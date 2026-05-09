@@ -1,7 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Environment
 .env
 .env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Claude (personal)
 .claude/CLAUDE.local.md
 .claude/settings.local.json
+
+# OS / Editor
 .DS_Store
 Thumbs.db
+
+# Logs
 logs/*.log
+npm-debug.log*

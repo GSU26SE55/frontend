@@ -18,14 +18,14 @@ repos:
     hooks:
       - id: eslint
         name: ESLint
-        entry: bash -c 'cd code && npx eslint --max-warnings=0 .'
+        entry: npx eslint --max-warnings=0
         language: system
-        files: ^code/.*\.(ts|tsx|js|jsx)$
-        pass_filenames: false
+        files: \.(ts|tsx|js|jsx)$
+        pass_filenames: true
 
       - id: tsc
         name: TypeScript check
-        entry: bash -c 'cd code && npx tsc --noEmit'
+        entry: npx tsc --noEmit
         language: system
-        files: ^code/.*\.(ts|tsx)$
+        files: \.(ts|tsx)$
         pass_filenames: false
