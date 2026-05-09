@@ -1,27 +1,7 @@
-# Dependencies
-node_modules/
-
-# Build
-dist/
-dist-ssr/
-
-# Environment
 .env
 .env.local
-.env.*.local
-
-# Logs
-*.log
-npm-debug.log*
-logs/*.log
-
-# Editor / OS
-.DS_Store
-Thumbs.db
-
-# Claude (personal — không commit)
 .claude/CLAUDE.local.md
 .claude/settings.local.json
-
-# Test coverage
-coverage/
+.DS_Store
+Thumbs.db
+logs/*.log
