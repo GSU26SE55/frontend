@@ -4,10 +4,8 @@
 .claude/settings.local.json
 .DS_Store
 Thumbs.db
-logs/*.log
-
-# Logs
-logs
+# Logs — chỉ ignore file .log, KHÔNG ignore thư mục logs/ (dùng để lưu plan/review/test)
+logs/**/*.log
 *.log
 npm-debug.log*
 yarn-debug.log*
