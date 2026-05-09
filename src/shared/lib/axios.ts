@@ -47,6 +47,7 @@ axiosInstance.interceptors.response.use(
 
     try {
       const refreshToken = Cookies.get('refreshToken')
+      if (!refreshToken) throw new Error('No refresh token')
       const { data } = await axios.post(`${env.VITE_API_BASE_URL}/auth/refresh`, { refreshToken })
       const newToken: string = data.data.accessToken
 

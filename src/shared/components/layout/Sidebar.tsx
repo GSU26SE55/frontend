@@ -3,7 +3,7 @@ import { useSessionStore } from '@/shared/stores/sessionStore'
 import { cn } from '@/shared/lib/utils'
 import {
   Users, Battery, Settings, FileText,
-  LayoutDashboard, Ticket, BarChart3, ClipboardList, Wrench,
+  LayoutDashboard, Ticket, BarChart3, ClipboardList,
 } from 'lucide-react'
 
 const adminNav = [
@@ -21,7 +21,6 @@ const managerNav = [
 
 const staffNav = [
   { to: '/staff/tickets', label: 'Ticket của tôi', icon: ClipboardList },
-  { to: '/staff/tickets', label: 'Công việc', icon: Wrench },
 ]
 
 const navByRole: Record<string, typeof adminNav> = {
