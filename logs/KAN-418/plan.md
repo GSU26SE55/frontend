@@ -1,7 +1,7 @@
 # Plan — KAN-418: [FE] CRUD static data (mock) để test workflow AI
 
 ## Metadata
-- **Status:** IN_PROGRESS
+- **Status:** TESTING
 - **Ngày tạo:** 2026-05-10
 - **Cập nhật lần cuối:** 2026-05-10
 
@@ -238,4 +238,4 @@ import { Activity } from 'lucide-react'
 - [x] Bước 8: Tạo `BatteryReadingsPage.tsx` — page tổng hợp với Dialog + state quản lý Create/Edit — 2026-05-10
 - [x] Bước 9: Update `router/index.tsx` + `Sidebar.tsx` — 2026-05-10
 - [x] Bước 10: `npm run lint && npm run build` — pass clean — 2026-05-10
-- [ ] Bước 11: Commit `feat(KAN-418): CRUD mock BatteryReading để test workflow AI`
+- [x] Bước 11: Commit `feat(KAN-418): CRUD mock BatteryReading để test workflow AI` — 2026-05-10
