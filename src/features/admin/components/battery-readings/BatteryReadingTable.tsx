@@ -61,7 +61,7 @@ export function BatteryReadingTable({ data, onEdit, onDelete, isDeleting }: Prop
                   onClick={() => onEdit(reading)}
                   disabled={isDeleting}
                 >
-                  Edit
+                  Sửa
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

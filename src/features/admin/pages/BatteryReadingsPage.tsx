@@ -22,7 +22,7 @@ export function BatteryReadingsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<BatteryReading | null>(null)
 
-  const { data = [], isLoading } = useBatteryReadingList()
+  const { data = [], isLoading, isError } = useBatteryReadingList()
   const createMutation = useCreateReading()
   const updateMutation = useUpdateReading()
   const deleteMutation = useDeleteReading()
@@ -61,14 +61,18 @@ export function BatteryReadingsPage() {
 
       {isLoading && <LoadingSpinner className="py-16" />}
 
-      {!isLoading && data.length === 0 && (
+      {isError && (
+        <EmptyState title="Có lỗi xảy ra" description="Không thể tải dữ liệu." />
+      )}
+
+      {!isLoading && !isError && data.length === 0 && (
         <EmptyState
           title="Chưa có dữ liệu đo"
           description="Nhấn Thêm mới để tạo bản ghi đầu tiên."
         />
       )}
 
-      {!isLoading && data.length > 0 && (
+      {!isLoading && !isError && data.length > 0 && (
         <BatteryReadingTable
           data={data}
           onEdit={openEdit}
