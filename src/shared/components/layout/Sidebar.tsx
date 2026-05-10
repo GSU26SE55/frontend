@@ -3,7 +3,7 @@ import { useSessionStore } from '@/shared/stores/sessionStore'
 import { cn } from '@/shared/lib/utils'
 import {
   Users, Battery, Settings, FileText,
-  LayoutDashboard, Ticket, BarChart3, ClipboardList,
+  LayoutDashboard, Ticket, BarChart3, ClipboardList, Activity,
 } from 'lucide-react'
 
 const adminNav = [
@@ -11,6 +11,7 @@ const adminNav = [
   { to: '/admin/batteries', label: 'Pin', icon: Battery },
   { to: '/admin/sla-rules', label: 'Quy tắc SLA', icon: Settings },
   { to: '/admin/audit-logs', label: 'Audit Log', icon: FileText },
+  { to: '/admin/battery-readings', label: 'Battery Readings', icon: Activity },
 ]
 
 const managerNav = [
