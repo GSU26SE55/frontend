@@ -22,6 +22,7 @@ import { ReportsPage } from '@/features/manager/pages/ReportsPage'
 
 import { MyTicketsPage } from '@/features/staff/pages/MyTicketsPage'
 import { TicketWorkPage } from '@/features/staff/pages/TicketWorkPage'
+import { AIWorkflowPage } from '@/features/ai-workflow/pages/AIWorkflowPage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -80,6 +81,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  { path: '/ai-workflow', element: <AIWorkflowPage /> },
   { path: '/unauthorized', element: <UnauthorizedPage /> },
   { path: '*', element: <NotFoundPage /> },
 ])
