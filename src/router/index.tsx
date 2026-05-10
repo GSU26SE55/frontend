@@ -22,6 +22,7 @@ import { ReportsPage } from '@/features/manager/pages/ReportsPage'
 
 import { MyTicketsPage } from '@/features/staff/pages/MyTicketsPage'
 import { TicketWorkPage } from '@/features/staff/pages/TicketWorkPage'
+import { BatteryReadingsPage } from '@/features/admin/pages/BatteryReadingsPage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <RootRedirect /> },
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
               { path: 'batteries', element: <BatteryConfigPage /> },
               { path: 'sla-rules', element: <SLARulesPage /> },
               { path: 'audit-logs', element: <AuditLogPage /> },
+              { path: 'battery-readings', element: <BatteryReadingsPage /> },
             ],
           },
         ],
