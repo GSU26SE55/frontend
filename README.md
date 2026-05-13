@@ -22,6 +22,7 @@
 - [Claude Code](https://claude.ai/code) — bắt buộc
 - Node.js 18+
 - Git 2.30+
+- [GitHub CLI](https://cli.github.com/) — bắt buộc
 
 ### Bước 2 — Clone repo
 
@@ -42,28 +43,15 @@ MSSV: [MSSV của bạn]
 ---
 ```
 
-### Bước 4 — Tạo file .env
-
-Tạo file `.env` ở root folder (file này **không được commit**):
-
-```
-JIRA_BASE_URL=https://fpt-team-d7rg7yak.atlassian.net
-JIRA_EMAIL=<email fpt của bạn>
-JIRA_API_TOKEN=<token Jira của bạn>
-```
-
-**Lấy Jira API Token:**
-1. Vào https://id.atlassian.com/manage-profile/security/api-tokens
-2. Nhấn **Create API token** → đặt tên → Copy token
-
-### Bước 5 — Setup Jira MCP
+### Bước 4 — Xác thực GitHub CLI
 
 ```bash
-npx -y @rui.branco/jira-mcp setup "<email fpt>" "<API token>" "https://fpt-team-d7rg7yak.atlassian.net"
-claude mcp add --transport stdio jira -- npx -y @rui.branco/jira-mcp
+gh auth login
 ```
 
-### Bước 6 — Mở Claude Code
+Chọn **GitHub.com** → **HTTPS** → xác thực qua browser.
+
+### Bước 5 — Mở Claude Code
 
 ```bash
 claude
