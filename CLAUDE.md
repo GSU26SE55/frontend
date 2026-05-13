@@ -41,7 +41,9 @@ src/
     ├── components/ui/         ← shadcn (generated)
     ├── components/layout/     ← AppLayout, AuthLayout, Sidebar, Header
     ├── lib/axios.ts           ← Axios instance + interceptors
+    ├── lib/errors.ts          ← HttpError, EntityError, handleErrorApi
     ├── stores/sessionStore.ts ← Zustand auth session
+    ├── utils/queryKeys.ts     ← KEY (root) + QUERY_KEY (factories) cho TanStack Query
     └── types/                 ← api.types.ts, common.types.ts
 ```
 
@@ -50,5 +52,5 @@ src/
 ## Workflow
 
 ```
-/kltn-task KAN-XX → plan.md → approve → code → /kltn-reviewcode → /kltn-test → /kltn-ship KAN-XX
+/kltn-implement [issue-number] → plan.md → approve → code → /kltn-reviewcode → /kltn-test → /kltn-ship [issue-number]
 ```
