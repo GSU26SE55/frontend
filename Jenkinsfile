@@ -1,5 +1,5 @@
 // Pipeline: CI + Docker + Deploy — Frontend (ReactJS)
-// Trigger: push / PR vào nhánh staging hoặc main
+// Trigger: push vào staging (từ dev→staging) hoặc main (từ staging→main)
 // Stages: Install → Type Check → Lint → Build → Docker Build & Push → Deploy
 // Port:   staging → VPS:3000 | main → VPS:80
 
@@ -24,6 +24,19 @@ pipeline {
     }
 
     stages {
+        stage('Check Branch') {
+            steps {
+                script {
+                    def branch = env.BRANCH_NAME
+                    if (branch != 'staging' && branch != 'main') {
+                        currentBuild.result = 'NOT_BUILT'
+                        error("Branch '${branch}' không được phép chạy CI/CD. Chỉ staging và main.")
+                    }
+                    echo "Branch hợp lệ: ${branch}"
+                }
+            }
+        }
+
         stage('Install') {
             steps {
                 sh 'node --version && npm --version'
@@ -52,7 +65,7 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME ?: 'staging'
+                    def branch = env.BRANCH_NAME
                     def shortSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
 
                     def tags = []
@@ -79,10 +92,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME ?: 'staging'
+                    def branch = env.BRANCH_NAME
 
-                    // staging → port 3000, container name: frontend-staging
-                    // main    → port 80,   container name: frontend-prod
+                    // staging → port 3000, container: frontend-staging
+                    // main    → port 80,   container: frontend-prod
                     def containerName = branch == 'main' ? 'frontend-prod'    : 'frontend-staging'
                     def imageTag      = branch == 'main' ? 'latest'            : 'staging'
                     def vpsPort       = branch == 'main' ? '80'                : '3000'
@@ -114,7 +127,7 @@ pipeline {
     post {
         success {
             script {
-                def branch = env.BRANCH_NAME ?: 'staging'
+                def branch = env.BRANCH_NAME
                 def url = branch == 'main'
                     ? 'http://capstonegsu26se55.mooo.com'
                     : 'http://capstonegsu26se55.mooo.com:3000'
