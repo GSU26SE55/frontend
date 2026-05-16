@@ -27,13 +27,12 @@ pipeline {
         stage('Check Branch') {
             steps {
                 script {
-                    def branch = env.CURRENT_BRANCH ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                    env.CURRENT_BRANCH = branch
-                    if (branch != 'staging' && branch != 'main') {
+                    env.CURRENT_BRANCH = env.BRANCH_NAME
+                    if (env.CURRENT_BRANCH != 'staging' && env.CURRENT_BRANCH != 'main') {
                         currentBuild.result = 'NOT_BUILT'
-                        error("Branch '${branch}' không được phép chạy CI/CD. Chỉ staging và main.")
+                        error("Branch '${env.CURRENT_BRANCH}' không được phép chạy CI/CD. Chỉ staging và main.")
                     }
-                    echo "Branch hợp lệ: ${branch}"
+                    echo "Branch hợp lệ: ${env.CURRENT_BRANCH}"
                 }
             }
         }
