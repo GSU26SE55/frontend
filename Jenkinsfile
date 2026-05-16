@@ -27,7 +27,8 @@ pipeline {
         stage('Check Branch') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME
+                    def branch = env.CURRENT_BRANCH ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    env.CURRENT_BRANCH = branch
                     if (branch != 'staging' && branch != 'main') {
                         currentBuild.result = 'NOT_BUILT'
                         error("Branch '${branch}' không được phép chạy CI/CD. Chỉ staging và main.")
@@ -65,7 +66,7 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME
+                    def branch = env.CURRENT_BRANCH
                     def shortSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
 
                     def tags = []
@@ -92,13 +93,13 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME
+                    def branch = env.CURRENT_BRANCH
 
                     // staging → port 3000, container: frontend-staging
                     // main    → port 80,   container: frontend-prod
                     def containerName = branch == 'main' ? 'frontend-prod'    : 'frontend-staging'
                     def imageTag      = branch == 'main' ? 'latest'            : 'staging'
-                    def vpsPort       = branch == 'main' ? '80'                : '3000'
+                    def vpsPort       = branch == 'main' ? '8081'              : '3000'
 
                     withCredentials([
                         string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN'),
@@ -127,7 +128,7 @@ pipeline {
     post {
         success {
             script {
-                def branch = env.BRANCH_NAME
+                def branch = env.CURRENT_BRANCH
                 def url = branch == 'main'
                     ? 'http://capstonegsu26se55.mooo.com'
                     : 'http://capstonegsu26se55.mooo.com:3000'
