@@ -1,7 +1,7 @@
 # Plan — GH-27: [FE] Implement Account Settings — /api/accounts/me
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-05-18
+- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-05-18
 - **Issue:** #27 — https://github.com/GSU26SE55/frontend/issues/27
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
