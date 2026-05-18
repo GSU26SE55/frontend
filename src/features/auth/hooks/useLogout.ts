@@ -13,7 +13,7 @@ export const useLogout = () => {
     onSettled: () => {
       clearTokens();
       clearSession();
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     },
   });
 };

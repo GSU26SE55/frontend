@@ -27,6 +27,7 @@ export const QUERY_KEY = {
     list: (params?: object) => [...KEY.auditLogs, 'list', params] as const,
   },
   currentUser: {
+    session: () => [...KEY.currentUser, 'session'] as const,
     me: () => [...KEY.currentUser, 'me'] as const,
   },
 } as const;

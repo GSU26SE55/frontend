@@ -4,7 +4,7 @@ import { useAuthContext } from '@/shared/context/authContext';
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    <div className="size-8 animate-spin rounded-full border-b-2 border-primary" />
   </div>
 );
 
@@ -13,7 +13,7 @@ const ProtectedRoute = () => {
   const isAuthenticated = useSessionStore(s => s.isAuthenticated);
 
   if (isHydrating) return <PageLoader />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
   return <Outlet />;
 };
 
