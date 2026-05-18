@@ -1,4 +1,3 @@
-import axios from 'axios';
 import axiosInstance from '@/shared/lib/axios';
 import { env } from '@/config/env';
 import { ENDPOINTS } from '@/shared/utils/endpoints';
@@ -12,18 +11,20 @@ import type {
   VerifyResetOtpPayload,
   VerifyResetOtpResponseData,
   ResetPasswordPayload,
-  AccountDto,
-} from '@/features/auth/types/auth.types';
-import type { CommonResponse } from '@/shared/types/api.types';
+} from "@/features/auth/types/auth.types";
+import type { CommonResponse } from "@/shared/types/api.types";
 
 export const authService = {
   login: (payload: LoginPayload) =>
-    axiosInstance.post<CommonResponse<LoginResponseData>>(ENDPOINTS.AUTH.LOGIN, payload),
+    axiosInstance.post<CommonResponse<LoginResponseData>>(
+      ENDPOINTS.AUTH.LOGIN,
+      payload,
+    ),
 
   logout: () => axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.LOGOUT),
 
   refreshToken: (refreshToken: string) =>
-    axios.post<CommonResponse<LoginResponseData>>(
+    axiosInstance.post<CommonResponse<LoginResponseData>>(
       `${env.VITE_API_BASE_URL}${ENDPOINTS.AUTH.REFRESH_TOKEN}`,
       { refreshToken },
       { timeout: 10_000 }
@@ -44,14 +45,15 @@ export const authService = {
   verifyResetOtp: (payload: VerifyResetOtpPayload) =>
     axiosInstance.post<CommonResponse<VerifyResetOtpResponseData>>(
       ENDPOINTS.AUTH.VERIFY_RESET_OTP,
-      payload
+      payload,
     ),
 
   resetPassword: (payload: ResetPasswordPayload) =>
     axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.RESET_PASSWORD, payload),
 
   resendResetOtp: (payload: ResendOtpPayload) =>
-    axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.RESEND_RESET_OTP, payload),
-
-  getMe: () => axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.AUTH.ME),
+    axiosInstance.post<CommonResponse>(
+      ENDPOINTS.AUTH.RESEND_RESET_OTP,
+      payload,
+    ),
 };

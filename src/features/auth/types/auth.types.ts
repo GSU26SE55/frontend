@@ -40,15 +40,6 @@ export interface LoginResponseData {
   refreshToken: string;
 }
 
-export interface AccountDto {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  phoneNumber?: string;
-  avatarUrl?: string;
-}
-
 export interface VerifyResetOtpResponseData {
   resetToken: string;
 }
