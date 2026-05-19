@@ -1,7 +1,7 @@
 # Plan — GH-40: [FE] Battery Catalog — Types & Groups
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #40 — https://github.com/GSU26SE55/frontend/issues/40
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 

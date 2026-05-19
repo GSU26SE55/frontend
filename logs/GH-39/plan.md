@@ -1,7 +1,7 @@
 # Plan — GH-39: [FE] Battery Asset Management — CRUD & Operations
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #39 — https://github.com/GSU26SE55/frontend/issues/39
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 

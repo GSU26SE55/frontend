@@ -1,7 +1,7 @@
 # Plan — GH-36: [FE] Integrate FileStorage API (upload / download / delete)
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #36 — https://github.com/GSU26SE55/frontend/issues/36
 - **Sprint:** Sprint 1 (due: 2026-05-30)
 

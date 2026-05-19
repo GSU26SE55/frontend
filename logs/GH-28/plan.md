@@ -1,9 +1,9 @@
 # Plan — GH-28: Auth Profile, Staff Assignment & Session Management — services + hooks
 
 ## Metadata
-- **Status:** REVIEWING
+- **Status:** SHIPPED
 - **Role:** FE
-- **Ngày:** 2026-05-18
+- **Ngày:** 2026-05-20
 - **Issue:** #28 — https://github.com/GSU26SE55/frontend/issues/28
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 

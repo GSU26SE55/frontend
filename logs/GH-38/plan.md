@@ -1,7 +1,7 @@
 # Plan — GH-38: [FE] Site Management & Dashboard
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #38 — https://github.com/GSU26SE55/frontend/issues/38
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
