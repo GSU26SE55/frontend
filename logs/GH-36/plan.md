@@ -1,7 +1,7 @@
 # Plan — GH-36: [FE] Integrate FileStorage API (upload / download / delete)
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-05-19
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #36 — https://github.com/GSU26SE55/frontend/issues/36
 - **Sprint:** Sprint 1 (due: 2026-05-30)
 
@@ -123,15 +123,15 @@ Consumer → useDeleteFile.mutate(fileId)
 | Build thành công | `npm run build` |
 
 ## Steps
-- [ ] Bước 1: Tạo `src/features/file-storage/types/file-storage.types.ts`
-- [ ] Bước 2: Thêm `FILES` vào `src/shared/utils/endpoints.ts`
-- [ ] Bước 3: Thêm `files` key vào `src/shared/utils/queryKeys.ts`
-- [ ] Bước 4: Tạo `src/features/file-storage/services/file-storage.service.ts`
-- [ ] Bước 5: Tạo `src/features/file-storage/hooks/useUploadFile.ts`
-- [ ] Bước 6: Tạo `src/features/file-storage/hooks/useFileMetadata.ts`
-- [ ] Bước 7: Tạo `src/features/file-storage/hooks/usePresignedUrl.ts`
-- [ ] Bước 8: Tạo `src/features/file-storage/hooks/useDeleteFile.ts`
-- [ ] Bước 9: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Tạo `src/features/file-storage/types/file-storage.types.ts` — 2026-05-20
+- [x] Bước 2: Thêm `FILES` vào `src/shared/utils/endpoints.ts` — 2026-05-20
+- [x] Bước 3: Thêm `files` key vào `src/shared/utils/queryKeys.ts` — 2026-05-20
+- [x] Bước 4: Tạo `src/features/file-storage/services/file-storage.service.ts` — 2026-05-20
+- [x] Bước 5: Tạo `src/features/file-storage/hooks/useUploadFile.ts` — 2026-05-20
+- [x] Bước 6: Tạo `src/features/file-storage/hooks/useFileMetadata.ts` — 2026-05-20
+- [x] Bước 7: Tạo `src/features/file-storage/hooks/usePresignedUrl.ts` — 2026-05-20
+- [x] Bước 8: Tạo `src/features/file-storage/hooks/useDeleteFile.ts` — 2026-05-20
+- [x] Bước 9: `tsc --noEmit` + `eslint --max-warnings=0` → PASS — 2026-05-20
 
 ## Câu hỏi đã giải đáp
 - **Service có unwrap không?** Không — confirm từ `auth.service.ts`: service trả `axiosInstance.post<CommonResponse<T>>(...)`, hook unwrap `response.data`. Plan đúng, không mâu thuẫn convention.
