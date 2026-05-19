@@ -13,6 +13,7 @@ import type {
   ResetPasswordPayload,
 } from "@/features/auth/types/auth.types";
 import type { CommonResponse } from "@/shared/types/api.types";
+import type { AccountDto } from "@/shared/types/account.types";
 
 export const authService = {
   login: (payload: LoginPayload) =>
@@ -56,4 +57,6 @@ export const authService = {
       ENDPOINTS.AUTH.RESEND_RESET_OTP,
       payload,
     ),
+
+  getMe: () => axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.AUTH.ME),
 };

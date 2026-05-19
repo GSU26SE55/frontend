@@ -7,7 +7,7 @@ export const useCurrentUser = () => {
   const isAuthenticated = useSessionStore(s => s.isAuthenticated);
 
   return useQuery({
-    queryKey: QUERY_KEY.currentUser.me(),
+    queryKey: QUERY_KEY.profile.me(),
     queryFn: () => authService.getMe(),
     enabled: isAuthenticated,
     select: response => response.data.data,
