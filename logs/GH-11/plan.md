@@ -56,7 +56,6 @@ Thiết lập toàn bộ nền tảng project (router, providers, axios, Zustand
 | `src/features/auth/hooks/useVerifyResetOtp.ts` | create | useMutation |
 | `src/features/auth/hooks/useResendResetOtp.ts` | create | useMutation |
 | `src/features/auth/hooks/useResetPassword.ts` | create | useMutation |
-| `src/features/auth/hooks/useCurrentUser.ts` | create | useQuery GET /me |
 | `src/features/auth/components/LoginForm.tsx` | create | email + password + Google button |
 | `src/features/auth/components/RegisterForm.tsx` | create | full register fields |
 | `src/features/auth/components/OtpVerifyForm.tsx` | create | 6-digit OTP + resend countdown |
@@ -160,12 +159,19 @@ otp: z.string().length(6).regex(/^\d{6}$/)
 **Role enum — UPPERCASE** (JWT gửi PascalCase → FE `.toUpperCase()` khi decode):
 
 ```ts
-// session.types.ts
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CUSTOMER';
+// session.types.ts — dùng const object + type alias (erasableSyntaxOnly không cho phép enum)
+export const UserRole = {
+  ADMIN:    'ADMIN',
+  MANAGER:  'MANAGER',
+  STAFF:    'STAFF',
+  CUSTOMER: 'CUSTOMER',
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 ```
 
 > JWT claim `role: "Customer"` → `jwtPayload.role.toUpperCase() as UserRole` → `"CUSTOMER"`
-> Mọi so sánh trong app đều dùng UPPERCASE: `checkRole(user, 'ADMIN')`, `user.role === 'MANAGER'`
+> Mọi so sánh trong app đều dùng constant: `checkRole(user, UserRole.ADMIN)`, `user.role === UserRole.MANAGER`
+> Không hardcode string `'ADMIN'` trực tiếp — luôn dùng `UserRole.XXX`
 
 **JwtPayload type** dùng để decode trong `auth.types.ts`:
 ```ts
@@ -290,7 +296,7 @@ Case 3: CÓ refreshToken, KHÔNG có accessToken HOẶC access đã hết hạn
 ```tsx
 // ProtectedRoute.tsx
 // isHydrating → <PageLoader /> (không redirect)
-// !isAuthenticated → <Navigate to="/login" replace />
+// !isAuthenticated → <Navigate to="/login" replace />  ← thẳng /login, không qua LandingPage
 // OK → <Outlet />
 
 // RoleRoute.tsx — nhận allowedRoles: UserRole[]
@@ -302,7 +308,7 @@ Case 3: CÓ refreshToken, KHÔNG có accessToken HOẶC access đã hết hạn
   element: <ProtectedRoute />,
   children: [
     {
-      element: <RoleRoute allowedRoles={['ADMIN']} />,
+      element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
       children: [{ path: '/admin/*', element: <AdminLayout /> }],
     },
   ],
@@ -312,11 +318,12 @@ Case 3: CÓ refreshToken, KHÔNG có accessToken HOẶC access đã hết hạn
 **Logout:**
 ```ts
 // Trong React tree (component/hook) → dùng useNavigate, không reload page
+// useLogout dùng onSettled (luôn chạy dù API fail) để đảm bảo luôn clear session
 const logout = () => {
   Cookies.remove('accessToken');
   Cookies.remove('refreshToken');
   sessionStore.getState().clearSession();  // bắt buộc clear Zustand
-  navigate('/login');
+  navigate('/login', { replace: true });   // thẳng /login, không qua LandingPage (/)
 };
 
 // Trong Axios interceptor (ngoài React tree) → window.location.href là acceptable
@@ -588,7 +595,7 @@ export const checkRole = (
 - **Double refresh (cùng tab):** `isRefreshing` flag + queue, 3 request đồng thời → chỉ 1 refresh call. Timeout 10s + `finally` reset flag → không deadlock khi BE hung
 - **Clock skew:** `isTokenExpired` buffer 30s + 401 fallback là 2 lớp bảo vệ
 - **Google callback token leakage:** `replaceState` ngay ở bước 2 trước khi xử lý token
-- **Customer login vào web:** block sớm trong `useLogin onSuccess` — `toast.error('Vui lòng dùng Mobile App')` + `logout()`
+- **Customer login vào web:** block sớm trong `useLogin onSuccess` — `toast.error('Vui lòng dùng Mobile App')` + `clearTokens()` (không navigate — user ở lại /login)
 - **Google callback lỗi:** không parse error param — `catch` block: `console.error` + `toast.error` + `navigate('/login')`
 - **resetToken hết hạn (5 phút):** countdown hiển thị ở step 3, hết giờ → toast + reset về step 1
 - **OtpVerifyPage navigate trực tiếp:** `if (!location.state?.email) → navigate('/register', { replace: true })`
@@ -622,7 +629,7 @@ export const checkRole = (
 - [x] Bước 11: Rewrite `src/App.tsx` (QueryClient + ThemeProvider + AuthProvider + RouterProvider + Toaster) — 2026-05-15
 - [x] Bước 12: Tạo `src/features/auth/types/auth.types.ts` + tất cả schemas — 2026-05-15
 - [x] Bước 13: Tạo `src/features/auth/services/auth.service.ts` — 2026-05-15
-- [x] Bước 14: Tạo tất cả hooks (useLogin, useLogout, useRegister, useVerifyOtp, useResendOtp, useResendResetOtp, useForgotPassword, useVerifyResetOtp, useResetPassword, useCurrentUser) — 2026-05-15
+- [x] Bước 14: Tạo tất cả hooks (useLogin, useLogout, useRegister, useVerifyOtp, useResendOtp, useResendResetOtp, useForgotPassword, useVerifyResetOtp, useResetPassword) — 2026-05-15
 - [x] Bước 15: Tạo auth components (LoginForm, RegisterForm, OtpVerifyForm, ForgotPasswordForm, ResetOtpVerifyForm, ResetPasswordForm) — 2026-05-15
 - [x] Bước 16: Tạo auth pages (LoginPage, RegisterPage, OtpVerifyPage, ForgotPasswordPage, GoogleCallbackPage) — 2026-05-15
 - [x] Bước 17: `tsc --noEmit` + `eslint . --max-warnings=0` + `npm run build` → PASS — 2026-05-15

@@ -1,6 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useSessionStore } from '@/shared/stores/sessionStore';
-import { useAuthContext } from '@/shared/context/authContext';
+import { Navigate, Outlet } from "react-router-dom";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { useAuthContext } from "@/shared/context/authContext";
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -10,10 +10,10 @@ const PageLoader = () => (
 
 const ProtectedRoute = () => {
   const { isHydrating } = useAuthContext();
-  const isAuthenticated = useSessionStore(s => s.isAuthenticated);
+  const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
 
   if (isHydrating) return <PageLoader />;
-  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <Outlet />;
 };
 

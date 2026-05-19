@@ -2,7 +2,11 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { saveTokens, clearTokens } from "@/shared/lib/axios";
-import { decodeToken, redirectByRole } from "@/shared/types/session.types";
+import {
+  UserRole,
+  decodeToken,
+  redirectByRole,
+} from "@/shared/types/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
 const GoogleCallbackPage = () => {
@@ -25,7 +29,7 @@ const GoogleCallbackPage = () => {
       saveTokens(accessToken, refreshToken);
       const user = decodeToken(accessToken);
 
-      if (user.role === "CUSTOMER") {
+      if (user.role === UserRole.CUSTOMER) {
         clearTokens();
         toast.error("Vui lòng sử dụng Mobile App để đăng nhập.");
         navigate("/login", { replace: true });

@@ -1,6 +1,13 @@
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from "jwt-decode";
 
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF' | 'CUSTOMER';
+export const UserRole = {
+  ADMIN: "ADMIN",
+  MANAGER: "MANAGER",
+  STAFF: "STAFF",
+  CUSTOMER: "CUSTOMER",
+} as const;
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 interface JwtPayload {
   jti: string;
@@ -37,9 +44,9 @@ export const decodeToken = (token: string): SessionUser => {
 export const redirectByRole = (role: UserRole): string =>
   (
     ({
-      ADMIN: '/admin',
-      MANAGER: '/manager',
-      STAFF: '/staff',
-      CUSTOMER: '/unauthorized',
+      [UserRole.ADMIN]: "/admin",
+      [UserRole.MANAGER]: "/manager",
+      [UserRole.STAFF]: "/staff",
+      [UserRole.CUSTOMER]: "/unauthorized",
     }) as Record<UserRole, string>
-  )[role] ?? '/unauthorized';
+  )[role] ?? "/unauthorized";
