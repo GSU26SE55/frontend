@@ -1,5 +1,6 @@
-import axiosInstance from "@/shared/lib/axios";
-import { ENDPOINTS } from "@/shared/utils/endpoints";
+import axiosInstance from '@/shared/lib/axios';
+import { env } from '@/config/env';
+import { ENDPOINTS } from '@/shared/utils/endpoints';
 import type {
   LoginPayload,
   LoginResponseData,
@@ -21,6 +22,13 @@ export const authService = {
     ),
 
   logout: () => axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.LOGOUT),
+
+  refreshToken: (refreshToken: string) =>
+    axiosInstance.post<CommonResponse<LoginResponseData>>(
+      `${env.VITE_API_BASE_URL}${ENDPOINTS.AUTH.REFRESH_TOKEN}`,
+      { refreshToken },
+      { timeout: 10_000 }
+    ),
 
   register: (payload: RegisterPayload) =>
     axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.REGISTER, payload),

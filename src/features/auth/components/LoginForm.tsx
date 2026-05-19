@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +12,14 @@ import { useLogin } from '@/features/auth/hooks/useLogin';
 import { env } from '@/config/env';
 import { ENDPOINTS } from '@/shared/utils/endpoints';
 
-const LoginForm = () => {
+interface LoginFormProps {
+  onForgotPassword?: () => void;
+  onRegister?: () => void;
+}
+
+const LoginForm = ({ onForgotPassword, onRegister }: LoginFormProps = {}) => {
+  const [showPassword, setShowPassword] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -27,55 +36,98 @@ const LoginForm = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Đăng nhập</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-xl tracking-tight">Đăng nhập</CardTitle>
         <CardDescription>Nhập thông tin tài khoản của bạn</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="password">Mật khẩu</Label>
             <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              {...register('email')}
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
 
-          <div className="text-right">
-            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-              Quên mật khẩu?
-            </Link>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Mật khẩu</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                className="pr-10"
+                {...register('password')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-xs text-destructive">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            {onForgotPassword ? (
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Quên mật khẩu?
+              </button>
+            ) : (
+              <Link
+                to="/forgot-password"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Quên mật khẩu?
+              </Link>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Đang đăng nhập…
+              </>
+            ) : (
+              'Đăng nhập'
+            )}
           </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Hoặc</span>
+            <div className="relative flex justify-center">
+              <span className="bg-card px-2 text-xs text-muted-foreground">hoặc</span>
             </div>
           </div>
 
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogleLogin}>
-            <svg className="mr-2 size-4" viewBox="0 0 24 24" aria-hidden="true">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleLogin}
+          >
+            <svg className="mr-2 size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -93,14 +145,24 @@ const LoginForm = () => {
                 fill="#EA4335"
               />
             </svg>
-            Đăng nhập với Google
+            Tiếp tục với Google
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground">
             Chưa có tài khoản?{' '}
-            <Link to="/register" className="text-primary hover:underline">
-              Đăng ký
-            </Link>
+            {onRegister ? (
+              <button
+                type="button"
+                onClick={onRegister}
+                className="font-medium text-primary hover:underline"
+              >
+                Đăng ký
+              </button>
+            ) : (
+              <Link to="/register" className="font-medium text-primary hover:underline">
+                Đăng ký
+              </Link>
+            )}
           </p>
         </form>
       </CardContent>

@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   forgotPasswordStep2Schema,
   type ForgotPasswordStep2Values,
 } from '@/features/auth/schemas/forgot-password.schema';
 import { useVerifyResetOtp } from '@/features/auth/hooks/useVerifyResetOtp';
 import { useResendResetOtp } from '@/features/auth/hooks/useResendResetOtp';
+import OtpBoxInput from './OtpBoxInput';
 
 const RESEND_COOLDOWN = 60;
 
@@ -20,12 +20,14 @@ interface ResetOtpVerifyFormProps {
 
 const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordStep2Values>({
     resolver: zodResolver(forgotPasswordStep2Schema),
+    defaultValues: { otp: '' },
   });
 
   const { mutate: verifyOtp, isPending: isVerifying } = useVerifyResetOtp(onSuccess);
@@ -37,8 +39,7 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
     return () => clearInterval(id);
   }, [countdown]);
 
-  const onSubmit = (data: ForgotPasswordStep2Values) =>
-    verifyOtp({ email, otp: data.otp });
+  const onSubmit = (data: ForgotPasswordStep2Values) => verifyOtp({ email, otp: data.otp });
 
   const handleResend = () => {
     resendOtp({ email });
@@ -46,24 +47,40 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Nhập mã OTP đã gửi đến <span className="font-medium text-foreground">{email}</span>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <p className="text-center text-sm text-muted-foreground">
+        Nhập mã 6 chữ số đã gửi đến{' '}
+        <span className="font-medium text-foreground">{email}</span>
       </p>
 
-      <div className="space-y-1">
-        <Label htmlFor="reset-otp">Mã OTP</Label>
-        <Input
-          id="reset-otp"
-          placeholder="123456"
-          maxLength={6}
-          {...register('otp')}
+      <div className="space-y-3">
+        <Controller
+          name="otp"
+          control={control}
+          render={({ field, fieldState }) => (
+            <OtpBoxInput
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              hasError={!!fieldState.error}
+              disabled={isVerifying}
+            />
+          )}
         />
-        {errors.otp && <p className="text-sm text-destructive">{errors.otp.message}</p>}
+        {errors.otp && (
+          <p className="text-center text-xs text-destructive">{errors.otp.message}</p>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isVerifying}>
-        {isVerifying ? 'Đang xác thực...' : 'Xác nhận OTP'}
+        {isVerifying ? (
+          <>
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            Đang xác thực…
+          </>
+        ) : (
+          'Xác nhận OTP'
+        )}
       </Button>
 
       <div className="text-center">
@@ -71,6 +88,7 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
           type="button"
           variant="ghost"
           size="sm"
+          className="text-xs text-muted-foreground"
           disabled={countdown > 0 || isResending}
           onClick={handleResend}
         >
