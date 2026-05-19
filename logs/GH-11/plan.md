@@ -377,21 +377,29 @@ const tryRefresh = async (): Promise<string | null> => {
 **Google OAuth flow:**
 ```
 Click "Sign in with Google" → window.location.href = VITE_API_BASE_URL + ENDPOINTS.AUTH.GOOGLE_LOGIN
-→ Backend callback → redirect FE: /auth/google/callback?accessToken=...&refreshToken=...
+→ Google redirect về /api/auth/google/callback (BE xử lý)
+→ BE trả JSON: CommonResponse<{ accessToken, refreshToken }> — KHÔNG redirect FE với token trong URL
 
-GoogleCallbackPage — thứ tự bắt buộc (trong try-catch bao toàn bộ):
+GoogleCallbackPage — BE gọi endpoint này server-side, FE không mount page này trực tiếp từ Google redirect.
+FE cần gọi GET /api/auth/google/callback (qua axios) để nhận token JSON:
+
+  // Confirmed từ thực tế: BE trả JSON response, không redirect với ?accessToken= trong URL
   try {
-    1. Đọc searchParams (accessToken, refreshToken, error)
-    2. window.history.replaceState({}, '', '/auth/google/callback')  ← xóa token khỏi URL NGAY
-    3. saveTokens(accessToken, refreshToken)
-    4. const user = decodeToken(accessToken)   // capture rõ return value
-    5. sessionStore.getState().setSession(user)
-    6. navigate(redirectByRole(user.role), { replace: true })
+    const res = await authService.googleCallback(code, state);  // GET /api/auth/google/callback
+    const { accessToken, refreshToken } = res.data;
+    saveTokens(accessToken, refreshToken);
+    const user = decodeToken(accessToken);
+    sessionStore.getState().setSession(user);
+    navigate(redirectByRole(user.role), { replace: true });
   } catch (err) {
-    console.error('[GoogleCallback]', err);  // confirmed Q3: không parse error param
+    console.error('[GoogleCallback]', err);
     toast.error('Đăng nhập Google thất bại');
-    navigate('/login', { replace: true })
+    navigate('/login', { replace: true });
   }
+
+  // GoogleCallbackPage mount tại /auth/google/callback
+  // Đọc ?code=...&state=... từ URL (Google redirect về đây)
+  // Gọi authService.googleCallback(code, state) → BE exchange code → trả { accessToken, refreshToken }
 ```
 
 **Known Limitations (document, không fix trong Sprint 1):**
@@ -403,8 +411,9 @@ GoogleCallbackPage — thứ tự bắt buộc (trong try-catch bao toàn bộ):
 Step 1: nhập email → POST /forgot-password → lưu email trong component state → next step
 Step 2: nhập OTP → POST /verify-reset-otp → nhận resetToken → next step
 Step 3: nhập mật khẩu mới → POST /reset-password (với resetToken) → navigate('/login') + toast
-// resetToken TTL = 5 phút (confirmed Q2)
-// UX: hiển thị countdown 5 phút ở step 3, nếu hết hạn → toast "Mã đã hết hạn, vui lòng thử lại" → reset về step 1
+// resetToken TTL = lấy từ response.data.expiresInSeconds của POST /verify-reset-otp
+// API doc JSON example: expiresInSeconds = 600 (10 phút) — dùng giá trị động từ response, không hardcode
+// UX: hiển thị countdown theo expiresInSeconds nhận được ở step 2, nếu hết hạn → toast "Mã đã hết hạn, vui lòng thử lại" → reset về step 1
 ```
 
 **OtpVerifyPage guard:**
@@ -594,10 +603,10 @@ export const checkRole = (
 - **401 khi đang refresh:** không retry → logout() + `window.location.href = '/login'`
 - **Double refresh (cùng tab):** `isRefreshing` flag + queue, 3 request đồng thời → chỉ 1 refresh call. Timeout 10s + `finally` reset flag → không deadlock khi BE hung
 - **Clock skew:** `isTokenExpired` buffer 30s + 401 fallback là 2 lớp bảo vệ
-- **Google callback token leakage:** `replaceState` ngay ở bước 2 trước khi xử lý token
+- **Google callback:** BE trả JSON, FE mount `/auth/google/callback` → đọc `?code&state` từ URL → gọi `authService.googleCallback(code, state)` → nhận token từ JSON response (không có token leak trong URL vì token nằm trong response body)
 - **Customer login vào web:** block sớm trong `useLogin onSuccess` — `toast.error('Vui lòng dùng Mobile App')` + `clearTokens()` (không navigate — user ở lại /login)
 - **Google callback lỗi:** không parse error param — `catch` block: `console.error` + `toast.error` + `navigate('/login')`
-- **resetToken hết hạn (5 phút):** countdown hiển thị ở step 3, hết giờ → toast + reset về step 1
+- **resetToken hết hạn:** countdown lấy từ `expiresInSeconds` trong response verify-reset-otp (API doc example: 600s = 10 phút), hiển thị ở step 3, hết giờ → toast + reset về step 1
 - **OtpVerifyPage navigate trực tiếp:** `if (!location.state?.email) → navigate('/register', { replace: true })`
 - **Resend OTP 429:** disable nút + countdown 60s
 - **Multi-tab logout/refresh race:** Known Limitation — document, không fix Sprint 1
@@ -647,5 +656,6 @@ export const checkRole = (
 | # | Câu hỏi | Kết quả |
 |---|---------|---------|
 | Q1 | `refreshToken` TTL? | **7 ngày** — cookie `{ expires: 7 }` |
-| Q2 | `resetToken` TTL (forgot password step 2)? | **5 phút** — countdown UI ở step 3, hết hạn → reset step 1 |
+| Q2 | `resetToken` TTL (forgot password step 2)? | **Lấy động từ `expiresInSeconds`** trong response POST /verify-reset-otp. API doc JSON example: 600s (10 phút). Không hardcode — render countdown từ giá trị server trả về |
 | Q3 | Google OAuth callback error param? | **Bỏ qua parse** — `catch` block: `console.error` + `toast.error` |
+| Q4 | Google OAuth callback flow? | **BE trả JSON** — FE mount `/auth/google/callback`, đọc `?code&state` từ URL (Google redirect), gọi `GET /api/auth/google/callback` qua axios → nhận `{ accessToken, refreshToken }` từ JSON response. Confirmed từ Swagger/browser test: BE không redirect FE với token trong URL query param |
