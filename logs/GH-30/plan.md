@@ -82,11 +82,11 @@ export interface StaffSkillDto {
 
 export interface StaffProfileDto {
   accountId: string;
-  employeeCode: string;
-  department: string;
+  employeeCode?: string;   // nullable theo API doc
+  department?: string;     // nullable theo API doc
   maxConcurrentTickets: number;
   isAvailable: boolean;
-  notes: string;
+  notes?: string;          // nullable theo API doc
   skills: StaffSkillDto[];
 }
 
@@ -95,6 +95,7 @@ export interface AccountDto {
   email: string;
   phoneNumber?: string;
   fullName: string;
+  /** @deprecated legacy direct URL — KHÔNG dùng để render, dùng displayAvatarUrl */
   avatarUrl?: string;
   dateOfBirth?: string;
   address?: string;
@@ -105,9 +106,13 @@ export interface AccountDto {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt?: string;
-  roles: string[];
+  roleId: string;           // 1 role duy nhất — quan hệ 1-N (không phải roles: string[])
+  role: string;             // PascalCase từ BE — FE .toUpperCase() khi cần so sánh
+  roleAssignedAt?: string;
+  roleAssignedBy?: string;  // null nếu gán lúc tạo account
   profile?: AccountProfileDto;
   staffProfile?: StaffProfileDto;
+  displayAvatarUrl?: string; // dùng field này để render avatar trong <img src>
 }
 
 // Giữ trong shared vì cross-feature: admin (Nhóm 6) + auth profile (GH-28, GET /api/staff)
@@ -192,10 +197,12 @@ export interface GetAccountsParams {
 }
 export interface CreateAccountPayload {
   email: string; fullName: string; password: string;
-  phoneNumber?: string; dateOfBirth?: string; address?: string; roleIds?: string[];
+  phoneNumber?: string; dateOfBirth?: string; address?: string;
+  roleId: string; // bắt buộc — scalar Guid (1 role/account, quan hệ 1-N)
 }
 export interface InviteAccountPayload {
-  email: string; fullName: string; phoneNumber?: string; roleIds: string[];
+  email: string; fullName: string; phoneNumber?: string;
+  roleId: string; // bắt buộc — scalar Guid (1 role/account, quan hệ 1-N)
 }
 export interface UpdateAccountPayload {
   fullName: string; phoneNumber?: string; avatarUrl?: string;
@@ -285,7 +292,7 @@ ADMIN: {
 | GET | `/api/admin/accounts` | `GetAccountsParams` (query) | `CommonResponse<PaginationResponse<AccountDto>>` |
 | GET | `/api/admin/accounts/{id}` | — | `CommonResponse<AccountDto>` |
 | POST | `/api/admin/accounts` | `CreateAccountPayload` | `CommonResponse<string>` (Guid) |
-| POST | `/api/admin/accounts/invite` | `InviteAccountPayload` | `CommonResponse<null>` |
+| POST | `/api/admin/accounts/invite` | `InviteAccountPayload` | `CommonResponse<string>` (Guid của account vừa tạo, trạng thái PendingVerification) |
 | PUT | `/api/admin/accounts/{id}` | `UpdateAccountPayload` | `CommonResponse<string>` (Guid) |
 | PATCH | `/api/admin/accounts/{id}/status` | `ChangeAccountStatusPayload` | `CommonResponse<unknown>` |
 | POST | `/api/admin/accounts/{id}/unlock` | — | `CommonResponse<unknown>` |
@@ -368,7 +375,7 @@ export const QUERY_KEY = {
 | `DELETE /api/admin/accounts/{id}` trả `409` | `onError` → `handleErrorApi({ error })` → toast.error (hook không cần logic đặc biệt, BE chưa enforce) |
 | `PUT /api/admin/roles/{roleId}/permissions` với `permissionIds: []` | Replace semantics — xóa hết; hook expose thẳng, UI page (issue riêng) chịu trách nhiệm fetch-before-save |
 | `PERMISSIONS.BY_ROLE` và `SET_FOR_ROLE` cùng path | Phân biệt bằng method: `axios.get` vs `axios.put` — comment trong service file |
-| `InviteAccountPayload` response | `CommonResponse<null>` — confirmed từ api-auth.md line 1166: `data` là null |
+| `InviteAccountPayload` response | `CommonResponse<string>` — `data` là Guid (confirmed từ api-auth.md line 1216–1225: response trả Guid của account PendingVerification) |
 
 ## Success Criteria
 
@@ -401,5 +408,5 @@ export const QUERY_KEY = {
 | Admin routing trong scope? | Không thay đổi — `/admin/*` placeholder giữ nguyên |
 | KEY.admin.staff có cần không? | Có — cần để invalidate đúng sau staff mutations (stale data bug nếu thiếu) |
 | StaffAssignmentProfileDto ở shared/ hay admin/? | shared/ — cross-feature với GH-28 (GET /api/staff) |
-| InviteAccountPayload response shape? | Pending BE confirm — dùng CommonResponse\<unknown\> + TODO comment |
-| StaffProfileDto shape confirmed? | Confirmed từ response DTO: `accountId`, `employeeCode`, `department`, `maxConcurrentTickets`, `isAvailable`, `notes`, `skills[]` (non-optional). Không có `displayAvatarUrl`. |
+| InviteAccountPayload response shape? | `CommonResponse<string>` — `data` là Guid của account vừa tạo (trạng thái PendingVerification). Confirmed từ api-auth.md line 1216–1225. |
+| StaffProfileDto shape confirmed? | Confirmed từ api-auth.md: `accountId` (non-optional), `employeeCode?`, `department?`, `maxConcurrentTickets`, `isAvailable`, `notes?`, `skills[]`. `employeeCode`, `department`, `notes` là **nullable**. Không có `displayAvatarUrl` (field đó chỉ có ở `StaffAssignmentProfileDto`). |
