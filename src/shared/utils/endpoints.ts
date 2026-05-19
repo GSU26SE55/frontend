@@ -122,6 +122,15 @@ export const ENDPOINTS = {
     },
   },
 
+  SITES: {
+    LIST:      '/api/sites',
+    ME:        '/api/sites/me',
+    DETAIL:    (id: string) => `/api/sites/${id}`,
+    DASHBOARD: (id: string) => `/api/sites/${id}/dashboard`,
+    ASSETS:    (siteId: string) => `/api/sites/${siteId}/assets`,
+    RESTORE:   (id: string) => `/api/sites/${id}/restore`,
+  },
+
   STAFF: {
     LIST:   '/api/staff',
     DETAIL: (id: string) => `/api/staff/${id}/assignment-profile`,

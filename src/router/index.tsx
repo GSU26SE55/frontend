@@ -3,6 +3,7 @@ import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
 import { UserRole } from '@/shared/types/session.types';
 import AuthLayout from '@/shared/components/layout/AuthLayout';
+import AppLayout from '@/shared/components/layout/AppLayout';
 import LandingPage from '@/features/landing/pages/LandingPage';
 import GoogleCallbackPage from '@/features/auth/pages/GoogleCallbackPage';
 import LoginPage from '@/features/auth/pages/LoginPage';
@@ -10,6 +11,12 @@ import RegisterPage from '@/features/auth/pages/RegisterPage';
 import OtpVerifyPage from '@/features/auth/pages/OtpVerifyPage';
 import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
 import AccountSettingsPage from '@/features/auth/pages/AccountSettingsPage';
+import AdminDashboardPage from '@/features/admin/pages/DashboardPage';
+import AdminSiteListPage from '@/features/admin/pages/SiteListPage';
+import AdminSiteDetailPage from '@/features/admin/pages/SiteDetailPage';
+import ManagerDashboardPage from '@/features/manager/pages/DashboardPage';
+import ManagerSiteListPage from '@/features/manager/pages/SiteListPage';
+import ManagerSiteDetailPage from '@/features/manager/pages/SiteDetailPage';
 
 const router = createBrowserRouter([
   {
@@ -48,11 +55,33 @@ const router = createBrowserRouter([
       { path: '/settings', element: <AccountSettingsPage /> },
       {
         element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
-        children: [{ path: '/admin/*', element: <div>Admin Portal</div> }],
+        children: [
+          {
+            path: '/admin',
+            element: <AppLayout />,
+            children: [
+              { index: true, element: <AdminDashboardPage /> },
+              { path: 'dashboard', element: <AdminDashboardPage /> },
+              { path: 'sites', element: <AdminSiteListPage /> },
+              { path: 'sites/:id', element: <AdminSiteDetailPage /> },
+            ],
+          },
+        ],
       },
       {
         element: <RoleRoute allowedRoles={[UserRole.MANAGER]} />,
-        children: [{ path: '/manager/*', element: <div>Manager Portal</div> }],
+        children: [
+          {
+            path: '/manager',
+            element: <AppLayout />,
+            children: [
+              { index: true, element: <ManagerDashboardPage /> },
+              { path: 'dashboard', element: <ManagerDashboardPage /> },
+              { path: 'sites', element: <ManagerSiteListPage /> },
+              { path: 'sites/:id', element: <ManagerSiteDetailPage /> },
+            ],
+          },
+        ],
       },
       {
         element: <RoleRoute allowedRoles={[UserRole.STAFF]} />,

@@ -4,6 +4,7 @@ export const KEY = {
   profile:      'profile',
   staff:        'staff',
   sessions:     'sessions',
+  sites:        'sites',
   admin: {
     accounts:    ['admin', 'accounts']    as const,
     staff:       ['admin', 'staff']       as const,
@@ -29,6 +30,12 @@ export const QUERY_KEY = {
   },
   sessions: {
     me: (activeOnly?: boolean) => [KEY.sessions, 'me', activeOnly] as const,
+  },
+  sites: {
+    list:      (params?: object) => [KEY.sites, 'list', params]                  as const,
+    detail:    (id: string)      => [KEY.sites, 'detail', id]                    as const,
+    dashboard: (id: string)      => [KEY.sites, 'dashboard', id]                 as const,
+    assets:    (siteId: string, params?: object) => [KEY.sites, 'assets', siteId, params] as const,
   },
   admin: {
     accounts: {
