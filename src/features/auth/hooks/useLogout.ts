@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '@/features/auth/services/auth.service';
-import { clearTokens } from '@/shared/lib/axios';
-import { useSessionStore } from '@/shared/stores/sessionStore';
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { authService } from "@/features/auth/services/auth.service";
+import { clearTokens } from "@/shared/lib/axios";
+import { useSessionStore } from "@/shared/stores/sessionStore";
 
 export const useLogout = () => {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export const useLogout = () => {
     onSettled: () => {
       clearTokens();
       clearSession();
-      navigate('/', { replace: true });
+      navigate("/login", { replace: true });
     },
   });
 };
