@@ -102,11 +102,11 @@ export interface StaffSkillDto {
 }
 export interface StaffProfileDto {
   accountId: string;
-  employeeCode: string;
-  department: string;
+  employeeCode?: string;   // nullable theo API doc
+  department?: string;     // nullable theo API doc
   maxConcurrentTickets: number;
   isAvailable: boolean;
-  notes: string;
+  notes?: string;          // nullable theo API doc
   skills: StaffSkillDto[];
 }
 export interface AccountDto {
@@ -114,7 +114,7 @@ export interface AccountDto {
   email: string;
   fullName: string;
   phoneNumber?: string;
-  /** @deprecated legacy field — render avatar qua staffProfile?.skills hay profile?.avatarFileId/externalAvatarUrl theo avatarSource */
+  /** @deprecated legacy direct URL — KHÔNG dùng để render, dùng displayAvatarUrl */
   avatarUrl?: string;
   dateOfBirth?: string;
   address?: string;
@@ -125,9 +125,13 @@ export interface AccountDto {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt?: string;
-  roles: string[];
-  profile?: AccountProfileDto;     // null khi user chưa gọi PUT /api/auth/me/profile
+  roleId: string;           // 1 role duy nhất — quan hệ 1-N (không phải roles: string[])
+  role: string;             // PascalCase từ BE — FE .toUpperCase() khi cần so sánh
+  roleAssignedAt?: string;
+  roleAssignedBy?: string;  // null nếu gán lúc tạo account
+  profile?: AccountProfileDto;     // null nếu account chưa tạo profile row (vd seed admin)
   staffProfile?: StaffProfileDto;  // null nếu không phải Staff
+  displayAvatarUrl?: string;       // dùng field này để render avatar trong <img src>
 }
 
 // features/staff/types/staff.types.ts

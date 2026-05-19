@@ -9,16 +9,18 @@ import ProductSection from '@/features/landing/components/ProductSection';
 import RolesSection from '@/features/landing/components/RolesSection';
 import WorkflowSection from '@/features/landing/components/WorkflowSection';
 import StatsSection from '@/features/landing/components/StatsSection';
+import { useSessionStore } from '@/shared/stores/sessionStore';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
-
+  const user = useSessionStore((state) => state.user);
+  console.log("LandingPage user:", user);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (

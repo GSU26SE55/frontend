@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
+import { UserRole } from '@/shared/types/session.types';
 import AuthLayout from '@/shared/components/layout/AuthLayout';
 import LandingPage from '@/features/landing/pages/LandingPage';
 import GoogleCallbackPage from '@/features/auth/pages/GoogleCallbackPage';
@@ -34,7 +35,9 @@ const router = createBrowserRouter([
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-semibold text-destructive">403</h1>
-          <p className="mt-2 text-muted-foreground">Bạn không có quyền truy cập trang này.</p>
+          <p className="mt-2 text-muted-foreground">
+            Bạn không có quyền truy cập trang này.
+          </p>
         </div>
       </div>
     ),
@@ -44,15 +47,15 @@ const router = createBrowserRouter([
     children: [
       { path: '/settings', element: <AccountSettingsPage /> },
       {
-        element: <RoleRoute allowedRoles={['ADMIN']} />,
+        element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
         children: [{ path: '/admin/*', element: <div>Admin Portal</div> }],
       },
       {
-        element: <RoleRoute allowedRoles={['MANAGER']} />,
+        element: <RoleRoute allowedRoles={[UserRole.MANAGER]} />,
         children: [{ path: '/manager/*', element: <div>Manager Portal</div> }],
       },
       {
-        element: <RoleRoute allowedRoles={['STAFF']} />,
+        element: <RoleRoute allowedRoles={[UserRole.STAFF]} />,
         children: [{ path: '/staff/*', element: <div>Staff Portal</div> }],
       },
     ],
