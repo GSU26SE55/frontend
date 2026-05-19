@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +14,13 @@ import type { ResetPasswordPayload } from '@/features/auth/types/auth.types';
 
 interface ResetPasswordFormProps {
   resetToken: string;
+  onSuccess?: () => void;
 }
 
-const ResetPasswordForm = ({ resetToken }: ResetPasswordFormProps) => {
+const ResetPasswordForm = ({ resetToken, onSuccess }: ResetPasswordFormProps) => {
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -24,7 +30,7 @@ const ResetPasswordForm = ({ resetToken }: ResetPasswordFormProps) => {
     resolver: zodResolver(forgotPasswordStep3Schema),
   });
 
-  const { mutate, isPending } = useResetPassword(setError);
+  const { mutate, isPending } = useResetPassword(setError, onSuccess || (() => {}));
 
   const onSubmit = (data: ForgotPasswordStep3Values) => {
     const payload: ResetPasswordPayload = {
@@ -37,34 +43,65 @@ const ResetPasswordForm = ({ resetToken }: ResetPasswordFormProps) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <Label htmlFor="newPassword">Mật khẩu mới</Label>
-        <Input
-          id="newPassword"
-          type="password"
-          placeholder="••••••••"
-          {...register('newPassword')}
-        />
+        <div className="relative">
+          <Input
+            id="newPassword"
+            type={showNew ? 'text' : 'password'}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            className="pr-10"
+            {...register('newPassword')}
+          />
+          <button
+            type="button"
+            onClick={() => setShowNew(v => !v)}
+            aria-label={showNew ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showNew ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
         {errors.newPassword && (
-          <p className="text-sm text-destructive">{errors.newPassword.message}</p>
+          <p className="text-xs text-destructive">{errors.newPassword.message}</p>
         )}
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          placeholder="••••••••"
-          {...register('confirmPassword')}
-        />
+        <div className="relative">
+          <Input
+            id="confirmPassword"
+            type={showConfirm ? 'text' : 'password'}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            className="pr-10"
+            {...register('confirmPassword')}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirm(v => !v)}
+            aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
         {errors.confirmPassword && (
-          <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+          <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
         )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
+        {isPending ? (
+          <>
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            Đang xử lý…
+          </>
+        ) : (
+          'Đặt lại mật khẩu'
+        )}
       </Button>
     </form>
   );

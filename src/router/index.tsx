@@ -1,17 +1,19 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import AuthLayout from '@/shared/components/layout/AuthLayout';
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
+import AuthLayout from '@/shared/components/layout/AuthLayout';
+import LandingPage from '@/features/landing/pages/LandingPage';
+import GoogleCallbackPage from '@/features/auth/pages/GoogleCallbackPage';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import RegisterPage from '@/features/auth/pages/RegisterPage';
 import OtpVerifyPage from '@/features/auth/pages/OtpVerifyPage';
 import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
-import GoogleCallbackPage from '@/features/auth/pages/GoogleCallbackPage';
+import AccountSettingsPage from '@/features/auth/pages/AccountSettingsPage';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <LandingPage />,
   },
   {
     element: <AuthLayout />,
@@ -31,7 +33,7 @@ const router = createBrowserRouter([
     element: (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-destructive">403</h1>
+          <h1 className="text-4xl font-semibold text-destructive">403</h1>
           <p className="mt-2 text-muted-foreground">Bạn không có quyền truy cập trang này.</p>
         </div>
       </div>
@@ -40,6 +42,7 @@ const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/settings', element: <AccountSettingsPage /> },
       {
         element: <RoleRoute allowedRoles={['ADMIN']} />,
         children: [{ path: '/admin/*', element: <div>Admin Portal</div> }],
@@ -56,7 +59,7 @@ const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/" replace />,
   },
 ]);
 

@@ -1,29 +1,34 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { otpVerifySchema, type OtpVerifyFormValues } from '@/features/auth/schemas/otp-verify.schema';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
+import OtpBoxInput from './OtpBoxInput';
 
 const RESEND_COOLDOWN = 60;
 
 interface OtpVerifyFormProps {
   email: string;
+  onSuccess?: () => void;
 }
 
-const OtpVerifyForm = ({ email }: OtpVerifyFormProps) => {
+const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
-  } = useForm<OtpVerifyFormValues>({ resolver: zodResolver(otpVerifySchema) });
+  } = useForm<OtpVerifyFormValues>({
+    resolver: zodResolver(otpVerifySchema),
+    defaultValues: { otp: '' },
+  });
 
-  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
+  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp(onSuccess || (() => {}));
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
 
   useEffect(() => {
@@ -32,8 +37,7 @@ const OtpVerifyForm = ({ email }: OtpVerifyFormProps) => {
     return () => clearInterval(id);
   }, [countdown]);
 
-  const onSubmit = (data: OtpVerifyFormValues) =>
-    verifyOtp({ email, otp: data.otp });
+  const onSubmit = (data: OtpVerifyFormValues) => verifyOtp({ email, otp: data.otp });
 
   const handleResend = () => {
     resendOtp({ email });
@@ -41,30 +45,44 @@ const OtpVerifyForm = ({ email }: OtpVerifyFormProps) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Xác thực OTP</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-xl tracking-tight">Xác thực OTP</CardTitle>
         <CardDescription>
-          Mã OTP đã được gửi đến <span className="font-medium text-foreground">{email}</span>
+          Nhập mã 6 chữ số đã gửi đến{' '}
+          <span className="font-medium text-foreground">{email}</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="otp">Mã OTP</Label>
-            <Input
-              id="otp"
-              placeholder="123456"
-              maxLength={6}
-              {...register('otp')}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-3">
+            <Controller
+              name="otp"
+              control={control}
+              render={({ field, fieldState }) => (
+                <OtpBoxInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  hasError={!!fieldState.error}
+                  disabled={isVerifying}
+                />
+              )}
             />
             {errors.otp && (
-              <p className="text-sm text-destructive">{errors.otp.message}</p>
+              <p className="text-center text-xs text-destructive">{errors.otp.message}</p>
             )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isVerifying}>
-            {isVerifying ? 'Đang xác thực...' : 'Xác thực'}
+            {isVerifying ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Đang xác thực…
+              </>
+            ) : (
+              'Xác thực'
+            )}
           </Button>
 
           <div className="text-center">
@@ -72,6 +90,7 @@ const OtpVerifyForm = ({ email }: OtpVerifyFormProps) => {
               type="button"
               variant="ghost"
               size="sm"
+              className="text-xs text-muted-foreground"
               disabled={countdown > 0 || isResending}
               onClick={handleResend}
             >

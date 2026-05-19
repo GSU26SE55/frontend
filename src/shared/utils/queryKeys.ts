@@ -1,32 +1,56 @@
 export const KEY = {
-  batteries: ['batteries'],
-  tickets: ['tickets'],
-  users: ['users'],
-  notifications: ['notifications'],
-  auditLogs: ['auditLogs'],
-  currentUser: ['currentUser'],
+  currentUser:  'currentUser',
+  loginHistory: 'loginHistory',
+  profile:      'profile',
+  staff:        'staff',
+  sessions:     'sessions',
+  admin: {
+    accounts:    ['admin', 'accounts']    as const,
+    staff:       ['admin', 'staff']       as const,
+    roles:       ['admin', 'roles']       as const,
+    permissions: ['admin', 'permissions'] as const,
+    auditLogs:   ['admin', 'auditLogs']   as const,
+  },
 } as const;
 
 export const QUERY_KEY = {
-  batteries: {
-    list: (params?: object) => [...KEY.batteries, 'list', params] as const,
-    detail: (id: string) => [...KEY.batteries, 'detail', id] as const,
-  },
-  tickets: {
-    list: (params?: object) => [...KEY.tickets, 'list', params] as const,
-    detail: (id: string) => [...KEY.tickets, 'detail', id] as const,
-  },
-  users: {
-    list: (params?: object) => [...KEY.users, 'list', params] as const,
-    detail: (id: string) => [...KEY.users, 'detail', id] as const,
-  },
-  notifications: {
-    list: (params?: object) => [...KEY.notifications, 'list', params] as const,
-  },
-  auditLogs: {
-    list: (params?: object) => [...KEY.auditLogs, 'list', params] as const,
-  },
   currentUser: {
-    me: () => [...KEY.currentUser, 'me'] as const,
+    session: () => [KEY.currentUser, 'session'] as const,
+  },
+  loginHistory: {
+    list: (params?: object) => [KEY.loginHistory, 'list', params] as const,
+  },
+  profile: {
+    me: () => [KEY.profile, 'me'] as const,
+  },
+  staff: {
+    list:   (skill?: string) => [KEY.staff, 'list', skill]     as const,
+    detail: (id: string)     => [KEY.staff, 'detail', id]      as const,
+  },
+  sessions: {
+    me: (activeOnly?: boolean) => [KEY.sessions, 'me', activeOnly] as const,
+  },
+  admin: {
+    accounts: {
+      list:         (params?: object) => [...KEY.admin.accounts, 'list', params],
+      detail:       (id: string)      => [...KEY.admin.accounts, 'detail', id],
+      sessions:     (id: string)      => [...KEY.admin.accounts, 'sessions', id],
+      loginHistory: (id: string, params?: object) =>
+                      [...KEY.admin.accounts, 'loginHistory', id, params],
+    },
+    staff: {
+      profile: (accountId: string) => [...KEY.admin.staff, 'profile', accountId],
+    },
+    roles: {
+      list:        (params?: object) => [...KEY.admin.roles, 'list', params],
+      detail:      (id: string)      => [...KEY.admin.roles, 'detail', id],
+      permissions: (roleId: string)  => [...KEY.admin.roles, 'permissions', roleId],
+    },
+    permissions: {
+      list: (module?: string) => [...KEY.admin.permissions, 'list', module],
+    },
+    auditLogs: {
+      list: (params?: object) => [...KEY.admin.auditLogs, 'list', params],
+    },
   },
 } as const;

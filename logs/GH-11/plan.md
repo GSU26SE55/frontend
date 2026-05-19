@@ -1,7 +1,7 @@
 # Plan — GH-11: [FE] Flow Authentication
 
 ## Metadata
-- **Status:** TESTING | **Role:** FE | **Ngày:** 2026-05-15
+- **Status:** TESTING | **Role:** FE | **Ngày:** 2026-05-18
 - **Issue:** #11 — https://github.com/GSU26SE55/frontend/issues/11
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -54,6 +54,7 @@ Thiết lập toàn bộ nền tảng project (router, providers, axios, Zustand
 | `src/features/auth/hooks/useResendOtp.ts` | create | useMutation |
 | `src/features/auth/hooks/useForgotPassword.ts` | create | useMutation |
 | `src/features/auth/hooks/useVerifyResetOtp.ts` | create | useMutation |
+| `src/features/auth/hooks/useResendResetOtp.ts` | create | useMutation |
 | `src/features/auth/hooks/useResetPassword.ts` | create | useMutation |
 | `src/features/auth/hooks/useCurrentUser.ts` | create | useQuery GET /me |
 | `src/features/auth/components/LoginForm.tsx` | create | email + password + Google button |
@@ -67,6 +68,75 @@ Thiết lập toàn bộ nền tảng project (router, providers, axios, Zustand
 | `src/features/auth/pages/OtpVerifyPage.tsx` | create | Nhận email từ router state |
 | `src/features/auth/pages/ForgotPasswordPage.tsx` | create | Multi-step (state nội bộ: step 1→2→3) |
 | `src/features/auth/pages/GoogleCallbackPage.tsx` | create | Parse token từ URL query → save → redirect |
+
+## Types
+
+```ts
+// src/features/auth/types/auth.types.ts
+
+// Payloads
+interface LoginPayload          { email: string; password: string; }
+interface RegisterPayload       { fullName: string; email: string; password: string; confirmPassword: string; phoneNumber: string; }
+interface OtpVerifyPayload      { email: string; otp: string; }
+interface ResendOtpPayload      { email: string; }               // dùng chung cho resend-otp + resend-reset-otp
+interface ForgotPasswordPayload { email: string; }
+interface VerifyResetOtpPayload { email: string; otp: string; }
+interface ResetPasswordPayload  { resetToken: string; newPassword: string; confirmPassword: string; }
+
+// Responses
+interface LoginResponseData          { accessToken: string; refreshToken: string; }
+interface VerifyResetOtpResponseData { resetToken: string; }
+interface AccountDto                 { id: string; email: string; fullName: string; role: string; phoneNumber?: string; avatarUrl?: string; }
+```
+
+## Schema (Zod)
+
+```ts
+// login.schema.ts
+email:    z.string().email()
+password: z.string().min(8)
+
+// register.schema.ts
+fullName:        z.string().min(2)
+email:           z.string().email()
+password:        z.string().min(8).regex(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])/)
+confirmPassword: z.string()
+phoneNumber:     z.string().regex(/^(0[35789])[0-9]{8}$/)
+// .refine: password === confirmPassword
+
+// otp-verify.schema.ts
+otp: z.string().length(6).regex(/^\d{6}$/)
+
+// forgot-password.schema.ts — 3 sub-schemas (step 1/2/3)
+// Step 1: email: z.string().email()
+// Step 2: otp: z.string().length(6)
+// Step 3: newPassword + confirmPassword (cùng pattern với register)
+```
+
+## Endpoints
+
+| Method | Path | Request Body | Response |
+|--------|------|-------------|----------|
+| POST | `/api/auth/login` | `{ email, password }` | `CommonResponse<LoginResponseData>` |
+| POST | `/api/auth/register` | `{ fullName, email, password, confirmPassword, phoneNumber }` | `CommonResponse<null>` |
+| POST | `/api/auth/verify-otp` | `{ email, otp }` | `CommonResponse<null>` |
+| POST | `/api/auth/resend-otp` | `{ email }` | `CommonResponse<null>` |
+| POST | `/api/auth/forgot-password` | `{ email }` | `CommonResponse<null>` |
+| POST | `/api/auth/verify-reset-otp` | `{ email, otp }` | `CommonResponse<VerifyResetOtpResponseData>` |
+| POST | `/api/auth/resend-reset-otp` | `{ email }` | `CommonResponse<null>` |
+| POST | `/api/auth/reset-password` | `{ resetToken, newPassword, confirmPassword }` | `CommonResponse<null>` |
+| POST | `/api/auth/refresh-token` | `{ refreshToken }` | `CommonResponse<LoginResponseData>` |
+| POST | `/api/auth/logout` | `{ refreshToken }` | `CommonResponse<null>` |
+| GET | `/api/auth/google/login` | — | redirect 302 → Google |
+| GET | `/api/auth/google/callback` | — | redirect → `/auth/google/callback?accessToken=&refreshToken=` |
+| POST | `/api/auth/accept-invite` | — | ngoài scope — ticket Admin riêng |
+| GET | `/api/auth/me` | — | `CommonResponse<AccountDto>` |
+| PUT | `/api/auth/me/profile` | `{ fullName, phoneNumber }` | `CommonResponse<AccountDto>` — ngoài scope |
+| POST | `/api/auth/me/avatar` | `FormData` | `CommonResponse<{ avatarUrl }>` — ngoài scope |
+
+> `refresh-token` và `logout` gọi trực tiếp trong `shared/lib/axios.ts` interceptor — KHÔNG qua `authService` để tránh circular dependency.
+
+---
 
 ## JWT Structure (thực tế từ backend)
 
@@ -552,7 +622,7 @@ export const checkRole = (
 - [x] Bước 11: Rewrite `src/App.tsx` (QueryClient + ThemeProvider + AuthProvider + RouterProvider + Toaster) — 2026-05-15
 - [x] Bước 12: Tạo `src/features/auth/types/auth.types.ts` + tất cả schemas — 2026-05-15
 - [x] Bước 13: Tạo `src/features/auth/services/auth.service.ts` — 2026-05-15
-- [x] Bước 14: Tạo tất cả hooks (useLogin, useLogout, useRegister, useVerifyOtp, useResendOtp, useForgotPassword, useVerifyResetOtp, useResetPassword, useCurrentUser) — 2026-05-15
+- [x] Bước 14: Tạo tất cả hooks (useLogin, useLogout, useRegister, useVerifyOtp, useResendOtp, useResendResetOtp, useForgotPassword, useVerifyResetOtp, useResetPassword, useCurrentUser) — 2026-05-15
 - [x] Bước 15: Tạo auth components (LoginForm, RegisterForm, OtpVerifyForm, ForgotPasswordForm, ResetOtpVerifyForm, ResetPasswordForm) — 2026-05-15
 - [x] Bước 16: Tạo auth pages (LoginPage, RegisterPage, OtpVerifyPage, ForgotPasswordPage, GoogleCallbackPage) — 2026-05-15
 - [x] Bước 17: `tsc --noEmit` + `eslint . --max-warnings=0` + `npm run build` → PASS — 2026-05-15
