@@ -122,9 +122,55 @@ export const ENDPOINTS = {
     },
   },
 
+  SITES: {
+    LIST:      '/api/sites',
+    ME:        '/api/sites/me',
+    DETAIL:    (id: string) => `/api/sites/${id}`,
+    DASHBOARD: (id: string) => `/api/sites/${id}/dashboard`,
+    ASSETS:    (siteId: string) => `/api/sites/${siteId}/assets`,
+    RESTORE:   (id: string) => `/api/sites/${id}/restore`,
+  },
+
   STAFF: {
     LIST:   '/api/staff',
     DETAIL: (id: string) => `/api/staff/${id}/assignment-profile`,
+  },
+
+  BATTERY_ASSETS: {
+    LIST:           '/api/battery-assets',
+    DETAIL:         (id: string) => `/api/battery-assets/${id}`,
+    REALTIME:       (id: string) => `/api/battery-assets/${id}/realtime`,
+    CREATE:         '/api/battery-assets',
+    UPDATE:         (id: string) => `/api/battery-assets/${id}`,
+    DELETE:         (id: string) => `/api/battery-assets/${id}`,
+    RESTORE:        (id: string) => `/api/battery-assets/${id}/restore`,
+    TRANSFER_OWNER: (id: string) => `/api/battery-assets/${id}/transfer-owner`,
+  },
+
+  BATTERY_TYPES: {
+    LIST:    '/api/battery-types',
+    DETAIL:  (id: string) => `/api/battery-types/${id}`,
+    CREATE:  '/api/battery-types',
+    UPDATE:  (id: string) => `/api/battery-types/${id}`,
+    DELETE:  (id: string) => `/api/battery-types/${id}`,
+    RESTORE: (id: string) => `/api/battery-types/${id}/restore`,
+  },
+
+  BATTERY_GROUPS: {
+    LIST:    '/api/battery-groups',
+    DETAIL:  (id: string) => `/api/battery-groups/${id}`,
+    CREATE:  '/api/battery-groups',
+    UPDATE:  (id: string) => `/api/battery-groups/${id}`,
+    DELETE:  (id: string) => `/api/battery-groups/${id}`,
+    RESTORE: (id: string) => `/api/battery-groups/${id}/restore`,
+  },
+
+  FILES: {
+    UPLOAD:       '/api/files/upload',
+    METADATA:     (id: string) => `/api/files/${id}/metadata`,
+    DOWNLOAD:     (id: string) => `/api/files/${id}/download`,
+    PRESIGNED_URL: (id: string) => `/api/files/${id}/presigned-url`,
+    DELETE:       (id: string) => `/api/files/${id}`,
   },
 
   SESSIONS: {

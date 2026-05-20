@@ -1,7 +1,7 @@
 # Plan — GH-38: [FE] Site Management & Dashboard
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-05-19
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #38 — https://github.com/GSU26SE55/frontend/issues/38
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -305,18 +305,18 @@ function getHealthLabel(score: number): string {
 
 ## Steps
 
-- [ ] Bước 1: Tạo `shared/types/site.types.ts` + `shared/types/battery.types.ts`
-- [ ] Bước 2: **Modify** `shared/utils/endpoints.ts` — thêm `SITES` group. **Modify** `shared/utils/queryKeys.ts` — thêm `KEY.sites` + `QUERY_KEY.sites.*`
-- [ ] Bước 3: Tạo `shared/components/layout/AppLayout.tsx` (minimal `<Outlet />`)
-- [ ] Bước 4: Tạo `shared/components/common/SiteDashboardCard.tsx` (có color logic) + `SiteAssetsTable.tsx`
-- [ ] Bước 5: Tạo `admin/schemas/site.schema.ts` + `admin/services/site.service.ts`
-- [ ] Bước 6: Tạo `admin/hooks/useSites.ts` — chú ý `staleTime: 60_000` cho `useSiteDashboard`
-- [ ] Bước 7: Tạo `admin/components/SiteTable.tsx` + `admin/components/SiteFormDialog.tsx` (try-catch + setError)
-- [ ] Bước 8: Tạo `admin/pages/SiteListPage.tsx` + `admin/pages/SiteDetailPage.tsx`
-- [ ] Bước 9: Tạo `manager/services/site.service.ts` + `manager/hooks/useSites.ts` (staleTime dashboard)
-- [ ] Bước 10: Tạo `manager/pages/SiteListPage.tsx` + `manager/pages/SiteDetailPage.tsx`
-- [ ] Bước 11: **Modify** `router/index.tsx` — expand admin/* và manager/* với nested site routes + AppLayout
-- [ ] Bước 12: `npx tsc --noEmit` + `npx eslint . --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Tạo `shared/types/site.types.ts` + `shared/types/battery.types.ts` — 2026-05-20
+- [x] Bước 2: **Modify** `shared/utils/endpoints.ts` — thêm `SITES` group. **Modify** `shared/utils/queryKeys.ts` — thêm `KEY.sites` + `QUERY_KEY.sites.*` — 2026-05-20
+- [x] Bước 3: Tạo `shared/components/layout/AppLayout.tsx` (minimal `<Outlet />`) — 2026-05-20
+- [x] Bước 4: Tạo `shared/components/common/SiteDashboardCard.tsx` (có color logic) + `SiteAssetsTable.tsx` — 2026-05-20
+- [x] Bước 5: Tạo `admin/schemas/site.schema.ts` + `admin/services/site.service.ts` — 2026-05-20
+- [x] Bước 6: Tạo `admin/hooks/useSites.ts` — chú ý `staleTime: 60_000` cho `useSiteDashboard` — 2026-05-20
+- [x] Bước 7: Tạo `admin/components/SiteTable.tsx` + `admin/components/SiteFormDialog.tsx` (try-catch + setError) — 2026-05-20
+- [x] Bước 8: Tạo `admin/pages/SiteListPage.tsx` + `admin/pages/SiteDetailPage.tsx` — 2026-05-20
+- [x] Bước 9: Tạo `manager/services/site.service.ts` + `manager/hooks/useSites.ts` (staleTime dashboard) — 2026-05-20
+- [x] Bước 10: Tạo `manager/pages/SiteListPage.tsx` + `manager/pages/SiteDetailPage.tsx` — 2026-05-20
+- [x] Bước 11: **Modify** `router/index.tsx` — expand admin/* và manager/* với nested site routes + AppLayout — 2026-05-20
+- [x] Bước 12: `npx tsc --noEmit` + `npx eslint . --max-warnings=0` + `npm run build` → PASS — 2026-05-20
 
 ## Câu hỏi đã giải đáp
 - **Dashboard shape**: `SiteDashboardDto` — healthScore 0–100, công thức từ `api-battery.md §Nhóm 6`

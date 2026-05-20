@@ -1,99 +1,66 @@
-## BÁO CÁO CODE REVIEW — feature/GH-11-flow-authentication — 2026-05-18
+## BÁO CÁO CODE REVIEW — feature/GH-11-flow-authentication — 2026-05-20
 ### Scope: FE (Web)
-### Effort: Deep (63 files — auth foundation + shared infrastructure)
+### Effort: Deep
 
 ---
 
 ### TÓM TẮT
 
-Nền tảng auth implement đúng kiến trúc. Critical bug đã được fix — `GoogleCallbackPage` giờ block CUSTOMER role + clearTokens + toast + navigate('/login') nhất quán với `useLogin` flow. Tất cả quality gates pass.
+Code nền tảng auth (axios interceptor, sessionStore, ProtectedRoute, hooks, service) đúng pattern và sạch. Phát hiện 1 Critical: `AccountSettingsPage` hardcode `isEnabled={false}` cho TwoFactorSetup trong khi `AccountDto.twoFactorEnabled` đã sẵn có từ `useCurrentUser`.
 
 ---
 
 ### PHÂN TÍCH
 
-#### ✅ Fixed: `src/features/auth/pages/GoogleCallbackPage.tsx:25–32`
-— Đã thêm CUSTOMER block sau khi decode token:
-```ts
-if (user.role === 'CUSTOMER') {
-  clearTokens();
-  toast.error('Vui lòng sử dụng Mobile App để đăng nhập.');
-  navigate('/login', { replace: true });
-  return;
-}
-```
-Nhất quán với `useLogin.onSuccess` — Customer không còn bị kẹt với active session.
+🔴 **Critical**
+
+- `src/features/auth/pages/AccountSettingsPage.tsx:17`
+  — `<TwoFactorSetup isEnabled={false} />` hardcoded → UI luôn hiển thị "Chưa bật 2FA" dù user đã bật
+  — Fix: dùng `useCurrentUser()` → `account?.twoFactorEnabled ?? false`
 
 ---
 
-#### 🟡 Warning (không block ship — ghi nhận cho các ticket sau)
+🟡 **Warning**
 
-**`src/shared/utils/endpoints.ts:21–28`** — `ENDPOINTS.USERS.*` dùng path sai.
-- Hiện tại: `/api/users/*` → Đúng: `/api/admin/accounts/*`
-- Chưa có code nào consume ENDPOINTS.USERS → chưa lỗi runtime
-- Cần rename → `ADMIN_ACCOUNTS` với đúng paths **trước khi implement Admin ticket đầu tiên**
+- `src/features/auth/pages/AccountSettingsPage.tsx:18`
+  — `<GoogleLinkSection isLinked={false} />` hardcoded
+  — `AccountDto` không có field `isGoogleLinked` tường minh; cần xác nhận với BE cách detect (có thể từ `avatarSource === AvatarSourceEnum.Google` hoặc field riêng)
+  — Tạm thời nên connect qua `useCurrentUser` khi có đủ data
 
-**`src/shared/utils/endpoints.ts:67–69`** — `ENDPOINTS.AUDIT_LOGS.LIST` path sai.
-- Hiện tại: `/api/audit-logs` → Đúng: `/api/admin/audit-logs`
-- Cùng lý do — cần fix cùng lúc với ENDPOINTS.USERS rename
+- `src/features/landing/pages/LandingPage.tsx:33`
+  — `console.log("LandingPage user:", user)` — debug statement
+  — Pre-existing trên `origin/dev` (không do branch này thêm), nhưng sẽ ship nếu không xóa trước merge. Nên xóa ở đây hoặc tạo separate fix commit trên dev.
 
-**`LoginForm.tsx` / `RegisterForm.tsx` / `ResetPasswordForm.tsx`** — Form submit dùng `mutate` + closure-captured `setError` trong `onError` thay vì `mutateAsync` + `try-catch` theo fe.md prescription. Functionally equivalent (setError vẫn được gọi), nhưng lệch convention. Ghi nhận để đồng nhất trong các ticket form sau.
-
-**Bundle size 559 kB** — Cần `React.lazy` + dynamic import trong router khi Admin/Manager/Staff pages được thêm vào Sprint 2/3.
+- `src/features/auth/services/auth.service.ts` + `src/features/auth/services/profile.service.ts`
+  — Cả hai đều có `getMe()` gọi cùng `ENDPOINTS.AUTH.ME` — minor duplication
+  — Nên chọn 1 source duy nhất (ưu tiên `profileService.getMe()` hoặc xóa bản trong `authService`)
 
 ---
 
-#### ✅ Pass: Architecture
-- Không có API call trực tiếp trong component — tất cả qua `services/` → hooks ✅
-- Feature isolation: `features/auth` không import từ `features/admin|manager|staff` ✅
-- Single axios instance (`shared/lib/axios.ts`) ✅
-- Zustand (`sessionStore`) chỉ dùng cho auth session ✅
+✅ **Pass**
 
-#### ✅ Pass: Auth & Security
-- Route tree: `/admin/*`, `/manager/*`, `/staff/*` đều wrap `ProtectedRoute` + `RoleRoute` ✅
-- Public routes (login, register, forgot-password, callback) không có ProtectedRoute ✅
-- `isHydrating` guard trong `ProtectedRoute` — không flash redirect khi boot ✅
-- 3-case boot logic trong `AuthContext` đúng spec ✅
-- Token chỉ lưu cookie (`js-cookie`), không có `localStorage` ✅
-- Google OAuth: `replaceState` xóa token khỏi URL trước khi xử lý ✅
-- CUSTOMER block: `useLogin.onSuccess` ✅ + `GoogleCallbackPage` ✅ (fixed)
-
-#### ✅ Pass: Token Refresh
-- `isRefreshing` flag + `pendingQueue` chống double-refresh ✅
-- `tryRefresh` timeout 10s ✅
-- `finally` flush queue → reset flag (đúng thứ tự, không deadlock) ✅
-- 401 fallback trong response interceptor ✅
-- Clock skew buffer 30s ✅
-
-#### ✅ Pass: Error Handling
-- `EntityError` → `setError` map field dưới input ✅
-- `HttpError` → `toast.error` ✅
-- `useLogout` dùng `onSettled` — luôn clear tokens dù API fail ✅
-
-#### ✅ Pass: UX Flows
-- OTP resend countdown 60s + disable button ✅
-- `OtpVerifyPage` guard `if (!location.state?.email) → navigate('/register')` ✅
-- `ForgotPasswordPage` countdown resetToken 5 phút + auto reset step 1 ✅
-- Loading state đầy đủ trên tất cả form buttons ✅
-- Không có `console.log` (chỉ `console.error` trong GoogleCallbackPage — intentional) ✅
-
-#### ✅ Pass: Quality Gates
-- `tsc --noEmit` — 0 errors ✅
-- `eslint --max-warnings=0` — 0 warnings ✅
-- `npm run build` — success ✅
+- Architecture: API 100% qua `services/` → hook, không fetch trực tiếp trong component
+- Feature isolation: `features/admin` chỉ import từ `features/admin`, không cross-feature
+- Auth wrap: `/settings` đúng bên trong `ProtectedRoute` — không có route auth-required nào bỏ sót
+- Error handling: form mutations dùng `try-catch` + `handleErrorApi({ error, setError })`; non-form mutations dùng `onError` callback
+- QueryKey: `QUERY_KEY` factory dùng nhất quán, không inline array
+- invalidateQueries: dùng `KEY` root (broad invalidation)
+- Token storage: js-cookie only, không có `localStorage`
+- Axios: dùng `shared/lib/axios` instance, không tạo mới
+- TypeScript: `tsc --noEmit` → 0 lỗi
+- ESLint: `eslint . --max-warnings=0` → 0 warning
 
 ---
 
 ### RỦI RO & LƯU Ý
 
-- **Multi-tab logout/refresh race:** Known Limitation đã document trong plan — không fix Sprint 1
-- **Cookie không httpOnly:** Acknowledged security risk, acceptable cho capstone scope
-- **ENDPOINTS.USERS / AUDIT_LOGS paths sai:** Sẽ gây bug âm thầm khi Admin ticket bắt đầu — phải fix trước
-- **Bundle size:** Code-split cần thiết trước Sprint 3
+- `AccountSettingsPage` + account settings components (ChangeEmail, PhoneVerify, TwoFactor, GoogleLink, DangerZone, LoginHistory) + admin/staff hooks nằm ngoài scope GH-11 ban đầu — xem xét move sang ticket riêng nếu chưa có review
+- `useCurrentUser` hook tồn tại nhưng chưa được dùng tại `AccountSettingsPage` — thiếu liên kết dữ liệu thực
 
 ---
 
 ### KẾT LUẬN
-**PASS** — Độ tự tin: Cao
 
-Critical bug đã fix. Chạy `/kltn-test GH-11` để tiếp tục.
+**FAIL** — Độ tự tin: **Cao**
+
+Fix 1 Critical trước khi ship: truyền `account?.twoFactorEnabled` thay vì `false` vào `TwoFactorSetup`.

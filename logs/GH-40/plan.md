@@ -1,7 +1,7 @@
 # Plan — GH-40: [FE] Battery Catalog — Types & Groups
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-05-19
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #40 — https://github.com/GSU26SE55/frontend/issues/40
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -231,20 +231,20 @@ Task này chỉ setup data layer — không có user flow hay UI. Workflow secti
 | Build thành công | `npm run build` |
 
 ## Steps
-- [ ] Bước 1: Fix `api.types.ts` — `totalCount` → `totalItems` (6 fields còn lại giữ nguyên — khớp với live BE response)
-- [ ] Bước 2: Cập nhật `endpoints.ts` — thêm `BATTERY_TYPES`, `BATTERY_GROUPS` theo shape đã define
-- [ ] Bước 3: Cập nhật `queryKeys.ts` — thêm root keys + factories cho 2 entities
-- [ ] Bước 4: Tạo `battery-type.types.ts` — BatteryChemistry enum (5 values) + interfaces
-- [ ] Bước 5: Tạo `battery-group.types.ts` — interfaces
-- [ ] Bước 6: Tạo `battery-type.schema.ts` — Zod create/update schema
-- [ ] Bước 7: Tạo `battery-group.schema.ts` — Zod create/update schema
-- [ ] Bước 8: Tạo `battery-type.service.ts` — 6 API functions
-- [ ] Bước 9: Tạo `battery-group.service.ts` — 6 API functions
-- [ ] Bước 10: Tạo `useBatteryTypes.ts` — list + detail queries
-- [ ] Bước 11: Tạo `useBatteryTypesMutation.ts` — create/update/delete/restore
-- [ ] Bước 12: Tạo `useBatteryGroups.ts` — list + detail queries
-- [ ] Bước 13: Tạo `useBatteryGroupsMutation.ts` — create/update/delete/restore
-- [ ] Bước 14: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: `api.types.ts` đã có `totalItems` — không cần fix — 2026-05-20
+- [x] Bước 2: Cập nhật `endpoints.ts` — BATTERY_TYPES (6), BATTERY_GROUPS (6) — 2026-05-20
+- [x] Bước 3: Cập nhật `queryKeys.ts` — batteryGroups root + factories; batteryTypes detail factory — 2026-05-20
+- [x] Bước 4: Tạo `battery-type.types.ts` — BatteryChemistryEnum + BatteryTypeDto + payloads — 2026-05-20
+- [x] Bước 5: Tạo `battery-group.types.ts` — BatteryGroupDto + payloads — 2026-05-20
+- [x] Bước 6: Tạo `battery-type.schema.ts` — create/update schema (z.union literals) — 2026-05-20
+- [x] Bước 7: Tạo `battery-group.schema.ts` — create/update schema — 2026-05-20
+- [x] Bước 8: Cập nhật `battery-type.service.ts` — 6 API functions — 2026-05-20
+- [x] Bước 9: Tạo `battery-group.service.ts` — 6 API functions — 2026-05-20
+- [x] Bước 10: Cập nhật `useBatteryTypes.ts` — list + detail queries — 2026-05-20
+- [x] Bước 11: Tạo `useBatteryTypesMutation.ts` — create/update/delete/restore — 2026-05-20
+- [x] Bước 12: Tạo `useBatteryGroups.ts` — list + detail queries — 2026-05-20
+- [x] Bước 13: Tạo `useBatteryGroupsMutation.ts` — create/update/delete/restore — 2026-05-20
+- [x] Bước 14: `tsc --noEmit` + `eslint --max-warnings=0` → PASS — 2026-05-20
 
 ## Câu hỏi đã giải đáp
 

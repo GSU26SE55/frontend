@@ -1,7 +1,7 @@
 # Plan — GH-39: [FE] Battery Asset Management — CRUD & Operations
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-05-19
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #39 — https://github.com/GSU26SE55/frontend/issues/39
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -301,15 +301,15 @@ export default function AppLayout() {
 > Wildcard `/admin/*` cũ phải bị xóa — không để lại hai entries `/admin/*` và `/admin` song song.
 
 ## Steps
-- [ ] Bước 1: Types — `battery-asset.types.ts` + `battery-type.types.ts` (enums + interfaces + payloads)
-- [ ] Bước 2: Shared — cập nhật `endpoints.ts` + `queryKeys.ts` + tạo `shared/constants/roleIds.ts`
-- [ ] Bước 3: Services — `battery-asset.service.ts`, `battery-type.service.ts`, `account.service.ts`
-- [ ] Bước 4: Hooks — `useBatteryAssets`, `useBatteryAsset`, `useBatteryAssetRealtime`, `useBatteryTypes`, `useCustomers` + 5 mutation hooks riêng: `useCreateBatteryAsset`, `useUpdateBatteryAsset`, `useDeleteBatteryAsset`, `useRestoreBatteryAsset`, `useTransferOwner`
-- [ ] Bước 5: Schema — `battery-asset.schema.ts`
-- [ ] Bước 6: AppLayout shell + Router — restructure admin block theo Router Structure section (blocking step cho pages)
-- [ ] Bước 7: Components — `BatteryAssetTable`, `BatteryAssetForm`, `TransferOwnerDialog`, `BatteryRealtimeCard`
-- [ ] Bước 8: Pages — `BatteryAssetsPage`, `BatteryAssetDetailPage`
-- [ ] Bước 9: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Types — `battery-asset.types.ts` (enums + interfaces + payloads) — 2026-05-20
+- [x] Bước 2: Shared — cập nhật `endpoints.ts` + `queryKeys.ts` + tạo `shared/constants/roleIds.ts` — 2026-05-20
+- [x] Bước 3: Services — `battery-asset.service.ts`, `battery-type.service.ts`, `account.service.ts` — 2026-05-20
+- [x] Bước 4: Hooks — `useBatteryAssets`, `useBatteryAsset`, `useBatteryAssetRealtime`, `useBatteryTypes`, `useCustomers` + 5 mutation hooks — 2026-05-20
+- [x] Bước 5: Schema — `battery-asset.schema.ts` — 2026-05-20
+- [x] Bước 6: Router — thêm battery-assets routes vào admin block — 2026-05-20
+- [x] Bước 7: Components — `BatteryAssetTable`, `BatteryAssetForm`, `TransferOwnerDialog`, `BatteryRealtimeCard` — 2026-05-20
+- [x] Bước 8: Pages — `BatteryAssetsPage`, `BatteryAssetDetailPage` — 2026-05-20
+- [x] Bước 9: `tsc --noEmit` + `eslint --max-warnings=0` → PASS — 2026-05-20
 
 ## Câu hỏi đã giải đáp
 - `GET /api/battery-assets/me` (Customer): ngoài scope — Customer dùng mobile app

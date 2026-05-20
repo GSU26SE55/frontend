@@ -1,7 +1,7 @@
 # Plan — GH-30: Admin Account Management — Nhóm 5, 6, 7, 8, 9
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-19
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #30 — https://github.com/GSU26SE55/frontend/issues/30
 - **Sprint:** Sprint 1 (due: 2026-05-30)
 
