@@ -1,7 +1,7 @@
 // Pipeline: CI + Docker + Deploy — Frontend (ReactJS)
 // Trigger: push vào staging (từ dev→staging) hoặc main (từ staging→main)
 // Stages: Install → Type Check → Lint → Build → Docker Build & Push → Deploy
-// Port:   staging → VPS:3000 | main → VPS:80
+// Routing: main -> https://capstonegsu26se55.mooo.com, staging -> https://capstonegsu26se55.mooo.com:3443
 
 pipeline {
     agent any
@@ -11,6 +11,10 @@ pipeline {
         GH_USER    = 'gsu26se55'
         VPS_HOST   = '152.42.167.222'
         VPS_USER   = 'root'
+        K8S_NAMESPACE = 'solar-staging'
+        FRONTEND_MANIFEST = 'deploy/k8s/frontend-web.yaml'
+        VITE_API_BASE_URL = 'https://api.capstonegsu26se55.mooo.com'
+        VITE_GOOGLE_CLIENT_ID = '85758470906-dhc3h3iiv52o77g7a8odqti5316j67cc.apps.googleusercontent.com'
     }
 
     options {
@@ -39,26 +43,26 @@ pipeline {
 
         stage('Install') {
             steps {
-                sh 'node --version && npm --version'
-                sh 'npm install'
+                sh 'node --version && corepack enable && pnpm --version'
+                sh 'pnpm install --frozen-lockfile'
             }
         }
 
         stage('Type Check') {
             steps {
-                sh 'npx tsc --noEmit'
+                sh 'pnpm exec tsc --noEmit'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npx eslint . --max-warnings=0'
+                sh 'pnpm exec eslint . --max-warnings=0'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                sh 'pnpm run build'
             }
         }
 
@@ -81,7 +85,7 @@ pipeline {
 
                     withCredentials([string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN')]) {
                         sh "echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin"
-                        sh "docker build ${tagArgs} ."
+                        sh "docker build --build-arg VITE_API_BASE_URL=${env.VITE_API_BASE_URL} --build-arg VITE_GOOGLE_CLIENT_ID=${env.VITE_GOOGLE_CLIENT_ID} ${tagArgs} ."
                         tags.each { tag -> sh "docker push ${tag}" }
                         sh "docker logout ghcr.io"
                     }
@@ -94,29 +98,18 @@ pipeline {
                 script {
                     def branch = env.CURRENT_BRANCH
 
-                    // staging → port 3000, container: frontend-staging
-                    // main    → port 80,   container: frontend-prod
-                    def containerName = branch == 'main' ? 'frontend-prod'    : 'frontend-staging'
-                    def imageTag      = branch == 'main' ? 'latest'            : 'staging'
-                    def vpsPort       = branch == 'main' ? '8081'              : '3000'
+                    def deploymentName = branch == 'main' ? 'frontend-prod' : 'frontend-staging'
+                    def imageTag       = branch == 'main' ? 'latest'        : 'staging'
 
                     withCredentials([
-                        string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN'),
                         sshUserPrivateKey(credentialsId: 'VPS_SSH_KEY', keyFileVariable: 'SSH_KEY')
                     ]) {
                         sh """
+                            ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.VPS_USER}@${env.VPS_HOST} "kubectl apply -f -" < ${env.FRONTEND_MANIFEST}
                             ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.VPS_USER}@${env.VPS_HOST} \
-                                "echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin && \
-                                docker pull ${env.IMAGE_NAME}:${imageTag} && \
-                                docker stop ${containerName} 2>/dev/null || true && \
-                                docker rm   ${containerName} 2>/dev/null || true && \
-                                docker run -d \
-                                    --name ${containerName} \
-                                    --restart unless-stopped \
-                                    -p ${vpsPort}:80 \
-                                    ${env.IMAGE_NAME}:${imageTag} && \
-                                docker logout ghcr.io && \
-                                docker image prune -f"
+                                "kubectl -n ${env.K8S_NAMESPACE} set image deployment/${deploymentName} frontend=${env.IMAGE_NAME}:${imageTag} && \
+                                kubectl -n ${env.K8S_NAMESPACE} rollout restart deployment/${deploymentName} && \
+                                kubectl -n ${env.K8S_NAMESPACE} rollout status deployment/${deploymentName} --timeout=5m"
                         """
                     }
                 }
@@ -129,8 +122,8 @@ pipeline {
             script {
                 def branch = env.CURRENT_BRANCH
                 def url = branch == 'main'
-                    ? 'http://capstonegsu26se55.mooo.com'
-                    : 'http://capstonegsu26se55.mooo.com:3000'
+                    ? 'https://capstonegsu26se55.mooo.com'
+                    : 'https://capstonegsu26se55.mooo.com:3443'
                 echo "Deploy thành công → ${url}"
             }
         }

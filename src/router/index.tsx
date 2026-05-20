@@ -1,21 +1,36 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
-import RoleRoute from "./RoleRoute";
-import { UserRole } from "@/shared/types/session.types";
-import LandingPage from "@/features/landing/pages/LandingPage";
-import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import ProtectedRoute from './ProtectedRoute';
+import RoleRoute from './RoleRoute';
+import { UserRole } from '@/shared/types/session.types';
+import AuthLayout from '@/shared/components/layout/AuthLayout';
+import LandingPage from '@/features/landing/pages/LandingPage';
+import GoogleCallbackPage from '@/features/auth/pages/GoogleCallbackPage';
+import LoginPage from '@/features/auth/pages/LoginPage';
+import RegisterPage from '@/features/auth/pages/RegisterPage';
+import OtpVerifyPage from '@/features/auth/pages/OtpVerifyPage';
+import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
+import AccountSettingsPage from '@/features/auth/pages/AccountSettingsPage';
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <LandingPage />,
   },
   {
-    path: "/auth/google/callback",
+    element: <AuthLayout />,
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/register/verify-otp', element: <OtpVerifyPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+    ],
+  },
+  {
+    path: '/auth/google/callback',
     element: <GoogleCallbackPage />,
   },
   {
-    path: "/unauthorized",
+    path: '/unauthorized',
     element: (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -30,22 +45,23 @@ const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/settings', element: <AccountSettingsPage /> },
       {
         element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
-        children: [{ path: "/admin/*", element: <div>Admin Portal</div> }],
+        children: [{ path: '/admin/*', element: <div>Admin Portal</div> }],
       },
       {
         element: <RoleRoute allowedRoles={[UserRole.MANAGER]} />,
-        children: [{ path: "/manager/*", element: <div>Manager Portal</div> }],
+        children: [{ path: '/manager/*', element: <div>Manager Portal</div> }],
       },
       {
         element: <RoleRoute allowedRoles={[UserRole.STAFF]} />,
-        children: [{ path: "/staff/*", element: <div>Staff Portal</div> }],
+        children: [{ path: '/staff/*', element: <div>Staff Portal</div> }],
       },
     ],
   },
   {
-    path: "*",
+    path: '*',
     element: <Navigate to="/" replace />,
   },
 ]);

@@ -1,7 +1,7 @@
 # Plan — GH-30: Admin Account Management — Nhóm 5, 6, 7, 8, 9
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-05-18
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-19
 - **Issue:** #30 — https://github.com/GSU26SE55/frontend/issues/30
 - **Sprint:** Sprint 1 (due: 2026-05-30)
 
@@ -390,14 +390,14 @@ export const QUERY_KEY = {
 
 ## Steps
 
-- [ ] Bước 1: Fix `totalCount → totalItems` trong `src/shared/types/api.types.ts`
-- [ ] Bước 2: Tạo `src/shared/types/account.types.ts` — AccountDto, AccountProfileDto, StaffProfileDto (confirm `displayAvatarUrl` với BE), StaffSkillDto, StaffAssignmentProfileDto, AccountStatusEnum, RefreshTokenStatus
-- [ ] Bước 3: Tạo `src/features/admin/types/admin.types.ts` — đọc api-auth.md để lấy đủ 40+ AuditActionEnum values; RoleDto, PermissionDto, AuditLogDto, SessionDto, LoginAttemptDto, tất cả enums + payloads
-- [ ] Bước 4: Update `src/shared/utils/endpoints.ts` — add ADMIN section
-- [ ] Bước 5: Update `src/shared/utils/queryKeys.ts` — add KEY.admin (incl. staff) + QUERY_KEY.admin
-- [ ] Bước 6: Tạo 5 service files
-- [ ] Bước 7: Tạo 5 hook files
-- [ ] Bước 8: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Fix `totalCount → totalItems` trong `src/shared/types/api.types.ts` — 2026-05-19
+- [x] Bước 2: Tạo `src/shared/types/account.types.ts` — 2026-05-19
+- [x] Bước 3: Tạo `src/features/admin/types/admin.types.ts` — 2026-05-19
+- [x] Bước 4: Update `src/shared/utils/endpoints.ts` — add ADMIN section — 2026-05-19
+- [x] Bước 5: Update `src/shared/utils/queryKeys.ts` — add KEY.admin + QUERY_KEY.admin — 2026-05-19
+- [x] Bước 6: Tạo 5 service files — 2026-05-19
+- [x] Bước 7: Tạo 5 hook files — 2026-05-19
+- [x] Bước 8: `tsc --noEmit` + `pnpm run build` → PASS — 2026-05-19
 
 ## Câu hỏi đã giải đáp
 

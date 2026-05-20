@@ -1,7 +1,7 @@
 # Plan — GH-27: [FE] Implement Account Settings — /api/accounts/me
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-05-18
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-05-19
 - **Issue:** #27 — https://github.com/GSU26SE55/frontend/issues/27
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -209,17 +209,17 @@ Confirm dialog → mutate → OK: `clearSession()` + `Cookies.remove('accessToke
 | `npm run build` pass | Build không lỗi |
 
 ## Steps
-- [ ] Bước 1: Cài `qrcode.react` + `@react-oauth/google`
-- [ ] Bước 2: Thêm `ACCOUNTS.ME` vào `endpoints.ts`, thêm `loginHistory` vào `queryKeys.ts`
-- [ ] Bước 3: Tạo `account.types.ts`
-- [ ] Bước 4: Tạo `account.service.ts` (12 methods)
-- [ ] Bước 5: Tạo 3 schemas (`change-password`, `change-email`, `confirm-otp`)
-- [ ] Bước 6: Tạo 12 hooks (11 mutation + 1 query)
-- [ ] Bước 7: Tạo `ChangePasswordForm`, `ChangeEmailForm`, `PhoneVerifySection`, `TwoFactorSetup`, `GoogleLinkSection`, `DangerZone`, `LoginHistoryTable`
-- [ ] Bước 8: Tạo `AccountSettingsPage` (ghép 6 sections + LoginHistoryTable)
-- [ ] Bước 9: Wrap `GoogleOAuthProvider` trong `App.tsx`, thêm `VITE_GOOGLE_CLIENT_ID` vào `env.ts`
-- [ ] Bước 10: Thêm route `/settings` vào `router/index.tsx` dưới `ProtectedRoute`
-- [ ] Bước 11: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Cài `qrcode.react` + `@react-oauth/google` — 2026-05-19
+- [x] Bước 2: Thêm `ACCOUNTS.ME` vào `endpoints.ts`, thêm `loginHistory` vào `queryKeys.ts` — 2026-05-19
+- [x] Bước 3: Tạo `account.types.ts` — 2026-05-19
+- [x] Bước 4: Tạo `account.service.ts` (12 methods) — 2026-05-19
+- [x] Bước 5: Tạo 3 schemas (`change-password`, `change-email`, `confirm-otp`) — 2026-05-19
+- [x] Bước 6: Tạo 12 hooks (11 mutation + 1 query) — 2026-05-19
+- [x] Bước 7: Tạo `ChangePasswordForm`, `ChangeEmailForm`, `PhoneVerifySection`, `TwoFactorSetup`, `GoogleLinkSection`, `DangerZone`, `LoginHistoryTable` — 2026-05-19
+- [x] Bước 8: Tạo `AccountSettingsPage` (ghép 6 sections + LoginHistoryTable) — 2026-05-19
+- [x] Bước 9: Wrap `GoogleOAuthProvider` trong `App.tsx`, thêm `VITE_GOOGLE_CLIENT_ID` vào `env.ts` — 2026-05-19
+- [x] Bước 10: Thêm route `/settings` vào `router/index.tsx` dưới `ProtectedRoute` — 2026-05-19
+- [x] Bước 11: `tsc --noEmit` + `pnpm run build` → PASS — 2026-05-19
 
 ## Câu hỏi đã giải đáp
 - **Route location:** `/settings` dưới `ProtectedRoute` — không `RoleRoute`, mọi role đều vào được ✅

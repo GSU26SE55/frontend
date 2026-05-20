@@ -1,7 +1,7 @@
 # Plan — GH-11: [FE] Flow Authentication
 
 ## Metadata
-- **Status:** TESTING | **Role:** FE | **Ngày:** 2026-05-18
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #11 — https://github.com/GSU26SE55/frontend/issues/11
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 

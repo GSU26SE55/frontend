@@ -1,7 +1,7 @@
 # Plan — GH-28: Auth Profile, Staff Assignment & Session Management — services + hooks
 
 ## Metadata
-- **Status:** IN_PROGRESS
+- **Status:** REVIEWING
 - **Role:** FE
 - **Ngày:** 2026-05-18
 - **Issue:** #28 — https://github.com/GSU26SE55/frontend/issues/28
@@ -329,14 +329,14 @@ useRevokeAllSessions() → sessionService.revokeAllSessions(payload)
 
 ## Steps
 
-- [ ] Bước 1: Tạo `src/shared/types/account.types.ts` + `src/features/staff/types/staff.types.ts`
-- [ ] Bước 2: Cập nhật `src/features/auth/types/auth.types.ts` (thêm session + profile payload types)
-- [ ] Bước 3: Cập nhật `src/shared/utils/endpoints.ts` (thêm ME, STAFF, SESSIONS)
-- [ ] Bước 4: Cập nhật `src/shared/utils/queryKeys.ts` (thêm KEY + QUERY_KEY)
-- [ ] Bước 5: Tạo `src/features/auth/services/profile.service.ts`
-- [ ] Bước 6: Tạo `src/features/auth/services/session.service.ts`
-- [ ] Bước 7: Tạo `src/features/staff/services/staff.service.ts`
-- [ ] Bước 8: Tạo 3 profile hooks (`useProfile`, `useUpdateProfile`, `useUpdateAvatar`)
-- [ ] Bước 9: Tạo 3 session hooks (`useSessions`, `useRevokeSession`, `useRevokeAllSessions`)
-- [ ] Bước 10: Tạo 2 staff hooks (`useStaffList`, `useStaffAssignmentProfile`) trong `src/features/staff/hooks/`
-- [ ] Bước 11: `tsc --noEmit` + `eslint --max-warnings=0` → PASS
+- [x] Bước 1: Tạo `src/shared/types/account.types.ts` — 2026-05-19
+- [x] Bước 2: Cập nhật `src/features/auth/types/auth.types.ts` (thêm session + profile payload types) — 2026-05-19
+- [x] Bước 3: Cập nhật `src/shared/utils/endpoints.ts` (thêm ME, STAFF, SESSIONS) — 2026-05-19
+- [x] Bước 4: Cập nhật `src/shared/utils/queryKeys.ts` (thêm KEY + QUERY_KEY) — 2026-05-19
+- [x] Bước 5: Tạo `src/features/auth/services/profile.service.ts` — 2026-05-19
+- [x] Bước 6: Tạo `src/features/auth/services/session.service.ts` — 2026-05-19
+- [x] Bước 7: Tạo `src/features/staff/services/staff.service.ts` — 2026-05-19
+- [x] Bước 8: Tạo 3 profile hooks (`useProfile`, `useUpdateProfile`, `useUpdateAvatar`) — 2026-05-19
+- [x] Bước 9: Tạo 3 session hooks (`useSessions`, `useRevokeSession`, `useRevokeAllSessions`) — 2026-05-19
+- [x] Bước 10: Tạo 2 staff hooks (`useStaffList`, `useStaffAssignmentProfile`) — 2026-05-19
+- [x] Bước 11: `tsc --noEmit` → PASS — 2026-05-19
