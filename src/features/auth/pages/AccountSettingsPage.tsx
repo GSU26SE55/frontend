@@ -5,8 +5,10 @@ import TwoFactorSetup from '@/features/auth/components/TwoFactorSetup';
 import GoogleLinkSection from '@/features/auth/components/GoogleLinkSection';
 import DangerZone from '@/features/auth/components/DangerZone';
 import LoginHistoryTable from '@/features/auth/components/LoginHistoryTable';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 
 const AccountSettingsPage = () => {
+  const { data: account } = useCurrentUser();
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
@@ -15,7 +17,7 @@ const AccountSettingsPage = () => {
       <ChangePasswordForm />
       <ChangeEmailForm />
       <PhoneVerifySection />
-      <TwoFactorSetup isEnabled={false} />
+      <TwoFactorSetup isEnabled={account?.twoFactorEnabled ?? false} />
       <GoogleLinkSection isLinked={false} />
       <LoginHistoryTable />
       <DangerZone />
