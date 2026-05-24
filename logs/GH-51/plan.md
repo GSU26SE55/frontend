@@ -3,6 +3,7 @@
 ## Metadata
 - **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-24
 - **Issue:** #51 — https://github.com/GSU26SE55/frontend/issues/51
+- **PR:** #52 — https://github.com/GSU26SE55/frontend/pull/52
 - **Sprint:** Sprint 1 (due: 2026-05-30)
 
 ## Mục tiêu
