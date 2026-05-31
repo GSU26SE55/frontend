@@ -37,7 +37,7 @@ export const decodeToken = (token: string): SessionUser => {
     email: payload.email,
     fullName: payload.FullName,
     role: payload.role.toUpperCase() as UserRole,
-    permissions: payload.perm,
+    permissions: payload.perm ?? [],
   };
 };
 
