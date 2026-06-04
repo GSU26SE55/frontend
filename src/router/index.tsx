@@ -16,9 +16,12 @@ import AdminSiteListPage from '@/features/admin/pages/SiteListPage';
 import AdminSiteDetailPage from '@/features/admin/pages/SiteDetailPage';
 import BatteryAssetsPage from '@/features/admin/pages/BatteryAssetsPage';
 import BatteryAssetDetailPage from '@/features/admin/pages/BatteryAssetDetailPage';
+import AccountsPage from '@/features/admin/pages/AccountsPage';
+import RolesPage from '@/features/admin/pages/RolesPage';
 import ManagerDashboardPage from '@/features/manager/pages/DashboardPage';
 import ManagerSiteListPage from '@/features/manager/pages/SiteListPage';
 import ManagerSiteDetailPage from '@/features/manager/pages/SiteDetailPage';
+import StaffDashboardPage from '@/features/staff/pages/DashboardPage';
 
 const router = createBrowserRouter([
   {
@@ -54,7 +57,6 @@ const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      { path: '/settings', element: <AccountSettingsPage /> },
       {
         element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
         children: [
@@ -62,12 +64,15 @@ const router = createBrowserRouter([
             path: '/admin',
             element: <AppLayout />,
             children: [
-              { index: true, element: <AdminDashboardPage /> },
-              { path: 'dashboard', element: <AdminDashboardPage /> },
-              { path: 'sites', element: <AdminSiteListPage /> },
-              { path: 'sites/:id', element: <AdminSiteDetailPage /> },
-              { path: 'battery-assets', element: <BatteryAssetsPage /> },
-              { path: 'battery-assets/:id', element: <BatteryAssetDetailPage /> },
+              { index: true,               element: <AdminDashboardPage />    },
+              { path: 'dashboard',         element: <AdminDashboardPage />    },
+              { path: 'sites',             element: <AdminSiteListPage />     },
+              { path: 'sites/:id',         element: <AdminSiteDetailPage />   },
+              { path: 'battery-assets',    element: <BatteryAssetsPage />     },
+              { path: 'battery-assets/:id',element: <BatteryAssetDetailPage />},
+              { path: 'accounts',          element: <AccountsPage />          },
+              { path: 'roles',             element: <RolesPage />             },
+              { path: 'settings',          element: <AccountSettingsPage />   },
             ],
           },
         ],
@@ -79,17 +84,31 @@ const router = createBrowserRouter([
             path: '/manager',
             element: <AppLayout />,
             children: [
-              { index: true, element: <ManagerDashboardPage /> },
-              { path: 'dashboard', element: <ManagerDashboardPage /> },
-              { path: 'sites', element: <ManagerSiteListPage /> },
+              { index: true,       element: <ManagerDashboardPage />  },
+              { path: 'dashboard', element: <ManagerDashboardPage />  },
+              { path: 'sites',     element: <ManagerSiteListPage />   },
               { path: 'sites/:id', element: <ManagerSiteDetailPage /> },
+              { path: 'settings',  element: <AccountSettingsPage />   },
             ],
           },
         ],
       },
       {
         element: <RoleRoute allowedRoles={[UserRole.STAFF]} />,
-        children: [{ path: '/staff/*', element: <div>Staff Portal</div> }],
+        children: [
+          {
+            path: '/staff',
+            element: <AppLayout />,
+            children: [
+              { index: true,       element: <StaffDashboardPage /> },
+              { path: 'dashboard', element: <StaffDashboardPage /> },
+              { path: 'sla',       element: <StaffDashboardPage /> },
+              { path: 'wiki',      element: <StaffDashboardPage /> },
+              { path: 'alerts',    element: <StaffDashboardPage /> },
+              { path: 'settings',  element: <AccountSettingsPage /> },
+            ],
+          },
+        ],
       },
     ],
   },

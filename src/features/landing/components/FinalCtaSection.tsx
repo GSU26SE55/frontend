@@ -1,185 +1,139 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
+import {
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+  Ticket,
+  Zap,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { Check, Send } from 'lucide-react';
-import solarCtaImg from '@/assets/solar_cta.png';
 
-type PackageId = 'only' | 'battery' | 'monitoring';
+const TRUST_ITEMS = [
+  { icon: ShieldCheck, text: '0 SLA breach' },
+  { icon: Zap,          text: 'Alert trong vài giây' },
+  { icon: Ticket,       text: 'Ticket tự động từ cảnh báo' },
+  { icon: CheckCircle2, text: 'Audit trail đầy đủ' },
+] as const;
 
-const PACKAGE_OPTIONS: Array<{ id: PackageId; label: string }> = [
-  { id: 'only', label: 'Solar Only' },
-  { id: 'battery', label: 'Solar + Battery' },
-  { id: 'monitoring', label: 'Solar + Battery + Monitoring' },
-];
+const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => (
+  <section className="relative overflow-hidden bg-slate-950 px-5 py-24 lg:px-8 lg:py-32">
+    {/* Subtle radial glow top-center */}
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 -top-32 flex justify-center"
+    >
+      <div className="h-80 w-[700px] rounded-full bg-emerald-500/10 blur-[96px]" />
+    </div>
 
-const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
-  const [selectedPackage, setSelectedPackage] = useState<PackageId>('battery');
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    {/* Dot grid */}
+    <div
+      aria-hidden
+      className="absolute inset-0 opacity-[0.025]"
+      style={{
+        backgroundImage:
+          'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+      }}
+    />
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast.error('Vui lòng nhập địa chỉ email của bạn!');
-      return;
-    }
+    <div className="relative z-10 mx-auto max-w-4xl text-center">
+      {/* Eyebrow badge */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+        className="mb-5 flex justify-center"
+      >
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-emerald-300">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </span>
+          Hệ thống đang hoạt động
+        </span>
+      </motion.div>
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast.success('Yêu cầu cấu hình hệ thống của bạn đã được gửi thành công!', {
-        description: `Hệ thống sẽ gửi báo giá chi tiết gói ${selectedPackage === 'only' ? 'Solar Only' : selectedPackage === 'battery' ? 'Solar + Battery' : 'Solar + Battery + Monitoring'
-          } tới email ${email} trong vòng 24 giờ.`,
-      });
-      setEmail('');
-    }, 1200);
-  };
+      {/* Headline */}
+      <motion.h2
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.08, duration: 0.5 }}
+        className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl leading-[1.08]"
+      >
+        Không có cảnh báo nào
+        <br />
+        <span className="text-emerald-400">bị bỏ sót nữa.</span>
+      </motion.h2>
 
-  return (
-    <section className="bg-white px-5 py-24 text-slate-900 lg:px-8 lg:py-32 relative overflow-hidden">
-      {/* Decorative background visual elements */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-slate-50 rounded-full blur-3xl pointer-events-none" />
+      {/* Subheadline */}
+      <motion.p
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.16, duration: 0.5 }}
+        className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg"
+      >
+        Một console cho SOH, cảnh báo bất thường, work order và SLA — từ phát hiện đến đóng ticket đều có audit trail rõ ràng.
+      </motion.p>
 
-      <div className="relative z-10 mx-auto max-w-7xl">
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      {/* CTA Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.24, duration: 0.5 }}
+        className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
+      >
+        <Button
+          size="lg"
+          onClick={onLogin}
+          className="h-12 gap-2 rounded-xl bg-white px-7 font-bold text-slate-950 shadow-lg hover:bg-slate-100 cursor-pointer"
+        >
+          Vào hệ thống
+          <ArrowRight className="size-4" />
+        </Button>
+        <a
+          href="#product"
+          className="flex h-12 items-center gap-2 rounded-xl border border-white/15 px-7 text-sm font-semibold text-white/80 transition-colors hover:border-white/30 hover:text-white"
+        >
+          Xem sản phẩm
+        </a>
+      </motion.div>
 
-          {/* Left: Clean, floating tilted 3D solar panels on white bg, absolutely NO frames or borders */}
-          <motion.div
-            className="relative aspect-video sm:aspect-[16/10] lg:aspect-[4/3] overflow-hidden flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <img
-              src={solarCtaImg}
-              alt="Build your own energy system solar panels tilted"
-              className="w-full h-full object-contain transition-transform duration-500 hover:scale-105"
-              loading="lazy"
-            />
-          </motion.div>
-
-          {/* Right: Build your own energy system text & form */}
-          <div className="flex flex-col text-left">
-            <motion.p
-              className="text-sm font-semibold uppercase tracking-wider text-emerald-700 mb-3"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              Cấu hình hệ thống
-            </motion.p>
-            <motion.h2
-              className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight mb-4"
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-            >
-              Build your own
-              <br />
-              energy system.
-            </motion.h2>
-            <motion.p
-              className="text-sm sm:text-base text-slate-500 leading-relaxed mb-10 max-w-lg"
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              Stop renting your power. Get a custom quote based on your home's architecture, energy usage, and budget.
-            </motion.p>
-
-            {/* Interactive Package Configurator Form tailored for white background */}
-            <motion.div
-              className="space-y-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-            >
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">1. Chọn cấu hình phần cứng của bạn:</p>
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
-                  {PACKAGE_OPTIONS.map(opt => {
-                    const active = selectedPackage === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setSelectedPackage(opt.id)}
-                        className={`
-                          relative rounded-xl border p-4 text-left transition-all duration-300
-                          ${active
-                            ? 'bg-slate-50 border-emerald-600 text-emerald-800 shadow-[0_4px_16px_rgba(16,185,129,0.1)]'
-                            : 'bg-slate-50/50 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-bold leading-tight">{opt.label}</span>
-                          {active && (
-                            <div className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-                              <Check className="size-2.5 stroke-[3]" />
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Form Input */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">2. Nhập thông tin để nhận tư vấn và báo giá:</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="email"
-                    placeholder="Địa chỉ email của bạn…"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    disabled={isSubmitting}
-                    className="flex-1 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-300 disabled:opacity-50"
-                  />
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={isSubmitting}
-                    className="h-12 bg-slate-950 text-white hover:bg-emerald-600 font-bold rounded-xl transition-all duration-300 shrink-0 gap-2 shadow-sm disabled:opacity-70"
-                  >
-                    {isSubmitting ? (
-                      <div className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      <>
-                        Gửi yêu cầu
-                        <Send className="size-4" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-
-              {/* Divider and link to console login */}
-              <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between flex-wrap gap-4">
-                <span className="text-xs text-slate-400">Đã đăng ký hệ thống vận hành?</span>
-                <button
-                  type="button"
-                  onClick={onLogin}
-                  className="text-xs font-semibold text-emerald-700 hover:text-slate-950 transition-colors"
-                >
-                  Vào hệ thống quản lý &rarr;
-                </button>
-              </div>
-
-            </motion.div>
+      {/* Trust items row */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.36, duration: 0.5 }}
+        className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
+      >
+        {TRUST_ITEMS.map(({ icon: Icon, text }) => (
+          <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
+            <Icon className="size-4 text-emerald-400 shrink-0" />
+            <span>{text}</span>
           </div>
+        ))}
+      </motion.div>
 
-        </div>
-      </div>
-    </section>
-  );
-};
+      {/* Divider line */}
+      <div className="mt-14 border-t border-white/[0.07]" />
+
+      {/* Already have account */}
+      <p className="mt-7 text-sm text-slate-500">
+        Đã có tài khoản?{' '}
+        <button
+          type="button"
+          onClick={onLogin}
+          className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+        >
+          Đăng nhập ngay &rarr;
+        </button>
+      </p>
+    </div>
+  </section>
+);
 
 export default FinalCtaSection;
