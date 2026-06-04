@@ -1,7 +1,21 @@
-import logoImg from '@/assets/logo.png';
 import { Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import logoImg from '@/assets/logo.png';
+
+const PRODUCT_LINKS = [
+  { label: 'Giám sát pin', href: '#product' },
+  { label: 'Cảnh báo bất thường', href: '#product' },
+  { label: 'Quản lý SLA', href: '#governance' },
+  { label: 'Hỗ trợ kỹ thuật', href: '#workflow' },
+];
+
+const COMPANY_LINKS = [
+  { label: 'Về chúng tôi', href: '#' },
+  { label: 'Quy trình dịch vụ', href: '#workflow' },
+  { label: 'Phân quyền hệ thống', href: '#roles' },
+  { label: 'Liên hệ', href: '#' },
+];
 
 const LandingFooter = () => {
   const [email, setEmail] = useState('');
@@ -13,93 +27,120 @@ const LandingFooter = () => {
       return;
     }
     toast.success('Đăng ký bản tin thành công!', {
-      description: 'Cảm ơn bạn đã đăng ký nhận thông tin từ Hệ thống.',
+      description: 'Cảm ơn bạn đã quan tâm đến hệ thống quản lý pin mặt trời.',
     });
     setEmail('');
   };
 
   return (
-    <footer className="bg-slate-950 text-slate-400 px-5 pt-16 pb-8 lg:px-8 border-t border-white/5 relative overflow-hidden">
-      {/* Footer Content Grid */}
+    <footer className="bg-slate-950 text-slate-400 px-5 pt-16 pb-8 lg:px-8 border-t border-white/[0.06] relative overflow-hidden">
+      {/* Subtle top glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
+      >
+        <div className="h-px w-[600px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+      </div>
+
       <div className="mx-auto max-w-7xl relative z-10">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5 mb-12">
 
-          {/* Brand Info */}
+          {/* Brand */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2 text-white">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/5 p-1 border border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/[0.06] border border-white/[0.1]">
                 <img
                   src={logoImg}
-                  alt="Solar Energy Logo"
-                  className="h-full w-auto object-contain brightness-0 invert"
+                  alt="Sunaria Logo"
+                  className="h-5 w-auto object-contain brightness-0 invert"
                 />
               </div>
-              <span className="font-bold text-lg tracking-tight text-white">Hệ thống Quản lý Năng lượng Mặt trời</span>
+              <span className="font-bold text-base tracking-tight text-white">Sunaria</span>
             </div>
-            <p className="text-xs md:text-sm text-slate-400 leading-relaxed max-w-sm">
-              Cung cấp giải pháp năng lượng bền vững, hiệu quả cao và tối ưu hóa chi phí thông qua các tấm pin năng lượng mặt trời hiện đại, hệ thống lưu trữ điện thông minh và giám sát thời gian thực.
+            <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+              Nền tảng AI giám sát và bảo trì pin lithium-ion cho hệ thống năng lượng mặt trời — phục vụ Admin, Manager và Staff trong cùng một console.
             </p>
+            {/* Status indicator */}
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              </span>
+              Hệ thống vận hành bình thường
+            </div>
           </div>
 
-          {/* Links Column 1: Products */}
+          {/* Products */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">Sản phẩm</h4>
-            <ul className="space-y-2.5 text-xs md:text-sm">
-              {['Solar Only', 'Solar + Battery', 'Solar + Battery + Monitoring', 'Hỗ trợ kỹ thuật'].map(link => (
-                <li key={link}>
-                  <a href="#product" className="hover:text-white transition-colors duration-250">
-                    {link}
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+              Tính năng
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              {PRODUCT_LINKS.map(link => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="hover:text-white transition-colors duration-200"
+                  >
+                    {link.label}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Links Column 2: Company */}
+          {/* Company */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">Công ty</h4>
-            <ul className="space-y-2.5 text-xs md:text-sm">
-              {['Về chúng tôi', 'Tuyển dụng', 'Liên hệ', 'Báo chí'].map(link => (
-                <li key={link}>
-                  <a href="#workflow" className="hover:text-white transition-colors duration-250">
-                    {link}
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+              Công ty
+            </h4>
+            <ul className="space-y-2.5 text-sm">
+              {COMPANY_LINKS.map(link => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="hover:text-white transition-colors duration-200"
+                  >
+                    {link.label}
                   </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Newsletter / Subscribe */}
+          {/* Newsletter */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">Bản tin</h4>
-            <form onSubmit={handleSubscribe} className="space-y-2.5">
-              <p className="text-xs text-slate-500 leading-normal">Đăng ký để nhận tin tức cập nhật mới nhất về công nghệ năng lượng sạch.</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Email của bạn…"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full rounded-lg bg-white/[0.03] border border-white/10 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-                <button
-                  type="submit"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-950 hover:bg-emerald-500 hover:text-white transition-colors duration-250 shrink-0"
-                >
-                  <Send className="size-3.5" />
-                </button>
-              </div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+              Bản tin
+            </h4>
+            <p className="text-xs text-slate-500 leading-relaxed mb-3">
+              Cập nhật tính năng mới và báo cáo vận hành pin mặt trời.
+            </p>
+            <form onSubmit={handleSubscribe} className="flex gap-2">
+              <input
+                type="email"
+                placeholder="Email của bạn…"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="flex-1 min-w-0 rounded-lg bg-white/[0.04] border border-white/[0.1] px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+              />
+              <button
+                type="submit"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors duration-200 cursor-pointer"
+                aria-label="Đăng ký bản tin"
+              >
+                <Send className="size-3.5" />
+              </button>
             </form>
           </div>
-
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© 2026 Hệ thống Quản lý Năng lượng Mặt trời. All rights reserved. Hệ thống Quản lý Năng lượng Mặt trời.</p>
-          <div className="flex gap-4">
-            <a href="#privacy" className="hover:text-slate-300">Chính sách bảo mật</a>
-            <a href="#terms" className="hover:text-slate-300">Điều khoản dịch vụ</a>
+        {/* Bottom bar */}
+        <div className="border-t border-white/[0.06] pt-7 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+          <p>© 2026 Sunaria · Solar Battery Maintenance Management System. All rights reserved.</p>
+          <div className="flex gap-5">
+            <a href="#" className="hover:text-slate-300 transition-colors">Chính sách bảo mật</a>
+            <a href="#" className="hover:text-slate-300 transition-colors">Điều khoản dịch vụ</a>
           </div>
         </div>
       </div>

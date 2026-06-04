@@ -72,7 +72,7 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
         )}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isVerifying}>
+      <Button type="submit" className="h-10 w-full rounded-lg bg-emerald-600 font-semibold text-white hover:bg-emerald-700 transition-colors cursor-pointer" disabled={isVerifying}>
         {isVerifying ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
@@ -84,16 +84,14 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
       </Button>
 
       <div className="text-center">
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground"
           disabled={countdown > 0 || isResending}
           onClick={handleResend}
+          className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           {countdown > 0 ? `Gửi lại sau ${countdown}s` : 'Gửi lại OTP'}
-        </Button>
+        </button>
       </div>
     </form>
   );

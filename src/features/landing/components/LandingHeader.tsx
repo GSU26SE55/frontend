@@ -1,4 +1,4 @@
-import { LockKeyhole } from 'lucide-react';
+import { LockKeyhole, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/features/landing/landing.constants';
@@ -12,21 +12,22 @@ type LandingHeaderProps = {
 const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => (
   <header
     className={cn(
-      'fixed left-0 right-0 top-0 z-40 px-6 py-4 transition-all duration-300 lg:px-12',
+      'fixed left-0 right-0 top-0 z-40 transition-all duration-300',
       scrolled
-        ? 'border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md'
-        : 'border-b border-transparent bg-transparent'
+        ? 'border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md py-3 px-6 lg:px-12'
+        : 'border-b border-transparent bg-transparent py-4 px-6 lg:px-12'
     )}
   >
     <div className="mx-auto grid w-full max-w-7xl grid-cols-3 items-center">
-      <nav className="flex items-center justify-start gap-8 text-sm font-medium" aria-label="Primary navigation">
+      {/* Left: Nav */}
+      <nav className="flex items-center justify-start gap-6 text-sm font-medium" aria-label="Primary navigation">
         {NAV_ITEMS.map(item => (
           <a
             key={item.href}
             href={item.href}
             className={cn(
-              'whitespace-nowrap transition-colors duration-300',
-              scrolled ? 'text-slate-600 hover:text-slate-950' : 'text-white/85 hover:text-white'
+              'whitespace-nowrap transition-colors duration-300 hidden md:block',
+              scrolled ? 'text-slate-600 hover:text-slate-950' : 'text-white/80 hover:text-white'
             )}
           >
             {item.label}
@@ -34,24 +35,44 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => (
         ))}
       </nav>
 
+      {/* Center: Logo */}
       <div className="flex justify-center">
-        <a href="#main-content" className="flex h-12 items-center focus:outline-none">
-          <img src={logoImg} alt="Sunaria Logo" className="h-full w-auto object-contain transition-all duration-300" />
+        <a href="#main-content" className="flex h-11 items-center focus:outline-none">
+          <img
+            src={logoImg}
+            alt="Sunaria Logo"
+            className="h-full w-auto object-contain transition-all duration-300"
+          />
         </a>
       </div>
 
-      <div className="flex justify-end">
+      {/* Right: Badge + Login */}
+      <div className="flex items-center justify-end gap-3">
+        {/* "AI-Powered" badge — visible trên đủ lớn */}
+        <span
+          className={cn(
+            'hidden lg:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide transition-all duration-300',
+            scrolled
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
+          )}
+        >
+          <Zap className="size-3" />
+          AI Monitoring
+        </span>
+
         <Button
           size="sm"
-          variant="outline"
-          className={cn(
-            'h-10 gap-2 border-none bg-transparent p-0 text-sm font-medium transition-all duration-300 hover:bg-transparent',
-            scrolled ? 'text-slate-900 hover:text-slate-600' : 'text-white/85 hover:text-white'
-          )}
           onClick={onLogin}
+          className={cn(
+            'h-9 gap-2 rounded-lg px-4 text-sm font-semibold transition-all duration-300 cursor-pointer',
+            scrolled
+              ? 'bg-slate-950 text-white hover:bg-slate-800'
+              : 'bg-white/10 text-white border border-white/20 hover:bg-white/20 backdrop-blur-sm'
+          )}
         >
+          <LockKeyhole className="size-3.5" />
           Đăng nhập
-          <LockKeyhole className="size-4" />
         </Button>
       </div>
     </div>
