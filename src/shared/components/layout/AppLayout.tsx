@@ -19,21 +19,18 @@ import {
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { clearTokens } from "@/shared/lib/axios";
+import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/session.types";
 import { cn } from "@/lib/utils";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
   const navigate = useNavigate();
-  const { user, clearSession } = useSessionStore();
+  const { user } = useSessionStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { mutate: logout } = useLogout();
 
-  const handleLogout = () => {
-    clearTokens();
-    clearSession();
-    navigate("/login", { replace: true });
-  };
+  const handleLogout = () => logout();
 
   const initials = (user?.fullName ?? "?")
     .split(" ")

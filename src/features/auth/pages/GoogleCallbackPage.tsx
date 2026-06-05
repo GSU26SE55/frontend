@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { saveTokens, clearTokens } from "@/shared/lib/axios";
 import {
@@ -8,11 +9,13 @@ import {
   redirectByRole,
 } from "@/shared/types/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
 
 const GoogleCallbackPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     try {
@@ -37,6 +40,7 @@ const GoogleCallbackPage = () => {
       }
 
       setSession(user);
+      queryClient.setQueryData(QUERY_KEY.currentUser.session(), user);
       navigate(redirectByRole(user.role), { replace: true });
     } catch (err) {
       console.error("[GoogleCallback]", err);
