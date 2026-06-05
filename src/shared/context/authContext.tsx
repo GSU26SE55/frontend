@@ -1,8 +1,8 @@
-import { createContext, use, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { useHydrateSession } from '@/features/auth/hooks/useHydrateSession';
-import { useSessionStore } from '@/shared/stores/sessionStore';
-import { clearTokens } from '@/shared/lib/axios';
+import { createContext, use, useEffect } from "react";
+import type { ReactNode } from "react";
+import { useHydrateSession } from "@/features/auth/hooks/useHydrateSession";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { clearTokens } from "@/shared/lib/axios";
 
 interface AuthContextValue {
   isHydrating: boolean;
@@ -15,19 +15,24 @@ export const useAuthContext = () => use(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { setSession, clearSession } = useSessionStore();
-  const { data: session, isPending: isHydrating } = useHydrateSession();
+  const { data: session, status } = useHydrateSession();
+
+  const isHydrating = status === "pending";
 
   useEffect(() => {
-    if (isHydrating) return;
+    if (status === "pending") return;
 
-    if (session) {
+    if (status === "success" && session) {
       setSession(session);
-      return;
+    } else {
+      clearTokens();
+      clearSession();
     }
+  }, [clearSession, session, setSession, status]);
 
-    clearTokens();
-    clearSession();
-  }, [clearSession, isHydrating, session, setSession]);
-
-  return <AuthContext.Provider value={{ isHydrating }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ isHydrating }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
