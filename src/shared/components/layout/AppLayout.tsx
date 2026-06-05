@@ -163,6 +163,7 @@ function DropMenuItem({
 // ── Nav configs ─────────────────────────────────────────────────────────────
 const ADMIN_NAV: NavSection[] = [
   {
+    // Top-level — always visible, no header
     items: [
       { label: "Tổng quan", path: "/admin/dashboard", icon: LayoutDashboard },
     ],
