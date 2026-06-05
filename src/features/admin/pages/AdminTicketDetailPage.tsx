@@ -208,36 +208,44 @@ export default function AdminTicketDetailPage() {
               <CardTitle className="text-base">SLA Timer</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Trạng thái</span>
-                <span className="font-medium">{ticket.slaTimer.status}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Deadline</span>
-                <span className="font-medium">
-                  {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Còn lại</span>
-                <span className="font-medium">
-                  {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    ticket.slaTimer.remainingPercent > 50
-                      ? "bg-green-500"
-                      : ticket.slaTimer.remainingPercent > 20
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
-                  }`}
-                  style={{
-                    width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                  }}
-                />
-              </div>
+              {ticket.slaTimer ? (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Trạng thái</span>
+                    <span className="font-medium">
+                      {ticket.slaTimer.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Deadline</span>
+                    <span className="font-medium">
+                      {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Còn lại</span>
+                    <span className="font-medium">
+                      {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        ticket.slaTimer.remainingPercent > 50
+                          ? "bg-green-500"
+                          : ticket.slaTimer.remainingPercent > 20
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{
+                        width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Chưa có SLA timer.</p>
+              )}
             </CardContent>
           </Card>
         </div>
