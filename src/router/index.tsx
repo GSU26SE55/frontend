@@ -21,6 +21,9 @@ import RolesPage from "@/features/admin/pages/RolesPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
+import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
+import ManagerTicketQueuePage from "@/features/manager/pages/TicketQueuePage";
+import ManagerTicketDetailPage from "@/features/manager/pages/TicketDetailPage";
 import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
 
@@ -71,7 +74,10 @@ const router = createBrowserRouter([
               { path: "sites", element: <AdminSiteListPage /> },
               { path: "sites/:id", element: <AdminSiteDetailPage /> },
               { path: "battery-assets", element: <BatteryAssetsPage /> },
-              { path: "battery-assets/:id", element: <BatteryAssetDetailPage /> },
+              {
+                path: "battery-assets/:id",
+                element: <BatteryAssetDetailPage />,
+              },
               { path: "accounts", element: <AccountsPage /> },
               { path: "roles", element: <RolesPage /> },
             ],
@@ -89,6 +95,9 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <ManagerDashboardPage /> },
               { path: "sites", element: <ManagerSiteListPage /> },
               { path: "sites/:id", element: <ManagerSiteDetailPage /> },
+              { path: "tickets", element: <ManagerTicketListPage /> },
+              { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
+              { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
             ],
           },
         ],

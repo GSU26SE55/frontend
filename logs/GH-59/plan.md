@@ -1,7 +1,7 @@
 # Plan — GH-59: [FE] Manager — Ticket Management
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-05
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-05
 - **Issue:** #59 — https://github.com/GSU26SE55/frontend/issues/59
 - **Sprint:** Sprint 2 (deadline 2026-06-13)
 
@@ -239,18 +239,18 @@ createTicketSchema: z.object({
 | `tsc --noEmit` + eslint 0 warning + build pass | `npm run build` |
 
 ## Steps
-- [ ] Bước 1: Tạo `types/ticket.types.ts` — enums + interfaces
-- [ ] Bước 2: Cập nhật `endpoints.ts` — TICKETS.ACTIVITIES + ADMIN.TICKETS
-- [ ] Bước 3: Cập nhật `queryKeys.ts` — KEY.manager.tickets + QUERY_KEY.manager.tickets
-- [ ] Bước 4: Tạo `schemas/ticket.schema.ts` — Zod schemas cho 6 form; `reopen-ticket.schema.ts`; `create-ticket.schema.ts`
-- [ ] Bước 5: Tạo `services/ticket.service.ts` — 12 API calls
-- [ ] Bước 6: Tạo `hooks/useManagerTickets.ts` — 4 queries + 8 mutations
-- [ ] Bước 7: Tạo shared components — TicketStatusBadge, TicketPriorityBadge, SlaCountdown, TicketTable
-- [ ] Bước 8: Tạo action dialogs — TriageDialog, AssignDialog, ReassignDialog, RejectDialog, EscalateDialog
-- [ ] Bước 9: Tạo TicketActivityTimeline + AddCommentForm
-- [ ] Bước 10: Tạo 3 pages — TicketListPage, TicketQueuePage, TicketDetailPage
-- [ ] Bước 11: Cập nhật router + AppLayout nav
-- [ ] Bước 12: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Tạo `types/ticket.types.ts` — enums + interfaces — 2026-06-05
+- [x] Bước 2: Cập nhật `endpoints.ts` — TICKETS.ACTIVITIES + ADMIN.TICKETS — 2026-06-05
+- [x] Bước 3: Cập nhật `queryKeys.ts` — KEY.manager.tickets + QUERY_KEY.manager.tickets — 2026-06-05
+- [x] Bước 4: Tạo `schemas/ticket.schema.ts` — Zod schemas cho 6 form; `reopen-ticket.schema.ts`; `create-ticket.schema.ts` — 2026-06-05
+- [x] Bước 5: Tạo `services/ticket.service.ts` — 12 API calls — 2026-06-05
+- [x] Bước 6: Tạo `hooks/useManagerTickets.ts` — 4 queries + 8 mutations — 2026-06-05
+- [x] Bước 7: Tạo shared components — TicketStatusBadge, TicketPriorityBadge, SlaCountdown, TicketTable — 2026-06-05
+- [x] Bước 8: Tạo action dialogs — TriageDialog, AssignDialog, ReassignDialog, RejectDialog, EscalateDialog — 2026-06-05
+- [x] Bước 9: Tạo TicketActivityTimeline + AddCommentForm — 2026-06-05
+- [x] Bước 10: Tạo 3 pages — TicketListPage, TicketQueuePage, TicketDetailPage — 2026-06-05
+- [x] Bước 11: Cập nhật router + AppLayout nav — 2026-06-05
+- [x] Bước 12: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS — 2026-06-05
 
 ## Câu hỏi đã giải đáp
 - Tất cả API đã có đầy đủ trong `docs/api-ticket.md` — không cần hỏi thêm

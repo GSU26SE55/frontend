@@ -1,14 +1,27 @@
-import { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, MapPin, Battery, Users, Shield, Settings,
-  Bell, ChevronDown, LogOut, User, Ticket, Clock, BookOpen, AlertTriangle, FileText,
-} from 'lucide-react';
-import Sidebar, { type NavSection } from './Sidebar';
-import { useSessionStore } from '@/shared/stores/sessionStore';
-import { clearTokens } from '@/shared/lib/axios';
-import { UserRole } from '@/shared/types/session.types';
-import { cn } from '@/lib/utils';
+  LayoutDashboard,
+  MapPin,
+  Battery,
+  Users,
+  Shield,
+  Settings,
+  Bell,
+  ChevronDown,
+  LogOut,
+  User,
+  Ticket,
+  Clock,
+  BookOpen,
+  AlertTriangle,
+  FileText,
+} from "lucide-react";
+import Sidebar, { type NavSection } from "./Sidebar";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { clearTokens } from "@/shared/lib/axios";
+import { UserRole } from "@/shared/types/session.types";
+import { cn } from "@/lib/utils";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
@@ -19,21 +32,24 @@ function Topbar() {
   const handleLogout = () => {
     clearTokens();
     clearSession();
-    navigate('/login', { replace: true });
+    navigate("/login", { replace: true });
   };
 
-  const initials = (user?.fullName ?? '?')
-    .split(' ')
+  const initials = (user?.fullName ?? "?")
+    .split(" ")
     .slice(-2)
-    .map((n) => n[0] ?? '')
-    .join('')
+    .map((n) => n[0] ?? "")
+    .join("")
     .toUpperCase();
 
   const roleLabel =
-    user?.role === UserRole.ADMIN   ? 'Admin'   :
-    user?.role === UserRole.MANAGER ? 'Manager' :
-    user?.role === UserRole.STAFF   ? 'Staff'   :
-    (user?.role ?? '');
+    user?.role === UserRole.ADMIN
+      ? "Admin"
+      : user?.role === UserRole.MANAGER
+        ? "Manager"
+        : user?.role === UserRole.STAFF
+          ? "Staff"
+          : (user?.role ?? "");
 
   return (
     <header className="h-14 border-b bg-card flex items-center px-5 gap-3 sticky top-0 z-20 shrink-0">
@@ -64,29 +80,52 @@ function Topbar() {
             {initials}
           </span>
           <div className="text-left leading-tight">
-            <div className="text-[12.5px] font-medium text-foreground">{user?.fullName ?? '—'}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{roleLabel}</div>
+            <div className="text-[12.5px] font-medium text-foreground">
+              {user?.fullName ?? "—"}
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">
+              {roleLabel}
+            </div>
           </div>
           <ChevronDown size={12} className="text-muted-foreground ml-1" />
         </button>
 
         {menuOpen && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setMenuOpen(false)}
+            />
             <div className="fade-up absolute right-0 top-full mt-1.5 w-52 bg-card border border-border rounded-xl z-50 p-1.5 shadow-md">
               <div className="px-2.5 py-2 border-b border-border mb-1">
-                <div className="text-[13px] font-semibold">{user?.fullName}</div>
-                <div className="text-[11px] text-muted-foreground">{user?.email}</div>
+                <div className="text-[13px] font-semibold">
+                  {user?.fullName}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {user?.email}
+                </div>
               </div>
-              <DropMenuItem icon={<User size={14} />} onClick={() => {
-                const path = user?.role === UserRole.ADMIN ? '/admin/settings' :
-                             user?.role === UserRole.MANAGER ? '/manager/settings' : '/staff/settings';
-                navigate(path); setMenuOpen(false);
-              }}>
+              <DropMenuItem
+                icon={<User size={14} />}
+                onClick={() => {
+                  const path =
+                    user?.role === UserRole.ADMIN
+                      ? "/admin/settings"
+                      : user?.role === UserRole.MANAGER
+                        ? "/manager/settings"
+                        : "/staff/settings";
+                  navigate(path);
+                  setMenuOpen(false);
+                }}
+              >
                 Hồ sơ & Cài đặt
               </DropMenuItem>
               <div className="border-t border-border my-1" />
-              <DropMenuItem icon={<LogOut size={14} />} onClick={handleLogout} danger>
+              <DropMenuItem
+                icon={<LogOut size={14} />}
+                onClick={handleLogout}
+                danger
+              >
                 Đăng xuất
               </DropMenuItem>
             </div>
@@ -98,16 +137,24 @@ function Topbar() {
 }
 
 function DropMenuItem({
-  children, icon, onClick, danger,
-}: { children: React.ReactNode; icon: React.ReactNode; onClick?: () => void; danger?: boolean }) {
+  children,
+  icon,
+  onClick,
+  danger,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  onClick?: () => void;
+  danger?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-[13px] transition-colors',
+        "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-[13px] transition-colors",
         danger
-          ? 'text-red-600 hover:bg-red-50'
-          : 'text-foreground hover:bg-muted',
+          ? "text-red-600 hover:bg-red-50"
+          : "text-foreground hover:bg-muted",
       )}
     >
       {icon}
@@ -121,86 +168,81 @@ const ADMIN_NAV: NavSection[] = [
   {
     // Top-level — always visible, no header
     items: [
-      { label: 'Tổng quan', path: '/admin/dashboard', icon: LayoutDashboard },
+      { label: "Tổng quan", path: "/admin/dashboard", icon: LayoutDashboard },
     ],
   },
   {
-    title: 'Hạ tầng pin',
+    title: "Hạ tầng pin",
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: 'Sites',          path: '/admin/sites',          icon: MapPin    },
-      { label: 'Battery Assets', path: '/admin/battery-assets', icon: Battery   },
+      { label: "Sites", path: "/admin/sites", icon: MapPin },
+      { label: "Battery Assets", path: "/admin/battery-assets", icon: Battery },
     ],
   },
   {
-    title: 'Người dùng',
+    title: "Người dùng",
     collapsible: true,
     defaultOpen: false,
     items: [
-      { label: 'Tài khoản',          path: '/admin/accounts', icon: Users  },
-      { label: 'Roles & Permissions', path: '/admin/roles',   icon: Shield },
+      { label: "Tài khoản", path: "/admin/accounts", icon: Users },
+      { label: "Roles & Permissions", path: "/admin/roles", icon: Shield },
     ],
   },
   {
-    title: 'Hệ thống',
+    title: "Hệ thống",
     collapsible: true,
     defaultOpen: false,
-    items: [
-      { label: 'Cài đặt', path: '/admin/settings', icon: Settings },
-    ],
+    items: [{ label: "Cài đặt", path: "/admin/settings", icon: Settings }],
   },
 ];
 
 const MANAGER_NAV: NavSection[] = [
   {
     items: [
-      { label: 'Tổng quan', path: '/manager/dashboard', icon: LayoutDashboard },
+      { label: "Tổng quan", path: "/manager/dashboard", icon: LayoutDashboard },
     ],
   },
   {
-    title: 'Quản lý',
+    title: "Quản lý",
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: 'Sites',   path: '/manager/sites',   icon: MapPin    },
-      { label: 'Tickets', path: '/manager/tickets', icon: Ticket    },
-      { label: 'Alerts',  path: '/manager/alerts',  icon: AlertTriangle },
+      { label: "Sites", path: "/manager/sites", icon: MapPin },
+      { label: "Tickets", path: "/manager/tickets", icon: Ticket },
+      { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Alerts", path: "/manager/alerts", icon: AlertTriangle },
     ],
   },
   {
-    title: 'Hệ thống',
+    title: "Hệ thống",
     collapsible: true,
     defaultOpen: false,
-    items: [
-      { label: 'Cài đặt', path: '/manager/settings', icon: Settings },
-    ],
+    items: [{ label: "Cài đặt", path: "/manager/settings", icon: Settings }],
   },
 ];
 
 const STAFF_NAV: NavSection[] = [
   {
     items: [
-      { label: 'My Tickets',  path: '/staff/dashboard', icon: LayoutDashboard },
-      { label: 'SLA Monitor', path: '/staff/sla',       icon: Clock           },
+      { label: "My Tickets", path: "/staff/dashboard", icon: LayoutDashboard },
+      { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
     ],
   },
   {
-    title: 'Kiến thức',
+    title: "Kiến thức",
     collapsible: true,
     defaultOpen: true,
     items: [
-      { label: 'Knowledge Base', path: '/staff/wiki',   icon: BookOpen  },
-      { label: 'Báo cáo',        path: '/staff/alerts', icon: FileText  },
+      { label: "Knowledge Base", path: "/staff/wiki", icon: BookOpen },
+      { label: "Báo cáo", path: "/staff/alerts", icon: FileText },
     ],
   },
   {
-    title: 'Hệ thống',
+    title: "Hệ thống",
     collapsible: true,
     defaultOpen: false,
-    items: [
-      { label: 'Cài đặt', path: '/staff/settings', icon: Settings },
-    ],
+    items: [{ label: "Cài đặt", path: "/staff/settings", icon: Settings }],
   },
 ];
 
@@ -210,10 +252,13 @@ export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   const sections =
-    role === UserRole.ADMIN   ? ADMIN_NAV   :
-    role === UserRole.MANAGER ? MANAGER_NAV :
-    role === UserRole.STAFF   ? STAFF_NAV   :
-    [];
+    role === UserRole.ADMIN
+      ? ADMIN_NAV
+      : role === UserRole.MANAGER
+        ? MANAGER_NAV
+        : role === UserRole.STAFF
+          ? STAFF_NAV
+          : [];
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

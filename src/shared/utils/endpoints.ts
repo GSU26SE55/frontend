@@ -135,6 +135,18 @@ export const ENDPOINTS = {
     AUDIT_LOGS: {
       LIST: "/api/admin/audit-logs",
     },
+    TICKETS: {
+      LIST: "/api/admin/tickets",
+      QUEUE: "/api/admin/tickets/queue",
+      TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
+      ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
+      REASSIGN: (id: string) => `/api/admin/tickets/${id}/reassign`,
+      APPROVE: (id: string) => `/api/admin/tickets/${id}/approve`,
+      REJECT: (id: string) => `/api/admin/tickets/${id}/reject`,
+      ESCALATE: (id: string) => `/api/admin/tickets/${id}/escalate`,
+      DECLARE_INCIDENT: (id: string) =>
+        `/api/admin/tickets/${id}/declare-incident`,
+    },
   },
 
   SITES: {
