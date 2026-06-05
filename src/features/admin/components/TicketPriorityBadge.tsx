@@ -1,0 +1,36 @@
+import { Badge } from "@/components/ui/badge";
+import type { TicketPriorityEnum } from "@/shared/types/ticket.types";
+
+const PRIORITY_CONFIG: Record<
+  TicketPriorityEnum,
+  { label: string; className: string }
+> = {
+  P1Critical: {
+    label: "P1 Critical",
+    className: "bg-red-100 text-red-800 border-red-300",
+  },
+  P2High: {
+    label: "P2 High",
+    className: "bg-orange-100 text-orange-800 border-orange-300",
+  },
+  P3Normal: {
+    label: "P3 Normal",
+    className: "bg-green-100 text-green-800 border-green-300",
+  },
+};
+
+interface Props {
+  priority: TicketPriorityEnum;
+}
+
+export default function TicketPriorityBadge({ priority }: Props) {
+  const config = PRIORITY_CONFIG[priority] ?? {
+    label: priority,
+    className: "",
+  };
+  return (
+    <Badge variant="outline" className={config.className}>
+      {config.label}
+    </Badge>
+  );
+}

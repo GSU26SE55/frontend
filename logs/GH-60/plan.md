@@ -1,7 +1,7 @@
 # Plan — GH-60: [FE] Admin — Ticket Management
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-05
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-05
 - **Issue:** #60 — https://github.com/GSU26SE55/frontend/issues/60
 - **Sprint:** Sprint 2 (deadline 2026-06-13)
 
@@ -252,17 +252,17 @@ User click "Declare Incident" → `AlertDialog` confirm → `useDeclareIncident.
 | Build clean | `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` PASS |
 
 ## Steps
-- [ ] Bước 1: Tạo `src/shared/types/ticket.types.ts` — toàn bộ enums + tất cả DTOs (kể cả TicketCommentDTO, MaintenanceLogDTO, TicketAttachmentDTO, TicketDetailDTO đầy đủ)
-- [ ] Bước 2: Cập nhật `endpoints.ts` — thêm `ADMIN_TICKETS` + `TICKETS.ACTIVITIES`
-- [ ] Bước 3: Cập nhật `queryKeys.ts` — thêm ticket query keys
-- [ ] Bước 4: Tạo `src/features/admin/services/ticket.service.ts`
-- [ ] Bước 5: Tạo `src/features/admin/hooks/useAdminTickets.ts` — dùng `/activities` endpoint riêng (không phụ thuộc `ticket.activities` từ detail); override `staleTime: 30_000` cho `useAdminTickets` (list) và `useAdminTicketDetail` theo fe.md
-- [ ] Bước 6: Tạo badge components (`TicketStatusBadge`, `TicketPriorityBadge`)
-- [ ] Bước 7: Tạo `AdminTicketTable.tsx` + `TicketActivityTimeline.tsx`
-- [ ] Bước 8: Tạo `AdminTicketListPage.tsx` — filter state và page state gộp chung 1 object; khi bất kỳ filter thay đổi, reset `PageNumber` về `1` trong cùng 1 state update (không để filter và page là 2 `useState` độc lập)
-- [ ] Bước 9: Tạo `AdminTicketDetailPage.tsx`
-- [ ] Bước 10: Cập nhật `router/index.tsx` + `AppLayout.tsx`
-- [ ] Bước 11: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Tạo `src/shared/types/ticket.types.ts` — toàn bộ enums + tất cả DTOs (kể cả TicketCommentDTO, MaintenanceLogDTO, TicketAttachmentDTO, TicketDetailDTO đầy đủ) — 2026-06-05
+- [x] Bước 2: Cập nhật `endpoints.ts` — thêm `ADMIN_TICKETS` + `TICKETS.ACTIVITIES` — 2026-06-05
+- [x] Bước 3: Cập nhật `queryKeys.ts` — thêm ticket query keys — 2026-06-05
+- [x] Bước 4: Tạo `src/features/admin/services/ticket.service.ts` — 2026-06-05
+- [x] Bước 5: Tạo `src/features/admin/hooks/useAdminTickets.ts` — dùng `/activities` endpoint riêng (không phụ thuộc `ticket.activities` từ detail); override `staleTime: 30_000` cho `useAdminTickets` (list) và `useAdminTicketDetail` theo fe.md — 2026-06-05
+- [x] Bước 6: Tạo badge components (`TicketStatusBadge`, `TicketPriorityBadge`) — 2026-06-05
+- [x] Bước 7: Tạo `AdminTicketTable.tsx` + `TicketActivityTimeline.tsx` — 2026-06-05
+- [x] Bước 8: Tạo `AdminTicketListPage.tsx` — filter state và page state gộp chung 1 object; khi bất kỳ filter thay đổi, reset `PageNumber` về `1` trong cùng 1 state update (không để filter và page là 2 `useState` độc lập) — 2026-06-05
+- [x] Bước 9: Tạo `AdminTicketDetailPage.tsx` — 2026-06-05
+- [x] Bước 10: Cập nhật `router/index.tsx` + `AppLayout.tsx` — 2026-06-05
+- [x] Bước 11: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS — 2026-06-05
 
 ## Câu hỏi đã giải đáp
 | Câu hỏi | Quyết định |

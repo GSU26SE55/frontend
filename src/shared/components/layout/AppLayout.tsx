@@ -181,6 +181,12 @@ const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
+    title: "Hỗ trợ",
+    collapsible: true,
+    defaultOpen: true,
+    items: [{ label: "Tickets", path: "/admin/tickets", icon: Ticket }],
+  },
+  {
     title: "Người dùng",
     collapsible: true,
     defaultOpen: false,

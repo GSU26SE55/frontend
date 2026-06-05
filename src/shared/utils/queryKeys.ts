@@ -17,6 +17,7 @@ export const KEY = {
     roles: ["admin", "roles"] as const,
     permissions: ["admin", "permissions"] as const,
     auditLogs: ["admin", "auditLogs"] as const,
+    tickets: ["admin", "tickets"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -97,6 +98,9 @@ export const QUERY_KEY = {
     },
     auditLogs: {
       list: (params?: object) => [...KEY.admin.auditLogs, "list", params],
+    },
+    tickets: {
+      list: (params?: object) => [...KEY.admin.tickets, "list", params],
     },
   },
   tickets: {

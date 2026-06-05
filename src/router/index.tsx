@@ -18,6 +18,8 @@ import BatteryAssetsPage from "@/features/admin/pages/BatteryAssetsPage";
 import BatteryAssetDetailPage from "@/features/admin/pages/BatteryAssetDetailPage";
 import AccountsPage from "@/features/admin/pages/AccountsPage";
 import RolesPage from "@/features/admin/pages/RolesPage";
+import AdminTicketListPage from "@/features/admin/pages/AdminTicketListPage";
+import AdminTicketDetailPage from "@/features/admin/pages/AdminTicketDetailPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
@@ -80,6 +82,8 @@ const router = createBrowserRouter([
               },
               { path: "accounts", element: <AccountsPage /> },
               { path: "roles", element: <RolesPage /> },
+              { path: "tickets", element: <AdminTicketListPage /> },
+              { path: "tickets/:id", element: <AdminTicketDetailPage /> },
             ],
           },
         ],
