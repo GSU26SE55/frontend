@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
@@ -7,12 +7,14 @@ import { decodeToken, redirectByRole } from "@/shared/types/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { UserRole } from "@/shared/types/session.types";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { LoginPayload } from "@/features/auth/types/auth.types";
 import type { UseFormSetError } from "react-hook-form";
 
 export const useLogin = (setError?: UseFormSetError<LoginPayload>) => {
   const navigate = useNavigate();
   const { setSession } = useSessionStore();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: LoginPayload) => authService.login(payload),
@@ -33,6 +35,7 @@ export const useLogin = (setError?: UseFormSetError<LoginPayload>) => {
       }
 
       setSession(user);
+      queryClient.setQueryData(QUERY_KEY.currentUser.session(), user);
       navigate(redirectByRole(user.role), { replace: true });
     },
     onError: (error) => handleErrorApi({ error, setError }),
