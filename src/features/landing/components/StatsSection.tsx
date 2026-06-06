@@ -1,28 +1,28 @@
-import { motion } from 'framer-motion';
-import Reveal from '@/features/landing/components/Reveal';
-import test1Img from '@/assets/test 1.jpg';
+import { motion } from "framer-motion";
+import Reveal from "@/features/landing/components/Reveal";
+import test1Img from "@/assets/test 1.jpg";
 
 const STATS_DATA = [
   {
-    value: '0',
-    unit: 'breach',
-    label: 'SLA Breach',
-    sub: 'Zero vi phạm SLA kể từ khi triển khai',
-    color: 'text-emerald-400',
+    value: "0",
+    unit: "breach",
+    label: "SLA Breach",
+    sub: "Zero vi phạm SLA kể từ khi triển khai",
+    color: "text-emerald-400",
   },
   {
-    value: '94.7',
-    unit: '%',
-    label: 'SOH Trung bình',
-    sub: 'Sức khỏe pin trên toàn hệ thống giám sát',
-    color: 'text-white',
+    value: "94.7",
+    unit: "%",
+    label: "SOH Trung bình",
+    sub: "Sức khỏe pin trên toàn hệ thống giám sát",
+    color: "text-white",
   },
   {
-    value: '< 18',
-    unit: 'phút',
-    label: 'Thời gian Triage',
-    sub: 'Từ cảnh báo đến ticket có owner',
-    color: 'text-white',
+    value: "< 18",
+    unit: "phút",
+    label: "Thời gian Triage",
+    sub: "Từ cảnh báo đến ticket có owner",
+    color: "text-white",
   },
 ] as const;
 
@@ -37,7 +37,7 @@ const StatItem = ({
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    transition={{ delay: index * 0.12, duration: 0.5, ease: 'easeOut' }}
+    transition={{ delay: index * 0.12, duration: 0.5, ease: "easeOut" }}
     className="flex flex-col items-center justify-center px-4 text-center"
   >
     <div className="flex items-end gap-1.5">

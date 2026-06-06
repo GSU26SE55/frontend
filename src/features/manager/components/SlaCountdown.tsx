@@ -16,8 +16,8 @@ interface Props {
 }
 
 export default function SlaCountdown({ slaTimer }: Props) {
-  const [remaining, setRemaining] = useState(
-    () => slaTimer ? new Date(slaTimer.dueAt).getTime() - Date.now() : 0,
+  const [remaining, setRemaining] = useState(() =>
+    slaTimer ? new Date(slaTimer.dueAt).getTime() - Date.now() : 0,
   );
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function SlaCountdown({ slaTimer }: Props) {
       setRemaining(new Date(slaTimer!.dueAt).getTime() - Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, [slaTimer?.dueAt, slaTimer?.status]);
+  }, [slaTimer]);
 
   if (!slaTimer) return null;
 

@@ -1,18 +1,20 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { KEY, QUERY_KEY } from '@/shared/utils/queryKeys';
-import { batteryTypeService } from '@/features/admin/services/battery-type.service';
-import { handleErrorApi } from '@/shared/lib/errors';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import { batteryTypeService } from "@/features/admin/services/battery-type.service";
+import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   CreateBatteryTypePayload,
   UpdateBatteryTypePayload,
-} from '@/features/admin/types/battery-type.types';
+} from "@/features/admin/types/battery-type.types";
 
 export function useCreateBatteryType() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateBatteryTypePayload) =>
       batteryTypeService.create(payload).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [KEY.batteryTypes] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY.batteryTypes] });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }
@@ -22,7 +24,9 @@ export function useUpdateBatteryType(id: string) {
   return useMutation({
     mutationFn: (payload: UpdateBatteryTypePayload) =>
       batteryTypeService.update(id, payload).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [KEY.batteryTypes] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY.batteryTypes] });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }
@@ -30,7 +34,8 @@ export function useUpdateBatteryType(id: string) {
 export function useDeleteBatteryType() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => batteryTypeService.delete(id).then((r) => r.data),
+    mutationFn: (id: string) =>
+      batteryTypeService.delete(id).then((r) => r.data),
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: [KEY.batteryTypes] });
       qc.removeQueries({ queryKey: QUERY_KEY.batteryTypes.detail(id) });
@@ -42,8 +47,11 @@ export function useDeleteBatteryType() {
 export function useRestoreBatteryType() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => batteryTypeService.restore(id).then((r) => r.data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: [KEY.batteryTypes] }); },
+    mutationFn: (id: string) =>
+      batteryTypeService.restore(id).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY.batteryTypes] });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

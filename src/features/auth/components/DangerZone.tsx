@@ -1,20 +1,27 @@
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
-} from '@/components/ui/alert-dialog';
-import { useDeactivateAccount } from '@/features/auth/hooks/useDeactivateAccount';
-import { useDeleteAccount } from '@/features/auth/hooks/useDeleteAccount';
-import { handleErrorApi } from '@/shared/lib/errors';
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { useDeactivateAccount } from "@/features/auth/hooks/useDeactivateAccount";
+import { useDeleteAccount } from "@/features/auth/hooks/useDeleteAccount";
+import { handleErrorApi } from "@/shared/lib/errors";
 
 const DangerZone = () => {
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const { mutate: deactivate, isPending: isDeactivating } = useDeactivateAccount();
+  const { mutate: deactivate, isPending: isDeactivating } =
+    useDeactivateAccount();
   const { mutate: deleteAcc, isPending: isDeleting } = useDeleteAccount();
 
   const handleDeactivate = () => {
@@ -38,29 +45,48 @@ const DangerZone = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Vô hiệu hóa tài khoản</p>
-            <p className="text-xs text-muted-foreground">Tạm thời vô hiệu hóa tài khoản</p>
+            <p className="text-xs text-muted-foreground">
+              Tạm thời vô hiệu hóa tài khoản
+            </p>
           </div>
-          <Button variant="outline" onClick={() => setConfirmDeactivate(true)}>Vô hiệu hóa</Button>
+          <Button variant="outline" onClick={() => setConfirmDeactivate(true)}>
+            Vô hiệu hóa
+          </Button>
         </div>
 
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Xóa tài khoản</p>
-            <p className="text-xs text-muted-foreground">Xóa vĩnh viễn tài khoản và tất cả dữ liệu</p>
+            <p className="text-xs text-muted-foreground">
+              Xóa vĩnh viễn tài khoản và tất cả dữ liệu
+            </p>
           </div>
-          <Button variant="destructive" onClick={() => setConfirmDelete(true)}>Xóa tài khoản</Button>
+          <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
+            Xóa tài khoản
+          </Button>
         </div>
 
-        <AlertDialog open={confirmDeactivate} onOpenChange={setConfirmDeactivate}>
+        <AlertDialog
+          open={confirmDeactivate}
+          onOpenChange={setConfirmDeactivate}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Vô hiệu hóa tài khoản?</AlertDialogTitle>
-              <AlertDialogDescription>Bạn có thể kích hoạt lại sau.</AlertDialogDescription>
+              <AlertDialogDescription>
+                Bạn có thể kích hoạt lại sau.
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setConfirmDeactivate(false)} />
-              <AlertDialogAction variant="destructive" onClick={handleDeactivate} disabled={isDeactivating}>
-                {isDeactivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleDeactivate}
+                disabled={isDeactivating}
+              >
+                {isDeactivating && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Xác nhận
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -77,8 +103,14 @@ const DangerZone = () => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setConfirmDelete(false)} />
-              <AlertDialogAction variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <AlertDialogAction
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Xóa vĩnh viễn
               </AlertDialogAction>
             </AlertDialogFooter>

@@ -1,13 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminStaffService } from '@/features/admin/services/admin-staff.service';
-import { KEY, QUERY_KEY } from '@/shared/utils/queryKeys';
-import type { UpdateStaffProfilePayload, AddSkillPayload } from '@/features/admin/types/admin.types';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminStaffService } from "@/features/admin/services/admin-staff.service";
+import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import type {
+  UpdateStaffProfilePayload,
+  AddSkillPayload,
+} from "@/features/admin/types/admin.types";
 
 export const useAdminUpdateStaffProfile = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateStaffProfilePayload }) =>
-      adminStaffService.updateProfile(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateStaffProfilePayload;
+    }) => adminStaffService.updateProfile(id, payload),
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.admin.staff.profile(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });

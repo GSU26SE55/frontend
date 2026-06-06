@@ -1,7 +1,10 @@
-import axiosInstance from '@/shared/lib/axios';
-import { ENDPOINTS } from '@/shared/utils/endpoints';
-import type { CommonResponse, PaginationResponse } from '@/shared/types/api.types';
-import type { AccountDto } from '@/shared/types/account.types';
+import axiosInstance from "@/shared/lib/axios";
+import { ENDPOINTS } from "@/shared/utils/endpoints";
+import type {
+  CommonResponse,
+  PaginationResponse,
+} from "@/shared/types/api.types";
+import type { AccountDto } from "@/shared/types/account.types";
 import type {
   GetAccountsParams,
   CreateAccountPayload,
@@ -14,50 +17,75 @@ import type {
   GetAccountSessionsParams,
   SessionDto,
   LoginAttemptDto,
-} from '@/features/admin/types/admin.types';
+} from "@/features/admin/types/admin.types";
 
 export const adminAccountsService = {
   getList: (params?: GetAccountsParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<AccountDto>>>(
-      ENDPOINTS.ADMIN.ACCOUNTS.LIST, { params },
+      ENDPOINTS.ADMIN.ACCOUNTS.LIST,
+      { params },
     ),
 
   getById: (id: string) =>
-    axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.ADMIN.ACCOUNTS.DETAIL(id)),
+    axiosInstance.get<CommonResponse<AccountDto>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.DETAIL(id),
+    ),
 
   create: (payload: CreateAccountPayload) =>
-    axiosInstance.post<CommonResponse<string>>(ENDPOINTS.ADMIN.ACCOUNTS.CREATE, payload),
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.CREATE,
+      payload,
+    ),
 
   invite: (payload: InviteAccountPayload) =>
-    axiosInstance.post<CommonResponse<null>>(ENDPOINTS.ADMIN.ACCOUNTS.INVITE, payload),
+    axiosInstance.post<CommonResponse<null>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.INVITE,
+      payload,
+    ),
 
   update: (id: string, payload: UpdateAccountPayload) =>
-    axiosInstance.put<CommonResponse<string>>(ENDPOINTS.ADMIN.ACCOUNTS.UPDATE(id), payload),
+    axiosInstance.put<CommonResponse<string>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.UPDATE(id),
+      payload,
+    ),
 
   changeStatus: (id: string, payload: ChangeAccountStatusPayload) =>
-    axiosInstance.patch<CommonResponse<unknown>>(ENDPOINTS.ADMIN.ACCOUNTS.STATUS(id), payload),
+    axiosInstance.patch<CommonResponse<unknown>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.STATUS(id),
+      payload,
+    ),
 
   unlock: (id: string) =>
-    axiosInstance.post<CommonResponse<unknown>>(ENDPOINTS.ADMIN.ACCOUNTS.UNLOCK(id)),
+    axiosInstance.post<CommonResponse<unknown>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.UNLOCK(id),
+    ),
 
   delete: (id: string) =>
-    axiosInstance.delete<CommonResponse<unknown>>(ENDPOINTS.ADMIN.ACCOUNTS.DELETE(id)),
+    axiosInstance.delete<CommonResponse<unknown>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.DELETE(id),
+    ),
 
   getSessions: (id: string, params?: GetAccountSessionsParams) =>
     axiosInstance.get<CommonResponse<SessionDto[]>>(
-      ENDPOINTS.ADMIN.ACCOUNTS.SESSIONS(id), { params },
+      ENDPOINTS.ADMIN.ACCOUNTS.SESSIONS(id),
+      { params },
     ),
 
   revokeAllSessions: (id: string, payload?: AdminRevokeAllSessionsPayload) =>
     axiosInstance.post<CommonResponse<number>>(
-      ENDPOINTS.ADMIN.ACCOUNTS.REVOKE_ALL(id), payload,
+      ENDPOINTS.ADMIN.ACCOUNTS.REVOKE_ALL(id),
+      payload,
     ),
 
   getLoginHistory: (id: string, params?: GetLoginHistoryParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<LoginAttemptDto>>>(
-      ENDPOINTS.ADMIN.ACCOUNTS.LOGIN_HISTORY(id), { params },
+      ENDPOINTS.ADMIN.ACCOUNTS.LOGIN_HISTORY(id),
+      { params },
     ),
 
   changeRole: (id: string, payload: ChangeAccountRolePayload) =>
-    axiosInstance.put<CommonResponse<unknown>>(ENDPOINTS.ADMIN.ACCOUNTS.ROLE(id), payload),
+    axiosInstance.put<CommonResponse<unknown>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.ROLE(id),
+      payload,
+    ),
 };

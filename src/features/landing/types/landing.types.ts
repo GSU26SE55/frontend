@@ -1,6 +1,6 @@
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from "lucide-react";
 
-export type HeroDemoId = 'health' | 'alerts' | 'tickets' | 'sla';
+export type HeroDemoId = "health" | "alerts" | "tickets" | "sla";
 
 export type LandingMetric = {
   label: string;
@@ -43,7 +43,7 @@ export type RoleItem = {
   desc: string;
 };
 
-export type BatteryStatus = 'Normal' | 'Degrading' | 'Critical';
+export type BatteryStatus = "Normal" | "Degrading" | "Critical";
 
 export type BatteryRow = {
   id: string;
@@ -55,7 +55,7 @@ export type BatteryRow = {
   assignee: string;
 };
 
-export type TicketPriority = 'P1' | 'P2';
+export type TicketPriority = "P1" | "P2";
 
 export type TicketRow = {
   id: string;

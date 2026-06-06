@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import OtpVerifyForm from '@/features/auth/components/OtpVerifyForm';
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import OtpVerifyForm from "@/features/auth/components/OtpVerifyForm";
 
 const OtpVerifyPage = () => {
   const location = useLocation();
@@ -9,7 +9,7 @@ const OtpVerifyPage = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate('/register', { replace: true });
+      navigate("/register", { replace: true });
     }
   }, [email, navigate]);
 

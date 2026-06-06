@@ -107,7 +107,9 @@ export default function AdminTicketDetailPage() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Đánh dấu là Incident nghiêm trọng?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Đánh dấu là Incident nghiêm trọng?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là Incident
               và xử lý theo quy trình ưu tiên cao nhất. Hành động này không thể
@@ -212,7 +214,9 @@ export default function AdminTicketDetailPage() {
                 <>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Trạng thái</span>
-                    <span className="font-medium">{ticket.slaTimer.status}</span>
+                    <span className="font-medium">
+                      {ticket.slaTimer.status}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Deadline</span>

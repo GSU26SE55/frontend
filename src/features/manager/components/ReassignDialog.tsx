@@ -39,7 +39,8 @@ interface Props {
 
 export default function ReassignDialog({ ticketId, open, onClose }: Props) {
   const { mutateAsync, isPending } = useReassignTicket(ticketId);
-  const { data: staffList = [], isLoading: loadingStaff } = useStaffAssignmentList();
+  const { data: staffList = [], isLoading: loadingStaff } =
+    useStaffAssignmentList();
 
   const form = useForm<ReassignFormValues>({
     resolver: zodResolver(reassignSchema),
@@ -69,13 +70,18 @@ export default function ReassignDialog({ ticketId, open, onClose }: Props) {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    items={staffList.map(s => ({ value: s.accountId, label: s.fullName ?? s.accountId }))}
+                    items={staffList.map((s) => ({
+                      value: s.accountId,
+                      label: s.fullName ?? s.accountId,
+                    }))}
                     disabled={loadingStaff}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={loadingStaff ? "Đang tải..." : "Chọn nhân viên"}
+                          placeholder={
+                            loadingStaff ? "Đang tải..." : "Chọn nhân viên"
+                          }
                         />
                       </SelectTrigger>
                     </FormControl>

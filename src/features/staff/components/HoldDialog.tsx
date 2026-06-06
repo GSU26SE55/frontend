@@ -71,7 +71,9 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    items={Object.entries(PAUSE_REASON_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                    items={Object.entries(PAUSE_REASON_LABELS).map(
+                      ([v, l]) => ({ value: v, label: l }),
+                    )}
                   >
                     <FormControl>
                       <SelectTrigger>

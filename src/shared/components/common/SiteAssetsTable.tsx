@@ -1,20 +1,33 @@
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BatteryStatusEnum, type BatteryAssetDto } from '@/shared/types/battery.types';
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  BatteryStatusEnum,
+  type BatteryAssetDto,
+} from "@/shared/types/battery.types";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]:         'Hoạt động',
-  [BatteryStatusEnum.Inactive]:       'Không hoạt động',
-  [BatteryStatusEnum.Decommissioned]: 'Đã ngừng',
+  [BatteryStatusEnum.Active]: "Hoạt động",
+  [BatteryStatusEnum.Inactive]: "Không hoạt động",
+  [BatteryStatusEnum.Decommissioned]: "Đã ngừng",
 };
 
-const STATUS_VARIANT: Record<BatteryStatusEnum, 'default' | 'secondary' | 'destructive'> = {
-  [BatteryStatusEnum.Active]:         'default',
-  [BatteryStatusEnum.Inactive]:       'secondary',
-  [BatteryStatusEnum.Decommissioned]: 'destructive',
+const STATUS_VARIANT: Record<
+  BatteryStatusEnum,
+  "default" | "secondary" | "destructive"
+> = {
+  [BatteryStatusEnum.Active]: "default",
+  [BatteryStatusEnum.Inactive]: "secondary",
+  [BatteryStatusEnum.Decommissioned]: "destructive",
 };
 
 interface SiteAssetsTableProps {
@@ -48,7 +61,9 @@ export default function SiteAssetsTable({
 
   if (data.length === 0) {
     return (
-      <p className="text-center text-sm text-muted-foreground py-8">Chưa có pin nào.</p>
+      <p className="text-center text-sm text-muted-foreground py-8">
+        Chưa có pin nào.
+      </p>
     );
   }
 
@@ -68,19 +83,26 @@ export default function SiteAssetsTable({
         <TableBody>
           {data.map((asset) => (
             <TableRow key={asset.id}>
-              <TableCell className="font-mono text-sm">{asset.serialNumber}</TableCell>
+              <TableCell className="font-mono text-sm">
+                {asset.serialNumber}
+              </TableCell>
               <TableCell>{asset.batteryTypeName}</TableCell>
-              <TableCell>{asset.batteryGroupName ?? '—'}</TableCell>
+              <TableCell>{asset.batteryGroupName ?? "—"}</TableCell>
               <TableCell>
                 <Badge variant={STATUS_VARIANT[asset.status]}>
                   {STATUS_LABEL[asset.status]}
                 </Badge>
               </TableCell>
-              <TableCell>{format(new Date(asset.installDate), 'dd/MM/yyyy')}</TableCell>
+              <TableCell>
+                {format(new Date(asset.installDate), "dd/MM/yyyy")}
+              </TableCell>
               <TableCell>
                 {asset.lastSensorReadingAt
-                  ? format(new Date(asset.lastSensorReadingAt), 'dd/MM/yyyy HH:mm')
-                  : '—'}
+                  ? format(
+                      new Date(asset.lastSensorReadingAt),
+                      "dd/MM/yyyy HH:mm",
+                    )
+                  : "—"}
               </TableCell>
             </TableRow>
           ))}

@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import { fileStorageService } from '@/features/file-storage/services/file-storage.service';
-import type { UploadFilePayload } from '@/features/file-storage/types/file-storage.types';
+import { useMutation } from "@tanstack/react-query";
+import { fileStorageService } from "@/features/file-storage/services/file-storage.service";
+import type { UploadFilePayload } from "@/features/file-storage/types/file-storage.types";
 
 export function useUploadFile() {
   return useMutation({

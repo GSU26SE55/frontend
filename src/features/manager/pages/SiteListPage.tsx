@@ -1,33 +1,51 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
-import { useSiteList } from '@/features/manager/hooks/useSites';
-import { SiteStatusEnum, type SiteFilterParams } from '@/shared/types/site.types';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { useSiteList } from "@/features/manager/hooks/useSites";
+import {
+  SiteStatusEnum,
+  type SiteFilterParams,
+} from "@/shared/types/site.types";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
-  [SiteStatusEnum.Active]:           'Hoạt động',
-  [SiteStatusEnum.UnderMaintenance]: 'Bảo trì',
-  [SiteStatusEnum.Decommissioned]:   'Đã ngừng',
+  [SiteStatusEnum.Active]: "Hoạt động",
+  [SiteStatusEnum.UnderMaintenance]: "Bảo trì",
+  [SiteStatusEnum.Decommissioned]: "Đã ngừng",
 };
 
-const STATUS_VARIANT: Record<SiteStatusEnum, 'default' | 'secondary' | 'destructive'> = {
-  [SiteStatusEnum.Active]:           'default',
-  [SiteStatusEnum.UnderMaintenance]: 'secondary',
-  [SiteStatusEnum.Decommissioned]:   'destructive',
+const STATUS_VARIANT: Record<
+  SiteStatusEnum,
+  "default" | "secondary" | "destructive"
+> = {
+  [SiteStatusEnum.Active]: "default",
+  [SiteStatusEnum.UnderMaintenance]: "secondary",
+  [SiteStatusEnum.Decommissioned]: "destructive",
 };
 
 export default function ManagerSiteListPage() {
   const navigate = useNavigate();
-  const [params, setParams] = useState<SiteFilterParams>({ pageNumber: 1, pageSize: 10 });
-  const [keyword, setKeyword] = useState('');
+  const [params, setParams] = useState<SiteFilterParams>({
+    pageNumber: 1,
+    pageSize: 10,
+  });
+  const [keyword, setKeyword] = useState("");
 
   const { data, isLoading } = useSiteList(params);
-  const totalPages = Math.ceil((data?.totalItems ?? 0) / (params.pageSize ?? 10));
+  const totalPages = Math.ceil(
+    (data?.totalItems ?? 0) / (params.pageSize ?? 10),
+  );
 
   const handleSearch = () => {
     setParams((p) => ({ ...p, pageNumber: 1, keyword: keyword || undefined }));
@@ -52,14 +70,18 @@ export default function ManagerSiteListPage() {
           placeholder="Tìm theo tên site..."
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           className="max-w-sm"
         />
-        <Button variant="outline" onClick={handleSearch}>Tìm</Button>
+        <Button variant="outline" onClick={handleSearch}>
+          Tìm
+        </Button>
       </div>
 
-      {(!data?.items || data.items.length === 0) ? (
-        <p className="text-center text-sm text-muted-foreground py-8">Chưa có site nào.</p>
+      {!data?.items || data.items.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-8">
+          Chưa có site nào.
+        </p>
       ) : (
         <Table>
           <TableHeader>
@@ -86,7 +108,9 @@ export default function ManagerSiteListPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>{site.batteryAssetCount}</TableCell>
-                <TableCell>{format(new Date(site.installDate), 'dd/MM/yyyy')}</TableCell>
+                <TableCell>
+                  {format(new Date(site.installDate), "dd/MM/yyyy")}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -98,7 +122,9 @@ export default function ManagerSiteListPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setParams((p) => ({ ...p, pageNumber: (p.pageNumber ?? 1) - 1 }))}
+            onClick={() =>
+              setParams((p) => ({ ...p, pageNumber: (p.pageNumber ?? 1) - 1 }))
+            }
             disabled={(params.pageNumber ?? 1) <= 1}
           >
             Trước
@@ -109,7 +135,9 @@ export default function ManagerSiteListPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setParams((p) => ({ ...p, pageNumber: (p.pageNumber ?? 1) + 1 }))}
+            onClick={() =>
+              setParams((p) => ({ ...p, pageNumber: (p.pageNumber ?? 1) + 1 }))
+            }
             disabled={(params.pageNumber ?? 1) >= totalPages}
           >
             Sau

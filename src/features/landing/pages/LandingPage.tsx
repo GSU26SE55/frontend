@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import FinalCtaSection from '@/features/landing/components/FinalCtaSection';
-import GovernanceSection from '@/features/landing/components/GovernanceSection';
-import HeroSection from '@/features/landing/components/HeroSection';
-import LandingFooter from '@/features/landing/components/LandingFooter';
-import LandingHeader from '@/features/landing/components/LandingHeader';
-import ProductSection from '@/features/landing/components/ProductSection';
-import RolesSection from '@/features/landing/components/RolesSection';
-import WorkflowSection from '@/features/landing/components/WorkflowSection';
-import StatsSection from '@/features/landing/components/StatsSection';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import FinalCtaSection from "@/features/landing/components/FinalCtaSection";
+import GovernanceSection from "@/features/landing/components/GovernanceSection";
+import HeroSection from "@/features/landing/components/HeroSection";
+import LandingFooter from "@/features/landing/components/LandingFooter";
+import LandingHeader from "@/features/landing/components/LandingHeader";
+import ProductSection from "@/features/landing/components/ProductSection";
+import RolesSection from "@/features/landing/components/RolesSection";
+import WorkflowSection from "@/features/landing/components/WorkflowSection";
+import StatsSection from "@/features/landing/components/StatsSection";
 const LandingPage = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
@@ -28,16 +28,16 @@ const LandingPage = () => {
         Skip to main content
       </a>
 
-      <LandingHeader scrolled={scrolled} onLogin={() => navigate('/login')} />
+      <LandingHeader scrolled={scrolled} onLogin={() => navigate("/login")} />
 
       <main id="main-content">
-        <HeroSection onLogin={() => navigate('/login')} />
+        <HeroSection onLogin={() => navigate("/login")} />
         <ProductSection />
         <WorkflowSection />
         <StatsSection />
         <RolesSection />
         <GovernanceSection />
-        <FinalCtaSection onLogin={() => navigate('/login')} />
+        <FinalCtaSection onLogin={() => navigate("/login")} />
       </main>
 
       <LandingFooter />

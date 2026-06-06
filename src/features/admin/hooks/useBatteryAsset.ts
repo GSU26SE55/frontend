@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEY } from '@/shared/utils/queryKeys';
-import { batteryAssetService } from '@/features/admin/services/battery-asset.service';
+import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
+import { batteryAssetService } from "@/features/admin/services/battery-asset.service";
 
 export function useBatteryAsset(id: string) {
   return useQuery({

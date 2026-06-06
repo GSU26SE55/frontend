@@ -29,7 +29,9 @@ const PRIORITY_ITEMS: Record<string, string> = {
 };
 const CATEGORY_ITEMS: Record<string, string> = {
   "": "Tất cả loại",
-  ...Object.fromEntries(Object.entries(TicketCategoryEnum).map(([, v]) => [v, v])),
+  ...Object.fromEntries(
+    Object.entries(TicketCategoryEnum).map(([, v]) => [v, v]),
+  ),
 };
 
 export default function TicketQueuePage() {

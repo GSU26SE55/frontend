@@ -20,10 +20,7 @@ import {
   useApproveTicket,
   useDeclareIncident,
 } from "@/features/manager/hooks/useManagerTickets";
-import {
-  TicketStatusEnum,
-  ActorRoleEnum,
-} from "@/shared/types/ticket.types";
+import { TicketStatusEnum, ActorRoleEnum } from "@/shared/types/ticket.types";
 
 type DialogType =
   | "triage"

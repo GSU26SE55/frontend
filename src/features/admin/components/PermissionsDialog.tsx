@@ -1,18 +1,25 @@
-import { useState, useMemo } from 'react';
-import { Loader2, Search } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useMemo } from "react";
+import { Loader2, Search } from "lucide-react";
+import { toast } from "sonner";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useAdminPermissionList,
   useAdminRolePermissions,
   useAdminSetRolePermissions,
-} from '@/features/admin/hooks/useAdminPermissions';
-import { handleErrorApi } from '@/shared/lib/errors';
-import type { RoleDto, PermissionDto } from '@/features/admin/types/admin.types';
+} from "@/features/admin/hooks/useAdminPermissions";
+import { handleErrorApi } from "@/shared/lib/errors";
+import type {
+  RoleDto,
+  PermissionDto,
+} from "@/features/admin/types/admin.types";
 
 interface Props {
   open: boolean;
@@ -21,30 +28,43 @@ interface Props {
 }
 
 export default function PermissionsDialog({ open, onClose, role }: Props) {
-  const [search, setSearch]             = useState('');
-  const [selected, setSelected]         = useState<Set<string> | null>(null);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string> | null>(null);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
 
-  const { data: allPermsData, isLoading: loadingAll }  = useAdminPermissionList();
-  const { data: rolePermsData, isLoading: loadingRole } = useAdminRolePermissions(role.id);
-  const { mutate: setPerms, isPending: isSaving }       = useAdminSetRolePermissions();
+  const { data: allPermsData, isLoading: loadingAll } =
+    useAdminPermissionList();
+  const { data: rolePermsData, isLoading: loadingRole } =
+    useAdminRolePermissions(role.id);
+  const { mutate: setPerms, isPending: isSaving } =
+    useAdminSetRolePermissions();
 
   const allPerms: PermissionDto[] = useMemo(
-    () => Array.isArray(allPermsData)  ? allPermsData  : ((allPermsData  as unknown as { items?: unknown[] })?.items ?? []) as PermissionDto[],
+    () =>
+      Array.isArray(allPermsData)
+        ? allPermsData
+        : (((allPermsData as unknown as { items?: unknown[] })?.items ??
+            []) as PermissionDto[]),
     [allPermsData],
   );
   const rolePerms: PermissionDto[] = useMemo(
-    () => Array.isArray(rolePermsData) ? rolePermsData : ((rolePermsData as unknown as { items?: unknown[] })?.items ?? []) as PermissionDto[],
+    () =>
+      Array.isArray(rolePermsData)
+        ? rolePermsData
+        : (((rolePermsData as unknown as { items?: unknown[] })?.items ??
+            []) as PermissionDto[]),
     [rolePermsData],
   );
 
-  const checkedIds: Set<string> = selected ?? new Set(rolePerms.map(p => p.id));
+  const checkedIds: Set<string> =
+    selected ?? new Set(rolePerms.map((p) => p.id));
 
   const grouped = useMemo(() => {
     const q = search.toLowerCase();
-    const filtered = allPerms.filter(p =>
-      p.code.toLowerCase().includes(q) ||
-      (p.description ?? '').toLowerCase().includes(q),
+    const filtered = allPerms.filter(
+      (p) =>
+        p.code.toLowerCase().includes(q) ||
+        (p.description ?? "").toLowerCase().includes(q),
     );
     return filtered.reduce<Record<string, PermissionDto[]>>((acc, p) => {
       (acc[p.module] ??= []).push(p);
@@ -54,19 +74,32 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
 
   const toggle = (id: string) => {
     const next = new Set(checkedIds);
-    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
     setSelected(next);
   };
 
   const toggleModule = (perms: PermissionDto[]) => {
-    const allChecked = perms.every(p => checkedIds.has(p.id));
+    const allChecked = perms.every((p) => checkedIds.has(p.id));
     const next = new Set(checkedIds);
-    perms.forEach(p => { if (allChecked) { next.delete(p.id); } else { next.add(p.id); } });
+    perms.forEach((p) => {
+      if (allChecked) {
+        next.delete(p.id);
+      } else {
+        next.add(p.id);
+      }
+    });
     setSelected(next);
   };
 
   const handleSave = () => {
-    if (checkedIds.size === 0) { setConfirmEmpty(true); return; }
+    if (checkedIds.size === 0) {
+      setConfirmEmpty(true);
+      return;
+    }
     doSave();
   };
 
@@ -74,8 +107,11 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
     setPerms(
       { roleId: role.id, payload: { permissionIds: Array.from(checkedIds) } },
       {
-        onSuccess: () => { toast.success('Đã cập nhật quyền'); onClose(); },
-        onError:   (err) => handleErrorApi({ error: err }),
+        onSuccess: () => {
+          toast.success("Đã cập nhật quyền");
+          onClose();
+        },
+        onError: (err) => handleErrorApi({ error: err }),
       },
     );
   };
@@ -84,7 +120,10 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
 
   return (
     <>
-      <Dialog open={open && !confirmEmpty} onOpenChange={(v: boolean) => !v && onClose()}>
+      <Dialog
+        open={open && !confirmEmpty}
+        onOpenChange={(v: boolean) => !v && onClose()}
+      >
         <DialogContent className="sm:max-w-lg flex flex-col max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>Permissions — {role.name}</DialogTitle>
@@ -92,10 +131,13 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
 
           {/* Search */}
           <div className="relative shrink-0">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              size={13}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm permission…"
               className="h-8 w-full pl-8 pr-3 rounded-md border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
             />
@@ -105,65 +147,80 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
           <div className="flex-1 overflow-y-auto space-y-4 py-1 pr-1">
             {isLoading ? (
               <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10" />
+                ))}
               </div>
             ) : Object.keys(grouped).length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Không tìm thấy permission nào.</p>
+              <p className="text-sm text-muted-foreground text-center py-6">
+                Không tìm thấy permission nào.
+              </p>
             ) : (
-              Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([module, perms]) => {
-                const allChecked  = perms.every(p => checkedIds.has(p.id));
-                const someChecked = !allChecked && perms.some(p => checkedIds.has(p.id));
-                return (
-                  <div key={module}>
-                    <button
-                      type="button"
-                      onClick={() => toggleModule(perms)}
-                      className="flex items-center gap-2 w-full text-left mb-1.5 group"
-                    >
-                      <span className={`w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
-                        allChecked
-                          ? 'bg-emerald-600 border-emerald-600 text-white'
-                          : someChecked
-                          ? 'bg-emerald-100 border-emerald-400 text-emerald-700'
-                          : 'border-border'
-                      }`}>
-                        {allChecked ? '✓' : someChecked ? '−' : ''}
-                      </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                        {module} ({perms.length})
-                      </span>
-                    </button>
-                    <div className="pl-6 space-y-1">
-                      {perms.map(p => (
-                        <label
-                          key={p.id}
-                          className="flex items-start gap-2.5 cursor-pointer py-1 rounded hover:bg-muted/40 px-2 -mx-2"
+              Object.entries(grouped)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([module, perms]) => {
+                  const allChecked = perms.every((p) => checkedIds.has(p.id));
+                  const someChecked =
+                    !allChecked && perms.some((p) => checkedIds.has(p.id));
+                  return (
+                    <div key={module}>
+                      <button
+                        type="button"
+                        onClick={() => toggleModule(perms)}
+                        className="flex items-center gap-2 w-full text-left mb-1.5 group"
+                      >
+                        <span
+                          className={`w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
+                            allChecked
+                              ? "bg-emerald-600 border-emerald-600 text-white"
+                              : someChecked
+                                ? "bg-emerald-100 border-emerald-400 text-emerald-700"
+                                : "border-border"
+                          }`}
                         >
-                          <span className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
-                            checkedIds.has(p.id)
-                              ? 'bg-emerald-600 border-emerald-600 text-white'
-                              : 'border-border'
-                          }`}>
-                            {checkedIds.has(p.id) ? '✓' : ''}
-                          </span>
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={checkedIds.has(p.id)}
-                            onChange={() => toggle(p.id)}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[12px] font-mono leading-none truncate">{p.code}</div>
-                            {p.description && (
-                              <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{p.description}</div>
-                            )}
-                          </div>
-                        </label>
-                      ))}
+                          {allChecked ? "✓" : someChecked ? "−" : ""}
+                        </span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                          {module} ({perms.length})
+                        </span>
+                      </button>
+                      <div className="pl-6 space-y-1">
+                        {perms.map((p) => (
+                          <label
+                            key={p.id}
+                            className="flex items-start gap-2.5 cursor-pointer py-1 rounded hover:bg-muted/40 px-2 -mx-2"
+                          >
+                            <span
+                              className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
+                                checkedIds.has(p.id)
+                                  ? "bg-emerald-600 border-emerald-600 text-white"
+                                  : "border-border"
+                              }`}
+                            >
+                              {checkedIds.has(p.id) ? "✓" : ""}
+                            </span>
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={checkedIds.has(p.id)}
+                              onChange={() => toggle(p.id)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-[12px] font-mono leading-none truncate">
+                                {p.code}
+                              </div>
+                              {p.description && (
+                                <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                                  {p.description}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })
             )}
           </div>
 
@@ -172,8 +229,14 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
           </div>
 
           <DialogFooter className="shrink-0">
-            <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
-            <Button onClick={handleSave} disabled={isSaving} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
               {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
               Lưu quyền
             </Button>
@@ -182,17 +245,29 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
       </Dialog>
 
       {/* Confirm empty permissions */}
-      <Dialog open={confirmEmpty} onOpenChange={(v: boolean) => setConfirmEmpty(v)}>
+      <Dialog
+        open={confirmEmpty}
+        onOpenChange={(v: boolean) => setConfirmEmpty(v)}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Xóa hết quyền?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Bạn chưa chọn permission nào. Role <strong>{role.name}</strong> sẽ không có bất kỳ quyền gì sau khi lưu. Bạn có chắc không?
+            Bạn chưa chọn permission nào. Role <strong>{role.name}</strong> sẽ
+            không có bất kỳ quyền gì sau khi lưu. Bạn có chắc không?
           </p>
           <div className="flex gap-2 justify-end pt-2">
-            <Button variant="outline" onClick={() => setConfirmEmpty(false)}>Quay lại</Button>
-            <Button variant="destructive" onClick={() => { setConfirmEmpty(false); doSave(); }}>
+            <Button variant="outline" onClick={() => setConfirmEmpty(false)}>
+              Quay lại
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setConfirmEmpty(false);
+                doSave();
+              }}
+            >
               Xóa hết quyền
             </Button>
           </div>

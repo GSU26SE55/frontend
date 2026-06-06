@@ -21,7 +21,9 @@ const PAGE_SIZE = 20;
 
 const STATUS_ITEMS: Record<string, string> = {
   "": "Tất cả trạng thái",
-  ...Object.fromEntries(Object.entries(TicketStatusEnum).map(([, v]) => [v, v])),
+  ...Object.fromEntries(
+    Object.entries(TicketStatusEnum).map(([, v]) => [v, v]),
+  ),
 };
 const PRIORITY_ITEMS: Record<string, string> = {
   "": "Tất cả priority",
@@ -31,7 +33,9 @@ const PRIORITY_ITEMS: Record<string, string> = {
 };
 const CATEGORY_ITEMS: Record<string, string> = {
   "": "Tất cả loại",
-  ...Object.fromEntries(Object.entries(TicketCategoryEnum).map(([, v]) => [v, v])),
+  ...Object.fromEntries(
+    Object.entries(TicketCategoryEnum).map(([, v]) => [v, v]),
+  ),
 };
 
 export default function TicketListPage() {

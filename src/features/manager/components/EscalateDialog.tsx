@@ -76,7 +76,12 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    items={Object.entries(EscalationReasonEnum).map(([, v]) => ({ value: v, label: ESCALATION_REASON_LABEL[v] }))}
+                    items={Object.entries(EscalationReasonEnum).map(
+                      ([, v]) => ({
+                        value: v,
+                        label: ESCALATION_REASON_LABEL[v],
+                      }),
+                    )}
                   >
                     <FormControl>
                       <SelectTrigger>

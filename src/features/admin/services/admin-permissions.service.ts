@@ -1,7 +1,10 @@
-import axiosInstance from '@/shared/lib/axios';
-import { ENDPOINTS } from '@/shared/utils/endpoints';
-import type { CommonResponse } from '@/shared/types/api.types';
-import type { PermissionDto, SetPermissionsPayload } from '@/features/admin/types/admin.types';
+import axiosInstance from "@/shared/lib/axios";
+import { ENDPOINTS } from "@/shared/utils/endpoints";
+import type { CommonResponse } from "@/shared/types/api.types";
+import type {
+  PermissionDto,
+  SetPermissionsPayload,
+} from "@/features/admin/types/admin.types";
 
 export const adminPermissionsService = {
   getList: (module?: string) =>
@@ -19,6 +22,7 @@ export const adminPermissionsService = {
   setForRole: (roleId: string, payload: SetPermissionsPayload) =>
     // PUT replaces all permissions — FE must fetch-before-save to preserve existing ones
     axiosInstance.put<CommonResponse<unknown>>(
-      ENDPOINTS.ADMIN.PERMISSIONS.SET_FOR_ROLE(roleId), payload,
+      ENDPOINTS.ADMIN.PERMISSIONS.SET_FOR_ROLE(roleId),
+      payload,
     ),
 };

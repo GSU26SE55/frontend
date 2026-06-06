@@ -1,35 +1,38 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import SiteDashboardCard from '@/shared/components/common/SiteDashboardCard';
-import SiteAssetsTable from '@/shared/components/common/SiteAssetsTable';
-import SiteFormDialog from '@/features/admin/components/SiteFormDialog';
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
+import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
+import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
 import {
   useSiteDetail,
   useSiteDashboard,
   useSiteAssets,
   useDeleteSite,
   useRestoreSite,
-} from '@/features/admin/hooks/useSites';
-import { SiteStatusEnum } from '@/shared/types/site.types';
-import type { SiteAssetsFilterParams } from '@/shared/types/site.types';
+} from "@/features/admin/hooks/useSites";
+import { SiteStatusEnum } from "@/shared/types/site.types";
+import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
 
 export default function SiteDetailPage() {
-  const { id = '' }    = useParams<{ id: string }>();
-  const navigate        = useNavigate();
-  const [editOpen, setEditOpen]   = useState(false);
+  const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
   const [assetsParams, setAssetsParams] = useState<SiteAssetsFilterParams>({
     pageNumber: 1,
-    pageSize:   10,
+    pageSize: 10,
   });
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
-  const { data: dashboard }                    = useSiteDashboard(id);
-  const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(id, assetsParams);
+  const { data: dashboard } = useSiteDashboard(id);
+  const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(
+    id,
+    assetsParams,
+  );
 
-  const { mutate: deleteSite }  = useDeleteSite();
+  const { mutate: deleteSite } = useDeleteSite();
   const { mutate: restoreSite } = useRestoreSite();
 
   if (loadingSite) {
@@ -45,7 +48,9 @@ export default function SiteDetailPage() {
     return (
       <div className="p-6">
         <p className="text-muted-foreground">Không tìm thấy site.</p>
-        <Button variant="outline" className="mt-2" onClick={() => navigate(-1)}>Quay lại</Button>
+        <Button variant="outline" className="mt-2" onClick={() => navigate(-1)}>
+          Quay lại
+        </Button>
       </div>
     );
   }
@@ -54,7 +59,7 @@ export default function SiteDetailPage() {
 
   const handleDelete = () => {
     if (confirm(`Xoá site "${site.name}"?`)) {
-      deleteSite(site.id, { onSuccess: () => navigate('/admin/sites') });
+      deleteSite(site.id, { onSuccess: () => navigate("/admin/sites") });
     }
   };
 
@@ -68,7 +73,12 @@ export default function SiteDetailPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="-ml-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="-ml-2"
+          >
             ← Quay lại
           </Button>
           <h1 className="text-2xl font-bold">{site.name}</h1>
@@ -82,12 +92,22 @@ export default function SiteDetailPage() {
           {isDecommissioned ? (
             <>
               <Badge variant="destructive">Đã ngừng</Badge>
-              <Button variant="outline" size="sm" onClick={handleRestore}>Khôi phục</Button>
+              <Button variant="outline" size="sm" onClick={handleRestore}>
+                Khôi phục
+              </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>Sửa</Button>
-              <Button variant="destructive" size="sm" onClick={handleDelete}>Xoá</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditOpen(true)}
+              >
+                Sửa
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                Xoá
+              </Button>
             </>
           )}
         </div>

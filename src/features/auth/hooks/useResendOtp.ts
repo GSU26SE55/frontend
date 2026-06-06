@@ -1,19 +1,19 @@
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { authService } from '@/features/auth/services/auth.service';
-import { handleErrorApi } from '@/shared/lib/errors';
-import type { ResendOtpPayload } from '@/features/auth/types/auth.types';
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { authService } from "@/features/auth/services/auth.service";
+import { handleErrorApi } from "@/shared/lib/errors";
+import type { ResendOtpPayload } from "@/features/auth/types/auth.types";
 
 export const useResendOtp = () =>
   useMutation({
     mutationFn: (payload: ResendOtpPayload) => authService.resendOtp(payload),
-    onSuccess: response => {
+    onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? 'Gửi lại OTP thất bại');
+        toast.error(res.message ?? "Gửi lại OTP thất bại");
         return;
       }
-      toast.success('OTP đã được gửi lại');
+      toast.success("OTP đã được gửi lại");
     },
-    onError: error => handleErrorApi({ error }),
+    onError: (error) => handleErrorApi({ error }),
   });

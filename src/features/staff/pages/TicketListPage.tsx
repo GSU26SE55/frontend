@@ -48,7 +48,11 @@ export default function TicketListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Ticket của tôi</h1>
-        <Select value={statusFilter} items={STATUS_ITEMS} onValueChange={handleStatusChange}>
+        <Select
+          value={statusFilter}
+          items={STATUS_ITEMS}
+          onValueChange={handleStatusChange}
+        >
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>

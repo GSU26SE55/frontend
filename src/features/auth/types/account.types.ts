@@ -36,16 +36,17 @@ export interface LoginHistoryParams {
 }
 
 export const LoginAttemptResult = {
-  Success:           1,
-  WrongPassword:     2,
-  AccountNotFound:   3,
-  AccountLocked:     4,
-  AccountSuspended:  5,
-  AccountBanned:     6,
-  AccountInactive:   7,
-  AccountNotVerified:8,
+  Success: 1,
+  WrongPassword: 2,
+  AccountNotFound: 3,
+  AccountLocked: 4,
+  AccountSuspended: 5,
+  AccountBanned: 6,
+  AccountInactive: 7,
+  AccountNotVerified: 8,
 } as const;
-export type LoginAttemptResult = typeof LoginAttemptResult[keyof typeof LoginAttemptResult];
+export type LoginAttemptResult =
+  (typeof LoginAttemptResult)[keyof typeof LoginAttemptResult];
 
 export interface LoginAttemptDto {
   id: string;
@@ -74,10 +75,11 @@ export interface LoginHistoryResponseData {
 // PendingVerification = 0 is an intentional exception — mirrors the BE API contract
 export const AccountStatusEnum = {
   PendingVerification: 0,
-  Active:              1,
-  Locked:              2,
-  Inactive:            3,
-  Suspended:           4,
-  Banned:              5,
+  Active: 1,
+  Locked: 2,
+  Inactive: 3,
+  Suspended: 4,
+  Banned: 5,
 } as const;
-export type AccountStatusEnum = typeof AccountStatusEnum[keyof typeof AccountStatusEnum];
+export type AccountStatusEnum =
+  (typeof AccountStatusEnum)[keyof typeof AccountStatusEnum];

@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEY } from '@/shared/utils/queryKeys';
-import { batteryGroupService } from '@/features/admin/services/battery-group.service';
-import type { BatteryGroupListParams } from '@/features/admin/types/battery-group.types';
+import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
+import { batteryGroupService } from "@/features/admin/services/battery-group.service";
+import type { BatteryGroupListParams } from "@/features/admin/types/battery-group.types";
 
 export function useBatteryGroups(params?: BatteryGroupListParams) {
   return useQuery({

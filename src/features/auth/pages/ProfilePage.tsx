@@ -1,26 +1,31 @@
-import { useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Camera } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { profileSchema, type ProfileFormValues } from '@/features/auth/schemas/profile.schema';
-import { useProfile } from '@/features/auth/hooks/useProfile';
-import { useUpdateProfile } from '@/features/auth/hooks/useUpdateProfile';
-import { useUpdateAvatar } from '@/features/auth/hooks/useUpdateAvatar';
-import { useUploadFile } from '@/features/file-storage/hooks/useUploadFile';
-import { FilePurposeEnum } from '@/features/file-storage/types/file-storage.types';
-import { handleErrorApi } from '@/shared/lib/errors';
+import { useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Camera } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  profileSchema,
+  type ProfileFormValues,
+} from "@/features/auth/schemas/profile.schema";
+import { useProfile } from "@/features/auth/hooks/useProfile";
+import { useUpdateProfile } from "@/features/auth/hooks/useUpdateProfile";
+import { useUpdateAvatar } from "@/features/auth/hooks/useUpdateAvatar";
+import { useUploadFile } from "@/features/file-storage/hooks/useUploadFile";
+import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
+import { handleErrorApi } from "@/shared/lib/errors";
 
 const ProfilePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: account, isLoading } = useProfile();
-  const { mutateAsync: updateProfile, isPending: isUpdating } = useUpdateProfile();
+  const { mutateAsync: updateProfile, isPending: isUpdating } =
+    useUpdateProfile();
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
-  const { mutate: updateAvatar, isPending: isAvatarUpdating } = useUpdateAvatar();
+  const { mutate: updateAvatar, isPending: isAvatarUpdating } =
+    useUpdateAvatar();
 
   const {
     register,
@@ -31,20 +36,20 @@ const ProfilePage = () => {
     resolver: zodResolver(profileSchema),
     values: account
       ? {
-          fullName: account.fullName ?? '',
-          phoneNumber: account.phoneNumber ?? '',
-          address: account.address ?? '',
-          birthDate: account.dateOfBirth ?? '',
-          timeZone: account.profile?.timeZone ?? '',
+          fullName: account.fullName ?? "",
+          phoneNumber: account.phoneNumber ?? "",
+          address: account.address ?? "",
+          birthDate: account.dateOfBirth ?? "",
+          timeZone: account.profile?.timeZone ?? "",
         }
       : undefined,
   });
 
-  const initials = (account?.fullName ?? '?')
-    .split(' ')
+  const initials = (account?.fullName ?? "?")
+    .split(" ")
     .slice(-2)
-    .map(n => n[0] ?? '')
-    .join('')
+    .map((n) => n[0] ?? "")
+    .join("")
     .toUpperCase();
 
   const onSubmit = async (data: ProfileFormValues) => {
@@ -56,7 +61,7 @@ const ProfilePage = () => {
         birthDate: data.birthDate || undefined,
         timeZone: data.timeZone || undefined,
       });
-      toast.success('Cập nhật hồ sơ thành công');
+      toast.success("Cập nhật hồ sơ thành công");
     } catch (error) {
       handleErrorApi({ error, setError });
     }
@@ -71,13 +76,14 @@ const ProfilePage = () => {
       {
         onSuccess: (res) => {
           if (!res.isSuccess || !res.data) {
-            toast.error('Tải ảnh thất bại');
+            toast.error("Tải ảnh thất bại");
             return;
           }
           updateAvatar(
             { avatarFileId: res.data.fileId },
             {
-              onSuccess: () => toast.success('Cập nhật ảnh đại diện thành công'),
+              onSuccess: () =>
+                toast.success("Cập nhật ảnh đại diện thành công"),
               onError: (err) => handleErrorApi({ error: err }),
             },
           );
@@ -86,7 +92,7 @@ const ProfilePage = () => {
       },
     );
 
-    e.target.value = '';
+    e.target.value = "";
   };
 
   if (isLoading) {
@@ -156,9 +162,11 @@ const ProfilePage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1.5">
                 <Label htmlFor="fullName">Họ và tên</Label>
-                <Input id="fullName" {...register('fullName')} />
+                <Input id="fullName" {...register("fullName")} />
                 {errors.fullName && (
-                  <p className="text-xs text-red-500">{errors.fullName.message}</p>
+                  <p className="text-xs text-red-500">
+                    {errors.fullName.message}
+                  </p>
                 )}
               </div>
 
@@ -166,7 +174,7 @@ const ProfilePage = () => {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  value={account?.email ?? ''}
+                  value={account?.email ?? ""}
                   disabled
                   className="bg-muted"
                 />
@@ -174,25 +182,35 @@ const ProfilePage = () => {
 
               <div className="space-y-1.5">
                 <Label htmlFor="phoneNumber">Số điện thoại</Label>
-                <Input id="phoneNumber" {...register('phoneNumber')} placeholder="0912345678" />
+                <Input
+                  id="phoneNumber"
+                  {...register("phoneNumber")}
+                  placeholder="0912345678"
+                />
                 {errors.phoneNumber && (
-                  <p className="text-xs text-red-500">{errors.phoneNumber.message}</p>
+                  <p className="text-xs text-red-500">
+                    {errors.phoneNumber.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="birthDate">Ngày sinh</Label>
-                <Input id="birthDate" type="date" {...register('birthDate')} />
+                <Input id="birthDate" type="date" {...register("birthDate")} />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="timeZone">Múi giờ</Label>
-                <Input id="timeZone" {...register('timeZone')} placeholder="Asia/Ho_Chi_Minh" />
+                <Input
+                  id="timeZone"
+                  {...register("timeZone")}
+                  placeholder="Asia/Ho_Chi_Minh"
+                />
               </div>
 
               <div className="col-span-2 space-y-1.5">
                 <Label htmlFor="address">Địa chỉ</Label>
-                <Input id="address" {...register('address')} />
+                <Input id="address" {...register("address")} />
               </div>
             </div>
 

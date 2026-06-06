@@ -77,7 +77,10 @@ export function MaintenanceLogDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    items={Object.entries(LOG_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
+                    items={Object.entries(LOG_TYPE_LABELS).map(([v, l]) => ({
+                      value: v,
+                      label: l,
+                    }))}
                   >
                     <FormControl>
                       <SelectTrigger>

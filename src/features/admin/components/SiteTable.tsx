@@ -1,21 +1,31 @@
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SiteStatusEnum, type SiteDto } from '@/shared/types/site.types';
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { SiteStatusEnum, type SiteDto } from "@/shared/types/site.types";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
-  [SiteStatusEnum.Active]:           'Hoạt động',
-  [SiteStatusEnum.UnderMaintenance]: 'Bảo trì',
-  [SiteStatusEnum.Decommissioned]:   'Đã ngừng',
+  [SiteStatusEnum.Active]: "Hoạt động",
+  [SiteStatusEnum.UnderMaintenance]: "Bảo trì",
+  [SiteStatusEnum.Decommissioned]: "Đã ngừng",
 };
 
-const STATUS_VARIANT: Record<SiteStatusEnum, 'default' | 'secondary' | 'destructive'> = {
-  [SiteStatusEnum.Active]:           'default',
-  [SiteStatusEnum.UnderMaintenance]: 'secondary',
-  [SiteStatusEnum.Decommissioned]:   'destructive',
+const STATUS_VARIANT: Record<
+  SiteStatusEnum,
+  "default" | "secondary" | "destructive"
+> = {
+  [SiteStatusEnum.Active]: "default",
+  [SiteStatusEnum.UnderMaintenance]: "secondary",
+  [SiteStatusEnum.Decommissioned]: "destructive",
 };
 
 interface SiteTableProps {
@@ -25,7 +35,7 @@ interface SiteTableProps {
   pageSize: number;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
-  onEdit:   (site: SiteDto) => void;
+  onEdit: (site: SiteDto) => void;
   onDelete: (site: SiteDto) => void;
   onRestore?: (site: SiteDto) => void;
 }
@@ -41,7 +51,7 @@ export default function SiteTable({
   onDelete,
   onRestore,
 }: SiteTableProps) {
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const totalPages = Math.ceil(totalCount / pageSize);
 
   if (isLoading) {
@@ -56,7 +66,9 @@ export default function SiteTable({
 
   if (data.length === 0) {
     return (
-      <p className="text-center text-sm text-muted-foreground py-8">Chưa có site nào.</p>
+      <p className="text-center text-sm text-muted-foreground py-8">
+        Chưa có site nào.
+      </p>
     );
   }
 
@@ -88,16 +100,39 @@ export default function SiteTable({
                 </Badge>
               </TableCell>
               <TableCell>{site.batteryAssetCount}</TableCell>
-              <TableCell>{format(new Date(site.installDate), 'dd/MM/yyyy')}</TableCell>
-              <TableCell className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
+              <TableCell>
+                {format(new Date(site.installDate), "dd/MM/yyyy")}
+              </TableCell>
+              <TableCell
+                className="text-right space-x-1"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {site.status !== SiteStatusEnum.Decommissioned ? (
                   <>
-                    <Button variant="outline" size="sm" onClick={() => onEdit(site)}>Sửa</Button>
-                    <Button variant="destructive" size="sm" onClick={() => onDelete(site)}>Xoá</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(site)}
+                    >
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onDelete(site)}
+                    >
+                      Xoá
+                    </Button>
                   </>
                 ) : (
                   onRestore && (
-                    <Button variant="outline" size="sm" onClick={() => onRestore(site)}>Khôi phục</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onRestore(site)}
+                    >
+                      Khôi phục
+                    </Button>
                   )
                 )}
               </TableCell>

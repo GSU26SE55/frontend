@@ -96,9 +96,12 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
                     }}
                     value={field.value}
                     items={[
-                      { value: ImpactScopeEnum.SingleAsset, label: 'Single Asset' },
-                      { value: ImpactScopeEnum.Site, label: 'Site' },
-                      { value: ImpactScopeEnum.MultiSite, label: 'Multi Site' },
+                      {
+                        value: ImpactScopeEnum.SingleAsset,
+                        label: "Single Asset",
+                      },
+                      { value: ImpactScopeEnum.Site, label: "Site" },
+                      { value: ImpactScopeEnum.MultiSite, label: "Multi Site" },
                     ]}
                   >
                     <FormControl>
@@ -134,9 +137,9 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
                     }}
                     value={field.value}
                     items={[
-                      { value: UrgencyLevelEnum.Low, label: 'Low' },
-                      { value: UrgencyLevelEnum.Medium, label: 'Medium' },
-                      { value: UrgencyLevelEnum.High, label: 'High' },
+                      { value: UrgencyLevelEnum.Low, label: "Low" },
+                      { value: UrgencyLevelEnum.Medium, label: "Medium" },
+                      { value: UrgencyLevelEnum.High, label: "High" },
                     ]}
                   >
                     <FormControl>
