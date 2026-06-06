@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,11 +17,11 @@ import type {
   TicketPriorityEnum as TicketPriority,
   TicketCategoryEnum as TicketCategory,
 } from "@/shared/types/ticket.types";
-import type { GetAdminTicketsParams } from "../services/ticket.service";
 import { useAdminTickets } from "../hooks/useAdminTickets";
 import AdminTicketTable from "../components/AdminTicketTable";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const STATUS_OPTIONS = Object.values(TicketStatusEnum) as TicketStatus[];
 const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
@@ -60,54 +59,34 @@ const CATEGORY_LABELS: Record<TicketCategory, string> = {
   Other: "Khác",
 };
 
-const STATUS_ITEMS: Record<string, string> = {
-  "": "Tất cả trạng thái",
-  ...Object.fromEntries(STATUS_OPTIONS.map((s) => [s, STATUS_LABELS[s]])),
+const DEFAULTS = {
+  keyword: "",
+  status: "",
+  priority: "",
+  category: "",
+  pageNumber: 1,
+  pageSize: PAGE_SIZE,
 };
-const PRIORITY_ITEMS: Record<string, string> = {
-  "": "Tất cả priority",
-  ...Object.fromEntries(PRIORITY_OPTIONS.map((p) => [p, PRIORITY_LABELS[p]])),
-};
-const CATEGORY_ITEMS: Record<string, string> = {
-  "": "Tất cả loại",
-  ...Object.fromEntries(CATEGORY_OPTIONS.map((c) => [c, CATEGORY_LABELS[c]])),
-};
-
-interface FilterState extends GetAdminTicketsParams {
-  pageNumber: number;
-  pageSize: number;
-}
-
-const INITIAL: FilterState = { pageNumber: 1, pageSize: PAGE_SIZE };
 
 export default function AdminTicketListPage() {
-  const [filters, setFilters] = useState<FilterState>(INITIAL);
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
 
-  const { data, isLoading } = useAdminTickets(filters);
+  const params = {
+    keyword: filters.keyword || undefined,
+    status: (filters.status as TicketStatus) || undefined,
+    priority: (filters.priority as TicketPriority) || undefined,
+    category: (filters.category as TicketCategory) || undefined,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
+  };
 
-  function setFilter<K extends keyof FilterState>(
-    key: K,
-    value: FilterState[K] | undefined,
-  ) {
-    setFilters((prev) => ({ ...prev, [key]: value, pageNumber: 1 }));
-  }
-
-  function handleReset() {
-    setFilters(INITIAL);
-  }
-
-  const hasActiveFilter = !!(
-    filters.keyword ||
-    filters.status ||
-    filters.priority ||
-    filters.category
-  );
+  const { data, isLoading } = useAdminTickets(params);
 
   return (
     <div className="space-y-6 p-6">
       <h1 className="text-2xl font-bold">Quản lý Ticket</h1>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 items-end">
         <Input
           placeholder="Tìm theo mã hoặc tiêu đề..."
@@ -119,17 +98,16 @@ export default function AdminTicketListPage() {
         />
 
         <Select
-          value={filters.status ?? ""}
-          items={STATUS_ITEMS}
+          value={filters.status || null}
           onValueChange={(v: string | null) =>
-            setFilter("status", (v as TicketStatus) || undefined)
+            setFilter("status", v || undefined)
           }
         >
           <SelectTrigger className="w-44">
-            <SelectValue />
+            <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value="">Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
                 {STATUS_LABELS[s]}
@@ -139,17 +117,16 @@ export default function AdminTicketListPage() {
         </Select>
 
         <Select
-          value={filters.priority ?? ""}
-          items={PRIORITY_ITEMS}
+          value={filters.priority || null}
           onValueChange={(v: string | null) =>
-            setFilter("priority", (v as TicketPriority) || undefined)
+            setFilter("priority", v || undefined)
           }
         >
           <SelectTrigger className="w-36">
-            <SelectValue />
+            <SelectValue placeholder="Tất cả priority" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value="">Tất cả priority</SelectItem>
+            <SelectItem value={null}>Tất cả priority</SelectItem>
             {PRIORITY_OPTIONS.map((p) => (
               <SelectItem key={p} value={p}>
                 {PRIORITY_LABELS[p]}
@@ -159,17 +136,16 @@ export default function AdminTicketListPage() {
         </Select>
 
         <Select
-          value={filters.category ?? ""}
-          items={CATEGORY_ITEMS}
+          value={filters.category || null}
           onValueChange={(v: string | null) =>
-            setFilter("category", (v as TicketCategory) || undefined)
+            setFilter("category", v || undefined)
           }
         >
           <SelectTrigger className="w-40">
-            <SelectValue />
+            <SelectValue placeholder="Tất cả loại" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value="">Tất cả loại</SelectItem>
+            <SelectItem value={null}>Tất cả loại</SelectItem>
             {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c]}
@@ -179,7 +155,7 @@ export default function AdminTicketListPage() {
         </Select>
 
         {hasActiveFilter && (
-          <Button variant="ghost" onClick={handleReset}>
+          <Button variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
           </Button>
         )}
@@ -188,8 +164,10 @@ export default function AdminTicketListPage() {
       <AdminTicketTable
         data={data}
         isLoading={isLoading}
-        page={filters.pageNumber}
-        onPageChange={(p) => setFilters((prev) => ({ ...prev, pageNumber: p }))}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
     </div>
   );

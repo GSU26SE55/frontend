@@ -26,7 +26,8 @@ Implement toàn bộ UI và logic cho portal Manager quản lý và điều ph�
 
 | File | Action | Ghi chú |
 |------|--------|---------|
-| `src/features/manager/types/ticket.types.ts` | create | 14 enums + 13 interface DTOs |
+| `src/shared/types/ticket.types.ts` | create | 14 enums + 13 interface DTOs — **đặt ở shared/ thay vì features/manager/types/ để dùng cross-feature (Admin, Staff cùng dùng)** |
+| `src/features/manager/hooks/useStaffAssignmentList.ts` | create | useQuery — GET /api/staff qua `managerSiteService.getStaffList()`, staleTime 5 phút — dùng cho AssignDialog + ReassignDialog |
 | `src/features/manager/schemas/ticket.schema.ts` | create | Zod: triage, assign, reassign, reject, escalate, comment |
 | `src/features/manager/schemas/reopen-ticket.schema.ts` | create | Zod: `{ reopenReason: z.string().max(500).optional() }` |
 | `src/features/manager/schemas/create-ticket.schema.ts` | create | Zod: `{ ..., batteryAssetId: z.string().uuid().optional() }` |
@@ -281,3 +282,9 @@ createTicketSchema: z.object({
 - Staff list lấy từ `GET /api/staff` (ENDPOINTS.STAFF.LIST) qua service riêng trong manager feature (không cross-import từ features/staff/)
 - `approve` endpoint dùng query param cho comment, không phải body — đã ghi rõ trong approach
 - Types đặt trong `features/manager/types/` (không phải shared/) vì chỉ manager portal dùng trong sprint này
+
+## Thay đổi so với plan gốc (ghi nhận sau implement)
+| Item | Plan gốc | Thực tế | Lý do |
+|------|----------|---------|-------|
+| `features/manager/types/ticket.types.ts` | create ở `features/manager/types/` | **Tạo ở `shared/types/ticket.types.ts`** | GH-60 (Admin Tickets) và GH-58 (Staff Tickets) cùng cần types này — đặt ở shared/ là đúng hơn, tránh duplicate |
+| `useStaffAssignmentList.ts` | Không có trong plan | **Tạo tại `features/manager/hooks/useStaffAssignmentList.ts`** | Cần thiết cho AssignDialog + ReassignDialog load danh sách Staff — gọi `managerSiteService.getStaffList()`, staleTime 5 phút |

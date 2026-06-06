@@ -9,29 +9,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import type { PaginationResponse } from "@/shared/types/api.types";
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketPriorityBadge from "./TicketPriorityBadge";
+import DataPagination from "@/shared/components/common/DataPagination";
 
 interface Props {
   data?: PaginationResponse<TicketDTO>;
   isLoading: boolean;
-  page: number;
+  pageNumber: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 export default function AdminTicketTable({
   data,
   isLoading,
-  page,
+  pageNumber,
+  pageSize,
   onPageChange,
+  onPageSizeChange,
 }: Props) {
   const navigate = useNavigate();
   const tickets = data?.items ?? [];
-  const totalPages = data?.totalPages ?? 1;
 
   if (isLoading) {
     return (
@@ -97,31 +100,16 @@ export default function AdminTicketTable({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Trang {page} / {totalPages} — {data?.totalItems} ticket
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!data?.hasPreviousPage}
-              onClick={() => onPageChange(page - 1)}
-            >
-              Trước
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!data?.hasNextPage}
-              onClick={() => onPageChange(page + 1)}
-            >
-              Tiếp
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        totalItems={data?.totalItems ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={pageNumber}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
     </div>
   );
 }

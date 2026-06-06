@@ -8,25 +8,30 @@ import {
 } from "@/features/admin/hooks/useSites";
 import SiteTable from "@/features/admin/components/SiteTable";
 import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
-import type { SiteDto, SiteFilterParams } from "@/shared/types/site.types";
+import type { SiteDto } from "@/shared/types/site.types";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+
+const DEFAULTS = {
+  keyword: "",
+  includeDeleted: false,
+  pageNumber: 1,
+  pageSize: 10,
+};
 
 export default function SiteListPage() {
-  const [params, setParams] = useState<SiteFilterParams>({
-    pageNumber: 1,
-    pageSize: 10,
-  });
-  const [keyword, setKeyword] = useState("");
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState<SiteDto | null>(null);
-  const [includeDeleted, setIncludeDeleted] = useState(false);
 
-  const { data, isLoading } = useSiteList(params);
+  const { data, isLoading } = useSiteList({
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
+    keyword: filters.keyword || undefined,
+    includeDeleted: filters.includeDeleted || undefined,
+  });
   const { mutate: deleteSite } = useDeleteSite();
   const { mutate: restoreSite } = useRestoreSite();
-
-  const handleSearch = () => {
-    setParams((p) => ({ ...p, pageNumber: 1, keyword: keyword || undefined }));
-  };
 
   const handleEdit = (site: SiteDto) => {
     setEditData(site);
@@ -39,27 +44,11 @@ export default function SiteListPage() {
   };
 
   const handleDelete = (site: SiteDto) => {
-    if (confirm(`Xoá site "${site.name}"?`)) {
-      deleteSite(site.id);
-    }
+    if (confirm(`Xoá site "${site.name}"?`)) deleteSite(site.id);
   };
 
   const handleRestore = (site: SiteDto) => {
-    if (confirm(`Khôi phục site "${site.name}"?`)) {
-      restoreSite(site.id);
-    }
-  };
-
-  const toggleDeleted = () => {
-    setIncludeDeleted((v) => {
-      const next = !v;
-      setParams((p) => ({
-        ...p,
-        pageNumber: 1,
-        includeDeleted: next || undefined,
-      }));
-      return next;
-    });
+    if (confirm(`Khôi phục site "${site.name}"?`)) restoreSite(site.id);
   };
 
   return (
@@ -72,29 +61,36 @@ export default function SiteListPage() {
       <div className="flex items-center gap-2">
         <Input
           placeholder="Tìm theo tên site..."
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          value={filters.keyword}
+          onChange={(e) => setFilter("keyword", e.target.value || undefined)}
           className="max-w-sm"
         />
-        <Button variant="outline" onClick={handleSearch}>
-          Tìm
-        </Button>
         <Button
-          variant={includeDeleted ? "default" : "outline"}
-          onClick={toggleDeleted}
+          variant={filters.includeDeleted ? "default" : "outline"}
+          onClick={() =>
+            setFilter("includeDeleted", !filters.includeDeleted || undefined)
+          }
         >
-          {includeDeleted ? "Ẩn đã xoá" : "Hiện đã xoá"}
+          {filters.includeDeleted ? "Ẩn đã xoá" : "Hiện đã xoá"}
         </Button>
+        {hasActiveFilter && (
+          <Button variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       <SiteTable
         data={data?.items ?? []}
-        totalCount={data?.totalItems ?? 0}
-        pageNumber={params.pageNumber ?? 1}
-        pageSize={params.pageSize ?? 10}
+        totalItems={data?.totalItems ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
         isLoading={isLoading}
-        onPageChange={(page) => setParams((p) => ({ ...p, pageNumber: page }))}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onRestore={handleRestore}

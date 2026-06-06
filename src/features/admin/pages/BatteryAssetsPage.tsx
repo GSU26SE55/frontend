@@ -1,30 +1,32 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useBatteryAssets } from "@/features/admin/hooks/useBatteryAssets";
 import BatteryAssetTable from "@/features/admin/components/BatteryAssetTable";
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types";
+import DataPagination from "@/shared/components/common/DataPagination";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+
+const DEFAULTS = {
+  keyword: "",
+  includeDeleted: false,
+  pageNumber: 1,
+  pageSize: 10,
+};
 
 export default function BatteryAssetsPage() {
-  const [keyword, setKeyword] = useState("");
-  const [pageNumber, setPageNumber] = useState(1);
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<BatteryAssetDto | null>(null);
 
-  const pageSize = 10;
-
   const { data, isLoading } = useBatteryAssets({
-    pageNumber,
-    pageSize,
-    keyword: keyword || undefined,
-    includeDeleted,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
+    keyword: filters.keyword || undefined,
+    includeDeleted: filters.includeDeleted || undefined,
   });
-
-  const items = data?.items ?? [];
-  const totalItems = data?.totalItems ?? 0;
-  const totalPages = data?.totalPages ?? 1;
 
   const handleEdit = (item: BatteryAssetDto) => {
     setEditItem(item);
@@ -46,62 +48,50 @@ export default function BatteryAssetsPage() {
       <div className="flex items-center gap-3">
         <Input
           placeholder="Tìm theo serial number..."
-          value={keyword}
-          onChange={(e) => {
-            setKeyword(e.target.value);
-            setPageNumber(1);
-          }}
+          value={filters.keyword}
+          onChange={(e) => setFilter("keyword", e.target.value || undefined)}
           className="max-w-xs"
         />
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
-            checked={includeDeleted}
-            onChange={(e) => {
-              setIncludeDeleted(e.target.checked);
-              setPageNumber(1);
-            }}
+            checked={!!filters.includeDeleted}
+            onChange={(e) =>
+              setFilter("includeDeleted", e.target.checked || undefined)
+            }
           />
           Hiện đã xóa
         </label>
         <span className="text-sm text-muted-foreground">
-          {totalItems} kết quả
+          {data?.totalItems ?? 0} kết quả
         </span>
+        {hasActiveFilter && (
+          <Button variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
         <p className="text-muted-foreground">Đang tải...</p>
       ) : (
         <BatteryAssetTable
-          items={items}
-          includeDeleted={includeDeleted}
+          items={data?.items ?? []}
+          includeDeleted={!!filters.includeDeleted}
           onEdit={handleEdit}
         />
       )}
 
-      {totalPages > 1 && (
-        <div className="flex gap-2 items-center justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pageNumber <= 1}
-            onClick={() => setPageNumber((p) => p - 1)}
-          >
-            Trước
-          </Button>
-          <span className="text-sm">
-            {pageNumber} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pageNumber >= totalPages}
-            onClick={() => setPageNumber((p) => p + 1)}
-          >
-            Sau
-          </Button>
-        </div>
-      )}
+      <DataPagination
+        totalItems={data?.totalItems ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
+      />
 
       <BatteryAssetForm
         open={formOpen}

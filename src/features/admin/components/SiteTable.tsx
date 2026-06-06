@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SiteStatusEnum, type SiteDto } from "@/shared/types/site.types";
+import DataPagination from "@/shared/components/common/DataPagination";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
   [SiteStatusEnum.Active]: "Hoạt động",
@@ -30,11 +31,15 @@ const STATUS_VARIANT: Record<
 
 interface SiteTableProps {
   data: SiteDto[];
-  totalCount: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
   pageNumber: number;
   pageSize: number;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
   onEdit: (site: SiteDto) => void;
   onDelete: (site: SiteDto) => void;
   onRestore?: (site: SiteDto) => void;
@@ -42,17 +47,20 @@ interface SiteTableProps {
 
 export default function SiteTable({
   data,
-  totalCount,
+  totalItems,
+  totalPages,
+  hasNextPage,
+  hasPreviousPage,
   pageNumber,
   pageSize,
   isLoading,
   onPageChange,
+  onPageSizeChange,
   onEdit,
   onDelete,
   onRestore,
 }: SiteTableProps) {
   const navigate = useNavigate();
-  const totalPages = Math.ceil(totalCount / pageSize);
 
   if (isLoading) {
     return (
@@ -141,29 +149,16 @@ export default function SiteTable({
         </TableBody>
       </Table>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(pageNumber - 1)}
-            disabled={pageNumber <= 1}
-          >
-            Trước
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {pageNumber} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(pageNumber + 1)}
-            disabled={pageNumber >= totalPages}
-          >
-            Sau
-          </Button>
-        </div>
-      )}
+      <DataPagination
+        totalItems={totalItems}
+        totalPages={totalPages}
+        hasNextPage={hasNextPage}
+        hasPreviousPage={hasPreviousPage}
+        pageNumber={pageNumber}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
     </div>
   );
 }
