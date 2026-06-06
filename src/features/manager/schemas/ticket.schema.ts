@@ -4,7 +4,7 @@ import {
   UrgencyLevelEnum,
   TicketPriorityEnum,
   EscalationReasonEnum,
-} from "@/features/manager/types/ticket.types";
+} from "@/shared/types/ticket.types";
 
 export const triageSchema = z
   .object({

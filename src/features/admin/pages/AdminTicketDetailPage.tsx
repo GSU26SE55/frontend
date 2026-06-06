@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import {
   useAdminTicketDetail,
   useAdminTicketActivities,
@@ -102,30 +104,30 @@ export default function AdminTicketDetailPage() {
       </div>
 
       {/* Confirm Dialog */}
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Đánh dấu là Incident nghiêm trọng?</DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Đánh dấu là Incident nghiêm trọng?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
               Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là Incident
               và xử lý theo quy trình ưu tiên cao nhất. Hành động này không thể
               hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              Hủy
-            </Button>
-            <Button
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmOpen(false)} />
+            <AlertDialogAction
               variant="destructive"
               onClick={handleConfirm}
               disabled={isPending}
             >
               {isPending ? "Đang xử lý..." : "Xác nhận"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main info */}
@@ -208,36 +210,46 @@ export default function AdminTicketDetailPage() {
               <CardTitle className="text-base">SLA Timer</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Trạng thái</span>
-                <span className="font-medium">{ticket.slaTimer.status}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Deadline</span>
-                <span className="font-medium">
-                  {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Còn lại</span>
-                <span className="font-medium">
-                  {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${
-                    ticket.slaTimer.remainingPercent > 50
-                      ? "bg-green-500"
-                      : ticket.slaTimer.remainingPercent > 20
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
-                  }`}
-                  style={{
-                    width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                  }}
-                />
-              </div>
+              {ticket.slaTimer ? (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Trạng thái</span>
+                    <span className="font-medium">
+                      {ticket.slaTimer.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Deadline</span>
+                    <span className="font-medium">
+                      {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Còn lại</span>
+                    <span className="font-medium">
+                      {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        ticket.slaTimer.remainingPercent > 50
+                          ? "bg-green-500"
+                          : ticket.slaTimer.remainingPercent > 20
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{
+                        width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground">
+                  Chưa có SLA timer (ticket chưa được triage).
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

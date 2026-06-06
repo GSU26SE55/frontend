@@ -1,5 +1,5 @@
-import { Outlet } from 'react-router-dom';
-import logoImg from '@/assets/logo.png';
+import { Outlet } from "react-router-dom";
+import logoImg from "@/assets/logo.png";
 
 const AuthLayout = () => (
   <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 py-12">
@@ -9,8 +9,8 @@ const AuthLayout = () => (
       className="pointer-events-none fixed inset-0"
       style={{
         backgroundImage:
-          'linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
+          "linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)",
+        backgroundSize: "40px 40px",
         opacity: 0.45,
       }}
     />
@@ -24,7 +24,9 @@ const AuthLayout = () => (
     <div className="relative z-10 mb-7 flex flex-col items-center gap-2">
       <img src={logoImg} alt="Sunaria" className="h-16 w-16 object-contain" />
       <div className="text-center">
-        <p className="text-sm font-bold tracking-tight text-slate-900">Sunaria</p>
+        <p className="text-sm font-bold tracking-tight text-slate-900">
+          Sunaria
+        </p>
         <p className="text-xs text-slate-400">Solar Battery Management</p>
       </div>
     </div>

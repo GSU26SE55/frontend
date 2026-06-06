@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { TicketPriorityEnum } from "@/features/manager/types/ticket.types";
+import { TicketPriorityEnum } from "@/shared/types/ticket.types";
 
 const PRIORITY_CONFIG: Record<
   TicketPriorityEnum,

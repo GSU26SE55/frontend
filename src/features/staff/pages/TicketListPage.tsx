@@ -13,7 +13,6 @@ import { useStaffTickets } from "../hooks/useStaffTickets";
 import { TicketCard } from "../components/TicketCard";
 
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "", label: "Tất cả" },
   { value: TicketStatusEnum.Assigned, label: "Đã gán" },
   { value: TicketStatusEnum.InProgress, label: "Đang xử lý" },
   { value: TicketStatusEnum.WaitingCustomer, label: "Chờ khách hàng" },
@@ -23,14 +22,19 @@ const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: TicketStatusEnum.Escalated, label: "Đã chuyển cấp" },
 ];
 
+const STATUS_ITEMS: Record<string, string> = {
+  "": "Tất cả trạng thái",
+  ...Object.fromEntries(STATUS_FILTER_OPTIONS.map((o) => [o.value, o.label])),
+};
+
 const PAGE_SIZE = 10;
 
 export default function TicketListPage() {
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError } = useStaffTickets({
-    status: (statusFilter as TicketStatusEnum | undefined) || undefined,
+    status: (statusFilter as TicketStatusEnum) || undefined,
     pageNumber: page,
     pageSize: PAGE_SIZE,
   });
@@ -44,11 +48,16 @@ export default function TicketListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Ticket của tôi</h1>
-        <Select value={statusFilter} onValueChange={handleStatusChange}>
+        <Select
+          value={statusFilter}
+          items={STATUS_ITEMS}
+          onValueChange={handleStatusChange}
+        >
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Lọc trạng thái" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả trạng thái</SelectItem>
             {STATUS_FILTER_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}

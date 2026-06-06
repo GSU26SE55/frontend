@@ -71,13 +71,16 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    items={Object.entries(PAUSE_REASON_LABELS).map(
+                      ([v, l]) => ({ value: v, label: l }),
+                    )}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn lý do" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       {Object.entries(PAUSE_REASON_LABELS).map(
                         ([value, label]) => (
                           <SelectItem key={value} value={value}>

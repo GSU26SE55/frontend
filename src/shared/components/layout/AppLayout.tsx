@@ -16,6 +16,7 @@ import {
   BookOpen,
   AlertTriangle,
   FileText,
+  ScrollText,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -107,15 +108,15 @@ function Topbar() {
                 onClick={() => {
                   const path =
                     user?.role === UserRole.ADMIN
-                      ? "/admin/settings"
+                      ? "/admin/profile"
                       : user?.role === UserRole.MANAGER
-                        ? "/manager/settings"
-                        : "/staff/settings";
+                        ? "/manager/profile"
+                        : "/staff/profile";
                   navigate(path);
                   setMenuOpen(false);
                 }}
               >
-                Hồ sơ & Cài đặt
+                Hồ sơ của tôi
               </DropMenuItem>
               <div className="border-t border-border my-1" />
               <DropMenuItem
@@ -196,7 +197,10 @@ const ADMIN_NAV: NavSection[] = [
     title: "Hệ thống",
     collapsible: true,
     defaultOpen: false,
-    items: [{ label: "Cài đặt", path: "/admin/settings", icon: Settings }],
+    items: [
+      { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
+      { label: "Cài đặt", path: "/admin/settings", icon: Settings },
+    ],
   },
 ];
 

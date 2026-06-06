@@ -78,13 +78,16 @@ export function EscalateRequestDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    items={Object.entries(ESCALATION_REASON_LABELS).map(
+                      ([v, l]) => ({ value: v, label: l }),
+                    )}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn lý do" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       {Object.entries(ESCALATION_REASON_LABELS).map(
                         ([value, label]) => (
                           <SelectItem key={value} value={value}>

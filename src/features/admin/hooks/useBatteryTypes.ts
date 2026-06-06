@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEY } from '@/shared/utils/queryKeys';
-import { batteryTypeService } from '@/features/admin/services/battery-type.service';
-import type { BatteryTypeListParams } from '@/features/admin/types/battery-type.types';
+import { useQuery } from "@tanstack/react-query";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
+import { batteryTypeService } from "@/features/admin/services/battery-type.service";
+import type { BatteryTypeListParams } from "@/features/admin/types/battery-type.types";
 
 export function useBatteryTypes(params?: BatteryTypeListParams) {
   return useQuery({

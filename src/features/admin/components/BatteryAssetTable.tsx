@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -6,33 +6,43 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BatteryStatusEnum, type BatteryAssetDto } from '@/features/admin/types/battery-asset.types';
-import { useDeleteBatteryAsset } from '@/features/admin/hooks/useDeleteBatteryAsset';
-import { useRestoreBatteryAsset } from '@/features/admin/hooks/useRestoreBatteryAsset';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  BatteryStatusEnum,
+  type BatteryAssetDto,
+} from "@/features/admin/types/battery-asset.types";
+import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
+import { useRestoreBatteryAsset } from "@/features/admin/hooks/useRestoreBatteryAsset";
+import { toast } from "sonner";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]:         'Hoạt động',
-  [BatteryStatusEnum.Inactive]:       'Không hoạt động',
-  [BatteryStatusEnum.Decommissioned]: 'Ngừng sử dụng',
+  [BatteryStatusEnum.Active]: "Hoạt động",
+  [BatteryStatusEnum.Inactive]: "Không hoạt động",
+  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
 };
 
-const statusVariant: Record<BatteryStatusEnum, 'default' | 'secondary' | 'destructive'> = {
-  [BatteryStatusEnum.Active]:         'default',
-  [BatteryStatusEnum.Inactive]:       'secondary',
-  [BatteryStatusEnum.Decommissioned]: 'destructive',
+const statusVariant: Record<
+  BatteryStatusEnum,
+  "default" | "secondary" | "destructive"
+> = {
+  [BatteryStatusEnum.Active]: "default",
+  [BatteryStatusEnum.Inactive]: "secondary",
+  [BatteryStatusEnum.Decommissioned]: "destructive",
 };
 
 interface BatteryAssetTableProps {
-  items:         BatteryAssetDto[];
+  items: BatteryAssetDto[];
   includeDeleted?: boolean;
-  onEdit:        (item: BatteryAssetDto) => void;
+  onEdit: (item: BatteryAssetDto) => void;
 }
 
-export default function BatteryAssetTable({ items, includeDeleted, onEdit }: BatteryAssetTableProps) {
+export default function BatteryAssetTable({
+  items,
+  includeDeleted,
+  onEdit,
+}: BatteryAssetTableProps) {
   const navigate = useNavigate();
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
   const { mutate: restoreAsset } = useRestoreBatteryAsset();
@@ -57,17 +67,22 @@ export default function BatteryAssetTable({ items, includeDeleted, onEdit }: Bat
             className="cursor-pointer hover:bg-muted/50"
             onClick={() => navigate(`/admin/battery-assets/${item.id}`)}
           >
-            <TableCell className="font-mono text-sm">{item.serialNumber}</TableCell>
+            <TableCell className="font-mono text-sm">
+              {item.serialNumber}
+            </TableCell>
             <TableCell>{item.batteryTypeName}</TableCell>
             <TableCell>{item.customerName}</TableCell>
-            <TableCell>{item.siteName ?? '—'}</TableCell>
+            <TableCell>{item.siteName ?? "—"}</TableCell>
             <TableCell>
               <Badge variant={statusVariant[item.status]}>
                 {statusLabel[item.status]}
               </Badge>
             </TableCell>
             <TableCell>{item.installDate.slice(0, 10)}</TableCell>
-            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+            <TableCell
+              className="text-right"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-end gap-1">
                 {!includeDeleted && (
                   <>
@@ -81,9 +96,11 @@ export default function BatteryAssetTable({ items, includeDeleted, onEdit }: Bat
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => deleteAsset(item.id, {
-                        onSuccess: () => toast.success('Đã xóa'),
-                      })}
+                      onClick={() =>
+                        deleteAsset(item.id, {
+                          onSuccess: () => toast.success("Đã xóa"),
+                        })
+                      }
                     >
                       Xóa
                     </Button>
@@ -93,9 +110,11 @@ export default function BatteryAssetTable({ items, includeDeleted, onEdit }: Bat
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => restoreAsset(item.id, {
-                      onSuccess: () => toast.success('Đã khôi phục'),
-                    })}
+                    onClick={() =>
+                      restoreAsset(item.id, {
+                        onSuccess: () => toast.success("Đã khôi phục"),
+                      })
+                    }
                   >
                     Khôi phục
                   </Button>
@@ -106,7 +125,10 @@ export default function BatteryAssetTable({ items, includeDeleted, onEdit }: Bat
         ))}
         {items.length === 0 && (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+            <TableCell
+              colSpan={7}
+              className="text-center text-muted-foreground py-8"
+            >
               Không có dữ liệu
             </TableCell>
           </TableRow>

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 type RevealProps = {
   children: ReactNode;
@@ -22,7 +22,7 @@ const Reveal = ({ children, className, delay = 0 }: RevealProps) => {
           observer.disconnect();
         }
       },
-      { threshold: 0.16 }
+      { threshold: 0.16 },
     );
 
     observer.observe(node);
@@ -33,9 +33,9 @@ const Reveal = ({ children, className, delay = 0 }: RevealProps) => {
     <div
       ref={ref}
       className={cn(
-        'min-w-0 transition-all duration-500 motion-reduce:transition-none',
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0',
-        className
+        "min-w-0 transition-all duration-500 motion-reduce:transition-none",
+        visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
+        className,
       )}
       style={{ transitionDelay: `${delay}ms` }}
     >

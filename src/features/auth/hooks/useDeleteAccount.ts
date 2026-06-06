@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
-import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
-import { accountService } from '@/features/auth/services/account.service';
-import { useSessionStore } from '@/shared/stores/sessionStore';
+import { useMutation } from "@tanstack/react-query";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
+import { accountService } from "@/features/auth/services/account.service";
+import { useSessionStore } from "@/shared/stores/sessionStore";
 
 export const useDeleteAccount = () => {
   const navigate = useNavigate();
@@ -11,10 +11,10 @@ export const useDeleteAccount = () => {
   return useMutation({
     mutationFn: () => accountService.deleteAccount(),
     onSuccess: () => {
-      Cookies.remove('accessToken');
-      Cookies.remove('refreshToken');
+      Cookies.remove("accessToken");
+      Cookies.remove("refreshToken");
       clearSession();
-      navigate('/login');
+      navigate("/login");
     },
   });
 };

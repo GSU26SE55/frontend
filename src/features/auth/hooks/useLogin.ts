@@ -5,13 +5,11 @@ import { authService } from "@/features/auth/services/auth.service";
 import { saveTokens, clearTokens } from "@/shared/lib/axios";
 import { decodeToken, redirectByRole } from "@/shared/types/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { handleErrorApi } from "@/shared/lib/errors";
 import { UserRole } from "@/shared/types/session.types";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { LoginPayload } from "@/features/auth/types/auth.types";
-import type { UseFormSetError } from "react-hook-form";
 
-export const useLogin = (setError?: UseFormSetError<LoginPayload>) => {
+export const useLogin = () => {
   const navigate = useNavigate();
   const { setSession } = useSessionStore();
   const queryClient = useQueryClient();
@@ -38,6 +36,5 @@ export const useLogin = (setError?: UseFormSetError<LoginPayload>) => {
       queryClient.setQueryData(QUERY_KEY.currentUser.session(), user);
       navigate(redirectByRole(user.role), { replace: true });
     },
-    onError: (error) => handleErrorApi({ error, setError }),
   });
 };

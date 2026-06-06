@@ -29,22 +29,7 @@ import {
   type AssignFormValues,
 } from "@/features/manager/schemas/ticket.schema";
 import { useAssignTicket } from "@/features/manager/hooks/useManagerTickets";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/shared/lib/axios";
-import { ENDPOINTS } from "@/shared/utils/endpoints";
-import type { StaffAssignmentProfileDto } from "@/shared/types/account.types";
-import type { CommonResponse } from "@/shared/types/api.types";
-
-function useStaffList() {
-  return useQuery({
-    queryKey: ["manager", "staff-list"],
-    queryFn: () =>
-      axiosInstance
-        .get<CommonResponse<StaffAssignmentProfileDto[]>>(ENDPOINTS.STAFF.LIST)
-        .then((r) => r.data.data ?? []),
-    staleTime: 5 * 60_000,
-  });
-}
+import { useStaffAssignmentList } from "@/features/manager/hooks/useStaffAssignmentList";
 
 interface Props {
   ticketId: string;
@@ -54,7 +39,8 @@ interface Props {
 
 export default function AssignDialog({ ticketId, open, onClose }: Props) {
   const { mutateAsync, isPending } = useAssignTicket(ticketId);
-  const { data: staffList = [], isLoading: loadingStaff } = useStaffList();
+  const { data: staffList = [], isLoading: loadingStaff } =
+    useStaffAssignmentList();
 
   const form = useForm<AssignFormValues>({
     resolver: zodResolver(assignSchema),
@@ -84,6 +70,10 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
+                    items={staffList.map((s) => ({
+                      value: s.accountId,
+                      label: s.fullName ?? s.accountId,
+                    }))}
                     disabled={loadingStaff}
                   >
                     <FormControl>
@@ -95,7 +85,7 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
                         />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       {staffList.length === 0 && (
                         <SelectItem value="_empty" disabled>
                           Không có Staff khả dụng

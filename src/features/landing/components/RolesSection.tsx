@@ -1,14 +1,14 @@
-import { motion } from 'framer-motion';
-import type { Variants } from 'framer-motion';
-import { ROLES } from '@/features/landing/landing.constants';
-import type { RoleItem } from '@/features/landing/types/landing.types';
+import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
+import { ROLES } from "@/features/landing/landing.constants";
+import type { RoleItem } from "@/features/landing/types/landing.types";
 
 const slideVariants = (index: number): Variants => ({
   hidden: { opacity: 0, x: index === 0 ? -40 : 40 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { delay: index * 0.1, duration: 0.5, ease: 'easeOut' },
+    transition: { delay: index * 0.1, duration: 0.5, ease: "easeOut" },
   },
 });
 
@@ -17,7 +17,7 @@ const RoleCard = ({ role, index }: { role: RoleItem; index: number }) => (
     variants={slideVariants(index)}
     initial="hidden"
     whileInView="visible"
-    viewport={{ once: true, margin: '-80px' }}
+    viewport={{ once: true, margin: "-80px" }}
     whileHover="hover"
     className="group h-full cursor-default rounded-md border border-white/10 bg-white/[0.04] p-6"
   >
@@ -25,14 +25,16 @@ const RoleCard = ({ role, index }: { role: RoleItem; index: number }) => (
       <motion.div
         className="flex h-11 w-11 items-center justify-center rounded-md bg-white text-slate-950"
         variants={{ hover: { scale: 1.08 } }}
-        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
       >
         <role.icon className="size-5" />
       </motion.div>
 
       <motion.span
         className="rounded-sm border border-white/10 px-2 py-1 font-mono text-xs font-medium text-slate-300"
-        variants={{ hover: { y: -2, borderColor: 'oklch(0.72 0.17 160 / 0.5)' } }}
+        variants={{
+          hover: { y: -2, borderColor: "oklch(0.72 0.17 160 / 0.5)" },
+        }}
         transition={{ duration: 0.2 }}
       >
         {role.role}
@@ -58,13 +60,16 @@ const RolesSection = () => (
         transition={{ duration: 0.5 }}
       >
         <div>
-          <p className="mb-3 text-sm font-medium text-emerald-300">Vận hành theo vai trò</p>
+          <p className="mb-3 text-sm font-medium text-emerald-300">
+            Vận hành theo vai trò
+          </p>
           <h2 className="text-3xl font-semibold leading-tight lg:text-4xl">
             Cùng một hệ thống, quyết định khác nhau cho từng vai trò.
           </h2>
         </div>
         <p className="text-base leading-7 text-slate-300">
-          Admin thiết lập chuẩn vận hành, manager điều phối hàng chờ, staff xử lý công việc hiện trường.
+          Admin thiết lập chuẩn vận hành, manager điều phối hàng chờ, staff xử
+          lý công việc hiện trường.
         </p>
       </motion.div>
 

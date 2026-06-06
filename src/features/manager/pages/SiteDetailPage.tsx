@@ -1,28 +1,31 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import SiteDashboardCard from '@/shared/components/common/SiteDashboardCard';
-import SiteAssetsTable from '@/shared/components/common/SiteAssetsTable';
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
+import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
 import {
   useSiteDetail,
   useSiteDashboard,
   useSiteAssets,
-} from '@/features/manager/hooks/useSites';
-import type { SiteAssetsFilterParams } from '@/shared/types/site.types';
+} from "@/features/manager/hooks/useSites";
+import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
 
 export default function ManagerSiteDetailPage() {
-  const { id = '' } = useParams<{ id: string }>();
-  const navigate     = useNavigate();
+  const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [assetsParams, setAssetsParams] = useState<SiteAssetsFilterParams>({
     pageNumber: 1,
-    pageSize:   10,
+    pageSize: 10,
   });
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
-  const { data: dashboard }                    = useSiteDashboard(id);
-  const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(id, assetsParams);
+  const { data: dashboard } = useSiteDashboard(id);
+  const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(
+    id,
+    assetsParams,
+  );
 
   if (loadingSite) {
     return (
@@ -37,7 +40,9 @@ export default function ManagerSiteDetailPage() {
     return (
       <div className="p-6">
         <p className="text-muted-foreground">Không tìm thấy site.</p>
-        <Button variant="outline" className="mt-2" onClick={() => navigate(-1)}>Quay lại</Button>
+        <Button variant="outline" className="mt-2" onClick={() => navigate(-1)}>
+          Quay lại
+        </Button>
       </div>
     );
   }
@@ -45,7 +50,12 @@ export default function ManagerSiteDetailPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="-ml-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="-ml-2"
+        >
           ← Quay lại
         </Button>
         <h1 className="text-2xl font-bold mt-1">{site.name}</h1>

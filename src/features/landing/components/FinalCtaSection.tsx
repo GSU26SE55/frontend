@@ -1,18 +1,18 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   CheckCircle2,
   ShieldCheck,
   Ticket,
   Zap,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TRUST_ITEMS = [
-  { icon: ShieldCheck, text: '0 SLA breach' },
-  { icon: Zap,          text: 'Alert trong vài giây' },
-  { icon: Ticket,       text: 'Ticket tự động từ cảnh báo' },
-  { icon: CheckCircle2, text: 'Audit trail đầy đủ' },
+  { icon: ShieldCheck, text: "0 SLA breach" },
+  { icon: Zap, text: "Alert trong vài giây" },
+  { icon: Ticket, text: "Ticket tự động từ cảnh báo" },
+  { icon: CheckCircle2, text: "Audit trail đầy đủ" },
 ] as const;
 
 const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => (
@@ -31,8 +31,8 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => (
       className="absolute inset-0 opacity-[0.025]"
       style={{
         backgroundImage:
-          'radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
+          "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
       }}
     />
 
@@ -75,7 +75,8 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => (
         transition={{ delay: 0.16, duration: 0.5 }}
         className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg"
       >
-        Một console cho SOH, cảnh báo bất thường, work order và SLA — từ phát hiện đến đóng ticket đều có audit trail rõ ràng.
+        Một console cho SOH, cảnh báo bất thường, work order và SLA — từ phát
+        hiện đến đóng ticket đều có audit trail rõ ràng.
       </motion.p>
 
       {/* CTA Buttons */}
@@ -111,7 +112,10 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => (
         className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3"
       >
         {TRUST_ITEMS.map(({ icon: Icon, text }) => (
-          <div key={text} className="flex items-center gap-2 text-sm text-slate-400">
+          <div
+            key={text}
+            className="flex items-center gap-2 text-sm text-slate-400"
+          >
             <Icon className="size-4 text-emerald-400 shrink-0" />
             <span>{text}</span>
           </div>
@@ -123,7 +127,7 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => (
 
       {/* Already have account */}
       <p className="mt-7 text-sm text-slate-500">
-        Đã có tài khoản?{' '}
+        Đã có tài khoản?{" "}
         <button
           type="button"
           onClick={onLogin}

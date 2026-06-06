@@ -86,8 +86,9 @@ export interface StaffProfileDto {
   department?: string;     // nullable theo API doc
   maxConcurrentTickets: number;
   isAvailable: boolean;
+  skillTier: number;       // ← Swagger: bắt buộc, integer (tier 1/2/3 theo StaffSkillTierEnum)
   notes?: string;          // nullable theo API doc
-  skills: StaffSkillDto[];
+  skills: StaffSkillDto[] | null;  // ← Swagger: nullable: true — luôn guard bằng `skills ?? []` khi render
 }
 
 export interface AccountDto {
@@ -219,7 +220,9 @@ export interface GetAccountSessionsParams { activeOnly?: boolean; }
 // ── Nhóm 6 — Payloads ──
 export interface UpdateStaffProfilePayload {
   employeeCode?: string; department?: string;
-  maxConcurrentTickets: number; isAvailable: boolean; notes?: string;
+  maxConcurrentTickets: number; isAvailable: boolean;
+  skillTier: number;  // ← Swagger: bắt buộc — gửi kèm khi PUT staff profile
+  notes?: string;
 }
 export interface AddSkillPayload { skillCode: string; skillLevel: number; certifiedUntil?: string; }
 
@@ -231,6 +234,9 @@ export interface GetRolesParams {
 export interface CreateRolePayload { name: string; description?: string; }
 export type UpdateRolePayload = CreateRolePayload;
 export interface ChangeRoleStatusPayload { status: RoleStatusEnum; }
+
+// ── Nhóm 5 bổ sung — đổi role ──
+export interface ChangeAccountRolePayload { roleId: string; }  // PUT /api/admin/accounts/{id}/role
 
 // ── Nhóm 8 — Payloads ──
 export interface SetPermissionsPayload { permissionIds: string[]; allowSystemRole?: boolean; }
@@ -254,6 +260,7 @@ ADMIN: {
     INVITE:        '/api/admin/accounts/invite',
     UPDATE:        (id: string) => `/api/admin/accounts/${id}`,
     STATUS:        (id: string) => `/api/admin/accounts/${id}/status`,
+    CHANGE_ROLE:   (id: string) => `/api/admin/accounts/${id}/role`,  // ← bổ sung từ Swagger
     UNLOCK:        (id: string) => `/api/admin/accounts/${id}/unlock`,
     DELETE:        (id: string) => `/api/admin/accounts/${id}`,
     SESSIONS:      (id: string) => `/api/admin/accounts/${id}/sessions`,
@@ -280,7 +287,8 @@ ADMIN: {
     SET_FOR_ROLE: (roleId: string) => `/api/admin/roles/${roleId}/permissions`,
   },
   AUDIT_LOGS: {
-    LIST: '/api/admin/audit-logs',
+    LIST:       '/api/admin/audit-logs',
+    BY_ACCOUNT: (accountId: string) => `/api/admin/audit-logs/by-account/${accountId}`,  // ← bổ sung từ Swagger
   },
 }
 ```
@@ -291,16 +299,17 @@ ADMIN: {
 |--------|------|---------|----------|
 | GET | `/api/admin/accounts` | `GetAccountsParams` (query) | `CommonResponse<PaginationResponse<AccountDto>>` |
 | GET | `/api/admin/accounts/{id}` | — | `CommonResponse<AccountDto>` |
-| POST | `/api/admin/accounts` | `CreateAccountPayload` | `CommonResponse<string>` (Guid) |
+| POST | `/api/admin/accounts` | `CreateAccountPayload` | `CommonResponse<string>` (Guid) — HTTP **201** |
 | POST | `/api/admin/accounts/invite` | `InviteAccountPayload` | `CommonResponse<string>` (Guid của account vừa tạo, trạng thái PendingVerification) |
 | PUT | `/api/admin/accounts/{id}` | `UpdateAccountPayload` | `CommonResponse<string>` (Guid) |
+| PUT | `/api/admin/accounts/{id}/role` | `{ roleId: string }` | `CommonResponse<unknown>` | ← endpoint đổi role, thêm vào ENDPOINTS.ADMIN.ACCOUNTS |
 | PATCH | `/api/admin/accounts/{id}/status` | `ChangeAccountStatusPayload` | `CommonResponse<unknown>` |
 | POST | `/api/admin/accounts/{id}/unlock` | — | `CommonResponse<unknown>` |
 | DELETE | `/api/admin/accounts/{id}` | — | `CommonResponse<unknown>` |
 | GET | `/api/admin/accounts/{id}/sessions` | `GetAccountSessionsParams` (query) | `CommonResponse<SessionDto[]>` |
 | POST | `/api/admin/accounts/{id}/sessions/revoke-all` | `RevokeAllSessionsPayload` | `CommonResponse<number>` |
 | GET | `/api/admin/accounts/{id}/login-history` | `GetLoginHistoryParams` (query) | `CommonResponse<PaginationResponse<LoginAttemptDto>>` |
-| PUT | `/api/admin/staff/{id}/profile` | `UpdateStaffProfilePayload` | `CommonResponse<string>` (Guid) |
+| PUT | `/api/admin/staff/{id}/profile` | `UpdateStaffProfilePayload` | `CommonResponse<string>` (Guid) | ← payload phải có `skillTier` (bắt buộc) |
 | POST | `/api/admin/staff/{id}/skills` | `AddSkillPayload` | `CommonResponse<string>` (Guid) |
 | DELETE | `/api/admin/staff/{id}/skills/{skillCode}` | — | `CommonResponse<unknown>` |
 | GET | `/api/admin/roles` | `GetRolesParams` (query) | `CommonResponse<PaginationResponse<RoleDto>>` |
@@ -313,6 +322,7 @@ ADMIN: {
 | GET | `/api/admin/roles/{roleId}/permissions` | — | `CommonResponse<PermissionDto[]>` |
 | PUT | `/api/admin/roles/{roleId}/permissions` | `SetPermissionsPayload` | `CommonResponse<unknown>` |
 | GET | `/api/admin/audit-logs` | `GetAuditLogsParams` (query) | `CommonResponse<PaginationResponse<AuditLogDto>>` |
+| GET | `/api/admin/audit-logs/by-account/{accountId}` | `{ pageNumber?, pageSize?, action?, isSuccess? }` (query) | `CommonResponse<PaginationResponse<AuditLogDto>>` | ← endpoint bổ sung từ Swagger |
 
 ## Query Keys
 
@@ -387,6 +397,9 @@ Ticket này chỉ implement data layer (types, services, hooks) — không có U
 | `PUT /api/admin/roles/{roleId}/permissions` với `permissionIds: []` | Replace semantics — xóa hết; hook expose thẳng, UI page (issue riêng) chịu trách nhiệm fetch-before-save |
 | `PERMISSIONS.BY_ROLE` và `SET_FOR_ROLE` cùng path | Phân biệt bằng method: `axios.get` vs `axios.put` — comment trong service file |
 | `InviteAccountPayload` response | `CommonResponse<string>` — `data` là Guid (confirmed từ api-auth.md line 1216–1225: response trả Guid của account PendingVerification) |
+| `StaffProfileDto.skills` là `null` | Swagger: `nullable: true` — luôn dùng `staffProfile.skills ?? []` khi render/iterate, không dùng `staffProfile.skills.map(...)` trực tiếp |
+| `UpdateStaffProfilePayload` thiếu `skillTier` | `skillTier` là bắt buộc trong Swagger — form UI phải có field này. UI page (issue riêng) chịu trách nhiệm lấy giá trị hiện tại từ `staffProfile.skillTier` làm default |
+| `POST /api/admin/accounts` trả HTTP 201 | Axios mặc định treat 2xx là success → không cần handle riêng |
 
 ## Success Criteria
 
@@ -420,4 +433,6 @@ Ticket này chỉ implement data layer (types, services, hooks) — không có U
 | KEY.admin.staff có cần không? | Có — cần để invalidate đúng sau staff mutations (stale data bug nếu thiếu) |
 | StaffAssignmentProfileDto ở shared/ hay admin/? | shared/ — cross-feature với GH-28 (GET /api/staff) |
 | InviteAccountPayload response shape? | `CommonResponse<string>` — `data` là Guid của account vừa tạo (trạng thái PendingVerification). Confirmed từ api-auth.md line 1216–1225. |
-| StaffProfileDto shape confirmed? | Confirmed từ api-auth.md: `accountId` (non-optional), `employeeCode?`, `department?`, `maxConcurrentTickets`, `isAvailable`, `notes?`, `skills[]`. `employeeCode`, `department`, `notes` là **nullable**. Không có `displayAvatarUrl` (field đó chỉ có ở `StaffAssignmentProfileDto`). |
+| StaffProfileDto shape confirmed? | Confirmed từ Swagger: `accountId` (non-optional), `employeeCode?`, `department?`, `maxConcurrentTickets`, `isAvailable`, `skillTier` (bắt buộc, int), `notes?`, `skills[]` (nullable). `employeeCode`, `department`, `notes` là nullable. Không có `displayAvatarUrl`. |
+| `skillTier` trong `UpdateStaffProfilePayload`? | **Bắt buộc** theo Swagger — `UpdateStaffProfileCommand` có field `skillTier: number`. Plan cũ bỏ sót. Đã fix. |
+| `skills` trong `StaffProfileDto` là nullable? | **Có** — Swagger: `nullable: true`. Guard bằng `?? []`. |

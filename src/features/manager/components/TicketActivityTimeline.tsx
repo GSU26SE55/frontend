@@ -1,8 +1,5 @@
-import {
-  ActivityActionEnum,
-  ActorRoleEnum,
-} from "@/features/manager/types/ticket.types";
-import type { TicketActivityDTO } from "@/features/manager/types/ticket.types";
+import { ActivityActionEnum, ActorRoleEnum } from "@/shared/types/ticket.types";
+import type { TicketActivityDTO } from "@/shared/types/ticket.types";
 
 const ACTION_LABEL: Partial<Record<ActivityActionEnum, string>> = {
   Created: "Tạo ticket",

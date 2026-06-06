@@ -28,7 +28,7 @@ import {
   escalateSchema,
   type EscalateFormValues,
 } from "@/features/manager/schemas/ticket.schema";
-import { EscalationReasonEnum } from "@/features/manager/types/ticket.types";
+import { EscalationReasonEnum } from "@/shared/types/ticket.types";
 import { useEscalateTicket } from "@/features/manager/hooks/useManagerTickets";
 
 const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
@@ -73,13 +73,22 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Lý do chuyển cấp *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    items={Object.entries(EscalationReasonEnum).map(
+                      ([, v]) => ({
+                        value: v,
+                        label: ESCALATION_REASON_LABEL[v],
+                      }),
+                    )}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn lý do" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       {Object.entries(EscalationReasonEnum).map(([, v]) => (
                         <SelectItem key={v} value={v}>
                           {ESCALATION_REASON_LABEL[v]}

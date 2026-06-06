@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { SlaTimerStatusEnum } from "@/features/manager/types/ticket.types";
-import type { SlaTimerDTO } from "@/features/manager/types/ticket.types";
+import { SlaTimerStatusEnum } from "@/shared/types/ticket.types";
+import type { SlaTimerDTO } from "@/shared/types/ticket.types";
 
 function formatDuration(ms: number): string {
   if (ms <= 0) return "00:00:00";
@@ -12,26 +12,29 @@ function formatDuration(ms: number): string {
 }
 
 interface Props {
-  slaTimer: SlaTimerDTO;
+  slaTimer: SlaTimerDTO | null;
 }
 
 export default function SlaCountdown({ slaTimer }: Props) {
-  const [remaining, setRemaining] = useState(
-    () => new Date(slaTimer.dueAt).getTime() - Date.now(),
+  const [remaining, setRemaining] = useState(() =>
+    slaTimer ? new Date(slaTimer.dueAt).getTime() - Date.now() : 0,
   );
 
   useEffect(() => {
     if (
+      !slaTimer ||
       slaTimer.status === SlaTimerStatusEnum.Met ||
       slaTimer.status === SlaTimerStatusEnum.Breached
     )
       return;
 
     const interval = setInterval(() => {
-      setRemaining(new Date(slaTimer.dueAt).getTime() - Date.now());
+      setRemaining(new Date(slaTimer!.dueAt).getTime() - Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, [slaTimer.dueAt, slaTimer.status]);
+  }, [slaTimer]);
+
+  if (!slaTimer) return null;
 
   if (slaTimer.status === SlaTimerStatusEnum.Met) {
     return (

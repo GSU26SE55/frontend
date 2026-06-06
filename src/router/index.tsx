@@ -10,7 +10,10 @@ import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import OtpVerifyPage from "@/features/auth/pages/OtpVerifyPage";
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
+import AcceptInvitePage from "@/features/auth/pages/AcceptInvitePage";
 import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
+import ProfilePage from "@/features/auth/pages/ProfilePage";
+import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
 import AdminSiteDetailPage from "@/features/admin/pages/SiteDetailPage";
@@ -41,6 +44,7 @@ const router = createBrowserRouter([
       { path: "/register", element: <RegisterPage /> },
       { path: "/register/verify-otp", element: <OtpVerifyPage /> },
       { path: "/forgot-password", element: <ForgotPasswordPage /> },
+      { path: "/invite/accept", element: <AcceptInvitePage /> },
     ],
   },
   {
@@ -63,7 +67,11 @@ const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      { path: "/settings", element: <AccountSettingsPage /> },
+      {
+        path: "/settings",
+        element: <AppLayout />,
+        children: [{ index: true, element: <AccountSettingsPage /> }],
+      },
       {
         element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
         children: [
@@ -84,6 +92,9 @@ const router = createBrowserRouter([
               { path: "roles", element: <RolesPage /> },
               { path: "tickets", element: <AdminTicketListPage /> },
               { path: "tickets/:id", element: <AdminTicketDetailPage /> },
+              { path: "profile", element: <ProfilePage /> },
+              { path: "audit-logs", element: <AuditLogsPage /> },
+              { path: "settings", element: <AccountSettingsPage /> },
             ],
           },
         ],
@@ -102,6 +113,8 @@ const router = createBrowserRouter([
               { path: "tickets", element: <ManagerTicketListPage /> },
               { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
               { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
+              { path: "profile", element: <ProfilePage /> },
+              { path: "settings", element: <AccountSettingsPage /> },
             ],
           },
         ],
@@ -116,6 +129,8 @@ const router = createBrowserRouter([
               { index: true, element: <Navigate to="tickets" replace /> },
               { path: "tickets", element: <StaffTicketListPage /> },
               { path: "tickets/:id", element: <StaffTicketDetailPage /> },
+              { path: "profile", element: <ProfilePage /> },
+              { path: "settings", element: <AccountSettingsPage /> },
             ],
           },
         ],
