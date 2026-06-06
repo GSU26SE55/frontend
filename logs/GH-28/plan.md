@@ -1,9 +1,7 @@
 # Plan — GH-28: Auth Profile, Staff Assignment & Session Management — services + hooks
 
 ## Metadata
-- **Status:** SHIPPED
-- **Role:** FE
-- **Ngày:** 2026-05-20
+- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
 - **Issue:** #28 — https://github.com/GSU26SE55/frontend/issues/28
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -234,6 +232,17 @@ export const QUERY_KEY = {
 ```
 
 ---
+
+## Approach
+
+- Service files (`profile.service.ts`, `session.service.ts`, `staff.service.ts`) import axios từ `shared/lib/axios.ts`, endpoints từ `ENDPOINTS.*` — không hardcode URL
+- Hooks dùng TanStack Query: queries dùng `useQuery`, mutations dùng `useMutation`
+- `useProfile` — `staleTime: 5 phút` (user profile ít thay đổi; đủ fresh cho header/avatar)
+- `useSessions` — `staleTime: 0, refetchOnWindowFocus: true` (security-sensitive — luôn fetch mới khi user quay lại tab)
+- `useStaffList`, `useStaffAssignmentProfile` — `staleTime: 2 phút` (default)
+- Mutation `onSuccess` invalidate scope hẹp: profile mutations → `KEY.profile`, session mutations → `KEY.sessions`
+- `StaffAssignmentProfileDto` và `StaffProfileDto` đặt ở `shared/types/account.types.ts` — cross-feature với GH-30 (admin) sau này
+- Không tạo Zod schema trong ticket này — scope chỉ là services + hooks, không có form input
 
 ## Cookie — revokeAllSessions
 

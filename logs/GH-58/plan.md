@@ -168,6 +168,47 @@ STAFF_TICKETS: {
 
 **Lưu ý:** `ticket.service.ts` dùng `TICKETS.DETAIL`, `TICKETS.COMMENTS`, `TICKETS.MAINTENANCE_LOGS` (đã có sẵn trong endpoints.ts) + `TICKETS.ACTIVITIES` (mới) + toàn bộ `STAFF_TICKETS` (mới).
 
+| Method | Path | Request | Response |
+|--------|------|---------|----------|
+| GET | `/api/staff/tickets/me` | `{ status?: TicketStatusEnum, pageNumber: number, pageSize: number }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
+| GET | `/api/tickets/{id}` | — | `CommonResponse<TicketDetailDTO>` |
+| GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
+| GET | `/api/tickets/{id}/comments` | — | `CommonResponse<TicketCommentDTO[]>` (từ `TicketDetailDTO.comments`) |
+| POST | `/api/staff/tickets/{id}/start` | — | `TicketActionResponse` |
+| POST | `/api/staff/tickets/{id}/hold` | `{ reason: PauseReasonEnum, note?: string }` | `TicketActionResponse` |
+| POST | `/api/staff/tickets/{id}/resume` | — | `TicketActionResponse` |
+| POST | `/api/staff/tickets/{id}/resolve` | `{ resolutionSummary?: string }` | `TicketActionResponse` |
+| POST | `/api/staff/tickets/{id}/escalate-request` | `{ reason: EscalationReasonEnum, note?: string }` | `TicketActionResponse` |
+| POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal: boolean, attachments?: CommentAttachmentInput[] }` | `CommonResponse<TicketCommentDTO>` |
+| POST | `/api/tickets/{id}/maintenance-logs` | `MaintenanceLogRequest` | `CommonResponse<MaintenanceLogDTO>` |
+
+## Query Keys
+
+```ts
+// KEY (root — dùng để invalidate broad)
+KEY.tickets        // shared cho tất cả portal
+KEY.staffTickets   // scoped cho Staff
+
+// QUERY_KEY factories
+QUERY_KEY.tickets = {
+  detail:     (id: string) => [KEY.tickets, 'detail', id] as const,
+  activities: (id: string) => [KEY.tickets, 'activities', id] as const,
+}
+
+QUERY_KEY.staffTickets = {
+  list:   (params?: object) => [KEY.staffTickets, 'list', params] as const,
+  detail: (id: string)      => [KEY.staffTickets, 'detail', id] as const,
+}
+```
+
+## staleTime Override
+
+| Hook | staleTime | refetchInterval | Lý do |
+|------|-----------|-----------------|-------|
+| `useStaffTickets` (list) | 30s | — | Ticket queue thay đổi thường xuyên — fe.md rule |
+| `useStaffTicketDetail` | 30s | — | Status ticket có thể đổi sau action của Staff khác |
+| `useStaffTicketActivities` | 30s | — | Nhất quán với detail |
+
 ## Workflow
 
 **List flow:**
@@ -266,3 +307,13 @@ useEffect(() => {
 - [x] Bước 11: Tạo `TicketListPage` + `TicketDetailPage` — 2026-06-05
 - [x] Bước 12: Update `router/index.tsx` — Staff AppLayout + ticket routes — 2026-06-05
 - [x] Bước 13: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS — 2026-06-05
+
+## Câu hỏi đã giải đáp
+
+| Câu hỏi | Quyết định |
+|---------|-----------|
+| `tickets.activities(id)` có cần invalidate sau khi add comment không? | Không — `TicketCommentDTO` không nằm trong activities endpoint. BE tự tạo activity entry `action:"Commented"` nhưng FE không cần invalidate activities riêng. Chỉ invalidate `staffTickets.detail(id)` để reload `comments[]`. |
+| Types đặt ở `shared/types/` hay `features/staff/types/`? | Enums + DTOs core đặt `shared/types/ticket.types.ts` (dùng cross-feature sau này). Request types (`HoldRequest`, `ResolveRequest`...) đặt `features/staff/types/staff-ticket.types.ts` (chỉ Staff dùng). |
+| SLA Countdown có cần invalidate từ server không? | Không — countdown chạy client-side từ `dueAt`. Chỉ re-render khi `dueAt` hoặc `slaStatus` thay đổi (query refetch 30s). |
+| `isInternal` comment: Staff có thấy comment internal không? | Có — Staff xem được tất cả comments kể cả `isInternal: true`. FE hiển thị badge "Nội bộ" để phân biệt, không ẩn. |
+| Maintenance log: `fileId` attachment có implement không? | Không — file picker ngoài scope. Schema vẫn khai báo `attachments` optional để type-safe, nhưng UI không render file input. |
