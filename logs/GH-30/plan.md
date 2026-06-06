@@ -367,6 +367,17 @@ export const QUERY_KEY = {
 - `StaffAssignmentProfileDto` giữ trong `shared/types` — cross-feature với GH-28 (`GET /api/staff`)
 - `StaffProfileDto` confirmed: `accountId`, `employeeCode`, `department`, `maxConcurrentTickets`, `isAvailable`, `notes`, `skills[]` (non-optional). Không có `displayAvatarUrl`.
 
+## Workflow
+
+Ticket này chỉ implement data layer (types, services, hooks) — không có UI pages hay user flow. Workflow sẽ được bổ sung ở các issue UI riêng per feature (account list page, role management page, audit log page...).
+
+**Invalidation strategy cho mutations:**
+- Account mutations → `invalidateQueries({ queryKey: KEY.admin.accounts })`
+- Staff mutations → `invalidateQueries({ queryKey: KEY.admin.staff })` + `invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) })` (vì `AccountDto` embed `staffProfile`)
+- Role mutations → `invalidateQueries({ queryKey: KEY.admin.roles })`
+- Permissions PUT → `invalidateQueries({ queryKey: QUERY_KEY.admin.roles.permissions(roleId) })` + `invalidateQueries({ queryKey: KEY.admin.permissions })`
+- Audit logs — read-only, không có mutation
+
 ## Edge Cases & Error Handling
 
 | Case | Xử lý |

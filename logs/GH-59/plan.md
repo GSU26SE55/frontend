@@ -125,6 +125,21 @@ TICKETS: {
 }
 ```
 
+| Method | Path | Request | Response |
+|--------|------|---------|----------|
+| GET | `/api/admin/tickets` | `{ keyword?, status?: TicketStatusEnum, priority?: TicketPriorityEnum, category?: TicketCategoryEnum, batteryAssetId?: string, pageNumber, pageSize }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
+| GET | `/api/admin/tickets/queue` | `{ priority?: TicketPriorityEnum, category?: TicketCategoryEnum, pageNumber, pageSize }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
+| GET | `/api/tickets/{id}` | — | `CommonResponse<TicketDetailDTO>` |
+| GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
+| POST | `/api/admin/tickets/{id}/triage` | `{ impact: ImpactScopeEnum, urgency: UrgencyLevelEnum, manualPriority?: TicketPriorityEnum, priorityOverrideReason?: string, managerComment?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/assign` | `{ staffId: string (UUID), notes?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/reassign` | `{ newStaffId: string (UUID), reason?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/approve` | — (comment qua query param `?comment=`) | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/reject` | `{ reason?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/escalate` | `{ reason: EscalationReasonEnum, note?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/declare-incident` | — | `TicketActionResponse` |
+| POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal: boolean, attachments?: CommentAttachmentInput[] }` | `CommonResponse<TicketCommentDTO>` |
+
 ## Query Keys
 ```ts
 // KEY thêm:
@@ -141,8 +156,17 @@ manager: {
     activities: (id: string) => [...KEY.manager.tickets, 'activities', id],
   }
 }
-// staleTime overrides: useTicketDetail → 30_000 | useAdminTicketQueue → 30_000 | SlaCountdown → staleTime:0 + refetchInterval:30_000
 ```
+
+## staleTime Override
+
+| Hook | staleTime | refetchInterval | Lý do |
+|------|-----------|-----------------|-------|
+| `useAdminTicketList` | 30s | — | Ticket queue rule — fe.md: ticket data thay đổi thường xuyên |
+| `useAdminTicketQueue` | 30s | — | Queue Open tickets cần fresh hơn list thông thường |
+| `useTicketDetail` | 30s | — | Status thay đổi sau mỗi action Manager |
+| `useTicketActivities` | 30s | — | Nhất quán với detail; activity append sau mỗi action |
+| `SlaCountdown` (internal) | 0 | 30s | fe.md: SLA countdown — staleTime:0 + refetchInterval:30s để auto-refetch |
 
 ## Schemas (Zod)
 ```ts

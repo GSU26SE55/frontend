@@ -217,6 +217,43 @@ ADMIN_TICKETS: {
 ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
 ```
 
+| Method | Path | Request | Response |
+|--------|------|---------|----------|
+| GET | `/api/admin/tickets` | `{ keyword?, status?: TicketStatusEnum, priority?: TicketPriorityEnum, category?: TicketCategoryEnum, pageNumber, pageSize }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
+| GET | `/api/tickets/{id}` | — | `CommonResponse<TicketDetailDTO>` |
+| GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
+| POST | `/api/admin/tickets/{id}/declare-incident` | — | `TicketActionResponse` |
+
+## Query Keys
+
+```ts
+// KEY thêm:
+admin: {
+  tickets: ['admin', 'tickets'] as const,
+}
+tickets: ['tickets'] as const,  // shared key dùng cho detail + activities
+
+// QUERY_KEY thêm:
+admin: {
+  tickets: {
+    list:   (p?: object) => [...KEY.admin.tickets, 'list', p] as const,
+    detail: (id: string) => [...KEY.admin.tickets, 'detail', id] as const,
+  }
+}
+tickets: {
+  detail:     (id: string) => [KEY.tickets, 'detail', id] as const,
+  activities: (id: string) => [KEY.tickets, 'activities', id] as const,
+}
+```
+
+## staleTime Override
+
+| Hook | staleTime | refetchInterval | Lý do |
+|------|-----------|-----------------|-------|
+| `useAdminTickets` (list) | 30s | — | Ticket queue rule — fe.md: ticket list thay đổi thường xuyên |
+| `useAdminTicketDetail` | 30s | — | Status ticket có thể đổi sau action của Manager/Staff |
+| `useAdminTicketActivities` | 30s | — | Nhất quán với detail; activity append sau mỗi action |
+
 ## Workflow
 
 **List flow:**
