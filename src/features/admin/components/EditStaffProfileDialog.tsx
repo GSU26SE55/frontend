@@ -178,6 +178,7 @@ export default function EditStaffProfileDialog({
                       type="number"
                       min={1}
                       max={20}
+                      placeholder="3"
                       {...profileForm.register("maxConcurrentTickets", {
                         valueAsNumber: true,
                       })}
@@ -202,7 +203,10 @@ export default function EditStaffProfileDialog({
                   </div>
                   <div className="col-span-2 space-y-1.5">
                     <Label>Ghi chú</Label>
-                    <Input {...profileForm.register("notes")} />
+                    <Input
+                      placeholder="Ghi chú nội bộ về nhân sự"
+                      {...profileForm.register("notes")}
+                    />
                   </div>
                 </div>
                 <DialogFooter>
@@ -292,6 +296,7 @@ export default function EditStaffProfileDialog({
                       type="number"
                       min={1}
                       max={5}
+                      placeholder="3"
                       {...skillForm.register("skillLevel", {
                         valueAsNumber: true,
                       })}

@@ -77,13 +77,18 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           <div className="space-y-1.5">
             <Label>Email</Label>
-            <Input value={account.email} disabled className="bg-muted" />
+            <Input
+              value={account.email}
+              disabled
+              className="bg-muted"
+              placeholder="user@sunaria.vn"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>
               Họ và tên <span className="text-red-500">*</span>
             </Label>
-            <Input {...register("fullName")} />
+            <Input placeholder="Nguyễn Văn A" {...register("fullName")} />
             {errors.fullName && (
               <p className="text-xs text-red-500">{errors.fullName.message}</p>
             )}
@@ -105,7 +110,10 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label>Địa chỉ</Label>
-            <Input {...register("address")} />
+            <Input
+              placeholder="Số nhà, đường, phường/xã..."
+              {...register("address")}
+            />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>

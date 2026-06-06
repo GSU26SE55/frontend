@@ -57,8 +57,15 @@ export default function TicketListPage() {
   });
 
   return (
-    <div className="space-y-4 p-6">
-      <h1 className="text-2xl font-bold">Quản lý Ticket</h1>
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-0.5">
+          Manager &middot; Ticket
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Quản lý ticket
+        </h1>
+      </div>
 
       <div className="flex flex-wrap gap-2 items-end">
         <Input

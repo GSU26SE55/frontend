@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -88,13 +90,15 @@ export default function AuditLogsPage() {
     : logs;
 
   return (
-    <div className="p-6 space-y-5 max-w-360">
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Admin · Hệ thống
           </p>
-          <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Audit Logs
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "…" : (data?.totalItems ?? 0)} sự kiện — lịch sử hoạt
             động trên hệ thống.
@@ -102,30 +106,35 @@ export default function AuditLogsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative max-w-xs w-full">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            value={filters.keyword}
-            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
-            placeholder="Action, email, IP…"
-            className="h-9 w-full pl-8 pr-3 rounded-lg border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-          />
+      <Card className="gap-0 py-0 overflow-hidden">
+        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight">
+              Danh sách audit log
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Theo dõi hành động, kết quả, tài khoản và IP thực hiện.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={filters.keyword}
+                onChange={(e) =>
+                  setFilter("keyword", e.target.value || undefined)
+                }
+                placeholder="Action, email, IP..."
+                className="pl-8"
+              />
+            </div>
+            {hasActiveFilter && (
+              <Button size="sm" variant="ghost" onClick={resetFilters}>
+                Xóa bộ lọc
+              </Button>
+            )}
+          </div>
         </div>
-        {hasActiveFilter && (
-          <Button variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
-          </Button>
-        )}
-      </div>
-
-      <div
-        className="bg-card rounded-xl border border-border overflow-hidden"
-        style={{ boxShadow: "var(--shadow-sm)" }}
-      >
         {isLoading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -190,7 +199,7 @@ export default function AuditLogsPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+      </Card>
 
       <DataPagination
         totalItems={data?.totalItems ?? 0}

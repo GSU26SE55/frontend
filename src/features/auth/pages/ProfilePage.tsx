@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import {
   profileSchema,
   type ProfileFormValues,
@@ -97,8 +100,13 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <div className="p-6 max-w-2xl mx-auto space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -106,127 +114,138 @@ const ProfilePage = () => {
   const isAvatarBusy = isUploading || isAvatarUpdating;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-xl font-semibold">Hồ sơ của tôi</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h2 className="text-lg font-semibold tracking-tight">
+          Hồ sơ của tôi
+        </h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Quản lý thông tin cá nhân và ảnh đại diện
         </p>
+        <Separator className="mt-4" />
       </div>
 
-      {/* Avatar */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Ảnh đại diện</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center gap-6">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold bg-emerald-100 text-emerald-700 select-none">
-              {initials}
-            </div>
-            <button
-              type="button"
-              disabled={isAvatarBusy}
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white border border-border shadow-sm flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
-              aria-label="Thay đổi ảnh đại diện"
-            >
-              {isAvatarBusy ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Camera className="size-3.5 text-muted-foreground" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-            />
-          </div>
-          <div className="text-sm text-muted-foreground">
-            <p>Nhấn vào biểu tượng camera để thay đổi ảnh đại diện.</p>
-            <p className="mt-1">Hỗ trợ JPG, PNG. Tối đa 5MB.</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Profile form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Thông tin cá nhân</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="fullName">Họ và tên</Label>
-                <Input id="fullName" {...register("fullName")} />
-                {errors.fullName && (
-                  <p className="text-xs text-red-500">
-                    {errors.fullName.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={account?.email ?? ""}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="phoneNumber">Số điện thoại</Label>
-                <Input
-                  id="phoneNumber"
-                  {...register("phoneNumber")}
-                  placeholder="0912345678"
-                />
-                {errors.phoneNumber && (
-                  <p className="text-xs text-red-500">
-                    {errors.phoneNumber.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="birthDate">Ngày sinh</Label>
-                <Input id="birthDate" type="date" {...register("birthDate")} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="timeZone">Múi giờ</Label>
-                <Input
-                  id="timeZone"
-                  {...register("timeZone")}
-                  placeholder="Asia/Ho_Chi_Minh"
-                />
-              </div>
-
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="address">Địa chỉ</Label>
-                <Input id="address" {...register("address")} />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
+      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+        {/* Avatar */}
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="text-base">Ảnh đại diện</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4 text-center">
+            <div className="relative">
+              <Avatar className="size-24 text-3xl">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
               <Button
-                type="submit"
-                disabled={isUpdating}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={isAvatarBusy}
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 size-8 rounded-full shadow-sm"
+                aria-label="Thay đổi ảnh đại diện"
               >
-                {isUpdating && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Lưu thay đổi
+                {isAvatarBusy ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Camera className="size-3.5" />
+                )}
               </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
-          </form>
-        </CardContent>
-      </Card>
+            <div className="text-sm text-muted-foreground">
+              <p>Nhấn vào biểu tượng camera để thay đổi ảnh đại diện.</p>
+              <p className="mt-1">Hỗ trợ JPG, PNG. Tối đa 5MB.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Thông tin cá nhân</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label htmlFor="fullName">Họ và tên</Label>
+                  <Input id="fullName" {...register("fullName")} />
+                  {errors.fullName && (
+                    <p className="text-xs text-destructive">
+                      {errors.fullName.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    value={account?.email ?? ""}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="phoneNumber">Số điện thoại</Label>
+                  <Input
+                    id="phoneNumber"
+                    {...register("phoneNumber")}
+                    placeholder="0912345678"
+                  />
+                  {errors.phoneNumber && (
+                    <p className="text-xs text-destructive">
+                      {errors.phoneNumber.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="birthDate">Ngày sinh</Label>
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    {...register("birthDate")}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="timeZone">Múi giờ</Label>
+                  <Input
+                    id="timeZone"
+                    {...register("timeZone")}
+                    placeholder="Asia/Ho_Chi_Minh"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label htmlFor="address">Địa chỉ</Label>
+                  <Input id="address" {...register("address")} />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating && (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  )}
+                  Lưu thay đổi
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

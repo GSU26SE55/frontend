@@ -69,7 +69,7 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           {role.isSystemRole && (
-            <p className="text-xs text-amber-600 bg-amber-50 rounded-md px-3 py-2">
+            <p className="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-300">
               Đây là system role — chỉ chỉnh sửa được tên hiển thị và mô tả.
             </p>
           )}
@@ -77,14 +77,21 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
             <Label>
               Tên role <span className="text-red-500">*</span>
             </Label>
-            <Input {...register("name")} disabled={role.isSystemRole} />
+            <Input
+              {...register("name")}
+              disabled={role.isSystemRole}
+              placeholder="VD: SeniorTechnician"
+            />
             {errors.name && (
               <p className="text-xs text-red-500">{errors.name.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
             <Label>Mô tả</Label>
-            <Input {...register("description")} />
+            <Input
+              {...register("description")}
+              placeholder="Mô tả ngắn về role này"
+            />
             {errors.description && (
               <p className="text-xs text-red-500">
                 {errors.description.message}
@@ -95,11 +102,7 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
             <Button type="button" variant="outline" onClick={handleClose}>
               Hủy
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
+            <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
               Lưu thay đổi
             </Button>

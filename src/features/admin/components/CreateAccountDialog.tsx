@@ -95,7 +95,11 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               <Label>
                 Email <span className="text-red-500">*</span>
               </Label>
-              <Input type="email" {...register("email")} />
+              <Input
+                type="email"
+                placeholder="user@sunaria.vn"
+                {...register("email")}
+              />
               {errors.email && (
                 <p className="text-xs text-red-500">{errors.email.message}</p>
               )}
@@ -104,7 +108,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               <Label>
                 Họ và tên <span className="text-red-500">*</span>
               </Label>
-              <Input {...register("fullName")} />
+              <Input placeholder="Nguyễn Văn A" {...register("fullName")} />
               {errors.fullName && (
                 <p className="text-xs text-red-500">
                   {errors.fullName.message}
@@ -119,6 +123,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                 <Input
                   type={showPw ? "text" : "password"}
                   className="pr-10"
+                  placeholder="Nhập mật khẩu"
                   {...register("password")}
                 />
                 <button
@@ -147,6 +152,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                 <Input
                   type={showConfirm ? "text" : "password"}
                   className="pr-10"
+                  placeholder="Nhập lại mật khẩu"
                   {...register("confirmPassword")}
                 />
                 <button
@@ -182,7 +188,10 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Địa chỉ</Label>
-              <Input {...register("address")} />
+              <Input
+                placeholder="Số nhà, đường, phường/xã..."
+                {...register("address")}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>

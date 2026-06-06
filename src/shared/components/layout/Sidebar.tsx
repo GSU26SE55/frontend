@@ -4,11 +4,11 @@ import type { LucideIcon } from "lucide-react";
 import {
   PanelLeftClose,
   PanelLeftOpen,
-  Zap,
   HelpCircle,
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logoImg from "@/assets/logo.png";
 
 export interface NavItem {
   label: string;
@@ -115,7 +115,7 @@ function Section({
                   <>
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="shrink-0 text-[10px] font-bold px-1.5 py-px rounded-full bg-red-100 text-red-600 leading-none">
+                      <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none">
                         {item.badge}
                       </span>
                     )}
@@ -161,17 +161,18 @@ export default function Sidebar({
           </button>
         ) : (
           <>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-600 text-white">
-              <Zap size={15} strokeWidth={2.5} />
-            </div>
+            <img
+              src={logoImg}
+              alt="Logo"
+              className="h-8 w-8 shrink-0 object-contain"
+            />
+
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm leading-tight tracking-tight">
+              <div className="text-[10px] text-muted-foreground tracking-wide uppercase">
                 {appName}
               </div>
-              <div className="text-[10px] text-muted-foreground tracking-wide uppercase mt-0.5">
-                Battery Ops
-              </div>
             </div>
+
             <button
               className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
               onClick={onToggle}

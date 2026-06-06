@@ -108,7 +108,7 @@ export default function ChangeAccountStatusDialog({
                   onValueChange={(v) => field.onChange(Number(v))}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {STATUS_OPTIONS.map((o) => (

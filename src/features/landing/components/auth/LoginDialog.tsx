@@ -49,6 +49,7 @@ import { useResendResetOtp } from "@/features/auth/hooks/useResendResetOtp";
 import { useResetPassword } from "@/features/auth/hooks/useResetPassword";
 import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
+import { handleErrorApi } from "@/shared/lib/errors";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -279,10 +280,18 @@ const LoginStep = ({
     setError,
     formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
-  const { mutate, isPending } = useLogin(setError);
+  const { mutateAsync, isPending } = useLogin();
+
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      await mutateAsync(data);
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
+  };
 
   return (
-    <StaggerForm onSubmit={handleSubmit((data) => mutate(data))}>
+    <StaggerForm onSubmit={handleSubmit(onSubmit)}>
       <Item>
         <h2 className="pb-2 text-center text-2xl font-bold tracking-tight text-foreground">
           Chào mừng trở lại
@@ -382,10 +391,18 @@ const RegisterStep = ({
     setError,
     formState: { errors },
   } = useForm<RegisterFormValues>({ resolver: zodResolver(registerSchema) });
-  const { mutate, isPending } = useRegister(setError, onOtpSent);
+  const { mutateAsync, isPending } = useRegister(onOtpSent);
+
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      await mutateAsync(data);
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
+  };
 
   return (
-    <StaggerForm onSubmit={handleSubmit((data) => mutate(data))}>
+    <StaggerForm onSubmit={handleSubmit(onSubmit)}>
       <Item>
         <h2 className="pb-2 text-center text-2xl font-bold tracking-tight text-foreground">
           Tạo tài khoản
@@ -662,18 +679,22 @@ const ResetPasswordStep = ({
   } = useForm<ForgotPasswordStep3Values>({
     resolver: zodResolver(forgotPasswordStep3Schema),
   });
-  const { mutate, isPending } = useResetPassword(setError, onSuccess);
+  const { mutateAsync, isPending } = useResetPassword(onSuccess);
+
+  const onSubmit = async (data: ForgotPasswordStep3Values) => {
+    try {
+      await mutateAsync({
+        resetToken,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      });
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
+  };
 
   return (
-    <StaggerForm
-      onSubmit={handleSubmit((data) =>
-        mutate({
-          resetToken,
-          newPassword: data.newPassword,
-          confirmPassword: data.confirmPassword,
-        }),
-      )}
-    >
+    <StaggerForm onSubmit={handleSubmit(onSubmit)}>
       <Item>
         <div className="pb-2 text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">

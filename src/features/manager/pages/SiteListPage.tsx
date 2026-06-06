@@ -1,5 +1,8 @@
+import { MapPin, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import SiteTable from "@/features/manager/components/SiteTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -19,37 +22,68 @@ export default function ManagerSiteListPage() {
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
   });
+  const items = data?.items ?? [];
+  const totalItems = data?.totalItems ?? 0;
 
   return (
-    <div className="space-y-4 p-6">
-      <h1 className="text-2xl font-bold">Danh sách Site</h1>
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-0.5">
+          Manager &middot; Tài sản
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Danh sách Site
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {isLoading ? "..." : totalItems} site.
+        </p>
+      </div>
 
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Tìm theo tên site..."
-          value={filters.keyword}
-          onChange={(e) => setFilter("keyword", e.target.value || undefined)}
-          className="max-w-sm"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo tên site..."
+            value={filters.keyword}
+            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            className="pl-8"
+          />
+        </div>
         {hasActiveFilter && (
-          <Button variant="ghost" onClick={resetFilters}>
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
           </Button>
         )}
       </div>
 
-      <SiteTable
-        data={data?.items ?? []}
-        totalItems={data?.totalItems ?? 0}
-        totalPages={data?.totalPages ?? 1}
-        hasNextPage={data?.hasNextPage ?? false}
-        hasPreviousPage={data?.hasPreviousPage ?? false}
-        pageNumber={filters.pageNumber}
-        pageSize={filters.pageSize}
-        isLoading={isLoading}
-        onPageChange={(p) => setFilter("pageNumber", p)}
-        onPageSizeChange={(s) => setFilter("pageSize", s)}
-      />
+      <Card className="gap-0 py-0 overflow-hidden">
+        {isLoading ? (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
+            <MapPin className="size-8 opacity-30" />
+            <span className="text-sm">Chưa có site nào.</span>
+          </div>
+        ) : (
+          <div className="p-0">
+            <SiteTable
+              data={items}
+              totalItems={totalItems}
+              totalPages={data?.totalPages ?? 1}
+              hasNextPage={data?.hasNextPage ?? false}
+              hasPreviousPage={data?.hasPreviousPage ?? false}
+              pageNumber={filters.pageNumber}
+              pageSize={filters.pageSize}
+              onPageChange={(p) => setFilter("pageNumber", p)}
+              onPageSizeChange={(s) => setFilter("pageSize", s)}
+            />
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
