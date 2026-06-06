@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,16 +102,18 @@ export default function TicketDetailPage() {
   const comments = ticket.comments ?? [];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 mb-1"
             onClick={() => navigate("/manager/tickets")}
-            className="text-sm text-muted-foreground hover:underline mb-1 block"
           >
-            ← Danh sách ticket
-          </button>
+            <ArrowLeft className="size-3.5" /> Danh sach ticket
+          </Button>
           <h1 className="text-xl font-bold">{ticket.title}</h1>
           <p className="text-sm text-muted-foreground font-mono">
             {ticket.code}

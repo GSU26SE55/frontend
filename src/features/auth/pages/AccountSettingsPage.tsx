@@ -9,8 +9,11 @@ import {
   Trash2,
   ChevronRight,
   User,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import ChangePasswordForm from "@/features/auth/components/ChangePasswordForm";
 import ChangeEmailForm from "@/features/auth/components/ChangeEmailForm";
 import PhoneVerifySection from "@/features/auth/components/PhoneVerifySection";
@@ -82,7 +85,7 @@ function PanelHeader({ label, desc }: { label: string; desc: string }) {
     <div className="mb-6">
       <h2 className="text-lg font-semibold tracking-tight">{label}</h2>
       <p className="text-sm text-muted-foreground mt-0.5">{desc}</p>
-      <div className="border-b border-border mt-4" />
+      <Separator className="mt-4" />
     </div>
   );
 }
@@ -90,24 +93,30 @@ function PanelHeader({ label, desc }: { label: string; desc: string }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 const AccountSettingsPage = () => {
   const { data: account } = useCurrentUser();
-  const [active, setActive] = useState<MenuKey>("password");
+  const [active, setActive] = useState<MenuKey>("profile");
 
   const current = MENU.find((m) => m.key === active)!;
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Page title */}
-      <div className="px-6 py-5 border-b border-border bg-card shrink-0">
-        <h1 className="text-xl font-bold tracking-tight">Cài đặt tài khoản</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      {/* Page header */}
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-0.5">
+          <Settings className="inline size-3 mr-1 -mt-0.5" />
+          Cài đặt
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Cài đặt tài khoản
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Quản lý thông tin và bảo mật tài khoản của bạn.
         </p>
       </div>
 
       {/* Two-column body */}
-      <div className="flex flex-1 min-h-0">
+      <Card className="min-h-[600px] gap-0 overflow-hidden rounded-md py-0 md:flex-row">
         {/* ── Left nav ── */}
-        <nav className="w-56 shrink-0 border-r border-border bg-sidebar overflow-y-auto py-3 px-2">
+        <nav className="w-full shrink-0 border-b border-border bg-background overflow-y-auto px-2 py-3 md:w-56 md:border-b-0 md:border-r">
           {MENU.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
@@ -116,18 +125,18 @@ const AccountSettingsPage = () => {
                 key={item.key}
                 onClick={() => setActive(item.key)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors mb-0.5",
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-colors mb-0.5 cursor-pointer",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-muted text-foreground font-semibold ring-1 ring-border"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground",
                   "danger" in item &&
                     item.danger &&
                     !isActive &&
-                    "hover:bg-red-50 hover:text-red-600",
+                    "hover:bg-destructive/10 hover:text-destructive",
                   "danger" in item &&
                     item.danger &&
                     isActive &&
-                    "bg-red-50 text-red-600",
+                    "bg-destructive/10 text-destructive ring-destructive/20",
                 )}
               >
                 <Icon size={15} className="shrink-0" />
@@ -191,7 +200,7 @@ const AccountSettingsPage = () => {
             </>
           )}
         </main>
-      </div>
+      </Card>
     </div>
   );
 };

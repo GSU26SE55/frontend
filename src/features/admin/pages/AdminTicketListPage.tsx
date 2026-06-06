@@ -84,8 +84,15 @@ export default function AdminTicketListPage() {
   const { data, isLoading } = useAdminTickets(params);
 
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Quản lý Ticket</h1>
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      {/* Page header */}
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-0.5">
+          Admin &middot; Ticket
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+                  </h1>
+      </div>
 
       <div className="flex flex-wrap gap-3 items-end">
         <Input

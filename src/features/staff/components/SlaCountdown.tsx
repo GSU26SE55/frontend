@@ -15,15 +15,19 @@ function formatSeconds(seconds: number): string {
 }
 
 export function SlaCountdown({ slaTimer }: Props) {
-  if (!slaTimer) return null;
-  const { dueAt, status, remainingPercent } = slaTimer;
+  const dueAt = slaTimer?.dueAt ?? "";
+  const status = slaTimer?.status;
+  const remainingPercent = slaTimer?.remainingPercent ?? 0;
 
   const [remaining, setRemaining] = useState(() =>
-    Math.max(0, Math.floor((new Date(dueAt).getTime() - Date.now()) / 1000)),
+    dueAt
+      ? Math.max(0, Math.floor((new Date(dueAt).getTime() - Date.now()) / 1000))
+      : 0,
   );
 
   useEffect(() => {
     if (
+      !dueAt ||
       status === SlaTimerStatusEnum.Paused ||
       status === SlaTimerStatusEnum.Met ||
       status === SlaTimerStatusEnum.Breached
@@ -37,6 +41,8 @@ export function SlaCountdown({ slaTimer }: Props) {
     }, 1000);
     return () => clearInterval(id);
   }, [dueAt, status]);
+
+  if (!slaTimer) return null;
 
   if (status === SlaTimerStatusEnum.Breached) {
     return (

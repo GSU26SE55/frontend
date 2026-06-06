@@ -79,7 +79,7 @@ export default function TicketDetailPage() {
 
   if (isLoading || !ticket) {
     return (
-      <div className="space-y-4">
+      <div className="p-6 space-y-4 max-w-4xl mx-auto">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -117,7 +117,7 @@ export default function TicketDetailPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="p-6 space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">

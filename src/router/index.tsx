@@ -29,8 +29,11 @@ import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
 import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
 import ManagerTicketQueuePage from "@/features/manager/pages/TicketQueuePage";
 import ManagerTicketDetailPage from "@/features/manager/pages/TicketDetailPage";
+import StaffDashboardPage from "@/features/staff/pages/DashboardPage";
 import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
+import StaffSlaMonitorPage from "@/features/staff/pages/SlaMonitorPage";
+import StaffAlertsPage from "@/features/staff/pages/AlertsPage";
 
 const router = createBrowserRouter([
   {
@@ -126,9 +129,12 @@ const router = createBrowserRouter([
             path: "/staff",
             element: <AppLayout />,
             children: [
-              { index: true, element: <Navigate to="tickets" replace /> },
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <StaffDashboardPage /> },
               { path: "tickets", element: <StaffTicketListPage /> },
               { path: "tickets/:id", element: <StaffTicketDetailPage /> },
+              { path: "sla", element: <StaffSlaMonitorPage /> },
+              { path: "alerts", element: <StaffAlertsPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],

@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useAdminPermissionList,
@@ -131,15 +132,12 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
 
           {/* Search */}
           <div className="relative shrink-0">
-            <Search
-              size={13}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
+            <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm permission…"
-              className="h-8 w-full pl-8 pr-3 rounded-md border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-emerald-500/30"
+              placeholder="Tìm permission..."
+              className="pl-8"
             />
           </div>
 
@@ -172,9 +170,9 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                         <span
                           className={`w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
                             allChecked
-                              ? "bg-emerald-600 border-emerald-600 text-white"
+                              ? "bg-primary border-primary text-primary-foreground"
                               : someChecked
-                                ? "bg-emerald-100 border-emerald-400 text-emerald-700"
+                                ? "bg-primary/10 border-primary/50 text-primary"
                                 : "border-border"
                           }`}
                         >
@@ -193,7 +191,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                             <span
                               className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
                                 checkedIds.has(p.id)
-                                  ? "bg-emerald-600 border-emerald-600 text-white"
+                                  ? "bg-primary border-primary text-primary-foreground"
                                   : "border-border"
                               }`}
                             >
@@ -232,11 +230,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
             <Button type="button" variant="outline" onClick={onClose}>
               Hủy
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
+            <Button onClick={handleSave} disabled={isSaving}>
               {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
               Lưu quyền
             </Button>

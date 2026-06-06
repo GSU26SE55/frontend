@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SiteStatusEnum, type SiteDto } from "@/shared/types/site.types";
-import DataPagination from "@/shared/components/common/DataPagination";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
   [SiteStatusEnum.Active]: "Hoạt động",
@@ -31,15 +30,7 @@ const STATUS_VARIANT: Record<
 
 interface SiteTableProps {
   data: SiteDto[];
-  totalItems: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-  pageNumber: number;
-  pageSize: number;
   isLoading?: boolean;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
   onEdit: (site: SiteDto) => void;
   onDelete: (site: SiteDto) => void;
   onRestore?: (site: SiteDto) => void;
@@ -47,15 +38,7 @@ interface SiteTableProps {
 
 export default function SiteTable({
   data,
-  totalItems,
-  totalPages,
-  hasNextPage,
-  hasPreviousPage,
-  pageNumber,
-  pageSize,
   isLoading,
-  onPageChange,
-  onPageSizeChange,
   onEdit,
   onDelete,
   onRestore,
@@ -81,84 +64,71 @@ export default function SiteTable({
   }
 
   return (
-    <div className="space-y-2">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Tên site</TableHead>
-            <TableHead>Khách hàng</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Số pin</TableHead>
-            <TableHead>Ngày lắp</TableHead>
-            <TableHead className="text-right">Thao tác</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((site) => (
-            <TableRow
-              key={site.id}
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => navigate(`/admin/sites/${site.id}`)}
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Tên site</TableHead>
+          <TableHead>Khách hàng</TableHead>
+          <TableHead>Trạng thái</TableHead>
+          <TableHead>Số pin</TableHead>
+          <TableHead>Ngày lắp</TableHead>
+          <TableHead className="text-right">Thao tác</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {data.map((site) => (
+          <TableRow
+            key={site.id}
+            className="cursor-pointer hover:bg-muted/50"
+            onClick={() => navigate(`/admin/sites/${site.id}`)}
+          >
+            <TableCell className="font-medium">{site.name}</TableCell>
+            <TableCell>{site.customerName}</TableCell>
+            <TableCell>
+              <Badge variant={STATUS_VARIANT[site.status]}>
+                {STATUS_LABEL[site.status]}
+              </Badge>
+            </TableCell>
+            <TableCell>{site.batteryAssetCount}</TableCell>
+            <TableCell>
+              {format(new Date(site.installDate), "dd/MM/yyyy")}
+            </TableCell>
+            <TableCell
+              className="text-right space-x-1"
+              onClick={(e) => e.stopPropagation()}
             >
-              <TableCell className="font-medium">{site.name}</TableCell>
-              <TableCell>{site.customerName}</TableCell>
-              <TableCell>
-                <Badge variant={STATUS_VARIANT[site.status]}>
-                  {STATUS_LABEL[site.status]}
-                </Badge>
-              </TableCell>
-              <TableCell>{site.batteryAssetCount}</TableCell>
-              <TableCell>
-                {format(new Date(site.installDate), "dd/MM/yyyy")}
-              </TableCell>
-              <TableCell
-                className="text-right space-x-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {site.status !== SiteStatusEnum.Decommissioned ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(site)}
-                    >
-                      Sửa
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => onDelete(site)}
-                    >
-                      Xoá
-                    </Button>
-                  </>
-                ) : (
-                  onRestore && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onRestore(site)}
-                    >
-                      Khôi phục
-                    </Button>
-                  )
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      <DataPagination
-        totalItems={totalItems}
-        totalPages={totalPages}
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
-        pageNumber={pageNumber}
-        pageSize={pageSize}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-      />
-    </div>
+              {site.status !== SiteStatusEnum.Decommissioned ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(site)}
+                  >
+                    Sửa
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDelete(site)}
+                  >
+                    Xoá
+                  </Button>
+                </>
+              ) : (
+                onRestore && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onRestore(site)}
+                  >
+                    Khôi phục
+                  </Button>
+                )
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

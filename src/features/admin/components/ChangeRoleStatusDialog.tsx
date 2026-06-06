@@ -96,7 +96,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
                   onValueChange={(v) => field.onChange(Number(v))}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn trạng thái" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {STATUS_OPTIONS.map((o) => (
@@ -116,11 +116,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
             <Button type="button" variant="outline" onClick={handleClose}>
               Hủy
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
+            <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
               Xác nhận
             </Button>

@@ -85,7 +85,12 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
             <Label htmlFor="invite-email">
               Email <span className="text-red-500">*</span>
             </Label>
-            <Input id="invite-email" type="email" {...register("email")} />
+            <Input
+              id="invite-email"
+              type="email"
+              placeholder="user@sunaria.vn"
+              {...register("email")}
+            />
             {errors.email && (
               <p className="text-xs text-red-500">{errors.email.message}</p>
             )}
@@ -94,7 +99,11 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
             <Label htmlFor="invite-fullName">
               Họ và tên <span className="text-red-500">*</span>
             </Label>
-            <Input id="invite-fullName" {...register("fullName")} />
+            <Input
+              id="invite-fullName"
+              placeholder="Nguyễn Văn A"
+              {...register("fullName")}
+            />
             {errors.fullName && (
               <p className="text-xs text-red-500">{errors.fullName.message}</p>
             )}

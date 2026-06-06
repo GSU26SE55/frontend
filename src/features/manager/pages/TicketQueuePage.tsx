@@ -38,14 +38,17 @@ export default function TicketQueuePage() {
   });
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Hàng chờ Triage</h1>
-          <p className="text-sm text-muted-foreground">
-            Ticket ở trạng thái Open, P1 ưu tiên trước.
-          </p>
-        </div>
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-0.5">
+          Manager &middot; Ticket
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Hang cho Triage
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Ticket o trang thai Open, P1 uu tien truoc.
+        </p>
       </div>
 
       <div className="flex gap-2 items-center">

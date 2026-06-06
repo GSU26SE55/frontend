@@ -1,18 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { useSiteList } from "@/features/admin/hooks/useSites";
 import { SiteStatusEnum } from "@/shared/types/site.types";
-import {
-  RefreshCw,
-  Plus,
-  Users,
-  Battery,
-  MapPin,
-  Settings,
-  TrendingUp,
-  TrendingDown,
-  ExternalLink,
-} from "lucide-react";
+import { RefreshCw, Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 // ── KPI Card ────────────────────────────────────────────────────────────────
 interface KpiProps {
@@ -31,11 +30,11 @@ function KpiCard({ label, value, sub, trend, accent }: KpiProps) {
         : "var(--muted-foreground)";
   return (
     <div
-      className="bg-card rounded-xl border border-border p-5 flex flex-col gap-2"
+      className="bg-card rounded-lg border border-border p-4 flex flex-col gap-1.5"
       style={{ boxShadow: "var(--shadow-sm)" }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-[11px] font-medium uppercase text-muted-foreground">
           {label}
         </span>
         {accent && (
@@ -46,9 +45,7 @@ function KpiCard({ label, value, sub, trend, accent }: KpiProps) {
         )}
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold tracking-tight text-foreground">
-          {value}
-        </span>
+        <span className="text-2xl font-semibold text-foreground">{value}</span>
         {sub && (
           <span className="text-xs text-muted-foreground font-mono-num">
             {sub}
@@ -83,7 +80,7 @@ function Card({
 }) {
   return (
     <div
-      className={`bg-card rounded-xl border border-border ${className}`}
+      className={`bg-card rounded-lg border border-border ${className}`}
       style={{ boxShadow: "var(--shadow-sm)" }}
     >
       {children}
@@ -91,93 +88,61 @@ function Card({
   );
 }
 
-// ── Alert bar chart (5 weeks × 3 types) ─────────────────────────────────────
-const WEEKS = ["T17", "T18", "T19", "T20", "T21"];
+// ── Alert bar chart ─────────────────────────────────────────────────────────
+const alertChartConfig = {
+  critical: { label: "Critical", color: "var(--destructive)" },
+  warning: { label: "Warning", color: "var(--p3)" },
+  info: { label: "Info", color: "var(--muted-foreground)" },
+} satisfies ChartConfig;
+
 const ALERT_DATA = [
-  { crit: 12, warn: 24, info: 18 },
-  { crit: 8, warn: 21, info: 22 },
-  { crit: 15, warn: 19, info: 16 },
-  { crit: 6, warn: 14, info: 19 },
-  { crit: 9, warn: 17, info: 21 },
+  { week: "T17", critical: 12, warning: 24, info: 18 },
+  { week: "T18", critical: 8, warning: 21, info: 22 },
+  { week: "T19", critical: 15, warning: 19, info: 16 },
+  { week: "T20", critical: 6, warning: 14, info: 19 },
+  { week: "T21", critical: 9, warning: 17, info: 21 },
 ];
+
 function AlertsChart() {
-  const W = 560,
-    H = 160,
-    maxV = 28;
-  const bw = 22,
-    gap = 3,
-    grpGap = 20;
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold">Cảnh báo theo tuần</h3>
-        <div className="flex gap-3 text-[11px] text-muted-foreground">
-          {[
-            { c: "var(--p1)", l: "Critical" },
-            { c: "var(--p3)", l: "Warning" },
-            { c: "var(--border-strong)", l: "Info" },
-          ].map((x) => (
-            <span key={x.l} className="flex items-center gap-1">
-              <span
-                className="inline-block w-2 h-2 rounded-sm"
-                style={{ background: x.c }}
-              />
-              {x.l}
-            </span>
-          ))}
+        <div>
+          <h3 className="text-sm font-semibold">Cảnh báo theo tuần</h3>
+          <p className="text-xs text-muted-foreground">
+            Phân bổ theo mức độ nghiêm trọng
+          </p>
         </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
-        {[0.33, 0.67, 1].map((g, i) => (
-          <line
-            key={i}
-            x1={0}
-            x2={W}
-            y1={H - 14 - g * (H - 26)}
-            y2={H - 14 - g * (H - 26)}
-            stroke="var(--border)"
-            strokeDasharray="2 3"
+      <ChartContainer
+        config={alertChartConfig}
+        className="h-[240px] w-full aspect-auto"
+        initialDimension={{ width: 640, height: 240 }}
+      >
+        <BarChart accessibilityLayer data={ALERT_DATA} barGap={3} barSize={18}>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis
+            dataKey="week"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
           />
-        ))}
-        {ALERT_DATA.map((d, i) => {
-          const bars = [
-            { v: d.crit, c: "var(--p1)" },
-            { v: d.warn, c: "var(--p3)" },
-            { v: d.info, c: "var(--border-strong)" },
-          ];
-          const grpW = bw * 3 + gap * 2;
-          const x = 10 + i * (grpW + grpGap);
-          return (
-            <g key={i}>
-              {bars.map((b, j) => {
-                const bh = (b.v / maxV) * (H - 26);
-                return (
-                  <rect
-                    key={j}
-                    x={x + j * (bw + gap)}
-                    y={H - 14 - bh}
-                    width={bw}
-                    height={bh}
-                    fill={b.c}
-                    rx={2}
-                    opacity={j === 2 ? 0.45 : 0.85}
-                  />
-                );
-              })}
-              <text
-                x={x + grpW / 2}
-                y={H - 1}
-                textAnchor="middle"
-                fontSize="9.5"
-                fill="var(--muted-foreground)"
-                fontFamily="ui-monospace, monospace"
-              >
-                {WEEKS[i]}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+          <YAxis width={28} tickLine={false} axisLine={false} tickMargin={8} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <ChartLegend content={<ChartLegendContent />} />
+          <Bar
+            dataKey="critical"
+            fill="var(--color-critical)"
+            radius={[4, 4, 0, 0]}
+          />
+          <Bar
+            dataKey="warning"
+            fill="var(--color-warning)"
+            radius={[4, 4, 0, 0]}
+          />
+          <Bar dataKey="info" fill="var(--color-info)" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ChartContainer>
     </div>
   );
 }
@@ -207,30 +172,15 @@ export default function AdminDashboardPage() {
         : 100,
   }));
 
-  const statusPill = (status: number) => ({
-    label:
-      status === SiteStatusEnum.Active
-        ? "Hoạt động"
-        : status === SiteStatusEnum.UnderMaintenance
-          ? "Bảo trì"
-          : "Ngừng",
-    cls:
-      status === SiteStatusEnum.Active
-        ? "bg-emerald-100 text-emerald-700"
-        : status === SiteStatusEnum.UnderMaintenance
-          ? "bg-amber-100 text-amber-700"
-          : "bg-red-100 text-red-600",
-  });
-
   return (
-    <div className="p-6 space-y-6 max-w-360">
+    <div className="p-6 space-y-5 max-w-[1440px] mx-auto">
       {/* ── Page header ── */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+          <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
             Admin · Tổng quan hệ thống
           </p>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-semibold text-foreground">
             {isLoading ? "Dashboard" : `Solar System · ${totalSites} site`}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -242,7 +192,7 @@ export default function AdminDashboardPage() {
             <RefreshCw size={14} /> Đồng bộ
           </button>
           <button
-            className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             onClick={() => navigate("/admin/battery-assets")}
           >
             <Plus size={14} /> Tạo asset
@@ -252,11 +202,11 @@ export default function AdminDashboardPage() {
 
       {/* ── KPI row ── */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="bg-card rounded-xl border border-border p-5 space-y-3"
+              className="bg-card rounded-lg border border-border p-4 space-y-3"
             >
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-8 w-14" />
@@ -264,7 +214,7 @@ export default function AdminDashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard
             label="Total Sites"
             value={totalSites}
@@ -304,12 +254,12 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ── Row 2: Alerts chart | Site health ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <Card className="lg:col-span-3 p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+        <Card className="lg:col-span-3 p-4">
           <AlertsChart />
         </Card>
-        <Card className="lg:col-span-2 p-5">
-          <h3 className="text-sm font-semibold mb-4">Sức khỏe site</h3>
+        <Card className="lg:col-span-2 p-4">
+          <h3 className="text-sm font-semibold mb-3">Sức khỏe site</h3>
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -327,7 +277,7 @@ export default function AdminDashboardPage() {
                   onClick={() => navigate(`/admin/sites/${s.id}`)}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12.5px] font-medium truncate group-hover:text-emerald-600 transition-colors">
+                    <p className="text-[12.5px] font-medium truncate group-hover:text-primary transition-colors">
                       {s.name}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
@@ -357,219 +307,76 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* ── Row 3: Recent activity | Quick actions ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Audit timeline */}
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4">Hoạt động gần đây</h3>
-          <ol className="space-y-4">
-            {[
-              {
-                action: "BATTERY.ASSIGN",
-                target: "SN-B0042",
-                actor: "Phan Quốc Hùng",
-                note: "Gán pin cho site ST-003",
-                ok: true,
-                dt: "21/05 · 14:32",
-              },
-              {
-                action: "SITE.UPDATE",
-                target: "ST-001",
-                actor: "Phan Quốc Hùng",
-                note: "Cập nhật capacity → 450 kW",
-                ok: true,
-                dt: "21/05 · 11:10",
-              },
-              {
-                action: "THRESHOLD.SET",
-                target: "BT-LFP-01",
-                actor: "Admin",
-                note: "Nhiệt độ max 47°C",
-                ok: true,
-                dt: "20/05 · 09:48",
-              },
-              {
-                action: "USER.CREATE",
-                target: "U-412",
-                actor: "Admin",
-                note: "Mời Staff mới — Nguyễn Văn B",
-                ok: true,
-                dt: "19/05 · 16:00",
-              },
-            ].map((item, i) => (
-              <li key={i} className="flex gap-3">
-                <span
-                  className="mt-0.75 w-2 h-2 rounded-full shrink-0"
-                  style={{ background: item.ok ? "var(--ok)" : "var(--p1)" }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-sm">
-                      <span className="font-mono-num text-[11px] text-muted-foreground">
-                        {item.action}
-                      </span>
-                      {" · "}
-                      <span className="font-medium">{item.target}</span>
+      {/* ── Row 3: Recent activity ── */}
+      <Card className="p-4">
+        <h3 className="text-sm font-semibold mb-3">Hoạt động gần đây</h3>
+        <ol className="grid gap-3 lg:grid-cols-2">
+          {[
+            {
+              action: "BATTERY.ASSIGN",
+              target: "SN-B0042",
+              actor: "Phan Quốc Hùng",
+              note: "Gán pin cho site ST-003",
+              ok: true,
+              dt: "21/05 · 14:32",
+            },
+            {
+              action: "SITE.UPDATE",
+              target: "ST-001",
+              actor: "Phan Quốc Hùng",
+              note: "Cập nhật capacity → 450 kW",
+              ok: true,
+              dt: "21/05 · 11:10",
+            },
+            {
+              action: "THRESHOLD.SET",
+              target: "BT-LFP-01",
+              actor: "Admin",
+              note: "Nhiệt độ max 47°C",
+              ok: true,
+              dt: "20/05 · 09:48",
+            },
+            {
+              action: "USER.CREATE",
+              target: "U-412",
+              actor: "Admin",
+              note: "Mời Staff mới — Nguyễn Văn B",
+              ok: true,
+              dt: "19/05 · 16:00",
+            },
+          ].map((item, i) => (
+            <li
+              key={i}
+              className="flex gap-3 rounded-md border border-border/70 bg-muted/20 p-3"
+            >
+              <span
+                className="mt-0.75 w-2 h-2 rounded-full shrink-0"
+                style={{ background: item.ok ? "var(--ok)" : "var(--p1)" }}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm">
+                    <span className="font-mono-num text-[11px] text-muted-foreground">
+                      {item.action}
                     </span>
-                    <span className="font-mono-num text-[11px] text-muted-foreground shrink-0">
-                      {item.dt}
-                    </span>
-                  </div>
-                  <p className="text-[12.5px] text-muted-foreground">
-                    {item.note}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-                    {item.actor}
-                  </p>
+                    {" · "}
+                    <span className="font-medium">{item.target}</span>
+                  </span>
+                  <span className="font-mono-num text-[11px] text-muted-foreground shrink-0">
+                    {item.dt}
+                  </span>
                 </div>
-              </li>
-            ))}
-          </ol>
-        </Card>
-
-        {/* Quick actions */}
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4">Quick actions</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              {
-                icon: <Users size={16} />,
-                title: "Tạo user mới",
-                sub: "Email + role + invite",
-                path: "/admin/accounts",
-              },
-              {
-                icon: <Battery size={16} />,
-                title: "Đăng ký battery",
-                sub: "Asset + serial + site",
-                path: "/admin/battery-assets",
-              },
-              {
-                icon: <MapPin size={16} />,
-                title: "Tạo site",
-                sub: "Vị trí, công suất",
-                path: "/admin/sites",
-              },
-              {
-                icon: <Settings size={16} />,
-                title: "Cấu hình ngưỡng",
-                sub: "Per battery type",
-                path: "/admin/battery-assets",
-              },
-            ].map((x, i) => (
-              <button
-                key={i}
-                onClick={() => navigate(x.path)}
-                className="flex flex-col gap-2 p-4 rounded-lg border border-border text-left hover:border-emerald-300 hover:bg-emerald-50/50 transition-all group"
-              >
-                <span className="text-muted-foreground group-hover:text-emerald-600 transition-colors">
-                  {x.icon}
-                </span>
-                <div>
-                  <div className="text-[13px] font-semibold">{x.title}</div>
-                  <div className="text-[11.5px] text-muted-foreground">
-                    {x.sub}
-                  </div>
-                </div>
-                <ExternalLink
-                  size={12}
-                  className="self-end text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-colors"
-                />
-              </button>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* ── Row 4: Sites grid ── */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold">Tất cả sites</h2>
-          <button
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-            onClick={() => navigate("/admin/sites")}
-          >
-            Xem tất cả →
-          </button>
-        </div>
-        {isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-card rounded-xl border border-border p-4 space-y-2"
-              >
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-2 w-full mt-3" />
+                <p className="text-[12.5px] text-muted-foreground">
+                  {item.note}
+                </p>
+                <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                  {item.actor}
+                </p>
               </div>
-            ))}
-          </div>
-        ) : sites.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Chưa có site nào.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sitesH.slice(0, 9).map((site) => {
-              const sp = statusPill(site.status);
-              return (
-                <button
-                  key={site.id}
-                  className="bg-card rounded-xl border border-border text-left p-4 hover:border-emerald-300 hover:shadow-md transition-all"
-                  style={{ boxShadow: "var(--shadow-sm)" }}
-                  onClick={() => navigate(`/admin/sites/${site.id}`)}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate text-[13.5px]">
-                        {site.name}
-                      </p>
-                      <p className="text-[11.5px] text-muted-foreground truncate mt-0.5">
-                        {site.customerName}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${sp.cls}`}
-                    >
-                      {sp.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px] text-muted-foreground mb-3">
-                    <span className="font-mono-num">
-                      {site.activeBatteryAssetCount}/{site.batteryAssetCount}{" "}
-                      pin
-                    </span>
-                    {site.capacityKw != null && (
-                      <span>· {site.capacityKw} kW</span>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-[10.5px] text-muted-foreground">
-                        Sức khỏe
-                      </span>
-                      <span
-                        className="text-[11px] font-semibold font-mono-num"
-                        style={{ color: hc(site.health) }}
-                      >
-                        {site.health}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-border overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${site.health}%`,
-                          background: hc(site.health),
-                        }}
-                      />
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+            </li>
+          ))}
+        </ol>
+      </Card>
     </div>
   );
 }

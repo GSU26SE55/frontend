@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
@@ -29,56 +31,71 @@ export default function ManagerSiteDetailPage() {
 
   if (loadingSite) {
     return (
-      <div className="space-y-4 p-6">
+      <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+        <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-32 w-full" />
+        <Card className="p-6">
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-5 w-full" />
+            ))}
+          </div>
+        </Card>
       </div>
     );
   }
 
   if (!site) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Không tìm thấy site.</p>
-        <Button variant="outline" className="mt-2" onClick={() => navigate(-1)}>
-          Quay lại
-        </Button>
+      <div className="p-6 max-w-[1440px] mx-auto">
+        <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
+          <MapPin className="size-8 opacity-30" />
+          <span className="text-sm">Khong tim thay site.</span>
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="size-3.5" /> Quay lai
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      {/* Back + header */}
       <div>
         <Button
           variant="ghost"
           size="sm"
+          className="-ml-2 mb-2"
           onClick={() => navigate(-1)}
-          className="-ml-2"
         >
-          ← Quay lại
+          <ArrowLeft className="size-3.5" /> Quay lai
         </Button>
-        <h1 className="text-2xl font-bold mt-1">{site.name}</h1>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight">{site.name}</h1>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
           {site.address && <span>{site.address}</span>}
-          {site.customerName && <span>· {site.customerName}</span>}
+          {site.customerName && <span>&middot; {site.customerName}</span>}
         </div>
       </div>
 
+      {/* Dashboard summary */}
       {dashboard && <SiteDashboardCard data={dashboard} />}
 
+      {/* Assets table */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Danh sách pin</h2>
-        <SiteAssetsTable
-          data={assetsPage?.items ?? []}
-          totalCount={assetsPage?.totalItems ?? 0}
-          pageNumber={assetsParams.pageNumber ?? 1}
-          pageSize={assetsParams.pageSize ?? 10}
-          isLoading={loadingAssets}
-          onPageChange={(page) =>
-            setAssetsParams((p) => ({ ...p, pageNumber: page }))
-          }
-        />
+        <h2 className="text-lg font-semibold mb-3">Danh sach pin</h2>
+        <Card>
+          <SiteAssetsTable
+            data={assetsPage?.items ?? []}
+            totalCount={assetsPage?.totalItems ?? 0}
+            pageNumber={assetsParams.pageNumber ?? 1}
+            pageSize={assetsParams.pageSize ?? 10}
+            isLoading={loadingAssets}
+            onPageChange={(page) =>
+              setAssetsParams((p) => ({ ...p, pageNumber: page }))
+            }
+          />
+        </Card>
       </div>
     </div>
   );

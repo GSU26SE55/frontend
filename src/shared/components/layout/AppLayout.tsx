@@ -13,6 +13,7 @@ import {
   User,
   Ticket,
   Clock,
+  FileText,
   ScrollText,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
@@ -20,6 +21,7 @@ import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/session.types";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "@/shared/components/common/ThemeToggle";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
@@ -56,6 +58,8 @@ function Topbar() {
         Hệ thống ổn định
       </div>
 
+      <ThemeToggle />
+
       {/* Notification bell */}
       <button
         className="relative p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -71,7 +75,7 @@ function Topbar() {
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full border border-border hover:bg-muted transition-colors"
         >
-          <span className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-emerald-100 text-emerald-700 shrink-0">
+          <span className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary shrink-0">
             {initials}
           </span>
           <div className="text-left leading-tight">
@@ -148,7 +152,7 @@ function DropMenuItem({
       className={cn(
         "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-[13px] transition-colors",
         danger
-          ? "text-red-600 hover:bg-red-50"
+          ? "text-destructive hover:bg-destructive/10"
           : "text-foreground hover:bg-muted",
       )}
     >
@@ -228,8 +232,16 @@ const MANAGER_NAV: NavSection[] = [
 const STAFF_NAV: NavSection[] = [
   {
     items: [
-      { label: "My Tickets", path: "/staff/tickets", icon: LayoutDashboard },
+      { label: "Tổng quan", path: "/staff/dashboard", icon: LayoutDashboard },
+      { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
+      { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
     ],
+  },
+  {
+    title: "Báo cáo",
+    collapsible: true,
+    defaultOpen: true,
+    items: [{ label: "Alerts", path: "/staff/alerts", icon: FileText }],
   },
   {
     title: "Hệ thống",
@@ -256,7 +268,7 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
-        appName="Sunaria"
+        appName="Solar Battery Management"
         sections={sections}
         collapsed={collapsed}
         onToggle={() => setCollapsed((v) => !v)}

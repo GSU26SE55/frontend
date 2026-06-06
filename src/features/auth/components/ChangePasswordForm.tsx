@@ -54,18 +54,21 @@ const ChangePasswordForm = () => {
               <Input
                 type={showCurrent ? "text" : "password"}
                 {...register("currentPassword")}
+                className="pr-10"
               />
-              <button
+              <Button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
                 onClick={() => setShowCurrent(!showCurrent)}
               >
                 {showCurrent ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="size-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 )}
-              </button>
+              </Button>
             </div>
             {errors.currentPassword && (
               <p className="text-sm text-destructive">
@@ -80,18 +83,21 @@ const ChangePasswordForm = () => {
               <Input
                 type={showNew ? "text" : "password"}
                 {...register("newPassword")}
+                className="pr-10"
               />
-              <button
+              <Button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
                 onClick={() => setShowNew(!showNew)}
               >
                 {showNew ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="size-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 )}
-              </button>
+              </Button>
             </div>
             {errors.newPassword && (
               <p className="text-sm text-destructive">
@@ -106,18 +112,21 @@ const ChangePasswordForm = () => {
               <Input
                 type={showConfirm ? "text" : "password"}
                 {...register("confirmPassword")}
+                className="pr-10"
               />
-              <button
+              <Button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
                 onClick={() => setShowConfirm(!showConfirm)}
               >
                 {showConfirm ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="size-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <Eye className="size-4 text-muted-foreground" />
                 )}
-              </button>
+              </Button>
             </div>
             {errors.confirmPassword && (
               <p className="text-sm text-destructive">
