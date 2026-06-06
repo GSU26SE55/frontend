@@ -33,7 +33,23 @@ function Section({
   section: NavSection;
   sidebarCollapsed: boolean;
 }) {
-  const [open, setOpen] = useState(section.defaultOpen ?? true);
+  const storageKey = section.title ? `sidebar-section-${section.title}` : null;
+  const [open, setOpen] = useState(() => {
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved !== null) return saved === 'true';
+    }
+    return section.defaultOpen ?? true;
+  });
+
+  const handleToggle = () => {
+    setOpen((v) => {
+      const next = !v;
+      if (storageKey) localStorage.setItem(storageKey, String(next));
+      return next;
+    });
+  };
+
   const isCollapsible = !!section.collapsible && !!section.title && !sidebarCollapsed;
 
   return (
@@ -42,7 +58,7 @@ function Section({
       {section.title && !sidebarCollapsed && (
         isCollapsible ? (
           <button
-            onClick={() => setOpen((v) => !v)}
+            onClick={handleToggle}
             className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-md mb-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors group"
           >
             <span className="text-[10.5px] font-semibold uppercase tracking-widest">{section.title}</span>

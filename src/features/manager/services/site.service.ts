@@ -8,6 +8,7 @@ import type {
   SiteAssetsFilterParams,
 } from '@/shared/types/site.types';
 import type { BatteryAssetDto } from '@/shared/types/battery.types';
+import type { StaffAssignmentProfileDto } from '@/shared/types/account.types';
 
 export const managerSiteService = {
   getList: (params?: SiteFilterParams) =>
@@ -25,4 +26,9 @@ export const managerSiteService = {
     axiosInstance.get<CommonResponse<PaginationResponse<BatteryAssetDto>>>(
       ENDPOINTS.SITES.ASSETS(siteId), { params },
     ),
+
+  getStaffList: () =>
+    axiosInstance
+      .get<CommonResponse<StaffAssignmentProfileDto[]>>(ENDPOINTS.STAFF.LIST)
+      .then((r) => r.data.data ?? []),
 };

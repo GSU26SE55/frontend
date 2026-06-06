@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Lock, Mail, Phone, ShieldCheck, Link2, History, Trash2, ChevronRight,
+  Lock, Mail, Phone, ShieldCheck, Link2, History, Trash2, ChevronRight, User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ChangePasswordForm  from '@/features/auth/components/ChangePasswordForm';
@@ -10,10 +10,12 @@ import TwoFactorSetup      from '@/features/auth/components/TwoFactorSetup';
 import GoogleLinkSection   from '@/features/auth/components/GoogleLinkSection';
 import LoginHistoryTable   from '@/features/auth/components/LoginHistoryTable';
 import DangerZone          from '@/features/auth/components/DangerZone';
+import ProfilePage         from '@/features/auth/pages/ProfilePage';
 import { useCurrentUser }  from '@/features/auth/hooks/useCurrentUser';
 
 // ── Menu items ────────────────────────────────────────────────────────────────
 const MENU = [
+  { key: 'profile',   label: 'Hồ sơ cá nhân',         icon: User,        desc: 'Thông tin cá nhân và ảnh đại diện'  },
   { key: 'password',  label: 'Đổi mật khẩu',          icon: Lock,        desc: 'Cập nhật mật khẩu hiện tại'         },
   { key: 'email',     label: 'Đổi email',              icon: Mail,        desc: 'Thay đổi địa chỉ email'             },
   { key: 'phone',     label: 'Số điện thoại',          icon: Phone,       desc: 'Xác thực số điện thoại'             },
@@ -80,17 +82,22 @@ const AccountSettingsPage = () => {
         </nav>
 
         {/* ── Right content ── */}
-        <main className="flex-1 overflow-y-auto p-6 min-w-0">
-          <PanelHeader label={current.label} desc={current.desc} />
-
-          {/* Forms: constrained width. Tables/lists: full width */}
-          {active === 'password' && <div className="max-w-md"><ChangePasswordForm /></div>}
-          {active === 'email'    && <div className="max-w-md"><ChangeEmailForm /></div>}
-          {active === 'phone'    && <div className="max-w-md"><PhoneVerifySection /></div>}
-          {active === '2fa'      && <div className="max-w-md"><TwoFactorSetup isEnabled={account?.twoFactorEnabled ?? false} /></div>}
-          {active === 'google'   && <div className="max-w-md"><GoogleLinkSection isLinked={false} /></div>}
-          {active === 'history'  && <LoginHistoryTable />}
-          {active === 'danger'   && <div className="max-w-md"><DangerZone /></div>}
+        <main className={cn('flex-1 overflow-y-auto min-w-0', active !== 'profile' && 'p-6')}>
+          {active === 'profile' ? (
+            <ProfilePage />
+          ) : (
+            <>
+              <PanelHeader label={current.label} desc={current.desc} />
+              {/* Forms: constrained width. Tables/lists: full width */}
+              {active === 'password' && <div className="max-w-md"><ChangePasswordForm /></div>}
+              {active === 'email'    && <div className="max-w-md"><ChangeEmailForm /></div>}
+              {active === 'phone'    && <div className="max-w-md"><PhoneVerifySection /></div>}
+              {active === '2fa'      && <div className="max-w-md"><TwoFactorSetup isEnabled={account?.twoFactorEnabled ?? false} /></div>}
+              {active === 'google'   && <div className="max-w-md"><GoogleLinkSection isLinked={false} /></div>}
+              {active === 'history'  && <LoginHistoryTable />}
+              {active === 'danger'   && <div className="max-w-md"><DangerZone /></div>}
+            </>
+          )}
         </main>
       </div>
     </div>

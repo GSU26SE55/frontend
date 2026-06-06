@@ -14,10 +14,25 @@ import {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
-} from "@/features/manager/types/ticket.types";
-import type { AdminTicketListParams } from "@/features/manager/types/ticket.types";
+} from "@/shared/types/ticket.types";
+import type { AdminTicketListParams } from "@/shared/types/ticket.types";
 
 const PAGE_SIZE = 20;
+
+const STATUS_ITEMS: Record<string, string> = {
+  "": "Tất cả trạng thái",
+  ...Object.fromEntries(Object.entries(TicketStatusEnum).map(([, v]) => [v, v])),
+};
+const PRIORITY_ITEMS: Record<string, string> = {
+  "": "Tất cả priority",
+  [TicketPriorityEnum.P1Critical]: "P1 Critical",
+  [TicketPriorityEnum.P2High]: "P2 High",
+  [TicketPriorityEnum.P3Normal]: "P3 Normal",
+};
+const CATEGORY_ITEMS: Record<string, string> = {
+  "": "Tất cả loại",
+  ...Object.fromEntries(Object.entries(TicketCategoryEnum).map(([, v]) => [v, v])),
+};
 
 export default function TicketListPage() {
   const [params, setParams] = useState<AdminTicketListParams>({
@@ -53,17 +68,17 @@ export default function TicketListPage() {
         </Button>
 
         <Select
-          onValueChange={(v) =>
-            applyFilter({
-              status: v === "_all" ? undefined : (v as TicketStatusEnum),
-            })
+          value={params.status ?? ""}
+          items={STATUS_ITEMS}
+          onValueChange={(v: string | null) =>
+            applyFilter({ status: (v as TicketStatusEnum) || undefined })
           }
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Trạng thái" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="_all">Tất cả</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả trạng thái</SelectItem>
             {Object.entries(TicketStatusEnum).map(([, v]) => (
               <SelectItem key={v} value={v}>
                 {v}
@@ -73,17 +88,17 @@ export default function TicketListPage() {
         </Select>
 
         <Select
-          onValueChange={(v) =>
-            applyFilter({
-              priority: v === "_all" ? undefined : (v as TicketPriorityEnum),
-            })
+          value={params.priority ?? ""}
+          items={PRIORITY_ITEMS}
+          onValueChange={(v: string | null) =>
+            applyFilter({ priority: (v as TicketPriorityEnum) || undefined })
           }
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Priority" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="_all">Tất cả</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả priority</SelectItem>
             <SelectItem value={TicketPriorityEnum.P1Critical}>
               P1 Critical
             </SelectItem>
@@ -95,17 +110,17 @@ export default function TicketListPage() {
         </Select>
 
         <Select
-          onValueChange={(v) =>
-            applyFilter({
-              category: v === "_all" ? undefined : (v as TicketCategoryEnum),
-            })
+          value={params.category ?? ""}
+          items={CATEGORY_ITEMS}
+          onValueChange={(v: string | null) =>
+            applyFilter({ category: (v as TicketCategoryEnum) || undefined })
           }
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Loại" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="_all">Tất cả</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả loại</SelectItem>
             {Object.entries(TicketCategoryEnum).map(([, v]) => (
               <SelectItem key={v} value={v}>
                 {v}

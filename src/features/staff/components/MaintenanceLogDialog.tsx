@@ -77,13 +77,14 @@ export function MaintenanceLogDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    items={Object.entries(LOG_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn loại" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       {Object.entries(LOG_TYPE_LABELS).map(([value, label]) => (
                         <SelectItem key={value} value={value}>
                           {label}

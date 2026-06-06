@@ -82,3 +82,13 @@ export interface RevokeAllSessionsPayload {
   exceptCurrent?: boolean;
   currentRefreshToken?: string;
 }
+
+export interface AcceptInviteFormValues {
+  password: string;
+  confirmPassword: string;
+}
+
+export interface AcceptInvitePayload {
+  invitationToken: string;
+  password: string;
+}

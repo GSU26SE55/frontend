@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { registerSchema, type RegisterFormValues } from '@/features/auth/schemas/register.schema';
 import { useRegister } from '@/features/auth/hooks/useRegister';
+import { handleErrorApi } from '@/shared/lib/errors';
 
 interface RegisterFormProps {
   onLogin?: () => void;
@@ -25,8 +26,14 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
     formState: { errors },
   } = useForm<RegisterFormValues>({ resolver: zodResolver(registerSchema) });
 
-  const { mutate, isPending } = useRegister(setError, onOtpSent || (() => {}));
-  const onSubmit = (data: RegisterFormValues) => mutate(data);
+  const { mutateAsync, isPending } = useRegister(onOtpSent || (() => {}));
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      await mutateAsync(data);
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
+  };
 
   const inputCls = 'h-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400';
 

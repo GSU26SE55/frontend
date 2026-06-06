@@ -23,7 +23,7 @@ import {
 import {
   TicketStatusEnum,
   ActorRoleEnum,
-} from "@/features/manager/types/ticket.types";
+} from "@/shared/types/ticket.types";
 
 type DialogType =
   | "triage"

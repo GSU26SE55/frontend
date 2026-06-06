@@ -3,7 +3,7 @@ import { SlaTimerStatusEnum } from "@/shared/types/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket.types";
 
 interface Props {
-  slaTimer: SlaTimerDTO;
+  slaTimer: SlaTimerDTO | null;
 }
 
 function formatSeconds(seconds: number): string {
@@ -15,6 +15,7 @@ function formatSeconds(seconds: number): string {
 }
 
 export function SlaCountdown({ slaTimer }: Props) {
+  if (!slaTimer) return null;
   const { dueAt, status, remainingPercent } = slaTimer;
 
   const [remaining, setRemaining] = useState(() =>

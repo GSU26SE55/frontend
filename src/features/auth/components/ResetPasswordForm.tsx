@@ -10,6 +10,7 @@ import {
   type ForgotPasswordStep3Values,
 } from '@/features/auth/schemas/forgot-password.schema';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
+import { handleErrorApi } from '@/shared/lib/errors';
 import type { ResetPasswordPayload } from '@/features/auth/types/auth.types';
 
 interface ResetPasswordFormProps {
@@ -30,15 +31,19 @@ const ResetPasswordForm = ({ resetToken, onSuccess }: ResetPasswordFormProps) =>
     resolver: zodResolver(forgotPasswordStep3Schema),
   });
 
-  const { mutate, isPending } = useResetPassword(setError, onSuccess || (() => {}));
+  const { mutateAsync, isPending } = useResetPassword(onSuccess || (() => {}));
 
-  const onSubmit = (data: ForgotPasswordStep3Values) => {
+  const onSubmit = async (data: ForgotPasswordStep3Values) => {
     const payload: ResetPasswordPayload = {
       resetToken,
       newPassword: data.newPassword,
       confirmPassword: data.confirmPassword,
     };
-    mutate(payload);
+    try {
+      await mutateAsync(payload);
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
   };
 
   return (

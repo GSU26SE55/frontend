@@ -111,6 +111,7 @@ export const ENDPOINTS = {
       REVOKE_ALL: (id: string) =>
         `/api/admin/accounts/${id}/sessions/revoke-all`,
       LOGIN_HISTORY: (id: string) => `/api/admin/accounts/${id}/login-history`,
+      ROLE: (id: string) => `/api/admin/accounts/${id}/role`,
     },
     STAFF: {
       PROFILE: (id: string) => `/api/admin/staff/${id}/profile`,

@@ -8,6 +8,7 @@ import type {
   InviteAccountPayload,
   UpdateAccountPayload,
   ChangeAccountStatusPayload,
+  ChangeAccountRolePayload,
   AdminRevokeAllSessionsPayload,
   GetLoginHistoryParams,
   GetAccountSessionsParams,
@@ -56,4 +57,7 @@ export const adminAccountsService = {
     axiosInstance.get<CommonResponse<PaginationResponse<LoginAttemptDto>>>(
       ENDPOINTS.ADMIN.ACCOUNTS.LOGIN_HISTORY(id), { params },
     ),
+
+  changeRole: (id: string, payload: ChangeAccountRolePayload) =>
+    axiosInstance.put<CommonResponse<unknown>>(ENDPOINTS.ADMIN.ACCOUNTS.ROLE(id), payload),
 };

@@ -149,8 +149,8 @@ otp: z.string().length(6).regex(/^\d{6}$/, 'OTP gồm 6 chữ số')
 | Method | Path | ENDPOINTS key | Body |
 |--------|------|--------------|------|
 | PATCH | `/api/accounts/me/password` | `ACCOUNTS.ME.PASSWORD` | `ChangePasswordPayload` |
-| POST | `/api/accounts/me/change-email` | `ACCOUNTS.ME.CHANGE_EMAIL` | `ChangeEmailPayload` |
-| POST | `/api/accounts/me/confirm-email-change` | `ACCOUNTS.ME.CONFIRM_EMAIL_CHANGE` | `ConfirmEmailChangePayload` |
+| POST | `/api/accounts/me/change-email` | `ACCOUNTS.ME.CHANGE_EMAIL` | `ChangeEmailPayload` | ⚠️ **CHƯA CÓ TRONG SWAGGER** — endpoint chưa được BE deploy, cần confirm trước khi implement |
+| POST | `/api/accounts/me/confirm-email-change` | `ACCOUNTS.ME.CONFIRM_EMAIL_CHANGE` | `ConfirmEmailChangePayload` | ⚠️ **CHƯA CÓ TRONG SWAGGER** — endpoint chưa được BE deploy, cần confirm trước khi implement |
 | POST | `/api/accounts/me/send-phone-otp` | `ACCOUNTS.ME.SEND_PHONE_OTP` | *(không có)* |
 | POST | `/api/accounts/me/verify-phone-otp` | `ACCOUNTS.ME.VERIFY_PHONE_OTP` | `VerifyPhoneOtpPayload` |
 | POST | `/api/accounts/me/2fa/enable` | `ACCOUNTS.ME.TWO_FA_ENABLE` | *(không có)* |
@@ -196,6 +196,13 @@ Confirm dialog → mutate → OK: `clearSession()` + `Cookies.remove('accessToke
 - Send phone OTP: 60s cooldown → disable button + countdown timer (local `useState` countdown)
 - Login history: API trả `totalItems` (không phải `totalCount`) — dùng `LoginHistoryResponseData` riêng, không reuse `PaginationResponse<T>` từ `api.types.ts`
 - `@react-oauth/google` yêu cầu `VITE_GOOGLE_CLIENT_ID` env var — thêm vào `config/env.ts`
+- **Đổi email (2 endpoints chưa có trong Swagger):** `ChangeEmailForm` và `useChangeEmail` / `useConfirmEmailChange` implement xong nhưng cần giữ ở trạng thái "pending BE". Cần confirm với BE trước khi enable UI. Nếu không kịp Sprint → comment out feature trong `AccountSettingsPage` (không xóa code)
+
+## Endpoints bổ sung từ Swagger (ngoài scope GH-27, ghi nhận cho ticket sau)
+| Method | Path | Ghi chú |
+|--------|------|---------|
+| GET | `/api/accounts/me/profile` | Lấy profile mở rộng (address, birthDate, timeZone) |
+| PUT | `/api/accounts/me/profile` | Update profile: `{ fullName, phoneNumber, address, birthDate, timeZone }` — chú ý field tên là `birthDate` (không phải `dateOfBirth`) |
 
 ## Success Criteria
 | Tiêu chí | Cách verify |

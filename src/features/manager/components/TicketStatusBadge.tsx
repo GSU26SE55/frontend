@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { TicketStatusEnum } from "@/features/manager/types/ticket.types";
+import { TicketStatusEnum } from "@/shared/types/ticket.types";
 
 const STATUS_CONFIG: Record<
   TicketStatusEnum,

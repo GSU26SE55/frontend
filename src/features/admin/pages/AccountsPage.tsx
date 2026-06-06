@@ -1,15 +1,41 @@
-import { Search, Mail, MoreHorizontal, Users } from 'lucide-react';
-import { useAdminAccountList } from '@/features/admin/hooks/useAdminAccounts';
-import { AccountStatusEnum } from '@/shared/types/account.types';
+import { useState } from 'react';
+import {
+  Search, Mail, Plus, MoreHorizontal, Users,
+  Edit2, Shield, KeyRound, Trash2, MonitorSmartphone, UserCog, Loader2,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  useAdminAccountList,
+  useAdminUnlockAccount,
+  useAdminDeleteAccount,
+} from '@/features/admin/hooks/useAdminAccounts';
+import { AccountStatusEnum } from '@/shared/types/account.types';
+import InviteAccountDialog from '@/features/admin/components/InviteAccountDialog';
+import CreateAccountDialog from '@/features/admin/components/CreateAccountDialog';
+import EditAccountDialog from '@/features/admin/components/EditAccountDialog';
+import ChangeAccountStatusDialog from '@/features/admin/components/ChangeAccountStatusDialog';
+import ChangeRoleDialog from '@/features/admin/components/ChangeRoleDialog';
+import AccountDetailDrawer from '@/features/admin/components/AccountDetailDrawer';
+import EditStaffProfileDialog from '@/features/admin/components/EditStaffProfileDialog';
+import { handleErrorApi } from '@/shared/lib/errors';
+import type { AccountDto } from '@/shared/types/account.types';
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
-  [AccountStatusEnum.PendingVerification]: { label: 'Chờ xác thực', cls: 'bg-amber-100 text-amber-700'    },
-  [AccountStatusEnum.Active]:              { label: 'Hoạt động',     cls: 'bg-emerald-100 text-emerald-700' },
-  [AccountStatusEnum.Locked]:              { label: 'Đã khóa',       cls: 'bg-red-100 text-red-600'         },
-  [AccountStatusEnum.Inactive]:            { label: 'Không hoạt động', cls: 'bg-gray-100 text-gray-500'    },
-  [AccountStatusEnum.Suspended]:           { label: 'Tạm khóa',      cls: 'bg-orange-100 text-orange-700'  },
-  [AccountStatusEnum.Banned]:              { label: 'Bị cấm',        cls: 'bg-red-200 text-red-700'         },
+  [AccountStatusEnum.PendingVerification]: { label: 'Chờ xác thực',     cls: 'bg-amber-100 text-amber-700'    },
+  [AccountStatusEnum.Active]:              { label: 'Hoạt động',         cls: 'bg-emerald-100 text-emerald-700' },
+  [AccountStatusEnum.Locked]:              { label: 'Đã khóa',           cls: 'bg-red-100 text-red-600'         },
+  [AccountStatusEnum.Inactive]:            { label: 'Không hoạt động',   cls: 'bg-gray-100 text-gray-500'       },
+  [AccountStatusEnum.Suspended]:           { label: 'Tạm khóa',          cls: 'bg-orange-100 text-orange-700'   },
+  [AccountStatusEnum.Banned]:              { label: 'Bị cấm',            cls: 'bg-red-200 text-red-700'         },
 };
 
 const ROLE_CLS: Record<string, string> = {
@@ -19,12 +45,45 @@ const ROLE_CLS: Record<string, string> = {
   Customer: 'bg-teal-100   text-teal-700',
 };
 
+type DialogState =
+  | { type: 'none' }
+  | { type: 'invite' }
+  | { type: 'create' }
+  | { type: 'edit'; account: AccountDto }
+  | { type: 'status'; account: AccountDto }
+  | { type: 'role'; account: AccountDto }
+  | { type: 'unlock'; account: AccountDto }
+  | { type: 'delete'; account: AccountDto }
+  | { type: 'detail'; account: AccountDto }
+  | { type: 'staffProfile'; account: AccountDto };
+
 export default function AccountsPage() {
+  const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
   const { data, isLoading } = useAdminAccountList({ pageNumber: 1, pageSize: 50 });
-  // Guard: API might return array directly or { items }
+  const { mutate: unlock } = useAdminUnlockAccount();
+  const { mutate: deleteAccount, isPending: isDeleting } = useAdminDeleteAccount();
+
   const raw      = data as unknown;
-  const accounts = Array.isArray(raw) ? raw : ((raw as { items?: unknown[] })?.items ?? []);
+  const accounts = Array.isArray(raw) ? raw : ((raw as { items?: unknown[] })?.items ?? []) as AccountDto[];
   const total    = (raw as { totalItems?: number })?.totalItems ?? (Array.isArray(raw) ? raw.length : 0);
+
+  const close = () => setDialog({ type: 'none' });
+
+  const handleUnlock = (account: AccountDto) => {
+    unlock(account.id, {
+      onSuccess: () => toast.success(`Đã mở khóa ${account.fullName}`),
+      onError: (err) => handleErrorApi({ error: err }),
+    });
+    close();
+  };
+
+  const handleDelete = (account: AccountDto) => {
+    deleteAccount(account.id, {
+      onSuccess: () => toast.success(`Đã xóa ${account.fullName}`),
+      onError: (err) => handleErrorApi({ error: err }),
+    });
+    close();
+  };
 
   return (
     <div className="p-6 space-y-5 max-w-[1440px]">
@@ -39,9 +98,20 @@ export default function AccountsPage() {
             {isLoading ? '…' : total} tài khoản — Admin, Manager, Staff, Customer.
           </p>
         </div>
-        <button className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
-          <Mail size={14} /> Mời người dùng
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setDialog({ type: 'invite' })}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold border border-border bg-card hover:bg-muted transition-colors"
+          >
+            <Mail size={14} /> Mời người dùng
+          </button>
+          <button
+            onClick={() => setDialog({ type: 'create' })}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+          >
+            <Plus size={14} /> Tạo tài khoản
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -69,7 +139,7 @@ export default function AccountsPage() {
           <table className="w-full text-[13px] border-collapse">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                {['Người dùng', 'Roles', 'Trạng thái', 'Ngày tạo', ''].map((h) => (
+                {['Người dùng', 'Roles', 'Trạng thái', 'Ngày tạo', ''].map(h => (
                   <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                     {h}
                   </th>
@@ -77,9 +147,12 @@ export default function AccountsPage() {
               </tr>
             </thead>
             <tbody>
-              {accounts.map((acc) => {
-                const s = STATUS_MAP[acc.status] ?? { label: String(acc.status), cls: 'bg-gray-100 text-gray-500' };
+              {accounts.map(acc => {
+                const s        = STATUS_MAP[acc.status] ?? { label: String(acc.status), cls: 'bg-gray-100 text-gray-500' };
                 const initials = acc.fullName.split(' ').slice(-2).map((n: string) => n[0]).join('').toUpperCase();
+                const isStaff  = acc.role?.toUpperCase() === 'STAFF';
+                const isLocked = acc.status === AccountStatusEnum.Locked;
+
                 return (
                   <tr key={acc.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
@@ -95,12 +168,11 @@ export default function AccountsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {(acc.roles ?? []).map((r: string) => (
-                          <span key={r} className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${ROLE_CLS[r] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {r}
+                        {acc.role ? (
+                          <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${ROLE_CLS[acc.role] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {acc.role}
                           </span>
-                        ))}
-                        {(!acc.roles || acc.roles.length === 0) && (
+                        ) : (
                           <span className="text-[10.5px] text-muted-foreground italic">Chưa gán</span>
                         )}
                       </div>
@@ -108,13 +180,49 @@ export default function AccountsPage() {
                     <td className="px-4 py-3">
                       <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
                     </td>
-                    <td className="px-4 py-3 font-mono-num text-[12px] text-muted-foreground whitespace-nowrap">
+                    <td className="px-4 py-3 text-[12px] text-muted-foreground whitespace-nowrap">
                       {new Date(acc.createdAt).toLocaleDateString('vi-VN')}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-                        <MoreHorizontal size={15} />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                          <MoreHorizontal size={15} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem onClick={() => setDialog({ type: 'edit', account: acc })}>
+                            <Edit2 className="mr-2 size-4" /> Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDialog({ type: 'status', account: acc })}>
+                            <Shield className="mr-2 size-4" /> Đổi trạng thái
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDialog({ type: 'role', account: acc })}>
+                            <UserCog className="mr-2 size-4" /> Đổi role
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDialog({ type: 'detail', account: acc })}>
+                            <MonitorSmartphone className="mr-2 size-4" /> Sessions & Lịch sử
+                          </DropdownMenuItem>
+                          {isStaff && (
+                            <DropdownMenuItem onClick={() => setDialog({ type: 'staffProfile', account: acc })}>
+                              <UserCog className="mr-2 size-4" /> Hồ sơ Staff
+                            </DropdownMenuItem>
+                          )}
+                          {isLocked && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setDialog({ type: 'unlock', account: acc })}>
+                                <KeyRound className="mr-2 size-4" /> Mở khóa
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => setDialog({ type: 'delete', account: acc })}
+                          >
+                            <Trash2 className="mr-2 size-4" /> Xóa tài khoản
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );
@@ -123,6 +231,67 @@ export default function AccountsPage() {
           </table>
         )}
       </div>
+
+      {/* Dialogs */}
+      <InviteAccountDialog open={dialog.type === 'invite'} onClose={close} />
+      <CreateAccountDialog open={dialog.type === 'create'} onClose={close} />
+
+      {dialog.type === 'edit' && (
+        <EditAccountDialog open onClose={close} account={dialog.account} />
+      )}
+      {dialog.type === 'status' && (
+        <ChangeAccountStatusDialog open onClose={close} account={dialog.account} />
+      )}
+      {dialog.type === 'role' && (
+        <ChangeRoleDialog open onClose={close} account={dialog.account} />
+      )}
+      {dialog.type === 'detail' && (
+        <AccountDetailDrawer open onClose={close} account={dialog.account} />
+      )}
+      {dialog.type === 'staffProfile' && (
+        <EditStaffProfileDialog open onClose={close} account={dialog.account} />
+      )}
+
+      {/* Unlock confirm */}
+      <AlertDialog open={dialog.type === 'unlock'} onOpenChange={(open: boolean) => !open && close()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận mở khóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialog.type === 'unlock' && <>Bạn có chắc muốn mở khóa tài khoản <strong>{dialog.account.fullName}</strong>?</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={close} />
+            <AlertDialogAction onClick={() => dialog.type === 'unlock' && handleUnlock(dialog.account)}>
+              Mở khóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirm */}
+      <AlertDialog open={dialog.type === 'delete'} onOpenChange={(open: boolean) => !open && close()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa tài khoản</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialog.type === 'delete' && <>Bạn có chắc muốn xóa tài khoản <strong>{dialog.account.fullName}</strong>? Hành động này không thể hoàn tác.</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={close} />
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={() => dialog.type === 'delete' && handleDelete(dialog.account)}
+            >
+              {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

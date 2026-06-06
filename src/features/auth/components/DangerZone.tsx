@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { useDeactivateAccount } from '@/features/auth/hooks/useDeactivateAccount';
 import { useDeleteAccount } from '@/features/auth/hooks/useDeleteAccount';
 import { handleErrorApi } from '@/shared/lib/errors';
@@ -48,33 +51,39 @@ const DangerZone = () => {
           <Button variant="destructive" onClick={() => setConfirmDelete(true)}>Xóa tài khoản</Button>
         </div>
 
-        <Dialog open={confirmDeactivate} onOpenChange={setConfirmDeactivate}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Vô hiệu hóa tài khoản?</DialogTitle></DialogHeader>
-            <p className="text-sm text-muted-foreground">Bạn có thể kích hoạt lại sau.</p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setConfirmDeactivate(false)}>Hủy</Button>
-              <Button variant="destructive" onClick={handleDeactivate} disabled={isDeactivating}>
+        <AlertDialog open={confirmDeactivate} onOpenChange={setConfirmDeactivate}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Vô hiệu hóa tài khoản?</AlertDialogTitle>
+              <AlertDialogDescription>Bạn có thể kích hoạt lại sau.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfirmDeactivate(false)} />
+              <AlertDialogAction variant="destructive" onClick={handleDeactivate} disabled={isDeactivating}>
                 {isDeactivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Xác nhận
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-        <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Xóa tài khoản vĩnh viễn?</DialogTitle></DialogHeader>
-            <p className="text-sm text-destructive font-medium">Hành động này không thể hoàn tác.</p>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setConfirmDelete(false)}>Hủy</Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xóa tài khoản vĩnh viễn?</AlertDialogTitle>
+              <AlertDialogDescription className="text-destructive font-medium">
+                Hành động này không thể hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfirmDelete(false)} />
+              <AlertDialogAction variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Xóa vĩnh viễn
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

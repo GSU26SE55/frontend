@@ -67,7 +67,10 @@ export interface AccountDto {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt?: string;
-  roles: string[];
+  roleId: string;
+  role: string;
+  roleAssignedAt?: string;
+  roleAssignedBy?: string;
   profile?: AccountProfileDto;
   staffProfile?: StaffProfileDto;
 }

@@ -12,6 +12,7 @@ import type {
   VerifyResetOtpPayload,
   VerifyResetOtpResponseData,
   ResetPasswordPayload,
+  AcceptInvitePayload,
 } from "@/features/auth/types/auth.types";
 import type { CommonResponse } from "@/shared/types/api.types";
 import type { AccountDto } from "@/shared/types/account.types";
@@ -60,4 +61,10 @@ export const authService = {
     ),
 
   getMe: () => axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.AUTH.ME),
+
+  acceptInvite: (payload: AcceptInvitePayload) =>
+    axiosInstance.post<CommonResponse<LoginResponseData>>(
+      ENDPOINTS.AUTH.ACCEPT_INVITE,
+      payload,
+    ),
 };

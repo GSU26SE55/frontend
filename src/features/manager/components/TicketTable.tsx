@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "./TicketStatusBadge";
 import TicketPriorityBadge from "./TicketPriorityBadge";
 import SlaCountdown from "./SlaCountdown";
-import type { TicketDTO } from "@/features/manager/types/ticket.types";
+import type { TicketDTO } from "@/shared/types/ticket.types";
 
 interface Props {
   tickets: TicketDTO[];

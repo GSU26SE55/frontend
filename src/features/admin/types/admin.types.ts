@@ -153,14 +153,14 @@ export interface CreateAccountPayload {
   phoneNumber?: string;
   dateOfBirth?: string;
   address?: string;
-  roleIds?: string[];
+  roleId: string;
 }
 
 export interface InviteAccountPayload {
   email: string;
   fullName: string;
   phoneNumber?: string;
-  roleIds: string[];
+  roleId: string;
 }
 
 export interface UpdateAccountPayload {
@@ -174,6 +174,10 @@ export interface UpdateAccountPayload {
 export interface ChangeAccountStatusPayload {
   status: AccountStatusEnum;
   reason?: string;
+}
+
+export interface ChangeAccountRolePayload {
+  roleId: string;
 }
 
 export interface AdminRevokeAllSessionsPayload {

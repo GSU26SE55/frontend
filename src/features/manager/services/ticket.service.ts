@@ -17,7 +17,7 @@ import type {
   RejectPayload,
   EscalatePayload,
   AddCommentPayload,
-} from "@/features/manager/types/ticket.types";
+} from "@/shared/types/ticket.types";
 
 export const managerTicketService = {
   getList: (params?: AdminTicketListParams) =>

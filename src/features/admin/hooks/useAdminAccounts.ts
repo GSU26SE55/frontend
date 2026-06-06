@@ -7,6 +7,7 @@ import type {
   InviteAccountPayload,
   UpdateAccountPayload,
   ChangeAccountStatusPayload,
+  ChangeAccountRolePayload,
   AdminRevokeAllSessionsPayload,
   GetLoginHistoryParams,
   GetAccountSessionsParams,
@@ -99,3 +100,15 @@ export const useAdminAccountLoginHistory = (id: string, params?: GetLoginHistory
     queryFn: () => adminAccountsService.getLoginHistory(id, params).then((r) => r.data.data),
     enabled: !!id,
   });
+
+export const useAdminChangeAccountRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ChangeAccountRolePayload }) =>
+      adminAccountsService.changeRole(id, payload),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: KEY.admin.accounts });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+    },
+  });
+};

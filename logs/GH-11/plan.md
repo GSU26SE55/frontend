@@ -80,12 +80,14 @@ interface OtpVerifyPayload      { email: string; otp: string; }
 interface ResendOtpPayload      { email: string; }               // dùng chung cho resend-otp + resend-reset-otp
 interface ForgotPasswordPayload { email: string; }
 interface VerifyResetOtpPayload { email: string; otp: string; }
-interface ResetPasswordPayload  { resetToken: string; newPassword: string; confirmPassword: string; }
+interface ResetPasswordPayload  { resetToken: string; newPassword: string; }  // confirmPassword là FE-only validation, không gửi lên BE
 
 // Responses
 interface LoginResponseData          { accessToken: string; refreshToken: string; }
-interface VerifyResetOtpResponseData { resetToken: string; }
+interface RegisterResponseData       { email: string; otpExpiresInSeconds: number; }  // ← countdown cho OTP verify sau register
+interface VerifyResetOtpResponseData { resetToken: string; expiresInSeconds: number; }
 interface AccountDto                 { id: string; email: string; fullName: string; role: string; phoneNumber?: string; avatarUrl?: string; }
+// AccountDto đầy đủ — xem GH-30 plan (shared/types/account.types.ts)
 ```
 
 ## Schema (Zod)
@@ -117,13 +119,13 @@ otp: z.string().length(6).regex(/^\d{6}$/)
 | Method | Path | Request Body | Response |
 |--------|------|-------------|----------|
 | POST | `/api/auth/login` | `{ email, password }` | `CommonResponse<LoginResponseData>` |
-| POST | `/api/auth/register` | `{ fullName, email, password, confirmPassword, phoneNumber }` | `CommonResponse<null>` |
+| POST | `/api/auth/register` | `{ fullName, email, password, confirmPassword, phoneNumber }` | `CommonResponse<RegisterResponseData>` — `{ email, otpExpiresInSeconds }` |
 | POST | `/api/auth/verify-otp` | `{ email, otp }` | `CommonResponse<null>` |
 | POST | `/api/auth/resend-otp` | `{ email }` | `CommonResponse<null>` |
 | POST | `/api/auth/forgot-password` | `{ email }` | `CommonResponse<null>` |
 | POST | `/api/auth/verify-reset-otp` | `{ email, otp }` | `CommonResponse<VerifyResetOtpResponseData>` |
 | POST | `/api/auth/resend-reset-otp` | `{ email }` | `CommonResponse<null>` |
-| POST | `/api/auth/reset-password` | `{ resetToken, newPassword, confirmPassword }` | `CommonResponse<null>` |
+| POST | `/api/auth/reset-password` | `{ resetToken, newPassword }` | `CommonResponse<null>` | ← `confirmPassword` validate phía FE only, KHÔNG gửi lên BE |
 | POST | `/api/auth/refresh-token` | `{ refreshToken }` | `CommonResponse<LoginResponseData>` |
 | POST | `/api/auth/logout` | `{ refreshToken }` | `CommonResponse<null>` |
 | GET | `/api/auth/google/login` | — | redirect 302 → Google |
@@ -410,10 +412,17 @@ FE cần gọi GET /api/auth/google/callback (qua axios) để nhận token JSON
 ```
 Step 1: nhập email → POST /forgot-password → lưu email trong component state → next step
 Step 2: nhập OTP → POST /verify-reset-otp → nhận resetToken → next step
-Step 3: nhập mật khẩu mới → POST /reset-password (với resetToken) → navigate('/login') + toast
-// resetToken TTL = lấy từ response.data.expiresInSeconds của POST /verify-reset-otp
+Step 3: nhập mật khẩu mới → POST /reset-password { resetToken, newPassword } (KHÔNG gửi confirmPassword lên BE) → navigate('/login') + toast
+// resetToken TTL = lấy từ response.data.expiresInSeconds của POST /verify-reset-otp (field: expiresInSeconds, integer, seconds)
 // API doc JSON example: expiresInSeconds = 600 (10 phút) — dùng giá trị động từ response, không hardcode
 // UX: hiển thị countdown theo expiresInSeconds nhận được ở step 2, nếu hết hạn → toast "Mã đã hết hạn, vui lòng thử lại" → reset về step 1
+```
+
+**Register → OtpVerifyPage:**
+```ts
+// useRegister onSuccess: navigate('/register/verify-otp', { state: { email, otpExpiresInSeconds } })
+// OtpVerifyPage dùng otpExpiresInSeconds từ state để hiển thị countdown (giống step 2 forgot password)
+// Nếu otpExpiresInSeconds không có trong state → fallback: không show countdown (resend button luôn hiện)
 ```
 
 **OtpVerifyPage guard:**

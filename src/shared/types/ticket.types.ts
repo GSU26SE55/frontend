@@ -165,7 +165,7 @@ export interface TicketDTO {
   isIncident: boolean;
   createdAt: string;
   updatedAt?: string | null;
-  slaTimer: SlaTimerDTO;
+  slaTimer: SlaTimerDTO | null;
 }
 
 export interface TicketActivityDTO {
@@ -257,4 +257,72 @@ export interface TicketActionResponse {
   message: string | null;
   data: TicketActionDto | null;
   listErrors: Array<{ field: string | null; detail: string | null }> | null;
+}
+
+// --- Filter params ---
+
+export interface AdminTicketListParams {
+  keyword?: string;
+  status?: TicketStatusEnum;
+  priority?: TicketPriorityEnum;
+  category?: TicketCategoryEnum;
+  batteryAssetId?: string;
+  isDescending?: boolean;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AdminTicketQueueParams {
+  priority?: TicketPriorityEnum;
+  category?: TicketCategoryEnum;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface StaffTicketListParams {
+  status?: TicketStatusEnum;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+// --- Action payloads ---
+
+export interface TriagePayload {
+  impact: ImpactScopeEnum;
+  urgency: UrgencyLevelEnum;
+  manualPriority?: TicketPriorityEnum;
+  priorityOverrideReason?: string;
+  managerComment?: string;
+}
+
+export interface AssignPayload {
+  staffId: string;
+  notes?: string;
+}
+
+export interface ReassignPayload {
+  newStaffId: string;
+  reason?: string;
+}
+
+export interface RejectPayload {
+  reason?: string;
+}
+
+export interface EscalatePayload {
+  reason: EscalationReasonEnum;
+  note?: string;
+}
+
+export interface CommentAttachmentInput {
+  fileId: string;
+  fileName?: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
+export interface AddCommentPayload {
+  body: string;
+  isInternal: boolean;
+  attachments?: CommentAttachmentInput[];
 }

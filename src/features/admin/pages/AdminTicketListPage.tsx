@@ -60,6 +60,19 @@ const CATEGORY_LABELS: Record<TicketCategory, string> = {
   Other: "Khác",
 };
 
+const STATUS_ITEMS: Record<string, string> = {
+  "": "Tất cả trạng thái",
+  ...Object.fromEntries(STATUS_OPTIONS.map((s) => [s, STATUS_LABELS[s]])),
+};
+const PRIORITY_ITEMS: Record<string, string> = {
+  "": "Tất cả priority",
+  ...Object.fromEntries(PRIORITY_OPTIONS.map((p) => [p, PRIORITY_LABELS[p]])),
+};
+const CATEGORY_ITEMS: Record<string, string> = {
+  "": "Tất cả loại",
+  ...Object.fromEntries(CATEGORY_OPTIONS.map((c) => [c, CATEGORY_LABELS[c]])),
+};
+
 interface FilterState extends GetAdminTicketsParams {
   pageNumber: number;
   pageSize: number;
@@ -107,14 +120,16 @@ export default function AdminTicketListPage() {
 
         <Select
           value={filters.status ?? ""}
+          items={STATUS_ITEMS}
           onValueChange={(v: string | null) =>
             setFilter("status", (v as TicketStatus) || undefined)
           }
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Trạng thái" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả trạng thái</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
                 {STATUS_LABELS[s]}
@@ -125,14 +140,16 @@ export default function AdminTicketListPage() {
 
         <Select
           value={filters.priority ?? ""}
+          items={PRIORITY_ITEMS}
           onValueChange={(v: string | null) =>
             setFilter("priority", (v as TicketPriority) || undefined)
           }
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Priority" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả priority</SelectItem>
             {PRIORITY_OPTIONS.map((p) => (
               <SelectItem key={p} value={p}>
                 {PRIORITY_LABELS[p]}
@@ -143,14 +160,16 @@ export default function AdminTicketListPage() {
 
         <Select
           value={filters.category ?? ""}
+          items={CATEGORY_ITEMS}
           onValueChange={(v: string | null) =>
             setFilter("category", (v as TicketCategory) || undefined)
           }
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Phân loại" />
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="">Tất cả loại</SelectItem>
             {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c]}

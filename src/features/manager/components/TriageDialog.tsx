@@ -33,7 +33,7 @@ import {
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketPriorityEnum,
-} from "@/features/manager/types/ticket.types";
+} from "@/shared/types/ticket.types";
 import { useTriageTicket } from "@/features/manager/hooks/useManagerTickets";
 
 // Impact × Urgency → Priority matrix
@@ -95,13 +95,18 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
                       setImpact(v as ImpactScopeEnum);
                     }}
                     value={field.value}
+                    items={[
+                      { value: ImpactScopeEnum.SingleAsset, label: 'Single Asset' },
+                      { value: ImpactScopeEnum.Site, label: 'Site' },
+                      { value: ImpactScopeEnum.MultiSite, label: 'Multi Site' },
+                    ]}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn phạm vi" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       <SelectItem value={ImpactScopeEnum.SingleAsset}>
                         Single Asset
                       </SelectItem>
@@ -128,13 +133,18 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
                       setUrgency(v as UrgencyLevelEnum);
                     }}
                     value={field.value}
+                    items={[
+                      { value: UrgencyLevelEnum.Low, label: 'Low' },
+                      { value: UrgencyLevelEnum.Medium, label: 'Medium' },
+                      { value: UrgencyLevelEnum.High, label: 'High' },
+                    ]}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn độ khẩn" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent alignItemWithTrigger={false}>
                       <SelectItem value={UrgencyLevelEnum.Low}>Low</SelectItem>
                       <SelectItem value={UrgencyLevelEnum.Medium}>
                         Medium
