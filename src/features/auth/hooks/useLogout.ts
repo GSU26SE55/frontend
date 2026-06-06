@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { authService } from "@/features/auth/services/auth.service";
-import { clearTokens } from "@/shared/lib/axios";
+import Cookies from "js-cookie";
+import axiosInstance, { clearTokens } from "@/shared/lib/axios";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { ENDPOINTS } from "@/shared/utils/endpoints";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 
 export const useLogout = () => {
@@ -11,7 +12,10 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: () => {
+      const refreshToken = Cookies.get("refreshToken") ?? "";
+      return axiosInstance.post(ENDPOINTS.AUTH.LOGOUT, { refreshToken });
+    },
     onSettled: () => {
       clearTokens();
       clearSession();
