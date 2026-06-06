@@ -1,10 +1,19 @@
-import { useState } from "react";
 import { ScrollText, Search } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
-import type { AuditLogDto } from "@/features/admin/types/admin.types";
+import DataPagination from "@/shared/components/common/DataPagination";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
 const ACTION_GROUPS: Record<string, string> = {
   LoginSuccess: "Đăng nhập",
@@ -49,36 +58,37 @@ const ACTION_GROUPS: Record<string, string> = {
   PermissionRevoked: "Thu quyền",
 };
 
+const DEFAULTS = {
+  keyword: "",
+  pageNumber: 1,
+  pageSize: 25,
+};
+
+const fmt = (dt: string) =>
+  format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: vi });
+
 export default function AuditLogsPage() {
-  const [search, setSearch] = useState("");
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
+
   const { data, isLoading } = useAdminAuditLogs({
-    pageNumber: 1,
-    pageSize: 100,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
   });
 
-  const raw = data as unknown;
-  const logs = Array.isArray(raw)
-    ? raw
-    : (((raw as { items?: unknown[] })?.items ?? []) as AuditLogDto[]);
-  const total =
-    (raw as { totalItems?: number })?.totalItems ??
-    (Array.isArray(raw) ? raw.length : 0);
-
-  const filtered = search
+  const logs = data?.items ?? [];
+  const keyword = (filters.keyword ?? "").toLowerCase();
+  const filtered = keyword
     ? logs.filter(
         (l) =>
-          (l.actionName ?? "").toLowerCase().includes(search.toLowerCase()) ||
-          (l.targetEmail ?? "").toLowerCase().includes(search.toLowerCase()) ||
-          (l.ipAddress ?? "").includes(search),
+          (l.actionName ?? "").toLowerCase().includes(keyword) ||
+          (l.targetEmail ?? "").toLowerCase().includes(keyword) ||
+          (l.ipAddress ?? "").includes(keyword),
       )
     : logs;
 
-  const fmt = (dt: string) =>
-    format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: vi });
-
   return (
     <div className="p-6 space-y-5 max-w-[1440px]">
-      {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
@@ -86,26 +96,32 @@ export default function AuditLogsPage() {
           </p>
           <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "…" : total} sự kiện — lịch sử hoạt động trên hệ thống.
+            {isLoading ? "…" : (data?.totalItems ?? 0)} sự kiện — lịch sử hoạt
+            động trên hệ thống.
           </p>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-xs">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-        />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Action, email, IP…"
-          className="h-9 w-full pl-8 pr-3 rounded-lg border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-xs w-full">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            value={filters.keyword}
+            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            placeholder="Action, email, IP…"
+            className="h-9 w-full pl-8 pr-3 rounded-lg border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+          />
+        </div>
+        {hasActiveFilter && (
+          <Button variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
-      {/* Table */}
       <div
         className="bg-card rounded-xl border border-border overflow-hidden"
         style={{ boxShadow: "var(--shadow-sm)" }}
@@ -122,71 +138,70 @@ export default function AuditLogsPage() {
             <span className="text-sm">Không có audit log nào.</span>
           </div>
         ) : (
-          <table className="w-full text-[12.5px] border-collapse">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                {[
-                  "Thời gian",
-                  "Hành động",
-                  "Kết quả",
-                  "Tài khoản bị ảnh hưởng",
-                  "Thực hiện bởi",
-                  "IP",
-                  "Lý do",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-2.5 text-left text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead>Thời gian</TableHead>
+                <TableHead>Hành động</TableHead>
+                <TableHead>Kết quả</TableHead>
+                <TableHead>Tài khoản bị ảnh hưởng</TableHead>
+                <TableHead>Thực hiện bởi</TableHead>
+                <TableHead>IP</TableHead>
+                <TableHead>Lý do</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((log) => (
-                <tr
-                  key={log.id}
-                  className="border-b border-border hover:bg-muted/30 transition-colors"
-                >
-                  <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">
+                <TableRow key={log.id}>
+                  <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
                     {fmt(log.createdAt)}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <span className="font-medium">
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium text-sm">
                       {ACTION_GROUPS[log.actionName] ?? log.actionName}
                     </span>
                     <span className="ml-1.5 text-[10.5px] text-muted-foreground font-mono">
                       #{log.action}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </TableCell>
+                  <TableCell>
                     <span
                       className={`text-[10.5px] font-semibold px-1.5 py-0.5 rounded ${log.isSuccess ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}
                     >
                       {log.isSuccess ? "OK" : "FAIL"}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
                     {log.targetEmail ?? "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground text-[11.5px]">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs font-mono">
                     {log.actorAccountId
                       ? log.actorAccountId.slice(0, 8) + "…"
                       : "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground font-mono">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs font-mono">
                     {log.ipAddress ?? "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground max-w-[160px] truncate">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm max-w-40 truncate">
                     {log.reason ?? "—"}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
+
+      <DataPagination
+        totalItems={data?.totalItems ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
+      />
     </div>
   );
 }

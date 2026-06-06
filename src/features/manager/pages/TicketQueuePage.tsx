@@ -14,36 +14,28 @@ import {
   TicketPriorityEnum,
   TicketCategoryEnum,
 } from "@/shared/types/ticket.types";
-import type {
-  TicketDTO,
-  AdminTicketQueueParams,
-} from "@/shared/types/ticket.types";
+import type { TicketDTO } from "@/shared/types/ticket.types";
+import DataPagination from "@/shared/components/common/DataPagination";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
-const PAGE_SIZE = 20;
-
-const PRIORITY_ITEMS: Record<string, string> = {
-  "": "Tất cả priority",
-  [TicketPriorityEnum.P1Critical]: "P1 Critical",
-  [TicketPriorityEnum.P2High]: "P2 High",
-  [TicketPriorityEnum.P3Normal]: "P3 Normal",
-};
-const CATEGORY_ITEMS: Record<string, string> = {
-  "": "Tất cả loại",
-  ...Object.fromEntries(
-    Object.entries(TicketCategoryEnum).map(([, v]) => [v, v]),
-  ),
+const DEFAULTS = {
+  priority: "",
+  category: "",
+  pageNumber: 1,
+  pageSize: 25,
 };
 
 export default function TicketQueuePage() {
-  const [params, setParams] = useState<AdminTicketQueueParams>({
-    pageNumber: 1,
-    pageSize: PAGE_SIZE,
-  });
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
   const [triageTarget, setTriageTarget] = useState<TicketDTO | null>(null);
 
-  const { data, isLoading } = useAdminTicketQueue(params);
-  const tickets = data?.items ?? [];
-  const totalPages = data?.totalPages ?? 1;
+  const { data, isLoading } = useAdminTicketQueue({
+    priority: (filters.priority as TicketPriorityEnum) || undefined,
+    category: (filters.category as TicketCategoryEnum) || undefined,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
+  });
 
   return (
     <div className="space-y-4 p-6">
@@ -56,24 +48,18 @@ export default function TicketQueuePage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Select
-          value={params.priority ?? ""}
-          items={PRIORITY_ITEMS}
+          value={filters.priority || null}
           onValueChange={(v: string | null) =>
-            setParams((p) => ({
-              ...p,
-              priority: (v as TicketPriorityEnum) || undefined,
-              pageNumber: 1,
-            }))
+            setFilter("priority", v || undefined)
           }
         >
           <SelectTrigger className="w-36">
-            <SelectValue />
+            <SelectValue placeholder="Tất cả priority" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value="">Tất cả priority</SelectItem>
+            <SelectItem value={null}>Tất cả priority</SelectItem>
             <SelectItem value={TicketPriorityEnum.P1Critical}>
               P1 Critical
             </SelectItem>
@@ -85,65 +71,48 @@ export default function TicketQueuePage() {
         </Select>
 
         <Select
-          value={params.category ?? ""}
-          items={CATEGORY_ITEMS}
+          value={filters.category || null}
           onValueChange={(v: string | null) =>
-            setParams((p) => ({
-              ...p,
-              category: (v as TicketCategoryEnum) || undefined,
-              pageNumber: 1,
-            }))
+            setFilter("category", v || undefined)
           }
         >
-          <SelectTrigger className="w-36">
-            <SelectValue />
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tất cả loại" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value="">Tất cả loại</SelectItem>
-            {Object.entries(TicketCategoryEnum).map(([, v]) => (
-              <SelectItem key={v} value={v}>
-                {v}
+            <SelectItem value={null}>Tất cả loại</SelectItem>
+            {Object.values(TicketCategoryEnum).map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        {hasActiveFilter && (
+          <Button variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       <TicketTable
-        tickets={tickets}
+        tickets={data?.items ?? []}
         isLoading={isLoading}
         showTriage
         onTriage={setTriageTarget}
       />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center gap-2 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={params.pageNumber === 1}
-            onClick={() =>
-              setParams((p) => ({ ...p, pageNumber: (p.pageNumber ?? 1) - 1 }))
-            }
-          >
-            Trước
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Trang {params.pageNumber} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={params.pageNumber === totalPages}
-            onClick={() =>
-              setParams((p) => ({ ...p, pageNumber: (p.pageNumber ?? 1) + 1 }))
-            }
-          >
-            Sau
-          </Button>
-        </div>
-      )}
+      <DataPagination
+        totalItems={data?.totalItems ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
+      />
 
       {triageTarget && (
         <TriageDialog

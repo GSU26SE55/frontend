@@ -13,9 +13,6 @@ import {
   User,
   Ticket,
   Clock,
-  BookOpen,
-  AlertTriangle,
-  FileText,
   ScrollText,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
@@ -218,7 +215,6 @@ const MANAGER_NAV: NavSection[] = [
       { label: "Sites", path: "/manager/sites", icon: MapPin },
       { label: "Tickets", path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
-      { label: "Alerts", path: "/manager/alerts", icon: AlertTriangle },
     ],
   },
   {
@@ -232,17 +228,7 @@ const MANAGER_NAV: NavSection[] = [
 const STAFF_NAV: NavSection[] = [
   {
     items: [
-      { label: "My Tickets", path: "/staff/dashboard", icon: LayoutDashboard },
-      { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
-    ],
-  },
-  {
-    title: "Kiến thức",
-    collapsible: true,
-    defaultOpen: true,
-    items: [
-      { label: "Knowledge Base", path: "/staff/wiki", icon: BookOpen },
-      { label: "Báo cáo", path: "/staff/alerts", icon: FileText },
+      { label: "My Tickets", path: "/staff/tickets", icon: LayoutDashboard },
     ],
   },
   {

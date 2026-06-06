@@ -97,7 +97,8 @@ function Section({
             <li key={item.path}>
               <NavLink
                 to={item.path}
-                end={item.path.split("/").length <= 2}
+                end
+                replace
                 title={sidebarCollapsed ? item.label : undefined}
                 className={({ isActive }) =>
                   cn(

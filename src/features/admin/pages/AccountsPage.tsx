@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import DataPagination from "@/shared/components/common/DataPagination";
+import { Button } from "@/components/ui/button";
 import {
   Search,
   Mail,
@@ -94,23 +97,24 @@ type DialogState =
   | { type: "detail"; account: AccountDto }
   | { type: "staffProfile"; account: AccountDto };
 
+const DEFAULTS = { keyword: "", pageNumber: 1, pageSize: 10 };
+
 export default function AccountsPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
+
   const { data, isLoading } = useAdminAccountList({
-    pageNumber: 1,
-    pageSize: 50,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
+    keyword: filters.keyword || undefined,
   });
   const { mutate: unlock } = useAdminUnlockAccount();
   const { mutate: deleteAccount, isPending: isDeleting } =
     useAdminDeleteAccount();
 
-  const raw = data as unknown;
-  const accounts = Array.isArray(raw)
-    ? raw
-    : (((raw as { items?: unknown[] })?.items ?? []) as AccountDto[]);
-  const total =
-    (raw as { totalItems?: number })?.totalItems ??
-    (Array.isArray(raw) ? raw.length : 0);
+  const accounts = data?.items ?? [];
+  const total = data?.totalItems ?? 0;
 
   const close = () => setDialog({ type: "none" });
 
@@ -163,16 +167,24 @@ export default function AccountsPage() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-xs">
-        <Search
-          size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-        />
-        <input
-          placeholder="Tên, email…"
-          className="h-9 w-full pl-8 pr-3 rounded-lg border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
-          readOnly
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-xs w-full">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            placeholder="Tên, email…"
+            value={filters.keyword}
+            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            className="h-9 w-full pl-8 pr-3 rounded-lg border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+          />
+        </div>
+        {hasActiveFilter && (
+          <Button variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -343,6 +355,18 @@ export default function AccountsPage() {
           </table>
         )}
       </div>
+
+      {/* Pagination */}
+      <DataPagination
+        totalItems={data?.totalItems ?? 0}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
+      />
 
       {/* Dialogs */}
       <InviteAccountDialog open={dialog.type === "invite"} onClose={close} />

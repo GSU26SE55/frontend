@@ -1,10 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
+import SmartHome from "./SmartHome";
 import { UserRole } from "@/shared/types/session.types";
 import AuthLayout from "@/shared/components/layout/AuthLayout";
 import AppLayout from "@/shared/components/layout/AppLayout";
-import LandingPage from "@/features/landing/pages/LandingPage";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
@@ -35,7 +35,7 @@ import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
+    element: <SmartHome />,
   },
   {
     element: <AuthLayout />,
@@ -139,7 +139,7 @@ const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    element: <Navigate to="/unauthorized" replace />,
   },
 ]);
 

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -11,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
 import { useStaffTickets } from "../hooks/useStaffTickets";
 import { TicketCard } from "../components/TicketCard";
+import DataPagination from "@/shared/components/common/DataPagination";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: TicketStatusEnum.Assigned, label: "Đã gán" },
@@ -22,42 +23,37 @@ const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: TicketStatusEnum.Escalated, label: "Đã chuyển cấp" },
 ];
 
-const STATUS_ITEMS: Record<string, string> = {
-  "": "Tất cả trạng thái",
-  ...Object.fromEntries(STATUS_FILTER_OPTIONS.map((o) => [o.value, o.label])),
+const DEFAULTS = {
+  status: "",
+  pageNumber: 1,
+  pageSize: 10,
 };
 
-const PAGE_SIZE = 10;
-
 export default function TicketListPage() {
-  const [statusFilter, setStatusFilter] = useState("");
-  const [page, setPage] = useState(1);
+  const { filters, setFilter, resetFilters, hasActiveFilter } =
+    useUrlFilters(DEFAULTS);
 
   const { data, isLoading, isError } = useStaffTickets({
-    status: (statusFilter as TicketStatusEnum) || undefined,
-    pageNumber: page,
-    pageSize: PAGE_SIZE,
+    status: (filters.status as TicketStatusEnum) || undefined,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
   });
-
-  const handleStatusChange = (value: string | null) => {
-    setStatusFilter(value ?? "");
-    setPage(1);
-  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Ticket của tôi</h1>
         <Select
-          value={statusFilter}
-          items={STATUS_ITEMS}
-          onValueChange={handleStatusChange}
+          value={filters.status || null}
+          onValueChange={(v: string | null) =>
+            setFilter("status", v || undefined)
+          }
         >
           <SelectTrigger className="w-48">
-            <SelectValue />
+            <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value="">Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
             {STATUS_FILTER_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
@@ -65,6 +61,11 @@ export default function TicketListPage() {
             ))}
           </SelectContent>
         </Select>
+        {hasActiveFilter && (
+          <Button variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       {isLoading && (
@@ -95,29 +96,16 @@ export default function TicketListPage() {
             </div>
           )}
 
-          {data.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!data.hasPreviousPage}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Trước
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {data.totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!data.hasNextPage}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Sau
-              </Button>
-            </div>
-          )}
+          <DataPagination
+            totalItems={data.totalItems}
+            totalPages={data.totalPages}
+            hasNextPage={data.hasNextPage}
+            hasPreviousPage={data.hasPreviousPage}
+            pageNumber={filters.pageNumber}
+            pageSize={filters.pageSize}
+            onPageChange={(p) => setFilter("pageNumber", p)}
+            onPageSizeChange={(s) => setFilter("pageSize", s)}
+          />
         </>
       )}
     </div>
