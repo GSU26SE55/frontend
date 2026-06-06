@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px]">
+    <div className="p-6 space-y-6 max-w-360">
       {/* ── Page header ── */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -399,7 +399,7 @@ export default function AdminDashboardPage() {
             ].map((item, i) => (
               <li key={i} className="flex gap-3">
                 <span
-                  className="mt-[3px] w-2 h-2 rounded-full shrink-0"
+                  className="mt-0.75 w-2 h-2 rounded-full shrink-0"
                   style={{ background: item.ok ? "var(--ok)" : "var(--p1)" }}
                 />
                 <div className="flex-1 min-w-0">

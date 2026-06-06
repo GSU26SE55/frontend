@@ -62,7 +62,7 @@ function Topbar() {
         title="Thông báo"
       >
         <Bell size={17} />
-        <span className="absolute top-[5px] right-[5px] w-[6px] h-[6px] rounded-full bg-red-500" />
+        <span className="absolute top-1.25 right-1.25 w-1.5 h-1.5 rounded-full bg-red-500" />
       </button>
 
       {/* User menu */}
@@ -71,7 +71,7 @@ function Topbar() {
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full border border-border hover:bg-muted transition-colors"
         >
-          <span className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-bold bg-emerald-100 text-emerald-700 shrink-0">
+          <span className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-emerald-100 text-emerald-700 shrink-0">
             {initials}
           </span>
           <div className="text-left leading-tight">

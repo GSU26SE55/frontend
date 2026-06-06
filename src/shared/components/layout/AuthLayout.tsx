@@ -29,7 +29,7 @@ const AuthLayout = () => {
       {/* Emerald glow center-top */}
       <div
         aria-hidden
-        className="pointer-events-none fixed left-1/2 top-0 -translate-x-1/2 h-72 w-[600px] rounded-full bg-emerald-400/10 blur-[80px]"
+        className="pointer-events-none fixed left-1/2 top-0 -translate-x-1/2 h-72 w-150 rounded-full bg-emerald-400/10 blur-[80px]"
       />
 
       {/* Logo header */}
@@ -44,7 +44,7 @@ const AuthLayout = () => {
       </div>
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="relative z-10 w-full max-w-105 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <Outlet />
       </div>
 

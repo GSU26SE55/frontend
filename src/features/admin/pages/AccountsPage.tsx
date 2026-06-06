@@ -135,7 +135,7 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="p-6 space-y-5 max-w-[1440px]">
+    <div className="p-6 space-y-5 max-w-360">
       {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>

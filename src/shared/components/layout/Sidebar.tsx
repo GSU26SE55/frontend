@@ -92,7 +92,7 @@ function Section({
           opacity: open ? 1 : 0,
         }}
       >
-        <ul className="space-y-[2px]">
+        <ul className="space-y-0.5">
           {section.items.map((item) => (
             <li key={item.path}>
               <NavLink
@@ -102,7 +102,7 @@ function Section({
                 title={sidebarCollapsed ? item.label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-100",
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-colors duration-100",
                     sidebarCollapsed && "justify-center px-2",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
@@ -115,7 +115,7 @@ function Section({
                   <>
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-red-100 text-red-600 leading-none">
+                      <span className="shrink-0 text-[10px] font-bold px-1.5 py-px rounded-full bg-red-100 text-red-600 leading-none">
                         {item.badge}
                       </span>
                     )}
@@ -141,7 +141,7 @@ export default function Sidebar({
     <aside
       className={cn(
         "flex flex-col shrink-0 h-screen border-r bg-sidebar text-sidebar-foreground transition-all duration-200",
-        collapsed ? "w-14" : "w-[220px]",
+        collapsed ? "w-14" : "w-55",
       )}
     >
       {/* ── Logo header ── */}

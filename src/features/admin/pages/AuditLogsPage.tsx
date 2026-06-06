@@ -88,7 +88,7 @@ export default function AuditLogsPage() {
     : logs;
 
   return (
-    <div className="p-6 space-y-5 max-w-[1440px]">
+    <div className="p-6 space-y-5 max-w-360">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
