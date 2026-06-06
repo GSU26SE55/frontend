@@ -156,7 +156,7 @@ Implement 4 nhóm UI bị defer từ GH-11, GH-27, GH-28, GH-30:
 ### Admin RolesPage — lưu ý type cast hiện tại
 `RolesPage.tsx` hiện có type cast guard `const raw = data as unknown; const roles = Array.isArray(raw) ? ...` — **giữ nguyên, không fix trong scope này**. Khi modify file để wire dialogs, không chạm vào data-fetching logic này để tránh scope creep.
 
-### Admin RolesPage — row actions  
+### Admin RolesPage — row actions
 - Mỗi row có dropdown: Edit (name/desc), Change Status, Manage Permissions, Delete
 - `isSystemRole = true` → ẩn Delete button
 - PermissionsDialog: load all permissions + current role permissions → checkbox list → PUT (replace)
