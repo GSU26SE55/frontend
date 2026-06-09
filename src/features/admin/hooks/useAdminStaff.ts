@@ -18,7 +18,7 @@ export const useAdminUpdateStaffProfile = () => {
     }) => adminStaffService.updateProfile(id, payload),
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.admin.staff.profile(id) });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+      qc.invalidateQueries({ queryKey: KEY.admin.accounts });
     },
   });
 };
@@ -29,8 +29,8 @@ export const useAdminAddSkill = () => {
     mutationFn: ({ id, payload }: { id: string; payload: AddSkillPayload }) =>
       adminStaffService.addSkill(id, payload),
     onSuccess: (_data, { id }) => {
-      qc.invalidateQueries({ queryKey: KEY.admin.staff });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.staff.profile(id) });
+      qc.invalidateQueries({ queryKey: KEY.admin.accounts });
     },
   });
 };
@@ -41,8 +41,8 @@ export const useAdminDeleteSkill = () => {
     mutationFn: ({ id, skillCode }: { id: string; skillCode: string }) =>
       adminStaffService.deleteSkill(id, skillCode),
     onSuccess: (_data, { id }) => {
-      qc.invalidateQueries({ queryKey: KEY.admin.staff });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.staff.profile(id) });
+      qc.invalidateQueries({ queryKey: KEY.admin.accounts });
     },
   });
 };

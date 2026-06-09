@@ -39,8 +39,11 @@ interface Props {
 
 export default function AssignDialog({ ticketId, open, onClose }: Props) {
   const { mutateAsync, isPending } = useAssignTicket(ticketId);
-  const { data: staffList = [], isLoading: loadingStaff } =
-    useStaffAssignmentList();
+  const {
+    data: staffList = [],
+    isLoading: loadingStaff,
+    isError: staffError,
+  } = useStaffAssignmentList();
 
   const form = useForm<AssignFormValues>({
     resolver: zodResolver(assignSchema),
@@ -77,16 +80,25 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
                     disabled={loadingStaff}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue
                           placeholder={
-                            loadingStaff ? "Đang tải..." : "Chọn nhân viên"
+                            loadingStaff
+                              ? "Đang tải..."
+                              : staffError
+                                ? "Lỗi tải danh sách"
+                                : "Chọn nhân viên"
                           }
                         />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
-                      {staffList.length === 0 && (
+                      {staffError && (
+                        <SelectItem value="_error" disabled>
+                          Không thể tải danh sách Staff
+                        </SelectItem>
+                      )}
+                      {!staffError && staffList.length === 0 && (
                         <SelectItem value="_empty" disabled>
                           Không có Staff khả dụng
                         </SelectItem>
@@ -121,7 +133,10 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
               <Button type="button" variant="outline" onClick={onClose}>
                 Huỷ
               </Button>
-              <Button type="submit" disabled={isPending || loadingStaff}>
+              <Button
+                type="submit"
+                disabled={isPending || loadingStaff || staffError}
+              >
                 {isPending ? "Đang xử lý..." : "Gán Staff"}
               </Button>
             </DialogFooter>
