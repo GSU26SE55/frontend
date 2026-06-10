@@ -40,7 +40,7 @@ type DialogType =
   | "escalate"
   | null;
 
-const CATEGORY_LABEL: Record<TicketCategoryEnum, string> = {
+const CATEGORY_LABEL: Partial<Record<TicketCategoryEnum, string>> = {
   Charging: "Sạc",
   Overheat: "Quá nhiệt",
   NoPower: "Không điện",
@@ -59,6 +59,7 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   Low: "Thấp",
   Medium: "Trung bình",
   High: "Cao",
+  Critical: "Nghiêm trọng",
 };
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
@@ -147,9 +148,7 @@ export default function TicketDetailPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <TicketStatusBadge status={ticket.status} />
             <TicketPriorityBadge priority={ticket.priority} />
-            {ticket.isIncident && (
-              <Badge variant="destructive">Sự cố</Badge>
-            )}
+            {ticket.isIncident && <Badge variant="destructive">Sự cố</Badge>}
           </div>
         </div>
         <div className="shrink-0 w-48">
@@ -176,10 +175,7 @@ export default function TicketDetailPage() {
           </Button>
         )}
         {canReject && (
-          <Button
-            variant="destructive"
-            onClick={() => setDialog("reject")}
-          >
+          <Button variant="destructive" onClick={() => setDialog("reject")}>
             Từ chối
           </Button>
         )}

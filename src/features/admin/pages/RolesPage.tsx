@@ -47,7 +47,10 @@ import {
   useAdminRoleList,
   useAdminDeleteRole,
 } from "@/features/admin/hooks/useAdminRoles";
-import { RoleStatusEnum } from "@/features/admin/types/admin.types";
+import {
+  RoleStatusEnum,
+  RoleTypeFilter,
+} from "@/features/admin/types/admin.types";
 import CreateRoleDialog from "@/features/admin/components/CreateRoleDialog";
 import EditRoleDialog from "@/features/admin/components/EditRoleDialog";
 import ChangeRoleStatusDialog from "@/features/admin/components/ChangeRoleStatusDialog";
@@ -75,9 +78,7 @@ type DialogState =
 export default function RolesPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
   const [keyword, setKeyword] = useState("");
-  const [roleType, setRoleType] = useState<"all" | "system" | "custom">(
-    "all",
-  );
+  const [roleType, setRoleType] = useState<RoleTypeFilter>(RoleTypeFilter.All);
 
   const { data, isLoading } = useAdminRoleList({ pageNumber: 1, pageSize: 50 });
   const { mutate: deleteRole, isPending: isDeleting } = useAdminDeleteRole();
@@ -104,9 +105,9 @@ export default function RolesPage() {
           .filter(Boolean)
           .some((value) => value!.toLowerCase().includes(q));
       const matchesType =
-        roleType === "all" ||
-        (roleType === "system" && role.isSystemRole) ||
-        (roleType === "custom" && !role.isSystemRole);
+        roleType === RoleTypeFilter.All ||
+        (roleType === RoleTypeFilter.System && role.isSystemRole) ||
+        (roleType === RoleTypeFilter.Custom && !role.isSystemRole);
 
       return matchesKeyword && matchesType;
     });
@@ -139,8 +140,8 @@ export default function RolesPage() {
             Roles & Permissions
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : total} role &mdash; quản lý phân quyền truy
-            cập hệ thống.
+            {isLoading ? "..." : total} role &mdash; quản lý phân quyền truy cập
+            hệ thống.
           </p>
         </div>
         <Button size="sm" onClick={() => setDialog({ type: "create" })}>
@@ -214,16 +215,14 @@ export default function RolesPage() {
             </div>
             <div className="hidden rounded-lg border border-border bg-muted p-0.5 sm:flex">
               {[
-                { value: "all", label: "Tất cả" },
-                { value: "system", label: "Mặc định" },
-                { value: "custom", label: "Tùy chỉnh" },
+                { value: RoleTypeFilter.All, label: "Tất cả" },
+                { value: RoleTypeFilter.System, label: "Mặc định" },
+                { value: RoleTypeFilter.Custom, label: "Tùy chỉnh" },
               ].map((item) => (
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() =>
-                    setRoleType(item.value as "all" | "system" | "custom")
-                  }
+                  onClick={() => setRoleType(item.value)}
                   className={`h-7 rounded-md px-2.5 text-xs font-medium transition-colors ${
                     roleType === item.value
                       ? "bg-background text-foreground shadow-sm"
@@ -366,9 +365,8 @@ export default function RolesPage() {
             <AlertDialogDescription>
               {dialog.type === "delete" && (
                 <>
-                  Bạn có chắc muốn xóa role{" "}
-                  <strong>{dialog.role.name}</strong>? Hành động này không thể
-                  hoàn tác.
+                  Bạn có chắc muốn xóa role <strong>{dialog.role.name}</strong>?
+                  Hành động này không thể hoàn tác.
                 </>
               )}
             </AlertDialogDescription>

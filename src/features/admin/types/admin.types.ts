@@ -1,14 +1,20 @@
+import type { RoleStatusEnum } from "@/features/admin/enums/role.enum";
+import type {
+  LoginAttemptResult,
+  AuditActionEnum,
+} from "@/features/admin/enums/audit.enum";
 import type {
   AccountStatusEnum,
   RefreshTokenStatus,
+} from "@/shared/enums/account.enum";
+export {
+  RoleStatusEnum,
+  RoleTypeFilter,
+} from "@/features/admin/enums/role.enum";
+export {
   LoginAttemptResult,
-} from "@/shared/types/account.enums";
-
-export { RoleStatusEnum, AuditActionEnum } from "./admin.enums";
-export { LoginAttemptResult } from "@/shared/types/account.enums";
-
-import type { RoleStatusEnum, AuditActionEnum } from "./admin.enums";
-
+  AuditActionEnum,
+} from "@/features/admin/enums/audit.enum";
 // ── DTOs ──
 
 export interface RoleDto {

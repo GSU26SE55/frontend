@@ -1,6 +1,6 @@
-export { LoginAttemptResult } from "@/shared/types/account.enums";
-
-import type { LoginAttemptResult } from "@/shared/types/account.enums";
+import type { LoginAttemptResult } from "@/features/admin/enums/audit.enum";
+export { LoginAttemptResult } from "@/features/admin/enums/audit.enum";
+export { AccountStatusEnum } from "@/shared/enums/account.enum";
 
 export interface ChangePasswordPayload {
   currentPassword: string;

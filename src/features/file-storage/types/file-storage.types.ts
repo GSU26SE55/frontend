@@ -1,6 +1,11 @@
-export { FilePurposeEnum, FileStatusEnum } from "./file-storage.enums";
-
-import type { FilePurposeEnum, FileStatusEnum } from "./file-storage.enums";
+import type {
+  FilePurposeEnum,
+  FileStatusEnum,
+} from "@/features/file-storage/enums/file-storage.enum";
+export {
+  FilePurposeEnum,
+  FileStatusEnum,
+} from "@/features/file-storage/enums/file-storage.enum";
 
 export interface FileUploadResponse {
   fileId: string;

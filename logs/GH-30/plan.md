@@ -46,6 +46,18 @@ UI pages tách thành issue riêng per feature. Router giữ placeholder hiện 
 | `src/features/admin/hooks/useAdminPermissions.ts` | create | 3 hooks Nhóm 8 |
 | `src/features/admin/hooks/useAdminAuditLogs.ts` | create | 1 query hook Nhóm 9 |
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` và `src/features/admin/enums/` — không define inline trong types.
+
+| Enum | File |
+|------|------|
+| `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
+| `RoleStatusEnum`, `RoleTypeFilter` | `features/admin/enums/role.enum.ts` |
+| `LoginAttemptResult`, `AuditActionEnum` | `features/admin/enums/audit.enum.ts` |
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
+| `SiteStatusEnum` | `shared/enums/site.enum.ts` |
+
 ## Types
 
 ### `shared/types/account.types.ts`

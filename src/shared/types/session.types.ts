@@ -1,9 +1,6 @@
+import { UserRole } from "@/shared/enums/session.enum";
 import { jwtDecode } from "jwt-decode";
-
-export { UserRole } from "./session.enums";
-
-import type { UserRole } from "./session.enums";
-
+export { UserRole } from "@/shared/enums/session.enum";
 interface JwtPayload {
   jti: string;
   nameid: string;

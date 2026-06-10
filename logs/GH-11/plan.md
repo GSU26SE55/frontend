@@ -241,6 +241,17 @@ if (user.role === 'CUSTOMER') {
 
 ---
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` — không define inline trong types.
+
+| Enum | File |
+|------|------|
+| `UserRole` | `shared/enums/session.enum.ts` |
+| `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
+
+---
+
 ## Approach
 
 **Token storage:** `js-cookie` lưu `accessToken` và `refreshToken` trong cookie.

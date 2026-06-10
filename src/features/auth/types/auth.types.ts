@@ -1,7 +1,5 @@
-export { RefreshTokenStatus } from "@/shared/types/account.enums";
-
-import type { RefreshTokenStatus } from "@/shared/types/account.enums";
-
+import type { RefreshTokenStatus } from "@/shared/enums/account.enum";
+export { RefreshTokenStatus } from "@/shared/enums/account.enum";
 export interface LoginPayload {
   email: string;
   password: string;

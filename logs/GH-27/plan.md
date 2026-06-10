@@ -55,6 +55,15 @@ Triển khai types, endpoints, service, hooks, schemas, components và page cho 
 | `src/App.tsx` | modify | Wrap `GoogleOAuthProvider` từ `@react-oauth/google` |
 | `src/router/index.tsx` | modify | Thêm `/settings` route dưới `ProtectedRoute` |
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` và `src/features/admin/enums/` — không define inline trong types.
+
+| Enum | File |
+|------|------|
+| `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
+| `LoginAttemptResult`, `AuditActionEnum` | `features/admin/enums/audit.enum.ts` |
+
 ## Types
 
 ```ts

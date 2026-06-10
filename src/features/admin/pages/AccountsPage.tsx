@@ -43,6 +43,7 @@ import {
   useAdminDeleteAccount,
 } from "@/features/admin/hooks/useAdminAccounts";
 import { AccountStatusEnum } from "@/shared/types/account.types";
+import { UserRole } from "@/shared/types/session.types";
 import InviteAccountDialog from "@/features/admin/components/InviteAccountDialog";
 import CreateAccountDialog from "@/features/admin/components/CreateAccountDialog";
 import EditAccountDialog from "@/features/admin/components/EditAccountDialog";
@@ -160,10 +161,7 @@ export default function AccountsPage() {
           >
             <Mail className="size-3.5" /> Mời người dùng
           </Button>
-          <Button
-            size="sm"
-            onClick={() => setDialog({ type: "create" })}
-          >
+          <Button size="sm" onClick={() => setDialog({ type: "create" })}>
             <Plus className="size-3.5" /> Tạo tài khoản
           </Button>
         </div>
@@ -239,7 +237,7 @@ export default function AccountsPage() {
                   .map((n: string) => n[0])
                   .join("")
                   .toUpperCase();
-                const isStaff = acc.role?.toUpperCase() === "STAFF";
+                const isStaff = acc.role?.toUpperCase() === UserRole.STAFF;
                 const isLocked = acc.status === AccountStatusEnum.Locked;
 
                 return (

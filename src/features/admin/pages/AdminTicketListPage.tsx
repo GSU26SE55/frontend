@@ -50,7 +50,7 @@ const PRIORITY_LABELS: Record<TicketPriority, string> = {
   P3Normal: "P3 Normal",
 };
 
-const CATEGORY_LABELS: Record<TicketCategory, string> = {
+const CATEGORY_LABELS: Partial<Record<TicketCategory, string>> = {
   Charging: "Lỗi sạc",
   Overheat: "Quá nhiệt",
   NoPower: "Không điện",
@@ -90,8 +90,7 @@ export default function AdminTicketListPage() {
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           Admin &middot; Ticket
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-                  </h1>
+        <h1 className="text-2xl font-semibold tracking-tight"></h1>
       </div>
 
       <div className="flex flex-wrap gap-3 items-end">

@@ -45,6 +45,20 @@ Xây dựng portal quản lý ticket cho Admin: danh sách toàn bộ ticket v�
 | `src/router/index.tsx` | modify | Thêm routes `/admin/tickets` và `/admin/tickets/:id` |
 | `src/shared/components/layout/AppLayout.tsx` | modify | Thêm "Tickets" vào `ADMIN_NAV` |
 
+## Enums
+
+Tất cả enum nằm ở `src/shared/enums/ticket.enum.ts` — **không dùng plain string union type** như plan gốc đề xuất.
+`shared/types/ticket.types.ts` chỉ import và re-export từ enum file.
+
+| Enum | File |
+|------|------|
+| `TicketStatusEnum`, `TicketPriorityEnum`, `TicketCategoryEnum`, `TicketOriginEnum` | `shared/enums/ticket.enum.ts` |
+| `ImpactScopeEnum`, `UrgencyLevelEnum`, `EscalationReasonEnum` | `shared/enums/ticket.enum.ts` |
+| `PauseReasonEnum`, `SlaTimerStatusEnum`, `MaintenanceLogTypeEnum` | `shared/enums/ticket.enum.ts` |
+| `ActivityActionEnum`, `ActorRoleEnum` | `shared/enums/ticket.enum.ts` |
+
+**Thay đổi so với plan gốc:** Plan gốc dùng `export type TicketStatusEnum = 'New' | 'Open' | ...` (plain string union). Codebase thực tế dùng `as const` object pattern — xem `shared/enums/ticket.enum.ts`.
+
 ## Types
 
 ```ts

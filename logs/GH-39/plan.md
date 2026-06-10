@@ -53,6 +53,15 @@ Implement Admin portal cho quản lý battery assets: danh sách, tạo, sửa, 
 | `src/features/admin/pages/BatteryAssetDetailPage.tsx` | create | Detail page: info + BatteryRealtimeCard + actions |
 | `src/router/index.tsx` | modify | Thêm AppLayout + Admin routes /admin/battery-assets + /:id |
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng — không define inline trong types. Plan gốc dùng plain type union (`1 | 2 | 3`) — codebase thực tế đổi sang `as const` object pattern.
+
+| Enum | File |
+|------|------|
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
+| `WarrantyStatusEnum`, `ChargingStateEnum`, `BatteryChemistryEnum` | `features/admin/enums/battery-asset.enum.ts` |
+
 ## Types
 
 ```ts

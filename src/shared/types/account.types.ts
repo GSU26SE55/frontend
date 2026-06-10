@@ -1,12 +1,9 @@
+import type { AvatarSourceEnum } from "@/shared/enums/account.enum";
 export {
   AccountStatusEnum,
   AvatarSourceEnum,
   RefreshTokenStatus,
-  LoginAttemptResult,
-} from "./account.enums";
-
-import type { AvatarSourceEnum, AccountStatusEnum } from "./account.enums";
-
+} from "@/shared/enums/account.enum";
 export interface AccountProfileDto {
   accountId: string;
   avatarFileId?: string;
@@ -45,7 +42,7 @@ export interface AccountDto {
   emailConfirmed: boolean;
   phoneConfirmed: boolean;
   twoFactorEnabled: boolean;
-  status: AccountStatusEnum;
+  status: import("@/shared/enums/account.enum").AccountStatusEnum;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt?: string;

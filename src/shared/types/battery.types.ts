@@ -1,7 +1,5 @@
-export { BatteryStatusEnum } from "./battery.enums";
-
-import type { BatteryStatusEnum } from "./battery.enums";
-
+import type { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+export { BatteryStatusEnum } from "@/shared/enums/battery.enum";
 export interface BatteryAssetDto {
   id: string;
   serialNumber: string;

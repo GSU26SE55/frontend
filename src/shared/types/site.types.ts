@@ -1,7 +1,6 @@
-export { SiteStatusEnum } from "./site.enums";
-
-import type { BatteryStatusEnum } from "./battery.enums";
-import type { SiteStatusEnum } from "./site.enums";
+import type { SiteStatusEnum } from "@/shared/enums/site.enum";
+import type { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+export { SiteStatusEnum } from "@/shared/enums/site.enum";
 
 export interface SiteDto {
   id: string;

@@ -1,3 +1,16 @@
+import type {
+  TicketStatusEnum,
+  TicketPriorityEnum,
+  TicketCategoryEnum,
+  TicketOriginEnum,
+  ImpactScopeEnum,
+  UrgencyLevelEnum,
+  EscalationReasonEnum,
+  SlaTimerStatusEnum,
+  MaintenanceLogTypeEnum,
+  ActivityActionEnum,
+  ActorRoleEnum,
+} from "@/shared/enums/ticket.enum";
 export {
   TicketStatusEnum,
   TicketPriorityEnum,
@@ -11,22 +24,7 @@ export {
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
-} from "./ticket.enums";
-
-import type {
-  TicketStatusEnum,
-  TicketPriorityEnum,
-  TicketCategoryEnum,
-  TicketOriginEnum,
-  ImpactScopeEnum,
-  UrgencyLevelEnum,
-  EscalationReasonEnum,
-  SlaTimerStatusEnum,
-  MaintenanceLogTypeEnum,
-  ActivityActionEnum,
-  ActorRoleEnum,
-} from "./ticket.enums";
-
+} from "@/shared/enums/ticket.enum";
 // --- DTOs ---
 
 export interface SlaTimerDTO {
@@ -137,7 +135,7 @@ export interface TicketDetailDTO extends TicketDTO {
   attachments?: TicketAttachmentDTO[] | null;
 }
 
-// --- Action Response (distinct wrapper, not CommonResponse<T>) ---
+// --- Action Response ---
 
 export interface TicketActionDto {
   id: string | null;

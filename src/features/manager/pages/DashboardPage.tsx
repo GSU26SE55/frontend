@@ -26,6 +26,7 @@ import {
 import { KpiCard } from "@/shared/components/common/KpiCard";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import { SiteStatusEnum } from "@/shared/types/site.types";
+import { TrendDir } from "@/shared/enums/common.enum";
 import {
   Area,
   AreaChart,
@@ -160,7 +161,11 @@ export default function ManagerDashboardPage() {
             icon={<MapPin className="size-4" />}
             iconBg="bg-blue-50"
             iconColor="text-blue-600"
-            trend={{ dir: "flat", value: `${activeSites}`, note: "hoạt động" }}
+            trend={{
+              dir: TrendDir.Flat,
+              value: `${activeSites}`,
+              note: "hoạt động",
+            }}
           />
           <KpiCard
             label="Đang bảo trì"
@@ -169,7 +174,7 @@ export default function ManagerDashboardPage() {
             iconBg="bg-amber-50"
             iconColor="text-amber-600"
             trend={{
-              dir: maintSites > 0 ? "down" : "flat",
+              dir: maintSites > 0 ? TrendDir.Down : TrendDir.Flat,
               value: `${maintSites}`,
               note: "sites",
             }}
@@ -181,7 +186,7 @@ export default function ManagerDashboardPage() {
             icon={<ShieldCheck className="size-4" />}
             iconBg="bg-emerald-50"
             iconColor="text-emerald-600"
-            trend={{ dir: "up", value: "+1.2pp", note: "tháng trước" }}
+            trend={{ dir: TrendDir.Up, value: "+1.2pp", note: "tháng trước" }}
           />
           <KpiCard
             label="Avg Resolution"
@@ -190,7 +195,7 @@ export default function ManagerDashboardPage() {
             icon={<Timer className="size-4" />}
             iconBg="bg-purple-50"
             iconColor="text-purple-600"
-            trend={{ dir: "down", value: "−2.1h", note: "tuần trước" }}
+            trend={{ dir: TrendDir.Down, value: "−2.1h", note: "tuần trước" }}
           />
         </div>
       )}
@@ -205,7 +210,10 @@ export default function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-6">
-                <ChartContainer config={pieChartConfig} className="h-[160px] w-[160px] shrink-0">
+                <ChartContainer
+                  config={pieChartConfig}
+                  className="h-[160px] w-[160px] shrink-0"
+                >
                   <PieChart>
                     <Pie
                       data={pieData}
@@ -254,11 +262,22 @@ export default function ManagerDashboardPage() {
                 </ChartContainer>
                 <div className="flex-1 space-y-3">
                   {[
-                    { label: "Hoạt động", value: activeSites, color: "bg-emerald-500" },
-                    { label: "Bảo trì", value: maintSites, color: "bg-amber-500" },
+                    {
+                      label: "Hoạt động",
+                      value: activeSites,
+                      color: "bg-emerald-500",
+                    },
+                    {
+                      label: "Bảo trì",
+                      value: maintSites,
+                      color: "bg-amber-500",
+                    },
                     { label: "Ngừng", value: decommSites, color: "bg-red-500" },
                   ].map((s) => (
-                    <div key={s.label} className="flex items-center justify-between">
+                    <div
+                      key={s.label}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
                         <span className={`size-2.5 rounded-full ${s.color}`} />
                         <span className="text-sm text-muted-foreground">
@@ -365,10 +384,7 @@ export default function ManagerDashboardPage() {
             <TableBody>
               {atRisk.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-32 text-center"
-                  >
+                  <TableCell colSpan={5} className="h-32 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <CheckCircle className="size-8 text-emerald-500" />
                       <p className="text-sm text-muted-foreground">
@@ -436,7 +452,10 @@ export default function ManagerDashboardPage() {
               <CardDescription>Số lượng thao tác theo ngày</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={weeklyChartConfig} className="h-[140px] w-full">
+              <ChartContainer
+                config={weeklyChartConfig}
+                className="h-[140px] w-full"
+              >
                 <AreaChart data={weeklyData}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
@@ -449,8 +468,16 @@ export default function ManagerDashboardPage() {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <defs>
                     <linearGradient id="fillVolume" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-volume)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="var(--color-volume)" stopOpacity={0} />
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-volume)"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-volume)"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
                   <Area
@@ -471,11 +498,16 @@ export default function ManagerDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold tracking-tight">
-                96.4<span className="text-lg font-normal text-muted-foreground">%</span>
+                96.4
+                <span className="text-lg font-normal text-muted-foreground">
+                  %
+                </span>
               </div>
               <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t text-sm">
                 <div>
-                  <p className="text-muted-foreground text-xs">Avg resolution</p>
+                  <p className="text-muted-foreground text-xs">
+                    Avg resolution
+                  </p>
                   <p className="font-semibold tabular-nums mt-0.5">14h 32m</p>
                 </div>
                 <div>
@@ -549,7 +581,8 @@ export default function ManagerDashboardPage() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                     <Battery className="size-3" />
                     <span className="tabular-nums">
-                      {site.activeBatteryAssetCount}/{site.batteryAssetCount} pin
+                      {site.activeBatteryAssetCount}/{site.batteryAssetCount}{" "}
+                      pin
                     </span>
                     {site.capacityKw != null && (
                       <span>· {site.capacityKw} kW</span>

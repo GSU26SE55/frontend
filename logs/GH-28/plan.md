@@ -75,6 +75,20 @@ Tạo types + services + TanStack Query hooks cho 8 endpoint thuộc Nhóm 3 (Au
 
 ---
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` và `src/features/admin/enums/` — không define inline trong types. Plan gốc dùng `export enum` (TypeScript native enum) — codebase thực tế đã đổi sang `as const` object pattern.
+
+| Enum | File |
+|------|------|
+| `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
+| `RoleStatusEnum`, `RoleTypeFilter` | `features/admin/enums/role.enum.ts` |
+| `LoginAttemptResult`, `AuditActionEnum` | `features/admin/enums/audit.enum.ts` |
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
+| `SiteStatusEnum` | `shared/enums/site.enum.ts` |
+
+---
+
 ## Types
 
 ```ts

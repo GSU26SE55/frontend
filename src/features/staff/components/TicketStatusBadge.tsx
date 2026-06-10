@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
 
 const STATUS_CONFIG: Record<
-  string,
+  TicketStatusEnum,
   {
     label: string;
     variant: "default" | "secondary" | "destructive" | "outline";
@@ -43,7 +43,7 @@ const STATUS_CONFIG: Record<
 };
 
 interface Props {
-  status: string;
+  status: TicketStatusEnum;
 }
 
 export function TicketStatusBadge({ status }: Props) {

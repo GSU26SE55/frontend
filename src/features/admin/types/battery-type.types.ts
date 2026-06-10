@@ -1,7 +1,5 @@
-export { BatteryChemistryEnum } from "./battery-type.enums";
-
-import type { BatteryChemistryEnum } from "./battery-type.enums";
-
+import type { BatteryChemistryEnum } from "@/features/admin/enums/battery-asset.enum";
+export { BatteryChemistryEnum } from "@/features/admin/enums/battery-asset.enum";
 export interface BatteryTypeDto {
   id: string;
   name: string;

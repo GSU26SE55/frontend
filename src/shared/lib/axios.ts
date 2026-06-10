@@ -58,6 +58,7 @@ const tryRefresh = async (): Promise<string | null> => {
       { refreshToken },
       { timeout: 10_000 },
     );
+    if (!res.data?.isSuccess) throw new Error("Refresh failed");
     const { accessToken, refreshToken: newRefreshToken } = res.data.data;
     saveTokens(accessToken, newRefreshToken);
     useSessionStore.getState().setSession(decodeToken(accessToken));
@@ -115,6 +116,13 @@ axiosInstance.interceptors.response.use(
     const data = error.response?.data;
 
     if (status === 401 && !originalRequest._retry) {
+      const errorCode = data?.data?.errorCode;
+      if (errorCode === "MISSING_TOKEN") {
+        logout();
+        return Promise.reject(
+          new HttpError(401, getErrorMessage(401, data?.message)),
+        );
+      }
       originalRequest._retry = true;
       const newToken = await tryRefresh();
       if (newToken) {
