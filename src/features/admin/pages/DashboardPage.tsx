@@ -12,20 +12,21 @@ import { useSiteList } from "@/features/admin/hooks/useSites";
 import { SiteStatusEnum } from "@/shared/types/site.types";
 import { RefreshCw, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { TrendDir } from "@/shared/enums/common.enum";
 
 // ── KPI Card ────────────────────────────────────────────────────────────────
 interface KpiProps {
   label: string;
   value: string | number;
   sub?: string;
-  trend?: { dir: "up" | "down" | "flat"; value: string; note: string };
+  trend?: { dir: TrendDir; value: string; note: string };
   accent?: string;
 }
 function KpiCard({ label, value, sub, trend, accent }: KpiProps) {
   const trendColor =
-    trend?.dir === "up"
+    trend?.dir === TrendDir.Up
       ? "var(--ok)"
-      : trend?.dir === "down"
+      : trend?.dir === TrendDir.Down
         ? "var(--p1)"
         : "var(--muted-foreground)";
   return (
@@ -57,9 +58,9 @@ function KpiCard({ label, value, sub, trend, accent }: KpiProps) {
           className="flex items-center gap-1.5 text-xs"
           style={{ color: trendColor }}
         >
-          {trend.dir === "up" ? (
+          {trend.dir === TrendDir.Up ? (
             <TrendingUp size={11} />
-          ) : trend.dir === "down" ? (
+          ) : trend.dir === TrendDir.Down ? (
             <TrendingDown size={11} />
           ) : null}
           <span className="font-mono-num font-medium">{trend.value}</span>
@@ -220,7 +221,7 @@ export default function AdminDashboardPage() {
             value={totalSites}
             sub="sites"
             trend={{
-              dir: "up",
+              dir: TrendDir.Up,
               value: `${activeSites}`,
               note: "đang hoạt động",
             }}
@@ -229,7 +230,11 @@ export default function AdminDashboardPage() {
             label="Active Batteries"
             value={activeBatt}
             sub={`/${totalBatt}`}
-            trend={{ dir: "up", value: `+${activeBatt}`, note: "online" }}
+            trend={{
+              dir: TrendDir.Up,
+              value: `+${activeBatt}`,
+              note: "online",
+            }}
             accent="var(--ok)"
           />
           <KpiCard
@@ -237,7 +242,7 @@ export default function AdminDashboardPage() {
             value={totalBatt - activeBatt}
             sub="pin"
             trend={{
-              dir: totalBatt - activeBatt > 0 ? "down" : "flat",
+              dir: totalBatt - activeBatt > 0 ? TrendDir.Down : TrendDir.Flat,
               value: `${totalBatt - activeBatt}`,
               note: "inactive",
             }}
@@ -247,7 +252,7 @@ export default function AdminDashboardPage() {
             label="SLA Compliance"
             value="96.4%"
             sub="30 ngày"
-            trend={{ dir: "up", value: "+1.2pp", note: "tháng trước" }}
+            trend={{ dir: TrendDir.Up, value: "+1.2pp", note: "tháng trước" }}
             accent="var(--ok)"
           />
         </div>

@@ -24,7 +24,7 @@ import {
   useAdminAccountLoginHistory,
 } from "@/features/admin/hooks/useAdminAccounts";
 import { RefreshTokenStatus } from "@/shared/types/account.types";
-import { LoginAttemptResult } from "@/features/admin/types/admin.types";
+import { LoginAttemptResult } from "@/features/admin/enums/audit.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
 import type {
@@ -49,7 +49,7 @@ const SESSION_STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [RefreshTokenStatus.Compromised]: { label: "Xâm phạm", cls: "text-red-700" },
 };
 
-const LOGIN_RESULT_OK = [LoginAttemptResult.Success];
+const LOGIN_RESULT_OK = [LoginAttemptResult.SUCCESS];
 
 export default function AccountDetailDrawer({ open, onClose, account }: Props) {
   const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
@@ -232,7 +232,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                   <tbody>
                     {history.map((h) => {
                       const ok = LOGIN_RESULT_OK.includes(
-                        h.result as typeof LoginAttemptResult.Success,
+                        h.result as typeof LoginAttemptResult.SUCCESS,
                       );
                       return (
                         <tr

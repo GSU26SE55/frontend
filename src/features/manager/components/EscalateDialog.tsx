@@ -32,10 +32,14 @@ import { EscalationReasonEnum } from "@/shared/types/ticket.types";
 import { useEscalateTicket } from "@/features/manager/hooks/useManagerTickets";
 
 const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
+  SlaBreached: "SLA đã vi phạm",
+  SlaBreach: "SLA đã vi phạm",
+  StaffRequest: "Yêu cầu của Staff",
+  ManagerDecision: "Quyết định của Manager",
+  AutoEscalated: "Tự động chuyển cấp",
   SkillGap: "Vượt quá năng lực kỹ thuật",
   PartsRequired: "Cần linh kiện không có sẵn",
   SafetyConcern: "Lo ngại về an toàn",
-  SlaBreach: "SLA đã vi phạm",
   CustomerComplaint: "Khiếu nại của khách hàng",
 };
 

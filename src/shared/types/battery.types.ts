@@ -1,11 +1,5 @@
-export const BatteryStatusEnum = {
-  Active: 1,
-  Inactive: 2,
-  Decommissioned: 3,
-} as const;
-export type BatteryStatusEnum =
-  (typeof BatteryStatusEnum)[keyof typeof BatteryStatusEnum];
-
+import type { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+export { BatteryStatusEnum } from "@/shared/enums/battery.enum";
 export interface BatteryAssetDto {
   id: string;
   serialNumber: string;

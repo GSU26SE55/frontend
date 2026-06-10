@@ -1,14 +1,6 @@
+import { UserRole } from "@/shared/enums/session.enum";
 import { jwtDecode } from "jwt-decode";
-
-export const UserRole = {
-  ADMIN: "ADMIN",
-  MANAGER: "MANAGER",
-  STAFF: "STAFF",
-  CUSTOMER: "CUSTOMER",
-} as const;
-
-export type UserRole = (typeof UserRole)[keyof typeof UserRole];
-
+export { UserRole } from "@/shared/enums/session.enum";
 interface JwtPayload {
   jti: string;
   nameid: string;

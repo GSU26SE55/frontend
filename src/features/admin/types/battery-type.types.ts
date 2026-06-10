@@ -1,13 +1,5 @@
-export const BatteryChemistryEnum = {
-  LiFePO4: 1,
-  Nmc: 2,
-  Nca: 3,
-  Lco: 4,
-  Other: 99,
-} as const;
-export type BatteryChemistryEnum =
-  (typeof BatteryChemistryEnum)[keyof typeof BatteryChemistryEnum];
-
+import type { BatteryChemistryEnum } from "@/features/admin/enums/battery-asset.enum";
+export { BatteryChemistryEnum } from "@/features/admin/enums/battery-asset.enum";
 export interface BatteryTypeDto {
   id: string;
   name: string;

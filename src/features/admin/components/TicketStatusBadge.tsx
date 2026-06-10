@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { TicketStatusEnum } from "@/shared/types/ticket.types";
 
 const STATUS_CONFIG: Record<
   TicketStatusEnum,
@@ -8,20 +8,35 @@ const STATUS_CONFIG: Record<
     variant: "default" | "secondary" | "destructive" | "outline";
   }
 > = {
-  New: { label: "Mới", variant: "secondary" },
-  Open: { label: "Đang mở", variant: "secondary" },
-  Approved: { label: "Đã duyệt", variant: "default" },
-  Assigned: { label: "Đã gán", variant: "default" },
-  InProgress: { label: "Đang xử lý", variant: "default" },
-  WaitingCustomer: { label: "Chờ khách hàng", variant: "outline" },
-  WaitingParts: { label: "Chờ linh kiện", variant: "outline" },
-  WaitingOnsiteSchedule: { label: "Chờ lịch hẹn", variant: "outline" },
-  Resolved: { label: "Đã giải quyết", variant: "default" },
-  Escalated: { label: "Chuyển cấp", variant: "destructive" },
-  ClosedPendingRate: { label: "Chờ đánh giá", variant: "secondary" },
-  Closed: { label: "Đã đóng", variant: "secondary" },
-  ClosedRejected: { label: "Từ chối đóng", variant: "destructive" },
-  Incident: { label: "Sự cố", variant: "destructive" },
+  [TicketStatusEnum.New]: { label: "Mới", variant: "secondary" },
+  [TicketStatusEnum.Open]: { label: "Đang mở", variant: "secondary" },
+  [TicketStatusEnum.Approved]: { label: "Đã duyệt", variant: "default" },
+  [TicketStatusEnum.Assigned]: { label: "Đã gán", variant: "default" },
+  [TicketStatusEnum.InProgress]: { label: "Đang xử lý", variant: "default" },
+  [TicketStatusEnum.WaitingCustomer]: {
+    label: "Chờ khách hàng",
+    variant: "outline",
+  },
+  [TicketStatusEnum.WaitingParts]: {
+    label: "Chờ linh kiện",
+    variant: "outline",
+  },
+  [TicketStatusEnum.WaitingOnsiteSchedule]: {
+    label: "Chờ lịch hẹn",
+    variant: "outline",
+  },
+  [TicketStatusEnum.Resolved]: { label: "Đã giải quyết", variant: "default" },
+  [TicketStatusEnum.Escalated]: { label: "Chuyển cấp", variant: "destructive" },
+  [TicketStatusEnum.ClosedPendingRate]: {
+    label: "Chờ đánh giá",
+    variant: "secondary",
+  },
+  [TicketStatusEnum.Closed]: { label: "Đã đóng", variant: "secondary" },
+  [TicketStatusEnum.ClosedRejected]: {
+    label: "Từ chối đóng",
+    variant: "destructive",
+  },
+  [TicketStatusEnum.Incident]: { label: "Sự cố", variant: "destructive" },
 };
 
 interface Props {
