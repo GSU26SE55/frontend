@@ -84,7 +84,7 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
                     )}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Chọn lý do" />
                       </SelectTrigger>
                     </FormControl>

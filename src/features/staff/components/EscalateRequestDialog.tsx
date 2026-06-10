@@ -83,7 +83,7 @@ export function EscalateRequestDialog({
                     )}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Chọn lý do" />
                       </SelectTrigger>
                     </FormControl>
