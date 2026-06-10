@@ -119,6 +119,36 @@ Implement 4 nhóm UI bị defer từ GH-11, GH-27, GH-28, GH-30:
 | `src/router/index.tsx` | modify | Thêm profile routes, accept-invite, audit-logs, settings routes |
 | `src/shared/components/layout/AppLayout.tsx` | modify | ADMIN_NAV: add audit-logs; Topbar: fix profile link; Sidebar: wire settings |
 
+## Enums
+
+Enums dùng trong GH-64 và file nguồn tương ứng:
+
+| Enum | Dùng ở đâu | File |
+|------|-----------|------|
+| `AccountStatusEnum` | `ChangeAccountStatusDialog` — dropdown status; `admin-account.schema.ts` | `shared/enums/account.enum.ts` |
+| `AvatarSourceEnum` | `ProfilePage` — render avatar theo nguồn | `shared/enums/account.enum.ts` |
+| `RefreshTokenStatus` | `AccountDetailDrawer` — hiển thị trạng thái session | `shared/enums/account.enum.ts` |
+| `RoleStatusEnum` | `ChangeRoleStatusDialog` — toggle active/inactive | `features/admin/enums/role.enum.ts` |
+| `LoginAttemptResult` | `AccountDetailDrawer` — login history table | `features/admin/enums/audit.enum.ts` |
+| `AuditActionEnum` | `AuditLogsPage` — filter action | `features/admin/enums/audit.enum.ts` |
+
+**Lưu ý quan trọng — `AccountStatusEnum.PendingVerification = 0`:**
+```ts
+// ❌ SAI — 0 bị treat falsy
+if (account.status) { showBadge() }
+
+// ✅ ĐÚNG
+if (account.status !== undefined && account.status !== null) { showBadge() }
+// hoặc dùng === trực tiếp
+if (account.status === AccountStatusEnum.PendingVerification) { ... }
+```
+
+**Schema pattern:**
+```ts
+import { AccountStatusEnum } from "@/shared/enums/account.enum";
+status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
+```
+
 ## Approach
 
 ### ProfilePage

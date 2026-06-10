@@ -40,6 +40,14 @@ Tạo data layer hoàn chỉnh cho FileStorageService API (types, endpoints, ser
 | `src/shared/utils/endpoints.ts` | modify | Thêm `FILES` section |
 | `src/shared/utils/queryKeys.ts` | modify | Thêm `files` root key + factories |
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng — không define inline trong types.
+
+| Enum | File |
+|------|------|
+| `FilePurposeEnum`, `FileStatusEnum` | `features/file-storage/types/file-storage.types.ts` (feature-local, không dùng cross-feature) |
+
 ## Types
 
 ```ts

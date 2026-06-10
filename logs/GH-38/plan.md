@@ -44,6 +44,15 @@ Xây dựng FE cho quản lý địa điểm (site) — Admin có full CRUD, Man
 | `src/features/manager/pages/SiteDetailPage.tsx` | create | Detail với dashboard + assets, không có action buttons |
 | `src/router/index.tsx` | **modify** | Expand `admin/*` và `manager/*` với nested site routes + AppLayout |
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` — không define inline trong types. Plan gốc dùng `export enum` (TypeScript native enum) — codebase thực tế đã đổi sang `as const` object pattern.
+
+| Enum | File |
+|------|------|
+| `SiteStatusEnum` | `shared/enums/site.enum.ts` |
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
+
 ## Types
 
 ```ts

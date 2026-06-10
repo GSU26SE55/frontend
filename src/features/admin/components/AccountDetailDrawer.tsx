@@ -49,7 +49,7 @@ const SESSION_STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [RefreshTokenStatus.Compromised]: { label: "Xâm phạm", cls: "text-red-700" },
 };
 
-const LOGIN_RESULT_OK = [LoginAttemptResult.SUCCESS];
+const LOGIN_RESULT_OK = [LoginAttemptResult.Success];
 
 export default function AccountDetailDrawer({ open, onClose, account }: Props) {
   const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
@@ -232,7 +232,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                   <tbody>
                     {history.map((h) => {
                       const ok = LOGIN_RESULT_OK.includes(
-                        h.result as typeof LoginAttemptResult.SUCCESS,
+                        h.result as typeof LoginAttemptResult.Success,
                       );
                       return (
                         <tr

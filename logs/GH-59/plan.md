@@ -52,6 +52,34 @@ Implement toàn bộ UI và logic cho portal Manager quản lý và điều ph�
 | `src/router/index.tsx` | modify | +3 manager ticket routes |
 | `src/shared/components/layout/AppLayout.tsx` | modify | +Tickets nav items trong MANAGER_NAV |
 
+## Enums
+
+Tất cả enum nằm ở `src/shared/enums/ticket.enum.ts` — KHÔNG define inline trong types file.
+`shared/types/ticket.types.ts` chỉ import và re-export.
+
+| Enum | Giá trị liên quan | File |
+|------|-------------------|------|
+| `TicketStatusEnum` | New, Open, Approved, Assigned, InProgress, WaitingCustomer, WaitingParts, WaitingOnsiteSchedule, Resolved, Escalated, ClosedPendingRate, Closed, ClosedRejected, Incident | `shared/enums/ticket.enum.ts` |
+| `TicketPriorityEnum` | P1Critical, P2High, P3Normal | `shared/enums/ticket.enum.ts` |
+| `TicketCategoryEnum` | Maintenance, Repair, Inspection, Emergency, Replacement, Upgrade, Other, Charging, Overheat, NoPower, Performance | `shared/enums/ticket.enum.ts` |
+| `TicketOriginEnum` | Manual, AutoDetected, CustomerRequest, Scheduled | `shared/enums/ticket.enum.ts` |
+| `ImpactScopeEnum` | SingleAsset, Site, MultiSite | `shared/enums/ticket.enum.ts` |
+| `UrgencyLevelEnum` | Low, Medium, High, Critical | `shared/enums/ticket.enum.ts` |
+| `EscalationReasonEnum` | SlaBreached, SlaBreach, StaffRequest, ManagerDecision, AutoEscalated, SkillGap, PartsRequired, SafetyConcern, CustomerComplaint | `shared/enums/ticket.enum.ts` |
+| `SlaTimerStatusEnum` | Running, Paused, Breached, Met | `shared/enums/ticket.enum.ts` |
+| `ActivityActionEnum` | Created, StatusChanged, PriorityAssigned, Assigned, StaffAssigned, Reassigned, StaffReassigned, Paused, SlaPaused, Resumed, SlaResumed, Escalated, EscalationRequested, Resolved, Closed, Commented, LogAdded, MaintenanceLogged, PriorityChanged, SlaWarning, SlaBreached, Approved, TriageApproved, Rejected, Rated, Reopened, AutoClosed, ResolvedByEscalatedStaff, IncidentDeclared | `shared/enums/ticket.enum.ts` |
+| `ActorRoleEnum` | System, Admin, Manager, Staff, Customer | `shared/enums/ticket.enum.ts` |
+
+**Schema pattern:**
+```ts
+import { ImpactScopeEnum, UrgencyLevelEnum, EscalationReasonEnum } from "@/shared/enums/ticket.enum";
+impact: z.nativeEnum(ImpactScopeEnum)   // ✅
+urgency: z.nativeEnum(UrgencyLevelEnum) // ✅
+reason: z.nativeEnum(EscalationReasonEnum) // ✅
+```
+
+> **Lưu ý:** `EscalationReasonEnum` trong codebase có cả `SlaBreached` và `SlaBreach` (legacy duplicate). Dùng `SlaBreach` khi gửi lên BE — khớp với giá trị enum gốc.
+
 ## Types
 ```ts
 // ticket.types.ts — enums

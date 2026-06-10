@@ -1,12 +1,12 @@
 export const LoginAttemptResult = {
-  SUCCESS: 1,
-  WRONG_PASSWORD: 2,
-  ACCOUNT_NOT_FOUND: 3,
-  ACCOUNT_LOCKED: 4,
-  ACCOUNT_SUSPENDED: 5,
-  ACCOUNT_BANNED: 6,
-  ACCOUNT_INACTIVE: 7,
-  ACCOUNT_NOT_VERIFIED: 8,
+  Success: 1,
+  WrongPassword: 2,
+  AccountNotFound: 3,
+  AccountLocked: 4,
+  AccountSuspended: 5,
+  AccountBanned: 6,
+  AccountInactive: 7,
+  AccountNotVerified: 8,
 } as const;
 export type LoginAttemptResult =
   (typeof LoginAttemptResult)[keyof typeof LoginAttemptResult];
