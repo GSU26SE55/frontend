@@ -24,7 +24,7 @@ import {
   useAdminAccountLoginHistory,
 } from "@/features/admin/hooks/useAdminAccounts";
 import { RefreshTokenStatus } from "@/shared/types/account.types";
-import { LoginAttemptResult } from "@/features/admin/types/admin.types";
+import { LoginAttemptResult } from "@/features/admin/enums/audit.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
 import type {

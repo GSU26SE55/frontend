@@ -1,7 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { TicketPriorityEnum } from "@/shared/types/ticket.types";
 
-const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
+const PRIORITY_CONFIG: Record<
+  TicketPriorityEnum,
+  { label: string; className: string }
+> = {
   [TicketPriorityEnum.P1Critical]: {
     label: "P1 - Nghiêm trọng",
     className: "bg-red-100 text-red-700 border-red-200",
@@ -17,7 +20,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 interface Props {
-  priority: string;
+  priority: TicketPriorityEnum;
 }
 
 export function TicketPriorityBadge({ priority }: Props) {

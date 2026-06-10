@@ -51,6 +51,26 @@ Implement toàn bộ UI và logic cho Staff portal quản lý ticket được gi
 | `src/features/staff/pages/TicketDetailPage.tsx` | create | Detail page với actions + tabs |
 | `src/router/index.tsx` | modify | Replace Staff placeholder với AppLayout + ticket routes |
 
+## Enums
+
+Tất cả enum nằm ở `src/shared/enums/ticket.enum.ts` (không define inline trong types). Types file chỉ re-export.
+
+| Enum | Giá trị liên quan | File |
+|------|-------------------|------|
+| `TicketStatusEnum` | New, Open, Assigned, InProgress, WaitingCustomer, WaitingParts, WaitingOnsiteSchedule, Resolved, Escalated, ClosedPendingRate, Closed, ClosedRejected, Incident | `shared/enums/ticket.enum.ts` |
+| `PauseReasonEnum` | WaitingCustomer, WaitingParts, WaitingOnsiteSchedule | `shared/enums/ticket.enum.ts` |
+| `EscalationReasonEnum` | SkillGap, PartsRequired, SafetyConcern, SlaBreach, StaffRequest, ManagerDecision, AutoEscalated, CustomerComplaint, SafetyConcern | `shared/enums/ticket.enum.ts` |
+| `MaintenanceLogTypeEnum` | Diagnosis, Repair, PartReplacement, Testing, Completion, Note, RemoteSupport, OnSite, Inspection | `shared/enums/ticket.enum.ts` |
+| `SlaTimerStatusEnum` | Running, Paused, Breached, Met | `shared/enums/ticket.enum.ts` |
+| `ActivityActionEnum` | Created, StatusChanged, StaffAssigned, StaffReassigned, Commented, MaintenanceLogged, SlaPaused, SlaResumed, SlaWarning, SlaBreached, EscalationRequested, Escalated, Resolved, Approved, Rejected, Rated, Reopened, AutoClosed, ResolvedByEscalatedStaff, TriageApproved, ... | `shared/enums/ticket.enum.ts` |
+| `ActorRoleEnum` | System, Admin, Manager, Staff, Customer | `shared/enums/ticket.enum.ts` |
+
+**Schema pattern:**
+```ts
+import { PauseReasonEnum, EscalationReasonEnum } from "@/shared/enums/ticket.enum";
+reason: z.nativeEnum(PauseReasonEnum)  // ✅ không dùng z.enum([...])
+```
+
 ## Types (shared/types/ticket.types.ts)
 
 ```ts

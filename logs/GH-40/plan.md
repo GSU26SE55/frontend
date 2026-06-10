@@ -40,6 +40,15 @@ Setup layer service cho Battery Catalog (BatteryType + BatteryGroup): types, Zod
 | `src/features/admin/hooks/useBatteryGroups.ts` | create | useQuery: list + detail |
 | `src/features/admin/hooks/useBatteryGroupsMutation.ts` | create | useMutation: create, update, delete, restore |
 
+## Enums
+
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng — không define inline trong types. Plan gốc dùng `export enum` (TypeScript native enum) — codebase thực tế đã đổi sang `as const` object pattern.
+
+| Enum | File |
+|------|------|
+| `BatteryChemistryEnum` | `features/admin/enums/battery-asset.enum.ts` |
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
+
 ## Types (confirmed từ `docs/api-battery.md`)
 
 ```ts
