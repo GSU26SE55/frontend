@@ -18,6 +18,7 @@ export const fileStorageService = {
     return axiosInstance.post<CommonResponse<FileUploadResponse>>(
       ENDPOINTS.FILES.UPLOAD,
       form,
+      { headers: { "Content-Type": undefined } },
     );
   },
 
@@ -36,6 +37,11 @@ export const fileStorageService = {
             : undefined,
       },
     ),
+
+  downloadFile: (id: string) =>
+    axiosInstance.get<Blob>(ENDPOINTS.FILES.DOWNLOAD(id), {
+      responseType: "blob",
+    }),
 
   deleteFile: (id: string) =>
     axiosInstance.delete<CommonResponse<null>>(ENDPOINTS.FILES.DELETE(id)),

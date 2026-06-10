@@ -1,12 +1,7 @@
-import type { BatteryStatusEnum } from "./battery.types";
+export { SiteStatusEnum } from "./site.enums";
 
-export const SiteStatusEnum = {
-  Active: 1,
-  UnderMaintenance: 2,
-  Decommissioned: 3,
-} as const;
-export type SiteStatusEnum =
-  (typeof SiteStatusEnum)[keyof typeof SiteStatusEnum];
+import type { BatteryStatusEnum } from "./battery.enums";
+import type { SiteStatusEnum } from "./site.enums";
 
 export interface SiteDto {
   id: string;

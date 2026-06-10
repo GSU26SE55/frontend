@@ -1,79 +1,13 @@
 import type {
   AccountStatusEnum,
   RefreshTokenStatus,
-} from "@/shared/types/account.types";
+  LoginAttemptResult,
+} from "@/shared/types/account.enums";
 
-export const RoleStatusEnum = {
-  Active: 1,
-  Inactive: 2,
-  Deprecated: 3,
-} as const;
-export type RoleStatusEnum =
-  (typeof RoleStatusEnum)[keyof typeof RoleStatusEnum];
+export { RoleStatusEnum, AuditActionEnum } from "./admin.enums";
+export { LoginAttemptResult } from "@/shared/types/account.enums";
 
-export const LoginAttemptResult = {
-  Success: 1,
-  WrongPassword: 2,
-  AccountNotFound: 3,
-  AccountLocked: 4,
-  AccountSuspended: 5,
-  AccountBanned: 6,
-  AccountInactive: 7,
-  AccountNotVerified: 8,
-} as const;
-export type LoginAttemptResult =
-  (typeof LoginAttemptResult)[keyof typeof LoginAttemptResult];
-
-export const AuditActionEnum = {
-  LoginSuccess: 1,
-  LoginFailedWrongPassword: 2,
-  LoginFailedAccountLocked: 3,
-  LoginFailedAccountSuspended: 4,
-  LoginFailedAccountBanned: 5,
-  LoginFailedAccountInactive: 6,
-  LoginFailedNotVerified: 7,
-  AccountAutoLocked: 8,
-  Logout: 9,
-  GoogleLoginSuccess: 10,
-  GoogleLoginFailed: 11,
-  TokenRefreshed: 12,
-  TokenReuseDetected: 13,
-  PasswordChanged: 20,
-  PasswordReset: 21,
-  OtpVerifySuccess: 22,
-  OtpVerifyFailed: 23,
-  EmailChangeRequested: 24,
-  EmailChangeConfirmed: 25,
-  PhoneVerified: 26,
-  TwoFactorEnabled: 40,
-  TwoFactorDisabled: 41,
-  GoogleLinked: 50,
-  GoogleUnlinked: 51,
-  AccountRegistered: 60,
-  AccountCreatedByAdmin: 61,
-  AccountUpdated: 62,
-  AccountStatusChanged: 63,
-  AccountUnlocked: 64,
-  AccountDeactivated: 65,
-  AccountDeleted: 66,
-  AccountInviteSent: 67,
-  AccountInviteAccepted: 68,
-  SessionRevoked: 80,
-  AllSessionsRevoked: 81,
-  AdminForceLogout: 82,
-  SessionLimitExceededOldestRevoked: 83,
-  RoleAssigned: 90,
-  RoleRevoked: 91,
-  RoleTemporaryAssigned: 92,
-  RoleCreated: 93,
-  RoleUpdated: 94,
-  RoleStatusChanged: 95,
-  RoleDeleted: 96,
-  PermissionGranted: 97,
-  PermissionRevoked: 98,
-} as const;
-export type AuditActionEnum =
-  (typeof AuditActionEnum)[keyof typeof AuditActionEnum];
+import type { RoleStatusEnum, AuditActionEnum } from "./admin.enums";
 
 // ── DTOs ──
 
