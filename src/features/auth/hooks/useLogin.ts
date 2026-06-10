@@ -1,19 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
 import { saveTokens, clearTokens } from "@/shared/lib/axios";
 import { decodeToken, redirectByRole } from "@/shared/types/session.types";
-import { useSessionStore } from "@/shared/stores/sessionStore";
 import { UserRole } from "@/shared/types/session.types";
-import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { LoginPayload } from "@/features/auth/types/auth.types";
 
 export const useLogin = () => {
-  const navigate = useNavigate();
-  const { setSession } = useSessionStore();
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (payload: LoginPayload) => authService.login(payload),
     onSuccess: (response) => {
@@ -32,9 +25,7 @@ export const useLogin = () => {
         return;
       }
 
-      setSession(user);
-      queryClient.setQueryData(QUERY_KEY.currentUser.session(), user);
-      navigate(redirectByRole(user.role), { replace: true });
+      window.location.href = redirectByRole(user.role);
     },
   });
 };
