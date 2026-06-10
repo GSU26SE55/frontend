@@ -52,6 +52,7 @@ export interface AccountDto {
   roleAssignedBy?: string;
   profile?: AccountProfileDto;
   staffProfile?: StaffProfileDto;
+  displayAvatarUrl?: string;
 }
 
 // Cross-feature: used by admin (Nhóm 6) + auth (GET /api/staff in GH-28)

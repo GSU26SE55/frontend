@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useFileBlobUrl } from "@/features/file-storage/hooks/useFileBlobUrl";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -29,6 +30,9 @@ const ProfilePage = () => {
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
   const { mutate: updateAvatar, isPending: isAvatarUpdating } =
     useUpdateAvatar();
+
+  const avatarFileId = account?.profile?.avatarFileId;
+  const { data: avatarUrl } = useFileBlobUrl(avatarFileId);
 
   const {
     register,
@@ -134,6 +138,9 @@ const ProfilePage = () => {
           <CardContent className="flex flex-col items-center gap-4 text-center">
             <div className="relative">
               <Avatar className="size-24 text-3xl">
+                {avatarUrl && (
+                  <AvatarImage src={avatarUrl} alt={account?.fullName ?? "Avatar"} />
+                )}
                 <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {initials}
                 </AvatarFallback>

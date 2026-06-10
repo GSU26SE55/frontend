@@ -64,6 +64,7 @@ export const QUERY_KEY = {
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,
     presignedUrl: (id: string) => [KEY.files, "presigned-url", id] as const,
+    blob: (id: string) => [KEY.files, "blob", id] as const,
   },
   admin: {
     accounts: {

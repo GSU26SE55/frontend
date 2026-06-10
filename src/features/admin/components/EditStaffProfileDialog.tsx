@@ -25,6 +25,7 @@ import {
   useAdminAddSkill,
   useAdminDeleteSkill,
 } from "@/features/admin/hooks/useAdminStaff";
+import { useAdminAccountDetail } from "@/features/admin/hooks/useAdminAccounts";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto, StaffSkillDto } from "@/shared/types/account.types";
 
@@ -41,7 +42,10 @@ export default function EditStaffProfileDialog({
 }: Props) {
   const [skillToDelete, setSkillToDelete] = useState<string | null>(null);
 
-  const sp = account.staffProfile;
+  const { data: liveAccount } = useAdminAccountDetail(account.id);
+  const current = liveAccount ?? account;
+
+  const sp = current.staffProfile;
 
   const { mutateAsync: updateProfile, isPending: isSaving } =
     useAdminUpdateStaffProfile();
@@ -128,7 +132,7 @@ export default function EditStaffProfileDialog({
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Hồ sơ Staff — {account.fullName}</DialogTitle>
+            <DialogTitle>Hồ sơ Staff — {current.fullName}</DialogTitle>
           </DialogHeader>
 
           <Tabs defaultValue="profile">
@@ -347,7 +351,7 @@ export default function EditStaffProfileDialog({
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Bạn có chắc muốn xóa kỹ năng <strong>{skillToDelete}</strong> khỏi
-            hồ sơ của {account.fullName}?
+            hồ sơ của {current.fullName}?
           </p>
           <div className="flex gap-2 justify-end pt-2">
             <Button variant="outline" onClick={() => setSkillToDelete(null)}>

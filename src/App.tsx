@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
@@ -30,6 +31,22 @@ function ThemedToaster() {
   );
 }
 
+function DismissSplash() {
+  useEffect(() => {
+    const splash = document.getElementById("splash");
+    if (!splash) return;
+    const elapsed =
+      Date.now() - ((window as unknown as Record<string, number>).__splashStart || 0);
+    const remaining = Math.max(0, 2200 - elapsed);
+    const timer = setTimeout(() => {
+      splash.classList.add("fade-out");
+      setTimeout(() => splash.remove(), 500);
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, []);
+  return null;
+}
+
 const App = () => (
   <GoogleOAuthProvider clientId={env.VITE_GOOGLE_CLIENT_ID}>
     <QueryClientProvider client={queryClient}>
@@ -42,6 +59,7 @@ const App = () => (
         <AuthProvider>
           <RouterProvider router={router} />
           <ThemedToaster />
+          <DismissSplash />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

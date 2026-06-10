@@ -36,9 +36,9 @@ export const decodeToken = (token: string): SessionUser => {
 export const redirectByRole = (role: UserRole): string =>
   (
     ({
-      [UserRole.ADMIN]: "/admin",
-      [UserRole.MANAGER]: "/manager",
-      [UserRole.STAFF]: "/staff",
-      [UserRole.CUSTOMER]: "/unauthorized",
+      ADMIN: "/admin",
+      MANAGER: "/manager",
+      STAFF: "/staff",
+      CUSTOMER: "/unauthorized",
     }) as Record<UserRole, string>
   )[role] ?? "/unauthorized";
