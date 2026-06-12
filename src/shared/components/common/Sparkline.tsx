@@ -4,7 +4,11 @@ interface SparklineProps {
   color?: string;
 }
 
-export function Sparkline({ data, h = 48, color = "var(--ok)" }: SparklineProps) {
+export function Sparkline({
+  data,
+  h = 48,
+  color = "var(--ok)",
+}: SparklineProps) {
   const w = 300;
   if (data.length < 2) return null;
 

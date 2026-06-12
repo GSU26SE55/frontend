@@ -36,7 +36,8 @@ function DismissSplash() {
     const splash = document.getElementById("splash");
     if (!splash) return;
     const elapsed =
-      Date.now() - ((window as unknown as Record<string, number>).__splashStart || 0);
+      Date.now() -
+      ((window as unknown as Record<string, number>).__splashStart || 0);
     const remaining = Math.max(0, 2200 - elapsed);
     const timer = setTimeout(() => {
       splash.classList.add("fade-out");

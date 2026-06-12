@@ -51,7 +51,9 @@ export default function StaffDashboardPage() {
   });
 
   const tickets = data?.items ?? [];
-  const openTickets = tickets.filter((ticket) => OPEN_STATUSES.has(ticket.status));
+  const openTickets = tickets.filter((ticket) =>
+    OPEN_STATUSES.has(ticket.status),
+  );
   const nearBreach = openTickets.filter(isNearBreach);
   const breached = openTickets.filter(isBreached);
   const resolved = tickets.filter(
@@ -84,7 +86,9 @@ export default function StaffDashboardPage() {
             onClick={() => refetch()}
             disabled={isFetching}
           >
-            <RefreshCw className={isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
+            <RefreshCw
+              className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
+            />
             Làm mới
           </Button>
           <Button size="sm" onClick={() => navigate("/staff/tickets")}>
@@ -183,9 +187,14 @@ export default function StaffDashboardPage() {
               ["Chờ linh kiện", TicketStatusEnum.WaitingParts],
               ["Đã chuyển cấp", TicketStatusEnum.Escalated],
             ].map(([label, status]) => {
-              const count = tickets.filter((ticket) => ticket.status === status).length;
+              const count = tickets.filter(
+                (ticket) => ticket.status === status,
+              ).length;
               return (
-                <div key={status} className="flex items-center justify-between text-sm">
+                <div
+                  key={status}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span className="text-muted-foreground">{label}</span>
                   <span className="font-semibold tabular-nums">
                     {isLoading ? "--" : count}
