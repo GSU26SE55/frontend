@@ -10,6 +10,7 @@ export const KEY = {
   batteryTypes: "batteryTypes",
   sensorReadings: "sensorReadings",
   thresholds: "thresholds",
+  alerts: "alerts",
   tickets: "tickets",
   staffTickets: "staffTickets",
   admin: {
@@ -113,6 +114,10 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
     },
+  },
+  alerts: {
+    list: (params?: object) => [KEY.alerts, "list", params] as const,
+    detail: (id: string) => [KEY.alerts, "detail", id] as const,
   },
   tickets: {
     detail: (id: string) => [KEY.tickets, "detail", id] as const,

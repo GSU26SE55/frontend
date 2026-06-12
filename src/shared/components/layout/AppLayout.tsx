@@ -4,10 +4,12 @@ import {
   LayoutDashboard,
   MapPin,
   Battery,
+  BatteryCharging,
   Users,
   Shield,
   Settings,
   Bell,
+  BellRing,
   ChevronDown,
   LogOut,
   User,
@@ -177,6 +179,12 @@ const ADMIN_NAV: NavSection[] = [
     items: [
       { label: "Sites", path: "/admin/sites", icon: MapPin },
       { label: "Battery Assets", path: "/admin/battery-assets", icon: Battery },
+      {
+        label: "Loại pin & Ngưỡng",
+        path: "/admin/battery-types",
+        icon: BatteryCharging,
+      },
+      { label: "Cảnh báo pin", path: "/admin/alerts", icon: BellRing },
     ],
   },
   {
@@ -219,6 +227,7 @@ const MANAGER_NAV: NavSection[] = [
       { label: "Sites", path: "/manager/sites", icon: MapPin },
       { label: "Tickets", path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Cảnh báo pin", path: "/manager/alerts", icon: BellRing },
     ],
   },
   {
@@ -241,7 +250,10 @@ const STAFF_NAV: NavSection[] = [
     title: "Báo cáo",
     collapsible: true,
     defaultOpen: true,
-    items: [{ label: "Alerts", path: "/staff/alerts", icon: FileText }],
+    items: [
+      { label: "Alerts", path: "/staff/alerts", icon: FileText },
+      { label: "Cảnh báo pin", path: "/staff/battery-alerts", icon: BellRing },
+    ],
   },
   {
     title: "Hệ thống",

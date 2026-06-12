@@ -1,7 +1,7 @@
 # Plan — GH-72: [FE] Alerts (Cảnh báo) — List · Detail · Acknowledge · Resolve
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-06-12
+- **Status:** TESTING | **Role:** FE | **Ngày:** 2026-06-12
 - **Issue:** #72 — https://github.com/GSU26SE55/frontend/issues/72
 - **Sprint:** Sprint 1 (due 2026-05-30)
 
@@ -102,13 +102,13 @@ interface AlertListParams {
 - [ ] `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` PASS.
 
 ## Steps
-- [ ] Bước 1: Types + Enums (`shared/enums/alert.enum.ts`, `shared/types/alert.types.ts`)
-- [ ] Bước 2: Endpoints + queryKeys (thêm block ALERTS + alerts key)
-- [ ] Bước 3: Service (`shared/services/alert.service.ts`)
-- [ ] Bước 4: Hooks (`shared/hooks/useAlerts.ts`)
-- [ ] Bước 5: Component dùng chung (`AlertsView` + badges) + 3 trang portal
-- [ ] Bước 6: Wire router (3 route) + Sidebar nav 3 portal
-- [ ] Bước 7: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
+- [x] Bước 1: Types + Enums (`shared/enums/alert.enum.ts`, `shared/types/alert.types.ts`) — 2026-06-12
+- [x] Bước 2: Endpoints + queryKeys (thêm block ALERTS + alerts key) — 2026-06-12
+- [x] Bước 3: Service (`shared/services/alert.service.ts`) — 2026-06-12
+- [x] Bước 4: Hooks (`shared/hooks/useAlerts.ts`) — 2026-06-12
+- [x] Bước 5: Component dùng chung (`AlertsView` + badges) + 3 trang portal — 2026-06-12
+- [x] Bước 6: Wire router (3 route) + Sidebar nav 3 portal — 2026-06-12
+- [x] Bước 7: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS — 2026-06-12
 
 ## Câu hỏi đã giải đáp
 - **Portal scope?** → Admin + Manager + Staff (cả 3 portal có trang Alerts). Customer ngoài scope (bị chặn login web).

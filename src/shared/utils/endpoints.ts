@@ -75,6 +75,13 @@ export const ENDPOINTS = {
     MARK_ALL_READ: "/api/notifications/read-all",
   },
 
+  ALERTS: {
+    LIST: "/api/alerts",
+    DETAIL: (id: string) => `/api/alerts/${id}`,
+    ACKNOWLEDGE: (id: string) => `/api/alerts/${id}/acknowledge`,
+    RESOLVE: (id: string) => `/api/alerts/${id}/resolve`,
+  },
+
   SLA: {
     LIST: "/api/sla-rules",
     UPDATE: (id: string) => `/api/sla-rules/${id}`,

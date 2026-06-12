@@ -1,7 +1,7 @@
 # Plan — GH-40: [FE] Battery Types & Thresholds — data layer (9 endpoints)
 
 ## Metadata
-- **Status:** TESTING (Battery Types ✅ · Thresholds ✅) | **Role:** FE | **Ngày:** 2026-06-12
+- **Status:** REVIEWING (data layer ✅ · UI ✅) | **Role:** FE | **Ngày:** 2026-06-12
 - **Issue:** #40 — https://github.com/GSU26SE55/frontend/issues/40
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
@@ -17,11 +17,12 @@ Setup data layer (types · Zod schema · service · TanStack Query hooks) cho 2 
 - Battery Types: types + enum + Zod schema + service (6 endpoints) + hooks (list/detail/mutations).
 - Thresholds: types + Zod schema (cross-field) + service (3 endpoints) + hooks (list/byType/upsert).
 - Cập nhật `endpoints.ts` + `queryKeys.ts`.
+- **UI Admin**: trang quản lý Loại pin (list/search/CRUD/restore) + dialog cấu hình Ngưỡng theo loại pin (route `/admin/battery-types` + nav).
 
 **Ngoài scope:**
-- UI pages/components (table, form, dialog), route wiring.
 - AnomalyType enum (thuộc Alerts feature — không cần cho 3 threshold endpoint).
 - Ambient threshold configs (Nhóm 8 — domain khác).
+- Trang danh sách toàn bộ Threshold (`GET /api/thresholds`) — hook đã có, UI để dành issue sau.
 
 ## Files
 | File | Action | Ghi chú |
@@ -36,8 +37,14 @@ Setup data layer (types · Zod schema · service · TanStack Query hooks) cho 2 
 | `src/features/admin/types/threshold.types.ts` | create ⏳ | DTO + params + upsert payload |
 | `src/features/admin/schemas/threshold.schema.ts` | create ⏳ | upsert schema + cross-field refine |
 | `src/features/admin/services/threshold.service.ts` | create ⏳ | 3 endpoints |
-| `src/features/admin/hooks/useThresholds.ts` | create ⏳ | list + byType query |
-| `src/features/admin/hooks/useThresholdsMutation.ts` | create ⏳ | upsert mutation |
+| `src/features/admin/hooks/useThresholds.ts` | create ✅ | list + byType query |
+| `src/features/admin/hooks/useThresholdsMutation.ts` | create ✅ | upsert mutation |
+| `src/features/admin/pages/BatteryTypesPage.tsx` | create ✅ | list + search + CRUD + restore |
+| `src/features/admin/components/BatteryTypeTable.tsx` | create ✅ | bảng loại pin + actions |
+| `src/features/admin/components/BatteryTypeFormDialog.tsx` | create ✅ | form create/edit (RHF + Zod) |
+| `src/features/admin/components/ThresholdConfigDialog.tsx` | create ✅ | upsert ngưỡng theo loại pin |
+| `src/router/index.tsx` | modify ✅ | route `/admin/battery-types` |
+| `src/shared/components/layout/AppLayout.tsx` | modify ✅ | nav "Loại pin & Ngưỡng" |
 
 ## Enums
 | Enum | File nguồn | Ghi chú |
@@ -218,6 +225,8 @@ Task chỉ setup data layer — không có user flow/UI. Quy ước dùng cho is
 - [x] Thresholds — `threshold.service.ts` (3 functions)
 - [x] Thresholds — `useThresholds.ts` (list + byType)
 - [x] Thresholds — `useThresholdsMutation.ts` (upsert)
+- [x] UI — `BatteryTypesPage` + `BatteryTypeTable` + `BatteryTypeFormDialog` + `ThresholdConfigDialog`
+- [x] UI — route `/admin/battery-types` + nav "Loại pin & Ngưỡng"
 - [x] `tsc --noEmit` + `eslint src/features/admin --max-warnings=0` + `npm run build` → PASS
 
 ## Success Criteria
