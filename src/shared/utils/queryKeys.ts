@@ -22,6 +22,8 @@ export const KEY = {
   manager: {
     tickets: ["manager", "tickets"] as const,
   },
+  kb: "kb",
+  ticketKbRefs: "ticketKbRefs",
 } as const;
 
 export const QUERY_KEY = {
@@ -119,5 +121,14 @@ export const QUERY_KEY = {
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },
+  },
+  kb: {
+    list: (params?: object) => [KEY.kb, "list", params] as const,
+    detail: (id: string) => [KEY.kb, "detail", id] as const,
+    search: (query?: string) => [KEY.kb, "search", query] as const,
+  },
+  ticketKbRefs: {
+    list: (ticketId: string) =>
+      [KEY.ticketKbRefs, "list", ticketId] as const,
   },
 } as const;

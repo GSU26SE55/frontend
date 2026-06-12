@@ -15,6 +15,7 @@ import {
   Clock,
   FileText,
   ScrollText,
+  BookOpen,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -183,7 +184,10 @@ const ADMIN_NAV: NavSection[] = [
     title: "Hỗ trợ",
     collapsible: true,
     defaultOpen: true,
-    items: [{ label: "Tickets", path: "/admin/tickets", icon: Ticket }],
+    items: [
+      { label: "Tickets", path: "/admin/tickets", icon: Ticket },
+      { label: "Knowledge Base", path: "/admin/kb", icon: BookOpen },
+    ],
   },
   {
     title: "Người dùng",
@@ -219,6 +223,7 @@ const MANAGER_NAV: NavSection[] = [
       { label: "Sites", path: "/manager/sites", icon: MapPin },
       { label: "Tickets", path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Knowledge Base", path: "/manager/kb", icon: BookOpen },
     ],
   },
   {
@@ -234,6 +239,7 @@ const STAFF_NAV: NavSection[] = [
     items: [
       { label: "Tổng quan", path: "/staff/dashboard", icon: LayoutDashboard },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
+      { label: "Knowledge Base", path: "/staff/kb", icon: BookOpen },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
     ],
   },

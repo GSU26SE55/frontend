@@ -30,6 +30,7 @@ import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
 import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
+import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
 import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
 import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
@@ -189,6 +190,7 @@ export default function TicketDetailPage() {
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="comments">Bình luận</TabsTrigger>
           <TabsTrigger value="logs">Nhật ký bảo trì</TabsTrigger>
+          <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="space-y-4 mt-4">
@@ -344,6 +346,10 @@ export default function TicketDetailPage() {
               ))
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="kb" className="mt-4">
+          <TicketKbReferencesPanel ticketId={ticketId} />
         </TabsContent>
       </Tabs>
 

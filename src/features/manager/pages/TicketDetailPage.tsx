@@ -31,6 +31,7 @@ import {
   UrgencyLevelEnum,
   TicketCategoryEnum,
 } from "@/shared/types/ticket.types";
+import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
 
 type DialogType =
   | "triage"
@@ -205,6 +206,7 @@ export default function TicketDetailPage() {
             Bình luận{comments.length > 0 && ` (${comments.length})`}
           </TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
         </TabsList>
 
         {/* ── Tab: Thông tin ── */}
@@ -326,6 +328,11 @@ export default function TicketDetailPage() {
           ) : (
             <TicketActivityTimeline activities={activities} />
           )}
+        </TabsContent>
+
+        {/* ── Tab: Bài viết KB ── */}
+        <TabsContent value="kb" className="mt-4">
+          <TicketKbReferencesPanel ticketId={id} />
         </TabsContent>
       </Tabs>
 

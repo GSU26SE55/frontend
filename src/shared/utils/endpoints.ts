@@ -206,4 +206,22 @@ export const ENDPOINTS = {
     REVOKE: (id: string) => `/api/sessions/${id}`,
     REVOKE_ALL: "/api/sessions/revoke-all",
   },
+
+  KB_ARTICLES: {
+    LIST: "/api/kb-articles",
+    DETAIL: (id: string) => `/api/kb-articles/${id}`,
+    CREATE: "/api/kb-articles",
+    UPDATE: (id: string) => `/api/kb-articles/${id}`,
+    DELETE: (id: string) => `/api/kb-articles/${id}`,
+    PUBLISH: (id: string) => `/api/kb-articles/${id}/publish`,
+    ARCHIVE: (id: string) => `/api/kb-articles/${id}/archive`,
+    SEARCH: "/api/kb-articles/search",
+  },
+
+  TICKET_KB_REFS: {
+    LIST: (ticketId: string) => `/api/tickets/${ticketId}/kb-references`,
+    ADD: (ticketId: string) => `/api/tickets/${ticketId}/kb-references`,
+    REMOVE: (ticketId: string, refId: string) =>
+      `/api/tickets/${ticketId}/kb-references/${refId}`,
+  },
 } as const;

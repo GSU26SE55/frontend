@@ -25,6 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { KbArticleSelector } from "@/shared/components/common/kb/KbArticleSelector";
 import { MaintenanceLogTypeEnum } from "@/shared/types/ticket.types";
 import {
   maintenanceLogSchema,
@@ -208,6 +209,22 @@ export function MaintenanceLogDialog({
                       placeholder="Kết quả sau khi xử lý..."
                       rows={2}
                       {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="relatedKbArticleIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bài viết KB liên quan</FormLabel>
+                  <FormControl>
+                    <KbArticleSelector
+                      value={field.value ?? []}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />

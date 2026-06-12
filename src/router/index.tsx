@@ -34,6 +34,14 @@ import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
 import StaffSlaMonitorPage from "@/features/staff/pages/SlaMonitorPage";
 import StaffAlertsPage from "@/features/staff/pages/AlertsPage";
+import AdminKbListPage from "@/features/admin/pages/KbListPage";
+import AdminKbDetailPage from "@/features/admin/pages/KbDetailPage";
+import AdminKbEditorPage from "@/features/admin/pages/KbEditorPage";
+import ManagerKbListPage from "@/features/manager/pages/KbListPage";
+import ManagerKbDetailPage from "@/features/manager/pages/KbDetailPage";
+import ManagerKbEditorPage from "@/features/manager/pages/KbEditorPage";
+import StaffKbListPage from "@/features/staff/pages/KbListPage";
+import StaffKbDetailPage from "@/features/staff/pages/KbDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -95,6 +103,10 @@ const router = createBrowserRouter([
               { path: "roles", element: <RolesPage /> },
               { path: "tickets", element: <AdminTicketListPage /> },
               { path: "tickets/:id", element: <AdminTicketDetailPage /> },
+              { path: "kb", element: <AdminKbListPage /> },
+              { path: "kb/new", element: <AdminKbEditorPage /> },
+              { path: "kb/:id", element: <AdminKbDetailPage /> },
+              { path: "kb/:id/edit", element: <AdminKbEditorPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
@@ -116,6 +128,10 @@ const router = createBrowserRouter([
               { path: "tickets", element: <ManagerTicketListPage /> },
               { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
               { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
+              { path: "kb", element: <ManagerKbListPage /> },
+              { path: "kb/new", element: <ManagerKbEditorPage /> },
+              { path: "kb/:id", element: <ManagerKbDetailPage /> },
+              { path: "kb/:id/edit", element: <ManagerKbEditorPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],
@@ -133,6 +149,8 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <StaffDashboardPage /> },
               { path: "tickets", element: <StaffTicketListPage /> },
               { path: "tickets/:id", element: <StaffTicketDetailPage /> },
+              { path: "kb", element: <StaffKbListPage /> },
+              { path: "kb/:id", element: <StaffKbDetailPage /> },
               { path: "sla", element: <StaffSlaMonitorPage /> },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "profile", element: <ProfilePage /> },
