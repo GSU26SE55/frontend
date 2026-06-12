@@ -25,6 +25,8 @@ import RolesPage from "@/features/admin/pages/RolesPage";
 import AdminTicketListPage from "@/features/admin/pages/AdminTicketListPage";
 import AdminTicketDetailPage from "@/features/admin/pages/AdminTicketDetailPage";
 import AdminAlertsPage from "@/features/admin/pages/AlertsPage";
+import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/EnvironmentalIncidentsPage";
+import AdminAmbientConfigPage from "@/features/admin/pages/AmbientConfigPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
@@ -32,12 +34,15 @@ import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
 import ManagerTicketQueuePage from "@/features/manager/pages/TicketQueuePage";
 import ManagerTicketDetailPage from "@/features/manager/pages/TicketDetailPage";
 import ManagerAlertsPage from "@/features/manager/pages/AlertsPage";
+import ManagerEnvironmentalIncidentsPage from "@/features/manager/pages/EnvironmentalIncidentsPage";
+import ManagerAmbientConfigPage from "@/features/manager/pages/AmbientConfigPage";
 import StaffDashboardPage from "@/features/staff/pages/DashboardPage";
 import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
 import StaffSlaMonitorPage from "@/features/staff/pages/SlaMonitorPage";
 import StaffAlertsPage from "@/features/staff/pages/AlertsPage";
 import StaffBatteryAlertsPage from "@/features/staff/pages/BatteryAlertsPage";
+import StaffEnvironmentalIncidentsPage from "@/features/staff/pages/EnvironmentalIncidentsPage";
 
 const router = createBrowserRouter([
   {
@@ -101,6 +106,11 @@ const router = createBrowserRouter([
               { path: "tickets", element: <AdminTicketListPage /> },
               { path: "tickets/:id", element: <AdminTicketDetailPage /> },
               { path: "alerts", element: <AdminAlertsPage /> },
+              {
+                path: "environmental-incidents",
+                element: <AdminEnvironmentalIncidentsPage />,
+              },
+              { path: "ambient", element: <AdminAmbientConfigPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
@@ -123,6 +133,11 @@ const router = createBrowserRouter([
               { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
               { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
               { path: "alerts", element: <ManagerAlertsPage /> },
+              {
+                path: "environmental-incidents",
+                element: <ManagerEnvironmentalIncidentsPage />,
+              },
+              { path: "ambient", element: <ManagerAmbientConfigPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],
@@ -143,6 +158,10 @@ const router = createBrowserRouter([
               { path: "sla", element: <StaffSlaMonitorPage /> },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },
+              {
+                path: "environmental-incidents",
+                element: <StaffEnvironmentalIncidentsPage />,
+              },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],

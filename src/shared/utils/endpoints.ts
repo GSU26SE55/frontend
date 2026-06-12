@@ -82,6 +82,29 @@ export const ENDPOINTS = {
     RESOLVE: (id: string) => `/api/alerts/${id}/resolve`,
   },
 
+  AMBIENT: {
+    // Note: POST /api/ambient/readings/batch là IoT ingest (API Key) — FE không gọi.
+    READINGS_HISTORY: "/api/ambient/readings/history",
+    READINGS_LATEST: "/api/ambient/readings/latest",
+    THRESHOLD_UPSERT: "/api/ambient/threshold-configs",
+    THRESHOLD_LIST: "/api/ambient/threshold-configs",
+    THRESHOLD_BY_SITE: (siteId: string) =>
+      `/api/ambient/threshold-configs/by-site/${siteId}`,
+  },
+
+  ENVIRONMENTAL_INCIDENTS: {
+    // Note: POST /api/environmental-incidents là IoT ingest (API Key) — FE không gọi.
+    LIST: "/api/environmental-incidents",
+    DETAIL: (id: string) => `/api/environmental-incidents/${id}`,
+    ACKNOWLEDGE: (id: string) =>
+      `/api/environmental-incidents/${id}/acknowledge`,
+    RESOLVE: (id: string) => `/api/environmental-incidents/${id}/resolve`,
+    FALSE_ALARM: (id: string) =>
+      `/api/environmental-incidents/${id}/false-alarm`,
+    ACTIVE_BY_SITE: (siteId: string) =>
+      `/api/environmental-incidents/by-site/${siteId}/active`,
+  },
+
   SLA: {
     LIST: "/api/sla-rules",
     UPDATE: (id: string) => `/api/sla-rules/${id}`,

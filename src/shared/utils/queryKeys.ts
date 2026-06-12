@@ -11,6 +11,8 @@ export const KEY = {
   sensorReadings: "sensorReadings",
   thresholds: "thresholds",
   alerts: "alerts",
+  ambient: "ambient",
+  environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
   staffTickets: "staffTickets",
   admin: {
@@ -118,6 +120,22 @@ export const QUERY_KEY = {
   alerts: {
     list: (params?: object) => [KEY.alerts, "list", params] as const,
     detail: (id: string) => [KEY.alerts, "detail", id] as const,
+  },
+  ambient: {
+    history: (siteId: string, params?: object) =>
+      [KEY.ambient, "history", siteId, params] as const,
+    latest: (siteId: string) => [KEY.ambient, "latest", siteId] as const,
+    thresholdList: (params?: object) =>
+      [KEY.ambient, "threshold", "list", params] as const,
+    thresholdBySite: (siteId: string) =>
+      [KEY.ambient, "threshold", "by-site", siteId] as const,
+  },
+  environmentalIncidents: {
+    list: (params?: object) =>
+      [KEY.environmentalIncidents, "list", params] as const,
+    detail: (id: string) => [KEY.environmentalIncidents, "detail", id] as const,
+    activeBySite: (siteId: string) =>
+      [KEY.environmentalIncidents, "active", siteId] as const,
   },
   tickets: {
     detail: (id: string) => [KEY.tickets, "detail", id] as const,
