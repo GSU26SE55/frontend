@@ -96,9 +96,7 @@ export default function AuditLogsPage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Admin · Hệ thống
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Audit Logs
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "…" : (data?.totalItems ?? 0)} sự kiện — lịch sử hoạt
             động trên hệ thống.

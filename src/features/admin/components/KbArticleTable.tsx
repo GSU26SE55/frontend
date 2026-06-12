@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
-import { Eye, ThumbsUp, MoreHorizontal, Pencil, Trash2, Upload, Archive } from "lucide-react";
+import { Eye, ThumbsUp, Pencil, Trash2, Upload, Archive } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
 

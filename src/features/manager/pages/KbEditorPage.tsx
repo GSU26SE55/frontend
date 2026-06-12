@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save } from "lucide-react";
 import {
   kbArticleSchema,
+  type KbArticleFormInput,
   type KbArticleFormValues,
 } from "../schemas/kb-article.schema";
 import {
@@ -35,7 +36,7 @@ export default function KbEditorPage() {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<KbArticleFormValues>({
+  } = useForm<KbArticleFormInput, unknown, KbArticleFormValues>({
     resolver: zodResolver(kbArticleSchema),
     defaultValues: {
       category: 0,

@@ -13,4 +13,5 @@ export const kbArticleSchema = z.object({
   tags: z.array(z.string()).optional().default([]),
 });
 
-export type KbArticleFormValues = z.infer<typeof kbArticleSchema>;
+export type KbArticleFormInput = z.input<typeof kbArticleSchema>;
+export type KbArticleFormValues = z.output<typeof kbArticleSchema>;

@@ -55,12 +55,6 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
             {data.assetsWithActiveAlerts}
           </p>
         </div>
-        {data.totalCapacityKw != null && (
-          <div>
-            <p className="text-sm text-muted-foreground">Công suất</p>
-            <p className="text-2xl font-bold">{data.totalCapacityKw} kW</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

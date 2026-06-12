@@ -86,7 +86,12 @@ export default function TicketKbReferencesPanel({
           <CardContent className="p-4 space-y-3">
             <KbArticleSelector value={selectedIds} onChange={setSelectedIds} />
 
-            <Select value={refType} onValueChange={setRefType}>
+            <Select
+              value={refType}
+              onValueChange={(value: string | null) => {
+                if (value) setRefType(value);
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>

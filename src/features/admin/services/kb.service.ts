@@ -12,10 +12,7 @@ import type {
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
 } from "@/shared/types/kb.types";
-import {
-  MOCK_KB_ARTICLES,
-  MOCK_KB_SUMMARIES,
-} from "@/shared/mocks/kb.mock";
+import { MOCK_KB_ARTICLES } from "@/shared/mocks/kb.mock";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
 
 let mockArticles = [...MOCK_KB_ARTICLES];

@@ -18,17 +18,24 @@ import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
 import AdminSiteDetailPage from "@/features/admin/pages/SiteDetailPage";
 import BatteryAssetsPage from "@/features/admin/pages/BatteryAssetsPage";
+import BatteryTypesPage from "@/features/admin/pages/BatteryTypesPage";
 import BatteryAssetDetailPage from "@/features/admin/pages/BatteryAssetDetailPage";
 import AccountsPage from "@/features/admin/pages/AccountsPage";
 import RolesPage from "@/features/admin/pages/RolesPage";
 import AdminTicketListPage from "@/features/admin/pages/AdminTicketListPage";
 import AdminTicketDetailPage from "@/features/admin/pages/AdminTicketDetailPage";
+import AdminAlertsPage from "@/features/admin/pages/AlertsPage";
+import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/EnvironmentalIncidentsPage";
+import AdminAmbientConfigPage from "@/features/admin/pages/AmbientConfigPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
 import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
 import ManagerTicketQueuePage from "@/features/manager/pages/TicketQueuePage";
 import ManagerTicketDetailPage from "@/features/manager/pages/TicketDetailPage";
+import ManagerAlertsPage from "@/features/manager/pages/AlertsPage";
+import ManagerEnvironmentalIncidentsPage from "@/features/manager/pages/EnvironmentalIncidentsPage";
+import ManagerAmbientConfigPage from "@/features/manager/pages/AmbientConfigPage";
 import StaffDashboardPage from "@/features/staff/pages/DashboardPage";
 import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
@@ -42,6 +49,8 @@ import ManagerKbDetailPage from "@/features/manager/pages/KbDetailPage";
 import ManagerKbEditorPage from "@/features/manager/pages/KbEditorPage";
 import StaffKbListPage from "@/features/staff/pages/KbListPage";
 import StaffKbDetailPage from "@/features/staff/pages/KbDetailPage";
+import StaffBatteryAlertsPage from "@/features/staff/pages/BatteryAlertsPage";
+import StaffEnvironmentalIncidentsPage from "@/features/staff/pages/EnvironmentalIncidentsPage";
 
 const router = createBrowserRouter([
   {
@@ -95,6 +104,7 @@ const router = createBrowserRouter([
               { path: "sites", element: <AdminSiteListPage /> },
               { path: "sites/:id", element: <AdminSiteDetailPage /> },
               { path: "battery-assets", element: <BatteryAssetsPage /> },
+              { path: "battery-types", element: <BatteryTypesPage /> },
               {
                 path: "battery-assets/:id",
                 element: <BatteryAssetDetailPage />,
@@ -107,6 +117,12 @@ const router = createBrowserRouter([
               { path: "kb/new", element: <AdminKbEditorPage /> },
               { path: "kb/:id", element: <AdminKbDetailPage /> },
               { path: "kb/:id/edit", element: <AdminKbEditorPage /> },
+              { path: "alerts", element: <AdminAlertsPage /> },
+              {
+                path: "environmental-incidents",
+                element: <AdminEnvironmentalIncidentsPage />,
+              },
+              { path: "ambient", element: <AdminAmbientConfigPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
@@ -132,6 +148,12 @@ const router = createBrowserRouter([
               { path: "kb/new", element: <ManagerKbEditorPage /> },
               { path: "kb/:id", element: <ManagerKbDetailPage /> },
               { path: "kb/:id/edit", element: <ManagerKbEditorPage /> },
+              { path: "alerts", element: <ManagerAlertsPage /> },
+              {
+                path: "environmental-incidents",
+                element: <ManagerEnvironmentalIncidentsPage />,
+              },
+              { path: "ambient", element: <ManagerAmbientConfigPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],
@@ -153,6 +175,11 @@ const router = createBrowserRouter([
               { path: "kb/:id", element: <StaffKbDetailPage /> },
               { path: "sla", element: <StaffSlaMonitorPage /> },
               { path: "alerts", element: <StaffAlertsPage /> },
+              { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },
+              {
+                path: "environmental-incidents",
+                element: <StaffEnvironmentalIncidentsPage />,
+              },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],

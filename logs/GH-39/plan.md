@@ -1,76 +1,95 @@
-# Plan — GH-39: [FE] Battery Asset Management — CRUD & Operations
+# Plan — GH-39: [FE] Battery Assets & Sensor Readings — Management + Monitoring
 
 ## Metadata
-- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** TESTING — Battery Assets + fix lệch docs + Sensor Readings (build PASS) | **Role:** FE | **Ngày:** 2026-05-20, cập nhật 2026-06-12
 - **Issue:** #39 — https://github.com/GSU26SE55/frontend/issues/39
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
 ## Mục tiêu
-Implement Admin portal cho quản lý battery assets: danh sách, tạo, sửa, xóa mềm, khôi phục, chuyển chủ sở hữu, và xem realtime snapshot. Tập trung vào logic (types, service, hooks) và base UI structure — không áp dụng design polish.
+Tích hợp **13 endpoint** thuộc 2 nhóm Battery Assets + Sensor Readings cho Admin portal: quản lý vòng đời tài sản pin (list/detail/realtime/CRUD/restore/transfer-owner) và giám sát dữ liệu cảm biến (latest snapshot, history, aggregate chart). Tập trung logic (types, service, hooks) + base UI, chưa polish design.
+
+## Đồng bộ docs mới (2026-06-12)
+
+> `docs/api-battery.md` viết lại lớn (+832/−259). Đối chiếu codebase thực tế (2026-06-12): **3/6 mục đã fix sẵn**, còn 3 mục.
+
+| # | Mục | Cần | Trạng thái code thực tế |
+|---|-----|-----|------------------------|
+| 1 | Write endpoints `/admin/` prefix | POST/PUT/DELETE/PATCH restore/transfer | ✅ FIX (có sẵn) |
+| 2 | `ChargingStateEnum` | thêm `Float=4`, `Bypass=5`; bỏ `Fault=4` sai | ✅ FIX 2026-06-12 |
+| 3 | `RealtimeDto.chargingState` | → `ChargingStateEnum \| null` | ✅ FIX 2026-06-12 |
+| 4 | `BatteryAssetListParams` | thêm `siteId?` | ✅ FIX 2026-06-12 |
+| 5 | Bỏ `batteryGroupId/Name` | xoá khỏi DTO/payload | ✅ ĐÃ XOÁ (battery group bỏ hẳn) |
+| 6 | Pagination | dùng `totalItems` | ✅ ĐÃ ĐÚNG — `api.types.ts` |
 
 ## Scope
-**Trong scope:**
-- 8 endpoints: GET list, GET detail, GET realtime, POST create, PUT update, DELETE, PATCH restore, PUT transfer-owner
-- Admin portal only
-- AppLayout shell (minimal wrapper + Outlet)
-- Battery types service/hook (dependency dropdown cho Create/Edit form)
-- Customer list service/hook (dropdown — filter `roleId = 44444444-4444-4444-4444-444444444444`)
+
+**Trong scope — 13 endpoint:**
+- **Battery Assets (9):** GET list, GET `/me`, GET `{id}`, GET realtime, POST create, PUT update, DELETE, PATCH restore, PUT transfer-owner
+- **Sensor Readings (4):** GET latest, GET history, GET aggregate, POST batch
+- Admin portal + AppLayout shell
 
 **Ngoài scope:**
-- `GET /api/battery-assets/me` — Customer dùng mobile app
-- Manager / Staff portal
-- Design, styling, responsive layout
-- Battery groups, sites management
+- `GET /api/battery-assets/me` — Customer; web chưa có portal Customer (mobile dùng). Liệt kê cho đủ domain, không build ở web.
+- `POST /api/sensor-readings/batch` — IoT gateway (API Key `X-Api-Key`), web không gọi. Liệt kê cho đủ domain.
+- Manager / Staff portal · design/styling/responsive · sites management
+- Dropdown `batteryTypeId`/`customerId` trong form: lấy data từ **#40 (Battery Catalog)** và Account Management — không thuộc issue này.
 
 ## Files
 
+**Battery Assets (9 endpoint):**
+
 | File | Action | Ghi chú |
 |------|--------|---------|
-| `src/shared/utils/endpoints.ts` | modify | Thêm BATTERY_ASSETS, BATTERY_TYPES, ADMIN_ACCOUNTS |
-| `src/shared/utils/queryKeys.ts` | modify | Thêm batteryAssets, batteryTypes, adminAccounts factories |
-| `src/shared/components/layout/AppLayout.tsx` | create | Layout shell: `<Outlet />` only — ProtectedRoute đã xử lý ở router level, không double-guard |
-| `src/shared/constants/roleIds.ts` | create | `CUSTOMER_ROLE_ID = '44444444-...'` — named constant, không magic string inline |
-| `src/features/admin/types/battery-asset.types.ts` | create | BatteryAssetDto, BatteryAssetRealtimeDto, enums, payloads |
-| `src/features/admin/services/battery-asset.service.ts` | create | 8 API calls — type `axiosInstance.get<CommonResponse<PaginationResponse<T>>>` cho list |
-| `src/features/admin/services/battery-type.service.ts` | create | GET /api/battery-types (dropdown dependency) |
-| `src/features/admin/services/account.service.ts` | create | GET /api/admin/accounts với CUSTOMER_ROLE_ID filter |
-| `src/features/admin/hooks/useBatteryAssets.ts` | create | useQuery list với params |
-| `src/features/admin/hooks/useBatteryAsset.ts` | create | useQuery detail by id |
+| `src/shared/utils/endpoints.ts` | modify | `BATTERY_ASSETS`: read `/api/battery-assets`, write `/api/admin/battery-assets` |
+| `src/shared/utils/queryKeys.ts` | modify | `batteryAssets` factories |
+| `src/shared/components/layout/AppLayout.tsx` | create | Layout shell — `<Outlet />` only |
+| `src/features/admin/types/battery-asset.types.ts` | create | DTO, RealtimeDto, payloads, list params |
+| `src/features/admin/services/battery-asset.service.ts` | create | 8 API calls (read 3 + write 5) |
+| `src/features/admin/hooks/useBatteryAssets.ts` | create | useQuery list |
+| `src/features/admin/hooks/useBatteryAsset.ts` | create | useQuery detail |
 | `src/features/admin/hooks/useBatteryAssetRealtime.ts` | create | useQuery realtime — staleTime:0 + refetchInterval:30s |
 | `src/features/admin/hooks/useCreateBatteryAsset.ts` | create | useMutation create |
 | `src/features/admin/hooks/useUpdateBatteryAsset.ts` | create | useMutation update |
 | `src/features/admin/hooks/useDeleteBatteryAsset.ts` | create | useMutation soft delete |
 | `src/features/admin/hooks/useRestoreBatteryAsset.ts` | create | useMutation restore |
 | `src/features/admin/hooks/useTransferOwner.ts` | create | useMutation transfer owner |
-| `src/features/admin/hooks/useBatteryTypes.ts` | create | useQuery battery types list |
-| `src/features/admin/hooks/useCustomers.ts` | create | useQuery customer accounts — import CUSTOMER_ROLE_ID |
-| `src/features/admin/schemas/battery-asset.schema.ts` | create | Zod schema cho Create/Edit + TransferOwner |
-| `src/features/admin/components/BatteryAssetTable.tsx` | create | Table với actions (edit, delete, restore) |
-| `src/features/admin/components/BatteryAssetForm.tsx` | create | Create/Edit form (shared) + dropdown battery types + customers |
-| `src/features/admin/components/TransferOwnerDialog.tsx` | create | Dialog chuyển chủ sở hữu + customer dropdown |
-| `src/features/admin/components/BatteryRealtimeCard.tsx` | create | Card hiển thị realtime snapshot với null-safe fields |
-| `src/features/admin/pages/BatteryAssetsPage.tsx` | create | List page: table + filter bar + pagination |
-| `src/features/admin/pages/BatteryAssetDetailPage.tsx` | create | Detail page: info + BatteryRealtimeCard + actions |
-| `src/router/index.tsx` | modify | Thêm AppLayout + Admin routes /admin/battery-assets + /:id |
+| `src/features/admin/schemas/battery-asset.schema.ts` | create | Zod Create/Edit + TransferOwner |
+| `src/features/admin/components/BatteryAssetTable.tsx` | create | Table + actions |
+| `src/features/admin/components/BatteryAssetForm.tsx` | create | Create/Edit form |
+| `src/features/admin/components/TransferOwnerDialog.tsx` | create | Dialog chuyển chủ sở hữu |
+| `src/features/admin/components/BatteryRealtimeCard.tsx` | create | Card realtime — null-safe |
+| `src/features/admin/pages/BatteryAssetsPage.tsx` | create | List page |
+| `src/features/admin/pages/BatteryAssetDetailPage.tsx` | create | Detail page + RealtimeCard + tab cảm biến |
+| `src/router/index.tsx` | modify | AppLayout + routes `/admin/battery-assets` + `/:id` |
+
+**Sensor Readings (3 GET — POST batch ngoài scope):**
+
+| File | Action | Ghi chú |
+|------|--------|---------|
+| `src/shared/utils/endpoints.ts` | modify | `SENSOR_READINGS`: latest/history/aggregate |
+| `src/shared/utils/queryKeys.ts` | modify | `sensorReadings` factories |
+| `src/features/admin/types/sensor-reading.types.ts` | create | DTO, HistoryResponseDto, AggregateDto, params |
+| `src/features/admin/services/sensor-reading.service.ts` | create | 3 GET calls |
+| `src/features/admin/hooks/useLatestReading.ts` | create | useQuery — staleTime:0 + refetchInterval:30s |
+| `src/features/admin/hooks/useReadingHistory.ts` | create | useInfiniteQuery — cursor |
+| `src/features/admin/hooks/useReadingAggregate.ts` | create | useQuery — staleTime:1 phút |
+| `src/features/admin/components/SensorHistoryTable.tsx` | create | Bảng raw — infinite scroll |
+| `src/features/admin/components/SensorChart.tsx` | create | Recharts SOC/Voltage/Temp từ aggregate |
 
 ## Enums
 
-> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng — không define inline trong types. Plan gốc dùng plain type union (`1 | 2 | 3`) — codebase thực tế đổi sang `as const` object pattern.
+| Enum | File nguồn | Giá trị |
+|------|-----------|---------|
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` | Active=1, Inactive=2, Decommissioned=3 |
+| `WarrantyStatusEnum` | `features/admin/enums/battery-asset.enum.ts` | Active=1, Expired=2, Void=3 |
+| `ChargingStateEnum` | `features/admin/enums/battery-asset.enum.ts` | Idle=1, Charging=2, Discharging=3, **Float=4, Bypass=5** |
 
-| Enum | File |
-|------|------|
-| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
-| `WarrantyStatusEnum`, `ChargingStateEnum`, `BatteryChemistryEnum` | `features/admin/enums/battery-asset.enum.ts` |
+> Pattern `as const` object + type alias (không dùng TS `enum`).
 
 ## Types
 
 ```ts
 // battery-asset.types.ts
-export type BatteryStatusEnum = 1 | 2 | 3        // Active | Inactive | Decommissioned
-export type WarrantyStatusEnum = 1 | 2 | 3        // Active | Expired | Void
-export type ChargingStateEnum = 1 | 2 | 3 | 4     // Idle | Charging | Discharging | Fault
-export type BatteryChemistryEnum = 1 | 2 | 3 | 4 | 99  // LiFePO4 | Nmc | Nca | Lco | Other
-
 export interface BatteryAssetDto {
   id: string;
   serialNumber: string;
@@ -78,8 +97,6 @@ export interface BatteryAssetDto {
   batteryTypeName: string;
   siteId: string | null;
   siteName: string | null;
-  batteryGroupId: string | null;
-  batteryGroupName: string | null;
   customerId: string;
   customerName: string;
   installDate: string;
@@ -105,17 +122,16 @@ export interface BatteryAssetRealtimeDto {
   socPercent: number | null;
   cycleCount: number | null;
   sohPercent: number | null;
-  chargingState: ChargingStateEnum;
+  chargingState: ChargingStateEnum | null;
   activeAlerts: number;
 }
 
-// PUT là full-replace — required fields giống POST (confirmed: docs "Request body: Giống POST, thêm")
+// PUT full-replace — required fields giống POST
 export interface CreateBatteryAssetPayload {
   serialNumber: string;
   batteryTypeId: string;
   customerId: string;
   siteId?: string;
-  batteryGroupId?: string;
   installDate: string;
   warrantyEndDate?: string;
   location?: string;
@@ -140,29 +156,49 @@ export interface BatteryAssetListParams {
   keyword?: string;
   customerId?: string;
   batteryTypeId?: string;
+  siteId?: string;
   status?: BatteryStatusEnum;
   includeDeleted?: boolean;
 }
 
-// Dropdown dependency — src/features/admin/types/battery-type.types.ts
-export interface BatteryTypeDto {
-  id: string;
-  name: string;
-  manufacturer: string | null;
-  nominalCapacityAh: number;
-  nominalVoltage: number;
-  chemistry: BatteryChemistryEnum;
-  maxCycleCount: number;
-  description: string | null;
-  createdAt: string;
+// sensor-reading.types.ts
+export interface SensorReadingDto {
+  time: string;              // ISO 8601 UTC
+  batteryAssetId: string;
+  voltage: number;           // V
+  current: number;           // A — âm = đang xả
+  temperature: number;       // °C
+  socPercent: number;        // 0–100
+  cycleCount: number | null;
+  sourceDeviceId: string | null;
 }
 
-// Dropdown dependency — slim subset của AccountDto dùng cho customer select
-// Full AccountDto có profile/staffProfile lồng nhau — không cần thiết ở đây
-export interface CustomerDropdownItem {
-  id: string;
-  fullName: string;
-  email: string;
+export interface SensorReadingHistoryParams {
+  from?: string;
+  to?: string;
+  limit?: number;   // 1–1000, default 100
+  cursor?: string;  // BE lấy record có time < cursor
+}
+
+export interface SensorReadingHistoryResponseDto {
+  items: SensorReadingDto[]; // sort time GIẢM DẦN
+  nextCursor: string | null;
+  hasMore: boolean;          // KHÔNG có totalItems
+}
+
+export interface SensorReadingAggregateParams {
+  from?: string;
+  to?: string;
+  interval?: "1m" | "5m" | "15m" | "1h" | "1d"; // default "1h"
+}
+
+export interface SensorReadingAggregateDto {
+  time: string;                  // bucket start (UTC) — field "time", không phải "bucket"
+  avgVoltage: number;
+  avgCurrent: number;
+  avgTemperature: number;
+  avgSocPercent: number;
+  avgSohPercent: number | null;  // KHÔNG có sampleCount
 }
 ```
 
@@ -171,20 +207,16 @@ export interface CustomerDropdownItem {
 ```ts
 // battery-asset.schema.ts
 const createSchema = z.object({
-  serialNumber: z.string().min(5).max(64).regex(/^[A-Z0-9-]+$/, 'Chỉ chứa A-Z, 0-9, dấu -'),
+  serialNumber: z.string().min(5).max(64).regex(/^[A-Z0-9-]+$/, "Chỉ A-Z, 0-9, dấu -"),
   batteryTypeId: z.string().uuid(),
   customerId: z.string().uuid(),
   siteId: z.string().uuid().optional(),
-  batteryGroupId: z.string().uuid().optional(),
-  // <input type="date"> trả "YYYY-MM-DD" — transform thành ISO 8601 trước khi submit
-  // BE expect "2026-05-19T00:00:00.000Z", không nhận "2026-05-19" raw
-  installDate: z.string()
-    .min(1, 'Bắt buộc')
-    .refine((val) => new Date(val) <= new Date(), 'Ngày lắp đặt không được ở tương lai')
-    .transform((val) => new Date(val).toISOString()),
-  warrantyEndDate: z.string()
-    .optional()
-    .transform((val) => (val ? new Date(val).toISOString() : undefined)),
+  // <input type="date"> trả "YYYY-MM-DD" → transform ISO 8601 trước submit
+  installDate: z.string().min(1, "Bắt buộc")
+    .refine((v) => new Date(v) <= new Date(), "Không ở tương lai")
+    .transform((v) => new Date(v).toISOString()),
+  warrantyEndDate: z.string().optional()
+    .transform((v) => (v ? new Date(v).toISOString() : undefined)),
   location: z.string().max(255).optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
@@ -199,132 +231,148 @@ const transferOwnerSchema = z.object({
 
 ## Endpoints
 
-> **Response wrapper:** Tất cả endpoints đều bọc trong `CommonResponse<T>`. List endpoints trả `CommonResponse<PaginationResponse<T>>` — hook access data qua `.data?.items` và `.data?.totalCount`.
-> **Lưu ý `totalCount`:** BE docs dùng tên `totalItems`, FE `api.types.ts` khai báo `totalCount`. Dùng theo FE type (`totalCount`) — sẽ xác nhận lại khi BE deploy và có thể cần alias nếu BE trả `totalItems`.
+> **Wrapper:** tất cả bọc `CommonResponse<T>`; list trả `CommonResponse<PaginationResponse<T>>` — access `.data?.items` + `.data?.totalItems`.
+> **Auth:** read battery-asset ở `/api/battery-assets`; write ở `/api/admin/battery-assets` (Admin only).
 
-| Method | Path | Request Body / Params | Response |
-|--------|------|-----------------------|----------|
-| GET | `/api/battery-assets` | `BatteryAssetListParams` | `CommonResponse<PaginationResponse<BatteryAssetDto>>` |
-| GET | `/api/battery-assets/{id}` | — | `CommonResponse<BatteryAssetDto>` |
-| GET | `/api/battery-assets/{id}/realtime` | — | `CommonResponse<BatteryAssetRealtimeDto>` |
-| POST | `/api/battery-assets` | `CreateBatteryAssetPayload` | `CommonResponse<BatteryAssetDto>` |
-| PUT | `/api/battery-assets/{id}` | `UpdateBatteryAssetPayload` | `CommonResponse<BatteryAssetDto>` |
-| DELETE | `/api/battery-assets/{id}` | — | `CommonResponse` |
-| PATCH | `/api/battery-assets/{id}/restore` | — | `CommonResponse` |
-| PUT | `/api/battery-assets/{id}/transfer-owner` | `TransferOwnerPayload` | `CommonResponse` |
-| GET | `/api/battery-types` | `{ pageNumber, pageSize, keyword? }` | `CommonResponse<PaginationResponse<BatteryTypeDto>>` |
-| GET | `/api/admin/accounts` | `{ roleId, pageNumber, pageSize }` | `CommonResponse<PaginationResponse<AccountDto>>` |
+**Battery Assets (9):**
+
+| Method | Path | Auth | Request | Response |
+|--------|------|------|---------|----------|
+| GET | `/api/battery-assets` | Admin/Manager | `BatteryAssetListParams` | `CommonResponse<PaginationResponse<BatteryAssetDto>>` |
+| GET | `/api/battery-assets/me` | Customer | `{ pageNumber, pageSize }` | `CommonResponse<PaginationResponse<BatteryAssetDto>>` *(ngoài scope web)* |
+| GET | `/api/battery-assets/{id}` | Mọi role | — | `CommonResponse<BatteryAssetDto>` |
+| GET | `/api/battery-assets/{id}/realtime` | Mọi role | — | `CommonResponse<BatteryAssetRealtimeDto>` |
+| POST | `/api/admin/battery-assets` | Admin | `CreateBatteryAssetPayload` | `CommonResponse<BatteryAssetDto>` (201) |
+| PUT | `/api/admin/battery-assets/{id}` | Admin | `UpdateBatteryAssetPayload` | `CommonResponse<BatteryAssetDto>` |
+| DELETE | `/api/admin/battery-assets/{id}` | Admin | — | `CommonResponse` |
+| PATCH | `/api/admin/battery-assets/{id}/restore` | Admin | — | `CommonResponse` |
+| PUT | `/api/admin/battery-assets/{id}/transfer-owner` | Admin | `TransferOwnerPayload` | `CommonResponse` |
+
+**Sensor Readings (4):**
+
+| Method | Path | Auth | Query | Response |
+|--------|------|------|-------|----------|
+| GET | `/api/sensor-readings/{batteryAssetId}/latest` | Mọi role | — | `CommonResponse<SensorReadingDto>` |
+| GET | `/api/sensor-readings/{batteryAssetId}/history` | Mọi role | `from?`, `to?`, `limit?` (1–1000, def 100), `cursor?` | `CommonResponse<SensorReadingHistoryResponseDto>` |
+| GET | `/api/sensor-readings/{batteryAssetId}/aggregate` | Mọi role | `from?`, `to?`, `interval?` (`1m\|5m\|15m\|1h\|1d`, def `1h`) | `CommonResponse<SensorReadingAggregateDto[]>` |
+| POST | `/api/sensor-readings/batch` | API Key (IoT) | — | *(ngoài scope web FE)* |
 
 ## Workflow
 
 **List flow:**
 ```
 BatteryAssetsPage → useBatteryAssets(params)
-  → BatteryAssetTable + pagination controls + keyword/status filter
-  → "Tạo" button → BatteryAssetForm dialog (create mode)
-  → row click → navigate('/admin/battery-assets/{id}')
-  → "Xóa" action → useDeleteBatteryAsset.mutate(id) → invalidate KEY.batteryAssets
-  → "Khôi phục" (khi includeDeleted=true) → useRestoreBatteryAsset.mutate(id)
+  → BatteryAssetTable + pagination + keyword/status filter
+  → "Tạo" → BatteryAssetForm (create) · row click → /admin/battery-assets/{id}
+  → "Xóa" → useDeleteBatteryAsset → invalidate KEY.batteryAssets
+  → "Khôi phục" (includeDeleted=true) → useRestoreBatteryAsset
 ```
 
 **Create/Edit flow:**
 ```
-BatteryAssetForm mount → load useBatteryTypes() + useCustomers()
-  → React Hook Form + Zod (schema transform installDate → ISO 8601 trước submit)
+BatteryAssetForm → RHF + Zod (transform installDate → ISO 8601)
   → submit: mutateAsync trong try-catch → handleErrorApi({ error, setError })
-  → OK: invalidate KEY.batteryAssets → toast.success → close dialog
-  → FAIL: lỗi field hiện dưới input, HttpError → toast
-
-⚠️ KHÔNG copy pattern từ useLogin (onError trong useMutation) — useLogin là code cũ chưa refactor.
-   Mutation hook cho battery dùng: mutateAsync + try-catch trong component là đúng rule.
+  → OK: invalidate KEY.batteryAssets → toast.success → close
+  → FAIL: EntityError → lỗi dưới input · HttpError → toast
+⚠️ KHÔNG copy pattern useLogin (onError) — dùng mutateAsync + try-catch trong component.
 ```
 
 **Realtime flow:**
 ```
-BatteryAssetDetailPage → useBatteryAssetRealtime(id)
-  config: staleTime:0 + refetchInterval:30000
-  → BatteryRealtimeCard: voltage, current, temp, SOH%, activeAlerts
-  → null fields (chưa có reading) → hiện "—"
+BatteryAssetDetailPage → useBatteryAssetRealtime(id) [staleTime:0 + refetchInterval:30s]
+  → BatteryRealtimeCard: voltage/current/temp/SOH%/activeAlerts · null → "—"
+```
+
+**Sensor readings flow (detail → tab "Lịch sử cảm biến"):**
+```
+useLatestReading(assetId)              → snapshot card (auto-refresh 30s)
+useReadingAggregate(assetId, interval) → SensorChart (range ≥ 24h)
+useReadingHistory(assetId, params)     → SensorHistoryTable (infinite scroll cursor)
 ```
 
 **Transfer owner flow:**
 ```
-"Transfer" button → TransferOwnerDialog
-  → useCustomers() để load dropdown
-  → validate: newCustomerId !== asset.customerId (client-side)
+"Transfer" → TransferOwnerDialog → validate newCustomerId !== asset.customerId
   → mutateAsync(TransferOwnerPayload) → onSuccess: invalidate detail + list
 ```
 
 ## Edge Cases
-- `includeDeleted=true`: soft-deleted items hiển thị với visual indicator (muted/strikethrough)
-- Realtime null fields: pin chưa có sensor reading → hiện "—", không crash
-- Transfer owner: guard `newCustomerId !== currentCustomerId` trước khi submit
-- 409 serial number conflict → `handleErrorApi({ error, setError })` map xuống `serialNumber` field
-- `installDate` validation: không ở tương lai
-- Customer dropdown lấy tất cả: `pageSize=100` (assume ít hơn 100 customers trong scope capstone)
+- `includeDeleted=true`: soft-deleted hiển thị muted/strikethrough
+- Realtime/reading null fields → "—", không crash
+- Transfer owner: guard `newCustomerId !== currentCustomerId` trước submit
+- 409 serial conflict → `handleErrorApi({ error, setError })` map xuống `serialNumber`
+- `installDate`: không ở tương lai
+- Sensor history: KHÔNG page-number — dùng `hasMore`/`nextCursor` (không có `totalItems`)
+- Sensor history/aggregate: luôn truyền `from`/`to`; range lớn → dùng `/aggregate`
+- Swagger có query param thừa `BatteryAssetId` (trùng path) → FE bỏ qua, chỉ dùng path
 
 ## Success Criteria
 
-| Tiêu chí | Cách verify |
-|----------|------------|
-| List load + pagination hoạt động | Hook trả `items[]` + `totalCount` |
-| Create thành công, item xuất hiện trong list | POST → list invalidated |
-| Edit cập nhật đúng | PUT → detail invalidated → values cập nhật |
-| Delete → item ẩn khỏi list (includeDeleted=false) | DELETE → list refetch |
-| Restore → item hiện lại | PATCH → list invalidated |
+| Tiêu chí | Verify |
+|----------|--------|
+| List load + pagination | Hook trả `items[]` + `totalItems` |
+| Create → xuất hiện trong list | POST → list invalidated |
+| Edit cập nhật đúng | PUT → detail invalidated |
+| Delete → ẩn khỏi list | DELETE → list refetch |
+| Restore → hiện lại | PATCH → list invalidated |
 | Transfer owner → `customerName` đổi | PUT → detail invalidated |
-| Realtime tự refresh mỗi 30s | Network tab: request đều đặn 30s |
+| Realtime + latest reading refresh 30s | Network tab request đều đặn |
+| History infinite scroll | cursor `nextCursor` nối trang |
+| Aggregate chart render | SensorChart vẽ từ bucket |
 | Build sạch | `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` PASS |
 
-## Router Structure (Bước 8 — chi tiết)
-
-Thay thế block admin hiện tại (`/admin/*` wildcard) trong `router/index.tsx`:
+## Router Structure
 
 ```tsx
 {
   element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
-  children: [
-    {
-      path: "/admin",
-      element: <AppLayout />,           // AppLayout dùng <Outlet /> để render children
-      children: [
-        { index: true, element: <Navigate to="battery-assets" replace /> },
-        { path: "battery-assets", element: <BatteryAssetsPage /> },
-        { path: "battery-assets/:id", element: <BatteryAssetDetailPage /> },
-      ],
-    },
-  ],
-},
-```
-
-`AppLayout` là minimal shell — không có sidebar/header design:
-```tsx
-// shared/components/layout/AppLayout.tsx
-import { Outlet } from 'react-router-dom';
-export default function AppLayout() {
-  return <Outlet />;
+  children: [{
+    path: "/admin",
+    element: <AppLayout />,            // <Outlet />
+    children: [
+      { index: true, element: <Navigate to="battery-assets" replace /> },
+      { path: "battery-assets", element: <BatteryAssetsPage /> },
+      { path: "battery-assets/:id", element: <BatteryAssetDetailPage /> },
+    ],
+  }],
 }
 ```
 
-> Router phải implement **trước pages** (Bước 8 trước Bước 6–7) để có thể test navigate.
-> Wildcard `/admin/*` cũ phải bị xóa — không để lại hai entries `/admin/*` và `/admin` song song.
+## Endpoints const (đề xuất `endpoints.ts`)
+
+```ts
+SENSOR_READINGS: {
+  LATEST:    (assetId: string) => `/api/sensor-readings/${assetId}/latest`,
+  HISTORY:   (assetId: string) => `/api/sensor-readings/${assetId}/history`,
+  AGGREGATE: (assetId: string) => `/api/sensor-readings/${assetId}/aggregate`,
+  // POST /batch: IoT gateway only — KHÔNG thêm vào FE
+},
+```
 
 ## Steps
-- [x] Bước 1: Types — `battery-asset.types.ts` (enums + interfaces + payloads) — 2026-05-20
-- [x] Bước 2: Shared — cập nhật `endpoints.ts` + `queryKeys.ts` + tạo `shared/constants/roleIds.ts` — 2026-05-20
-- [x] Bước 3: Services — `battery-asset.service.ts`, `battery-type.service.ts`, `account.service.ts` — 2026-05-20
-- [x] Bước 4: Hooks — `useBatteryAssets`, `useBatteryAsset`, `useBatteryAssetRealtime`, `useBatteryTypes`, `useCustomers` + 5 mutation hooks — 2026-05-20
-- [x] Bước 5: Schema — `battery-asset.schema.ts` — 2026-05-20
-- [x] Bước 6: Router — thêm battery-assets routes vào admin block — 2026-05-20
-- [x] Bước 7: Components — `BatteryAssetTable`, `BatteryAssetForm`, `TransferOwnerDialog`, `BatteryRealtimeCard` — 2026-05-20
-- [x] Bước 8: Pages — `BatteryAssetsPage`, `BatteryAssetDetailPage` — 2026-05-20
-- [x] Bước 9: `tsc --noEmit` + `eslint --max-warnings=0` → PASS — 2026-05-20
+
+**Battery Assets — đã ship (2026-05-20):**
+- [x] Types · Shared (endpoints/queryKeys) · Service · Hooks · Schema · Router · Components · Pages · build PASS
+
+**Fix lệch docs còn lại (Bước 10) — DONE 2026-06-12:**
+- [x] `ChargingStateEnum` (`enums/battery-asset.enum.ts`): `FLOAT=4`, `BYPASS=5` (bỏ `FAULT=4`)
+- [x] `BatteryAssetRealtimeDto.chargingState` → `ChargingStateEnum | null`
+- [x] `BatteryAssetListParams` → thêm `siteId?`
+- [x] (cleanup) xoá orphan `src/features/admin/types/battery-asset.enums.ts`
+- [x] ~~`/admin/` prefix~~ · ~~bỏ `batteryGroup*`~~ · ~~`totalItems`~~ — đã có sẵn trong code
+
+**Sensor Readings — mới — DONE 2026-06-12:**
+- [x] Bước 11: `sensor-reading.types.ts` + `sensor-reading.service.ts` + `SENSOR_READINGS` (endpoints) + `sensorReadings` (queryKeys)
+- [x] Bước 12: Hooks — `useLatestReading`, `useReadingHistory` (useInfiniteQuery cursor), `useReadingAggregate`
+- [x] Bước 13: Components — `SensorChart` (Recharts LineChart + range select), `SensorHistoryTable` (cursor "Tải thêm"); wire vào BatteryAssetDetailPage (Tabs Biểu đồ/Lịch sử)
+- [x] Bước 14: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
 
 ## Câu hỏi đã giải đáp
-- `GET /api/battery-assets/me` (Customer): ngoài scope — Customer dùng mobile app
-- Role scope: Admin only
-- Customer roleId cho dropdown: `44444444-4444-4444-4444-444444444444` (system default) — define tại `shared/constants/roleIds.ts` as `CUSTOMER_ROLE_ID`, không hardcode inline
-- AppLayout: base shell only — không áp dụng design trong sprint này
-- PUT full-replace hay partial: **full-replace** (confirmed từ API docs — required fields giống POST)
-- Response wrapper: `CommonResponse<PaginationResponse<T>>` — `.data?.items` để access list
-- `totalCount` vs `totalItems`: dùng FE type `totalCount`, xác nhận lại khi BE deploy
+- `GET /api/battery-assets/me`: Customer — web chưa có portal Customer, không build ở web
+- `POST /api/sensor-readings/batch`: IoT gateway (API Key) — web không gọi
+- Role scope: Admin
+- PUT full-replace (required fields giống POST)
+- Response wrapper: `CommonResponse<PaginationResponse<T>>` — `.data?.items`
+- `totalCount` vs `totalItems`: `api.types.ts` **đã dùng `totalItems`** (khớp docs) — không cần sửa
+- `batteryGroup*`: đã xoá hẳn khỏi code; battery group không còn trong #40 (retitled "Battery Types & Thresholds")
+- Dropdown `batteryTypeId`/`customerId`: dependency từ #40 + Account Management — không thuộc issue này

@@ -85,17 +85,19 @@ export function KbArticleSelector({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={disabled}
-            className="gap-1.5"
-          >
+        <DialogTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              className="gap-1.5"
+            />
+          }
+        >
             <BookOpen className="size-3.5" />
             Chọn bài KB
-          </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md">
           <DialogHeader>

@@ -67,9 +67,7 @@ export default function SlaMonitorPage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Staff &middot; SLA
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            SLA Monitor
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">SLA Monitor</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Theo dõi SLA của các ticket đang được giao cho bạn.
           </p>
@@ -80,7 +78,9 @@ export default function SlaMonitorPage() {
           onClick={() => refetch()}
           disabled={isFetching}
         >
-          <TimerReset className={isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
+          <TimerReset
+            className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
+          />
           Làm mới
         </Button>
       </div>

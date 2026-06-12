@@ -4,10 +4,12 @@ import {
   LayoutDashboard,
   MapPin,
   Battery,
+  BatteryCharging,
   Users,
   Shield,
   Settings,
   Bell,
+  BellRing,
   ChevronDown,
   LogOut,
   User,
@@ -16,6 +18,8 @@ import {
   FileText,
   ScrollText,
   BookOpen,
+  ShieldAlert,
+  Thermometer,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -178,6 +182,18 @@ const ADMIN_NAV: NavSection[] = [
     items: [
       { label: "Sites", path: "/admin/sites", icon: MapPin },
       { label: "Battery Assets", path: "/admin/battery-assets", icon: Battery },
+      {
+        label: "Loại pin & Ngưỡng",
+        path: "/admin/battery-types",
+        icon: BatteryCharging,
+      },
+      { label: "Cảnh báo pin", path: "/admin/alerts", icon: BellRing },
+      {
+        label: "Sự cố môi trường",
+        path: "/admin/environmental-incidents",
+        icon: ShieldAlert,
+      },
+      { label: "Môi trường site", path: "/admin/ambient", icon: Thermometer },
     ],
   },
   {
@@ -224,6 +240,13 @@ const MANAGER_NAV: NavSection[] = [
       { label: "Tickets", path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
       { label: "Knowledge Base", path: "/manager/kb", icon: BookOpen },
+      { label: "Cảnh báo pin", path: "/manager/alerts", icon: BellRing },
+      {
+        label: "Sự cố môi trường",
+        path: "/manager/environmental-incidents",
+        icon: ShieldAlert,
+      },
+      { label: "Môi trường site", path: "/manager/ambient", icon: Thermometer },
     ],
   },
   {
@@ -247,7 +270,15 @@ const STAFF_NAV: NavSection[] = [
     title: "Báo cáo",
     collapsible: true,
     defaultOpen: true,
-    items: [{ label: "Alerts", path: "/staff/alerts", icon: FileText }],
+    items: [
+      { label: "Alerts", path: "/staff/alerts", icon: FileText },
+      { label: "Cảnh báo pin", path: "/staff/battery-alerts", icon: BellRing },
+      {
+        label: "Sự cố môi trường",
+        path: "/staff/environmental-incidents",
+        icon: ShieldAlert,
+      },
+    ],
   },
   {
     title: "Hệ thống",

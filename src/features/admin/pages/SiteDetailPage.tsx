@@ -28,10 +28,7 @@ import {
 import { SiteStatusEnum } from "@/shared/types/site.types";
 import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
 
-type ConfirmState =
-  | { type: "none" }
-  | { type: "delete" }
-  | { type: "restore" };
+type ConfirmState = { type: "none" } | { type: "delete" } | { type: "restore" };
 
 export default function SiteDetailPage() {
   const { id = "" } = useParams<{ id: string }>();

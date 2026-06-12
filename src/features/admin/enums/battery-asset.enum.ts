@@ -10,7 +10,8 @@ export const ChargingStateEnum = {
   IDLE: 1,
   CHARGING: 2,
   DISCHARGING: 3,
-  FAULT: 4,
+  FLOAT: 4,
+  BYPASS: 5,
 } as const;
 export type ChargingStateEnum =
   (typeof ChargingStateEnum)[keyof typeof ChargingStateEnum];

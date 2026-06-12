@@ -117,7 +117,9 @@ export default function AlertsPage() {
             onClick={() => refetch()}
             disabled={isFetching}
           >
-            <RefreshCw className={isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
+            <RefreshCw
+              className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
+            />
             Làm mới
           </Button>
         </div>
@@ -206,7 +208,9 @@ export default function AlertsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/staff/tickets/${item.entityId}`)}
+                        onClick={() =>
+                          navigate(`/staff/tickets/${item.entityId}`)
+                        }
                       >
                         Mở ticket
                       </Button>

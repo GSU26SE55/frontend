@@ -1,26 +1,45 @@
-# TEST REPORT — GH-39 — 2026-05-20
-### Scope: FE
-### Môi trường: local
+# Test Report — GH-39
+## Kết quả: PASS ✅
+## Ngày chạy: 2026-06-12
+### Scope: FE (Web) · Môi trường: local
+### Phạm vi: Bước 10 (fix lệch docs) + Sensor Readings
 
 ## TÓM TẮT
-Battery Asset Management — CRUD + realtime monitoring + transfer ownership. Automated checks PASS.
+FE không có unit test suite → chạy 3 quality gate (type check + lint + build). Tất cả PASS, không lỗi.
 
-| Test case | Input | Expected | Actual | Status |
-|-----------|-------|----------|--------|--------|
-| tsc --noEmit | src/ | 0 errors | 0 errors | ✅ PASS |
-| eslint --max-warnings=0 | src/ | 0 warnings | 0 warnings | ✅ PASS |
-| npm run build | — | success | ✅ built | ✅ PASS |
-| battery-asset schema serialNumber | `{serialNumber:'ab'}` | min(5) fail | Zod validation fail | ✅ PASS |
-| battery-asset schema serialNumber regex | `{serialNumber:'ab-12'}` | regex `/^[A-Z0-9-]+$/` fail (lowercase) | Zod fail | ✅ PASS |
-| useBatteryAssetRealtime config | hook | staleTime:0, refetchInterval:30000 | confirmed | ✅ PASS |
-| BatteryAssetTable action cell | click event | stopPropagation | implemented ✅ | ✅ PASS |
-| TransferOwnerDialog self-transfer guard | newCustomerId === currentCustomerId | setError on field | implemented ✅ | ✅ PASS |
-| BatteryAssetsPage totalItems fallback | data undefined | totalItems ?? 0 | confirmed ✅ | ✅ PASS |
-| Routes | /admin/battery-assets, /admin/battery-assets/:id | wired | confirmed ✅ | ✅ PASS |
-| BatteryChemistryEnum re-export | battery-asset.types | no duplicate definition | re-export from battery-type.types ✅ | ✅ PASS |
+## Kiểm tra
 
-## Bugs tìm được
-Không có.
+| Bước | Lệnh | Kết quả |
+|------|------|---------|
+| Type check | `npx tsc --noEmit` | PASS — 0 errors |
+| Lint | `npx eslint . --max-warnings=0` | PASS — 0 warnings |
+| Build | `npm run build` | PASS — built in 2.89s |
+
+> Build cảnh báo chunk > 500kB — pre-existing, không phải lỗi của ticket.
+
+## Kiểm tra logic (static)
+
+| Test case | Expected | Actual | Status |
+|-----------|----------|--------|--------|
+| `ChargingStateEnum` đồng bộ docs | `FLOAT=4`, `BYPASS=5` (bỏ `FAULT=4`) | đúng | ✅ |
+| `RealtimeDto.chargingState` nullable | `ChargingStateEnum \| null` | đúng | ✅ |
+| `BatteryAssetListParams.siteId` | có `siteId?` | đúng | ✅ |
+| Orphan enum file | `types/battery-asset.enums.ts` đã xoá | không còn | ✅ |
+| `SENSOR_READINGS` endpoints | latest/history/aggregate (không có batch) | đúng | ✅ |
+| `sensorReadingService` | 3 GET qua `axiosInstance` + `ENDPOINTS` | đúng | ✅ |
+| `useLatestReading` | `staleTime:0`, `refetchInterval:30000` | đúng | ✅ |
+| `useReadingHistory` cursor | `useInfiniteQuery` + `getNextPageParam` (`hasMore`/`nextCursor`) | đúng | ✅ |
+| `useReadingAggregate` purity | `Date.now()` trong `queryFn`, không trong render | đúng | ✅ |
+| `SensorChart` | Recharts LineChart + range select, loading + empty | đúng | ✅ |
+| `SensorHistoryTable` | Table + "Tải thêm" theo cursor, loading + empty | đúng | ✅ |
+| Wire detail page | Tabs Biểu đồ / Lịch sử cảm biến | đúng | ✅ |
+
+## Lỗi (nếu có)
+Không có lỗi chặn. 2 warning nhỏ (xem `review.md`): sensor components thiếu UI `isError`; `key={r.time}` rủi ro trùng thấp.
+
+## Chưa cover (manual / cần BE local)
+- Render thực với data BE: chart vẽ, infinite scroll "Tải thêm", auto-refresh 30s.
+- `POST /api/sensor-readings/batch` — ngoài scope web FE (IoT gateway, API Key).
 
 ## KẾT LUẬN
-**PASS** — Độ tự tin: **Cao** (UI cần manual verify với BE local)
+**PASS** — Độ tự tin: **Cao** (quality gates xanh; UI cần manual verify với BE local trước demo).

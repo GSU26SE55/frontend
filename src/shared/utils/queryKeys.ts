@@ -8,7 +8,11 @@ export const KEY = {
   files: "files",
   batteryAssets: "batteryAssets",
   batteryTypes: "batteryTypes",
-  batteryGroups: "batteryGroups",
+  sensorReadings: "sensorReadings",
+  thresholds: "thresholds",
+  alerts: "alerts",
+  ambient: "ambient",
+  environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
   staffTickets: "staffTickets",
   admin: {
@@ -59,9 +63,18 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.batteryTypes, "list", params] as const,
     detail: (id: string) => [KEY.batteryTypes, "detail", id] as const,
   },
-  batteryGroups: {
-    list: (params?: object) => [KEY.batteryGroups, "list", params] as const,
-    detail: (id: string) => [KEY.batteryGroups, "detail", id] as const,
+  sensorReadings: {
+    latest: (assetId: string) =>
+      [KEY.sensorReadings, "latest", assetId] as const,
+    history: (assetId: string, params?: object) =>
+      [KEY.sensorReadings, "history", assetId, params] as const,
+    aggregate: (assetId: string, params?: object) =>
+      [KEY.sensorReadings, "aggregate", assetId, params] as const,
+  },
+  thresholds: {
+    list: (params?: object) => [KEY.thresholds, "list", params] as const,
+    byType: (batteryTypeId: string, params?: object) =>
+      [KEY.thresholds, "by-type", batteryTypeId, params] as const,
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,
@@ -105,6 +118,26 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
     },
+  },
+  alerts: {
+    list: (params?: object) => [KEY.alerts, "list", params] as const,
+    detail: (id: string) => [KEY.alerts, "detail", id] as const,
+  },
+  ambient: {
+    history: (siteId: string, params?: object) =>
+      [KEY.ambient, "history", siteId, params] as const,
+    latest: (siteId: string) => [KEY.ambient, "latest", siteId] as const,
+    thresholdList: (params?: object) =>
+      [KEY.ambient, "threshold", "list", params] as const,
+    thresholdBySite: (siteId: string) =>
+      [KEY.ambient, "threshold", "by-site", siteId] as const,
+  },
+  environmentalIncidents: {
+    list: (params?: object) =>
+      [KEY.environmentalIncidents, "list", params] as const,
+    detail: (id: string) => [KEY.environmentalIncidents, "detail", id] as const,
+    activeBySite: (siteId: string) =>
+      [KEY.environmentalIncidents, "active", siteId] as const,
   },
   tickets: {
     detail: (id: string) => [KEY.tickets, "detail", id] as const,
