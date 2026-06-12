@@ -120,9 +120,7 @@ const ProfilePage = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">
-          Hồ sơ của tôi
-        </h2>
+        <h2 className="text-lg font-semibold tracking-tight">Hồ sơ của tôi</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
           Quản lý thông tin cá nhân và ảnh đại diện
         </p>
@@ -139,7 +137,10 @@ const ProfilePage = () => {
             <div className="relative">
               <Avatar className="size-24 text-3xl">
                 {avatarUrl && (
-                  <AvatarImage src={avatarUrl} alt={account?.fullName ?? "Avatar"} />
+                  <AvatarImage
+                    src={avatarUrl}
+                    alt={account?.fullName ?? "Avatar"}
+                  />
                 )}
                 <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {initials}

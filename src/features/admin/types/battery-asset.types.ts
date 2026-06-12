@@ -16,8 +16,6 @@ export interface BatteryAssetDto {
   batteryTypeName: string;
   siteId: string | null;
   siteName: string | null;
-  batteryGroupId: string | null;
-  batteryGroupName: string | null;
   customerId: string;
   customerName: string;
   installDate: string;
@@ -43,7 +41,7 @@ export interface BatteryAssetRealtimeDto {
   socPercent: number | null;
   cycleCount: number | null;
   sohPercent: number | null;
-  chargingState: ChargingStateEnum;
+  chargingState: ChargingStateEnum | null;
   activeAlerts: number;
 }
 
@@ -52,7 +50,6 @@ export interface CreateBatteryAssetPayload {
   batteryTypeId: string;
   customerId: string;
   siteId?: string;
-  batteryGroupId?: string;
   installDate: string;
   warrantyEndDate?: string;
   location?: string;
@@ -77,6 +74,7 @@ export interface BatteryAssetListParams {
   keyword?: string;
   customerId?: string;
   batteryTypeId?: string;
+  siteId?: string;
   status?: BatteryStatusEnum;
   includeDeleted?: boolean;
 }

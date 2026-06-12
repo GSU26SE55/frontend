@@ -7,7 +7,6 @@ export const siteFormSchema = z.object({
   address: z.string().optional(),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
-  capacityKw: z.string().optional(),
   installDate: z.string().min(1, "Bắt buộc"),
   status: z.union([
     z.literal(SiteStatusEnum.Active),

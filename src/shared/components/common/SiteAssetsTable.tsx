@@ -74,7 +74,6 @@ export default function SiteAssetsTable({
           <TableRow>
             <TableHead>Số seri</TableHead>
             <TableHead>Loại pin</TableHead>
-            <TableHead>Nhóm</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Ngày lắp</TableHead>
             <TableHead>Đọc cuối</TableHead>
@@ -87,7 +86,6 @@ export default function SiteAssetsTable({
                 {asset.serialNumber}
               </TableCell>
               <TableCell>{asset.batteryTypeName}</TableCell>
-              <TableCell>{asset.batteryGroupName ?? "—"}</TableCell>
               <TableCell>
                 <Badge variant={STATUS_VARIANT[asset.status]}>
                   {STATUS_LABEL[asset.status]}

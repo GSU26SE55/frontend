@@ -9,7 +9,6 @@ export const batteryAssetFormSchema = z.object({
   batteryTypeId: z.string().uuid("UUID không hợp lệ"),
   customerId: z.string().uuid("UUID không hợp lệ"),
   siteId: z.string().uuid().optional().or(z.literal("")),
-  batteryGroupId: z.string().uuid().optional().or(z.literal("")),
   installDate: z.string().min(1, "Bắt buộc"),
   warrantyEndDate: z.string().optional(),
   location: z.string().max(255).optional(),

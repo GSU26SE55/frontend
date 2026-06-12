@@ -45,19 +45,6 @@ export const ENDPOINTS = {
     INVITE: "/api/users/invite",
   },
 
-  BATTERIES: {
-    LIST: "/api/batteries",
-    CREATE: "/api/batteries",
-    DETAIL: (id: string) => `/api/batteries/${id}`,
-    UPDATE: (id: string) => `/api/batteries/${id}`,
-    DELETE: (id: string) => `/api/batteries/${id}`,
-    ASSIGN: (id: string) => `/api/batteries/${id}/assign`,
-    CONFIG: (id: string) => `/api/batteries/${id}/config`,
-    READINGS: (id: string) => `/api/batteries/${id}/readings`,
-    READINGS_AGGREGATE: (id: string) =>
-      `/api/batteries/${id}/readings/aggregate`,
-  },
-
   TICKETS: {
     LIST: "/api/tickets",
     CREATE: "/api/tickets",
@@ -86,6 +73,13 @@ export const ENDPOINTS = {
     LIST: "/api/notifications",
     MARK_READ: (id: string) => `/api/notifications/${id}/read`,
     MARK_ALL_READ: "/api/notifications/read-all",
+  },
+
+  ALERTS: {
+    LIST: "/api/alerts",
+    DETAIL: (id: string) => `/api/alerts/${id}`,
+    ACKNOWLEDGE: (id: string) => `/api/alerts/${id}/acknowledge`,
+    RESOLVE: (id: string) => `/api/alerts/${id}/resolve`,
   },
 
   SLA: {
@@ -156,7 +150,11 @@ export const ENDPOINTS = {
     DETAIL: (id: string) => `/api/sites/${id}`,
     DASHBOARD: (id: string) => `/api/sites/${id}/dashboard`,
     ASSETS: (siteId: string) => `/api/sites/${siteId}/assets`,
-    RESTORE: (id: string) => `/api/sites/${id}/restore`,
+    // Write ops live under /api/admin/sites (AdminSitesController)
+    CREATE: "/api/admin/sites",
+    UPDATE: (id: string) => `/api/admin/sites/${id}`,
+    DELETE: (id: string) => `/api/admin/sites/${id}`,
+    RESTORE: (id: string) => `/api/admin/sites/${id}/restore`,
   },
 
   STAFF: {
@@ -168,29 +166,39 @@ export const ENDPOINTS = {
     LIST: "/api/battery-assets",
     DETAIL: (id: string) => `/api/battery-assets/${id}`,
     REALTIME: (id: string) => `/api/battery-assets/${id}/realtime`,
-    CREATE: "/api/battery-assets",
-    UPDATE: (id: string) => `/api/battery-assets/${id}`,
-    DELETE: (id: string) => `/api/battery-assets/${id}`,
-    RESTORE: (id: string) => `/api/battery-assets/${id}/restore`,
-    TRANSFER_OWNER: (id: string) => `/api/battery-assets/${id}/transfer-owner`,
+    // Write ops live under /api/admin/battery-assets (AdminBatteryAssetsController)
+    CREATE: "/api/admin/battery-assets",
+    UPDATE: (id: string) => `/api/admin/battery-assets/${id}`,
+    DELETE: (id: string) => `/api/admin/battery-assets/${id}`,
+    RESTORE: (id: string) => `/api/admin/battery-assets/${id}/restore`,
+    TRANSFER_OWNER: (id: string) =>
+      `/api/admin/battery-assets/${id}/transfer-owner`,
+  },
+
+  SENSOR_READINGS: {
+    LATEST: (assetId: string) => `/api/sensor-readings/${assetId}/latest`,
+    HISTORY: (assetId: string) => `/api/sensor-readings/${assetId}/history`,
+    AGGREGATE: (assetId: string) => `/api/sensor-readings/${assetId}/aggregate`,
+    // POST /api/sensor-readings/batch: IoT gateway (API Key) — không thuộc web FE
   },
 
   BATTERY_TYPES: {
     LIST: "/api/battery-types",
     DETAIL: (id: string) => `/api/battery-types/${id}`,
-    CREATE: "/api/battery-types",
-    UPDATE: (id: string) => `/api/battery-types/${id}`,
-    DELETE: (id: string) => `/api/battery-types/${id}`,
-    RESTORE: (id: string) => `/api/battery-types/${id}/restore`,
+    // Write ops live under /api/admin/battery-types (AdminBatteryTypesController)
+    CREATE: "/api/admin/battery-types",
+    UPDATE: (id: string) => `/api/admin/battery-types/${id}`,
+    DELETE: (id: string) => `/api/admin/battery-types/${id}`,
+    RESTORE: (id: string) => `/api/admin/battery-types/${id}/restore`,
   },
 
-  BATTERY_GROUPS: {
-    LIST: "/api/battery-groups",
-    DETAIL: (id: string) => `/api/battery-groups/${id}`,
-    CREATE: "/api/battery-groups",
-    UPDATE: (id: string) => `/api/battery-groups/${id}`,
-    DELETE: (id: string) => `/api/battery-groups/${id}`,
-    RESTORE: (id: string) => `/api/battery-groups/${id}/restore`,
+  THRESHOLDS: {
+    LIST: "/api/thresholds",
+    BY_TYPE: (batteryTypeId: string) =>
+      `/api/thresholds/by-type/${batteryTypeId}`,
+    // Write op lives under /api/admin/thresholds (AdminThresholdsController)
+    UPSERT: (batteryTypeId: string) =>
+      `/api/admin/thresholds/by-type/${batteryTypeId}`,
   },
 
   FILES: {

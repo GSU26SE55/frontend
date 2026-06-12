@@ -153,7 +153,11 @@ const ProductSection = () => {
   );
 
   return (
-    <section ref={sectionRef} id="product" className="bg-white px-5 py-18 lg:px-8 lg:py-24">
+    <section
+      ref={sectionRef}
+      id="product"
+      className="bg-white px-5 py-18 lg:px-8 lg:py-24"
+    >
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
