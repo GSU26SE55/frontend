@@ -4,7 +4,6 @@ export interface BatteryAssetDto {
   id: string;
   serialNumber: string;
   batteryTypeName: string;
-  batteryGroupName?: string;
   customerId: string;
   customerName: string;
   installDate: string;

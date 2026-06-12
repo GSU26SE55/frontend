@@ -584,9 +584,6 @@ export default function ManagerDashboardPage() {
                       {site.activeBatteryAssetCount}/{site.batteryAssetCount}{" "}
                       pin
                     </span>
-                    {site.capacityKw != null && (
-                      <span>· {site.capacityKw} kW</span>
-                    )}
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs">

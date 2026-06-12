@@ -1,270 +1,228 @@
-# Plan — GH-40: [FE] Battery Catalog — Types & Groups
+# Plan — GH-40: [FE] Battery Types & Thresholds — data layer (9 endpoints)
 
 ## Metadata
-- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** TESTING (Battery Types ✅ · Thresholds ✅) | **Role:** FE | **Ngày:** 2026-06-12
 - **Issue:** #40 — https://github.com/GSU26SE55/frontend/issues/40
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 
 ## Mục tiêu
-Setup layer service cho Battery Catalog (BatteryType + BatteryGroup): types, Zod schemas, services, TanStack Query hooks. **Không làm UI** — chỉ chuẩn hóa cấu trúc `features/admin` để các issue UI sau mount vào.
+Setup data layer (types · Zod schema · service · TanStack Query hooks) cho 2 nhóm API trong `docs/api-battery.md`:
+- **Battery Types** (Nhóm 3 — 6 endpoints): loại pin (model, chemistry, dung lượng, điện áp...).
+- **Threshold Configs** (Nhóm 6 — 3 endpoints): ngưỡng cảnh báo theo từng `BatteryType`.
+
+**Không làm UI** — chỉ chuẩn hóa cấu trúc `features/admin` để các issue UI sau mount vào.
 
 ## Scope
 **Trong scope:**
-- Types + enum (BatteryType, BatteryGroup, BatteryChemistry)
-- Zod schemas cho create/update payload (validation rules từ `docs/api-battery.md`)
-- Services gọi 12 endpoints
-- TanStack Query hooks (list, detail, mutations)
-- Cập nhật `endpoints.ts` + `queryKeys.ts`
-- Fix `PaginationResponse.totalCount → totalItems` (confirmed từ docs — zero consumer hiện tại)
+- Battery Types: types + enum + Zod schema + service (6 endpoints) + hooks (list/detail/mutations).
+- Thresholds: types + Zod schema (cross-field) + service (3 endpoints) + hooks (list/byType/upsert).
+- Cập nhật `endpoints.ts` + `queryKeys.ts`.
 
 **Ngoài scope:**
-- UI pages/components (table, form, dialog)
-- Admin layout, Sidebar, AppLayout
-- Route wiring (`/admin/battery-types`, `/admin/battery-groups`)
+- UI pages/components (table, form, dialog), route wiring.
+- AnomalyType enum (thuộc Alerts feature — không cần cho 3 threshold endpoint).
+- Ambient threshold configs (Nhóm 8 — domain khác).
 
 ## Files
-
 | File | Action | Ghi chú |
 |------|--------|---------|
-| `src/shared/types/api.types.ts` | modify | `totalCount` → `totalItems` — confirmed từ docs + live BE response, zero consumer hiện tại |
-| `src/shared/utils/endpoints.ts` | modify | Thêm `BATTERY_TYPES`, `BATTERY_GROUPS` |
-| `src/shared/utils/queryKeys.ts` | modify | Thêm `batteryTypes`, `batteryGroups` |
-| `src/features/admin/types/battery-type.types.ts` | create | BatteryType, BatteryChemistry enum (5 values), params, payloads |
-| `src/features/admin/types/battery-group.types.ts` | create | BatteryGroup, params, payloads |
-| `src/features/admin/schemas/battery-type.schema.ts` | create | Zod create/update schema với validation từ docs |
-| `src/features/admin/schemas/battery-group.schema.ts` | create | Zod create/update schema với validation từ docs |
-| `src/features/admin/services/battery-type.service.ts` | create | 6 endpoints |
-| `src/features/admin/services/battery-group.service.ts` | create | 6 endpoints |
-| `src/features/admin/hooks/useBatteryTypes.ts` | create | useQuery: list + detail |
-| `src/features/admin/hooks/useBatteryTypesMutation.ts` | create | useMutation: create, update, delete, restore |
-| `src/features/admin/hooks/useBatteryGroups.ts` | create | useQuery: list + detail |
-| `src/features/admin/hooks/useBatteryGroupsMutation.ts` | create | useMutation: create, update, delete, restore |
+| `src/shared/utils/endpoints.ts` | modify | `BATTERY_TYPES` (write ops `/api/admin/...`) · thêm `THRESHOLDS` |
+| `src/shared/utils/queryKeys.ts` | modify | `batteryTypes` · thêm `thresholds` |
+| `src/features/admin/types/battery-type.types.ts` | done ✅ | DTO + params + payloads |
+| `src/features/admin/schemas/battery-type.schema.ts` | done ✅ | create/update schema |
+| `src/features/admin/services/battery-type.service.ts` | done ✅ | 6 endpoints |
+| `src/features/admin/hooks/useBatteryTypes.ts` | done ✅ | list + detail |
+| `src/features/admin/hooks/useBatteryTypesMutation.ts` | done ✅ | create/update/delete/restore |
+| `src/features/admin/types/threshold.types.ts` | create ⏳ | DTO + params + upsert payload |
+| `src/features/admin/schemas/threshold.schema.ts` | create ⏳ | upsert schema + cross-field refine |
+| `src/features/admin/services/threshold.service.ts` | create ⏳ | 3 endpoints |
+| `src/features/admin/hooks/useThresholds.ts` | create ⏳ | list + byType query |
+| `src/features/admin/hooks/useThresholdsMutation.ts` | create ⏳ | upsert mutation |
 
 ## Enums
+| Enum | File nguồn | Ghi chú |
+|------|-----------|---------|
+| `BatteryChemistryEnum` | `features/admin/enums/battery-asset.enum.ts` | LiFePO4=1, Nmc=2, Nca=3, Lco=4, Other=99 |
 
-> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng — không define inline trong types. Plan gốc dùng `export enum` (TypeScript native enum) — codebase thực tế đã đổi sang `as const` object pattern.
+> Thresholds không cần enum mới — tất cả field là `decimal` / `bool` / `DateTime`.
 
-| Enum | File |
-|------|------|
-| `BatteryChemistryEnum` | `features/admin/enums/battery-asset.enum.ts` |
-| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
-
-## Types (confirmed từ `docs/api-battery.md`)
-
+## Types
 ```ts
 // battery-type.types.ts
-export enum BatteryChemistry {
-  LiFePO4 = 1,
-  Nmc = 2,
-  Nca = 3,
-  Lco = 4,
-  Other = 99,
-}
-
-export interface BatteryType {
+export interface BatteryTypeDto {
   id: string;
   name: string;
-  manufacturer?: string;        // nullable — nhà sản xuất
-  nominalCapacityAh: number;    // decimal từ BE → number trong TS
-  nominalVoltage: number;       // decimal từ BE → number trong TS
-  chemistry: BatteryChemistry;
+  manufacturer?: string;
+  nominalCapacityAh: number;     // decimal → number
+  nominalVoltage: number;        // decimal → number
+  chemistry: BatteryChemistryEnum;
   maxCycleCount: number;
   description?: string;
   createdAt: string;
 }
-
 export interface BatteryTypeListParams {
-  pageNumber?: number;
-  pageSize?: number;
-  keyword?: string;             // docs dùng "keyword", không phải "search"
-  includeDeleted?: boolean;
+  pageNumber?: number; pageSize?: number; keyword?: string; includeDeleted?: boolean;
 }
-
 export interface CreateBatteryTypePayload {
-  name: string;
-  manufacturer?: string;
-  nominalCapacityAh: number;
-  nominalVoltage: number;
-  chemistry?: BatteryChemistry; // optional, default LiFePO4 ở BE
-  maxCycleCount?: number;       // optional, default 2000 ở BE
+  name: string; manufacturer?: string;
+  nominalCapacityAh: number; nominalVoltage: number;
+  chemistry?: BatteryChemistryEnum;   // default LiFePO4 ở BE
+  maxCycleCount?: number;             // default 2000 ở BE
   description?: string;
 }
+// PUT full update — name, nominalCapacityAh, nominalVoltage bắt buộc
+export type UpdateBatteryTypePayload = CreateBatteryTypePayload;
 
-export type UpdateBatteryTypePayload = Required<
-  Pick<CreateBatteryTypePayload, 'name' | 'nominalCapacityAh' | 'nominalVoltage'>
-> & Omit<CreateBatteryTypePayload, 'name' | 'nominalCapacityAh' | 'nominalVoltage'>;
-// PUT là full update: name, nominalCapacityAh, nominalVoltage bắt buộc
-```
-
-```ts
-// battery-group.types.ts
-export interface BatteryGroup {
+// threshold.types.ts
+export interface ThresholdConfigDto {
   id: string;
-  siteId: string;
-  siteName: string;
-  name: string;
   batteryTypeId: string;
   batteryTypeName: string;
-  batteryCount: number;         // denormalized counter, auto-updated bởi BE
-  createdAt: string;
+  voltageMin: number;
+  voltageMax: number;
+  temperatureMax: number;
+  temperatureMin: number;
+  socWarningThreshold: number;
+  socCriticalThreshold: number;
+  currentMaxCharge?: number;     // nullable — không giới hạn
+  currentMaxDischarge?: number;  // nullable
+  sohWarningThreshold?: number;  // nullable — không monitor SOH
+  sohCriticalThreshold?: number; // nullable
+  effectiveFromUtc: string;
+  isActive: boolean;
 }
-
-export interface BatteryGroupListParams {
-  pageNumber?: number;
-  pageSize?: number;
-  keyword?: string;
-  siteId?: string;
-  batteryTypeId?: string;       // thêm từ docs
-  includeDeleted?: boolean;
+export interface ThresholdListParams {
+  pageNumber?: number; pageSize?: number; batteryTypeId?: string; isActive?: boolean;
 }
-
-export interface CreateBatteryGroupPayload {
-  siteId: string;
-  name: string;
-  batteryTypeId: string;
+export interface ThresholdByTypeParams {
+  includeInactive?: boolean;     // default false
 }
-
-export type UpdateBatteryGroupPayload = CreateBatteryGroupPayload;
-// PUT full update — tất cả 3 field đều bắt buộc
-// ⚠️ Nếu group đang có asset: BE trả 409 khi đổi siteId hoặc batteryTypeId
+export interface UpsertThresholdPayload {
+  voltageMin: number; voltageMax: number;
+  temperatureMax: number; temperatureMin: number;
+  socWarningThreshold: number; socCriticalThreshold: number;
+  currentMaxCharge?: number; currentMaxDischarge?: number;
+  sohWarningThreshold?: number; sohCriticalThreshold?: number;
+  effectiveFromUtc?: string;     // default UtcNow ở BE
+  // ⚠️ KHÔNG có batteryTypeId trong body — BE gán từ path param
+}
 ```
 
-## ENDPOINTS shape (trong `endpoints.ts`)
-
-```ts
-BATTERY_TYPES: {
-  LIST: '/api/battery-types',
-  DETAIL: (id: string) => `/api/battery-types/${id}`,
-  CREATE: '/api/battery-types',
-  UPDATE: (id: string) => `/api/battery-types/${id}`,
-  DELETE: (id: string) => `/api/battery-types/${id}`,
-  RESTORE: (id: string) => `/api/battery-types/${id}/restore`, // confirmed từ docs
-},
-BATTERY_GROUPS: {
-  LIST: '/api/battery-groups',
-  DETAIL: (id: string) => `/api/battery-groups/${id}`,
-  CREATE: '/api/battery-groups',
-  UPDATE: (id: string) => `/api/battery-groups/${id}`,
-  DELETE: (id: string) => `/api/battery-groups/${id}`,
-  RESTORE: (id: string) => `/api/battery-groups/${id}/restore`, // confirmed từ docs
-},
-```
-
-## QUERY_KEY factories (trong `queryKeys.ts`)
-
-```ts
-export const KEY = {
-  currentUser: 'currentUser',
-  batteryTypes: 'batteryTypes',  // root — dùng để invalidate broad
-  batteryGroups: 'batteryGroups',
-} as const;
-
-export const QUERY_KEY = {
-  currentUser: {
-    session: () => [KEY.currentUser, 'session'] as const,
-  },
-  batteryTypes: {
-    list: (params?: BatteryTypeListParams) => [KEY.batteryTypes, 'list', params] as const,
-    detail: (id: string) => [KEY.batteryTypes, 'detail', id] as const,
-  },
-  batteryGroups: {
-    list: (params?: BatteryGroupListParams) => [KEY.batteryGroups, 'list', params] as const,
-    detail: (id: string) => [KEY.batteryGroups, 'detail', id] as const,
-  },
-} as const;
-```
-
-## Zod Schemas (validation từ docs)
-
+## Schema (Zod)
 ```ts
 // battery-type.schema.ts
-export const createBatteryTypeSchema = z.object({
+createBatteryTypeSchema = z.object({
   name: z.string().min(1).max(100),
   manufacturer: z.string().max(100).optional(),
   nominalCapacityAh: z.number().positive(),
   nominalVoltage: z.number().positive(),
-  chemistry: z.nativeEnum(BatteryChemistry).optional(),
+  chemistry: z.nativeEnum(BatteryChemistryEnum).optional(),
   maxCycleCount: z.number().int().positive().optional(),
   description: z.string().max(500).optional(),
 });
+updateBatteryTypeSchema = createBatteryTypeSchema;  // PUT full update
 
-// updateBatteryTypeSchema — PUT yêu cầu name, nominalCapacityAh, nominalVoltage bắt buộc
-// Dùng createBatteryTypeSchema với .required() override cho 3 fields đó
-export const updateBatteryTypeSchema = createBatteryTypeSchema.extend({
-  name: z.string().min(1).max(100),
-  nominalCapacityAh: z.number().positive(),
-  nominalVoltage: z.number().positive(),
-});
-// Note: createBatteryTypeSchema đã mark 3 fields này là required — schema thực tế giống nhau.
-// updateBatteryTypeSchema được tạo riêng để semantic rõ ràng cho UI form sau.
+// threshold.schema.ts
+upsertThresholdSchema = z.object({
+  voltageMin: z.number().positive(),
+  voltageMax: z.number().positive(),
+  temperatureMin: z.number(),
+  temperatureMax: z.number(),
+  socWarningThreshold: z.number().min(0).max(100),
+  socCriticalThreshold: z.number().min(0).max(100),
+  currentMaxCharge: z.number().positive().optional(),
+  currentMaxDischarge: z.number().positive().optional(),
+  sohWarningThreshold: z.number().min(0).max(100).optional(),
+  sohCriticalThreshold: z.number().min(0).max(100).optional(),
+  effectiveFromUtc: z.string().optional(),
+})
+  .refine(d => d.voltageMax > d.voltageMin,
+    { message: "voltageMax phải lớn hơn voltageMin", path: ["voltageMax"] })
+  .refine(d => d.temperatureMax > d.temperatureMin,
+    { message: "temperatureMax phải lớn hơn temperatureMin", path: ["temperatureMax"] })
+  .refine(d => d.socCriticalThreshold < d.socWarningThreshold,
+    { message: "socCritical phải nhỏ hơn socWarning", path: ["socCriticalThreshold"] })
+  .refine(d => d.sohWarningThreshold == null || d.sohCriticalThreshold == null
+            || d.sohCriticalThreshold < d.sohWarningThreshold,
+    { message: "sohCritical phải nhỏ hơn sohWarning", path: ["sohCriticalThreshold"] });
+```
 
-// battery-group.schema.ts
-export const createBatteryGroupSchema = z.object({
-  siteId: z.string().uuid(),
-  name: z.string().min(1).max(100),
-  batteryTypeId: z.string().uuid(),
-});
+## Endpoints
+| Method | Path | Auth | Request | Response |
+|--------|------|------|---------|----------|
+| GET | `/api/battery-types` | Admin/Manager/Staff | query: `pageNumber, pageSize, keyword?, includeDeleted?` | `PaginationResponse<BatteryTypeDto>` |
+| GET | `/api/battery-types/{id}` | Admin/Manager/Staff | — | `CommonResponse<BatteryTypeDto>` |
+| POST | `/api/admin/battery-types` | Admin | `CreateBatteryTypePayload` | `CommonResponse<BatteryTypeDto>` (201) |
+| PUT | `/api/admin/battery-types/{id}` | Admin | `UpdateBatteryTypePayload` | `CommonResponse<BatteryTypeDto>` |
+| DELETE | `/api/admin/battery-types/{id}` | Admin | — | `CommonResponse<null>` |
+| PATCH | `/api/admin/battery-types/{id}/restore` | Admin | — | `CommonResponse<null>` |
+| GET | `/api/thresholds` | Admin/Manager | query: `pageNumber, pageSize, batteryTypeId?, isActive?` | `PaginationResponse<ThresholdConfigDto>` |
+| GET | `/api/thresholds/by-type/{batteryTypeId}` | Admin/Manager | query: `includeInactive?` | `CommonResponse<ThresholdConfigDto>` |
+| PUT | `/api/admin/thresholds/by-type/{batteryTypeId}` | Admin | `UpsertThresholdPayload` (KHÔNG cần `batteryTypeId`) | `CommonResponse<ThresholdConfigDto>` |
 
-// updateBatteryGroupSchema — PUT full update, tất cả 3 fields bắt buộc (giống create)
-export const updateBatteryGroupSchema = createBatteryGroupSchema;
+```ts
+// endpoints.ts shape
+BATTERY_TYPES: {
+  LIST: '/api/battery-types',
+  DETAIL: (id) => `/api/battery-types/${id}`,
+  CREATE: '/api/admin/battery-types',
+  UPDATE: (id) => `/api/admin/battery-types/${id}`,
+  DELETE: (id) => `/api/admin/battery-types/${id}`,
+  RESTORE: (id) => `/api/admin/battery-types/${id}/restore`,
+},
+THRESHOLDS: {
+  LIST: '/api/thresholds',
+  BY_TYPE: (batteryTypeId) => `/api/thresholds/by-type/${batteryTypeId}`,
+  UPSERT: (batteryTypeId) => `/api/admin/thresholds/by-type/${batteryTypeId}`,
+},
+```
+
+```ts
+// queryKeys.ts
+KEY.batteryTypes = 'batteryTypes';
+KEY.thresholds   = 'thresholds';
+QUERY_KEY.batteryTypes = {
+  list: (params?) => [KEY.batteryTypes, 'list', params],
+  detail: (id) => [KEY.batteryTypes, 'detail', id],
+};
+QUERY_KEY.thresholds = {
+  list: (params?) => [KEY.thresholds, 'list', params],
+  byType: (batteryTypeId, params?) => [KEY.thresholds, 'by-type', batteryTypeId, params],
+};
 ```
 
 ## Workflow
-Task này chỉ setup data layer — không có user flow hay UI. Workflow section sẽ được bổ sung khi làm issue UI sau (table, form, dialog).
+Task chỉ setup data layer — không có user flow/UI. Quy ước dùng cho issue UI sau:
 
-## Invalidation Strategy (explicit)
-
+**Invalidation:**
 | Mutation | invalidateQueries | removeQueries |
-|----------|------------------|---------------|
-| createBatteryType | `KEY.batteryTypes` | — |
-| updateBatteryType | `KEY.batteryTypes` | — |
-| deleteBatteryType | `KEY.batteryTypes` | `QUERY_KEY.batteryTypes.detail(id)` |
-| restoreBatteryType | `KEY.batteryTypes` | — |
-| createBatteryGroup | `KEY.batteryGroups` | — |
-| updateBatteryGroup | `KEY.batteryGroups` | — |
-| deleteBatteryGroup | `KEY.batteryGroups` | `QUERY_KEY.batteryGroups.detail(id)` |
-| restoreBatteryGroup | `KEY.batteryGroups` | — |
+|----------|-------------------|---------------|
+| create/update/restore BatteryType | `KEY.batteryTypes` | — |
+| delete BatteryType | `KEY.batteryTypes` | `QUERY_KEY.batteryTypes.detail(id)` |
+| upsert Threshold | `KEY.thresholds` | — |
 
-## Edge Cases
-- List API trả empty `items: []` → TanStack Query xử lý tự nhiên
-- Mutation onError → `handleErrorApi({ error })` → toast (không có form)
-- POST create trả `201` (không phải 200) — Axios xử lý bình thường, `isSuccess` vẫn check được
-- PUT battery-groups: BE trả `409` nếu đổi `siteId`/`batteryTypeId` khi group đang có asset
+**Edge cases:**
+- POST create trả `201` — Axios xử lý bình thường, vẫn check `isSuccess`.
+- DELETE BatteryType: BE trả `409` nếu loại pin đang gán cho asset.
+- GET threshold by-type: có thể `404` nếu loại pin chưa cấu hình ngưỡng và `includeInactive=false`.
+- PUT upsert threshold idempotent: chưa có → tạo (`isActive=true`); có active → ghi đè.
+- Field nullable (`currentMax*`, `soh*`) → không gửi nếu trống (không gửi `0`).
+- Mutation không có form → `onError: handleErrorApi({ error })` → toast.
+
+## Steps
+- [x] Battery Types — types/schema/service/hooks + write-op prefix `/api/admin/...`
+- [x] Thresholds — `endpoints.ts` thêm `THRESHOLDS` (3)
+- [x] Thresholds — `queryKeys.ts` thêm `thresholds` root + factories
+- [x] Thresholds — `threshold.types.ts`
+- [x] Thresholds — `threshold.schema.ts` (upsert + 4 refine)
+- [x] Thresholds — `threshold.service.ts` (3 functions)
+- [x] Thresholds — `useThresholds.ts` (list + byType)
+- [x] Thresholds — `useThresholdsMutation.ts` (upsert)
+- [x] `tsc --noEmit` + `eslint src/features/admin --max-warnings=0` + `npm run build` → PASS
 
 ## Success Criteria
-
 | Tiêu chí | Cách verify |
 |----------|------------|
 | `tsc --noEmit` không lỗi | `npx tsc --noEmit` |
 | ESLint 0 warning | `npx eslint src/features/admin --max-warnings=0` |
 | Build thành công | `npm run build` |
-
-## Steps
-- [x] Bước 1: `api.types.ts` đã có `totalItems` — không cần fix — 2026-05-20
-- [x] Bước 2: Cập nhật `endpoints.ts` — BATTERY_TYPES (6), BATTERY_GROUPS (6) — 2026-05-20
-- [x] Bước 3: Cập nhật `queryKeys.ts` — batteryGroups root + factories; batteryTypes detail factory — 2026-05-20
-- [x] Bước 4: Tạo `battery-type.types.ts` — BatteryChemistryEnum + BatteryTypeDto + payloads — 2026-05-20
-- [x] Bước 5: Tạo `battery-group.types.ts` — BatteryGroupDto + payloads — 2026-05-20
-- [x] Bước 6: Tạo `battery-type.schema.ts` — create/update schema (z.union literals) — 2026-05-20
-- [x] Bước 7: Tạo `battery-group.schema.ts` — create/update schema — 2026-05-20
-- [x] Bước 8: Cập nhật `battery-type.service.ts` — 6 API functions — 2026-05-20
-- [x] Bước 9: Tạo `battery-group.service.ts` — 6 API functions — 2026-05-20
-- [x] Bước 10: Cập nhật `useBatteryTypes.ts` — list + detail queries — 2026-05-20
-- [x] Bước 11: Tạo `useBatteryTypesMutation.ts` — create/update/delete/restore — 2026-05-20
-- [x] Bước 12: Tạo `useBatteryGroups.ts` — list + detail queries — 2026-05-20
-- [x] Bước 13: Tạo `useBatteryGroupsMutation.ts` — create/update/delete/restore — 2026-05-20
-- [x] Bước 14: `tsc --noEmit` + `eslint --max-warnings=0` → PASS — 2026-05-20
-
-## Câu hỏi đã giải đáp
-
-| Câu hỏi | Nguồn | Trả lời |
-|---------|-------|---------|
-| `totalCount` hay `totalItems`? | `docs/api-battery.md` pagination shape | **`totalItems`** — confirmed. Zero consumer hiện tại (`grep` xác nhận chỉ có `api.types.ts`). |
-| Restore path: `/{id}` hay `/{id}/restore`? | `docs/api-battery.md` PATCH section | **`/{id}/restore`** — confirmed. Docs ghi rõ `PATCH /api/battery-types/{id}/restore`. |
-| Shape BatteryType | `docs/api-battery.md` BatteryTypeDto | Confirmed — thêm `manufacturer?`, `decimal` fields |
-| Shape BatteryGroup | BE response + docs | Confirmed — thêm `batteryTypeId` filter param |
-| BatteryChemistry values | `docs/api-battery.md` BatteryChemistryEnum | LiFePO4=1, Nmc=2, Nca=3, Lco=4, Other=99 (5 values, không phải 3) |
-| List params | `docs/api-battery.md` query params | `keyword` (không phải `search`) + `includeDeleted` + `batteryTypeId` cho groups |
-| Description max length | `docs/api-battery.md` POST validation | **Max 500 ký tự** — confirmed |
-| POST response code | `docs/api-battery.md` | **201** cho cả BatteryType lẫn BatteryGroup |
-| UI scope | User xác nhận | Không làm UI — chỉ setup data layer |

@@ -10,12 +10,10 @@ export interface SiteDto {
   address?: string;
   latitude?: number;
   longitude?: number;
-  capacityKw?: number;
   installDate: string;
   status: SiteStatusEnum;
   contactPersonName?: string;
   contactPersonPhone?: string;
-  batteryGroupCount: number;
   batteryAssetCount: number;
   activeBatteryAssetCount: number;
   createdAt: string;
@@ -28,7 +26,6 @@ export interface SiteDashboardDto {
   totalAssets: number;
   activeAssets: number;
   assetsWithActiveAlerts: number;
-  totalCapacityKw?: number;
   lastAlertAt?: string;
   healthScore: number;
 }
@@ -45,7 +42,6 @@ export interface SiteFilterParams {
 export interface SiteAssetsFilterParams {
   pageNumber?: number;
   pageSize?: number;
-  batteryGroupId?: string;
   status?: BatteryStatusEnum;
 }
 
@@ -55,7 +51,6 @@ export interface SiteCreatePayload {
   address?: string;
   latitude?: number | null;
   longitude?: number | null;
-  capacityKw?: number | null;
   installDate: string;
   status?: SiteStatusEnum;
   contactPersonName?: string;

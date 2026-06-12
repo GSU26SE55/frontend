@@ -36,16 +36,19 @@ export const adminSiteService = {
     ),
 
   create: (payload: SiteCreatePayload) =>
-    axiosInstance.post<CommonResponse<SiteDto>>(ENDPOINTS.SITES.LIST, payload),
+    axiosInstance.post<CommonResponse<SiteDto>>(
+      ENDPOINTS.SITES.CREATE,
+      payload,
+    ),
 
   update: (id: string, payload: SiteUpdatePayload) =>
     axiosInstance.put<CommonResponse<SiteDto>>(
-      ENDPOINTS.SITES.DETAIL(id),
+      ENDPOINTS.SITES.UPDATE(id),
       payload,
     ),
 
   delete: (id: string) =>
-    axiosInstance.delete<CommonResponse<null>>(ENDPOINTS.SITES.DETAIL(id)),
+    axiosInstance.delete<CommonResponse<null>>(ENDPOINTS.SITES.DELETE(id)),
 
   restore: (id: string) =>
     axiosInstance.patch<CommonResponse<null>>(ENDPOINTS.SITES.RESTORE(id)),

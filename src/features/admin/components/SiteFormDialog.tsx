@@ -66,7 +66,6 @@ export default function SiteFormDialog({
           address: editData.address ?? "",
           latitude: editData.latitude?.toString() ?? "",
           longitude: editData.longitude?.toString() ?? "",
-          capacityKw: editData.capacityKw?.toString() ?? "",
           installDate: editData.installDate.slice(0, 10),
           status: editData.status,
           contactPersonName: editData.contactPersonName ?? "",
@@ -87,7 +86,6 @@ export default function SiteFormDialog({
       address: data.address || undefined,
       latitude: toNumOrNull(data.latitude),
       longitude: toNumOrNull(data.longitude),
-      capacityKw: toNumOrNull(data.capacityKw),
       contactPersonName: data.contactPersonName || undefined,
       contactPersonPhone: data.contactPersonPhone || undefined,
     };
@@ -180,21 +178,6 @@ export default function SiteFormDialog({
                 </p>
               )}
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="capacityKw">Công suất (kW)</Label>
-            <Input
-              id="capacityKw"
-              type="number"
-              step="any"
-              {...register("capacityKw")}
-            />
-            {errors.capacityKw && (
-              <p className="text-sm text-destructive">
-                {errors.capacityKw.message}
-              </p>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

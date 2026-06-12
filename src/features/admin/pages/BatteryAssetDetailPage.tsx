@@ -11,6 +11,9 @@ import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAs
 import BatteryRealtimeCard from "@/features/admin/components/BatteryRealtimeCard";
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/TransferOwnerDialog";
+import SensorChart from "@/features/admin/components/SensorChart";
+import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -159,12 +162,6 @@ export default function BatteryAssetDetailPage() {
             <span className="font-medium">{asset.siteName ?? "—"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Nhom</span>
-            <span className="font-medium">
-              {asset.batteryGroupName ?? "—"}
-            </span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-muted-foreground">Ngay lap dat</span>
             <span className="font-medium tabular-nums">
               {asset.installDate.slice(0, 10)}
@@ -192,6 +189,19 @@ export default function BatteryAssetDetailPage() {
       </Card>
 
       <BatteryRealtimeCard assetId={id} />
+
+      <Tabs defaultValue="chart">
+        <TabsList>
+          <TabsTrigger value="chart">Bieu do</TabsTrigger>
+          <TabsTrigger value="history">Lich su cam bien</TabsTrigger>
+        </TabsList>
+        <TabsContent value="chart" className="mt-4">
+          <SensorChart assetId={id} />
+        </TabsContent>
+        <TabsContent value="history" className="mt-4">
+          <SensorHistoryTable assetId={id} />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <BatteryAssetForm

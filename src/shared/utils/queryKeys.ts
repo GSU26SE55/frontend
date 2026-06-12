@@ -8,7 +8,8 @@ export const KEY = {
   files: "files",
   batteryAssets: "batteryAssets",
   batteryTypes: "batteryTypes",
-  batteryGroups: "batteryGroups",
+  sensorReadings: "sensorReadings",
+  thresholds: "thresholds",
   tickets: "tickets",
   staffTickets: "staffTickets",
   admin: {
@@ -57,9 +58,18 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.batteryTypes, "list", params] as const,
     detail: (id: string) => [KEY.batteryTypes, "detail", id] as const,
   },
-  batteryGroups: {
-    list: (params?: object) => [KEY.batteryGroups, "list", params] as const,
-    detail: (id: string) => [KEY.batteryGroups, "detail", id] as const,
+  sensorReadings: {
+    latest: (assetId: string) =>
+      [KEY.sensorReadings, "latest", assetId] as const,
+    history: (assetId: string, params?: object) =>
+      [KEY.sensorReadings, "history", assetId, params] as const,
+    aggregate: (assetId: string, params?: object) =>
+      [KEY.sensorReadings, "aggregate", assetId, params] as const,
+  },
+  thresholds: {
+    list: (params?: object) => [KEY.thresholds, "list", params] as const,
+    byType: (batteryTypeId: string, params?: object) =>
+      [KEY.thresholds, "by-type", batteryTypeId, params] as const,
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,

@@ -68,7 +68,6 @@ export default function BatteryAssetForm({
           batteryTypeId: editData.batteryTypeId,
           customerId: editData.customerId,
           siteId: editData.siteId ?? "",
-          batteryGroupId: editData.batteryGroupId ?? "",
           installDate: editData.installDate.slice(0, 10),
           warrantyEndDate: editData.warrantyEndDate?.slice(0, 10) ?? "",
           location: editData.location ?? "",
@@ -88,7 +87,6 @@ export default function BatteryAssetForm({
       batteryTypeId: data.batteryTypeId,
       customerId: data.customerId,
       siteId: data.siteId || undefined,
-      batteryGroupId: data.batteryGroupId || undefined,
       installDate: new Date(data.installDate).toISOString(),
       warrantyEndDate: data.warrantyEndDate
         ? new Date(data.warrantyEndDate).toISOString()

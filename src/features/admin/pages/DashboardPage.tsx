@@ -287,7 +287,6 @@ export default function AdminDashboardPage() {
                     </p>
                     <p className="text-[11px] text-muted-foreground">
                       {s.batteryAssetCount} pin
-                      {s.capacityKw != null ? ` · ${s.capacityKw} kW` : ""}
                     </p>
                   </div>
                   <div className="w-24 h-1.5 rounded-full bg-border shrink-0">
