@@ -69,7 +69,14 @@ export default function SensorChart({ assetId }: SensorChartProps) {
     <Card>
       <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base">Biểu đồ cảm biến</CardTitle>
-        <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
+        <Select
+          value={range}
+          items={(Object.keys(RANGES) as RangeKey[]).map((k) => ({
+            value: k,
+            label: RANGES[k].label,
+          }))}
+          onValueChange={(v) => setRange(v as RangeKey)}
+        >
           <SelectTrigger size="sm" className="w-28">
             <SelectValue />
           </SelectTrigger>

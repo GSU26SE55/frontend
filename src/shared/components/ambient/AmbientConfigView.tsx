@@ -83,6 +83,7 @@ export default function AmbientConfigView({
         <Label className="text-sm">Site</Label>
         <Select
           value={siteId || null}
+          items={sites.map((s) => ({ value: s.id, label: s.name }))}
           onValueChange={(v: string | null) => setSiteId(v ?? "")}
         >
           <SelectTrigger className="w-72">
