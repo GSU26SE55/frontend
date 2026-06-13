@@ -23,6 +23,7 @@ import {
 import TicketStatusBadge from "../components/TicketStatusBadge";
 import TicketPriorityBadge from "../components/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
+import TicketAttachments from "@/shared/components/common/TicketAttachments";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Charging: "Lỗi sạc",
@@ -185,6 +186,14 @@ export default function AdminTicketDetailPage() {
                 <p className="text-sm whitespace-pre-wrap">
                   {ticket.description}
                 </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {ticket.attachments && ticket.attachments.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <TicketAttachments attachments={ticket.attachments} />
               </CardContent>
             </Card>
           )}
