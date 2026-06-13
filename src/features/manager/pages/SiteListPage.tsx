@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import SiteTable from "@/features/manager/components/SiteTable";
+import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
 const DEFAULTS = {
@@ -69,21 +70,20 @@ export default function ManagerSiteListPage() {
             <span className="text-sm">Chưa có site nào.</span>
           </div>
         ) : (
-          <div className="p-0">
-            <SiteTable
-              data={items}
-              totalItems={totalItems}
-              totalPages={data?.totalPages ?? 1}
-              hasNextPage={data?.hasNextPage ?? false}
-              hasPreviousPage={data?.hasPreviousPage ?? false}
-              pageNumber={filters.pageNumber}
-              pageSize={filters.pageSize}
-              onPageChange={(p) => setFilter("pageNumber", p)}
-              onPageSizeChange={(s) => setFilter("pageSize", s)}
-            />
-          </div>
+          <SiteTable data={items} />
         )}
       </Card>
+
+      <DataPagination
+        totalItems={totalItems}
+        totalPages={data?.totalPages ?? 1}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={data?.hasPreviousPage ?? false}
+        pageNumber={filters.pageNumber}
+        pageSize={filters.pageSize}
+        onPageChange={(p) => setFilter("pageNumber", p)}
+        onPageSizeChange={(s) => setFilter("pageSize", s)}
+      />
     </div>
   );
 }
