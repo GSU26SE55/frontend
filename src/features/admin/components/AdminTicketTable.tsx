@@ -16,6 +16,20 @@ import TicketStatusBadge from "./TicketStatusBadge";
 import TicketPriorityBadge from "./TicketPriorityBadge";
 import DataPagination from "@/shared/components/common/DataPagination";
 
+const CATEGORY_LABELS: Record<string, string> = {
+  Maintenance: "Bảo trì",
+  Repair: "Sửa chữa",
+  Inspection: "Kiểm tra",
+  Emergency: "Khẩn cấp",
+  Replacement: "Thay thế",
+  Upgrade: "Nâng cấp",
+  Other: "Khác",
+  Charging: "Lỗi sạc",
+  Overheat: "Quá nhiệt",
+  NoPower: "Không điện",
+  Performance: "Hiệu suất",
+};
+
 interface Props {
   data?: PaginationResponse<TicketDTO>;
   isLoading: boolean;
@@ -62,6 +76,7 @@ export default function AdminTicketTable({
             <TableRow>
               <TableHead className="w-32">Mã</TableHead>
               <TableHead>Tiêu đề</TableHead>
+              <TableHead className="w-32">Loại</TableHead>
               <TableHead className="w-36">Trạng thái</TableHead>
               <TableHead className="w-32">Priority</TableHead>
               <TableHead className="w-36">Ngày tạo</TableHead>
@@ -84,6 +99,9 @@ export default function AdminTicketTable({
                 </TableCell>
                 <TableCell className="max-w-xs truncate">
                   {ticket.title}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {CATEGORY_LABELS[ticket.category] ?? ticket.category}
                 </TableCell>
                 <TableCell>
                   <TicketStatusBadge status={ticket.status} />

@@ -52,6 +52,10 @@ export default function TicketListPage() {
         </div>
         <Select
           value={filters.status || null}
+          items={STATUS_FILTER_OPTIONS.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
           }

@@ -34,6 +34,20 @@ const STATUS_LABELS: Record<string, string> = {
   Incident: "Sự cố",
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  Maintenance: "Bảo trì",
+  Repair: "Sửa chữa",
+  Inspection: "Kiểm tra",
+  Emergency: "Khẩn cấp",
+  Replacement: "Thay thế",
+  Upgrade: "Nâng cấp",
+  Other: "Khác",
+  Charging: "Lỗi sạc",
+  Overheat: "Quá nhiệt",
+  NoPower: "Không điện",
+  Performance: "Hiệu suất",
+};
+
 const DEFAULTS = {
   keyword: "",
   status: "",
@@ -77,6 +91,10 @@ export default function TicketListPage() {
 
         <Select
           value={filters.status || null}
+          items={Object.values(TicketStatusEnum).map((s) => ({
+            value: s,
+            label: STATUS_LABELS[s] ?? s,
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
           }
@@ -96,6 +114,11 @@ export default function TicketListPage() {
 
         <Select
           value={filters.priority || null}
+          items={[
+            { value: TicketPriorityEnum.P1Critical, label: "P1 Critical" },
+            { value: TicketPriorityEnum.P2High, label: "P2 High" },
+            { value: TicketPriorityEnum.P3Normal, label: "P3 Normal" },
+          ]}
           onValueChange={(v: string | null) =>
             setFilter("priority", v || undefined)
           }
@@ -117,6 +140,10 @@ export default function TicketListPage() {
 
         <Select
           value={filters.category || null}
+          items={Object.values(TicketCategoryEnum).map((c) => ({
+            value: c,
+            label: CATEGORY_LABELS[c] ?? c,
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
           }
@@ -128,7 +155,7 @@ export default function TicketListPage() {
             <SelectItem value={null}>Tất cả loại</SelectItem>
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
-                {c}
+                {CATEGORY_LABELS[c] ?? c}
               </SelectItem>
             ))}
           </SelectContent>

@@ -50,13 +50,18 @@ const PRIORITY_LABELS: Record<TicketPriority, string> = {
   P3Normal: "P3 Normal",
 };
 
-const CATEGORY_LABELS: Partial<Record<TicketCategory, string>> = {
+const CATEGORY_LABELS: Record<TicketCategory, string> = {
+  Maintenance: "Bảo trì",
+  Repair: "Sửa chữa",
+  Inspection: "Kiểm tra",
+  Emergency: "Khẩn cấp",
+  Replacement: "Thay thế",
+  Upgrade: "Nâng cấp",
+  Other: "Khác",
   Charging: "Lỗi sạc",
   Overheat: "Quá nhiệt",
   NoPower: "Không điện",
   Performance: "Hiệu suất",
-  Repair: "Sửa chữa",
-  Other: "Khác",
 };
 
 const DEFAULTS = {
@@ -105,6 +110,10 @@ export default function AdminTicketListPage() {
 
         <Select
           value={filters.status || null}
+          items={STATUS_OPTIONS.map((s) => ({
+            value: s,
+            label: STATUS_LABELS[s],
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
           }
@@ -124,6 +133,10 @@ export default function AdminTicketListPage() {
 
         <Select
           value={filters.priority || null}
+          items={PRIORITY_OPTIONS.map((p) => ({
+            value: p,
+            label: PRIORITY_LABELS[p],
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("priority", v || undefined)
           }
@@ -143,6 +156,10 @@ export default function AdminTicketListPage() {
 
         <Select
           value={filters.category || null}
+          items={CATEGORY_OPTIONS.map((c) => ({
+            value: c,
+            label: CATEGORY_LABELS[c],
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
           }
