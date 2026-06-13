@@ -364,8 +364,8 @@ export default function ManagerDashboardPage() {
 
       {/* ── Row 3: At-risk table | Weekly chart ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <Card className="lg:col-span-3">
-          <CardHeader>
+        <Card className="lg:col-span-3 gap-0 py-0 overflow-hidden">
+          <CardHeader className="border-b border-border py-4">
             <CardTitle>Sites cần chú ý</CardTitle>
             <CardDescription>
               Sức khỏe &lt; 80% · {atRisk.length} site
