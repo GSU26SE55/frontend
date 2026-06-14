@@ -62,7 +62,7 @@ export default function DataPagination({
   const pageRange = buildPageRange(pageNumber, totalPages);
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between px-1">
       {/* Left: total */}
       <span className="text-sm text-muted-foreground whitespace-nowrap">
         Hiển thị {from}–{to} / {totalItems}

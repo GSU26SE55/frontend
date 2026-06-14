@@ -147,6 +147,10 @@ export default function EnvironmentalIncidentsView({
       <div className="flex items-center gap-3 flex-wrap">
         <Select
           value={filters.status || null}
+          items={STATUS_OPTIONS.map((s) => ({
+            value: String(s),
+            label: STATUS_LABELS[s],
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
           }
@@ -166,6 +170,10 @@ export default function EnvironmentalIncidentsView({
 
         <Select
           value={filters.incidentType || null}
+          items={TYPE_OPTIONS.map((t) => ({
+            value: String(t),
+            label: incidentTypeLabel(t),
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("incidentType", v || undefined)
           }
@@ -186,6 +194,7 @@ export default function EnvironmentalIncidentsView({
         {sites && sites.length > 0 && (
           <Select
             value={filters.siteId || null}
+            items={sites.map((s) => ({ value: s.id, label: s.name }))}
             onValueChange={(v: string | null) =>
               setFilter("siteId", v || undefined)
             }

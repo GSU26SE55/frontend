@@ -12,6 +12,7 @@ import {
   Users,
   Edit2,
   Shield,
+  ShieldOff,
   KeyRound,
   Trash2,
   MonitorSmartphone,
@@ -41,6 +42,7 @@ import {
   useAdminAccountList,
   useAdminUnlockAccount,
   useAdminDeleteAccount,
+  useAdminReset2fa,
 } from "@/features/admin/hooks/useAdminAccounts";
 import { AccountStatusEnum } from "@/shared/types/account.types";
 import { UserRole } from "@/shared/types/session.types";
@@ -96,6 +98,7 @@ type DialogState =
   | { type: "status"; account: AccountDto }
   | { type: "role"; account: AccountDto }
   | { type: "unlock"; account: AccountDto }
+  | { type: "reset2fa"; account: AccountDto }
   | { type: "delete"; account: AccountDto }
   | { type: "detail"; account: AccountDto }
   | { type: "staffProfile"; account: AccountDto };
@@ -115,6 +118,7 @@ export default function AccountsPage() {
   const { mutate: unlock } = useAdminUnlockAccount();
   const { mutate: deleteAccount, isPending: isDeleting } =
     useAdminDeleteAccount();
+  const { mutate: reset2fa, isPending: isResetting2fa } = useAdminReset2fa();
 
   const accounts = data?.items ?? [];
   const total = data?.totalItems ?? 0;
@@ -132,6 +136,14 @@ export default function AccountsPage() {
   const handleDelete = (account: AccountDto) => {
     deleteAccount(account.id, {
       onSuccess: () => toast.success(`Đã xóa ${account.fullName}`),
+      onError: (err) => handleErrorApi({ error: err }),
+    });
+    close();
+  };
+
+  const handleReset2fa = (account: AccountDto) => {
+    reset2fa(account.id, {
+      onSuccess: () => toast.success(`Đã reset 2FA cho ${account.fullName}`),
       onError: (err) => handleErrorApi({ error: err }),
     });
     close();
@@ -330,6 +342,15 @@ export default function AccountsPage() {
                               <UserCog className="mr-2 size-4" /> Hồ sơ Staff
                             </DropdownMenuItem>
                           )}
+                          {acc.twoFactorEnabled && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setDialog({ type: "reset2fa", account: acc })
+                              }
+                            >
+                              <ShieldOff className="mr-2 size-4" /> Reset 2FA
+                            </DropdownMenuItem>
+                          )}
                           {isLocked && (
                             <>
                               <DropdownMenuSeparator />
@@ -423,6 +444,43 @@ export default function AccountsPage() {
               }
             >
               Mở khóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset 2FA confirm */}
+      <AlertDialog
+        open={dialog.type === "reset2fa"}
+        onOpenChange={(open: boolean) => !open && close()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset 2FA</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialog.type === "reset2fa" && (
+                <>
+                  Xác thực 2 lớp của <strong>{dialog.account.fullName}</strong>{" "}
+                  sẽ bị xóa (secret + backup codes). User phải enroll lại nếu
+                  muốn dùng 2FA. Chỉ thực hiện sau khi đã xác minh danh tính
+                  user qua kênh khác.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={close} />
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isResetting2fa}
+              onClick={() =>
+                dialog.type === "reset2fa" && handleReset2fa(dialog.account)
+              }
+            >
+              {isResetting2fa && (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              )}
+              Reset 2FA
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

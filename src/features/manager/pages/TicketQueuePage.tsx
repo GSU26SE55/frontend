@@ -18,6 +18,20 @@ import type { TicketDTO } from "@/shared/types/ticket.types";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
+const CATEGORY_LABELS: Record<string, string> = {
+  Maintenance: "Bảo trì",
+  Repair: "Sửa chữa",
+  Inspection: "Kiểm tra",
+  Emergency: "Khẩn cấp",
+  Replacement: "Thay thế",
+  Upgrade: "Nâng cấp",
+  Other: "Khác",
+  Charging: "Lỗi sạc",
+  Overheat: "Quá nhiệt",
+  NoPower: "Không điện",
+  Performance: "Hiệu suất",
+};
+
 const DEFAULTS = {
   priority: "",
   category: "",
@@ -54,6 +68,11 @@ export default function TicketQueuePage() {
       <div className="flex gap-2 items-center">
         <Select
           value={filters.priority || null}
+          items={[
+            { value: TicketPriorityEnum.P1Critical, label: "P1 Critical" },
+            { value: TicketPriorityEnum.P2High, label: "P2 High" },
+            { value: TicketPriorityEnum.P3Normal, label: "P3 Normal" },
+          ]}
           onValueChange={(v: string | null) =>
             setFilter("priority", v || undefined)
           }
@@ -75,6 +94,10 @@ export default function TicketQueuePage() {
 
         <Select
           value={filters.category || null}
+          items={Object.values(TicketCategoryEnum).map((c) => ({
+            value: c,
+            label: CATEGORY_LABELS[c] ?? c,
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
           }
@@ -86,7 +109,7 @@ export default function TicketQueuePage() {
             <SelectItem value={null}>Tất cả loại</SelectItem>
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
-                {c}
+                {CATEGORY_LABELS[c] ?? c}
               </SelectItem>
             ))}
           </SelectContent>

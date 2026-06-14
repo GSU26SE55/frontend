@@ -4,7 +4,8 @@ import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type {
   LoginPayload,
-  LoginResponseData,
+  LoginResultData,
+  Verify2faLoginPayload,
   RegisterPayload,
   OtpVerifyPayload,
   ResendOtpPayload,
@@ -19,15 +20,22 @@ import type { AccountDto } from "@/shared/types/account.types";
 
 export const authService = {
   login: (payload: LoginPayload) =>
-    axiosInstance.post<CommonResponse<LoginResponseData>>(
+    axiosInstance.post<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.LOGIN,
+      payload,
+    ),
+
+  // GH-295: bước 2 của 2FA login — verify TOTP/backup code bằng challengeToken
+  verify2faLogin: (payload: Verify2faLoginPayload) =>
+    axiosInstance.post<CommonResponse<LoginResultData>>(
+      ENDPOINTS.AUTH.LOGIN_VERIFY_2FA,
       payload,
     ),
 
   logout: () => axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.LOGOUT),
 
   refreshToken: (refreshToken: string) =>
-    axios.post<CommonResponse<LoginResponseData>>(
+    axios.post<CommonResponse<LoginResultData>>(
       `${env.VITE_API_BASE_URL}${ENDPOINTS.AUTH.REFRESH_TOKEN}`,
       { refreshToken },
       { timeout: 10_000 },
@@ -60,10 +68,17 @@ export const authService = {
       payload,
     ),
 
+  // GH-295: google callback trả JSON LoginResultDto (data.tokens.*), KHÔNG redirect token qua URL
+  googleCallback: (code: string, state: string) =>
+    axiosInstance.get<CommonResponse<LoginResultData>>(
+      ENDPOINTS.AUTH.GOOGLE_CALLBACK,
+      { params: { code, state } },
+    ),
+
   getMe: () => axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.AUTH.ME),
 
   acceptInvite: (payload: AcceptInvitePayload) =>
-    axiosInstance.post<CommonResponse<LoginResponseData>>(
+    axiosInstance.post<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.ACCEPT_INVITE,
       payload,
     ),

@@ -29,6 +29,7 @@ import { ResolveDialog } from "../components/ResolveDialog";
 import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
 import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
+import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
@@ -234,6 +235,7 @@ export default function TicketDetailPage() {
               </p>
             </div>
           )}
+          <TicketAttachments attachments={ticket.attachments} />
           {ticket.resolutionSummary && (
             <div>
               <p className="text-muted-foreground text-sm mb-1">

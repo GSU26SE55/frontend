@@ -1,9 +1,100 @@
 # Plan — GH-11: [FE] Flow Authentication
 
 ## Metadata
-- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED → **NEEDS REWORK (GH-295)** | **Role:** FE | **Ngày:** 2026-05-20, cập nhật 2026-06-14
 - **Issue:** #11 — https://github.com/GSU26SE55/frontend/issues/11
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
+
+---
+
+## ⚠️ GH-295 Contract Update (2026-06-14) — BẮT BUỘC SỬA TRƯỚC KHI FIX CODE
+
+> Plan này SHIPPED 2026-05-20, TRƯỚC breaking change **GH-295**. `docs/api-auth.md` (bản hiện tại) đã đổi contract. Các điểm bên dưới là nguồn sự thật — phần Endpoints/Types/Approach cũ phía dưới giữ nguyên để tham chiếu lịch sử, nhưng **đã lỗi thời** ở những chỗ được đánh dấu.
+
+> **Đã đối chiếu codebase hiện tại (2026-06-14):** Code THỰC TẾ vẫn dùng shape cũ — chưa migrate:
+> - `auth.types.ts:40` `LoginResponseData { accessToken, refreshToken }` phẳng (không có `tokens`/`challenge`/`requiresTwoFactor`).
+> - `useLogin.ts:18` `const { accessToken, refreshToken } = res.data` — đọc trực tiếp, sẽ `undefined` với shape mới.
+> - `axios.ts:62` `tryRefresh` đọc `res.data.data` phẳng — cùng lỗi.
+> - `auth.service.ts:30,66` refresh-token + acceptInvite type `CommonResponse<LoginResponseData>` phẳng.
+> - `endpoints.ts` thiếu `AUTH.LOGIN_VERIFY_2FA`; vẫn còn group `USERS:` (dòng 38).
+> - `auth.types.ts:12` `RegisterPayload` vẫn có `confirmPassword` → gửi thừa.
+> → Tất cả điểm C1–C5 đều cần sửa ở CẢ code (chưa làm).
+
+### C1 — 🔴 Response login/refresh/google/accept-invite: wrap trong `data.tokens.*`
+
+Trước GH-295: `data.accessToken` / `data.refreshToken` phẳng.
+Sau GH-295 ([api-auth.md §1 `POST /api/auth/login`](../../docs/api-auth.md)): discriminated union `LoginResultDto`:
+
+```ts
+// LoginResultDto — shape MỚI, áp dụng cho: login, refresh-token, google/callback, accept-invite
+interface TokenDTO { accessToken: string; refreshToken: string; }
+interface TwoFactorChallengeDto {
+  challengeToken: string;       // 32 hex, TTL 5 phút (Redis)
+  expiresInSeconds: number;     // luôn 300
+  methods: string[];            // luôn ["totp", "backupCode"]
+}
+interface LoginResultData {
+  tokens: TokenDTO | null;          // set khi login complete (Case A); null khi 2FA on (Case B)
+  challenge: TwoFactorChallengeDto | null;  // set khi 2FA on (Case B); null khi Case A
+  requiresTwoFactor: boolean;       // computed: challenge != null
+}
+```
+
+**Sửa mọi nơi đọc token:**
+- `saveTokens(res.data.data.accessToken, ...)` → `saveTokens(res.data.data.tokens.accessToken, res.data.data.tokens.refreshToken)`
+- Axios refresh interceptor ([Approach §tryRefresh](#approach)): `const { accessToken, refreshToken } = res.data.data` → `const { accessToken, refreshToken } = res.data.data.tokens`
+- Google callback ([Approach §Google OAuth](#approach)): `const { accessToken, refreshToken } = res.data` → `res.data.data.tokens`
+- `refresh-token` và `google/callback` **luôn** `challenge = null` (không bao giờ trả 2FA challenge).
+
+### C2 — 🔴 Login phải xử lý `requiresTwoFactor` (2FA bước 1)
+
+`useLogin` / `LoginForm` hiện chỉ handle Case A. Phải thêm rẽ nhánh:
+
+```
+POST /api/auth/login
+  ├─ data.requiresTwoFactor === false → saveTokens(data.tokens.*) → decode → setSession → redirectByRole
+  └─ data.requiresTwoFactor === true  → giữ data.challenge.challengeToken trong memory (KHÔNG cookie)
+                                         → navigate('/login/2fa') → màn hình verify-2fa
+```
+
+- Endpoint mới `POST /api/auth/login/verify-2fa` body `{ challengeToken, code, isBackupCode }` → response giống login Case A (`data.tokens.*`).
+- 2FA verify page + hook nằm ngoài scope GH-11 gốc → **tách sang ticket migrate** (xem §Migration scope cuối plan), nhưng `useLogin` BẮT BUỘC sửa trong ticket này để không crash khi `data.tokens === null`.
+
+### C3 — 🟡 `endpoints.ts`: thêm path GH-295, bỏ group `USERS` sai
+
+- Thêm `AUTH.LOGIN_VERIFY_2FA: '/api/auth/login/verify-2fa'`.
+- Group `USERS: { '/api/users', ... }` ([Endpoints block dưới](#endpoints--srcsharedutilsendpointsts)) **không tồn tại trong doc** — account management nằm ở `/api/admin/accounts` (đã đúng ở GH-30). Đánh dấu deprecated / xóa.
+
+### C4 — 🟡 Register: bỏ `confirmPassword` khỏi API body
+
+Body register doc ([api-auth.md §`POST /api/auth/register`](../../docs/api-auth.md)) KHÔNG có `confirmPassword`. Giữ `confirmPassword` là FE-only validation (giống reset-password đã làm đúng). Sửa `RegisterPayload` API body → `{ fullName, email, password, phoneNumber }`.
+
+### C5 — 🟢 Login password validation `.min(8)` → `.min(1)`
+
+Doc: login chỉ sanity-check "không rỗng", không enforce strong-password. `.min(8)` chặn nhầm user pass cũ. Đổi `login.schema.ts` password → `z.string().min(1)`.
+
+### C6 — 🟢 Comment TTL accessToken: "90 phút" → "1 giờ"
+
+Doc ghi JWT access token TTL **1 giờ**. Code lấy `exp` từ JWT nên không lỗi runtime — chỉ sửa comment cho khớp.
+
+### C7 — 🟡 Block `TICKETS` + ticket permissions sơ khai, sai so với `docs/api-ticket.md`
+
+> Block `TICKETS` (và ticket perms trong `authz.ts`) ở GH-11 là phác đoán Sprint 1 TRƯỚC khi có `docs/api-ticket.md`. Endpoints ticket chính thức đã được GH-58 (Staff), GH-59 (Manager), GH-60 (Admin) định nghĩa lại đúng (`STAFF_TICKETS`, `ADMIN.TICKETS`, `TICKETS.ACTIVITIES`). Block `TICKETS` cũ phía dưới **đã lỗi thời**.
+
+> **Đã đối chiếu codebase (2026-06-14):** [`src/shared/utils/endpoints.ts:48-60`](../../src/shared/utils/endpoints.ts) vẫn còn block `TICKETS` cũ với các endpoint **không tồn tại trong spec** — cần dọn ở ticket riêng:
+> - `LIST: '/api/tickets'`, `CREATE: '/api/tickets'` — spec tách theo role: `GET/POST /api/customer/tickets`, `GET /api/staff/tickets/me`, `GET /api/admin/tickets`. Không có list/create generic dưới `/api/tickets`.
+> - `UPDATE_STATUS: /{id}/status` — **không tồn tại**; chuyển trạng thái qua action riêng (`/start`, `/hold`, `/resume`, `/resolve`, `/triage`, `/assign`, `/approve`, `/reject`, ...).
+> - `CLOSE: /{id}/close` — **không tồn tại**; đóng qua `customer/.../rate` (→ Closed) hoặc `admin/.../approve` (→ ClosedPendingRate).
+> - `CLOSE_REJECT: /{id}/close-reject` — sai path; đúng là `POST /api/admin/tickets/{id}/triage-reject`.
+> - `ASSIGN`/`ESCALATE` dưới `/api/tickets` — sai base; đúng là `/api/admin/tickets/{id}/assign|escalate`.
+> - Giữ hợp lệ (thuộc base `/api/tickets` chung): `DETAIL`, `ACTIVITIES`, `COMMENTS`, `MAINTENANCE_LOGS`.
+> - Còn thiếu (do GH-58/59/60 bổ sung ở nhóm khác): `customer/tickets` (`me`/`reopen`/`rate`), `admin/tickets/queue`, `triage`, `reassign`, `declare-incident`, `staff .../escalate-request`, `maintenance-logs/me`.
+
+> **Ticket permissions `authz.ts` (C7):** spec ticket dùng từ ngữ `triage` / `triage-reject` / `approve` / `reject` — không phải `close` / `close_reject`. JWT mẫu (dòng 227) chỉ chứa `ticket.create`, `ticket.view`. Các perm `ticket.triage/close/close_reject/assign/escalate` **chưa được xác nhận từ BE** — cần confirm danh sách perm string thực tế (api-ticket.md không liệt kê permission). Đổi `TICKET_CLOSE`/`TICKET_CLOSE_REJECT` cho khớp tên action spec sau khi BE confirm.
+
+### Migration scope (ticket riêng — không thuộc GH-11 rework)
+- `POST /api/auth/login/verify-2fa` page + `useVerifyLogin2fa` hook → thuộc ticket 2FA migrate (cùng GH-27 2FA rework).
+- Dọn block `TICKETS` cũ trong `endpoints.ts` + sửa ticket perms trong `authz.ts` → ticket riêng (sau khi GH-58/59/60 merge và BE confirm perm list).
 
 ## Mục tiêu
 Thiết lập toàn bộ nền tảng project (router, providers, axios, Zustand session store) và implement đầy đủ auth flow gồm: Login, Register + OTP verify, Forgot Password (3 bước), Google OAuth. Đây là ticket nền tảng Sprint 1 — các feature sau (admin/manager/staff) đều phụ thuộc vào kết quả này.

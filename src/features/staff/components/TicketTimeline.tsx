@@ -25,6 +25,9 @@ const ACTION_LABELS: Partial<Record<string, string>> = {
   [ActivityActionEnum.AutoClosed]: "Tự động đóng",
   [ActivityActionEnum.ResolvedByEscalatedStaff]: "Giải quyết bởi Staff cấp cao",
   [ActivityActionEnum.TriageApproved]: "Triage được phê duyệt",
+  [ActivityActionEnum.IncidentDeclared]: "Đánh dấu Incident",
+  [ActivityActionEnum.AttachmentAdded]: "Đính kèm file",
+  [ActivityActionEnum.Closed]: "Đã đóng ticket",
 };
 
 const ROLE_LABELS: Record<string, string> = {

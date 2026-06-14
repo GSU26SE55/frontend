@@ -6,35 +6,20 @@ import { decodeToken, redirectByRole } from "@/shared/types/session.types";
 import { UserRole } from "@/shared/types/session.types";
 import {
   CHALLENGE_TOKEN_KEY,
-  type LoginPayload,
+  type Verify2faLoginPayload,
 } from "@/features/auth/types/auth.types";
 
-export const useLogin = () => {
+// GH-295: bước 2 của 2FA login — verify TOTP/backup code → cấp token (giống login Case A)
+export const useVerify2faLogin = () => {
   return useMutation({
-    mutationFn: (payload: LoginPayload) => authService.login(payload),
+    mutationFn: (payload: Verify2faLoginPayload) =>
+      authService.verify2faLogin(payload),
     onSuccess: (response) => {
       const res = response.data;
-      if (!res.isSuccess || !res.data) {
-        toast.error(res.message ?? "Đăng nhập thất bại");
+      if (!res.isSuccess || !res.data?.tokens) {
+        toast.error(res.message ?? "Xác thực 2FA thất bại");
         return;
       }
-      // GH-295: discriminated union. 2FA on → challenge set, tokens null.
-      if (res.data.requiresTwoFactor && res.data.challenge) {
-        // challengeToken giữ tạm trong sessionStorage (KHÔNG phải auth token,
-        // TTL 5 phút phía server) để màn hình /login/2fa dùng ở bước verify.
-        sessionStorage.setItem(
-          CHALLENGE_TOKEN_KEY,
-          res.data.challenge.challengeToken,
-        );
-        window.location.href = "/login/2fa";
-        return;
-      }
-
-      if (!res.data.tokens) {
-        toast.error("Đăng nhập thất bại");
-        return;
-      }
-
       const { accessToken, refreshToken } = res.data.tokens;
       saveTokens(accessToken, refreshToken);
       const user = decodeToken(accessToken);
@@ -45,6 +30,7 @@ export const useLogin = () => {
         return;
       }
 
+      sessionStorage.removeItem(CHALLENGE_TOKEN_KEY);
       window.location.href = redirectByRole(user.role);
     },
   });

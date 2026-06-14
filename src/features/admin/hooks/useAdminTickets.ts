@@ -39,8 +39,14 @@ export function useDeclareIncident() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => adminTicketService.declareIncident(id),
-    onSuccess: (_, id) => {
+    mutationFn: ({
+      id,
+      incidentDescription,
+    }: {
+      id: string;
+      incidentDescription: string;
+    }) => adminTicketService.declareIncident(id, incidentDescription),
+    onSuccess: (_, { id }) => {
       toast.success("Đã đánh dấu là Incident");
       queryClient.invalidateQueries({ queryKey: QUERY_KEY.tickets.detail(id) });
       queryClient.invalidateQueries({ queryKey: KEY.admin.tickets });

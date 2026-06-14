@@ -1,9 +1,50 @@
 # Plan — GH-59: [FE] Manager — Ticket Management
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-05
+- **Status:** REVIEWING → **NEEDS REWORK (enum drift)** | **Role:** FE | **Ngày:** 2026-06-05, cập nhật 2026-06-14
 - **Issue:** #59 — https://github.com/GSU26SE55/frontend/issues/59
 - **Sprint:** Sprint 2 (deadline 2026-06-13)
+
+---
+
+## ⚠️ Contract Reconciliation (2026-06-14) — đối chiếu với `docs/api-ticket.md`
+
+> Nguồn sự thật: [`docs/api-ticket.md`](../../docs/api-ticket.md). Bảng `## Enums` của plan này **bịa hàng loạt giá trị enum không tồn tại** và **mâu thuẫn với chính phần `## Types`** (phần Types khai đúng). Đã sửa bảng Enums theo Types/spec. Ưu tiên theo api-ticket.md.
+
+> **Đã đối chiếu codebase (2026-06-14):** [`src/shared/enums/ticket.enum.ts`](../../src/shared/enums/ticket.enum.ts) cũng chứa các giá trị bịa giống bảng Enums cũ. Lưu ý dòng 81 nói "codebase có cả SlaBreached và SlaBreach (legacy duplicate)" — đây là **lỗi code, không phải spec**; spec chỉ có `SlaBreach`. Fix code ở ticket riêng (ngoài scope sửa plan).
+
+### C1 — 🔴 `TicketCategoryEnum` chỉ có 6 giá trị
+Spec: `Charging=1, Overheat=2, NoPower=3, Performance=4, Other=5, Repair=6`.
+Bịa (phải bỏ): `Maintenance, Inspection, Emergency, Replacement, Upgrade`. Code `ticket.enum.ts:28-40` sai.
+
+### C2 — 🔴 `TicketOriginEnum` sai toàn bộ tên
+Spec: `ManualByCustomer=1, AutoFromAlert=2, CreatedByStaff=3`.
+Bịa (phải bỏ): `Manual, AutoDetected, CustomerRequest, Scheduled`. Code `ticket.enum.ts:44-49` sai.
+
+### C3 — 🔴 `UrgencyLevelEnum` chỉ có 3 giá trị
+Spec: `Low=1, Medium=2, High=3`. Thừa `Critical`. Code `ticket.enum.ts:61-66` sai.
+
+### C4 — 🔴 `EscalationReasonEnum` chỉ có 5 giá trị
+Spec: `SkillGap, PartsRequired, SafetyConcern, SlaBreach, CustomerComplaint`.
+Bịa (phải bỏ): `SlaBreached, StaffRequest, ManagerDecision, AutoEscalated`. Code `ticket.enum.ts:78-88` sai.
+
+### C5 — 🔴 `ActivityActionEnum` phải có `Closed` + dùng tên đúng
+Object Types (dòng 103-113) thiếu `Closed=25`. Bảng Enums dùng tên bịa `Assigned/Reassigned/Paused/Resumed/LogAdded/PriorityChanged` — tên đúng: `StaffAssigned/StaffReassigned/SlaPaused/SlaResumed/MaintenanceLogged/PriorityAssigned`. Spec int: không có 21, `AutoClosed=22...Closed=25`.
+
+### C6 — 🟡 Response wrapper POST comment
+`POST /api/tickets/{id}/comments` → **`TicketActionResponse` (201)**, KHÔNG phải `CommonResponse<TicketCommentDTO>`.
+
+### C7 — 🟡 Pagination param PascalCase
+Admin list query dùng PascalCase: `Keyword, Status, Priority, Category, BatteryAssetId, IsDescending, PageNumber, PageSize`. Bổ sung `IsDescending` còn thiếu.
+
+### Trạng thái implement vs plan (đối chiếu code 2026-06-14)
+✅ Đúng: endpoint paths + methods; `approve` gửi comment qua **query param** (`post(url, null, {params:{comment}})`); body triage/assign/reassign/escalate; POST comment khai `TicketActionResponse`; `z.nativeEnum`; `TicketActivityTimeline` map dùng tên action ĐÚNG (không dùng tên bịa).
+❌ Còn thiếu/sai trong code (fix ở ticket riêng):
+- **CRITICAL** — `EscalationReasonEnum` bịa lọt vào `z.nativeEnum` ở `ticket.schema.ts` → EscalateDialog có thể submit giá trị BE không hiểu.
+- **MAJOR** — `AdminTicketListParams`/`AdminTicketQueueParams` gửi camelCase (`ticket.service.ts`), spec cần PascalCase; axios không map casing.
+- **MAJOR** — `escalationReason` không được render ở đâu (thiếu implement edge case); nếu thêm sau phải guard `escalatedAt != null`.
+- **MINOR** — `TicketActivityTimeline` thiếu label `Closed` (và `AttachmentAdded`) → fallback hiển thị chuỗi thô.
+- **MINOR** — `create-ticket.schema.ts` `description` thiếu `.min(1)` (spec: bắt buộc không rỗng).
 
 ## Mục tiêu
 Implement toàn bộ UI và logic cho portal Manager quản lý và điều phối ticket: xem danh sách, triage, gán/điều chuyển Staff, approve/reject kết quả, escalate, declare incident, xem chi tiết + timeline + comment.
@@ -61,13 +102,13 @@ Tất cả enum nằm ở `src/shared/enums/ticket.enum.ts` — KHÔNG define in
 |------|-------------------|------|
 | `TicketStatusEnum` | New, Open, Approved, Assigned, InProgress, WaitingCustomer, WaitingParts, WaitingOnsiteSchedule, Resolved, Escalated, ClosedPendingRate, Closed, ClosedRejected, Incident | `shared/enums/ticket.enum.ts` |
 | `TicketPriorityEnum` | P1Critical, P2High, P3Normal | `shared/enums/ticket.enum.ts` |
-| `TicketCategoryEnum` | Maintenance, Repair, Inspection, Emergency, Replacement, Upgrade, Other, Charging, Overheat, NoPower, Performance | `shared/enums/ticket.enum.ts` |
-| `TicketOriginEnum` | Manual, AutoDetected, CustomerRequest, Scheduled | `shared/enums/ticket.enum.ts` |
+| `TicketCategoryEnum` | Charging, Overheat, NoPower, Performance, Other, Repair | `shared/enums/ticket.enum.ts` |
+| `TicketOriginEnum` | ManualByCustomer, AutoFromAlert, CreatedByStaff | `shared/enums/ticket.enum.ts` |
 | `ImpactScopeEnum` | SingleAsset, Site, MultiSite | `shared/enums/ticket.enum.ts` |
-| `UrgencyLevelEnum` | Low, Medium, High, Critical | `shared/enums/ticket.enum.ts` |
-| `EscalationReasonEnum` | SlaBreached, SlaBreach, StaffRequest, ManagerDecision, AutoEscalated, SkillGap, PartsRequired, SafetyConcern, CustomerComplaint | `shared/enums/ticket.enum.ts` |
-| `SlaTimerStatusEnum` | Running, Paused, Breached, Met | `shared/enums/ticket.enum.ts` |
-| `ActivityActionEnum` | Created, StatusChanged, PriorityAssigned, Assigned, StaffAssigned, Reassigned, StaffReassigned, Paused, SlaPaused, Resumed, SlaResumed, Escalated, EscalationRequested, Resolved, Closed, Commented, LogAdded, MaintenanceLogged, PriorityChanged, SlaWarning, SlaBreached, Approved, TriageApproved, Rejected, Rated, Reopened, AutoClosed, ResolvedByEscalatedStaff, IncidentDeclared | `shared/enums/ticket.enum.ts` |
+| `UrgencyLevelEnum` | Low, Medium, High | `shared/enums/ticket.enum.ts` |
+| `EscalationReasonEnum` | SkillGap, PartsRequired, SafetyConcern, SlaBreach, CustomerComplaint | `shared/enums/ticket.enum.ts` |
+| `SlaTimerStatusEnum` | Running, Paused, Met, Breached | `shared/enums/ticket.enum.ts` |
+| `ActivityActionEnum` | Created, StatusChanged, PriorityAssigned, StaffAssigned, StaffReassigned, Commented, MaintenanceLogged, AttachmentAdded, SlaPaused, SlaResumed, SlaWarning, SlaBreached, EscalationRequested, Escalated, IncidentDeclared, Resolved, Approved, Rejected, Rated, Reopened, AutoClosed(22), ResolvedByEscalatedStaff(23), TriageApproved(24), Closed(25) — *int 21 bỏ trống* | `shared/enums/ticket.enum.ts` |
 | `ActorRoleEnum` | System, Admin, Manager, Staff, Customer | `shared/enums/ticket.enum.ts` |
 
 **Schema pattern:**
@@ -78,7 +119,7 @@ urgency: z.nativeEnum(UrgencyLevelEnum) // ✅
 reason: z.nativeEnum(EscalationReasonEnum) // ✅
 ```
 
-> **Lưu ý:** `EscalationReasonEnum` trong codebase có cả `SlaBreached` và `SlaBreach` (legacy duplicate). Dùng `SlaBreach` khi gửi lên BE — khớp với giá trị enum gốc.
+> **Lưu ý:** Spec chỉ có `SlaBreach` (=4). Codebase hiện sai (có thêm `SlaBreached` + nhiều giá trị bịa) — đây là **bug code cần fix ở ticket riêng**, không phải hợp lệ. Luôn gửi `SlaBreach` lên BE.
 
 ## Types
 ```ts
@@ -99,7 +140,7 @@ export const UrgencyLevelEnum = { Low: 'Low', Medium: 'Medium', High: 'High' } a
 export const EscalationReasonEnum = { SkillGap: 'SkillGap', PartsRequired: 'PartsRequired', SafetyConcern: 'SafetyConcern', SlaBreach: 'SlaBreach', CustomerComplaint: 'CustomerComplaint' } as const;
 export const SlaTimerStatusEnum = { Running: 'Running', Paused: 'Paused', Met: 'Met', Breached: 'Breached' } as const;
 export const MaintenanceLogTypeEnum = { RemoteSupport: 'RemoteSupport', OnSite: 'OnSite', PartReplacement: 'PartReplacement', Inspection: 'Inspection' } as const;
-// [FIX #1] Điền đủ 23 values từ API doc (không để placeholder)
+// [FIX #1] Đủ 24 string values theo api-ticket.md (int 21 bỏ trống; AutoClosed=22, ResolvedByEscalatedStaff=23, TriageApproved=24, Closed=25)
 export const ActivityActionEnum = {
   Created: 'Created', StatusChanged: 'StatusChanged', PriorityAssigned: 'PriorityAssigned',
   StaffAssigned: 'StaffAssigned', StaffReassigned: 'StaffReassigned', Commented: 'Commented',
@@ -109,7 +150,7 @@ export const ActivityActionEnum = {
   Escalated: 'Escalated', IncidentDeclared: 'IncidentDeclared', Resolved: 'Resolved',
   Approved: 'Approved', Rejected: 'Rejected', Rated: 'Rated', Reopened: 'Reopened',
   AutoClosed: 'AutoClosed', ResolvedByEscalatedStaff: 'ResolvedByEscalatedStaff',
-  TriageApproved: 'TriageApproved',
+  TriageApproved: 'TriageApproved', Closed: 'Closed',
 } as const;
 export const ActorRoleEnum = { Admin: 'Admin', Manager: 'Manager', Staff: 'Staff', Customer: 'Customer', System: 'System' } as const;
 
@@ -156,7 +197,7 @@ TICKETS: {
 
 | Method | Path | Request | Response |
 |--------|------|---------|----------|
-| GET | `/api/admin/tickets` | `{ keyword?, status?: TicketStatusEnum, priority?: TicketPriorityEnum, category?: TicketCategoryEnum, batteryAssetId?: string, pageNumber, pageSize }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
+| GET | `/api/admin/tickets` | `{ Keyword?, Status?: TicketStatusEnum, Priority?: TicketPriorityEnum, Category?: TicketCategoryEnum, BatteryAssetId?: string, IsDescending?: boolean, PageNumber, PageSize }` (query, PascalCase) | `CommonResponse<PaginationResponse<TicketDTO>>` |
 | GET | `/api/admin/tickets/queue` | `{ priority?: TicketPriorityEnum, category?: TicketCategoryEnum, pageNumber, pageSize }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
 | GET | `/api/tickets/{id}` | — | `CommonResponse<TicketDetailDTO>` |
 | GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
@@ -167,7 +208,7 @@ TICKETS: {
 | POST | `/api/admin/tickets/{id}/reject` | `{ reason?: string }` | `TicketActionResponse` |
 | POST | `/api/admin/tickets/{id}/escalate` | `{ reason: EscalationReasonEnum, note?: string }` | `TicketActionResponse` |
 | POST | `/api/admin/tickets/{id}/declare-incident` | — | `TicketActionResponse` |
-| POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal: boolean, attachments?: CommentAttachmentInput[] }` | `CommonResponse<TicketCommentDTO>` |
+| POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal?: boolean, attachments?: CommentAttachmentInput[] }` | `TicketActionResponse` (**201**) |
 
 ## Query Keys
 ```ts
@@ -275,7 +316,7 @@ createTicketSchema: z.object({
 - SLA breached → TicketPriorityBadge + SlaCountdown hiển thị màu đỏ
 - Staff list rỗng → AssignDialog hiển thị empty state
 - `approve` endpoint gửi comment qua query param, không phải body → `axios.post(url, null, { params: { comment } })`
-- `escalationReason` trên TicketDetailDTO treat như optional (Swagger nói không nullable nhưng ticket chưa escalate có thể là enum default)
+- `escalationReason` trên TicketDetailDTO: **non-nullable** (Swagger trả `0` default khi chưa escalate). Guard bằng `escalatedAt != null` TRƯỚC khi hiển thị — không treat optional thuần
 - Triage: nếu `manualPriority` !== computed priority → `priorityOverrideReason` bắt buộc (validate ở FE với Zod `superRefine`)
 - Comment `isInternal: true` → chỉ Staff/Manager thấy — hiển thị rõ badge "Nội bộ" trong UI
 

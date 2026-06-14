@@ -130,6 +130,10 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
       <div className="flex items-center gap-3 flex-wrap">
         <Select
           value={filters.severity || null}
+          items={SEVERITY_OPTIONS.map((s) => ({
+            value: String(s),
+            label: SEVERITY_LABELS[s],
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("severity", v || undefined)
           }
@@ -149,6 +153,10 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
 
         <Select
           value={filters.status || null}
+          items={STATUS_OPTIONS.map((s) => ({
+            value: String(s),
+            label: STATUS_LABELS[s],
+          }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
           }

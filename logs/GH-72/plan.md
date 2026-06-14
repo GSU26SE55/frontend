@@ -110,6 +110,12 @@ interface AlertListParams {
 - [x] Bước 6: Wire router (3 route) + Sidebar nav 3 portal — 2026-06-12
 - [x] Bước 7: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS — 2026-06-12
 
+## Đối chiếu code thực tế (2026-06-14)
+
+> Đối chiếu `plan.md` ⇄ `src/` ⇄ `docs/api-battery.md`. **Khớp 100% — KHÔNG có lệch.** Enums (Severity/Status/15 AnomalyType), `AlertDto` (16 fields), `AlertListParams` (8), 4 endpoint, service, hooks (staleTime 30s + refetchInterval 30s), badges, `AlertsView`, 3 page wrapper (staff = `BatteryAlertsPage`), routes + Sidebar nav 3 portal — tất cả đúng plan.
+
+**Lưu ý từ spec `api-battery.md` (không phải lỗi code):** logic dedup (dòng 237) nhắc `mergedIntoAlertId = id alert gốc`, nhưng bảng `AlertDto` (dòng 214-231) **không liệt kê** field này. Code theo bảng DTO → `AlertDto` không có `mergedIntoAlertId`. Vì `excludeMerged=true` mặc định, FE không cần field này trong scope hiện tại. **Nếu sau này cần xem Merged alerts + truy alert gốc → hỏi BE confirm field, rồi bổ sung vào `AlertDto`.**
+
 ## Câu hỏi đã giải đáp
 - **Portal scope?** → Admin + Manager + Staff (cả 3 portal có trang Alerts). Customer ngoài scope (bị chặn login web).
 - **Đặt code ở đâu?** → Data layer + UI dùng chung ở `shared/`; mỗi portal chỉ có page mỏng + route + nav.

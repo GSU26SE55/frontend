@@ -78,13 +78,14 @@ Tích hợp **13 endpoint** thuộc 2 nhóm Battery Assets + Sensor Readings cho
 
 ## Enums
 
-| Enum | File nguồn | Giá trị |
-|------|-----------|---------|
-| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` | Active=1, Inactive=2, Decommissioned=3 |
-| `WarrantyStatusEnum` | `features/admin/enums/battery-asset.enum.ts` | Active=1, Expired=2, Void=3 |
-| `ChargingStateEnum` | `features/admin/enums/battery-asset.enum.ts` | Idle=1, Charging=2, Discharging=3, **Float=4, Bypass=5** |
+| Enum | File nguồn | Giá trị | Key trong code |
+|------|-----------|---------|----------------|
+| `BatteryStatusEnum` | `shared/enums/battery.enum.ts` | Active=1, Inactive=2, Decommissioned=3 | UPPERCASE (`ACTIVE`…) |
+| `WarrantyStatusEnum` | `features/admin/enums/battery-asset.enum.ts` | Active=1, Expired=2, Void=3 | UPPERCASE (`ACTIVE`…) |
+| `ChargingStateEnum` | `features/admin/enums/battery-asset.enum.ts` | Idle=1, Charging=2, Discharging=3, **Float=4, Bypass=5** | UPPERCASE (`IDLE`, `FLOAT`, `BYPASS`…) |
 
 > Pattern `as const` object + type alias (không dùng TS `enum`).
+> ⚠️ **Đối chiếu code:** enum **key** trong code dùng `CONSTANT_CASE` (vd `ChargingStateEnum.FLOAT = 4`), không phải PascalCase như ví dụ. Giá trị int đúng spec. Đây là convention chung của dự án — label hiển thị map thủ công trong component.
 
 ## Types
 
@@ -204,22 +205,20 @@ export interface SensorReadingAggregateDto {
 
 ## Schema (Zod)
 
+> ⚠️ **Cập nhật 2026-06-14 — đối chiếu code thực tế:** `battery-asset.schema.ts` đã ship **đơn giản hơn** plan gốc. `installDate`/`warrantyEndDate` KHÔNG có `.refine()`/`.transform()`; `latitude`/`longitude` là `z.string().optional()` (convert sang số/ISO làm thủ công trong form submit, không ở Zod layer). Plan dưới đây phản ánh **code thực tế đang chạy** (build PASS). Xem [Đối chiếu code thực tế](#đối-chiếu-code-thực-tế-2026-06-14) để biết lệch so với plan gốc + so với `api-battery.md`.
+
 ```ts
-// battery-asset.schema.ts
+// battery-asset.schema.ts — SHAPE THỰC TẾ (đã ship)
 const createSchema = z.object({
   serialNumber: z.string().min(5).max(64).regex(/^[A-Z0-9-]+$/, "Chỉ A-Z, 0-9, dấu -"),
   batteryTypeId: z.string().uuid(),
   customerId: z.string().uuid(),
   siteId: z.string().uuid().optional(),
-  // <input type="date"> trả "YYYY-MM-DD" → transform ISO 8601 trước submit
-  installDate: z.string().min(1, "Bắt buộc")
-    .refine((v) => new Date(v) <= new Date(), "Không ở tương lai")
-    .transform((v) => new Date(v).toISOString()),
-  warrantyEndDate: z.string().optional()
-    .transform((v) => (v ? new Date(v).toISOString() : undefined)),
+  installDate: z.string().min(1, "Bắt buộc"),   // ⚠️ KHÔNG refine/transform — convert ISO ở form submit
+  warrantyEndDate: z.string().optional(),        // ⚠️ KHÔNG transform — convert ISO ở form submit
   location: z.string().max(255).optional(),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
+  latitude: z.string().optional(),               // ⚠️ string, không phải number — parse ở form submit
+  longitude: z.string().optional(),              // ⚠️ string, không phải number — parse ở form submit
   notes: z.string().max(1000).optional(),
 });
 
@@ -376,3 +375,21 @@ SENSOR_READINGS: {
 - `totalCount` vs `totalItems`: `api.types.ts` **đã dùng `totalItems`** (khớp docs) — không cần sửa
 - `batteryGroup*`: đã xoá hẳn khỏi code; battery group không còn trong #40 (retitled "Battery Types & Thresholds")
 - Dropdown `batteryTypeId`/`customerId`: dependency từ #40 + Account Management — không thuộc issue này
+
+---
+
+## Đối chiếu code thực tế (2026-06-14)
+
+> Đối chiếu `plan.md` ⇄ `src/` (build PASS) ⇄ `docs/api-battery.md`. Code là nguồn sự thật. Liệt kê các điểm code **lệch** so với plan gốc.
+
+| # | Mục | Plan gốc nói | Code thực tế | Đánh giá vs `api-battery.md` |
+|---|-----|--------------|--------------|------------------------------|
+| 1 | `installDate` / `warrantyEndDate` (Zod) | có `.refine(<= now)` + `.transform(→ ISO)` | chỉ `z.string().min(1)`; convert ISO thủ công ở form submit | Spec yêu cầu `installDate` không ở tương lai & UTC (dòng 434). Validate "không ở tương lai" hiện **chỉ dựa vào BE 400** — FE không chặn sớm. **Cân nhắc bổ sung lại refine** nếu muốn UX chặn trước submit. |
+| 2 | `latitude` / `longitude` (Zod) | `z.number().min/max` | `z.string().optional()`, parse số thủ công khi submit | Spec range -90..90 / -180..180 (dòng 437-438). Range **không validate ở FE** — phụ thuộc BE. Acceptable nhưng kém chặt. |
+| 3 | Enum key | ví dụ PascalCase | `CONSTANT_CASE` (`FLOAT`, `BYPASS`…), giá trị int đúng | Khớp spec về giá trị. Chỉ khác naming key (convention dự án). |
+| 4 | Orphan `*.enums.ts` | "đã xoá orphan `battery-asset.enums.ts`" | còn `shared/types/battery.enums.ts` + `features/admin/types/battery-type.enums.ts` (PascalCase, KHÔNG được import ở đâu) | Không ảnh hưởng runtime. Dead-code cleanup toàn dự án (8 file `*.enums.ts` đều không import) — nên xử lý ở 1 chore issue riêng, không thuộc scope #39. |
+
+**Khớp đúng (không lệch):** toàn bộ endpoints, query keys, services (11 methods), hooks + staleTime/refetchInterval, `BatteryAssetDto`/`RealtimeDto`/`SensorReadingDto`/`AggregateDto` fields, `ChargingState Float=4/Bypass=5`, `siteId?` trong list params, dùng `totalItems`, xử lý param thừa `BatteryAssetId`.
+
+**Lưu ý từ spec `api-battery.md` (lỗi nội tại spec, không phải lỗi code):**
+- `/aggregate` mã lỗi `from>to` mâu thuẫn `422` (dòng 797) vs `400` (dòng 801). Code dùng `handleErrorApi` chung nên không ảnh hưởng — nhưng BE/spec cần thống nhất.
