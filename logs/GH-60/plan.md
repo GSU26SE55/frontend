@@ -1,9 +1,34 @@
 # Plan — GH-60: [FE] Admin — Ticket Management
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-05
+- **Status:** REVIEWING → **MINOR REWORK** | **Role:** FE | **Ngày:** 2026-06-05, cập nhật 2026-06-14
 - **Issue:** #60 — https://github.com/GSU26SE55/frontend/issues/60
 - **Sprint:** Sprint 2 (deadline 2026-06-13)
+
+---
+
+## ⚠️ Contract Reconciliation (2026-06-14) — đối chiếu với `docs/api-ticket.md`
+
+> Nguồn sự thật: [`docs/api-ticket.md`](../../docs/api-ticket.md). Plan này khai enum dạng string union khá đúng; chỉ vài sai lệch nhỏ đã sửa trong thân plan. Ưu tiên theo api-ticket.md.
+
+### C1 — 🟠 `ActivityActionEnum` thiếu `'Closed'`
+Type union (dòng 86-92) ghi "23 giá trị" và kết thúc ở `TriageApproved`. Spec có tới `Closed=25` → phải thêm `'Closed'` (tổng 24 string values; int 21 bỏ trống). Code `ticket.enum.ts` đã có `Closed` — OK.
+
+### C2 — 🟡 Pagination param PascalCase
+Spec admin list dùng PascalCase: `Keyword, Status, Priority, Category, BatteryAssetId, IsDescending, PageNumber, PageSize`. Plan dùng camelCase — service cần map đúng sang PascalCase khi gửi query.
+Code hiện sai: `admin/services/ticket.service.ts:17-33` gửi camelCase thẳng, không map (axios không có paramsSerializer). BE ASP.NET thường bind case-insensitive nên có thể chạy, nhưng không khớp contract.
+
+### C3 — 🔴 `declare-incident` thiếu body `incidentDescription` BẮT BUỘC
+Spec ([api-ticket.md §declare-incident](../../docs/api-ticket.md)): body `{ incidentDescription: string }` **bắt buộc**, không rỗng/whitespace; BE trả **400** nếu thiếu. Bảng Endpoints + Workflow cũ của plan này ghi request "—" (rỗng) → **SAI**. Đã sửa bên dưới.
+> **Code hiện sai (2026-06-14):** `admin/services/ticket.service.ts:47-50` `declareIncident: (id) => post(URL)` gửi body rỗng; `useAdminTickets.ts:42` chỉ truyền `id`. → action declare-incident **fail 400 100%**. Cần: thêm input lý do → `declareIncident(id, incidentDescription)` → `post(url, { incidentDescription })`. Fix code ở ticket riêng.
+
+### Trạng thái implement vs plan (đối chiếu code 2026-06-14)
+✅ Đúng: endpoint paths + methods; không dùng enum bịa trong timeline.
+❌ Còn thiếu/sai trong code (fix ở ticket riêng):
+- **MAJOR (C3)** — declare-incident không gửi `incidentDescription` → fail 400.
+- **MAJOR (C2)** — list query camelCase, không map PascalCase.
+- **MINOR (C1)** — `TicketActivityTimeline` thiếu label `Closed` → fallback chuỗi thô.
+- Guard `escalationReason`/`escalatedAt`: kiểm tra `AdminTicketDetailPage.tsx` nếu có render escalationReason.
 
 ## Mục tiêu
 Xây dựng portal quản lý ticket cho Admin: danh sách toàn bộ ticket với bộ lọc nâng cao, trang chi tiết ticket kèm activity timeline, và action declare-incident. Admin xem không bị filter theo user (khác Manager/Staff).
@@ -82,14 +107,14 @@ export type SlaTimerStatusEnum = 'Running' | 'Paused' | 'Met' | 'Breached';
 export type MaintenanceLogTypeEnum = 'RemoteSupport' | 'OnSite' | 'PartReplacement' | 'Inspection';
 export type ActorRoleEnum = 'Admin' | 'Manager' | 'Staff' | 'Customer' | 'System';
 
-// ActivityActionEnum — 23 giá trị (đúng theo api-ticket.md)
+// ActivityActionEnum — 24 string values theo api-ticket.md (int 21 bỏ trống; AutoClosed=22, ResolvedByEscalatedStaff=23, TriageApproved=24, Closed=25)
 export type ActivityActionEnum =
   | 'Created' | 'StatusChanged' | 'PriorityAssigned' | 'StaffAssigned' | 'StaffReassigned'
   | 'Commented' | 'MaintenanceLogged' | 'AttachmentAdded'
   | 'SlaPaused' | 'SlaResumed' | 'SlaWarning' | 'SlaBreached'
   | 'EscalationRequested' | 'Escalated' | 'IncidentDeclared'
   | 'Resolved' | 'Approved' | 'Rejected' | 'Rated' | 'Reopened'
-  | 'AutoClosed' | 'ResolvedByEscalatedStaff' | 'TriageApproved';
+  | 'AutoClosed' | 'ResolvedByEscalatedStaff' | 'TriageApproved' | 'Closed';
 
 // ── Core DTOs ──
 
@@ -233,10 +258,10 @@ ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
 
 | Method | Path | Request | Response |
 |--------|------|---------|----------|
-| GET | `/api/admin/tickets` | `{ keyword?, status?: TicketStatusEnum, priority?: TicketPriorityEnum, category?: TicketCategoryEnum, pageNumber, pageSize }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
+| GET | `/api/admin/tickets` | `{ Keyword?, Status?: TicketStatusEnum, Priority?: TicketPriorityEnum, Category?: TicketCategoryEnum, BatteryAssetId?: string, IsDescending?: boolean, PageNumber, PageSize }` (query, PascalCase) | `CommonResponse<PaginationResponse<TicketDTO>>` |
 | GET | `/api/tickets/{id}` | — | `CommonResponse<TicketDetailDTO>` |
 | GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
-| POST | `/api/admin/tickets/{id}/declare-incident` | — | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/declare-incident` | `{ incidentDescription: string }` (**bắt buộc**, không rỗng/whitespace) | `TicketActionResponse` (`isIncident=true`); **400** nếu thiếu |
 
 ## Query Keys
 
@@ -282,12 +307,14 @@ User click row → navigate `/admin/tickets/:id`
 > **Lý do dùng `/activities` endpoint riêng** (thay vì `ticket.activities` từ detail): `activities` trong `TicketDetailDTO` là nullable — BE có thể trả `null` để giảm payload. Endpoint `/api/tickets/{id}/activities` luôn trả full array. Dùng endpoint riêng loại bỏ dependency vào BE behavior mà không cần confirm trước.
 
 **Declare Incident flow:**
-User click "Declare Incident" → `AlertDialog` confirm → `useDeclareIncident.mutate(id)`
+User click "Declare Incident" → Dialog với **input `incidentDescription` (bắt buộc)** → `useDeclareIncident.mutate({ id, incidentDescription })`
+→ service: `post(DECLARE_INCIDENT(id), { incidentDescription })` — KHÔNG gửi body rỗng (BE 400)
 → OK: toast.success + `invalidateQueries` (detail + list) + button bị disable nếu `isIncident=true`
-→ FAIL: `handleErrorApi({ error })` → toast.error
+→ FAIL: `handleErrorApi({ error })` → toast.error (vd 400 khi description rỗng, 409 nếu đã là incident)
 
 ## Edge Cases
-- Ticket đã là Incident: disable "Declare Incident" button (`ticket.isIncident === true`)
+- Ticket đã là Incident: disable "Declare Incident" button (`ticket.isIncident === true`); BE trả `409` nếu cố declare lại
+- `incidentDescription` rỗng/whitespace: validate FE (Zod `min(1)`) trước khi submit — BE trả `400` nếu lọt
 - Activities API trả về `[]`: hiện empty state trong timeline
 - 403/404 khi vào detail: redirect hoặc hiện error state
 - Pagination: nếu trang hiện tại > totalPages sau filter → reset về page 1

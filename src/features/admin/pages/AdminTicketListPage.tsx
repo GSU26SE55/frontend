@@ -51,17 +51,12 @@ const PRIORITY_LABELS: Record<TicketPriority, string> = {
 };
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
-  Maintenance: "Bảo trì",
-  Repair: "Sửa chữa",
-  Inspection: "Kiểm tra",
-  Emergency: "Khẩn cấp",
-  Replacement: "Thay thế",
-  Upgrade: "Nâng cấp",
-  Other: "Khác",
   Charging: "Lỗi sạc",
   Overheat: "Quá nhiệt",
   NoPower: "Không điện",
   Performance: "Hiệu suất",
+  Other: "Khác",
+  Repair: "Sửa chữa",
 };
 
 const DEFAULTS = {

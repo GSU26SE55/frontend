@@ -145,3 +145,24 @@ falseAlarmSchema: falseAlarmReason z.string().trim().min(5).max(2000)
 1. **Branch base** → tách từ `feat/GH-72-alerts-feature` để tái dùng `AlertSeverityEnum` + pattern; #73 phụ thuộc #72 merge trước.
 2. **Incident UI roles** → Admin + Manager + Staff (3 page wrapper); actions gate RBAC (false-alarm chỉ A/M).
 3. **Ambient UI** → trang Admin/Manager riêng (`AmbientConfigPage`) có site selector; KHÔNG sửa `SiteDetailPage` (tránh đụng #38).
+
+---
+
+## Đối chiếu code thực tế (2026-06-14)
+
+> Đối chiếu `plan.md` ⇄ `src/` ⇄ `docs/api-battery.md`. **Khớp 100%.** Data layer (enum/types/schema/service/hooks/queryKeys) + UI (view/badges/pages) + RBAC + error handling + nav đều đúng.
+
+| # | Mục | Plan gốc nói | Code thực tế | Đánh giá |
+|---|-----|--------------|--------------|----------|
+| 1 | Nav entries | "thêm nav entries (nếu có cấu trúc menu — confirm khi implement)" | **ĐÃ CÓ** trong `AppLayout.tsx`: "Sự cố môi trường" + "Môi trường site" cho Admin (dòng 191/195) & Manager (241/244); Staff chỉ "Sự cố môi trường" (272) — đúng vì Ambient chỉ A/M | ✅ Khớp. (Nav định nghĩa trong `AppLayout.tsx`, KHÔNG phải `Sidebar.tsx`.) |
+
+**Khớp đúng (kiểm chứng):**
+- 3 enum mới giá trị đúng spec (`EnvironmentalIncidentType` Smoke=1..Other=99, `EnvironmentalIncidentStatus` Open=1..FalseAlarm=4, `AmbientReadingSource` IotSensor=1/WeatherApi=2).
+- Zod cross-field `ambientThresholdSchema` dùng `>=` cho Critical vs Warning — đúng field-rule spec (dòng 1488/1490). `resolveSchema`/`falseAlarmSchema` `.min(5).max(2000)` — đúng spec (dòng 1651/1683).
+- 11 endpoint FE gọi đúng; 2 endpoint IoT (batch, POST incident) KHÔNG khai báo trong service — đúng scope.
+- staleTime từng case (incident list 30s+refetch30s, active-by-site 0+refetch30s, ambient latest 1', history 5', threshold 10') — khớp.
+- RBAC: false-alarm chỉ A/M; ack/resolve không gate (BE 403 là source of truth) — đúng spec.
+
+**Lưu ý từ spec `api-battery.md` (lỗi nội tại spec, không phải lỗi code):**
+- `AmbientReadingDto.source` default mâu thuẫn: POST batch default `IotSensor` (dòng 1346) vs GET history/latest mô tả "mặc định `WeatherApi`" (dòng 1422). Code KHÔNG hardcode default → an toàn, nhưng BE/spec cần thống nhất.
+- Lỗi `400 — Critical < Warning` (dòng 1518) mâu thuẫn rule `>=` ở field-table (dòng 1488/1490). Code theo field-rule `>=` — đúng.

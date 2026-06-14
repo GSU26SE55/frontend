@@ -1,9 +1,55 @@
 # Plan — GH-58: [FE] Staff — Ticket Management
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-05
+- **Status:** REVIEWING → **NEEDS REWORK (enum drift)** | **Role:** FE | **Ngày:** 2026-06-05, cập nhật 2026-06-14
 - **Issue:** #58 — https://github.com/GSU26SE55/frontend/issues/58
 - **Sprint:** Sprint 2 (deadline 2026-06-13)
+
+---
+
+## ⚠️ Contract Reconciliation (2026-06-14) — đối chiếu với `docs/api-ticket.md`
+
+> Nguồn sự thật: [`docs/api-ticket.md`](../../docs/api-ticket.md). Plan này SHIPPED trước khi spec ticket hoàn chỉnh; bảng `## Enums` bên dưới đã được phác đoán và **bịa nhiều giá trị không tồn tại**. Các điểm dưới đây ưu tiên theo api-ticket.md. Phần thân plan đã được sửa cho khớp; những chỗ cần fix code được đánh dấu.
+
+> **Đã đối chiếu codebase (2026-06-14):** code THỰC TẾ cũng sai giống bảng Enums cũ — [`src/shared/enums/ticket.enum.ts`](../../src/shared/enums/ticket.enum.ts) chứa đầy giá trị bịa. Cần fix code ở ticket riêng (ngoài scope sửa plan này).
+
+### C1 — 🔴 `EscalationReasonEnum` chỉ có 5 giá trị
+Spec: `SkillGap=1, PartsRequired=2, SafetyConcern=3, SlaBreach=4, CustomerComplaint=5`.
+Bịa (phải bỏ): `StaffRequest, ManagerDecision, AutoEscalated, SlaBreached` (+ `SafetyConcern` lặp 2 lần).
+Code hiện sai: `ticket.enum.ts:78-88`.
+
+### C2 — 🔴 `MaintenanceLogTypeEnum` chỉ có 4 giá trị
+Spec: `RemoteSupport=1, OnSite=2, PartReplacement=3, Inspection=4`.
+Bịa (phải bỏ): `Diagnosis, Repair, Testing, Completion, Note`.
+Code hiện sai: `ticket.enum.ts:102-114`.
+
+### C3 — 🔴 `TicketStatusEnum` phải có `Approved`
+Spec state machine: New→Open→**Approved**→Assigned→InProgress→Resolved→ClosedPendingRate→Closed. Bảng Enums cũ thiếu `Approved` (phần Types đã đúng). Code `ticket.enum.ts:1-16` đã có `Approved` — OK.
+
+### C4 — 🔴 Response wrapper POST comment / maintenance-log
+- `POST /api/tickets/{id}/comments` → **`TicketActionResponse` (201)**, KHÔNG phải `CommonResponse<TicketCommentDTO>`.
+- `POST /api/tickets/{id}/maintenance-logs` → **`TicketActionResponse` (201)** (kèm `MaintenanceLogId`), KHÔNG phải `CommonResponse<MaintenanceLogDTO>`.
+
+### C5 — 🟡 GET comments là endpoint phân trang riêng
+`GET /api/tickets/{ticketId}/comments` → `CommonResponse<PaginationResponse<TicketCommentDTO>>`, query `page`/`pageSize` (lowercase). KHÔNG lấy từ `TicketDetailDTO.comments`.
+
+### C6 — 🟡 `SlaTimerStatusEnum` chỉ có 4 giá trị
+Spec: `Running, Paused, Met, Breached`. Code `ticket.enum.ts:92-98` thừa `Completed` — cần bỏ ở ticket fix code.
+
+### C7 — 🟢 `ActivityActionEnum` int mapping có gap
+Spec: không có int 21; `AutoClosed=22, ResolvedByEscalatedStaff=23, TriageApproved=24, Closed=25`. Phải có `Closed`. Code `ticket.enum.ts` thừa các alias `Assigned/Reassigned/Paused/Resumed/LogAdded/PriorityChanged` (tên đúng: `StaffAssigned/StaffReassigned/SlaPaused/SlaResumed/MaintenanceLogged/PriorityAssigned`).
+
+### C8 — 🟢 `escalationReason` guard
+Field non-nullable (Swagger trả `0` default). FE phải check `escalatedAt != null` TRƯỚC khi tin `escalationReason`, không chỉ "treat optional".
+
+### Trạng thái implement vs plan (đối chiếu code 2026-06-14)
+✅ Đúng: endpoint paths + methods; `hold`/`resolve`/`escalate-request` body; POST comment & maintenance-log đã khai `TicketActionResponse` (C4 fixed); dùng `z.nativeEnum`; `TicketStatusEnum` có `Approved`.
+❌ Còn thiếu/sai trong code (fix ở ticket riêng):
+- **MAJOR** — `GET /me` query gửi camelCase `pageNumber/pageSize` (`staff-ticket.types.ts`), spec cần PascalCase.
+- **MAJOR** — Chưa có method GET comments phân trang (C5); vẫn lấy comments từ `TicketDetailDTO.comments`. `TICKETS.COMMENTS` chưa được GET dùng.
+- **MINOR** — `start` không gửi body `{ logType, latitude, longitude }`; thiếu type `StartTicketRequest`.
+- ~~`maintenanceLogSchema.logType` thiếu `.default('RemoteSupport')`~~ → **đã xử lý khác**: zod `.default()` làm lệch input/output type của RHF resolver → giữ `z.nativeEnum(...)` và cung cấp default `RemoteSupport` qua `defaultValues` của form (đã có trong `MaintenanceLogDialog`).
+- Enum bịa (C1/C2/C6) vẫn nằm trong `ticket.enum.ts` → `z.nativeEnum` cho phép submit giá trị BE không nhận.
 
 ## Mục tiêu
 Implement toàn bộ UI và logic cho Staff portal quản lý ticket được giao: danh sách ticket (filter + pagination), trang chi tiết với actions theo state machine, activity timeline, comments, và maintenance log.
@@ -57,12 +103,12 @@ Tất cả enum nằm ở `src/shared/enums/ticket.enum.ts` (không define inlin
 
 | Enum | Giá trị liên quan | File |
 |------|-------------------|------|
-| `TicketStatusEnum` | New, Open, Assigned, InProgress, WaitingCustomer, WaitingParts, WaitingOnsiteSchedule, Resolved, Escalated, ClosedPendingRate, Closed, ClosedRejected, Incident | `shared/enums/ticket.enum.ts` |
+| `TicketStatusEnum` | New, Open, Approved, Assigned, InProgress, WaitingCustomer, WaitingParts, WaitingOnsiteSchedule, Resolved, Escalated, ClosedPendingRate, Closed, ClosedRejected, Incident | `shared/enums/ticket.enum.ts` |
 | `PauseReasonEnum` | WaitingCustomer, WaitingParts, WaitingOnsiteSchedule | `shared/enums/ticket.enum.ts` |
-| `EscalationReasonEnum` | SkillGap, PartsRequired, SafetyConcern, SlaBreach, StaffRequest, ManagerDecision, AutoEscalated, CustomerComplaint, SafetyConcern | `shared/enums/ticket.enum.ts` |
-| `MaintenanceLogTypeEnum` | Diagnosis, Repair, PartReplacement, Testing, Completion, Note, RemoteSupport, OnSite, Inspection | `shared/enums/ticket.enum.ts` |
-| `SlaTimerStatusEnum` | Running, Paused, Breached, Met | `shared/enums/ticket.enum.ts` |
-| `ActivityActionEnum` | Created, StatusChanged, StaffAssigned, StaffReassigned, Commented, MaintenanceLogged, SlaPaused, SlaResumed, SlaWarning, SlaBreached, EscalationRequested, Escalated, Resolved, Approved, Rejected, Rated, Reopened, AutoClosed, ResolvedByEscalatedStaff, TriageApproved, ... | `shared/enums/ticket.enum.ts` |
+| `EscalationReasonEnum` | SkillGap, PartsRequired, SafetyConcern, SlaBreach, CustomerComplaint | `shared/enums/ticket.enum.ts` |
+| `MaintenanceLogTypeEnum` | RemoteSupport, OnSite, PartReplacement, Inspection | `shared/enums/ticket.enum.ts` |
+| `SlaTimerStatusEnum` | Running, Paused, Met, Breached | `shared/enums/ticket.enum.ts` |
+| `ActivityActionEnum` | Created, StatusChanged, PriorityAssigned, StaffAssigned, StaffReassigned, Commented, MaintenanceLogged, AttachmentAdded, SlaPaused, SlaResumed, SlaWarning, SlaBreached, EscalationRequested, Escalated, IncidentDeclared, Resolved, Approved, Rejected, Rated, Reopened, AutoClosed(22), ResolvedByEscalatedStaff(23), TriageApproved(24), Closed(25) — *int 21 bỏ trống* | `shared/enums/ticket.enum.ts` |
 | `ActorRoleEnum` | System, Admin, Manager, Staff, Customer | `shared/enums/ticket.enum.ts` |
 
 **Schema pattern:**
@@ -193,14 +239,14 @@ STAFF_TICKETS: {
 | GET | `/api/staff/tickets/me` | `{ status?: TicketStatusEnum, pageNumber: number, pageSize: number }` (query) | `CommonResponse<PaginationResponse<TicketDTO>>` |
 | GET | `/api/tickets/{id}` | — | `CommonResponse<TicketDetailDTO>` |
 | GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
-| GET | `/api/tickets/{id}/comments` | — | `CommonResponse<TicketCommentDTO[]>` (từ `TicketDetailDTO.comments`) |
-| POST | `/api/staff/tickets/{id}/start` | — | `TicketActionResponse` |
+| GET | `/api/tickets/{id}/comments` | `{ page?: number, pageSize?: number }` (query, lowercase) | `CommonResponse<PaginationResponse<TicketCommentDTO>>` — endpoint phân trang riêng, KHÔNG lấy từ `TicketDetailDTO.comments` |
+| POST | `/api/staff/tickets/{id}/start` | `{ logType?: MaintenanceLogTypeEnum, latitude?: number, longitude?: number }` | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/hold` | `{ reason: PauseReasonEnum, note?: string }` | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/resume` | — | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/resolve` | `{ resolutionSummary?: string }` | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/escalate-request` | `{ reason: EscalationReasonEnum, note?: string }` | `TicketActionResponse` |
-| POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal: boolean, attachments?: CommentAttachmentInput[] }` | `CommonResponse<TicketCommentDTO>` |
-| POST | `/api/tickets/{id}/maintenance-logs` | `MaintenanceLogRequest` | `CommonResponse<MaintenanceLogDTO>` |
+| POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal?: boolean, attachments?: CommentAttachmentInput[] }` | `TicketActionResponse` (**201**) |
+| POST | `/api/tickets/{id}/maintenance-logs` | `MaintenanceLogRequest` (`summary` bắt buộc) | `TicketActionResponse` (**201**, kèm `MaintenanceLogId`) |
 
 ## Query Keys
 
@@ -289,7 +335,7 @@ useEffect(() => {
 - 403 sai trạng thái: `handleErrorApi({ error })` → toast.error với message từ BE
 - 404 ticket: navigate về list + toast.error
 - Action button ẩn khi status không phù hợp (guard trong TicketDetailPage)
-- `escalationReason` trong TicketDetailDTO: treat như optional (BE note: có thể là enum default khi chưa escalate)
+- `escalationReason` trong TicketDetailDTO: **non-nullable** (Swagger trả `0` default). Guard bằng `escalatedAt != null` TRƯỚC khi hiển thị `escalationReason` — không treat như optional thuần
 - `isInternal` comment: hiển thị badge "Nội bộ" cho Staff; FE không ẩn (Staff xem được internal)
 - SLA `status === 'Paused'`: SlaCountdown dừng interval, hiển thị "Đang tạm dừng" — không countdown xuống âm
 - SLA `status === 'Breached'`: hiển thị "Đã vi phạm SLA" với màu đỏ, remaining = 0

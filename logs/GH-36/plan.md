@@ -13,13 +13,13 @@ Tạo data layer hoàn chỉnh cho FileStorageService API (types, endpoints, ser
 - Types: `FilePurposeEnum`, `FileStatusEnum`, `FileUploadResponse`, `FileMetadataResponse`
 - Endpoints: thêm `FILES` section vào `src/shared/utils/endpoints.ts`
 - Query keys: thêm `files` root key + factories vào `src/shared/utils/queryKeys.ts`
-- Service functions: `uploadFile`, `getFileMetadata`, `getPresignedUrl`, `deleteFile`
-- Hooks: `useUploadFile`, `useFileMetadata`, `usePresignedUrl`, `useDeleteFile`
+- Service functions: `uploadFile`, `getFileMetadata`, `getPresignedUrl`, `deleteFile`, `downloadFile` (`downloadFile` thêm sau SHIPPED)
+- Hooks: `useUploadFile`, `useFileMetadata`, `usePresignedUrl`, `useDeleteFile`, `useFileBlobUrl` (`useFileBlobUrl` thêm sau SHIPPED)
 
 **Ngoài scope:**
 - UI components (FileUpload widget, ImageDisplay)
 - Endpoints legacy theo `objectKey` (deprecated — FE mới không dùng)
-- Hook cho download (`/api/files/{id}/download` dùng trực tiếp làm URL trong `<img src>`)
+- ~~Hook cho download~~ — **bổ sung sau SHIPPED** (`useFileBlobUrl` + `downloadFile`): vì endpoint download yêu cầu Bearer auth nên không dùng trực tiếp `<img src>` được, phải fetch blob → `URL.createObjectURL`. Xem `AuthImage.tsx`.
 - Toast/error boundary tại layer hook — feature consumer tự xử lý qua `handleErrorApi`
 
 ## Files
@@ -27,12 +27,14 @@ Tạo data layer hoàn chỉnh cho FileStorageService API (types, endpoints, ser
 ### Tạo mới
 | File | Action | Ghi chú |
 |------|--------|---------|
-| `src/features/file-storage/types/file-storage.types.ts` | create | Types + enums từ `docs/api-filestorage.md` |
-| `src/features/file-storage/services/file-storage.service.ts` | create | 4 service functions |
+| `src/features/file-storage/enums/file-storage.enum.ts` | create | `FilePurposeEnum`, `FileStatusEnum` (`as const` — tách khỏi types theo rule fe.md) |
+| `src/features/file-storage/types/file-storage.types.ts` | create | Types — re-export enums từ `enums/file-storage.enum.ts` |
+| `src/features/file-storage/services/file-storage.service.ts` | create | 5 service functions (4 + `downloadFile`) |
 | `src/features/file-storage/hooks/useUploadFile.ts` | create | `useMutation` — POST /upload |
 | `src/features/file-storage/hooks/useFileMetadata.ts` | create | `useQuery` — GET /{id}/metadata |
 | `src/features/file-storage/hooks/usePresignedUrl.ts` | create | `useQuery` — GET /{id}/presigned-url |
 | `src/features/file-storage/hooks/useDeleteFile.ts` | create | `useMutation` — DELETE /{id} |
+| `src/features/file-storage/hooks/useFileBlobUrl.ts` | create | `useQuery` — GET /{id}/download (blob URL) — **thêm sau khi SHIPPED** để render ảnh auth qua `<img>`. Ban đầu ghi "ngoài scope" nhưng consumer (avatar/attachment) cần nên đã bổ sung. |
 
 ### Sửa đổi
 | File | Action | Ghi chú |
@@ -42,11 +44,11 @@ Tạo data layer hoàn chỉnh cho FileStorageService API (types, endpoints, ser
 
 ## Enums
 
-> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng — không define inline trong types.
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra file riêng theo rule fe.md — không define inline trong types.
 
 | Enum | File |
 |------|------|
-| `FilePurposeEnum`, `FileStatusEnum` | `features/file-storage/types/file-storage.types.ts` (feature-local, không dùng cross-feature) |
+| `FilePurposeEnum`, `FileStatusEnum` | `features/file-storage/enums/file-storage.enum.ts` (feature-local, không dùng cross-feature) |
 
 ## Types
 
@@ -136,6 +138,7 @@ files: 'files',  // root — invalidate toàn bộ files cache
 files: {
   metadata:    (id: string) => [KEY.files, 'metadata', id] as const,
   presignedUrl:(id: string) => [KEY.files, 'presigned-url', id] as const,
+  blob:        (id: string) => [KEY.files, 'blob', id] as const,  // thêm sau SHIPPED — cho useFileBlobUrl
 }
 ```
 

@@ -21,7 +21,8 @@ export const useHydrateSession = () => {
 
       try {
         const response = await authService.refreshToken(refreshToken);
-        const tokens = response.data.data;
+        // GH-295: refresh trả LoginResultDto — token nằm trong data.tokens
+        const tokens = response.data.data?.tokens;
 
         if (!tokens) return null;
 

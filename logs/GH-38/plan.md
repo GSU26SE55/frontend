@@ -300,3 +300,22 @@ function getHealthLabel(score: number): string {
 - [x] Bước 10: Tạo `manager/pages/SiteListPage.tsx` + `manager/pages/SiteDetailPage.tsx` — 2026-05-20
 - [x] Bước 11: Modify `router/index.tsx` — nested site routes + `AppLayout` — 2026-05-20
 - [x] Bước 12: `npx tsc --noEmit` + `npx eslint . --max-warnings=0` + `npm run build` → PASS — 2026-05-20
+
+---
+
+## Đối chiếu code thực tế (2026-06-14)
+
+> Đối chiếu `plan.md` ⇄ `src/` (build PASS) ⇄ `docs/api-battery.md`. **Khớp ~95%.** 32/32 file plan đều tồn tại. Code là nguồn sự thật.
+
+| # | Mục | Plan gốc nói | Code thực tế | Đánh giá |
+|---|-----|--------------|--------------|----------|
+| 1 | `latitude`/`longitude` (Zod) | `z.coerce.number().min/max()` (-90..90 / -180..180) | `z.string()` + convert thủ công `toNumOrNull()` ở form submit | Range **không validate ở Zod** — chỉ dựa BE. Spec range tại dòng 1049-1050. Acceptable, kém chặt hơn plan. |
+| 2 | Invalidation các mutation | targeted `QUERY_KEY.sites.list(params)` | broad `[KEY.sites]` (invalidate mọi site query) | Refetch rộng hơn nhưng tránh stale. Không lệch contract. |
+| 3 | Admin filter UI | filter bar có keyword + status + customerId + includeDeleted | UI chỉ render keyword + includeDeleted | `status`/`customerId` BE hỗ trợ (spec dòng 911) nhưng **chưa có control UI**. → backlog UI nếu cần. |
+| 4 | `manager/services/site.service.ts` | 4 method read-only | thêm `getStaffList` (5 method) | Support cho site assignment, ngoài scope #38 — không hại. |
+
+**Khớp đúng (kiểm chứng):**
+- `SiteDto`/`SiteDashboardDto` fields khớp 100% — **KHÔNG** có `capacityKw`/`totalCapacityKw` (đúng spec dòng 1056).
+- `SiteStatusEnum` Active=1/UnderMaintenance=2/Decommissioned=3, endpoints read `/api/sites` vs write `/api/admin/sites`, query keys — khớp.
+- `healthScore` color logic (`getHealthColor`/`getHealthLabel`, ngưỡng 80/50) nằm **duy nhất** trong `SiteDashboardCard.tsx` — đúng spec dòng 1008-1012 + rule plan.
+- `useSiteDashboard` staleTime 1 phút (60_000) — khớp.

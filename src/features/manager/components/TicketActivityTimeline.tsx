@@ -24,6 +24,8 @@ const ACTION_LABEL: Partial<Record<ActivityActionEnum, string>> = {
   AutoClosed: "Tự động đóng",
   ResolvedByEscalatedStaff: "Giải quyết bởi Staff cấp cao",
   TriageApproved: "Triage — phê duyệt hợp lệ",
+  AttachmentAdded: "Đính kèm file",
+  Closed: "Đã đóng ticket",
 };
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {

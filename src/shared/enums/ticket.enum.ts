@@ -26,26 +26,20 @@ export type TicketPriorityEnum =
   (typeof TicketPriorityEnum)[keyof typeof TicketPriorityEnum];
 
 export const TicketCategoryEnum = {
-  Maintenance: "Maintenance",
-  Repair: "Repair",
-  Inspection: "Inspection",
-  Emergency: "Emergency",
-  Replacement: "Replacement",
-  Upgrade: "Upgrade",
-  Other: "Other",
   Charging: "Charging",
   Overheat: "Overheat",
   NoPower: "NoPower",
   Performance: "Performance",
+  Other: "Other",
+  Repair: "Repair",
 } as const;
 export type TicketCategoryEnum =
   (typeof TicketCategoryEnum)[keyof typeof TicketCategoryEnum];
 
 export const TicketOriginEnum = {
-  Manual: "Manual",
-  AutoDetected: "AutoDetected",
-  CustomerRequest: "CustomerRequest",
-  Scheduled: "Scheduled",
+  ManualByCustomer: "ManualByCustomer",
+  AutoFromAlert: "AutoFromAlert",
+  CreatedByStaff: "CreatedByStaff",
 } as const;
 export type TicketOriginEnum =
   (typeof TicketOriginEnum)[keyof typeof TicketOriginEnum];
@@ -62,7 +56,6 @@ export const UrgencyLevelEnum = {
   Low: "Low",
   Medium: "Medium",
   High: "High",
-  Critical: "Critical",
 } as const;
 export type UrgencyLevelEnum =
   (typeof UrgencyLevelEnum)[keyof typeof UrgencyLevelEnum];
@@ -76,14 +69,10 @@ export type PauseReasonEnum =
   (typeof PauseReasonEnum)[keyof typeof PauseReasonEnum];
 
 export const EscalationReasonEnum = {
-  SlaBreached: "SlaBreached",
-  SlaBreach: "SlaBreach",
-  StaffRequest: "StaffRequest",
-  ManagerDecision: "ManagerDecision",
-  AutoEscalated: "AutoEscalated",
   SkillGap: "SkillGap",
   PartsRequired: "PartsRequired",
   SafetyConcern: "SafetyConcern",
+  SlaBreach: "SlaBreach",
   CustomerComplaint: "CustomerComplaint",
 } as const;
 export type EscalationReasonEnum =
@@ -92,22 +81,16 @@ export type EscalationReasonEnum =
 export const SlaTimerStatusEnum = {
   Running: "Running",
   Paused: "Paused",
-  Breached: "Breached",
-  Completed: "Completed",
   Met: "Met",
+  Breached: "Breached",
 } as const;
 export type SlaTimerStatusEnum =
   (typeof SlaTimerStatusEnum)[keyof typeof SlaTimerStatusEnum];
 
 export const MaintenanceLogTypeEnum = {
-  Diagnosis: "Diagnosis",
-  Repair: "Repair",
-  PartReplacement: "PartReplacement",
-  Testing: "Testing",
-  Completion: "Completion",
-  Note: "Note",
   RemoteSupport: "RemoteSupport",
   OnSite: "OnSite",
+  PartReplacement: "PartReplacement",
   Inspection: "Inspection",
 } as const;
 export type MaintenanceLogTypeEnum =
@@ -117,32 +100,27 @@ export const ActivityActionEnum = {
   Created: "Created",
   StatusChanged: "StatusChanged",
   PriorityAssigned: "PriorityAssigned",
-  Assigned: "Assigned",
   StaffAssigned: "StaffAssigned",
-  Reassigned: "Reassigned",
   StaffReassigned: "StaffReassigned",
-  Paused: "Paused",
-  SlaPaused: "SlaPaused",
-  Resumed: "Resumed",
-  SlaResumed: "SlaResumed",
-  Escalated: "Escalated",
-  EscalationRequested: "EscalationRequested",
-  Resolved: "Resolved",
-  Closed: "Closed",
   Commented: "Commented",
-  LogAdded: "LogAdded",
   MaintenanceLogged: "MaintenanceLogged",
-  PriorityChanged: "PriorityChanged",
+  AttachmentAdded: "AttachmentAdded",
+  SlaPaused: "SlaPaused",
+  SlaResumed: "SlaResumed",
   SlaWarning: "SlaWarning",
   SlaBreached: "SlaBreached",
+  EscalationRequested: "EscalationRequested",
+  Escalated: "Escalated",
+  IncidentDeclared: "IncidentDeclared",
+  Resolved: "Resolved",
   Approved: "Approved",
-  TriageApproved: "TriageApproved",
   Rejected: "Rejected",
   Rated: "Rated",
   Reopened: "Reopened",
   AutoClosed: "AutoClosed",
   ResolvedByEscalatedStaff: "ResolvedByEscalatedStaff",
-  IncidentDeclared: "IncidentDeclared",
+  TriageApproved: "TriageApproved",
+  Closed: "Closed",
 } as const;
 export type ActivityActionEnum =
   (typeof ActivityActionEnum)[keyof typeof ActivityActionEnum];

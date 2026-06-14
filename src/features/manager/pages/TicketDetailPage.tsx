@@ -18,6 +18,7 @@ import RejectDialog from "@/features/manager/components/RejectDialog";
 import EscalateDialog from "@/features/manager/components/EscalateDialog";
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
+import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -59,7 +60,6 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   Low: "Thấp",
   Medium: "Trung bình",
   High: "Cao",
-  Critical: "Nghiêm trọng",
 };
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
@@ -256,6 +256,8 @@ export default function TicketDetailPage() {
               </p>
             </div>
           )}
+
+          <TicketAttachments attachments={ticket.attachments} />
 
           {ticket.rejectionReason && (
             <Card className="border-destructive">

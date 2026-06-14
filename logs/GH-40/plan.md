@@ -235,3 +235,21 @@ Task chỉ setup data layer — không có user flow/UI. Quy ước dùng cho is
 | `tsc --noEmit` không lỗi | `npx tsc --noEmit` |
 | ESLint 0 warning | `npx eslint src/features/admin --max-warnings=0` |
 | Build thành công | `npm run build` |
+
+---
+
+## Đối chiếu code thực tế (2026-06-14)
+
+> Đối chiếu `plan.md` ⇄ `src/` (build PASS) ⇄ `docs/api-battery.md`. **Khớp ~99%** — không lệch contract.
+
+| # | Mục | Plan gốc nói | Code thực tế | Ghi chú |
+|---|-----|--------------|--------------|---------|
+| 1 | `chemistry` (Zod) | `z.nativeEnum(BatteryChemistryEnum)` | `z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(99)])` | Tương đương chức năng. Code chọn union literal để khớp giá trị int của spec (1,2,3,4,99). Không lệch contract. |
+| 2 | `BatteryChemistryEnum` key | LiFePO4/Nmc/Nca/Lco/Other | `LI_FE_PO4`/`NMC`/`NCA`/`LCO`/`OTHER` (CONSTANT_CASE) trong `enums/battery-asset.enum.ts` | Giá trị int đúng spec. Khác naming key (convention dự án). |
+| 3 | File legacy `battery-type.enums.ts` | không nhắc | tồn tại (`features/admin/types/battery-type.enums.ts`, PascalCase, KHÔNG import) | Dead-code — dùng enum từ `enums/battery-asset.enum.ts`. Cleanup ở chore issue riêng. |
+
+**Khớp đúng (kiểm chứng từ code):**
+- 18/18 file plan đều tồn tại & implement đúng.
+- `ThresholdConfigDto`, `UpsertThresholdPayload` (KHÔNG có `batteryTypeId` trong body — đúng spec dòng 1197), `BatteryTypeDto` — fields khớp 100%.
+- 4 Zod `.refine()` threshold (voltageMax>voltageMin, temperatureMax>temperatureMin, socCritical<socWarning, sohCritical<sohWarning null-safe) — đúng spec.
+- 9 endpoint, write-op `/api/admin/` prefix, query keys, invalidation/removeQueries — khớp.

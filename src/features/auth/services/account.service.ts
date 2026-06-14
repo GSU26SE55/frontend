@@ -6,7 +6,12 @@ import type {
   ChangeEmailPayload,
   ConfirmEmailChangePayload,
   VerifyPhoneOtpPayload,
-  EnableTwoFactorResponseData,
+  Init2faResponseData,
+  Confirm2faPayload,
+  Confirm2faResponseData,
+  Disable2faPayload,
+  RegenBackupCodesPayload,
+  RegenBackupCodesResponseData,
   LinkGooglePayload,
   LoginHistoryParams,
   LoginHistoryResponseData,
@@ -40,13 +45,29 @@ export const accountService = {
       payload,
     ),
 
-  enableTwoFactor: () =>
-    axiosInstance.post<CommonResponse<EnableTwoFactorResponseData>>(
-      ENDPOINTS.ACCOUNTS.ME.TWO_FA_ENABLE,
+  // GH-295: 2FA enroll flow 2 bước
+  initTwoFactor: () =>
+    axiosInstance.post<CommonResponse<Init2faResponseData>>(
+      ENDPOINTS.ACCOUNTS.ME.TWO_FA_INIT,
     ),
 
-  disableTwoFactor: () =>
-    axiosInstance.post<CommonResponse>(ENDPOINTS.ACCOUNTS.ME.TWO_FA_DISABLE),
+  confirmTwoFactor: (payload: Confirm2faPayload) =>
+    axiosInstance.post<CommonResponse<Confirm2faResponseData>>(
+      ENDPOINTS.ACCOUNTS.ME.TWO_FA_CONFIRM,
+      payload,
+    ),
+
+  disableTwoFactor: (payload: Disable2faPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.ACCOUNTS.ME.TWO_FA_DISABLE,
+      payload,
+    ),
+
+  regenerateBackupCodes: (payload: RegenBackupCodesPayload) =>
+    axiosInstance.post<CommonResponse<RegenBackupCodesResponseData>>(
+      ENDPOINTS.ACCOUNTS.ME.TWO_FA_BACKUP_REGEN,
+      payload,
+    ),
 
   linkGoogle: (payload: LinkGooglePayload) =>
     axiosInstance.post<CommonResponse>(

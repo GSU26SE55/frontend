@@ -164,14 +164,14 @@ const ProfilePage = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp"
                 className="hidden"
                 onChange={handleAvatarChange}
               />
             </div>
             <div className="text-sm text-muted-foreground">
               <p>Nhấn vào biểu tượng camera để thay đổi ảnh đại diện.</p>
-              <p className="mt-1">Hỗ trợ JPG, PNG. Tối đa 5MB.</p>
+              <p className="mt-1">Hỗ trợ JPG, PNG, WEBP. Tối đa 20MB.</p>
             </div>
           </CardContent>
         </Card>
