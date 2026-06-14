@@ -60,7 +60,6 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   Low: "Thấp",
   Medium: "Trung bình",
   High: "Cao",
-  Critical: "Nghiêm trọng",
 };
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {

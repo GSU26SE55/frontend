@@ -1,9 +1,49 @@
 # Plan — GH-30: Admin Account Management — Nhóm 5, 6, 7, 8, 9
 
 ## Metadata
-- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED → **NEEDS REWORK (GH-295 + plan↔code drift)** | **Role:** FE | **Ngày:** 2026-05-20, cập nhật 2026-06-14
 - **Issue:** #30 — https://github.com/GSU26SE55/frontend/issues/30
 - **Sprint:** Sprint 1 (due: 2026-05-30)
+
+---
+
+## ⚠️ GH-295 + Codebase Drift (2026-06-14) — SỬA TRƯỚC KHI FIX CODE
+
+> SHIPPED 2026-05-20. **Đã đối chiếu codebase** — phát hiện plan ghi nhiều thứ mà CODE KHÔNG implement (plan sai, code đúng doc) và ngược lại. Phần Types/Endpoints cũ phía dưới giữ để tham chiếu; điểm sai đánh dấu bên dưới.
+
+### C1 — 🟠 `skillTier` KHÔNG tồn tại (plan SAI, code đúng doc)
+
+- **Plan** ([Types §account.types dòng 101](#shared-typesaccounttypests), [§admin payloads dòng 236, 324](#features-admintypesadmintypests)) ghi `skillTier: number` **bắt buộc** vào `StaffProfileDto` + `UpdateStaffProfilePayload`, claim "Swagger: bắt buộc".
+- **Code (verified):** `account.types.ts:23` `StaffProfileDto` KHÔNG có `skillTier`. Đúng với doc — body `PUT /api/admin/staff/{id}/profile` ([api-auth.md §Nhóm 6](../../docs/api-auth.md)) chỉ có `employeeCode, department, maxConcurrentTickets, isAvailable, notes`.
+- → **Sửa PLAN:** xóa `skillTier` khỏi mọi mục. Không động vào code (đã đúng). Nếu Swagger thực có `skillTier` → cần BE/doc reconcile, nhưng theo `api-auth.md` thì KHÔNG có.
+
+### C2 — 🟠 `GET /api/admin/audit-logs/by-account/{accountId}` KHÔNG tồn tại (plan SAI, code đúng doc)
+
+- **Plan** ([Endpoints dòng 303, 337](#endpoints)) thêm endpoint `by-account` + `AUDIT_LOGS.BY_ACCOUNT`.
+- **Code (verified):** `endpoints.ts:153-155` `AUDIT_LOGS` chỉ có `LIST`. Đúng doc — lọc theo account dùng query `targetAccountId` trên `GET /api/admin/audit-logs` ([api-auth.md §Nhóm 9](../../docs/api-auth.md)).
+- → **Sửa PLAN:** xóa mục `by-account` (endpoint này 404). Code đã đúng.
+
+### C3 — 🔴 Thiếu `DELETE /api/admin/accounts/{id}/2fa` (admin reset 2FA — GH-295)
+
+- Doc [api-auth.md §`DELETE /api/admin/accounts/{id}/2fa`](../../docs/api-auth.md): Admin reset 2FA của user (clear secret + backup codes). Auth **Admin only**.
+- **Code (verified):** không có trong `endpoints.ts ADMIN.ACCOUNTS` (chỉ tới `ROLE` dòng 131) lẫn `admin-accounts.service.ts`.
+- → **Thêm:** `ADMIN.ACCOUNTS.RESET_2FA: (id) => '/api/admin/accounts/${id}/2fa'` + service `adminReset2fa(id)` (DELETE) + hook `useAdminReset2fa` + nút "Reset 2FA" trong AccountsPage (GH-64). Response `CommonResponse<Guid>`, idempotent.
+
+### C4 — 🟠 `AuditActionEnum` thiếu actions 2FA mới (GH-295)
+
+- **Plan/Code:** `AuditActionEnum` ([Types dòng 159-177](#features-admintypesadmintypests)) dừng ở `PermissionRevoked=98`, **thiếu** nhóm 2FA mới của doc ([api-auth.md §AuditActionEnum](../../docs/api-auth.md)):
+  `TwoFactorReset=42, BackupCodeRedeemed=43, BackupCodesRegenerated=44, Admin2FAReset=45, LoginWith2FA=46, LoginPending2FA=47`.
+- → **Thêm** 6 value này vào `features/admin/enums/audit.enum.ts` để `AuditLogsPage` filter/hiển thị đúng action mới.
+
+### C5 — ✅ `totalCount` vs `totalItems` — ĐÃ CHECK BE: code ĐÚNG, DOC SAI
+
+- **BE (verified):** `SharedContracts/.../PaginationResponse.cs:6` → `TotalItems` → JSON `totalItems`.
+- **Code FE (verified):** `api.types.ts:15` `totalItems` → **khớp BE.** GH-30 Bước 1 đổi `totalCount → totalItems` là **đúng**.
+- → **Hành động:** sửa `docs/api-auth.md` (`totalCount` → `totalItems`). Không đụng code.
+
+### C6 — 🟢 `UpdateAccountPayload.avatarUrl` (legacy, deprecated Sprint 5)
+
+Doc [api-auth.md §`PUT /api/admin/accounts/{id}`](../../docs/api-auth.md): `avatarUrl` là legacy field, **sẽ bị xóa sau FileStorage integration (Sprint 5)**. Plan/code đang giữ — OK tạm, nhưng đánh dấu deprecated, FE render avatar bằng `displayAvatarUrl`.
 
 ## Mục tiêu
 
@@ -63,18 +103,21 @@ UI pages tách thành issue riêng per feature. Router giữ placeholder hiện 
 ### `shared/types/account.types.ts`
 
 ```ts
-export enum AccountStatusEnum {
-  PendingVerification = 0,
-  Active = 1,
-  Locked = 2,
-  Inactive = 3,
-  Suspended = 4,
-  Banned = 5,
-}
+// shared/enums/account.enum.ts (as const — KHÔNG dùng TS native enum theo fe.md)
+export const AccountStatusEnum = {
+  PendingVerification: 0,
+  Active: 1,
+  Locked: 2,
+  Inactive: 3,
+  Suspended: 4,
+  Banned: 5,
+} as const;
+export type AccountStatusEnum = (typeof AccountStatusEnum)[keyof typeof AccountStatusEnum];
 
-export enum RefreshTokenStatus {
-  Active = 1, Used = 2, Revoked = 3, Expired = 4, Compromised = 5,
-}
+export const RefreshTokenStatus = {
+  Active: 1, Used: 2, Revoked: 3, Expired: 4, Compromised: 5,
+} as const;
+export type RefreshTokenStatus = (typeof RefreshTokenStatus)[keyof typeof RefreshTokenStatus];
 
 export interface AccountProfileDto {
   accountId: string;
@@ -147,34 +190,40 @@ export interface StaffAssignmentProfileDto {
 ```ts
 import type { AccountStatusEnum, RefreshTokenStatus } from '@/shared/types/account.types';
 
-export enum RoleStatusEnum { Active = 1, Inactive = 2, Deprecated = 3 }
+// features/admin/enums/*.enum.ts (as const — KHÔNG dùng TS native enum theo fe.md)
+export const RoleStatusEnum = {
+  Active: 1, Inactive: 2, Deprecated: 3,
+} as const;
+export type RoleStatusEnum = (typeof RoleStatusEnum)[keyof typeof RoleStatusEnum];
 
-export enum LoginAttemptResult {
-  Success = 1, WrongPassword = 2, AccountNotFound = 3,
-  AccountLocked = 4, AccountSuspended = 5, AccountBanned = 6,
-  AccountInactive = 7, AccountNotVerified = 8,
-}
+export const LoginAttemptResult = {
+  Success: 1, WrongPassword: 2, AccountNotFound: 3,
+  AccountLocked: 4, AccountSuspended: 5, AccountBanned: 6,
+  AccountInactive: 7, AccountNotVerified: 8,
+} as const;
+export type LoginAttemptResult = (typeof LoginAttemptResult)[keyof typeof LoginAttemptResult];
 
-// Đọc đủ 40+ values từ api-auth.md khi implement Bước 3
-export enum AuditActionEnum {
-  LoginSuccess = 1, LoginFailedWrongPassword = 2, LoginFailedAccountLocked = 3,
-  LoginFailedAccountSuspended = 4, LoginFailedAccountBanned = 5,
-  LoginFailedAccountInactive = 6, LoginFailedNotVerified = 7,
-  AccountAutoLocked = 8, Logout = 9, GoogleLoginSuccess = 10,
-  GoogleLoginFailed = 11, TokenRefreshed = 12, TokenReuseDetected = 13,
-  PasswordChanged = 20, PasswordReset = 21, OtpVerifySuccess = 22,
-  OtpVerifyFailed = 23, EmailChangeRequested = 24, EmailChangeConfirmed = 25,
-  PhoneVerified = 26, TwoFactorEnabled = 40, TwoFactorDisabled = 41,
-  GoogleLinked = 50, GoogleUnlinked = 51, AccountRegistered = 60,
-  AccountCreatedByAdmin = 61, AccountUpdated = 62, AccountStatusChanged = 63,
-  AccountUnlocked = 64, AccountDeactivated = 65, AccountDeleted = 66,
-  AccountInviteSent = 67, AccountInviteAccepted = 68, SessionRevoked = 80,
-  AllSessionsRevoked = 81, AdminForceLogout = 82,
-  SessionLimitExceededOldestRevoked = 83, RoleAssigned = 90, RoleRevoked = 91,
-  RoleTemporaryAssigned = 92, RoleCreated = 93, RoleUpdated = 94,
-  RoleStatusChanged = 95, RoleDeleted = 96, PermissionGranted = 97,
-  PermissionRevoked = 98,
-}
+// Keys dùng SCREAMING_SNAKE_CASE khớp code thực tế (features/admin/enums/audit.enum.ts)
+export const AuditActionEnum = {
+  LOGIN_SUCCESS: 1, LOGIN_FAILED_WRONG_PASSWORD: 2, LOGIN_FAILED_ACCOUNT_LOCKED: 3,
+  LOGIN_FAILED_ACCOUNT_SUSPENDED: 4, LOGIN_FAILED_ACCOUNT_BANNED: 5,
+  LOGIN_FAILED_ACCOUNT_INACTIVE: 6, LOGIN_FAILED_NOT_VERIFIED: 7,
+  ACCOUNT_AUTO_LOCKED: 8, LOGOUT: 9, GOOGLE_LOGIN_SUCCESS: 10,
+  GOOGLE_LOGIN_FAILED: 11, TOKEN_REFRESHED: 12, TOKEN_REUSE_DETECTED: 13,
+  PASSWORD_CHANGED: 20, PASSWORD_RESET: 21, OTP_VERIFY_SUCCESS: 22,
+  OTP_VERIFY_FAILED: 23, EMAIL_CHANGE_REQUESTED: 24, EMAIL_CHANGE_CONFIRMED: 25,
+  PHONE_VERIFIED: 26, TWO_FACTOR_ENABLED: 40, TWO_FACTOR_DISABLED: 41,
+  GOOGLE_LINKED: 50, GOOGLE_UNLINKED: 51, ACCOUNT_REGISTERED: 60,
+  ACCOUNT_CREATED_BY_ADMIN: 61, ACCOUNT_UPDATED: 62, ACCOUNT_STATUS_CHANGED: 63,
+  ACCOUNT_UNLOCKED: 64, ACCOUNT_DEACTIVATED: 65, ACCOUNT_DELETED: 66,
+  ACCOUNT_INVITE_SENT: 67, ACCOUNT_INVITE_ACCEPTED: 68, SESSION_REVOKED: 80,
+  ALL_SESSIONS_REVOKED: 81, ADMIN_FORCE_LOGOUT: 82,
+  SESSION_LIMIT_EXCEEDED_OLDEST_REVOKED: 83, ROLE_ASSIGNED: 90, ROLE_REVOKED: 91,
+  ROLE_TEMPORARY_ASSIGNED: 92, ROLE_CREATED: 93, ROLE_UPDATED: 94,
+  ROLE_STATUS_CHANGED: 95, ROLE_DELETED: 96, PERMISSION_GRANTED: 97,
+  PERMISSION_REVOKED: 98,
+} as const;
+export type AuditActionEnum = (typeof AuditActionEnum)[keyof typeof AuditActionEnum];
 
 // DTOs
 export interface RoleDto {

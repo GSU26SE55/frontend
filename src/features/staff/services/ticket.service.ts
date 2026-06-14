@@ -8,10 +8,12 @@ import type {
   TicketDTO,
   TicketDetailDTO,
   TicketActivityDTO,
+  TicketCommentDTO,
   TicketActionResponse,
 } from "@/shared/types/ticket.types";
 import type {
   StaffTicketsParams,
+  StartTicketRequest,
   HoldTicketRequest,
   ResolveTicketRequest,
   EscalateTicketRequest,
@@ -23,7 +25,13 @@ export const staffTicketService = {
   getMyTickets: (params: StaffTicketsParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketDTO>>>(
       ENDPOINTS.STAFF_TICKETS.ME,
-      { params },
+      {
+        params: {
+          Status: params.status,
+          PageNumber: params.pageNumber,
+          PageSize: params.pageSize,
+        },
+      },
     ),
 
   getDetail: (id: string) =>
@@ -36,8 +44,17 @@ export const staffTicketService = {
       ENDPOINTS.TICKETS.ACTIVITIES(id),
     ),
 
-  start: (id: string) =>
-    axiosInstance.post<TicketActionResponse>(ENDPOINTS.STAFF_TICKETS.START(id)),
+  getComments: (ticketId: string, page = 1, pageSize = 10) =>
+    axiosInstance.get<CommonResponse<PaginationResponse<TicketCommentDTO>>>(
+      ENDPOINTS.TICKETS.COMMENTS(ticketId),
+      { params: { page, pageSize } },
+    ),
+
+  start: (id: string, data?: StartTicketRequest) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.STAFF_TICKETS.START(id),
+      data,
+    ),
 
   hold: (id: string, data: HoldTicketRequest) =>
     axiosInstance.post<TicketActionResponse>(

@@ -1,9 +1,34 @@
 # Plan — GH-64: Implement deferred UI — Profile, Accept Invite, Admin UI forms
 
 ## Metadata
-- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-06
+- **Status:** REVIEWING → **NEEDS REWORK (GH-295)** | **Role:** FE | **Ngày:** 2026-06-06, cập nhật 2026-06-14
 - **Issue:** #64 — https://github.com/GSU26SE55/frontend/issues/64
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
+
+---
+
+## ⚠️ GH-295 Contract Update (2026-06-14) — SỬA TRƯỚC KHI FIX CODE
+
+> **Đã đối chiếu codebase.** Phần Endpoints/Approach cũ phía dưới lỗi thời ở chỗ đánh dấu.
+
+### C1 — 🔴 Accept Invite response: `data.tokens.*` (phụ thuộc fix GH-11 C1)
+
+- **Plan** ([Endpoints §Accept Invite dòng 48](#accept-invite), [Approach dòng 166](#accept-invite-flow)) ghi response `CommonResponse<{ accessToken, refreshToken }>` phẳng.
+- **Code (verified):** `auth.service.ts:66` `acceptInvite` type `CommonResponse<LoginResponseData>` (phẳng) — sẽ vỡ với shape mới.
+- **Doc** [api-auth.md §`/accept-invite`](../../docs/api-auth.md): response = `LoginResultDto` → `data.tokens.accessToken`, `data.challenge=null`.
+- → `AcceptInvitePage` onSuccess: `saveTokens(data.tokens.accessToken, data.tokens.refreshToken)` (không phải `data.accessToken`). Đồng bộ với `useLogin` sau khi GH-11 C1 fix. Accept-invite **bypass 2FA** nên `challenge` luôn null — không cần handle `requiresTwoFactor`.
+
+### C2 — 🔴 AccountsPage: thêm nút "Reset 2FA" (admin) — endpoint GH-295 mới
+
+- Doc [api-auth.md §`DELETE /api/admin/accounts/{id}/2fa`](../../docs/api-auth.md): admin reset 2FA của user khác. **Admin only**.
+- **Code (verified):** chưa có endpoint/service/hook (xem GH-30 C3).
+- → Sau khi GH-30 thêm `useAdminReset2fa`: thêm menu item "Reset 2FA" trong row action AccountsPage (chỉ hiện khi `account.twoFactorEnabled === true` và actor là Admin) → confirm dialog → `DELETE`. Toast theo message idempotent từ BE.
+
+### C3 — 🟢 ProfilePage avatar — không đổi (đã đúng doc)
+
+`POST /api/auth/me/avatar` body `{ avatarFileId }` + render bằng `displayAvatarUrl` — khớp doc. Giữ nguyên.
+
+> Các phần admin forms khác (invite/create/edit/status/role/unlock/delete, roles, permissions, audit) khớp doc — không cần sửa, TRỪ: AuditLogsPage filter cần thêm 6 action 2FA mới sau khi GH-30 C4 mở rộng `AuditActionEnum`.
 
 ## Mục tiêu
 Implement 4 nhóm UI bị defer từ GH-11, GH-27, GH-28, GH-30:
@@ -40,7 +65,7 @@ Implement 4 nhóm UI bị defer từ GH-11, GH-27, GH-28, GH-30:
 | GET | `/api/auth/me` | Lấy profile hiện tại (hook đã có: `useProfile`) |
 | PUT | `/api/auth/me/profile` | Cập nhật profile (hook đã có: `useUpdateProfile`) |
 | POST | `/api/auth/me/avatar` | Gắn avatarFileId (hook đã có: `useUpdateAvatar`) |
-| POST | `/api/files` | Upload file lấy fileId (hook đã có: `useUploadFile`) |
+| POST | `/api/files/upload` | Upload file lấy fileId (hook đã có: `useUploadFile`) |
 
 ### Accept Invite
 | Method | Path | Request | Response |
@@ -153,7 +178,7 @@ status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
 
 ### ProfilePage
 - `useProfile()` → hiển thị current data; `useUpdateProfile()` → onSubmit form
-- Avatar: file input `<input type="file" accept="image/*">` → `useUploadFile({ file, purpose: FilePurposeEnum.Avatar })` → lấy `fileId` → `useUpdateAvatar({ avatarFileId: fileId })`
+- Avatar: file input `<input type="file" accept=".jpg,.jpeg,.png,.webp">` (khớp whitelist Avatar của FileStorage — spec api-filestorage.md) → `useUploadFile({ file, purpose: FilePurposeEnum.Avatar })` → lấy `fileId` → `useUpdateAvatar({ avatarFileId: fileId })`
 - Render avatar: `${VITE_API_BASE_URL}${account.displayAvatarUrl}` hoặc placeholder nếu null
 - `profile` có thể `null` (seed admin) → form vẫn submit được, BE tự tạo profile row
 - Cache invalidation: `useUpdateProfile` + `useUpdateAvatar` đều dùng `invalidateQueries({ queryKey: [KEY.profile] })` — prefix-match `QUERY_KEY.profile.me()` = `[KEY.profile, "me"]` → đúng, không cần sửa

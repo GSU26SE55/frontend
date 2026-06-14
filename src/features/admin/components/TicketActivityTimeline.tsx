@@ -26,6 +26,7 @@ const ACTION_LABEL: Partial<Record<string, string>> = {
   AutoClosed: "Tự động đóng",
   ResolvedByEscalatedStaff: "Giải quyết sau escalation",
   TriageApproved: "Manager duyệt triage",
+  Closed: "Đã đóng ticket",
 };
 
 interface Props {

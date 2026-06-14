@@ -58,8 +58,10 @@ const tryRefresh = async (): Promise<string | null> => {
       { refreshToken },
       { timeout: 10_000 },
     );
-    if (!res.data?.isSuccess) throw new Error("Refresh failed");
-    const { accessToken, refreshToken: newRefreshToken } = res.data.data;
+    // GH-295: refresh trả LoginResultDto — token nằm trong data.tokens (challenge luôn null)
+    if (!res.data?.isSuccess || !res.data.data?.tokens)
+      throw new Error("Refresh failed");
+    const { accessToken, refreshToken: newRefreshToken } = res.data.data.tokens;
     saveTokens(accessToken, newRefreshToken);
     useSessionStore.getState().setSession(decodeToken(accessToken));
     pendingQueue.forEach((cb) => cb(accessToken));

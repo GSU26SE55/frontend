@@ -22,12 +22,12 @@ export interface StaffSkillDto {
 
 export interface StaffProfileDto {
   accountId: string;
-  employeeCode: string;
-  department: string;
+  employeeCode?: string; // Swagger: nullable
+  department?: string; // Swagger: nullable
   maxConcurrentTickets: number;
   isAvailable: boolean;
   notes?: string;
-  skills: StaffSkillDto[];
+  skills: StaffSkillDto[] | null; // Swagger: nullable — guard bằng `skills ?? []` khi render
 }
 
 export interface AccountDto {

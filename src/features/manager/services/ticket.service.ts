@@ -19,17 +19,41 @@ import type {
   AddCommentPayload,
 } from "@/shared/types/ticket.types";
 
+function toListParams(params?: AdminTicketListParams) {
+  if (!params) return undefined;
+  return {
+    Keyword: params.keyword,
+    Status: params.status,
+    Priority: params.priority,
+    Category: params.category,
+    BatteryAssetId: params.batteryAssetId,
+    IsDescending: params.isDescending,
+    PageNumber: params.pageNumber,
+    PageSize: params.pageSize,
+  };
+}
+
+function toQueueParams(params?: AdminTicketQueueParams) {
+  if (!params) return undefined;
+  return {
+    Priority: params.priority,
+    Category: params.category,
+    PageNumber: params.pageNumber,
+    PageSize: params.pageSize,
+  };
+}
+
 export const managerTicketService = {
   getList: (params?: AdminTicketListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketDTO>>>(
       ENDPOINTS.ADMIN.TICKETS.LIST,
-      { params },
+      { params: toListParams(params) },
     ),
 
   getQueue: (params?: AdminTicketQueueParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketDTO>>>(
       ENDPOINTS.ADMIN.TICKETS.QUEUE,
-      { params },
+      { params: toQueueParams(params) },
     ),
 
   getDetail: (id: string) =>

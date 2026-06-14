@@ -1,9 +1,65 @@
 # Plan — GH-27: [FE] Implement Account Settings — /api/accounts/me
 
 ## Metadata
-- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED → **NEEDS REWORK (GH-295)** | **Role:** FE | **Ngày:** 2026-05-20, cập nhật 2026-06-14
 - **Issue:** #27 — https://github.com/GSU26SE55/frontend/issues/27
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
+
+---
+
+## ⚠️ GH-295 Contract Update (2026-06-14) — SỬA TRƯỚC KHI FIX CODE
+
+> SHIPPED 2026-05-20, trước GH-295. `docs/api-auth.md` đã đổi flow 2FA. Phần Types/Endpoints/Workflow cũ phía dưới lỗi thời ở chỗ được đánh dấu. **Đã đối chiếu codebase** — trạng thái thực tế ghi từng mục.
+
+### C1 — 🔴 2FA enable flow CŨ đã bị thay (endpoint trả 410)
+
+**Code hiện tại (đã verify):**
+- `account.service.ts:43` `enableTwoFactor()` POST `/2fa/enable` body rỗng → doc [api-auth.md §`/2fa/enable`](../../docs/api-auth.md) endpoint này **luôn trả `410 Gone`**.
+- `account.service.ts:48` `disableTwoFactor()` POST `/2fa/disable` body rỗng → doc yêu cầu body **bắt buộc** `{password, totpCode}`.
+- `endpoints.ts:28-29` chỉ có `TWO_FA_ENABLE` + `TWO_FA_DISABLE` — thiếu hết endpoint GH-295.
+- `TwoFactorSetup.tsx` comment "2FA kích hoạt ngay — không có bước confirm" → trái flow mới.
+
+**Phải thay bằng flow 2 bước (doc §`/2fa/init`, §`/2fa/confirm`):**
+
+| Endpoint mới | Body | Response data |
+|---|---|---|
+| `POST /api/accounts/me/2fa/init` | — | `{ secret, otpAuthUri, pendingToken }` |
+| `POST /api/accounts/me/2fa/confirm` | `{ pendingToken, code }` | `{ enabled: true, backupCodes: string[8] }` (hiện 1 lần) |
+| `POST /api/accounts/me/2fa/disable` | `{ password, totpCode }` | `Guid` |
+| `POST /api/accounts/me/2fa/backup-codes/regenerate` | `{ totpCode }` | `{ backupCodes: string[8] }` |
+
+→ `endpoints.ts` thêm `TWO_FA_INIT`, `TWO_FA_CONFIRM`, `TWO_FA_BACKUP_REGEN`; bỏ/deprecate `TWO_FA_ENABLE`.
+→ `TwoFactorSetup` đổi thành wizard: init (render QR từ `otpAuthUri` + `secret`) → nhập 6 số → confirm → hiển thị 8 backup codes (modal bắt buộc "Tôi đã lưu").
+→ `DisableTwoFactorForm` mới: 2 input `password` + `totpCode`.
+→ Thêm `RegenerateBackupCodesModal` (nhập `totpCode`).
+
+### C2 — 🟠 Types 2FA mới
+
+`account.types.ts`:
+```ts
+// BỎ: EnableTwoFactorResponseData { secret, otpAuthUri }  ← thiếu pendingToken
+export interface Init2faResponseData { secret: string; otpAuthUri: string; pendingToken: string; }
+export interface Confirm2faPayload { pendingToken: string; code: string; }
+export interface Confirm2faResponseData { enabled: boolean; backupCodes: string[]; }
+export interface Disable2faPayload { password: string; totpCode: string; }
+export interface RegenBackupCodesPayload { totpCode: string; }
+export interface RegenBackupCodesResponseData { backupCodes: string[]; }
+```
+
+### C3 — ✅ `totalCount` vs `totalItems` — ĐÃ CHECK BE: code ĐÚNG, DOC SAI
+
+- **BE (verified):** `shared/src/SharedContracts/Common/Responses/PaginationResponse.cs:6` → `public int TotalItems` (+ `TotalPages`, `HasNextPage`). JSON serialize ra **`totalItems`**.
+- **Code FE (verified):** `api.types.ts:15` + `account.types.ts:58` dùng `totalItems` → **khớp BE, không sửa.**
+- **Doc SAI:** [api-auth.md login-history](../../docs/api-auth.md) ghi `"totalCount": 42` — cần sửa DOC, không sửa code.
+- → **Hành động:** sửa `docs/api-auth.md` các response phân trang `totalCount` → `totalItems`. Code giữ nguyên.
+
+### C4 — 🟢 change-email / confirm-email-change: enable lại
+
+Plan gốc đánh dấu 2 endpoint "CHƯA CÓ TRONG SWAGGER, pending BE" ([Endpoints dòng 161-162](#endpoints)). Doc [api-auth.md §`/change-email`, §`/confirm-email-change`](../../docs/api-auth.md) nay đã document đầy đủ. Code đã có sẵn (`account.service.ts:22-32`) → enable UI trong `ChangeEmailForm` (nếu đang bị comment out).
+
+### C5 — 🟢 Login response shape (gián tiếp)
+
+`AccountSettingsPage` không gọi login, nhưng nếu bất kỳ flow nào ở đây redirect qua login lại thì phụ thuộc fix GH-11 C1. Không cần sửa trong ticket này.
 
 ## Mục tiêu
 Triển khai types, endpoints, service, hooks, schemas, components và page cho trang cài đặt tài khoản cá nhân tại route `/settings`. Bao gồm 12 endpoints Nhóm 2 (`/api/accounts/me`): đổi mật khẩu, đổi email (2-step OTP), xác thực SĐT, 2FA TOTP, liên kết Google, deactivate/delete account, và lịch sử đăng nhập.

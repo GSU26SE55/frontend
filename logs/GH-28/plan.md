@@ -1,9 +1,22 @@
 # Plan — GH-28: Auth Profile, Staff Assignment & Session Management — services + hooks
 
 ## Metadata
-- **Status:** SHIPPED | **Role:** FE | **Ngày:** 2026-05-20
+- **Status:** SHIPPED → **OK (minor)** | **Role:** FE | **Ngày:** 2026-05-20, cập nhật 2026-06-14
 - **Issue:** #28 — https://github.com/GSU26SE55/frontend/issues/28
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
+
+---
+
+## ⚠️ GH-295 Review (2026-06-14) — KHÔNG có breaking change ở ticket này
+
+> **Đã đối chiếu codebase + doc.** GH-28 là data-layer cho profile/staff/session (Nhóm 3 & 4) — các endpoint này **không bị GH-295 đụng tới**. Không cần rework lớn. Ghi nhận:
+
+- ✅ `GET/PUT /api/auth/me`, `POST /api/auth/me/avatar` (`{ avatarFileId }`), `/api/staff*`, `/api/sessions*` — code khớp doc. (`account.types.ts` `AccountDto`/`StaffProfileDto`/`SessionDto` đã verify đúng shape.)
+- ✅ `StaffProfileDto.notes?` nullable — đã đúng (blocker #2 cũ resolved). Code `account.types.ts:25-26` còn để `employeeCode`/`department` **non-optional** trong khi doc ([api-auth.md §Nhóm 6](../../docs/api-auth.md)) cho phép `string?` — 🟢 minor: nên đổi sang optional để khớp, nhưng không gây lỗi runtime (BE eager-load luôn trả).
+- ⚠️ `StaffProfileDto` KHÔNG có `skillTier` — **đúng** (xem GH-30 C1: plan GH-30 ghi nhầm `skillTier`, code/doc đều không có).
+- ℹ️ `AccountDto` được dùng lại bởi login flow (gián tiếp) nhưng GH-28 không gọi login → không dính C1 token-wrapper của GH-11.
+
+→ **Hành động:** chỉ cân nhắc đổi `employeeCode`/`department` sang optional. Không có việc fix bắt buộc.
 
 ## Mục tiêu
 Tạo types + services + TanStack Query hooks cho 8 endpoint thuộc Nhóm 3 (Auth Profile & Staff Assignment) và Nhóm 4 (Session Management). Không tạo pages/components — chỉ là tầng data access để các feature pages dùng sau.
@@ -77,7 +90,7 @@ Tạo types + services + TanStack Query hooks cho 8 endpoint thuộc Nhóm 3 (Au
 
 ## Enums
 
-> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` và `src/features/admin/enums/` — không define inline trong types. Plan gốc dùng `export enum` (TypeScript native enum) — codebase thực tế đã đổi sang `as const` object pattern.
+> **Note (thêm sau khi SHIPPED):** Enums được tách ra `src/shared/enums/` và `src/features/admin/enums/` — không define inline trong types. Plan đã đồng bộ sang pattern `as const` object + type alias (theo rule fe.md — KHÔNG dùng TS native enum), khớp với codebase thực tế.
 
 | Enum | File |
 |------|------|
@@ -92,11 +105,16 @@ Tạo types + services + TanStack Query hooks cho 8 endpoint thuộc Nhóm 3 (Au
 ## Types
 
 ```ts
-// shared/types/account.types.ts
-export enum AccountStatusEnum {
-  PendingVerification = 0, Active = 1, Locked = 2, Inactive = 3, Suspended = 4, Banned = 5,
-}
-export enum AvatarSourceEnum { None = 0, Uploaded = 1, Google = 2 }
+// shared/enums/account.enum.ts (as const — KHÔNG dùng TS native enum theo fe.md)
+export const AccountStatusEnum = {
+  PendingVerification: 0, Active: 1, Locked: 2, Inactive: 3, Suspended: 4, Banned: 5,
+} as const;
+export type AccountStatusEnum = (typeof AccountStatusEnum)[keyof typeof AccountStatusEnum];
+
+export const AvatarSourceEnum = {
+  None: 0, Uploaded: 1, Google: 2,
+} as const;
+export type AvatarSourceEnum = (typeof AvatarSourceEnum)[keyof typeof AvatarSourceEnum];
 
 export interface AccountProfileDto {
   accountId: string;
@@ -161,8 +179,11 @@ export interface StaffAssignmentProfileDto {
   skills: StaffSkillDto[];
 }
 
-// features/auth/types/auth.types.ts (additions)
-export enum RefreshTokenStatus { Active = 1, Used = 2, Revoked = 3, Expired = 4, Compromised = 5 }
+// shared/enums/account.enum.ts (as const — KHÔNG dùng TS native enum theo fe.md)
+export const RefreshTokenStatus = {
+  Active: 1, Used: 2, Revoked: 3, Expired: 4, Compromised: 5,
+} as const;
+export type RefreshTokenStatus = (typeof RefreshTokenStatus)[keyof typeof RefreshTokenStatus];
 export interface SessionDto {
   id: string;
   issuedAt: string;

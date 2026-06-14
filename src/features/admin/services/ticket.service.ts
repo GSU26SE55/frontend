@@ -24,12 +24,25 @@ export interface GetAdminTicketsParams {
   pageSize?: number;
 }
 
+function toQueryParams(params?: GetAdminTicketsParams) {
+  if (!params) return undefined;
+  return {
+    Keyword: params.keyword,
+    Status: params.status,
+    Priority: params.priority,
+    Category: params.category,
+    IsDescending: params.isDescending,
+    PageNumber: params.pageNumber,
+    PageSize: params.pageSize,
+  };
+}
+
 export const adminTicketService = {
   getList: (params?: GetAdminTicketsParams) =>
     axiosInstance
       .get<
         CommonResponse<PaginationResponse<TicketDTO>>
-      >(ENDPOINTS.ADMIN.TICKETS.LIST, { params })
+      >(ENDPOINTS.ADMIN.TICKETS.LIST, { params: toQueryParams(params) })
       .then((r) => r.data),
 
   getDetail: (id: string) =>
@@ -44,8 +57,13 @@ export const adminTicketService = {
       >(ENDPOINTS.TICKETS.ACTIVITIES(id))
       .then((r) => r.data),
 
-  declareIncident: (id: string) =>
+  declareIncident: (id: string, incidentDescription: string) =>
     axiosInstance
-      .post<TicketActionResponse>(ENDPOINTS.ADMIN.TICKETS.DECLARE_INCIDENT(id))
+      .post<TicketActionResponse>(
+        ENDPOINTS.ADMIN.TICKETS.DECLARE_INCIDENT(id),
+        {
+          incidentDescription,
+        },
+      )
       .then((r) => r.data),
 };

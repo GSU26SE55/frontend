@@ -155,3 +155,15 @@ export const useAdminChangeAccountRole = () => {
     },
   });
 };
+
+// GH-295: admin reset 2FA của user khác
+export const useAdminReset2fa = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminAccountsService.reset2fa(id),
+    onSuccess: (_data, id) => {
+      qc.invalidateQueries({ queryKey: KEY.admin.accounts });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+    },
+  });
+};

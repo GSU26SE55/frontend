@@ -1,6 +1,7 @@
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: "/api/auth/login",
+    LOGIN_VERIFY_2FA: "/api/auth/login/verify-2fa", // GH-295 — bước 2 của 2FA login
     LOGOUT: "/api/auth/logout",
     REGISTER: "/api/auth/register",
     VERIFY_OTP: "/api/auth/verify-otp",
@@ -25,24 +26,17 @@ export const ENDPOINTS = {
       CONFIRM_EMAIL_CHANGE: "/api/accounts/me/confirm-email-change",
       SEND_PHONE_OTP: "/api/accounts/me/send-phone-otp",
       VERIFY_PHONE_OTP: "/api/accounts/me/verify-phone-otp",
-      TWO_FA_ENABLE: "/api/accounts/me/2fa/enable",
+      // GH-295: flow 2FA 2 bước. /enable cũ đã 410 Gone — không dùng.
+      TWO_FA_INIT: "/api/accounts/me/2fa/init",
+      TWO_FA_CONFIRM: "/api/accounts/me/2fa/confirm",
       TWO_FA_DISABLE: "/api/accounts/me/2fa/disable",
+      TWO_FA_BACKUP_REGEN: "/api/accounts/me/2fa/backup-codes/regenerate",
       LINK_GOOGLE: "/api/accounts/me/link-google",
       UNLINK_GOOGLE: "/api/accounts/me/unlink-google",
       DEACTIVATE: "/api/accounts/me/deactivate",
       DELETE: "/api/accounts/me",
       LOGIN_HISTORY: "/api/accounts/me/login-history",
     },
-  },
-
-  USERS: {
-    LIST: "/api/users",
-    CREATE: "/api/users",
-    DETAIL: (id: string) => `/api/users/${id}`,
-    UPDATE: (id: string) => `/api/users/${id}`,
-    DEACTIVATE: (id: string) => `/api/users/${id}/deactivate`,
-    RESET_PASSWORD: (id: string) => `/api/users/${id}/reset-password`,
-    INVITE: "/api/users/invite",
   },
 
   TICKETS: {
@@ -129,6 +123,7 @@ export const ENDPOINTS = {
         `/api/admin/accounts/${id}/sessions/revoke-all`,
       LOGIN_HISTORY: (id: string) => `/api/admin/accounts/${id}/login-history`,
       ROLE: (id: string) => `/api/admin/accounts/${id}/role`,
+      RESET_2FA: (id: string) => `/api/admin/accounts/${id}/2fa`, // GH-295 — admin reset 2FA (DELETE)
     },
     STAFF: {
       PROFILE: (id: string) => `/api/admin/staff/${id}/profile`,

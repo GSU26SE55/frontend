@@ -5,6 +5,8 @@ import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -38,6 +40,7 @@ export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [incidentDescription, setIncidentDescription] = useState("");
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
   const { data: activities, isLoading: loadingActivities } =
@@ -45,7 +48,15 @@ export default function AdminTicketDetailPage() {
   const { mutate: declareIncident, isPending } = useDeclareIncident();
 
   function handleConfirm() {
-    declareIncident(id!, { onSuccess: () => setConfirmOpen(false) });
+    declareIncident(
+      { id: id!, incidentDescription: incidentDescription.trim() },
+      {
+        onSuccess: () => {
+          setConfirmOpen(false);
+          setIncidentDescription("");
+        },
+      },
+    );
   }
 
   if (loadingDetail) {
@@ -117,12 +128,23 @@ export default function AdminTicketDetailPage() {
               hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="incident-description">
+              Mô tả lý do <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="incident-description"
+              placeholder="Mô tả ngắn lý do declare incident..."
+              value={incidentDescription}
+              onChange={(e) => setIncidentDescription(e.target.value)}
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setConfirmOpen(false)} />
             <AlertDialogAction
               variant="destructive"
               onClick={handleConfirm}
-              disabled={isPending}
+              disabled={isPending || !incidentDescription.trim()}
             >
               {isPending ? "Đang xử lý..." : "Xác nhận"}
             </AlertDialogAction>

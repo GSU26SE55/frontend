@@ -149,13 +149,13 @@ Open ──→ Acknowledged ──→ Resolved
 
 ### `SensorReadingSourceTypeEnum`
 
-> Phân loại nguồn của một sensor reading — phục vụ cross-source mismatch check (Sprint 7, anomaly `SensorMismatch`). Swagger chỉ expose int value `1, 2, 3`; **tên member chưa được swagger export — chờ BE confirm tên chính xác**.
+> Phân loại nguồn của một sensor reading — phục vụ cross-source mismatch check (Sprint 7, anomaly `SensorMismatch`).
 
-| Int | Ý nghĩa (dự kiến) |
-|---|---|
-| `1` | BMS — reading từ Battery Management System (mặc định) |
-| `2` | IoT sensor — reading từ cảm biến IoT độc lập |
-| `3` | Nguồn khác / aggregated |
+| Giá trị | Int | Ý nghĩa |
+|---|---|---|
+| `Bms` | 1 | Reading từ BMS gắn trực tiếp trong pack (qua RS485/Modbus) — mặc định |
+| `IotGateway` | 2 | Reading từ IoT edge device (ESP32-S3 + sensor ngoài). Tên giữ legacy "Gateway" |
+| `External` | 3 | Manual import / third-party feed |
 
 ### `ChargingStateEnum`
 
@@ -861,10 +861,11 @@ Base route: `/api/sensor-readings`
 | `bmsErrorCode` | `string?` | Không | — | Mã lỗi raw từ BMS (nếu device gửi) |
 | `sensorSourceCode` | `string?` | Không | — | Mã nguồn/định danh kênh cảm biến (nếu device gửi) |
 
-**Response thành công `200`:**
+**Response thành công `201 Created`:** Tạo resource mới (sensor readings trong TimescaleDB hypertable).
 ```json
 {
   "isSuccess": true,
+  "statusCode": 201,
   "data": {
     "totalReceived": 10,
     "inserted": 9,
@@ -1345,19 +1346,17 @@ Base route: `/api/ambient`
 | `source` | `AmbientReadingSourceEnum` | ❌ (mặc định `IotSensor` = 1) | enum hợp lệ | Nguồn dữ liệu — xem enum |
 | `sourceDeviceId` | `string?` | ❌ | — | ID gateway / device gửi data |
 
-**Response thành công `200`:** `CommonResponse<int>` — `data` là số reading đã insert.
+**Response thành công `201 Created`:** `CommonResponse<int>` — `data` là số reading đã insert.
 
 ```json
 {
   "isSuccess": true,
-  "statusCode": 200,
-  "message": "Ingest 100 ambient readings.",
-  "data": 100,
-  "listErrors": []
+  "statusCode": 201,
+  "data": 100
 }
 ```
 
-> Trùng `(SiteId, Time)` → idempotent skip (không tính vào `data`).
+> Handler không set `message`. `data` = `request.Items.Count` (số reading client gửi lên — dedup phụ thuộc DB constraint / TimescaleDB hypertable, không filter ở application layer).
 
 **Lỗi thường gặp:**
 - `400` — `items` rỗng, vượt 100 record, hoặc item không hợp lệ (xem `listErrors` chi tiết từng item: `Items[0].SiteId`, `Items[0].Humidity`, …)
@@ -1564,7 +1563,7 @@ Base route: `/api/environmental-incidents`
 
 ### `POST /api/environmental-incidents`
 
-**Mục đích:** Report incident mới từ IoT edge (smoke/fire/gas leak/flood/overheat hazard cấp site). Khi tạo thành công, hệ thống tự động phát `EnvironmentalIncidentRaisedEvent` để Notification + Ticket service consume (auto tạo Alert site-level + ticket P1).
+**Mục đích:** Report incident mới từ IoT edge (smoke/fire/gas leak/flood/overheat hazard cấp site). Khi tạo thành công, hệ thống tự động phát `EnvironmentalIncidentDetectedEvent` để Notification + Ticket service consume (auto tạo Alert site-level + ticket P1).
 
 **Auth:** API Key — scheme `ApiKey` + policy `EnvironmentalIngest`.
 
@@ -1592,7 +1591,14 @@ Base route: `/api/environmental-incidents`
 | `reportedBy` | `string?` | ❌ | Max 256 ký tự | Định danh device/gateway hoặc operator báo cáo |
 | `notes` | `string?` | ❌ | Max 1000 ký tự | Ghi chú/mô tả chi tiết |
 
-**Response thành công `200`:** `CommonResponse<EnvironmentalIncidentDto>` — payload đầy đủ incident vừa tạo (shape giống `GET /{id}` bên dưới). Status được set `Open`, `acknowledgedAt`/`resolvedAt`/`falseAlarmAt` đều `null`.
+**Response thành công — 2 paths:**
+
+| Status | Path | Mô tả |
+|---|---|---|
+| `201 Created` | **Create** (normal path) | Incident mới được tạo. Status set `Open`, `acknowledgedAt`/`resolvedAt`/`falseAlarmAt` đều `null`. Hệ thống phát `EnvironmentalIncidentDetectedEvent` để Notification + Ticket service consume (auto tạo Alert site-level + ticket P1). |
+| `200 OK` | **Dedup** (idempotency) | Đã tồn tại incident active đang `Open`/`Acknowledged` cho cùng `SiteId` + cùng `IncidentType` → trả lại incident cũ thay vì tạo mới. KHÔNG phát event lần nữa. Idempotency-friendly cho IoT gateway spam cùng sự cố. |
+
+Cả 2 path đều trả `CommonResponse<EnvironmentalIncidentDto>` — payload đầy đủ incident (shape giống `GET /{id}` bên dưới).
 
 **Lỗi thường gặp:**
 - `400` — `SiteId` rỗng, `IncidentType`/`Severity` không hợp lệ, `DetectedAt` rỗng/vượt quá hiện tại 5'

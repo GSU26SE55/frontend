@@ -11,6 +11,12 @@ export interface StaffTicketsParams {
   pageSize: number;
 }
 
+export interface StartTicketRequest {
+  logType?: MaintenanceLogTypeEnum;
+  latitude?: number;
+  longitude?: number;
+}
+
 export interface HoldTicketRequest {
   reason: PauseReasonEnum;
   note?: string;

@@ -44,6 +44,8 @@ export const addCommentSchema = z.object({
 export type AddCommentFormValues = z.infer<typeof addCommentSchema>;
 
 export const maintenanceLogSchema = z.object({
+  // Default RemoteSupport được cung cấp qua form `defaultValues` (RHF), không dùng
+  // zod `.default()` để tránh lệch input/output type của resolver.
   logType: z.nativeEnum(MaintenanceLogTypeEnum),
   summary: z.string().min(1, "Tóm tắt công việc không được để trống"),
   diagnosisDetails: z.string().optional(),

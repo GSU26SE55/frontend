@@ -22,11 +22,12 @@ export const useAcceptInvite = () => {
       authService.acceptInvite(payload),
     onSuccess: (response) => {
       const res = response.data;
-      if (!res.isSuccess || !res.data) {
+      // GH-295: accept-invite trả LoginResultDto, bypass 2FA → tokens luôn set
+      if (!res.isSuccess || !res.data?.tokens) {
         toast.error(res.message ?? "Không thể kích hoạt tài khoản");
         return;
       }
-      const { accessToken, refreshToken } = res.data;
+      const { accessToken, refreshToken } = res.data.tokens;
       saveTokens(accessToken, refreshToken);
       const user = decodeToken(accessToken);
 

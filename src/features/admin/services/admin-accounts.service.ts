@@ -88,4 +88,10 @@ export const adminAccountsService = {
       ENDPOINTS.ADMIN.ACCOUNTS.ROLE(id),
       payload,
     ),
+
+  // GH-295: admin reset 2FA của user khác (idempotent)
+  reset2fa: (id: string) =>
+    axiosInstance.delete<CommonResponse<string>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.RESET_2FA(id),
+    ),
 };
