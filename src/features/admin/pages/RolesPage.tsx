@@ -1,0 +1,391 @@
+import { useMemo, useState } from "react";
+import {
+  Shield,
+  Plus,
+  Lock,
+  CheckCircle,
+  MoreHorizontal,
+  Loader2,
+  Edit2,
+  ToggleLeft,
+  Key,
+  Trash2,
+  Search,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import {
+  useAdminRoleList,
+  useAdminDeleteRole,
+} from "@/features/admin/hooks/useAdminRoles";
+import {
+  RoleStatusEnum,
+  RoleTypeFilter,
+} from "@/features/admin/types/admin.types";
+import CreateRoleDialog from "@/features/admin/components/CreateRoleDialog";
+import EditRoleDialog from "@/features/admin/components/EditRoleDialog";
+import ChangeRoleStatusDialog from "@/features/admin/components/ChangeRoleStatusDialog";
+import PermissionsDialog from "@/features/admin/components/PermissionsDialog";
+import { handleErrorApi } from "@/shared/lib/errors";
+import type { RoleDto } from "@/features/admin/types/admin.types";
+
+const STATUS_VARIANT: Record<
+  number,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
+  [RoleStatusEnum.Active]: { label: "Hoạt động", variant: "default" },
+  [RoleStatusEnum.Inactive]: { label: "Tắt", variant: "outline" },
+  [RoleStatusEnum.Deprecated]: { label: "Deprecated", variant: "secondary" },
+};
+
+type DialogState =
+  | { type: "none" }
+  | { type: "create" }
+  | { type: "edit"; role: RoleDto }
+  | { type: "status"; role: RoleDto }
+  | { type: "perms"; role: RoleDto }
+  | { type: "delete"; role: RoleDto };
+
+export default function RolesPage() {
+  const [dialog, setDialog] = useState<DialogState>({ type: "none" });
+  const [keyword, setKeyword] = useState("");
+  const [roleType, setRoleType] = useState<RoleTypeFilter>(RoleTypeFilter.All);
+
+  const { data, isLoading } = useAdminRoleList({ pageNumber: 1, pageSize: 50 });
+  const { mutate: deleteRole, isPending: isDeleting } = useAdminDeleteRole();
+
+  const raw = data as unknown;
+  const roles = useMemo(
+    () =>
+      Array.isArray(raw)
+        ? raw
+        : (((raw as { items?: unknown[] })?.items ?? []) as RoleDto[]),
+    [raw],
+  );
+  const total =
+    (raw as { totalItems?: number })?.totalItems ??
+    (Array.isArray(raw) ? raw.length : 0);
+
+  const filteredRoles = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+
+    return roles.filter((role) => {
+      const matchesKeyword =
+        !q ||
+        [role.name, role.normalizedName, role.description]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(q));
+      const matchesType =
+        roleType === RoleTypeFilter.All ||
+        (roleType === RoleTypeFilter.System && role.isSystemRole) ||
+        (roleType === RoleTypeFilter.Custom && !role.isSystemRole);
+
+      return matchesKeyword && matchesType;
+    });
+  }, [roles, keyword, roleType]);
+
+  const activeCount = roles.filter(
+    (role) => role.status === RoleStatusEnum.Active,
+  ).length;
+  const systemCount = roles.filter((role) => role.isSystemRole).length;
+  const customCount = Math.max(roles.length - systemCount, 0);
+
+  const close = () => setDialog({ type: "none" });
+
+  const handleDelete = (role: RoleDto) => {
+    deleteRole(role.id, {
+      onSuccess: () => toast.success(`Đã xóa role ${role.name}`),
+      onError: (err) => handleErrorApi({ error: err }),
+    });
+    close();
+  };
+
+  return (
+    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Admin &middot; Người dùng
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Roles & Permissions
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : total} role &mdash; quản lý phân quyền truy cập
+            hệ thống.
+          </p>
+        </div>
+        <Button size="sm" onClick={() => setDialog({ type: "create" })}>
+          <Plus className="size-3.5" /> Tạo role
+        </Button>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Tổng role</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight">
+                {isLoading ? "--" : roles.length}
+              </p>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Shield className="size-4" />
+            </span>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Đang hoạt động</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight">
+                {isLoading ? "--" : activeCount}
+              </p>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <CheckCircle className="size-4" />
+            </span>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Mặc định / Tùy chỉnh
+              </p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight">
+                {isLoading ? "--" : `${systemCount}/${customCount}`}
+              </p>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Lock className="size-4" />
+            </span>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="gap-0 py-0">
+        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight">
+              Danh sách role
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Gán quyền, đổi trạng thái và quản lý role hệ thống.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={keyword}
+                onChange={(event) => setKeyword(event.target.value)}
+                placeholder="Tìm role..."
+                className="pl-8"
+              />
+            </div>
+            <div className="hidden rounded-lg border border-border bg-muted p-0.5 sm:flex">
+              {[
+                { value: RoleTypeFilter.All, label: "Tất cả" },
+                { value: RoleTypeFilter.System, label: "Mặc định" },
+                { value: RoleTypeFilter.Custom, label: "Tùy chỉnh" },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setRoleType(item.value)}
+                  className={`h-7 rounded-md px-2.5 text-xs font-medium transition-colors ${
+                    roleType === item.value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : filteredRoles.length === 0 ? (
+          <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
+            <Shield className="size-8 opacity-30" />
+            <span className="text-sm">Không tìm thấy role phù hợp.</span>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role</TableHead>
+                <TableHead>Nguồn</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRoles.map((role) => {
+                const s = STATUS_VARIANT[role.status] ?? {
+                  label: String(role.status),
+                  variant: "outline" as const,
+                };
+
+                return (
+                  <TableRow key={role.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          {role.isSystemRole ? (
+                            <Lock className="size-4" />
+                          ) : (
+                            <Shield className="size-4" />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-medium">{role.name}</p>
+                          <p className="mt-0.5 max-w-[520px] truncate text-xs text-muted-foreground">
+                            {role.description || role.normalizedName}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={role.isSystemRole ? "secondary" : "outline"}
+                      >
+                        {role.isSystemRole ? "Mặc định" : "Tùy chỉnh"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={s.variant}>{s.label}</Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(role.createdAt).toLocaleDateString("vi-VN")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer">
+                          <MoreHorizontal className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onClick={() => setDialog({ type: "edit", role })}
+                          >
+                            <Edit2 className="mr-2 size-4" /> Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDialog({ type: "status", role })}
+                          >
+                            <ToggleLeft className="mr-2 size-4" /> Đổi trạng
+                            thái
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDialog({ type: "perms", role })}
+                          >
+                            <Key className="mr-2 size-4" /> Quản lý quyền
+                          </DropdownMenuItem>
+                          {!role.isSystemRole && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() =>
+                                  setDialog({ type: "delete", role })
+                                }
+                              >
+                                <Trash2 className="mr-2 size-4" /> Xóa role
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      <CreateRoleDialog open={dialog.type === "create"} onClose={close} />
+
+      {dialog.type === "edit" && (
+        <EditRoleDialog open onClose={close} role={dialog.role} />
+      )}
+      {dialog.type === "status" && (
+        <ChangeRoleStatusDialog open onClose={close} role={dialog.role} />
+      )}
+      {dialog.type === "perms" && (
+        <PermissionsDialog open onClose={close} role={dialog.role} />
+      )}
+
+      <AlertDialog
+        open={dialog.type === "delete"}
+        onOpenChange={(open: boolean) => !open && close()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa role?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialog.type === "delete" && (
+                <>
+                  Bạn có chắc muốn xóa role <strong>{dialog.role.name}</strong>?
+                  Hành động này không thể hoàn tác.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={close} />
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={() =>
+                dialog.type === "delete" && handleDelete(dialog.role)
+              }
+            >
+              {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
