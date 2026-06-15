@@ -108,22 +108,7 @@ function Topbar() {
                 <div className="text-[11px] text-muted-foreground">
                   {user?.email}
                 </div>
-              </div>
-              <DropMenuItem
-                icon={<User size={14} />}
-                onClick={() => {
-                  const path =
-                    user?.role === UserRole.ADMIN
-                      ? "/admin/profile"
-                      : user?.role === UserRole.MANAGER
-                        ? "/manager/profile"
-                        : "/staff/profile";
-                  navigate(path);
-                  setMenuOpen(false);
-                }}
-              >
-                Hồ sơ của tôi
-              </DropMenuItem>
+              </div>       
               <div className="border-t border-border my-1" />
               <DropMenuItem
                 icon={<LogOut size={14} />}

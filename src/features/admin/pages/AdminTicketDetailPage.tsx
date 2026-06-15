@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -36,6 +37,23 @@ const CATEGORY_LABELS: Record<string, string> = {
   Other: "Khác",
 };
 
+function SideInfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2">
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+      <span className="text-xs font-medium text-right">
+        {value ?? <span className="text-muted-foreground/50">—</span>}
+      </span>
+    </div>
+  );
+}
+
 export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -61,10 +79,9 @@ export default function AdminTicketDetailPage() {
 
   if (loadingDetail) {
     return (
-      <div className="space-y-4 p-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-64 w-full" />
+      <div className="p-6 space-y-3">
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-[calc(100vh-150px)] w-full rounded-xl" />
       </div>
     );
   }
@@ -80,42 +97,199 @@ export default function AdminTicketDetailPage() {
     );
   }
 
+  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
+  const slaBarCls =
+    slaPct > 50
+      ? "bg-emerald-500"
+      : slaPct > 20
+        ? "bg-amber-500"
+        : "bg-red-500";
+
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      <div className="px-6 py-3 shrink-0 border-b border-border flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
+            className="-ml-1 shrink-0"
             onClick={() => navigate("/admin/tickets")}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft size={16} />
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold">{ticket.code}</h1>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-mono text-muted-foreground">
+                {ticket.code}
+              </span>
+              <TicketStatusBadge status={ticket.status} />
+              {ticket.priority && (
+                <TicketPriorityBadge priority={ticket.priority} />
+              )}
               {ticket.isIncident && (
-                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <Badge variant="destructive" className="text-xs">
+                  <AlertTriangle size={10} className="mr-1" />
+                  Sự cố
+                </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <h1 className="text-base font-semibold truncate leading-tight mt-0.5">
               {ticket.title}
-            </p>
+            </h1>
           </div>
         </div>
 
         <Button
           variant="destructive"
+          size="sm"
           disabled={ticket.isIncident || isPending}
           onClick={() => setConfirmOpen(true)}
         >
-          <AlertTriangle className="h-4 w-4 mr-2" />
+          <AlertTriangle size={13} />
           {ticket.isIncident ? "Đã là Incident" : "Declare Incident"}
         </Button>
       </div>
 
-      {/* Confirm Dialog */}
+      {/* ── Main content ────────────────────────────────────────────────── */}
+      <div className="flex-1 min-h-0 flex">
+        {/* Left: Timeline (full height) */}
+        <div className="flex-1 flex flex-col min-w-0 border-r border-border">
+          <div className="px-6 py-2.5 border-b border-border shrink-0">
+            <span className="text-sm font-medium">Lịch sử hoạt động</span>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto p-6">
+            {loadingActivities ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12" />
+                ))}
+              </div>
+            ) : (
+              <TicketActivityTimeline activities={activities} />
+            )}
+          </div>
+        </div>
+
+        {/* Right: Sidebar */}
+        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+          {/* SLA */}
+          <div className="p-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              SLA
+            </p>
+            {ticket.slaTimer ? (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Trạng thái
+                  </span>
+                  <span className="text-xs font-medium">
+                    {ticket.slaTimer.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Deadline
+                  </span>
+                  <span className="text-xs font-medium tabular-nums">
+                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Còn lại</span>
+                  <span className="text-xs font-medium">
+                    {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${slaBarCls}`}
+                    style={{
+                      width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Chưa có SLA timer.
+              </p>
+            )}
+          </div>
+
+          {/* Description */}
+          {ticket.description && (
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Mô tả
+              </p>
+              <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                {ticket.description}
+              </p>
+            </div>
+          )}
+
+          {/* Attachments */}
+          {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Tệp đính kèm
+              </p>
+              <TicketAttachments fileIds={ticket.attachmentFileIds} />
+            </div>
+          )}
+
+          {/* Rejection reason */}
+          {ticket.rejectionReason && (
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
+                Lý do từ chối
+              </p>
+              <p className="text-xs leading-relaxed">{ticket.rejectionReason}</p>
+            </div>
+          )}
+
+          {/* Resolution */}
+          {ticket.resolutionSummary && (
+            <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
+              <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                Kết quả giải quyết
+              </p>
+              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                {ticket.resolutionSummary}
+              </p>
+            </div>
+          )}
+
+          {/* Meta */}
+          <div className="px-4 py-1">
+            <SideInfoRow
+              label="Danh mục"
+              value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
+            />
+            <SideInfoRow label="Nguồn" value={ticket.origin} />
+            <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
+            <SideInfoRow label="Khẩn cấp" value={ticket.urgencyLevel ?? null} />
+            <SideInfoRow
+              label="Ngày tạo"
+              value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
+                locale: vi,
+              })}
+            />
+            {ticket.updatedAt && (
+              <SideInfoRow
+                label="Cập nhật"
+                value={format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Declare Incident Dialog ──────────────────────────────────────── */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -123,9 +297,9 @@ export default function AdminTicketDetailPage() {
               Đánh dấu là Incident nghiêm trọng?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là Incident
-              và xử lý theo quy trình ưu tiên cao nhất. Hành động này không thể
-              hoàn tác.
+              Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là
+              Incident và xử lý theo quy trình ưu tiên cao nhất. Hành động
+              này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
@@ -140,7 +314,9 @@ export default function AdminTicketDetailPage() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmOpen(false)} />
+            <AlertDialogCancel onClick={() => setConfirmOpen(false)}>
+              Hủy
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleConfirm}
@@ -151,153 +327,6 @@ export default function AdminTicketDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main info */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Thông tin ticket</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Trạng thái</p>
-                <div className="mt-1">
-                  <TicketStatusBadge status={ticket.status} />
-                </div>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Priority</p>
-                <div className="mt-1">
-                  <TicketPriorityBadge priority={ticket.priority} />
-                </div>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Phân loại</p>
-                <p className="mt-1 font-medium">
-                  {CATEGORY_LABELS[ticket.category] ?? ticket.category}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Nguồn tạo</p>
-                <p className="mt-1 font-medium">{ticket.origin}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Ngày tạo</p>
-                <p className="mt-1 font-medium">
-                  {format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm")}
-                </p>
-              </div>
-              {ticket.updatedAt && (
-                <div>
-                  <p className="text-muted-foreground">Cập nhật lần cuối</p>
-                  <p className="mt-1 font-medium">
-                    {format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm")}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {ticket.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Mô tả</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm whitespace-pre-wrap">
-                  {ticket.description}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <TicketAttachments fileIds={ticket.attachmentFileIds} />
-              </CardContent>
-            </Card>
-          )}
-
-          {ticket.rejectionReason && (
-            <Card className="border-destructive">
-              <CardHeader>
-                <CardTitle className="text-base text-destructive">
-                  Lý do từ chối
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">{ticket.rejectionReason}</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* SLA sidebar */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">SLA Timer</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {ticket.slaTimer ? (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Trạng thái</span>
-                    <span className="font-medium">
-                      {ticket.slaTimer.status}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Deadline</span>
-                    <span className="font-medium">
-                      {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Còn lại</span>
-                    <span className="font-medium">
-                      {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        ticket.slaTimer.remainingPercent > 50
-                          ? "bg-green-500"
-                          : ticket.slaTimer.remainingPercent > 20
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                      }`}
-                      style={{
-                        width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                      }}
-                    />
-                  </div>
-                </>
-              ) : (
-                <p className="text-muted-foreground">
-                  Chưa có SLA timer (ticket chưa được triage).
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Activity Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Lịch sử hoạt động</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <TicketActivityTimeline
-            activities={activities}
-            isLoading={loadingActivities}
-          />
-        </CardContent>
-      </Card>
     </div>
   );
 }

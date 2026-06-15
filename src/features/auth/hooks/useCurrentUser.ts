@@ -8,8 +8,7 @@ export const useCurrentUser = () => {
 
   return useQuery({
     queryKey: QUERY_KEY.profile.me(),
-    queryFn: () => authService.getMe(),
+    queryFn: () => authService.getMe().then((r) => r.data.data),
     enabled: isAuthenticated,
-    select: (response) => response.data.data,
   });
 };

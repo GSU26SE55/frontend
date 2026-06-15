@@ -9,9 +9,10 @@ import { handleErrorApi } from "@/shared/lib/errors";
 
 interface GoogleLinkSectionProps {
   isLinked: boolean;
+  bare?: boolean;
 }
 
-const GoogleLinkSection = ({ isLinked }: GoogleLinkSectionProps) => {
+const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
   const { mutate: linkGoogle, isPending: isLinking } = useLinkGoogle();
   const { mutate: unlinkGoogle, isPending: isUnlinking } = useUnlinkGoogle();
 
@@ -35,37 +36,30 @@ const GoogleLinkSection = ({ isLinked }: GoogleLinkSectionProps) => {
     });
   };
 
+  const inner = (
+    <div className="flex items-center gap-2">
+      {!isLinked ? (
+        <Button onClick={() => googleLogin()} disabled={isLinking} variant="outline" size="sm">
+          {isLinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Liên kết
+        </Button>
+      ) : (
+        <Button variant="destructive" size="sm" onClick={handleUnlink} disabled={isUnlinking}>
+          {isUnlinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Hủy liên kết
+        </Button>
+      )}
+    </div>
+  );
+
+  if (bare) return inner;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Liên kết Google</CardTitle>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          {isLinked
-            ? "Tài khoản đã liên kết với Google."
-            : "Chưa liên kết với Google."}
-        </p>
-        {!isLinked ? (
-          <Button
-            onClick={() => googleLogin()}
-            disabled={isLinking}
-            variant="outline"
-          >
-            {isLinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Liên kết Google
-          </Button>
-        ) : (
-          <Button
-            variant="destructive"
-            onClick={handleUnlink}
-            disabled={isUnlinking}
-          >
-            {isUnlinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Hủy liên kết
-          </Button>
-        )}
-      </CardContent>
+      <CardContent>{inner}</CardContent>
     </Card>
   );
 };

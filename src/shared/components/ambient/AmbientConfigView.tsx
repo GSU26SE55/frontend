@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Thermometer, Droplets, Sun } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Thermometer, Droplets, Sun, Settings2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -56,6 +57,41 @@ const fmt = (v?: number | null, unit = "") =>
 const formatDateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
+// ── Site selector (reused in 2 places) ────────────────────────────────────────
+
+function SiteSelect({
+  sites,
+  value,
+  onChange,
+  className,
+}: {
+  sites: SiteOption[];
+  value: string;
+  onChange: (id: string) => void;
+  className?: string;
+}) {
+  return (
+    <Select
+      value={value || null}
+      items={sites.map((s) => ({ value: s.id, label: s.name }))}
+      onValueChange={(v: string | null) => onChange(v ?? "")}
+    >
+      <SelectTrigger className={className ?? "w-56"}>
+        <SelectValue placeholder="Chọn site..." />
+      </SelectTrigger>
+      <SelectContent alignItemWithTrigger={false}>
+        {sites.map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {s.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+// ── Main view ──────────────────────────────────────────────────────────────────
+
 export default function AmbientConfigView({
   subtitle,
   sites,
@@ -64,85 +100,115 @@ export default function AmbientConfigView({
   sites: SiteOption[];
 }) {
   const [siteId, setSiteId] = useState("");
+  const [configOpen, setConfigOpen] = useState(false);
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          {subtitle}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Môi trường site
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Cấu hình ngưỡng cảnh báo & xem dữ liệu môi trường theo site
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Label className="text-sm">Site</Label>
-        <Select
-          value={siteId || null}
-          items={sites.map((s) => ({ value: s.id, label: s.name }))}
-          onValueChange={(v: string | null) => setSiteId(v ?? "")}
-        >
-          <SelectTrigger className="w-72">
-            <SelectValue placeholder="Chọn site..." />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            {sites.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    // min-h full so empty state can center; natural height when content loaded
+    <div className="flex flex-col min-h-[calc(100vh-65px)]">
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      <div className="px-6 pt-5 pb-4 shrink-0 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            {subtitle}
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Môi trường site
+          </h1>
+        </div>
+        {/* Controls only visible when a site is already selected */}
+        {siteId && (
+          <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm whitespace-nowrap">Site</Label>
+              <SiteSelect
+                sites={sites}
+                value={siteId}
+                onChange={setSiteId}
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfigOpen(true)}
+            >
+              <Settings2 size={14} />
+              Cấu hình ngưỡng
+            </Button>
+          </div>
+        )}
       </div>
 
       {!siteId ? (
-        <Card className="py-16 flex flex-col items-center gap-2 text-muted-foreground">
-          <span className="text-sm">Chọn một site để xem cấu hình.</span>
-        </Card>
+        /* ── Empty state — selector centered on page ───────────────────── */
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6 pb-16">
+          <div className="size-14 rounded-2xl bg-muted flex items-center justify-center">
+            <Thermometer className="size-6 text-muted-foreground/40" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Chọn site để bắt đầu</p>
+            <p className="text-xs text-muted-foreground mt-1.5 max-w-[260px]">
+              Dữ liệu nhiệt độ, độ ẩm và lịch sử đo lường sẽ hiển thị tại đây
+            </p>
+          </div>
+          <SiteSelect
+            sites={sites}
+            value={siteId}
+            onChange={setSiteId}
+            className="w-64"
+          />
+        </div>
       ) : (
-        <div className="space-y-6">
-          <LatestWidget siteId={siteId} />
-          <ThresholdForm siteId={siteId} />
+        /* ── Content — natural height, no forced fill ──────────────────── */
+        <div className="px-6 pb-8 space-y-4">
+          <LatestStrip siteId={siteId} />
           <HistoryTable siteId={siteId} />
         </div>
+      )}
+
+      {/* ── Threshold drawer ──────────────────────────────────────────── */}
+      {siteId && (
+        <ThresholdPanel
+          siteId={siteId}
+          open={configOpen}
+          onClose={() => setConfigOpen(false)}
+        />
       )}
     </div>
   );
 }
 
-// ── Latest reading widget ───────────────────────────────────────────────────
-function LatestWidget({ siteId }: { siteId: string }) {
+// ── Latest metric strip ────────────────────────────────────────────────────────
+
+function LatestStrip({ siteId }: { siteId: string }) {
   const { data: latest, isLoading, isError } = useAmbientLatest(siteId);
 
   if (isLoading) {
-    return <Skeleton className="h-24 w-full" />;
+    return <Skeleton className="h-14 w-full rounded-xl" />;
   }
   if (isError || !latest) {
     return (
-      <Card className="p-6 text-sm text-muted-foreground">
+      <div className="flex items-center px-4 py-3 border border-border rounded-xl text-sm text-muted-foreground">
         Chưa có dữ liệu môi trường cho site này.
-      </Card>
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <MetricCard
-        icon={<Thermometer className="size-5 text-orange-500" />}
+    <div className="inline-flex items-center gap-5 px-5 py-3 border border-border rounded-xl bg-card">
+      <MetricItem
+        icon={<Thermometer className="size-4 text-orange-500" />}
         label="Nhiệt độ"
         value={fmt(latest.ambientTemperature, " °C")}
       />
-      <MetricCard
-        icon={<Droplets className="size-5 text-blue-500" />}
+      <Separator orientation="vertical" className="h-7" />
+      <MetricItem
+        icon={<Droplets className="size-4 text-blue-500" />}
         label="Độ ẩm"
         value={fmt(latest.humidity, " %")}
       />
-      <MetricCard
-        icon={<Sun className="size-5 text-amber-500" />}
+      <Separator orientation="vertical" className="h-7" />
+      <MetricItem
+        icon={<Sun className="size-4 text-amber-500" />}
         label="Bức xạ"
         value={fmt(latest.solarIrradiance, " W/m²")}
       />
@@ -150,7 +216,7 @@ function LatestWidget({ siteId }: { siteId: string }) {
   );
 }
 
-function MetricCard({
+function MetricItem({
   icon,
   label,
   value,
@@ -160,18 +226,90 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <Card className="p-4 flex items-center gap-3">
+    <div className="flex items-center gap-2.5">
       {icon}
       <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold">{value}</p>
+        <p className="text-[11px] text-muted-foreground leading-none mb-0.5">
+          {label}
+        </p>
+        <p className="text-sm font-semibold leading-tight">{value}</p>
       </div>
-    </Card>
+    </div>
   );
 }
 
-// ── Threshold config form ───────────────────────────────────────────────────
-function ThresholdForm({ siteId }: { siteId: string }) {
+// ── Threshold panel (Framer Motion drawer) ─────────────────────────────────────
+
+function ThresholdPanel({
+  siteId,
+  open,
+  onClose,
+}: {
+  siteId: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="backdrop"
+            className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+          />
+          <motion.div
+            key="panel"
+            className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover shadow-2xl ring-1 ring-border sm:max-w-[480px]"
+            initial={{ x: "100%", opacity: 0.5 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 340,
+              damping: 32,
+              mass: 0.9,
+            }}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+              <div>
+                <h2 className="text-base font-semibold">Ngưỡng cảnh báo</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Cấu hình ngưỡng giám sát môi trường site
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onClose}
+                className="shrink-0"
+              >
+                <X size={16} />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              <ThresholdFormBody siteId={siteId} onSaved={onClose} />
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── Threshold form body ────────────────────────────────────────────────────────
+
+function ThresholdFormBody({
+  siteId,
+  onSaved,
+}: {
+  siteId: string;
+  onSaved?: () => void;
+}) {
   const { data: threshold, isError } = useAmbientThresholdBySite(siteId);
   const { mutateAsync } = useUpsertAmbientThreshold();
 
@@ -203,7 +341,6 @@ function ThresholdForm({ siteId }: { siteId: string }) {
         enabled: threshold.enabled,
       });
     } else if (isError) {
-      // 404 — site chưa cấu hình → form tạo mới
       reset({
         siteId,
         highAmbientTempWarning: "",
@@ -230,51 +367,73 @@ function ThresholdForm({ siteId }: { siteId: string }) {
     };
     try {
       await mutateAsync(payload);
+      onSaved?.();
     } catch (error) {
       handleErrorApi({ error, setError });
     }
   };
 
   return (
-    <Card className="p-6">
-      <h2 className="text-base font-semibold mb-4">
-        Ngưỡng cảnh báo môi trường
-      </h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <input type="hidden" {...register("siteId")} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <input type="hidden" {...register("siteId")} />
+
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Nhiệt độ
+        </p>
+        <div className="grid grid-cols-2 gap-3">
           <NumField
-            label="Nhiệt độ — cảnh báo (°C)"
+            label="Cảnh báo (°C)"
             error={errors.highAmbientTempWarning?.message}
             {...register("highAmbientTempWarning")}
           />
           <NumField
-            label="Nhiệt độ — nguy hiểm (°C)"
+            label="Nguy hiểm (°C)"
             error={errors.highAmbientTempCritical?.message}
             {...register("highAmbientTempCritical")}
           />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Độ ẩm
+        </p>
+        <div className="grid grid-cols-2 gap-3">
           <NumField
-            label="Độ ẩm — cảnh báo (%)"
+            label="Cảnh báo (%)"
             error={errors.highHumidityWarning?.message}
             {...register("highHumidityWarning")}
           />
           <NumField
-            label="Độ ẩm — nguy hiểm (%)"
+            label="Nguy hiểm (%)"
             error={errors.highHumidityCritical?.message}
             {...register("highHumidityCritical")}
           />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Combo rule
+        </p>
+        <div className="grid grid-cols-2 gap-3">
           <NumField
-            label="Combo — ngưỡng nhiệt (°C)"
+            label="Ngưỡng nhiệt (°C)"
             error={errors.comboTempThreshold?.message}
             {...register("comboTempThreshold")}
           />
           <NumField
-            label="Combo — ngưỡng ẩm (%)"
+            label="Ngưỡng ẩm (%)"
             error={errors.comboHumidityThreshold?.message}
             {...register("comboHumidityThreshold")}
           />
         </div>
+      </div>
 
+      <Separator />
+
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Controller
             control={control}
@@ -291,17 +450,16 @@ function ThresholdForm({ siteId }: { siteId: string }) {
             Bật giám sát ngưỡng
           </Label>
         </div>
-
         <p className="text-xs text-muted-foreground">
           Bỏ trống một trường = không giám sát metric đó. Combo rule chỉ active
           khi cả 2 ngưỡng combo có giá trị.
         </p>
+      </div>
 
-        <Button type="submit" disabled={isSubmitting}>
-          Lưu cấu hình
-        </Button>
-      </form>
-    </Card>
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? "Đang lưu..." : "Lưu cấu hình"}
+      </Button>
+    </form>
   );
 }
 
@@ -314,15 +472,16 @@ function NumField({
   error?: string;
 }) {
   return (
-    <div className="space-y-1">
-      <Label className="text-sm">{label}</Label>
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
       <Input type="number" step="any" {...rest} />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
 
-// ── History table ───────────────────────────────────────────────────────────
+// ── History table — natural height, no forced fill ─────────────────────────────
+
 function HistoryTable({ siteId }: { siteId: string }) {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -334,50 +493,61 @@ function HistoryTable({ siteId }: { siteId: string }) {
   const items = data?.items ?? [];
 
   return (
-    <Card className="gap-0 py-0 overflow-hidden">
-      <div className="px-6 pt-5 pb-3">
-        <h2 className="text-base font-semibold">Lịch sử dữ liệu môi trường</h2>
+    <div>
+      <div className="pb-3">
+        <h2 className="text-sm font-medium">Lịch sử dữ liệu môi trường</h2>
       </div>
-      {isLoading ? (
-        <div className="p-6 space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </div>
-      ) : items.length === 0 ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Chưa có dữ liệu môi trường.
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Thời điểm</TableHead>
-              <TableHead>Nhiệt độ</TableHead>
-              <TableHead>Độ ẩm</TableHead>
-              <TableHead>Bức xạ</TableHead>
-              <TableHead>Nguồn</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map((r) => (
-              <TableRow key={r.time}>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDateTime(r.time)}
-                </TableCell>
-                <TableCell>{fmt(r.ambientTemperature, " °C")}</TableCell>
-                <TableCell>{fmt(r.humidity, " %")}</TableCell>
-                <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {SOURCE_LABELS[r.source] ?? "—"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
 
-      <div className="p-3">
+      {/* Bordered table — height = content, no empty space */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        {isLoading ? (
+          <div className="p-5 space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Chưa có dữ liệu môi trường.
+          </div>
+        ) : (
+          <Table className="table-fixed">
+            <colgroup>
+              <col className="w-[28%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+            </colgroup>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Thời điểm</TableHead>
+                <TableHead>Nhiệt độ</TableHead>
+                <TableHead>Độ ẩm</TableHead>
+                <TableHead>Bức xạ</TableHead>
+                <TableHead>Nguồn</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((r) => (
+                <TableRow key={r.time}>
+                  <TableCell className="text-sm text-muted-foreground tabular-nums">
+                    {formatDateTime(r.time)}
+                  </TableCell>
+                  <TableCell>{fmt(r.ambientTemperature, " °C")}</TableCell>
+                  <TableCell>{fmt(r.humidity, " %")}</TableCell>
+                  <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {SOURCE_LABELS[r.source] ?? "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
+
+      <div className="pt-3">
         <DataPagination
           totalItems={data?.totalItems ?? 0}
           totalPages={data?.totalPages ?? 1}
@@ -392,6 +562,6 @@ function HistoryTable({ siteId }: { siteId: string }) {
           }}
         />
       </div>
-    </Card>
+    </div>
   );
 }
