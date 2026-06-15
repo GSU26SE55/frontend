@@ -39,18 +39,13 @@ export const ENDPOINTS = {
     },
   },
 
+  // Base /api/tickets chung (đọc shared cho mọi role). Action theo role nằm ở
+  // STAFF_TICKETS / ADMIN.TICKETS — KHÔNG có LIST/CREATE/status/close generic (api-ticket.md).
   TICKETS: {
-    LIST: "/api/tickets",
-    CREATE: "/api/tickets",
     DETAIL: (id: string) => `/api/tickets/${id}`,
-    UPDATE_STATUS: (id: string) => `/api/tickets/${id}/status`,
-    ASSIGN: (id: string) => `/api/tickets/${id}/assign`,
-    ESCALATE: (id: string) => `/api/tickets/${id}/escalate`,
-    CLOSE: (id: string) => `/api/tickets/${id}/close`,
-    CLOSE_REJECT: (id: string) => `/api/tickets/${id}/close-reject`,
+    ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
     COMMENTS: (id: string) => `/api/tickets/${id}/comments`,
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
-    ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
   },
 
   STAFF_TICKETS: {
@@ -104,9 +99,8 @@ export const ENDPOINTS = {
     UPDATE: (id: string) => `/api/sla-rules/${id}`,
   },
 
-  AUDIT_LOGS: {
-    LIST: "/api/audit-logs",
-  },
+  // Audit logs thật nằm ở ADMIN.AUDIT_LOGS (/api/admin/audit-logs).
+  // Endpoint /api/audit-logs không tồn tại trong spec → đã xóa group top-level.
 
   ADMIN: {
     ACCOUNTS: {
@@ -147,6 +141,8 @@ export const ENDPOINTS = {
     },
     AUDIT_LOGS: {
       LIST: "/api/admin/audit-logs",
+      BY_ACCOUNT: (accountId: string) =>
+        `/api/admin/audit-logs/by-account/${accountId}`,
     },
     TICKETS: {
       LIST: "/api/admin/tickets",

@@ -9,6 +9,11 @@ export const editStaffProfileSchema = z.object({
     .min(1, "Tối thiểu 1")
     .max(20, "Tối đa 20"),
   isAvailable: z.boolean(),
+  skillTier: z
+    .number()
+    .int("Phải là số nguyên")
+    .min(1, "Tối thiểu 1")
+    .max(3, "Tối đa 3"),
   notes: z.string().max(500, "Tối đa 500 ký tự").optional(),
 });
 

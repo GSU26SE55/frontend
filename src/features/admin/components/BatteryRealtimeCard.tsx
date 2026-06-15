@@ -1,9 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useBatteryAssetRealtime } from "@/features/admin/hooks/useBatteryAssetRealtime";
+import { ChargingStateEnum } from "@/features/admin/enums/battery-asset.enum";
 
 const fmt = (v: number | null | undefined, unit = "") =>
   v !== null && v !== undefined ? `${v}${unit}` : "—";
+
+const CHARGING_STATE_LABELS: Record<ChargingStateEnum, string> = {
+  [ChargingStateEnum.IDLE]: "Nghỉ",
+  [ChargingStateEnum.CHARGING]: "Đang nạp",
+  [ChargingStateEnum.DISCHARGING]: "Đang xả",
+  [ChargingStateEnum.FLOAT]: "Float (duy trì)",
+  [ChargingStateEnum.BYPASS]: "Bypass",
+};
+
+const chargingLabel = (s: ChargingStateEnum | null | undefined) =>
+  s == null ? "—" : (CHARGING_STATE_LABELS[s] ?? `#${s}`);
 
 interface BatteryRealtimeCardProps {
   assetId: string;
@@ -66,6 +78,12 @@ export default function BatteryRealtimeCard({
         <div className="flex justify-between">
           <span className="text-muted-foreground">Số chu kỳ</span>
           <span className="font-medium">{fmt(data.cycleCount)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Trạng thái nạp/xả</span>
+          <span className="font-medium">
+            {chargingLabel(data.chargingState)}
+          </span>
         </div>
       </CardContent>
     </Card>

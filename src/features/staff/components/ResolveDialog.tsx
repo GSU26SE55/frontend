@@ -32,6 +32,7 @@ interface Props {
 export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
   const form = useForm<ResolveFormValues>({
     resolver: zodResolver(resolveSchema),
+    defaultValues: { resolutionSummary: "" },
   });
 
   const handleSubmit = form.handleSubmit((data) => {

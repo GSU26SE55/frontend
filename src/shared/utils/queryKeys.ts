@@ -114,6 +114,12 @@ export const QUERY_KEY = {
     },
     auditLogs: {
       list: (params?: object) => [...KEY.admin.auditLogs, "list", params],
+      byAccount: (accountId: string, params?: object) => [
+        ...KEY.admin.auditLogs,
+        "byAccount",
+        accountId,
+        params,
+      ],
     },
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],

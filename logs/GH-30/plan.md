@@ -11,17 +11,19 @@
 
 > SHIPPED 2026-05-20. **Đã đối chiếu codebase** — phát hiện plan ghi nhiều thứ mà CODE KHÔNG implement (plan sai, code đúng doc) và ngược lại. Phần Types/Endpoints cũ phía dưới giữ để tham chiếu; điểm sai đánh dấu bên dưới.
 
-### C1 — 🟠 `skillTier` KHÔNG tồn tại (plan SAI, code đúng doc)
+### C1 — 🔴 `skillTier` CÓ trong doc/BE (plan ĐÚNG, code THIẾU) — REVERSED 2026-06-15
 
-- **Plan** ([Types §account.types dòng 101](#shared-typesaccounttypests), [§admin payloads dòng 236, 324](#features-admintypesadmintypests)) ghi `skillTier: number` **bắt buộc** vào `StaffProfileDto` + `UpdateStaffProfilePayload`, claim "Swagger: bắt buộc".
-- **Code (verified):** `account.types.ts:23` `StaffProfileDto` KHÔNG có `skillTier`. Đúng với doc — body `PUT /api/admin/staff/{id}/profile` ([api-auth.md §Nhóm 6](../../docs/api-auth.md)) chỉ có `employeeCode, department, maxConcurrentTickets, isAvailable, notes`.
-- → **Sửa PLAN:** xóa `skillTier` khỏi mọi mục. Không động vào code (đã đúng). Nếu Swagger thực có `skillTier` → cần BE/doc reconcile, nhưng theo `api-auth.md` thì KHÔNG có.
+> **Đối chiếu lại với `api-auth.md` + BE code (UpdateStaffProfileCommand.cs:22):** `skillTier` (int, 1–3, mặc định 1, `StaffSkillTierEnum`) **CÓ THẬT** trong body `PUT /api/admin/staff/{id}/profile`. Kết luận drift cũ ("code đúng, plan sai") là SAI — đã đảo lại.
+- **Plan ĐÚNG:** giữ `skillTier: number` trong `StaffProfileDto` + `UpdateStaffProfilePayload`.
+- **Code THIẾU:** `account.types.ts` `StaffProfileDto` chưa có `skillTier` → **phải thêm** field này vào type + payload + form UI (GH-64).
+- → **Sửa CODE (không sửa plan):** thêm `skillTier` vào `StaffProfileDto`, `UpdateStaffProfilePayload`, và gửi kèm khi PUT.
 
-### C2 — 🟠 `GET /api/admin/audit-logs/by-account/{accountId}` KHÔNG tồn tại (plan SAI, code đúng doc)
+### C2 — 🔴 `GET /api/admin/audit-logs/by-account/{accountId}` CÓ trong doc/BE (plan ĐÚNG, code THIẾU) — REVERSED 2026-06-15
 
-- **Plan** ([Endpoints dòng 303, 337](#endpoints)) thêm endpoint `by-account` + `AUDIT_LOGS.BY_ACCOUNT`.
-- **Code (verified):** `endpoints.ts:153-155` `AUDIT_LOGS` chỉ có `LIST`. Đúng doc — lọc theo account dùng query `targetAccountId` trên `GET /api/admin/audit-logs` ([api-auth.md §Nhóm 9](../../docs/api-auth.md)).
-- → **Sửa PLAN:** xóa mục `by-account` (endpoint này 404). Code đã đúng.
+> **Đối chiếu lại với `api-auth.md` §Nhóm 9 + BE code (AdminAuditLogsController.cs:107):** endpoint `GET /api/admin/audit-logs/by-account/{accountId}` **CÓ THẬT** (Admin-only, query `pageNumber/pageSize/action/isSuccess`). Kết luận drift cũ ("404, không tồn tại") là SAI — đã đảo lại.
+- **Plan ĐÚNG:** giữ `AUDIT_LOGS.BY_ACCOUNT` + mục endpoint.
+- **Code THIẾU:** `endpoints.ts AUDIT_LOGS` chỉ có `LIST` → **phải thêm** `BY_ACCOUNT` + service + hook.
+- → **Sửa CODE (không sửa plan):** thêm `BY_ACCOUNT: (accountId) => '/api/admin/audit-logs/by-account/${accountId}'` + `adminAuditLogsByAccount(accountId, params)` + hook `useAdminAuditLogsByAccount`.
 
 ### C3 — 🔴 Thiếu `DELETE /api/admin/accounts/{id}/2fa` (admin reset 2FA — GH-295)
 
@@ -35,15 +37,22 @@
   `TwoFactorReset=42, BackupCodeRedeemed=43, BackupCodesRegenerated=44, Admin2FAReset=45, LoginWith2FA=46, LoginPending2FA=47`.
 - → **Thêm** 6 value này vào `features/admin/enums/audit.enum.ts` để `AuditLogsPage` filter/hiển thị đúng action mới.
 
-### C5 — ✅ `totalCount` vs `totalItems` — ĐÃ CHECK BE: code ĐÚNG, DOC SAI
+### C5 — ✅ `totalItems` — code FE + BE + doc khớp (RESOLVED)
 
 - **BE (verified):** `SharedContracts/.../PaginationResponse.cs:6` → `TotalItems` → JSON `totalItems`.
 - **Code FE (verified):** `api.types.ts:15` `totalItems` → **khớp BE.** GH-30 Bước 1 đổi `totalCount → totalItems` là **đúng**.
-- → **Hành động:** sửa `docs/api-auth.md` (`totalCount` → `totalItems`). Không đụng code.
+- **Doc (đã sửa 2026-06-15):** `api-auth.md` PaginationResponse nay dùng `totalItems`. Cả 3 phía khớp — không còn action.
 
 ### C6 — 🟢 `UpdateAccountPayload.avatarUrl` (legacy, deprecated Sprint 5)
 
 Doc [api-auth.md §`PUT /api/admin/accounts/{id}`](../../docs/api-auth.md): `avatarUrl` là legacy field, **sẽ bị xóa sau FileStorage integration (Sprint 5)**. Plan/code đang giữ — OK tạm, nhưng đánh dấu deprecated, FE render avatar bằng `displayAvatarUrl`.
+
+### C7 — 🟡 Auth role per-endpoint (cho UI gating GH-64) — BE-verified 2026-06-15
+
+Data layer không gate, nhưng UI (GH-64) phải `checkRole` đúng. Theo `[Authorize(Roles=...)]` thực tế:
+- **Admin + Manager:** `GET /accounts`, `GET /accounts/{id}`, `GET /accounts/{id}/sessions`, `GET /accounts/{id}/login-history`, `POST /accounts/{id}/unlock`, `GET /roles`, `GET /roles/{id}`.
+- **Admin only:** mọi mutation account (`POST/PUT/PATCH/DELETE /accounts/*`, `/role`, `/2fa`, `revoke-all`), tất cả mutation role, toàn bộ `/permissions`, **toàn bộ `/audit-logs` (kể cả GET — Manager KHÔNG xem được)**.
+- ⚠️ Lưu ý ngược trực giác: audit-logs **Admin-only** (không phải Admin+Manager); `GET /accounts/{id}/sessions` **Admin+Manager** (không phải Admin-only).
 
 ## Mục tiêu
 
@@ -75,16 +84,16 @@ UI pages tách thành issue riêng per feature. Router giữ placeholder hiện 
 | `src/features/admin/types/admin.types.ts` | create | RoleDto, PermissionDto, AuditLogDto, SessionDto, LoginAttemptDto, RoleStatusEnum, AuditActionEnum (40+ values từ api-auth.md), LoginAttemptResult + tất cả payloads |
 | `src/shared/utils/endpoints.ts` | modify | Add ADMIN.ACCOUNTS / STAFF / ROLES / PERMISSIONS / AUDIT_LOGS |
 | `src/shared/utils/queryKeys.ts` | modify | Add KEY.admin (incl. staff) + QUERY_KEY.admin factories |
-| `src/features/admin/services/admin-accounts.service.ts` | create | 11 functions Nhóm 5 |
+| `src/features/admin/services/admin-accounts.service.ts` | create | 12 functions Nhóm 5 (gồm `adminReset2fa` — DELETE /{id}/2fa, C3) |
 | `src/features/admin/services/admin-staff.service.ts` | create | 3 functions Nhóm 6 |
 | `src/features/admin/services/admin-roles.service.ts` | create | 6 functions Nhóm 7 |
 | `src/features/admin/services/admin-permissions.service.ts` | create | 3 functions Nhóm 8 |
-| `src/features/admin/services/admin-audit-logs.service.ts` | create | 1 function Nhóm 9 |
-| `src/features/admin/hooks/useAdminAccounts.ts` | create | 11 hooks Nhóm 5 |
+| `src/features/admin/services/admin-audit-logs.service.ts` | create | 2 functions Nhóm 9 (`list` + `byAccount` — C2) |
+| `src/features/admin/hooks/useAdminAccounts.ts` | create | 12 hooks Nhóm 5 (gồm `useAdminReset2fa` — C3) |
 | `src/features/admin/hooks/useAdminStaff.ts` | create | 3 mutation hooks Nhóm 6 |
 | `src/features/admin/hooks/useAdminRoles.ts` | create | 6 hooks Nhóm 7 |
 | `src/features/admin/hooks/useAdminPermissions.ts` | create | 3 hooks Nhóm 8 |
-| `src/features/admin/hooks/useAdminAuditLogs.ts` | create | 1 query hook Nhóm 9 |
+| `src/features/admin/hooks/useAdminAuditLogs.ts` | create | 2 query hooks Nhóm 9 (`useAdminAuditLogs` + `useAdminAuditLogsByAccount` — C2) |
 
 ## Enums
 
@@ -323,6 +332,7 @@ ADMIN: {
     STATUS:        (id: string) => `/api/admin/accounts/${id}/status`,
     CHANGE_ROLE:   (id: string) => `/api/admin/accounts/${id}/role`,  // ← bổ sung từ Swagger
     UNLOCK:        (id: string) => `/api/admin/accounts/${id}/unlock`,
+    RESET_2FA:     (id: string) => `/api/admin/accounts/${id}/2fa`,   // DELETE — admin reset 2FA (C3, Admin-only)
     DELETE:        (id: string) => `/api/admin/accounts/${id}`,
     SESSIONS:      (id: string) => `/api/admin/accounts/${id}/sessions`,
     REVOKE_ALL:    (id: string) => `/api/admin/accounts/${id}/sessions/revoke-all`,
@@ -365,8 +375,9 @@ ADMIN: {
 | PUT | `/api/admin/accounts/{id}` | `UpdateAccountPayload` | `CommonResponse<string>` (Guid) |
 | PUT | `/api/admin/accounts/{id}/role` | `{ roleId: string }` | `CommonResponse<unknown>` | ← endpoint đổi role, thêm vào ENDPOINTS.ADMIN.ACCOUNTS |
 | PATCH | `/api/admin/accounts/{id}/status` | `ChangeAccountStatusPayload` | `CommonResponse<unknown>` |
-| POST | `/api/admin/accounts/{id}/unlock` | — | `CommonResponse<unknown>` |
-| DELETE | `/api/admin/accounts/{id}` | — | `CommonResponse<unknown>` |
+| POST | `/api/admin/accounts/{id}/unlock` | — | `CommonResponse<unknown>` | Admin **hoặc Manager** |
+| DELETE | `/api/admin/accounts/{id}/2fa` | — | `CommonResponse<string>` (Guid, idempotent) | **Admin only** — reset 2FA (C3) |
+| DELETE | `/api/admin/accounts/{id}` | — | `CommonResponse<unknown>` | Admin only |
 | GET | `/api/admin/accounts/{id}/sessions` | `GetAccountSessionsParams` (query) | `CommonResponse<SessionDto[]>` |
 | POST | `/api/admin/accounts/{id}/sessions/revoke-all` | `RevokeAllSessionsPayload` | `CommonResponse<number>` |
 | GET | `/api/admin/accounts/{id}/login-history` | `GetLoginHistoryParams` (query) | `CommonResponse<PaginationResponse<LoginAttemptDto>>` |
@@ -436,7 +447,7 @@ export const QUERY_KEY = {
   - Role mutations → invalidate `KEY.admin.roles`
   - Permissions PUT → invalidate `QUERY_KEY.admin.roles.permissions(roleId)` + `KEY.admin.permissions`
 - `StaffAssignmentProfileDto` giữ trong `shared/types` — cross-feature với GH-28 (`GET /api/staff`)
-- `StaffProfileDto` confirmed: `accountId`, `employeeCode`, `department`, `maxConcurrentTickets`, `isAvailable`, `notes`, `skills[]` (non-optional). Không có `displayAvatarUrl`.
+- `StaffProfileDto` confirmed: `accountId`, `employeeCode?`, `department?`, `maxConcurrentTickets`, `isAvailable`, `skillTier` (bắt buộc, 1–3), `notes?`, `skills[]` (nullable). Không có `displayAvatarUrl`.
 
 ## Workflow
 
@@ -495,5 +506,6 @@ Ticket này chỉ implement data layer (types, services, hooks) — không có U
 | StaffAssignmentProfileDto ở shared/ hay admin/? | shared/ — cross-feature với GH-28 (GET /api/staff) |
 | InviteAccountPayload response shape? | `CommonResponse<string>` — `data` là Guid của account vừa tạo (trạng thái PendingVerification). Confirmed từ api-auth.md line 1216–1225. |
 | StaffProfileDto shape confirmed? | Confirmed từ Swagger: `accountId` (non-optional), `employeeCode?`, `department?`, `maxConcurrentTickets`, `isAvailable`, `skillTier` (bắt buộc, int), `notes?`, `skills[]` (nullable). `employeeCode`, `department`, `notes` là nullable. Không có `displayAvatarUrl`. |
-| `skillTier` trong `UpdateStaffProfilePayload`? | **Bắt buộc** theo Swagger — `UpdateStaffProfileCommand` có field `skillTier: number`. Plan cũ bỏ sót. Đã fix. |
+| `skillTier` trong `UpdateStaffProfilePayload`? | **Bắt buộc** — BE-verified `UpdateStaffProfileCommand.cs:22` có `skillTier: int` (1–3, default 1, `StaffSkillTierEnum`). Plan ĐÚNG; **code FE thiếu → phải thêm** (xem C1 reversed). |
+| `by-account` audit-logs endpoint? | **CÓ THẬT** — BE-verified `AdminAuditLogsController.cs:107` `GET /api/admin/audit-logs/by-account/{accountId}` (Admin-only). Plan ĐÚNG; **code FE thiếu → phải thêm** (xem C2 reversed). |
 | `skills` trong `StaffProfileDto` là nullable? | **Có** — Swagger: `nullable: true`. Guard bằng `?? []`. |

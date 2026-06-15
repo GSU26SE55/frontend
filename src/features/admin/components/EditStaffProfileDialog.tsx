@@ -60,6 +60,7 @@ export default function EditStaffProfileDialog({
       department: sp?.department ?? "",
       maxConcurrentTickets: sp?.maxConcurrentTickets ?? 3,
       isAvailable: sp?.isAvailable ?? true,
+      skillTier: sp?.skillTier ?? 1,
       notes: sp?.notes ?? "",
     },
   });
@@ -78,6 +79,7 @@ export default function EditStaffProfileDialog({
           department: data.department || undefined,
           maxConcurrentTickets: data.maxConcurrentTickets,
           isAvailable: data.isAvailable,
+          skillTier: data.skillTier,
           notes: data.notes || undefined,
         },
       });
@@ -204,6 +206,26 @@ export default function EditStaffProfileDialog({
                       <option value="true">Sẵn sàng</option>
                       <option value="false">Không sẵn sàng</option>
                     </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>
+                      Bậc kỹ năng (Tier) <span className="text-red-500">*</span>
+                    </Label>
+                    <select
+                      {...profileForm.register("skillTier", {
+                        valueAsNumber: true,
+                      })}
+                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                    >
+                      <option value={1}>Tier 1</option>
+                      <option value={2}>Tier 2</option>
+                      <option value={3}>Tier 3</option>
+                    </select>
+                    {pErr.skillTier && (
+                      <p className="text-xs text-red-500">
+                        {pErr.skillTier.message}
+                      </p>
+                    )}
                   </div>
                   <div className="col-span-2 space-y-1.5">
                     <Label>Ghi chú</Label>

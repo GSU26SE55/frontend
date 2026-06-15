@@ -23,6 +23,7 @@ const chartConfig = {
   avgVoltage: { label: "Điện áp (V)", color: "var(--chart-1)" },
   avgTemperature: { label: "Nhiệt độ (°C)", color: "var(--chart-2)" },
   avgSocPercent: { label: "SOC (%)", color: "var(--chart-3)" },
+  avgSohPercent: { label: "SOH (%)", color: "var(--chart-4)" },
 } satisfies ChartConfig;
 
 // Range lớn → dùng /aggregate (TimescaleDB time_bucket), không dùng /history.
@@ -138,6 +139,13 @@ export default function SensorChart({ assetId }: SensorChartProps) {
                 stroke="var(--color-avgSocPercent)"
                 dot={false}
                 strokeWidth={2}
+              />
+              <Line
+                dataKey="avgSohPercent"
+                stroke="var(--color-avgSohPercent)"
+                dot={false}
+                strokeWidth={2}
+                connectNulls
               />
             </LineChart>
           </ChartContainer>

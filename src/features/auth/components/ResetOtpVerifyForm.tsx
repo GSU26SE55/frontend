@@ -15,7 +15,7 @@ const RESEND_COOLDOWN = 60;
 
 interface ResetOtpVerifyFormProps {
   email: string;
-  onSuccess: (resetToken: string) => void;
+  onSuccess: (resetToken: string, expiresInSeconds: number) => void;
 }
 
 const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {

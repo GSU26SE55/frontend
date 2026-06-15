@@ -22,6 +22,20 @@ import { useCustomers } from "@/features/admin/hooks/useCustomers";
 import { useCreateBatteryAsset } from "@/features/admin/hooks/useCreateBatteryAsset";
 import { useUpdateBatteryAsset } from "@/features/admin/hooks/useUpdateBatteryAsset";
 import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types";
+import { WarrantyStatusEnum } from "@/features/admin/enums/battery-asset.enum";
+import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+
+const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
+  [BatteryStatusEnum.Active]: "Hoạt động",
+  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
+  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+};
+
+const WARRANTY_LABELS: Record<WarrantyStatusEnum, string> = {
+  [WarrantyStatusEnum.ACTIVE]: "Còn bảo hành",
+  [WarrantyStatusEnum.EXPIRED]: "Hết bảo hành",
+  [WarrantyStatusEnum.VOID]: "Vô hiệu",
+};
 
 const toNumOrNull = (val?: string): number | undefined => {
   if (!val || val === "") return undefined;
@@ -74,6 +88,8 @@ export default function BatteryAssetForm({
           latitude: editData.latitude?.toString() ?? "",
           longitude: editData.longitude?.toString() ?? "",
           notes: editData.notes ?? "",
+          warrantyStatus: editData.warrantyStatus,
+          status: editData.status,
         });
       } else {
         reset({});
@@ -99,7 +115,12 @@ export default function BatteryAssetForm({
 
     try {
       if (isEdit) {
-        await updateAsset(payload);
+        // Gửi kèm status + warrantyStatus để KHÔNG reset về Active (BE update default Active nếu thiếu)
+        await updateAsset({
+          ...payload,
+          warrantyStatus: data.warrantyStatus,
+          status: data.status,
+        });
         toast.success("Cập nhật battery asset thành công");
       } else {
         await createAsset(payload);
@@ -229,6 +250,39 @@ export default function BatteryAssetForm({
               />
             </div>
           </div>
+
+          {isEdit && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="status">Trạng thái</Label>
+                <select
+                  id="status"
+                  {...register("status", { valueAsNumber: true })}
+                  className={selectClass}
+                >
+                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="warrantyStatus">Bảo hành</Label>
+                <select
+                  id="warrantyStatus"
+                  {...register("warrantyStatus", { valueAsNumber: true })}
+                  className={selectClass}
+                >
+                  {Object.entries(WARRANTY_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="notes">Ghi chú</Label>

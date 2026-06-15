@@ -16,9 +16,9 @@ export interface AlertDto {
   batterySerialNumber: string;
   anomalyType: AnomalyTypeEnum;
   severity: AlertSeverityEnum;
-  thresholdValue: number;
-  actualValue: number;
-  unit: string;
+  thresholdValue: number | null;
+  actualValue: number | null;
+  unit: string | null;
   detectedAt: string;
   status: AlertStatusEnum;
   ticketId?: string | null;
@@ -35,7 +35,6 @@ export interface AlertListParams {
   batteryAssetId?: string;
   severity?: AlertSeverityEnum;
   status?: AlertStatusEnum;
-  excludeMerged?: boolean;
   from?: string;
   to?: string;
 }

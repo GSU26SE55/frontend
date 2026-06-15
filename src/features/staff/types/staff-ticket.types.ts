@@ -23,7 +23,7 @@ export interface HoldTicketRequest {
 }
 
 export interface ResolveTicketRequest {
-  resolutionSummary?: string;
+  resolutionSummary: string;
 }
 
 export interface EscalateTicketRequest {

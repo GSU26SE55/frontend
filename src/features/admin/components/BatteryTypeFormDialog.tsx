@@ -66,7 +66,10 @@ export default function BatteryTypeFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<CreateBatteryTypeFormValues>({
     resolver: zodResolver(createBatteryTypeSchema),
-    defaultValues: { chemistry: BatteryChemistryEnum.LI_FE_PO4 },
+    defaultValues: {
+      chemistry: BatteryChemistryEnum.LI_FE_PO4,
+      maxCycleCount: 2000,
+    },
   });
 
   const { mutateAsync: createType } = useCreateBatteryType();
@@ -85,7 +88,10 @@ export default function BatteryTypeFormDialog({
           description: editData.description ?? "",
         });
       } else {
-        reset({ chemistry: BatteryChemistryEnum.LI_FE_PO4 });
+        reset({
+          chemistry: BatteryChemistryEnum.LI_FE_PO4,
+          maxCycleCount: 2000,
+        });
       }
     }
   }, [open, editData, reset]);

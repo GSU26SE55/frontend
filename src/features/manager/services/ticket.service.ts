@@ -103,9 +103,10 @@ export const managerTicketService = {
       payload,
     ),
 
-  declareIncident: (id: string) =>
+  declareIncident: (id: string, incidentDescription: string) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.DECLARE_INCIDENT(id),
+      { incidentDescription },
     ),
 
   addComment: (ticketId: string, payload: AddCommentPayload) =>
