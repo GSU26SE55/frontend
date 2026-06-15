@@ -126,7 +126,15 @@ export default function SiteFormDialog({
               id="customerId"
               {...register("customerId")}
               placeholder="UUID"
+              readOnly={isEdit}
+              className={isEdit ? "cursor-not-allowed opacity-60" : undefined}
             />
+            {isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Không thể đổi khách hàng qua sửa site — dùng chức năng chuyển
+                chủ sở hữu.
+              </p>
+            )}
             {errors.customerId && (
               <p className="text-sm text-destructive">
                 {errors.customerId.message}

@@ -32,7 +32,11 @@ const AcceptInvitePage = () => {
   const onSubmit = async (data: AcceptInviteFormValues) => {
     if (!token) return;
     try {
-      await mutateAsync({ invitationToken: token, password: data.password });
+      await mutateAsync({
+        invitationToken: token,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      });
     } catch (error) {
       handleErrorApi({ error, setError });
     }

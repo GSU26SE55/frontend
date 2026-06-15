@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminSiteService } from "@/features/admin/services/site.service";
+import { handleErrorApi } from "@/shared/lib/errors";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import type {
   SiteFilterParams,
@@ -72,9 +73,7 @@ export const useDeleteSite = () => {
       qc.invalidateQueries({ queryKey: [KEY.sites] });
       toast.success("Đã xoá site");
     },
-    onError: () => {
-      toast.error("Xoá site thất bại");
-    },
+    onError: (error) => handleErrorApi({ error }),
   });
 };
 
@@ -86,8 +85,6 @@ export const useRestoreSite = () => {
       qc.invalidateQueries({ queryKey: [KEY.sites] });
       toast.success("Đã khôi phục site");
     },
-    onError: () => {
-      toast.error("Khôi phục site thất bại");
-    },
+    onError: (error) => handleErrorApi({ error }),
   });
 };

@@ -26,7 +26,8 @@ export const holdSchema = z.object({
 export type HoldFormValues = z.infer<typeof holdSchema>;
 
 export const resolveSchema = z.object({
-  resolutionSummary: z.string().optional(),
+  // BE required (TicketResolveCommand) — rỗng → 400.
+  resolutionSummary: z.string().min(1, "Tổng kết xử lý không được để trống"),
 });
 export type ResolveFormValues = z.infer<typeof resolveSchema>;
 

@@ -20,10 +20,17 @@ const PRIORITY_CONFIG: Record<
 };
 
 interface Props {
-  priority: TicketPriorityEnum;
+  priority: TicketPriorityEnum | null;
 }
 
 export function TicketPriorityBadge({ priority }: Props) {
+  if (!priority) {
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        Chưa phân loại
+      </Badge>
+    );
+  }
   const config = PRIORITY_CONFIG[priority] ?? {
     label: priority,
     className: "",

@@ -7,7 +7,9 @@
 
 ---
 
-## ⚠️ Contract Reconciliation (2026-06-14) — đối chiếu với `docs/api-ticket.md`
+## ⚠️ Contract Reconciliation (2026-06-14, cập nhật 2026-06-15) — đối chiếu với `docs/api-ticket.md` + codebase BE
+
+> **Cập nhật 2026-06-15:** đối chiếu trực tiếp codebase BE TicketService. Thêm C8 (priority/impact/urgency nullable), C9 (reject/reassign/reopen required), C10 (escalationReason nullable đính chính), C11 (attachments là string[]).
 
 > Nguồn sự thật: [`docs/api-ticket.md`](../../docs/api-ticket.md). Bảng `## Enums` của plan này **bịa hàng loạt giá trị enum không tồn tại** và **mâu thuẫn với chính phần `## Types`** (phần Types khai đúng). Đã sửa bảng Enums theo Types/spec. Ưu tiên theo api-ticket.md.
 
@@ -35,7 +37,27 @@ Object Types (dòng 103-113) thiếu `Closed=25`. Bảng Enums dùng tên bịa 
 `POST /api/tickets/{id}/comments` → **`TicketActionResponse` (201)**, KHÔNG phải `CommonResponse<TicketCommentDTO>`.
 
 ### C7 — 🟡 Pagination param PascalCase
-Admin list query dùng PascalCase: `Keyword, Status, Priority, Category, BatteryAssetId, IsDescending, PageNumber, PageSize`. Bổ sung `IsDescending` còn thiếu.
+Admin list query dùng PascalCase: `Keyword, Status, Priority, Category, BatteryAssetId, IsDescending, PageNumber, PageSize`. Bổ sung `IsDescending` còn thiếu. **BE default `IsDescending = true`** (mới nhất lên đầu) — `TicketGetListQuery.cs:16`.
+
+### C8 — 🔴 `TicketDTO.priority/impactScope/urgencyLevel` NULLABLE (mới — 2026-06-15)
+BE (`TicketDTO.cs:15-17`): cả 3 là `?` — **null khi ticket chưa triage** (`New`/`Open`). Type plan (dòng 159) khai non-null → **SAI**.
+> **Bug runtime nguy hiểm nhất:** TicketQueuePage hiển thị ticket `Open` (chưa triage) → `priority`/`impactScope`/`urgencyLevel` = `null` → `TicketPriorityBadge` render null. Fix code: type → `priority: TicketPriorityEnum | null; impactScope: ImpactScopeEnum | null; urgencyLevel: UrgencyLevelEnum | null;` + guard badge.
+
+### C9 — 🔴 `reject`/`reassign`/`reopen` body — `reason` BẮT BUỘC (mới — 2026-06-15)
+BE required (không rỗng → 400):
+- `reject.reason` — `TicketRejectCommand.cs:27`. Plan schema (dòng 256) khai `optional()` → **SAI**.
+- `reassign.reason` — `TicketReassignCommand.cs:31`. Plan schema (dòng 254) khai `optional()` → **SAI**.
+- `reopen.reopenReason` — `TicketReopenCommand.cs:29`. Plan schema (dòng 268) khai `optional()` → **SAI**.
+Fix code: cả 3 zod → `.min(1)` (reopen giữ `.max(500)`).
+
+### C10 — 🟢 `escalationReason` nullable (đính chính — 2026-06-15)
+Edge case cũ ghi "non-nullable, Swagger trả `0`". **ĐÍNH CHÍNH:** BE (`TicketDetailDTO.cs:20`) khai `EscalationReasonEnum?`, trả `null` khi chưa escalate. Type plan (dòng 165) `escalationReason: EscalationReasonEnum | null` đã **đúng**. Guard `escalatedAt != null` vẫn an toàn — chỉ sửa lý do.
+
+### C11 — 🟡 `attachments` trong TicketDetailDTO là `string[]` (mới — 2026-06-15)
+BE (`TicketDetailDTO.cs:25`) trả field `attachmentFileIds: string[]` (mảng FileId), KHÔNG phải `TicketAttachmentDTO[]`. Type plan (dòng 167) sai. GH-59 chưa render attachments nên chưa lộ — sửa khi implement.
+
+### C12 — 🔴 `reject` chuyển `Resolved → InProgress` trực tiếp (mới — 2026-06-15)
+BE state machine: reject kết quả resolve chuyển thẳng `Resolved → InProgress`, **KHÔNG** qua `ClosedRejected`. `ClosedRejected` chỉ dùng cho triage-reject. Plan dòng 84 (RejectDialog "Resolved → InProgress") đã **đúng** — chỉ lưu ý không nhầm với enum `ClosedRejected`.
 
 ### Trạng thái implement vs plan (đối chiếu code 2026-06-14)
 ✅ Đúng: endpoint paths + methods; `approve` gửi comment qua **query param** (`post(url, null, {params:{comment}})`); body triage/assign/reassign/escalate; POST comment khai `TicketActionResponse`; `z.nativeEnum`; `TicketActivityTimeline` map dùng tên action ĐÚNG (không dùng tên bịa).
@@ -45,6 +67,9 @@ Admin list query dùng PascalCase: `Keyword, Status, Priority, Category, Battery
 - **MAJOR** — `escalationReason` không được render ở đâu (thiếu implement edge case); nếu thêm sau phải guard `escalatedAt != null`.
 - **MINOR** — `TicketActivityTimeline` thiếu label `Closed` (và `AttachmentAdded`) → fallback hiển thị chuỗi thô.
 - **MINOR** — `create-ticket.schema.ts` `description` thiếu `.min(1)` (spec: bắt buộc không rỗng).
+- **CRITICAL (C8, 2026-06-15)** — `TicketDTO.priority/impactScope/urgencyLevel` khai non-null nhưng BE trả `null` cho ticket chưa triage → TicketQueuePage render badge null. Đổi type → nullable + guard.
+- **MAJOR (C9, 2026-06-15)** — `reject`/`reassign`/`reopen` schema khai `optional()` nhưng BE required → submit rỗng = 400. Thêm `.min(1)`.
+- **MINOR (C11, 2026-06-15)** — `attachments` type sai (`TicketAttachmentDTO[]` → thực tế `attachmentFileIds: string[]`).
 
 ## Mục tiêu
 Implement toàn bộ UI và logic cho portal Manager quản lý và điều phối ticket: xem danh sách, triage, gán/điều chuyển Staff, approve/reject kết quả, escalate, declare incident, xem chi tiết + timeline + comment.
@@ -156,7 +181,8 @@ export const ActorRoleEnum = { Admin: 'Admin', Manager: 'Manager', Staff: 'Staff
 
 // DTOs
 interface SlaTimerDTO { id: string; priority: TicketPriorityEnum; startedAt: string; dueAt: string; originalDueAt: string; totalPausedMinutes: number; warningSentAt: string | null; breachAt: string | null; status: SlaTimerStatusEnum; remainingPercent: number; }
-interface TicketDTO { id: string; code: string; title: string; status: TicketStatusEnum; priority: TicketPriorityEnum; category: TicketCategoryEnum; impactScope: ImpactScopeEnum; urgencyLevel: UrgencyLevelEnum; origin: TicketOriginEnum; assignedStaffId: string | null; customerId: string; batteryAssetId: string | null; isIncident: boolean; reopenCount: number; createdAt: string; updatedAt: string | null; slaTimer: SlaTimerDTO; }
+// [FIX 2026-06-15 C8] priority/impactScope/urgencyLevel NULLABLE — null khi ticket chưa triage (New/Open)
+interface TicketDTO { id: string; code: string; title: string; status: TicketStatusEnum; priority: TicketPriorityEnum | null; category: TicketCategoryEnum; impactScope: ImpactScopeEnum | null; urgencyLevel: UrgencyLevelEnum | null; origin: TicketOriginEnum; assignedStaffId: string | null; customerId: string; batteryAssetId: string | null; isIncident: boolean; reopenCount: number; createdAt: string; updatedAt: string | null; slaTimer: SlaTimerDTO | null; }
 // [FIX #2] TicketDetailDTO bổ sung đủ 12 fields còn thiếu
 interface TicketDetailDTO extends TicketDTO {
   description: string | null; resolutionSummary: string | null; resolvedAt: string | null;
@@ -203,9 +229,9 @@ TICKETS: {
 | GET | `/api/tickets/{id}/activities` | — | `CommonResponse<TicketActivityDTO[]>` |
 | POST | `/api/admin/tickets/{id}/triage` | `{ impact: ImpactScopeEnum, urgency: UrgencyLevelEnum, manualPriority?: TicketPriorityEnum, priorityOverrideReason?: string, managerComment?: string }` | `TicketActionResponse` |
 | POST | `/api/admin/tickets/{id}/assign` | `{ staffId: string (UUID), notes?: string }` | `TicketActionResponse` |
-| POST | `/api/admin/tickets/{id}/reassign` | `{ newStaffId: string (UUID), reason?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/reassign` | `{ newStaffId: string (UUID), reason: string }` (**reason bắt buộc** → 400 nếu rỗng) | `TicketActionResponse` |
 | POST | `/api/admin/tickets/{id}/approve` | — (comment qua query param `?comment=`) | `TicketActionResponse` |
-| POST | `/api/admin/tickets/{id}/reject` | `{ reason?: string }` | `TicketActionResponse` |
+| POST | `/api/admin/tickets/{id}/reject` | `{ reason: string }` (**bắt buộc** → 400 nếu rỗng; chuyển `Resolved → InProgress`) | `TicketActionResponse` |
 | POST | `/api/admin/tickets/{id}/escalate` | `{ reason: EscalationReasonEnum, note?: string }` | `TicketActionResponse` |
 | POST | `/api/admin/tickets/{id}/declare-incident` | — | `TicketActionResponse` |
 | POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal?: boolean, attachments?: CommentAttachmentInput[] }` | `TicketActionResponse` (**201**) |
@@ -250,10 +276,11 @@ triageSchema: { impact: z.nativeEnum(ImpactScopeEnum), urgency: z.nativeEnum(Urg
 // [FIX #5] assignSchema — validate UUID
 assignSchema: { staffId: z.string().uuid(), notes: z.string().optional() }
 
-// [FIX #5] reassignSchema — validate UUID
-reassignSchema: { newStaffId: z.string().uuid(), reason: z.string().optional() }
+// [FIX #5] reassignSchema — validate UUID; [FIX 2026-06-15 C9] reason BE required
+reassignSchema: { newStaffId: z.string().uuid(), reason: z.string().min(1) }
 
-rejectSchema: { reason: z.string().optional() }
+// [FIX 2026-06-15 C9] reject.reason BE required
+rejectSchema: { reason: z.string().min(1) }
 escalateSchema: { reason: z.nativeEnum(EscalationReasonEnum), note: z.string().optional() }
 
 // [FIX #6] addCommentSchema thêm attachments optional
@@ -264,8 +291,8 @@ addCommentSchema: { body: z.string().min(1), isInternal: z.boolean().default(fal
     contentType: z.string().optional(), sizeBytes: z.number().optional() })).optional() }
 // AddCommentPayload (dùng trong service): { body: string; isInternal: boolean; attachments?: CommentAttachmentInput[] }
 
-// reopen-ticket.schema.ts
-reopenTicketSchema: z.object({ reopenReason: z.string().max(500).optional() })
+// reopen-ticket.schema.ts — [FIX 2026-06-15 C9] reopenReason BE required
+reopenTicketSchema: z.object({ reopenReason: z.string().min(1).max(500) })
 
 // create-ticket.schema.ts
 createTicketSchema: z.object({
@@ -316,7 +343,8 @@ createTicketSchema: z.object({
 - SLA breached → TicketPriorityBadge + SlaCountdown hiển thị màu đỏ
 - Staff list rỗng → AssignDialog hiển thị empty state
 - `approve` endpoint gửi comment qua query param, không phải body → `axios.post(url, null, { params: { comment } })`
-- `escalationReason` trên TicketDetailDTO: **non-nullable** (Swagger trả `0` default khi chưa escalate). Guard bằng `escalatedAt != null` TRƯỚC khi hiển thị — không treat optional thuần
+- `escalationReason` trên TicketDetailDTO: **nullable** (BE trả `null` khi chưa escalate — KHÔNG phải `0`). Guard bằng `escalatedAt != null` TRƯỚC khi hiển thị
+- `priority`/`impactScope`/`urgencyLevel`: **nullable** khi ticket chưa triage (`New`/`Open`) — TicketQueuePage phải guard null trước khi render badge (xem C8)
 - Triage: nếu `manualPriority` !== computed priority → `priorityOverrideReason` bắt buộc (validate ở FE với Zod `superRefine`)
 - Comment `isInternal: true` → chỉ Staff/Manager thấy — hiển thị rõ badge "Nội bộ" trong UI
 

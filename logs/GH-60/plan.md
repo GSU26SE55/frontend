@@ -7,7 +7,9 @@
 
 ---
 
-## ⚠️ Contract Reconciliation (2026-06-14) — đối chiếu với `docs/api-ticket.md`
+## ⚠️ Contract Reconciliation (2026-06-14, cập nhật 2026-06-15) — đối chiếu với `docs/api-ticket.md` + codebase BE
+
+> **Cập nhật 2026-06-15:** đối chiếu trực tiếp codebase BE TicketService. Thêm C4 (priority/impact/urgency nullable), C5 (escalationReason nullable đính chính), C6 (attachments là string[]).
 
 > Nguồn sự thật: [`docs/api-ticket.md`](../../docs/api-ticket.md). Plan này khai enum dạng string union khá đúng; chỉ vài sai lệch nhỏ đã sửa trong thân plan. Ưu tiên theo api-ticket.md.
 
@@ -22,13 +24,25 @@ Code hiện sai: `admin/services/ticket.service.ts:17-33` gửi camelCase thẳn
 Spec ([api-ticket.md §declare-incident](../../docs/api-ticket.md)): body `{ incidentDescription: string }` **bắt buộc**, không rỗng/whitespace; BE trả **400** nếu thiếu. Bảng Endpoints + Workflow cũ của plan này ghi request "—" (rỗng) → **SAI**. Đã sửa bên dưới.
 > **Code hiện sai (2026-06-14):** `admin/services/ticket.service.ts:47-50` `declareIncident: (id) => post(URL)` gửi body rỗng; `useAdminTickets.ts:42` chỉ truyền `id`. → action declare-incident **fail 400 100%**. Cần: thêm input lý do → `declareIncident(id, incidentDescription)` → `post(url, { incidentDescription })`. Fix code ở ticket riêng.
 
-### Trạng thái implement vs plan (đối chiếu code 2026-06-14)
+### C4 — 🔴 `TicketDTO.priority/impactScope/urgencyLevel` NULLABLE (mới — 2026-06-15)
+BE (`TicketDTO.cs:15-17`): cả 3 là `?` — **null khi ticket chưa triage** (`New`/`Open`). Type plan (dòng 142-144) khai non-null → **SAI**.
+> AdminTicketListPage hiển thị TOÀN BỘ ticket (kể cả `New`/`Open` chưa triage) → `priority`/`impactScope`/`urgencyLevel` = `null` → `TicketPriorityBadge` render null. Fix code: type → nullable + guard badge.
+
+### C5 — 🟢 `escalationReason` nullable (đính chính — 2026-06-15)
+Plan (dòng 223, 350) ghi "Swagger non-null nhưng treat optional". **ĐÍNH CHÍNH:** BE (`TicketDetailDTO.cs:20`) thực sự khai `EscalationReasonEnum?` nullable, trả `null` (không phải `0`). Type plan `escalationReason?` đã **đúng** — chỉ sửa lý do.
+
+### C6 — 🟡 `attachments` là `string[]` (mới — 2026-06-15)
+BE (`TicketDetailDTO.cs:25`) trả `attachmentFileIds: string[]` (mảng FileId), KHÔNG phải `TicketAttachmentDTO[]`. Type plan (dòng 228) sai. GH-60 chưa render attachments — sửa khi implement.
+
+### Trạng thái implement vs plan (đối chiếu code 2026-06-14, cập nhật 2026-06-15)
 ✅ Đúng: endpoint paths + methods; không dùng enum bịa trong timeline.
 ❌ Còn thiếu/sai trong code (fix ở ticket riêng):
 - **MAJOR (C3)** — declare-incident không gửi `incidentDescription` → fail 400.
 - **MAJOR (C2)** — list query camelCase, không map PascalCase.
 - **MINOR (C1)** — `TicketActivityTimeline` thiếu label `Closed` → fallback chuỗi thô.
 - Guard `escalationReason`/`escalatedAt`: kiểm tra `AdminTicketDetailPage.tsx` nếu có render escalationReason.
+- **MAJOR (C4, 2026-06-15)** — `TicketDTO.priority/impactScope/urgencyLevel` khai non-null nhưng BE trả `null` cho ticket chưa triage → AdminTicketListPage render badge null cho ticket `New`/`Open`. Đổi type → nullable + guard `TicketPriorityBadge`.
+- **MINOR (C6, 2026-06-15)** — `attachments` type sai (`TicketAttachmentDTO[]` → thực tế `attachmentFileIds: string[]`).
 
 ## Mục tiêu
 Xây dựng portal quản lý ticket cho Admin: danh sách toàn bộ ticket với bộ lọc nâng cao, trang chi tiết ticket kèm activity timeline, và action declare-incident. Admin xem không bị filter theo user (khác Manager/Staff).
@@ -139,16 +153,17 @@ export interface TicketDTO {
   assignedStaffId?: string;
   title: string;
   category: TicketCategoryEnum;
-  priority: TicketPriorityEnum;
-  impactScope: ImpactScopeEnum;
-  urgencyLevel: UrgencyLevelEnum;
+  // [FIX 2026-06-15 C4] priority/impactScope/urgencyLevel NULLABLE — null khi ticket chưa triage (New/Open)
+  priority: TicketPriorityEnum | null;
+  impactScope: ImpactScopeEnum | null;
+  urgencyLevel: UrgencyLevelEnum | null;
   status: TicketStatusEnum;
   origin: TicketOriginEnum;
   reopenCount: number;
   isIncident: boolean;
   createdAt: string;
   updatedAt?: string;
-  slaTimer: SlaTimerDTO;
+  slaTimer: SlaTimerDTO | null;
 }
 
 export interface TicketActivityDTO {
@@ -220,7 +235,7 @@ export interface TicketDetailDTO extends TicketDTO {
   ratingComment?: string;
   ratedAt?: string;
   escalatedAt?: string;
-  escalationReason?: EscalationReasonEnum; // Swagger ghi non-null nhưng treat optional khi chưa escalate
+  escalationReason?: EscalationReasonEnum; // [2026-06-15] BE nullable — trả null khi chưa escalate (không phải 0)
   originAlertId?: string;
   activities?: TicketActivityDTO[];   // nullable — dùng /activities endpoint làm source of truth
   comments?: TicketCommentDTO[];
@@ -347,4 +362,4 @@ User click "Declare Incident" → Dialog với **input `incidentDescription` (b�
 |---------|-----------|
 | `activities` trong detail response vs `/activities` endpoint riêng? | Dùng endpoint riêng — `activities` trong `TicketDetailDTO` là nullable, endpoint `/activities` luôn trả full array. Không cần confirm BE. |
 | `BatteryAssetId` filter có UI không? | Không — không có dropdown data source trong sprint này. Filter param vẫn tồn tại trong service để BE hỗ trợ. |
-| `escalationReason` — nullable hay không? | Khai báo `?` dù Swagger ghi non-null, vì API docs khuyến cáo FE treat optional khi chưa escalate. |
+| `escalationReason` — nullable hay không? | **Nullable** — BE (`TicketDetailDTO.cs:20`) khai `EscalationReasonEnum?`, trả `null` khi chưa escalate (cập nhật 2026-06-15: đính chính lại "Swagger non-null trả 0" là sai). Khai `?` là đúng. |

@@ -78,6 +78,7 @@ export const CHALLENGE_TOKEN_KEY = "login_2fa_challenge";
 
 export interface VerifyResetOtpResponseData {
   resetToken: string;
+  expiresInSeconds: number; // TTL resetToken (api-auth.md: 900s) — dùng động, không hardcode
 }
 
 export interface SessionDto {
@@ -115,7 +116,9 @@ export interface AcceptInviteFormValues {
   confirmPassword: string;
 }
 
+// BE validate cross-field password === confirmPassword → 422 (api-auth.md §/accept-invite)
 export interface AcceptInvitePayload {
   invitationToken: string;
   password: string;
+  confirmPassword: string;
 }

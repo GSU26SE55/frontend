@@ -48,9 +48,11 @@ export interface TicketDTO {
   assignedStaffId?: string | null;
   title: string;
   category: TicketCategoryEnum;
-  priority: TicketPriorityEnum;
-  impactScope: ImpactScopeEnum;
-  urgencyLevel: UrgencyLevelEnum;
+  // BE trả null khi ticket chưa triage (state New/Open) — priority/impact/urgency
+  // được gán tại bước triage. Guard null trước khi render badge.
+  priority: TicketPriorityEnum | null;
+  impactScope: ImpactScopeEnum | null;
+  urgencyLevel: UrgencyLevelEnum | null;
   status: TicketStatusEnum;
   origin: TicketOriginEnum;
   reopenCount: number;
@@ -104,16 +106,6 @@ export interface MaintenanceLogDTO {
   createdAt: string;
 }
 
-export interface TicketAttachmentDTO {
-  id: string;
-  fileId: string;
-  fileName: string;
-  contentType: string;
-  sizeBytes: number;
-  uploadedByUserId?: string | null;
-  createdAt: string;
-}
-
 export interface TicketDetailDTO extends TicketDTO {
   description?: string | null;
   resolutionSummary?: string | null;
@@ -132,7 +124,8 @@ export interface TicketDetailDTO extends TicketDTO {
   activities?: TicketActivityDTO[] | null;
   comments?: TicketCommentDTO[] | null;
   maintenanceLogs?: MaintenanceLogDTO[] | null;
-  attachments?: TicketAttachmentDTO[] | null;
+  // BE trả mảng FileId (string[]), KHÔNG phải mảng TicketAttachmentDTO.
+  attachmentFileIds?: string[] | null;
 }
 
 // --- Action Response ---
@@ -194,11 +187,11 @@ export interface AssignPayload {
 
 export interface ReassignPayload {
   newStaffId: string;
-  reason?: string;
+  reason: string;
 }
 
 export interface RejectPayload {
-  reason?: string;
+  reason: string;
 }
 
 export interface EscalatePayload {

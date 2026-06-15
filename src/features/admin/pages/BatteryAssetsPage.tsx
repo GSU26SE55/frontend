@@ -5,15 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useBatteryAssets } from "@/features/admin/hooks/useBatteryAssets";
+import { useBatteryTypes } from "@/features/admin/hooks/useBatteryTypes";
+import { useCustomers } from "@/features/admin/hooks/useCustomers";
+import { useSiteList } from "@/features/admin/hooks/useSites";
 import BatteryAssetTable from "@/features/admin/components/BatteryAssetTable";
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types";
+import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
+const ALL = "all"; // sentinel cho "tất cả" (Select không nhận value rỗng)
+
+const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
+  [BatteryStatusEnum.Active]: "Hoạt động",
+  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
+  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+};
+
 const DEFAULTS = {
   keyword: "",
+  customerId: "",
+  batteryTypeId: "",
+  siteId: "",
+  status: "",
   includeDeleted: false,
   pageNumber: 1,
   pageSize: 10,
@@ -25,10 +48,21 @@ export default function BatteryAssetsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<BatteryAssetDto | null>(null);
 
+  // Data cho các dropdown filter
+  const { data: customersData } = useCustomers({ pageSize: 100 });
+  const { data: batteryTypesData } = useBatteryTypes({ pageSize: 100 });
+  const { data: sitesData } = useSiteList({ pageNumber: 1, pageSize: 100 });
+
   const { data, isLoading } = useBatteryAssets({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
+    customerId: filters.customerId || undefined,
+    batteryTypeId: filters.batteryTypeId || undefined,
+    siteId: filters.siteId || undefined,
+    status: filters.status
+      ? (Number(filters.status) as BatteryStatusEnum)
+      : undefined,
     includeDeleted: filters.includeDeleted || undefined,
   });
   const items = data?.items ?? [];
@@ -73,6 +107,79 @@ export default function BatteryAssetsPage() {
             className="pl-8"
           />
         </div>
+
+        <Select
+          value={filters.customerId || ALL}
+          onValueChange={(v) =>
+            setFilter("customerId", v === ALL ? undefined : v)
+          }
+        >
+          <SelectTrigger size="sm" className="w-44">
+            <SelectValue placeholder="Khách hàng" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Tất cả khách hàng</SelectItem>
+            {customersData?.items.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.fullName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.batteryTypeId || ALL}
+          onValueChange={(v) =>
+            setFilter("batteryTypeId", v === ALL ? undefined : v)
+          }
+        >
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue placeholder="Loại pin" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Tất cả loại pin</SelectItem>
+            {batteryTypesData?.items.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.siteId || ALL}
+          onValueChange={(v) => setFilter("siteId", v === ALL ? undefined : v)}
+        >
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue placeholder="Site" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Tất cả site</SelectItem>
+            {sitesData?.items.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.status || ALL}
+          onValueChange={(v) => setFilter("status", v === ALL ? undefined : v)}
+        >
+          <SelectTrigger size="sm" className="w-36">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Mọi trạng thái</SelectItem>
+            {Object.entries(STATUS_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <Checkbox
             checked={!!filters.includeDeleted}

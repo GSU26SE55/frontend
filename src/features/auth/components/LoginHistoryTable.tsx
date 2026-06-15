@@ -26,7 +26,7 @@ const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.AccountNotVerified]: "Chưa xác minh",
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20; // parity với BE default (api-auth.md login-history)
 
 const LoginHistoryTable = () => {
   const [page, setPage] = useState(1);

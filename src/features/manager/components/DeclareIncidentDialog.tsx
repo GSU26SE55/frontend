@@ -18,10 +18,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
-  rejectSchema,
-  type RejectFormValues,
+  declareIncidentSchema,
+  type DeclareIncidentFormValues,
 } from "@/features/manager/schemas/ticket.schema";
-import { useRejectTicket } from "@/features/manager/hooks/useManagerTickets";
+import { useDeclareIncident } from "@/features/manager/hooks/useManagerTickets";
 
 interface Props {
   ticketId: string;
@@ -29,16 +29,20 @@ interface Props {
   onClose: () => void;
 }
 
-export default function RejectDialog({ ticketId, open, onClose }: Props) {
-  const { mutateAsync, isPending } = useRejectTicket(ticketId);
+export default function DeclareIncidentDialog({
+  ticketId,
+  open,
+  onClose,
+}: Props) {
+  const { mutateAsync, isPending } = useDeclareIncident(ticketId);
 
-  const form = useForm<RejectFormValues>({
-    resolver: zodResolver(rejectSchema),
-    defaultValues: { reason: "" },
+  const form = useForm<DeclareIncidentFormValues>({
+    resolver: zodResolver(declareIncidentSchema),
+    defaultValues: { incidentDescription: "" },
   });
 
-  const onSubmit = async (values: RejectFormValues) => {
-    await mutateAsync(values);
+  const onSubmit = async (values: DeclareIncidentFormValues) => {
+    await mutateAsync(values.incidentDescription.trim());
     form.reset();
     onClose();
   };
@@ -47,22 +51,25 @@ export default function RejectDialog({ ticketId, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Từ chối kết quả</DialogTitle>
+          <DialogTitle>Khai báo Incident</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Ticket sẽ quay về trạng thái <strong>In Progress</strong> để Staff
-              tiếp tục xử lý.
+              Đánh dấu ticket là sự cố nghiêm trọng để ưu tiên xử lý. Hành động
+              này được ghi vào lịch sử và không thể thực hiện lại.
             </p>
             <FormField
               control={form.control}
-              name="reason"
+              name="incidentDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do từ chối</FormLabel>
+                  <FormLabel>Mô tả sự cố</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Nhập lý do..." {...field} />
+                    <Textarea
+                      placeholder="Mô tả ngắn lý do khai báo incident..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -73,7 +80,7 @@ export default function RejectDialog({ ticketId, open, onClose }: Props) {
                 Huỷ
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Từ chối"}
+                {isPending ? "Đang xử lý..." : "Khai báo Incident"}
               </Button>
             </DialogFooter>
           </form>
