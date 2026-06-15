@@ -14,7 +14,41 @@ import {
 import { useChangePassword } from "@/features/auth/hooks/useChangePassword";
 import { handleErrorApi } from "@/shared/lib/errors";
 
-const ChangePasswordForm = () => {
+interface ChangePasswordFormProps {
+  bare?: boolean;
+}
+
+function PasswordInput({
+  label,
+  show,
+  onToggle,
+  error,
+  ...rest
+}: {
+  label: string;
+  show: boolean;
+  onToggle: () => void;
+  error?: string;
+} & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="relative">
+        <Input type={show ? "text" : "password"} className="pr-9 h-8 text-sm" {...rest} />
+        <button
+          type="button"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          onClick={onToggle}
+        >
+          {show ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
+const ChangePasswordForm = ({ bare }: ChangePasswordFormProps = {}) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -41,106 +75,44 @@ const ChangePasswordForm = () => {
     }
   };
 
+  const form = (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <PasswordInput
+        label="Mật khẩu hiện tại"
+        show={showCurrent}
+        onToggle={() => setShowCurrent(!showCurrent)}
+        error={errors.currentPassword?.message}
+        {...register("currentPassword")}
+      />
+      <PasswordInput
+        label="Mật khẩu mới"
+        show={showNew}
+        onToggle={() => setShowNew(!showNew)}
+        error={errors.newPassword?.message}
+        {...register("newPassword")}
+      />
+      <PasswordInput
+        label="Xác nhận mật khẩu mới"
+        show={showConfirm}
+        onToggle={() => setShowConfirm(!showConfirm)}
+        error={errors.confirmPassword?.message}
+        {...register("confirmPassword")}
+      />
+      <Button type="submit" size="sm" disabled={isPending} className="mt-1">
+        {isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+        Cập nhật mật khẩu
+      </Button>
+    </form>
+  );
+
+  if (bare) return form;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Đổi mật khẩu</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label>Mật khẩu hiện tại</Label>
-            <div className="relative">
-              <Input
-                type={showCurrent ? "text" : "password"}
-                {...register("currentPassword")}
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
-                onClick={() => setShowCurrent(!showCurrent)}
-              >
-                {showCurrent ? (
-                  <EyeOff className="size-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="size-4 text-muted-foreground" />
-                )}
-              </Button>
-            </div>
-            {errors.currentPassword && (
-              <p className="text-sm text-destructive">
-                {errors.currentPassword.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label>Mật khẩu mới</Label>
-            <div className="relative">
-              <Input
-                type={showNew ? "text" : "password"}
-                {...register("newPassword")}
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
-                onClick={() => setShowNew(!showNew)}
-              >
-                {showNew ? (
-                  <EyeOff className="size-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="size-4 text-muted-foreground" />
-                )}
-              </Button>
-            </div>
-            {errors.newPassword && (
-              <p className="text-sm text-destructive">
-                {errors.newPassword.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label>Xác nhận mật khẩu mới</Label>
-            <div className="relative">
-              <Input
-                type={showConfirm ? "text" : "password"}
-                {...register("confirmPassword")}
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 size-7"
-                onClick={() => setShowConfirm(!showConfirm)}
-              >
-                {showConfirm ? (
-                  <EyeOff className="size-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="size-4 text-muted-foreground" />
-                )}
-              </Button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
-                {errors.confirmPassword.message}
-              </p>
-            )}
-          </div>
-
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Đổi mật khẩu
-          </Button>
-        </form>
-      </CardContent>
+      <CardContent>{form}</CardContent>
     </Card>
   );
 };

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,10 +18,12 @@ import { useConfirmTwoFactor } from "@/features/auth/hooks/useConfirmTwoFactor";
 import { useDisableTwoFactor } from "@/features/auth/hooks/useDisableTwoFactor";
 import { useRegenerateBackupCodes } from "@/features/auth/hooks/useRegenerateBackupCodes";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { Init2faResponseData } from "@/features/auth/types/account.types";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
+  bare?: boolean;
 }
 
 const BackupCodesList = ({ codes }: { codes: string[] }) => (
@@ -31,7 +34,9 @@ const BackupCodesList = ({ codes }: { codes: string[] }) => (
   </div>
 );
 
-const TwoFactorSetup = ({ isEnabled }: TwoFactorSetupProps) => {
+const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
+  const queryClient = useQueryClient();
+
   // enroll wizard state
   const [initData, setInitData] = useState<Init2faResponseData | null>(null);
   const [confirmCode, setConfirmCode] = useState("");
@@ -79,6 +84,7 @@ const TwoFactorSetup = ({ isEnabled }: TwoFactorSetupProps) => {
             resetEnroll();
             setBackupCodes(data.backupCodes);
             toast.success("Đã bật 2FA. Lưu lại backup codes ngay.");
+            queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
           } else {
             toast.error(res.data.message ?? "Mã không đúng");
           }
@@ -97,6 +103,7 @@ const TwoFactorSetup = ({ isEnabled }: TwoFactorSetupProps) => {
           setShowDisable(false);
           setDisablePassword("");
           setDisableTotp("");
+          queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
         },
         onError: (error) => handleErrorApi({ error }),
       },
@@ -123,33 +130,29 @@ const TwoFactorSetup = ({ isEnabled }: TwoFactorSetupProps) => {
     );
   };
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Xác thực 2 lớp (2FA)</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          {isEnabled ? "Xác thực 2 lớp đang bật." : "Chưa bật xác thực 2 lớp."}
-        </p>
-
-        {!isEnabled ? (
-          <Button onClick={handleInit} disabled={isIniting}>
-            {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Bật 2FA
+  const actionRow = (
+    <div className="flex items-center gap-2">
+      {!isEnabled ? (
+        <Button onClick={handleInit} disabled={isIniting} size="sm">
+          {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Bật 2FA
+        </Button>
+      ) : (
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowRegen(true)}>
+            Backup codes
           </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowRegen(true)}>
-              Sinh lại backup codes
-            </Button>
-            <Button variant="destructive" onClick={() => setShowDisable(true)}>
-              Tắt 2FA
-            </Button>
-          </div>
-        )}
+          <Button variant="destructive" size="sm" onClick={() => setShowDisable(true)}>
+            Tắt 2FA
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 
-        {/* Enroll wizard — QR + nhập TOTP */}
+  const dialogs = (
+    <>
+      {/* Enroll wizard — QR + nhập TOTP */}
         <Dialog
           open={!!initData}
           onOpenChange={(open) => !open && resetEnroll()}
@@ -295,6 +298,43 @@ const TwoFactorSetup = ({ isEnabled }: TwoFactorSetupProps) => {
             </div>
           </DialogContent>
         </Dialog>
+    </>
+  );
+
+  if (bare) {
+    return (
+      <>
+        {actionRow}
+        {dialogs}
+      </>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Xác thực 2 lớp (2FA)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          {isEnabled ? "Xác thực 2 lớp đang bật." : "Chưa bật xác thực 2 lớp."}
+        </p>
+        {!isEnabled ? (
+          <Button onClick={handleInit} disabled={isIniting}>
+            {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Bật 2FA
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowRegen(true)}>
+              Sinh lại backup codes
+            </Button>
+            <Button variant="destructive" onClick={() => setShowDisable(true)}>
+              Tắt 2FA
+            </Button>
+          </div>
+        )}
+        {dialogs}
       </CardContent>
     </Card>
   );

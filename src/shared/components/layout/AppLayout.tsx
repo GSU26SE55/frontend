@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   MapPin,
@@ -12,11 +12,11 @@ import {
   BellRing,
   ChevronDown,
   LogOut,
-  User,
   Ticket,
   Clock,
   FileText,
   ScrollText,
+  BookOpen,
   ShieldAlert,
   Thermometer,
 } from "lucide-react";
@@ -29,7 +29,6 @@ import ThemeToggle from "@/shared/components/common/ThemeToggle";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
-  const navigate = useNavigate();
   const { user } = useSessionStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const { mutate: logout } = useLogout();
@@ -107,22 +106,7 @@ function Topbar() {
                 <div className="text-[11px] text-muted-foreground">
                   {user?.email}
                 </div>
-              </div>
-              <DropMenuItem
-                icon={<User size={14} />}
-                onClick={() => {
-                  const path =
-                    user?.role === UserRole.ADMIN
-                      ? "/admin/profile"
-                      : user?.role === UserRole.MANAGER
-                        ? "/manager/profile"
-                        : "/staff/profile";
-                  navigate(path);
-                  setMenuOpen(false);
-                }}
-              >
-                Hồ sơ của tôi
-              </DropMenuItem>
+              </div>       
               <div className="border-t border-border my-1" />
               <DropMenuItem
                 icon={<LogOut size={14} />}
@@ -199,7 +183,10 @@ const ADMIN_NAV: NavSection[] = [
     title: "Hỗ trợ",
     collapsible: true,
     defaultOpen: true,
-    items: [{ label: "Tickets", path: "/admin/tickets", icon: Ticket }],
+    items: [
+      { label: "Tickets", path: "/admin/tickets", icon: Ticket },
+      { label: "Knowledge Base", path: "/admin/kb", icon: BookOpen },
+    ],
   },
   {
     title: "Người dùng",
@@ -235,6 +222,7 @@ const MANAGER_NAV: NavSection[] = [
       { label: "Sites", path: "/manager/sites", icon: MapPin },
       { label: "Tickets", path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Knowledge Base", path: "/manager/kb", icon: BookOpen },
       { label: "Cảnh báo pin", path: "/manager/alerts", icon: BellRing },
       {
         label: "Sự cố môi trường",
@@ -257,6 +245,7 @@ const STAFF_NAV: NavSection[] = [
     items: [
       { label: "Tổng quan", path: "/staff/dashboard", icon: LayoutDashboard },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
+      { label: "Knowledge Base", path: "/staff/kb", icon: BookOpen },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
     ],
   },
