@@ -7,7 +7,8 @@ import ResetOtpVerifyForm from "@/features/auth/components/ResetOtpVerifyForm";
 import ResetPasswordForm from "@/features/auth/components/ResetPasswordForm";
 import { cn } from "@/lib/utils";
 
-const RESET_TOKEN_TTL_MS = 5 * 60 * 1000;
+// Fallback nếu BE không trả expiresInSeconds (api-auth.md: resetToken TTL 900s = 15 phút)
+const RESET_TOKEN_TTL_FALLBACK_S = 900;
 
 const STEPS = [
   { label: "Email" },
@@ -52,7 +53,10 @@ const forgotPasswordReducer = (
         step: 3,
         resetToken: action.resetToken,
         tokenExpiry: action.tokenExpiry,
-        countdown: Math.ceil(RESET_TOKEN_TTL_MS / 1000),
+        countdown: Math.max(
+          0,
+          Math.ceil((action.tokenExpiry - Date.now()) / 1000),
+        ),
       };
     case "TOKEN_TICK":
       return { ...state, countdown: action.countdown };
@@ -175,11 +179,13 @@ const ForgotPasswordPage = () => {
         {state.step === 2 && (
           <ResetOtpVerifyForm
             email={state.email}
-            onSuccess={(token) =>
+            onSuccess={(token, expiresInSeconds) =>
               dispatch({
                 type: "OTP_VERIFIED",
                 resetToken: token,
-                tokenExpiry: Date.now() + RESET_TOKEN_TTL_MS,
+                tokenExpiry:
+                  Date.now() +
+                  (expiresInSeconds || RESET_TOKEN_TTL_FALLBACK_S) * 1000,
               })
             }
           />

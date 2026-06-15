@@ -26,6 +26,7 @@ export interface StaffProfileDto {
   department?: string; // Swagger: nullable
   maxConcurrentTickets: number;
   isAvailable: boolean;
+  skillTier: number; // StaffSkillTierEnum 1–3 (api-auth.md §Nhóm 6)
   notes?: string;
   skills: StaffSkillDto[] | null; // Swagger: nullable — guard bằng `skills ?? []` khi render
 }

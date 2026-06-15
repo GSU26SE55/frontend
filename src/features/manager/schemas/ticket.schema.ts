@@ -36,13 +36,15 @@ export type AssignFormValues = z.infer<typeof assignSchema>;
 
 export const reassignSchema = z.object({
   newStaffId: z.string().uuid("ID Staff không hợp lệ"),
-  reason: z.string().optional(),
+  // BE required (TicketReassignCommand) — rỗng → 400.
+  reason: z.string().min(1, "Lý do điều chuyển không được để trống"),
 });
 
 export type ReassignFormValues = z.infer<typeof reassignSchema>;
 
 export const rejectSchema = z.object({
-  reason: z.string().optional(),
+  // BE required (TicketRejectCommand) — rỗng → 400.
+  reason: z.string().min(1, "Lý do từ chối không được để trống"),
 });
 
 export type RejectFormValues = z.infer<typeof rejectSchema>;
@@ -53,6 +55,13 @@ export const escalateSchema = z.object({
 });
 
 export type EscalateFormValues = z.infer<typeof escalateSchema>;
+
+export const declareIncidentSchema = z.object({
+  // BE required (TicketDeclareIncidentCommand) — rỗng/whitespace → 400.
+  incidentDescription: z.string().min(1, "Mô tả sự cố không được để trống"),
+});
+
+export type DeclareIncidentFormValues = z.infer<typeof declareIncidentSchema>;
 
 const commentAttachmentSchema = z.object({
   fileId: z.string().uuid(),

@@ -96,6 +96,10 @@ const anomalyLabel = (t: AnomalyTypeEnum) => ANOMALY_LABELS[t] ?? `#${t}`;
 const formatDateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
+// Giá trị đo có thể null từ BE (thresholdValue/actualValue/unit là nullable)
+const formatMeasure = (value?: number | null, unit?: string | null) =>
+  value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+
 export default function AlertsView({ subtitle }: { subtitle: string }) {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
@@ -223,7 +227,8 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
                     <AlertSeverityBadge severity={alert.severity} />
                   </TableCell>
                   <TableCell className="font-mono-num text-sm">
-                    {alert.actualValue} / {alert.thresholdValue} {alert.unit}
+                    {formatMeasure(alert.actualValue, alert.unit)} /{" "}
+                    {formatMeasure(alert.thresholdValue, alert.unit)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDateTime(alert.detectedAt)}
@@ -307,12 +312,12 @@ function AlertDetailDialog({
             </DetailRow>
             <DetailRow label="Giá trị thực tế">
               <span className="font-mono-num">
-                {alert.actualValue} {alert.unit}
+                {formatMeasure(alert.actualValue, alert.unit)}
               </span>
             </DetailRow>
             <DetailRow label="Ngưỡng">
               <span className="font-mono-num">
-                {alert.thresholdValue} {alert.unit}
+                {formatMeasure(alert.thresholdValue, alert.unit)}
               </span>
             </DetailRow>
             <DetailRow label="Phát hiện lúc">

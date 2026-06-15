@@ -4,7 +4,9 @@ import { authService } from "@/features/auth/services/auth.service";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { VerifyResetOtpPayload } from "@/features/auth/types/auth.types";
 
-export const useVerifyResetOtp = (onSuccess?: (resetToken: string) => void) =>
+export const useVerifyResetOtp = (
+  onSuccess?: (resetToken: string, expiresInSeconds: number) => void,
+) =>
   useMutation({
     mutationFn: (payload: VerifyResetOtpPayload) =>
       authService.verifyResetOtp(payload),
@@ -14,7 +16,7 @@ export const useVerifyResetOtp = (onSuccess?: (resetToken: string) => void) =>
         toast.error(res.message ?? "OTP không hợp lệ");
         return;
       }
-      onSuccess?.(res.data.resetToken);
+      onSuccess?.(res.data.resetToken, res.data.expiresInSeconds);
     },
     onError: (error) => handleErrorApi({ error }),
   });

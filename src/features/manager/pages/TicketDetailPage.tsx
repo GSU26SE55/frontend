@@ -16,6 +16,7 @@ import AssignDialog from "@/features/manager/components/AssignDialog";
 import ReassignDialog from "@/features/manager/components/ReassignDialog";
 import RejectDialog from "@/features/manager/components/RejectDialog";
 import EscalateDialog from "@/features/manager/components/EscalateDialog";
+import DeclareIncidentDialog from "@/features/manager/components/DeclareIncidentDialog";
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
@@ -23,7 +24,6 @@ import {
   useManagerTicketDetail,
   useTicketActivities,
   useApproveTicket,
-  useDeclareIncident,
 } from "@/features/manager/hooks/useManagerTickets";
 import {
   TicketStatusEnum,
@@ -39,6 +39,7 @@ type DialogType =
   | "reassign"
   | "reject"
   | "escalate"
+  | "incident"
   | null;
 
 const CATEGORY_LABEL: Partial<Record<TicketCategoryEnum, string>> = {
@@ -79,8 +80,6 @@ export default function TicketDetailPage() {
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
-  const { mutate: declareIncident, isPending: declaring } =
-    useDeclareIncident(id);
 
   if (isError) {
     return (
@@ -185,12 +184,8 @@ export default function TicketDetailPage() {
           </Button>
         )}
         {canDeclareIncident && (
-          <Button
-            variant="destructive"
-            onClick={() => declareIncident()}
-            disabled={declaring}
-          >
-            {declaring ? "Đang xử lý..." : "Khai báo Incident"}
+          <Button variant="destructive" onClick={() => setDialog("incident")}>
+            Khai báo Incident
           </Button>
         )}
       </div>
@@ -223,13 +218,17 @@ export default function TicketDetailPage() {
             <div>
               <p className="text-muted-foreground">Phạm vi ảnh hưởng</p>
               <p className="font-medium">
-                {IMPACT_LABEL[ticket.impactScope] ?? ticket.impactScope}
+                {ticket.impactScope
+                  ? (IMPACT_LABEL[ticket.impactScope] ?? ticket.impactScope)
+                  : "—"}
               </p>
             </div>
             <div>
               <p className="text-muted-foreground">Độ khẩn cấp</p>
               <p className="font-medium">
-                {URGENCY_LABEL[ticket.urgencyLevel] ?? ticket.urgencyLevel}
+                {ticket.urgencyLevel
+                  ? (URGENCY_LABEL[ticket.urgencyLevel] ?? ticket.urgencyLevel)
+                  : "—"}
               </p>
             </div>
             <div>
@@ -257,7 +256,7 @@ export default function TicketDetailPage() {
             </div>
           )}
 
-          <TicketAttachments attachments={ticket.attachments} />
+          <TicketAttachments fileIds={ticket.attachmentFileIds} />
 
           {ticket.rejectionReason && (
             <Card className="border-destructive">
@@ -346,6 +345,13 @@ export default function TicketDetailPage() {
       )}
       {dialog === "escalate" && (
         <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "incident" && (
+        <DeclareIncidentDialog
+          ticketId={id}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
     </div>
   );

@@ -108,7 +108,7 @@ export default function ReassignDialog({ ticketId, open, onClose }: Props) {
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do điều chuyển (tuỳ chọn)</FormLabel>
+                  <FormLabel>Lý do điều chuyển</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Lý do..." {...field} />
                   </FormControl>

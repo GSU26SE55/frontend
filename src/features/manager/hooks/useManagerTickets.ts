@@ -134,7 +134,8 @@ export const useEscalateTicket = (id: string) => {
 export const useDeclareIncident = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => managerTicketService.declareIncident(id),
+    mutationFn: (incidentDescription: string) =>
+      managerTicketService.declareIncident(id, incidentDescription),
     onSuccess: () => {
       toast.success("Ticket đã được đánh dấu là Incident");
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });

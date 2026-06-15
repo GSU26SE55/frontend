@@ -99,6 +99,12 @@ export interface FileMetadataResponse {
 ```
 
 > **`publicUrl`:** Có giá trị khi `ObjectStorageOptions.PublicBaseUrl` được cấu hình (môi trường dev local với MinIO port 9090 đã có giá trị). FE **phải handle cả 2 case** — không assume `null`. Fallback về `GET /api/files/{fileId}/download` khi `null`. Dùng helper: `publicUrl ?? \`/api/files/${fileId}/download\``.
+>
+> **Hai field cấu hình URL khác nhau (đừng nhầm):** Backend có 2 option riêng biệt trong `ObjectStorageOptions`, cả hai trỏ về MinIO port 9090 ở dev nhưng dùng cho mục đích khác nhau:
+> - `PublicBaseUrl` (vd `http://localhost:9090/solar-battery-files`) → dùng để build field `publicUrl` trả về **sau upload**.
+> - `PublicServiceUrl` (vd `http://localhost:9090`) → dùng để **ký presigned URL** với hostname mà browser resolve được. Nếu không set thì fallback về `ServiceUrl` (host internal, browser không gọi được).
+>
+> Cả hai được set qua env var trong `docker-compose.yml` (`ObjectStorage__PublicBaseUrl`, `ObjectStorage__PublicServiceUrl`), không nằm trong `appsettings.json`.
 
 ---
 
@@ -227,6 +233,7 @@ FileStorageService chỉ biết metadata file (`purpose`, `status`, `createdBy`)
 **Lỗi thường gặp:**
 - `400` — Không có file trong request
 - `400 isSuccess=false` — File rỗng, thiếu phần mở rộng, hoặc phần mở rộng không hợp lệ với `purpose`
+- `401` — Chưa đăng nhập hoặc access token không hợp lệ/hết hạn (controller có `[Authorize]`)
 - `403` — Không đủ quyền upload với `purpose` yêu cầu, ví dụ non-Admin upload `Firmware`
 - `413 isSuccess=false` — File vượt quá 20 MB. Nếu request bị ASP.NET Core reject trước controller, body vẫn theo JSON lỗi của middleware với `statusCode=413`
 - `500` — Lỗi ghi lên object storage hoặc lưu metadata DB
@@ -250,18 +257,18 @@ Nếu handler đọc được multipart và thấy binary >20 MB:
 }
 ```
 
-Nếu ASP.NET Core reject request trước controller vì multipart request quá lớn, `GlobalExceptionMiddleware` vẫn trả JSON:
+Nếu ASP.NET Core reject request trước controller vì multipart request quá lớn, `GlobalExceptionMiddleware` vẫn trả JSON. Lưu ý: middleware để `message` **rỗng** và chỉ đẩy chi tiết vào `listErrors`:
 
 ```json
 {
   "isSuccess": false,
   "statusCode": 413,
-  "message": "Request payload too large. File tối đa 20 MB.",
+  "message": "",
   "data": null,
   "listErrors": [
     {
       "field": "file",
-      "detail": "Kích thước request vượt quá giới hạn cho phép."
+      "detail": "Kích thước request vượt quá giới hạn cho phép (tối đa 20 MB)."
     }
   ]
 }
@@ -599,6 +606,12 @@ Nếu bước FileStorage delete thất bại sau khi domain reference đã clea
 ---
 
 ## Changelog
+
+### 2026-06-15 — Verify lần 2 vs source code
+
+- **`413` message qua middleware** — docs ghi `message: "Request payload too large. File tối đa 20 MB."`, nhưng `GlobalExceptionMiddleware` thực tế trả `message: ""` (rỗng) và đẩy chi tiết vào `listErrors[0].detail = "Kích thước request vượt quá giới hạn cho phép (tối đa 20 MB)."`. Đã sửa JSON example.
+- **Bổ sung field `PublicServiceUrl`** — code có 2 option URL riêng: `PublicBaseUrl` (build `publicUrl` sau upload) và `PublicServiceUrl` (ký presigned URL). Docs trước chỉ nhắc `PublicBaseUrl`. Đã thêm note phân biệt, cả 2 set qua env trong `docker-compose.yml`.
+- **`401` cho `POST /upload`** — controller có `[Authorize]` nhưng mục "Lỗi thường gặp" của upload chưa liệt kê `401`. Đã bổ sung.
 
 ### 2026-05-19 — Fix enum values sau verify source code
 

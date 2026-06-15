@@ -18,15 +18,27 @@
 - **Doc** [api-auth.md §`/accept-invite`](../../docs/api-auth.md): response = `LoginResultDto` → `data.tokens.accessToken`, `data.challenge=null`.
 - → `AcceptInvitePage` onSuccess: `saveTokens(data.tokens.accessToken, data.tokens.refreshToken)` (không phải `data.accessToken`). Đồng bộ với `useLogin` sau khi GH-11 C1 fix. Accept-invite **bypass 2FA** nên `challenge` luôn null — không cần handle `requiresTwoFactor`.
 
+### C4 — 🔴 Accept Invite body PHẢI gồm `confirmPassword` (plan SAI) — 2026-06-15
+
+- **Plan cũ** ([Files dòng 116], [Approach dòng 190], Q&A dòng 284): `AcceptInvitePayload { invitationToken, password }` — **KHÔNG gửi confirmPassword**.
+- **Doc** [api-auth.md §`/accept-invite`]: body bắt buộc **cả 3** — `invitationToken`, `password`, **`confirmPassword`** (BE validate cross-field, mismatch → `422`). Nếu FE strip `confirmPassword`, BE không thực hiện được check đã document.
+- → **Sửa:** `AcceptInvitePayload { invitationToken, password, confirmPassword }` — gửi đủ 3 field lên BE (vẫn giữ Zod `.refine` check match phía FE).
+
+### C5 — 🔴 Accept Invite error status: 401 (không phải 410) — 2026-06-15
+
+- **Plan cũ** ([Approach dòng 201], Edge Cases dòng 243) branch lỗi trên `410` cho token hết hạn.
+- **Doc** [api-auth.md §`/accept-invite`]: token hết hạn/không hợp lệ/đã vô hiệu hóa = **`401`** (BE không có nhánh 410); `confirmPassword` mismatch = `422`; token đã dùng (account active) = `409`.
+- → **Sửa:** branch theo `401` (hết hạn/invalid) + `409` (đã active) + `422` (confirm mismatch — hiện dưới field). Nhánh `410` không bao giờ fire → bỏ.
+
 ### C2 — 🔴 AccountsPage: thêm nút "Reset 2FA" (admin) — endpoint GH-295 mới
 
 - Doc [api-auth.md §`DELETE /api/admin/accounts/{id}/2fa`](../../docs/api-auth.md): admin reset 2FA của user khác. **Admin only**.
 - **Code (verified):** chưa có endpoint/service/hook (xem GH-30 C3).
 - → Sau khi GH-30 thêm `useAdminReset2fa`: thêm menu item "Reset 2FA" trong row action AccountsPage (chỉ hiện khi `account.twoFactorEnabled === true` và actor là Admin) → confirm dialog → `DELETE`. Toast theo message idempotent từ BE.
 
-### C3 — 🟢 ProfilePage avatar — không đổi (đã đúng doc)
+### C3 — 🟢 ProfilePage avatar — plan đúng, nhưng review.md sai field
 
-`POST /api/auth/me/avatar` body `{ avatarFileId }` + render bằng `displayAvatarUrl` — khớp doc. Giữ nguyên.
+`POST /api/auth/me/avatar` body `{ avatarFileId }` + render bằng `displayAvatarUrl` — plan ([Approach dòng 182]) **đúng doc**. ⚠️ Lưu ý: `review.md` đề xuất render bằng `account.avatarUrl` — **SAI** (doc: `avatarUrl` là legacy field deprecated, KHÔNG dùng để hiển thị). Khi implement, render `<img src={displayAvatarUrl}>` theo plan, bỏ qua đề xuất review.md.
 
 > Các phần admin forms khác (invite/create/edit/status/role/unlock/delete, roles, permissions, audit) khớp doc — không cần sửa, TRỪ: AuditLogsPage filter cần thêm 6 action 2FA mới sau khi GH-30 C4 mở rộng `AuditActionEnum`.
 
@@ -70,7 +82,7 @@ Implement 4 nhóm UI bị defer từ GH-11, GH-27, GH-28, GH-30:
 ### Accept Invite
 | Method | Path | Request | Response |
 |--------|------|---------|----------|
-| POST | `/api/auth/accept-invite` | `AcceptInvitePayload` | `CommonResponse<{ accessToken, refreshToken }>` — **giống login** (xác nhận từ api-auth.md) |
+| POST | `/api/auth/accept-invite` | `AcceptInvitePayload` `{ invitationToken, password, confirmPassword }` | `CommonResponse<LoginResultData>` — `data.tokens.*`, `data.challenge=null` (GH-295) |
 
 ### Admin — Accounts (hooks đã có, **trừ changeRole**)
 | Method | Path | Hook |
@@ -113,7 +125,7 @@ Implement 4 nhóm UI bị defer từ GH-11, GH-27, GH-28, GH-30:
 
 | File | Action | Ghi chú |
 |------|--------|---------|
-| `src/features/auth/types/auth.types.ts` | modify | Thêm `AcceptInviteFormValues` (form — có `confirmPassword`) và `AcceptInvitePayload` (API body — chỉ `invitationToken` + `password`) |
+| `src/features/auth/types/auth.types.ts` | modify | Thêm `AcceptInviteFormValues` (form) và `AcceptInvitePayload` (API body — `invitationToken` + `password` + `confirmPassword`, gửi đủ 3) |
 | `src/features/admin/types/admin.types.ts` | modify | Thêm `ChangeAccountRolePayload { roleId: string }` |
 | `src/features/auth/services/auth.service.ts` | modify | Thêm `acceptInvite` method |
 | `src/features/auth/schemas/profile.schema.ts` | create | Zod schema cho edit profile form |
@@ -187,18 +199,19 @@ status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
 - Route `/invite/accept` dưới AuthLayout (public)
 - `invitationToken` lấy từ `useSearchParams()` — đọc `?token=...`
 - Form state type: `AcceptInviteFormValues { password, confirmPassword }` (Zod `.refine` check match)
-- API payload type: `AcceptInvitePayload { invitationToken, password }` — **KHÔNG gửi `confirmPassword` lên BE**
-- BE response: `CommonResponse<{ accessToken, refreshToken }>` — giống login (xác nhận từ api-auth.md §1)
-- onSuccess — mirror chính xác useLogin (5 bước theo thứ tự):
+- API payload type: `AcceptInvitePayload { invitationToken, password, confirmPassword }` — **gửi đủ 3 field** (BE validate cross-field; mismatch → 422)
+- BE response: `CommonResponse<LoginResultData>` (GH-295) — `data.tokens.*`, `data.challenge=null`
+- onSuccess — mirror chính xác useLogin (theo thứ tự):
   ```
-  1. saveTokens(accessToken, refreshToken)
-  2. const user = decodeToken(accessToken)
+  1. saveTokens(data.tokens.accessToken, data.tokens.refreshToken)   // GH-295: đọc data.tokens.*
+  2. const user = decodeToken(data.tokens.accessToken)
   3. if (user.role === 'CUSTOMER') { clearTokens(); toast.error(...); return; }  // guard nhất quán với useLogin
   4. setSession(user)
   5. queryClient.setQueryData(QUERY_KEY.currentUser.session(), user)   // ← bắt buộc, không bỏ
   6. navigate(redirectByRole(user.role), { replace: true })
   ```
-- Error 410: "Link mời đã hết hạn (72h). Liên hệ Admin để gửi lại." — không redirect
+- Error 401: "Link mời không hợp lệ hoặc đã hết hạn (72h). Liên hệ Admin để gửi lại." — không redirect
+- Error 422: `confirmPassword` không khớp — hiện lỗi dưới field (handleErrorApi setError)
 - Error 409: "Tài khoản đã được kích hoạt." — không redirect
 
 ### Admin AccountsPage — row actions
@@ -240,7 +253,8 @@ status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
 ## Edge Cases
 
 - `profile: null` trong AccountDto — form fields empty, submit vẫn OK (BE tạo row mới)
-- Accept invite 410 → hiện expired message, không redirect
+- Accept invite 401 → hiện "link không hợp lệ/hết hạn" message, không redirect
+- Accept invite 422 → confirmPassword mismatch → setError dưới field
 - Accept invite 409 → "Đã kích hoạt, đăng nhập bình thường"
 - PermissionsDialog `permissionIds: []` → xóa hết permissions — thêm confirm dialog
 - `isSystemRole = true` → disable Delete button trên RolesPage
@@ -265,7 +279,7 @@ status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
 
 ## Steps
 
-- [x] Bước 1: Types + schemas — `AcceptInviteFormValues`, `AcceptInvitePayload`, `ChangeAccountRolePayload { roleId: string }` (vào `admin.types.ts`), `profile.schema.ts`, `accept-invite.schema.ts`, `admin-account.schema.ts` (status field: `z.nativeEnum(AccountStatusEnum)`), `role.schema.ts`, `staff-profile.schema.ts` — 2026-06-06
+- [x] Bước 1: Types + schemas — `AcceptInviteFormValues`, `AcceptInvitePayload` (gồm `confirmPassword` — C4), `ChangeAccountRolePayload { roleId: string }` (vào `admin.types.ts`), `profile.schema.ts`, `accept-invite.schema.ts`, `admin-account.schema.ts` (status field: `z.nativeEnum(AccountStatusEnum)`), `role.schema.ts`, `staff-profile.schema.ts` — 2026-06-06 · ⚠️ rework C4/C5 (payload+errors)
 - [x] Bước 2: Missing service + hook — `endpoints.ts` (ROLE), `auth.service.ts` (acceptInvite), `admin-accounts.service.ts` (changeRole với `ChangeAccountRolePayload`), `useAcceptInvite.ts`, `useAdminChangeAccountRole` — 2026-06-06
 - [x] Bước 3: Accept Invite — `AcceptInvitePage.tsx` + wire router `/invite/accept` — 2026-06-06
 - [x] Bước 4: ProfilePage — `ProfilePage.tsx` (GET/PUT profile + avatar upload) + wire router `/admin|manager|staff/profile` + fix AppLayout links + settings redirects — 2026-06-06
@@ -280,8 +294,9 @@ status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
 
 | Câu hỏi | Trả lời |
 |---------|---------|
-| Accept invite response có trả tokens không? | **Có** — "Response giống `POST /api/auth/login`" (api-auth.md §1 `POST /api/auth/accept-invite`). Flow `saveTokens` → auto login là đúng. |
-| `AcceptInvitePayload` vs form values? | Tách rõ: `AcceptInviteFormValues { password, confirmPassword }` (Zod) vs `AcceptInvitePayload { invitationToken, password }` (API). `confirmPassword` không gửi lên BE. |
+| Accept invite response có trả tokens không? | **Có** — response = `LoginResultDto` (GH-295): `data.tokens.*`, `data.challenge=null`. Flow `saveTokens(data.tokens.*)` → auto login. |
+| `AcceptInvitePayload` vs form values? | `AcceptInviteFormValues { password, confirmPassword }` (Zod). `AcceptInvitePayload { invitationToken, password, confirmPassword }` — **gửi đủ 3 field** (BE validate cross-field, mismatch 422). Xem C4. |
+| Accept invite token hết hạn trả status nào? | **`401`** (không phải 410 — BE không có nhánh 410). confirmPassword mismatch = `422`, đã active = `409`. Xem C5. |
 | UnlockAccount có cần dialog riêng? | Không — inline `AlertDialog` confirm trong AccountsPage, gọi thẳng `useAdminUnlockAccount`. Không có file component riêng. |
 | PermissionsDialog khi `permissionIds: []` xử lý thế nào? | Inline `AlertDialog` trong `PermissionsDialog.tsx` — không cần file riêng. |
 | `/admin/settings` redirect target là gì? | Redirect `<Navigate to="/settings" replace />` — `/settings` đã tồn tại trong router → `AccountSettingsPage`. |

@@ -150,6 +150,7 @@ export interface UpdateStaffProfilePayload {
   department?: string;
   maxConcurrentTickets: number;
   isAvailable: boolean;
+  skillTier: number; // StaffSkillTierEnum 1–3 — bắt buộc (api-auth.md §Nhóm 6)
   notes?: string;
 }
 
@@ -198,4 +199,12 @@ export interface GetAuditLogsParams {
   isSuccess?: boolean;
   fromUtc?: string;
   toUtc?: string;
+}
+
+// GET /api/admin/audit-logs/by-account/{accountId} — chỉ nhận 4 query param này
+export interface GetAuditLogsByAccountParams {
+  pageNumber?: number;
+  pageSize?: number;
+  action?: AuditActionEnum;
+  isSuccess?: boolean;
 }

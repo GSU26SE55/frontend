@@ -4,6 +4,13 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
 import {
@@ -12,6 +19,14 @@ import {
   useSiteAssets,
 } from "@/features/manager/hooks/useSites";
 import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
+import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+
+const ASSET_STATUS_ALL = "all";
+const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
+  [BatteryStatusEnum.Active]: "Hoạt động",
+  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
+  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+};
 
 export default function ManagerSiteDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -83,7 +98,38 @@ export default function ManagerSiteDetailPage() {
 
       {/* Assets table */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Danh sach pin</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">Danh sach pin</h2>
+          <Select
+            value={
+              assetsParams.status != null
+                ? String(assetsParams.status)
+                : ASSET_STATUS_ALL
+            }
+            onValueChange={(v) =>
+              setAssetsParams((p) => ({
+                ...p,
+                pageNumber: 1,
+                status:
+                  v === ASSET_STATUS_ALL
+                    ? undefined
+                    : (Number(v) as BatteryStatusEnum),
+              }))
+            }
+          >
+            <SelectTrigger size="sm" className="w-40">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ASSET_STATUS_ALL}>Mọi trạng thái</SelectItem>
+              {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Card>
           <SiteAssetsTable
             data={assetsPage?.items ?? []}

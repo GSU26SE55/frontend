@@ -204,11 +204,11 @@ export default function TicketDetailPage() {
             </div>
             <div>
               <p className="text-muted-foreground">Phạm vi ảnh hưởng</p>
-              <p className="font-medium">{ticket.impactScope}</p>
+              <p className="font-medium">{ticket.impactScope ?? "—"}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Độ khẩn cấp</p>
-              <p className="font-medium">{ticket.urgencyLevel}</p>
+              <p className="font-medium">{ticket.urgencyLevel ?? "—"}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Ngày tạo</p>
@@ -233,7 +233,7 @@ export default function TicketDetailPage() {
               </p>
             </div>
           )}
-          <TicketAttachments attachments={ticket.attachments} />
+          <TicketAttachments fileIds={ticket.attachmentFileIds} />
           {ticket.resolutionSummary && (
             <div>
               <p className="text-muted-foreground text-sm mb-1">

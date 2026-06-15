@@ -77,7 +77,7 @@ Doc: login chỉ sanity-check "không rỗng", không enforce strong-password. `
 
 Doc ghi JWT access token TTL **1 giờ**. Code lấy `exp` từ JWT nên không lỗi runtime — chỉ sửa comment cho khớp.
 
-### C7 — 🟡 Block `TICKETS` + ticket permissions sơ khai, sai so với `docs/api-ticket.md`
+### C7 — 🟡 Block `TICKETS` + ticket permissions sơ khai, sai so với `docs/api-ticket.md` *(bổ sung BE-verify 2026-06-15)*
 
 > Block `TICKETS` (và ticket perms trong `authz.ts`) ở GH-11 là phác đoán Sprint 1 TRƯỚC khi có `docs/api-ticket.md`. Endpoints ticket chính thức đã được GH-58 (Staff), GH-59 (Manager), GH-60 (Admin) định nghĩa lại đúng (`STAFF_TICKETS`, `ADMIN.TICKETS`, `TICKETS.ACTIVITIES`). Block `TICKETS` cũ phía dưới **đã lỗi thời**.
 
@@ -91,6 +91,8 @@ Doc ghi JWT access token TTL **1 giờ**. Code lấy `exp` từ JWT nên không 
 > - Còn thiếu (do GH-58/59/60 bổ sung ở nhóm khác): `customer/tickets` (`me`/`reopen`/`rate`), `admin/tickets/queue`, `triage`, `reassign`, `declare-incident`, `staff .../escalate-request`, `maintenance-logs/me`.
 
 > **Ticket permissions `authz.ts` (C7):** spec ticket dùng từ ngữ `triage` / `triage-reject` / `approve` / `reject` — không phải `close` / `close_reject`. JWT mẫu (dòng 227) chỉ chứa `ticket.create`, `ticket.view`. Các perm `ticket.triage/close/close_reject/assign/escalate` **chưa được xác nhận từ BE** — cần confirm danh sách perm string thực tế (api-ticket.md không liệt kê permission). Đổi `TICKET_CLOSE`/`TICKET_CLOSE_REJECT` cho khớp tên action spec sau khi BE confirm.
+
+> **Cập nhật 2026-06-15 — đối chiếu codebase BE TicketService:** Các controller ticket BE dùng **role-based authorization** (`[Authorize(Roles="Staff")]`, `"Manager,Admin"`, `"Customer"`), **KHÔNG dùng permission-based policy** cho ticket actions. Permission string (`ticket.saga.view` / `ticket.saga.reprocess`) **chỉ tồn tại cho 2 endpoint Saga** (`/api/admin/sagas/alert-ticket`). → Kết luận: ticket gating ở FE nên dùng **`checkRole(user, 'STAFF'|'MANAGER'|'ADMIN'|'CUSTOMER')`** theo từng action, KHÔNG dựa vào `ticket.*` permission (các perm này không được BE enforce). Block ticket perms cũ trong `authz.ts` → xóa hoặc giữ tối thiểu, không mở rộng speculative.
 
 ### Migration scope (ticket riêng — không thuộc GH-11 rework)
 - `POST /api/auth/login/verify-2fa` page + `useVerifyLogin2fa` hook → thuộc ticket 2FA migrate (cùng GH-27 2FA rework).
@@ -166,27 +168,30 @@ Thiết lập toàn bộ nền tảng project (router, providers, axios, Zustand
 
 // Payloads
 interface LoginPayload          { email: string; password: string; }
-interface RegisterPayload       { fullName: string; email: string; password: string; confirmPassword: string; phoneNumber: string; }
+interface RegisterPayload       { fullName: string; email: string; password: string; phoneNumber: string; }  // confirmPassword là FE-only validation, KHÔNG gửi lên BE (GH-295)
+interface Verify2faLoginPayload { challengeToken: string; code: string; isBackupCode: boolean; }  // GH-295 bước 2 login
 interface OtpVerifyPayload      { email: string; otp: string; }
 interface ResendOtpPayload      { email: string; }               // dùng chung cho resend-otp + resend-reset-otp
 interface ForgotPasswordPayload { email: string; }
 interface VerifyResetOtpPayload { email: string; otp: string; }
 interface ResetPasswordPayload  { resetToken: string; newPassword: string; }  // confirmPassword là FE-only validation, không gửi lên BE
 
-// Responses
-interface LoginResponseData          { accessToken: string; refreshToken: string; }
+// Responses (GH-295 — LoginResultDto discriminated union)
+interface TokenDTO                   { accessToken: string; refreshToken: string; }
+interface TwoFactorChallengeDto      { challengeToken: string; expiresInSeconds: number; methods: string[]; }  // expiresInSeconds luôn 300, methods=["totp","backupCode"]
+interface LoginResultData            { tokens: TokenDTO | null; challenge: TwoFactorChallengeDto | null; requiresTwoFactor: boolean; }
 interface RegisterResponseData       { email: string; otpExpiresInSeconds: number; }  // ← countdown cho OTP verify sau register
-interface VerifyResetOtpResponseData { resetToken: string; expiresInSeconds: number; }
-interface AccountDto                 { id: string; email: string; fullName: string; role: string; phoneNumber?: string; avatarUrl?: string; }
-// AccountDto đầy đủ — xem GH-30 plan (shared/types/account.types.ts)
+interface VerifyResetOtpResponseData { resetToken: string; expiresInSeconds: number; }  // expiresInSeconds = 900 (15 phút)
+interface AccountDto                 { id: string; email: string; fullName: string; role: string; phoneNumber?: string; displayAvatarUrl?: string; }
+// AccountDto đầy đủ — xem GH-30 plan (shared/types/account.types.ts). Render avatar bằng displayAvatarUrl, KHÔNG dùng avatarUrl trực tiếp.
 ```
 
 ## Schema (Zod)
 
 ```ts
-// login.schema.ts
+// login.schema.ts — login chỉ sanity-check "không rỗng", BE không enforce strong-password ở login (api-auth.md)
 email:    z.string().email()
-password: z.string().min(8)
+password: z.string().min(1)
 
 // register.schema.ts
 fullName:        z.string().min(2)
@@ -209,22 +214,23 @@ otp: z.string().length(6).regex(/^\d{6}$/)
 
 | Method | Path | Request Body | Response |
 |--------|------|-------------|----------|
-| POST | `/api/auth/login` | `{ email, password }` | `CommonResponse<LoginResponseData>` |
-| POST | `/api/auth/register` | `{ fullName, email, password, confirmPassword, phoneNumber }` | `CommonResponse<RegisterResponseData>` — `{ email, otpExpiresInSeconds }` |
+| POST | `/api/auth/login` | `{ email, password }` | `CommonResponse<LoginResultData>` — discriminated union `{ tokens, challenge, requiresTwoFactor }` (GH-295) |
+| POST | `/api/auth/login/verify-2fa` | `{ challengeToken, code, isBackupCode }` | `CommonResponse<LoginResultData>` — giống login Case A (`data.tokens.*`) |
+| POST | `/api/auth/register` | `{ fullName, email, password, phoneNumber }` | `201` `CommonResponse<RegisterResponseData>` — `{ email, otpExpiresInSeconds }` — KHÔNG gửi `confirmPassword` (FE-only validation) |
 | POST | `/api/auth/verify-otp` | `{ email, otp }` | `CommonResponse<null>` |
 | POST | `/api/auth/resend-otp` | `{ email }` | `CommonResponse<null>` |
 | POST | `/api/auth/forgot-password` | `{ email }` | `CommonResponse<null>` |
 | POST | `/api/auth/verify-reset-otp` | `{ email, otp }` | `CommonResponse<VerifyResetOtpResponseData>` |
 | POST | `/api/auth/resend-reset-otp` | `{ email }` | `CommonResponse<null>` |
 | POST | `/api/auth/reset-password` | `{ resetToken, newPassword }` | `CommonResponse<null>` | ← `confirmPassword` validate phía FE only, KHÔNG gửi lên BE |
-| POST | `/api/auth/refresh-token` | `{ refreshToken }` | `CommonResponse<LoginResponseData>` |
+| POST | `/api/auth/refresh-token` | `{ refreshToken }` | `CommonResponse<LoginResultData>` — `data.tokens.*`, `data.challenge` luôn null (GH-295) |
 | POST | `/api/auth/logout` | `{ refreshToken }` | `CommonResponse<null>` |
 | GET | `/api/auth/google/login` | — | redirect 302 → Google |
-| GET | `/api/auth/google/callback` | — | redirect → `/auth/google/callback?accessToken=&refreshToken=` |
-| POST | `/api/auth/accept-invite` | — | ngoài scope — ticket Admin riêng |
-| GET | `/api/auth/me` | — | `CommonResponse<AccountDto>` |
-| PUT | `/api/auth/me/profile` | `{ fullName, phoneNumber }` | `CommonResponse<AccountDto>` — ngoài scope |
-| POST | `/api/auth/me/avatar` | `FormData` | `CommonResponse<{ avatarUrl }>` — ngoài scope |
+| GET | `/api/auth/google/callback` | — | `CommonResponse<LoginResultData>` — `data.tokens.*`, `data.challenge` luôn null (bypass 2FA) |
+| POST | `/api/auth/accept-invite` | — | ngoài scope — ticket Admin riêng (GH-64) |
+| GET | `/api/auth/me` | — | `CommonResponse<AccountDto>` — ngoài scope (GH-28) |
+| PUT | `/api/auth/me/profile` | `{ fullName, phoneNumber?, address?, birthDate?, timeZone? }` | `CommonResponse<AccountDto>` — ngoài scope (GH-28) |
+| POST | `/api/auth/me/avatar` | `{ avatarFileId }` | `CommonResponse<AccountDto>` — ngoài scope (GH-36) |
 
 > `refresh-token` và `logout` gọi trực tiếp trong `shared/lib/axios.ts` interceptor — KHÔNG qua `authService` để tránh circular dependency.
 
@@ -346,7 +352,7 @@ if (user.role === 'CUSTOMER') {
 ## Approach
 
 **Token storage:** `js-cookie` lưu `accessToken` và `refreshToken` trong cookie.
-- `accessToken`: expires **90 phút**
+- `accessToken`: expires lấy từ `exp` trong JWT (BE TTL **1 giờ** — api-auth.md)
 - `refreshToken`: expires **7 ngày** (`{ expires: 7 }`) — confirmed Q1
 
 > **[SECURITY — Acknowledged]** js-cookie tạo JavaScript-accessible cookie (không phải httpOnly). Acceptable cho capstone scope. Mọi nơi set cookie phải kèm comment:
@@ -462,7 +468,7 @@ const tryRefresh = async (): Promise<string | null> => {
   isRefreshing = true;
   try {
     const res = await axios.post(ENDPOINTS.AUTH.REFRESH_TOKEN, ..., { timeout: 10_000 });
-    const { accessToken, refreshToken } = res.data.data;
+    const { accessToken, refreshToken } = res.data.data.tokens;  // GH-295: wrap trong data.tokens.*
     saveTokens(accessToken, refreshToken);
     sessionStore.getState().setSession(decodeToken(accessToken));
     pendingQueue.forEach(cb => cb(accessToken)); // flush TRƯỚC khi reset
@@ -482,7 +488,7 @@ const tryRefresh = async (): Promise<string | null> => {
 ```
 Click "Sign in with Google" → window.location.href = VITE_API_BASE_URL + ENDPOINTS.AUTH.GOOGLE_LOGIN
 → Google redirect về /api/auth/google/callback (BE xử lý)
-→ BE trả JSON: CommonResponse<{ accessToken, refreshToken }> — KHÔNG redirect FE với token trong URL
+→ BE trả JSON: CommonResponse<LoginResultData> (GH-295) — `data.tokens.*`, `data.challenge` luôn null (Google bypass 2FA). KHÔNG redirect FE với token trong URL
 
 GoogleCallbackPage — BE gọi endpoint này server-side, FE không mount page này trực tiếp từ Google redirect.
 FE cần gọi GET /api/auth/google/callback (qua axios) để nhận token JSON:
@@ -490,7 +496,7 @@ FE cần gọi GET /api/auth/google/callback (qua axios) để nhận token JSON
   // Confirmed từ thực tế: BE trả JSON response, không redirect với ?accessToken= trong URL
   try {
     const res = await authService.googleCallback(code, state);  // GET /api/auth/google/callback
-    const { accessToken, refreshToken } = res.data;
+    const { accessToken, refreshToken } = res.data.data.tokens;  // GH-295: wrap trong data.tokens.*
     saveTokens(accessToken, refreshToken);
     const user = decodeToken(accessToken);
     sessionStore.getState().setSession(user);
@@ -516,7 +522,7 @@ Step 1: nhập email → POST /forgot-password → lưu email trong component st
 Step 2: nhập OTP → POST /verify-reset-otp → nhận resetToken → next step
 Step 3: nhập mật khẩu mới → POST /reset-password { resetToken, newPassword } (KHÔNG gửi confirmPassword lên BE) → navigate('/login') + toast
 // resetToken TTL = lấy từ response.data.expiresInSeconds của POST /verify-reset-otp (field: expiresInSeconds, integer, seconds)
-// API doc JSON example: expiresInSeconds = 600 (10 phút) — dùng giá trị động từ response, không hardcode
+// API doc: expiresInSeconds = 900 (15 phút) — dùng giá trị động từ response, không hardcode
 // UX: hiển thị countdown theo expiresInSeconds nhận được ở step 2, nếu hết hạn → toast "Mã đã hết hạn, vui lòng thử lại" → reset về step 1
 ```
 
@@ -557,6 +563,7 @@ export const ENDPOINTS = {
 
   AUTH: {
     LOGIN:              '/api/auth/login',
+    LOGIN_VERIFY_2FA:   '/api/auth/login/verify-2fa',   // GH-295 bước 2 login
     LOGOUT:             '/api/auth/logout',
     REGISTER:           '/api/auth/register',
     VERIFY_OTP:         '/api/auth/verify-otp',
@@ -574,15 +581,8 @@ export const ENDPOINTS = {
     UPDATE_AVATAR:      '/api/auth/me/avatar',
   },
 
-  USERS: {
-    LIST:               '/api/users',
-    CREATE:             '/api/users',
-    DETAIL:             (id: string) => `/api/users/${id}`,
-    UPDATE:             (id: string) => `/api/users/${id}`,
-    DEACTIVATE:         (id: string) => `/api/users/${id}/deactivate`,
-    RESET_PASSWORD:     (id: string) => `/api/users/${id}/reset-password`,
-    INVITE:             '/api/users/invite',
-  },
+  // ⚠️ Group USERS (/api/users) ĐÃ XÓA — không tồn tại trong spec.
+  // Account management nằm ở /api/admin/accounts (GH-30) + /api/accounts/me (GH-27).
 
   BATTERIES: {
     LIST:               '/api/batteries',
@@ -596,15 +596,14 @@ export const ENDPOINTS = {
     READINGS_AGGREGATE: (id: string) => `/api/batteries/${id}/readings/aggregate`,
   },
 
+  // ⚠️ Group TICKETS cũ ĐÃ LỖI THỜI (xem C7) — endpoint ticket chính thức tách theo role
+  // ở GH-58 (Staff), GH-59 (Manager), GH-60 (Admin) theo docs/api-ticket.md.
+  // Giữ hợp lệ dưới base /api/tickets chung: DETAIL, ACTIVITIES, COMMENTS, MAINTENANCE_LOGS.
+  // KHÔNG có: LIST/CREATE generic, /{id}/status, /{id}/close, /{id}/close-reject,
+  // ASSIGN/ESCALATE dưới /api/tickets (đúng base: /api/admin/tickets/{id}/assign|escalate).
   TICKETS: {
-    LIST:               '/api/tickets',
-    CREATE:             '/api/tickets',
     DETAIL:             (id: string) => `/api/tickets/${id}`,
-    UPDATE_STATUS:      (id: string) => `/api/tickets/${id}/status`,
-    ASSIGN:             (id: string) => `/api/tickets/${id}/assign`,
-    ESCALATE:           (id: string) => `/api/tickets/${id}/escalate`,
-    CLOSE:              (id: string) => `/api/tickets/${id}/close`,
-    CLOSE_REJECT:       (id: string) => `/api/tickets/${id}/close-reject`,
+    ACTIVITIES:         (id: string) => `/api/tickets/${id}/activities`,
     COMMENTS:           (id: string) => `/api/tickets/${id}/comments`,
     MAINTENANCE_LOGS:   (id: string) => `/api/tickets/${id}/maintenance-logs`,
   },
@@ -717,7 +716,7 @@ export const checkRole = (
 - **Google callback:** BE trả JSON, FE mount `/auth/google/callback` → đọc `?code&state` từ URL → gọi `authService.googleCallback(code, state)` → nhận token từ JSON response (không có token leak trong URL vì token nằm trong response body)
 - **Customer login vào web:** block sớm trong `useLogin onSuccess` — `toast.error('Vui lòng dùng Mobile App')` + `clearTokens()` (không navigate — user ở lại /login)
 - **Google callback lỗi:** không parse error param — `catch` block: `console.error` + `toast.error` + `navigate('/login')`
-- **resetToken hết hạn:** countdown lấy từ `expiresInSeconds` trong response verify-reset-otp (API doc example: 600s = 10 phút), hiển thị ở step 3, hết giờ → toast + reset về step 1
+- **resetToken hết hạn:** countdown lấy từ `expiresInSeconds` trong response verify-reset-otp (API doc: 900s = 15 phút), hiển thị ở step 3, hết giờ → toast + reset về step 1
 - **OtpVerifyPage navigate trực tiếp:** `if (!location.state?.email) → navigate('/register', { replace: true })`
 - **Resend OTP 429:** disable nút + countdown 60s
 - **Multi-tab logout/refresh race:** Known Limitation — document, không fix Sprint 1
@@ -767,6 +766,6 @@ export const checkRole = (
 | # | Câu hỏi | Kết quả |
 |---|---------|---------|
 | Q1 | `refreshToken` TTL? | **7 ngày** — cookie `{ expires: 7 }` |
-| Q2 | `resetToken` TTL (forgot password step 2)? | **Lấy động từ `expiresInSeconds`** trong response POST /verify-reset-otp. API doc JSON example: 600s (10 phút). Không hardcode — render countdown từ giá trị server trả về |
+| Q2 | `resetToken` TTL (forgot password step 2)? | **Lấy động từ `expiresInSeconds`** trong response POST /verify-reset-otp. API doc: 900s (15 phút). Không hardcode — render countdown từ giá trị server trả về |
 | Q3 | Google OAuth callback error param? | **Bỏ qua parse** — `catch` block: `console.error` + `toast.error` |
-| Q4 | Google OAuth callback flow? | **BE trả JSON** — FE mount `/auth/google/callback`, đọc `?code&state` từ URL (Google redirect), gọi `GET /api/auth/google/callback` qua axios → nhận `{ accessToken, refreshToken }` từ JSON response. Confirmed từ Swagger/browser test: BE không redirect FE với token trong URL query param |
+| Q4 | Google OAuth callback flow? | **BE trả JSON** — FE mount `/auth/google/callback`, đọc `?code&state` từ URL (Google redirect), gọi `GET /api/auth/google/callback` qua axios → nhận `data.tokens.{accessToken, refreshToken}` từ JSON response (GH-295 shape, `data.challenge` null). Confirmed từ Swagger/browser test: BE không redirect FE với token trong URL query param |

@@ -7,7 +7,9 @@
 
 ---
 
-## ⚠️ Contract Reconciliation (2026-06-14) — đối chiếu với `docs/api-ticket.md`
+## ⚠️ Contract Reconciliation (2026-06-14, cập nhật 2026-06-15) — đối chiếu với `docs/api-ticket.md` + codebase BE
+
+> **Cập nhật 2026-06-15:** đối chiếu trực tiếp với codebase BE TicketService (sau khi `docs/api-ticket.md` được sửa cho khớp code thực tế). C8 được đính chính (escalationReason nullable, không phải `0`), thêm C9 (resolve required) + C10 (priority nullable).
 
 > Nguồn sự thật: [`docs/api-ticket.md`](../../docs/api-ticket.md). Plan này SHIPPED trước khi spec ticket hoàn chỉnh; bảng `## Enums` bên dưới đã được phác đoán và **bịa nhiều giá trị không tồn tại**. Các điểm dưới đây ưu tiên theo api-ticket.md. Phần thân plan đã được sửa cho khớp; những chỗ cần fix code được đánh dấu.
 
@@ -39,8 +41,16 @@ Spec: `Running, Paused, Met, Breached`. Code `ticket.enum.ts:92-98` thừa `Comp
 ### C7 — 🟢 `ActivityActionEnum` int mapping có gap
 Spec: không có int 21; `AutoClosed=22, ResolvedByEscalatedStaff=23, TriageApproved=24, Closed=25`. Phải có `Closed`. Code `ticket.enum.ts` thừa các alias `Assigned/Reassigned/Paused/Resumed/LogAdded/PriorityChanged` (tên đúng: `StaffAssigned/StaffReassigned/SlaPaused/SlaResumed/MaintenanceLogged/PriorityAssigned`).
 
-### C8 — 🟢 `escalationReason` guard
-Field non-nullable (Swagger trả `0` default). FE phải check `escalatedAt != null` TRƯỚC khi tin `escalationReason`, không chỉ "treat optional".
+### C8 — 🟢 `escalationReason` guard ~~(cập nhật 2026-06-15 — đối chiếu BE thực tế)~~
+~~Field non-nullable (Swagger trả `0` default).~~ **ĐÍNH CHÍNH:** BE thực tế (`TicketDetailDTO.cs:20`) khai `EscalationReasonEnum?` **nullable**, trả `null` (KHÔNG phải `0`) khi chưa escalate. Guard `escalatedAt != null` vẫn an toàn nhưng lý do là vì field optional/null, không phải vì "treat `0`".
+
+### C9 — 🔴 `resolve` body `resolutionSummary` BẮT BUỘC (mới — 2026-06-15)
+Spec/BE (`TicketResolveCommand.cs:27`): `resolutionSummary` **required**, không rỗng/whitespace → BE trả **400** nếu thiếu. Plan cũ (schema dòng 188 + endpoint dòng 246) khai `optional()` — **SAI**.
+Cần fix code: `resolve.schema.ts` → `resolutionSummary: z.string().min(1)`; ResolveDialog không cho submit rỗng.
+> Phụ: BE khi resolve tự đóng mọi maintenance log đang mở (`completedAt=now`); với ticket đã `Escalated` cần Staff đang-assign-sau-escalation, và escalate vì `SkillGap` cần `SkillTier >= 2` (BE trả 403 nếu không đạt).
+
+### C10 — 🔴 `TicketDTO.priority/impactScope/urgencyLevel` NULLABLE (mới — 2026-06-15)
+BE (`TicketDTO.cs:15-17`): cả 3 field là `TicketPriorityEnum?` / `ImpactScopeEnum?` / `UrgencyLevelEnum?` — **null khi ticket chưa triage** (state `New`/`Open`). TicketCard/badge phải guard null trước khi render. (GH-58 chủ yếu hiển thị ticket đã assigned nên ít gặp, nhưng vẫn nên guard.)
 
 ### Trạng thái implement vs plan (đối chiếu code 2026-06-14)
 ✅ Đúng: endpoint paths + methods; `hold`/`resolve`/`escalate-request` body; POST comment & maintenance-log đã khai `TicketActionResponse` (C4 fixed); dùng `z.nativeEnum`; `TicketStatusEnum` có `Approved`.
@@ -184,8 +194,8 @@ interface TicketActionResponse {
 reason: z.nativeEnum(PauseReasonEnum)
 note:   z.string().optional()
 
-// resolve.schema.ts shape
-resolutionSummary: z.string().optional()
+// resolve.schema.ts shape — [FIX 2026-06-15] BE required
+resolutionSummary: z.string().min(1)   // ⚠️ KHÔNG optional — BE trả 400 nếu rỗng
 
 // escalate-request.schema.ts shape
 reason: z.nativeEnum(EscalationReasonEnum)
@@ -243,7 +253,7 @@ STAFF_TICKETS: {
 | POST | `/api/staff/tickets/{id}/start` | `{ logType?: MaintenanceLogTypeEnum, latitude?: number, longitude?: number }` | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/hold` | `{ reason: PauseReasonEnum, note?: string }` | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/resume` | — | `TicketActionResponse` |
-| POST | `/api/staff/tickets/{id}/resolve` | `{ resolutionSummary?: string }` | `TicketActionResponse` |
+| POST | `/api/staff/tickets/{id}/resolve` | `{ resolutionSummary: string }` (**bắt buộc**, không rỗng → 400) | `TicketActionResponse` |
 | POST | `/api/staff/tickets/{id}/escalate-request` | `{ reason: EscalationReasonEnum, note?: string }` | `TicketActionResponse` |
 | POST | `/api/tickets/{id}/comments` | `{ body: string, isInternal?: boolean, attachments?: CommentAttachmentInput[] }` | `TicketActionResponse` (**201**) |
 | POST | `/api/tickets/{id}/maintenance-logs` | `MaintenanceLogRequest` (`summary` bắt buộc) | `TicketActionResponse` (**201**, kèm `MaintenanceLogId`) |
@@ -335,7 +345,8 @@ useEffect(() => {
 - 403 sai trạng thái: `handleErrorApi({ error })` → toast.error với message từ BE
 - 404 ticket: navigate về list + toast.error
 - Action button ẩn khi status không phù hợp (guard trong TicketDetailPage)
-- `escalationReason` trong TicketDetailDTO: **non-nullable** (Swagger trả `0` default). Guard bằng `escalatedAt != null` TRƯỚC khi hiển thị `escalationReason` — không treat như optional thuần
+- `escalationReason` trong TicketDetailDTO: **nullable** (BE trả `null` khi chưa escalate — KHÔNG phải `0`). Guard bằng `escalatedAt != null` TRƯỚC khi hiển thị `escalationReason`
+- `priority`/`impactScope`/`urgencyLevel` của ticket: **nullable** khi chưa triage (`New`/`Open`) — guard null trước khi render badge
 - `isInternal` comment: hiển thị badge "Nội bộ" cho Staff; FE không ẩn (Staff xem được internal)
 - SLA `status === 'Paused'`: SlaCountdown dừng interval, hiển thị "Đang tạm dừng" — không countdown xuống âm
 - SLA `status === 'Breached'`: hiển thị "Đã vi phạm SLA" với màu đỏ, remaining = 0

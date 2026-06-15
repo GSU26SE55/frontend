@@ -212,10 +212,10 @@ export default function AdminTicketDetailPage() {
             </Card>
           )}
 
-          {ticket.attachments && ticket.attachments.length > 0 && (
+          {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
             <Card>
               <CardContent className="pt-6">
-                <TicketAttachments attachments={ticket.attachments} />
+                <TicketAttachments fileIds={ticket.attachmentFileIds} />
               </CardContent>
             </Card>
           )}
