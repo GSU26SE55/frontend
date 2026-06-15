@@ -111,7 +111,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.customerId || ALL}
           onValueChange={(v) =>
-            setFilter("customerId", v === ALL ? undefined : v)
+            setFilter("customerId", v === ALL ? undefined : v ?? undefined)
           }
         >
           <SelectTrigger size="sm" className="w-44">
@@ -130,7 +130,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.batteryTypeId || ALL}
           onValueChange={(v) =>
-            setFilter("batteryTypeId", v === ALL ? undefined : v)
+            setFilter("batteryTypeId", v === ALL ? undefined : v ?? undefined)
           }
         >
           <SelectTrigger size="sm" className="w-40">
@@ -148,7 +148,7 @@ export default function BatteryAssetsPage() {
 
         <Select
           value={filters.siteId || ALL}
-          onValueChange={(v) => setFilter("siteId", v === ALL ? undefined : v)}
+          onValueChange={(v) => setFilter("siteId", v === ALL ? undefined : v ?? undefined)}
         >
           <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Site" />
@@ -165,7 +165,7 @@ export default function BatteryAssetsPage() {
 
         <Select
           value={filters.status || ALL}
-          onValueChange={(v) => setFilter("status", v === ALL ? undefined : v)}
+          onValueChange={(v) => setFilter("status", v === ALL ? undefined : v ?? undefined)}
         >
           <SelectTrigger size="sm" className="w-36">
             <SelectValue placeholder="Trạng thái" />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   MapPin,
@@ -12,7 +12,6 @@ import {
   BellRing,
   ChevronDown,
   LogOut,
-  User,
   Ticket,
   Clock,
   FileText,
@@ -30,7 +29,6 @@ import ThemeToggle from "@/shared/components/common/ThemeToggle";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
-  const navigate = useNavigate();
   const { user } = useSessionStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const { mutate: logout } = useLogout();
