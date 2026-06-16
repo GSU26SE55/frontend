@@ -93,9 +93,7 @@ export default function KbEditorPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() =>
-            navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")
-          }
+          onClick={() => navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")}
         >
           <ArrowLeft className="size-4" />
         </Button>
@@ -117,10 +115,7 @@ export default function KbEditorPage() {
           <CardContent className="grid gap-4">
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">Tiêu đề</label>
-              <Input
-                {...register("title")}
-                placeholder="Hướng dẫn xử lý..."
-              />
+              <Input {...register("title")} placeholder="Hướng dẫn xử lý..." />
               {errors.title && (
                 <p className="text-xs text-destructive">
                   {errors.title.message}

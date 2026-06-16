@@ -166,6 +166,13 @@ export default function SiteDetailPage() {
                 ? String(assetsParams.status)
                 : ASSET_STATUS_ALL
             }
+            items={[
+              { value: ASSET_STATUS_ALL, label: "Mọi trạng thái" },
+              ...Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => ({
+                value,
+                label,
+              })),
+            ]}
             onValueChange={(v) =>
               setAssetsParams((p) => ({
                 ...p,

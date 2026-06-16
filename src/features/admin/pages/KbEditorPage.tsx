@@ -113,10 +113,7 @@ export default function KbEditorPage() {
           <CardContent className="grid gap-4">
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">Tiêu đề</label>
-              <Input
-                {...register("title")}
-                placeholder="Hướng dẫn xử lý..."
-              />
+              <Input {...register("title")} placeholder="Hướng dẫn xử lý..." />
               {errors.title && (
                 <p className="text-xs text-destructive">
                   {errors.title.message}
@@ -201,7 +198,11 @@ export default function KbEditorPage() {
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={creating || updating} className="gap-1.5">
+          <Button
+            type="submit"
+            disabled={creating || updating}
+            className="gap-1.5"
+          >
             <Save className="size-4" />
             {isEdit ? "Lưu thay đổi" : "Tạo bài viết"}
           </Button>

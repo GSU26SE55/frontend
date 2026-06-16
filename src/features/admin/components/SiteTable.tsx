@@ -1,8 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -30,6 +38,8 @@ const STATUS_VARIANT: Record<
 
 interface SiteTableProps {
   data: SiteDto[];
+  pageNumber: number;
+  pageSize: number;
   isLoading?: boolean;
   onEdit: (site: SiteDto) => void;
   onDelete: (site: SiteDto) => void;
@@ -38,6 +48,8 @@ interface SiteTableProps {
 
 export default function SiteTable({
   data,
+  pageNumber,
+  pageSize,
   isLoading,
   onEdit,
   onDelete,
@@ -67,6 +79,7 @@ export default function SiteTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12 text-center">STT</TableHead>
           <TableHead>Tên site</TableHead>
           <TableHead>Khách hàng</TableHead>
           <TableHead>Trạng thái</TableHead>
@@ -76,12 +89,15 @@ export default function SiteTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((site) => (
+        {data.map((site, index) => (
           <TableRow
             key={site.id}
             className="cursor-pointer hover:bg-muted/50"
             onClick={() => navigate(`/admin/sites/${site.id}`)}
           >
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {(pageNumber - 1) * pageSize + index + 1}
+            </TableCell>
             <TableCell className="font-medium">{site.name}</TableCell>
             <TableCell>{site.customerName}</TableCell>
             <TableCell>
@@ -94,37 +110,38 @@ export default function SiteTable({
               {format(new Date(site.installDate), "dd/MM/yyyy")}
             </TableCell>
             <TableCell
-              className="text-right space-x-1"
+              className="text-right"
               onClick={(e) => e.stopPropagation()}
             >
-              {site.status !== SiteStatusEnum.Decommissioned ? (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(site)}
-                  >
-                    Sửa
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-7">
+                    <EllipsisVertical className="size-4" />
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => onDelete(site)}
-                  >
-                    Xoá
-                  </Button>
-                </>
-              ) : (
-                onRestore && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onRestore(site)}
-                  >
-                    Khôi phục
-                  </Button>
-                )
-              )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {site.status !== SiteStatusEnum.Decommissioned ? (
+                    <>
+                      <DropdownMenuItem onClick={() => onEdit(site)}>
+                        Chỉnh sửa
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => onDelete(site)}
+                      >
+                        Xoá
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    onRestore && (
+                      <DropdownMenuItem onClick={() => onRestore(site)}>
+                        Khôi phục
+                      </DropdownMenuItem>
+                    )
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}

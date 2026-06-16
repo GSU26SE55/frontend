@@ -19,6 +19,8 @@ interface Props {
   isLoading: boolean;
   showTriage?: boolean;
   onTriage?: (ticket: TicketDTO) => void;
+  pageNumber?: number;
+  pageSize?: number;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -35,6 +37,8 @@ export default function TicketTable({
   isLoading,
   showTriage,
   onTriage,
+  pageNumber = 1,
+  pageSize = 0,
 }: Props) {
   const navigate = useNavigate();
 
@@ -61,6 +65,7 @@ export default function TicketTable({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12 text-center">STT</TableHead>
             <TableHead>Mã</TableHead>
             <TableHead>Tiêu đề</TableHead>
             <TableHead>Trạng thái</TableHead>
@@ -72,12 +77,15 @@ export default function TicketTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tickets.map((ticket) => (
+          {tickets.map((ticket, index) => (
             <TableRow
               key={ticket.id}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => navigate(`/manager/tickets/${ticket.id}`)}
             >
+              <TableCell className="text-center text-muted-foreground tabular-nums">
+                {(pageNumber - 1) * pageSize + index + 1}
+              </TableCell>
               <TableCell className="font-mono text-xs">{ticket.code}</TableCell>
               <TableCell className="max-w-xs truncate font-medium">
                 {ticket.title}

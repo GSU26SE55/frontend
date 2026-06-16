@@ -9,14 +9,23 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
-import { Eye, ThumbsUp, Pencil, Trash2, Upload, Archive } from "lucide-react";
+import { Eye, ThumbsUp, EllipsisVertical } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
   isLoading?: boolean;
+  pageNumber: number;
+  pageSize: number;
   onPublish?: (article: KbArticleSummaryDTO) => void;
   onArchive?: (article: KbArticleSummaryDTO) => void;
   onDelete?: (article: KbArticleSummaryDTO) => void;
@@ -25,6 +34,8 @@ interface KbArticleTableProps {
 export default function KbArticleTable({
   data,
   isLoading,
+  pageNumber,
+  pageSize,
   onPublish,
   onArchive,
   onDelete,
@@ -53,21 +64,25 @@ export default function KbArticleTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12 text-center">STT</TableHead>
           <TableHead className="w-[100px]">Mã</TableHead>
           <TableHead>Tiêu đề</TableHead>
           <TableHead className="w-[120px]">Trạng thái</TableHead>
           <TableHead className="w-[100px] text-center">Lượt xem</TableHead>
           <TableHead className="w-[100px] text-center">Hữu ích</TableHead>
-          <TableHead className="w-[120px]" />
+          <TableHead className="w-[120px] text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((article) => (
+        {data.map((article, index) => (
           <TableRow
             key={article.id}
             className="cursor-pointer"
             onClick={() => navigate(`/manager/kb/${article.id}`)}
           >
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {(pageNumber - 1) * pageSize + index + 1}
+            </TableCell>
             <TableCell className="font-mono text-xs text-muted-foreground">
               {article.code}
             </TableCell>
@@ -101,52 +116,47 @@ export default function KbArticleTable({
                 <ThumbsUp className="size-3" /> {article.helpfulCount}
               </span>
             </TableCell>
-            <TableCell onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  onClick={() => navigate(`/manager/kb/${article.id}/edit`)}
-                  title="Sửa"
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-                {article.status === KbArticleStatusEnum.Draft && onPublish && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7"
-                    onClick={() => onPublish(article)}
-                    title="Xuất bản"
-                  >
-                    <Upload className="size-3.5" />
+            <TableCell
+              className="text-right"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-7">
+                    <EllipsisVertical className="size-4" />
                   </Button>
-                )}
-                {article.status === KbArticleStatusEnum.Published &&
-                  onArchive && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7"
-                      onClick={() => onArchive(article)}
-                      title="Lưu trữ"
-                    >
-                      <Archive className="size-3.5" />
-                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => navigate(`/manager/kb/${article.id}/edit`)}
+                  >
+                    Chỉnh sửa
+                  </DropdownMenuItem>
+                  {article.status === KbArticleStatusEnum.Draft &&
+                    onPublish && (
+                      <DropdownMenuItem onClick={() => onPublish(article)}>
+                        Xuất bản
+                      </DropdownMenuItem>
+                    )}
+                  {article.status === KbArticleStatusEnum.Published &&
+                    onArchive && (
+                      <DropdownMenuItem onClick={() => onArchive(article)}>
+                        Lưu trữ
+                      </DropdownMenuItem>
+                    )}
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => onDelete(article)}
+                      >
+                        Xóa
+                      </DropdownMenuItem>
+                    </>
                   )}
-                {onDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 text-destructive"
-                    onClick={() => onDelete(article)}
-                    title="Xóa"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                )}
-              </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}

@@ -26,11 +26,37 @@ import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
 // ── Menu ──────────────────────────────────────────────────────────────────────
 const MENU = [
-  { key: "profile",     label: "Hồ sơ cá nhân",      icon: User,       desc: "Thông tin cá nhân và ảnh đại diện" },
-  { key: "credentials", label: "Mật khẩu & Email",    icon: KeyRound,   desc: "Cập nhật mật khẩu và địa chỉ email đăng nhập" },
-  { key: "security",    label: "Bảo mật",              icon: ShieldCheck, desc: "Xác thực 2 lớp, số điện thoại và liên kết bên ngoài" },
-  { key: "history",     label: "Lịch sử đăng nhập",   icon: History,    desc: "Xem các phiên đăng nhập gần đây" },
-  { key: "danger",      label: "Danger Zone",          icon: Trash2,     desc: "Vô hiệu hóa hoặc xóa tài khoản", danger: true },
+  {
+    key: "profile",
+    label: "Hồ sơ cá nhân",
+    icon: User,
+    desc: "Thông tin cá nhân và ảnh đại diện",
+  },
+  {
+    key: "credentials",
+    label: "Mật khẩu & Email",
+    icon: KeyRound,
+    desc: "Cập nhật mật khẩu và địa chỉ email đăng nhập",
+  },
+  {
+    key: "security",
+    label: "Bảo mật",
+    icon: ShieldCheck,
+    desc: "Xác thực 2 lớp, số điện thoại và liên kết bên ngoài",
+  },
+  {
+    key: "history",
+    label: "Lịch sử đăng nhập",
+    icon: History,
+    desc: "Xem các phiên đăng nhập gần đây",
+  },
+  {
+    key: "danger",
+    label: "Danger Zone",
+    icon: Trash2,
+    desc: "Vô hiệu hóa hoặc xóa tài khoản",
+    danger: true,
+  },
 ] as const;
 
 type MenuKey = (typeof MENU)[number]["key"];
@@ -48,7 +74,7 @@ function SecurityRow({
   title: string;
   description: string;
   statusBadge?: React.ReactNode;
-  action?: React.ReactNode;   // compact button — goes top-right inline with title
+  action?: React.ReactNode; // compact button — goes top-right inline with title
   children?: React.ReactNode; // expanded form — goes below description
 }) {
   return (
@@ -73,7 +99,15 @@ function SecurityRow({
   );
 }
 
-function StatusBadge({ ok, labelOk, labelNo }: { ok: boolean; labelOk: string; labelNo: string }) {
+function StatusBadge({
+  ok,
+  labelOk,
+  labelNo,
+}: {
+  ok: boolean;
+  labelOk: string;
+  labelNo: string;
+}) {
   return ok ? (
     <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
       <span className="size-1.5 rounded-full bg-emerald-500" />
@@ -103,7 +137,9 @@ const AccountSettingsPage = () => {
           <Settings className="inline size-3 mr-1 -mt-0.5" />
           Cài đặt
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Cài đặt tài khoản</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Cài đặt tài khoản
+        </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Quản lý thông tin và bảo mật tài khoản của bạn.
         </p>
@@ -119,19 +155,32 @@ const AccountSettingsPage = () => {
             return (
               <button
                 key={item.key}
-                onClick={() => { setActive(item.key); setCredSub(null); }}
+                onClick={() => {
+                  setActive(item.key);
+                  setCredSub(null);
+                }}
                 className={cn(
                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors mb-0.5 cursor-pointer",
                   isActive
                     ? "bg-background text-foreground font-semibold shadow-sm border border-border/50"
                     : "text-foreground/60 hover:bg-background/70 hover:text-foreground",
-                  "danger" in item && item.danger && !isActive && "hover:bg-destructive/10 hover:text-destructive",
-                  "danger" in item && item.danger && isActive && "bg-destructive/10 text-destructive border-destructive/20",
+                  "danger" in item &&
+                    item.danger &&
+                    !isActive &&
+                    "hover:bg-destructive/10 hover:text-destructive",
+                  "danger" in item &&
+                    item.danger &&
+                    isActive &&
+                    "bg-destructive/10 text-destructive border-destructive/20",
                 )}
               >
                 <Icon size={14} className="shrink-0" />
-                <span className="flex-1 text-[13px] truncate">{item.label}</span>
-                {isActive && <ChevronRight size={11} className="shrink-0 opacity-40" />}
+                <span className="flex-1 text-[13px] truncate">
+                  {item.label}
+                </span>
+                {isActive && (
+                  <ChevronRight size={11} className="shrink-0 opacity-40" />
+                )}
               </button>
             );
           })}
@@ -146,28 +195,37 @@ const AccountSettingsPage = () => {
               {/* Panel header */}
               <div className="px-6 pt-5 pb-0">
                 <h2 className="text-base font-semibold">{current.label}</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">{current.desc}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {current.desc}
+                </p>
                 <Separator className="mt-3" />
               </div>
 
               {/* Panel body */}
               <div className="px-6 pb-6 pt-5">
                 {/* Mật khẩu & Email — chọn action rồi hiện form */}
-                {active === "credentials" && (
-                  credSub === null ? (
+                {active === "credentials" &&
+                  (credSub === null ? (
                     <div className="flex flex-col items-center justify-center min-h-[340px] gap-6">
-                      <p className="text-sm text-muted-foreground">Chọn thao tác bạn muốn thực hiện</p>
+                      <p className="text-sm text-muted-foreground">
+                        Chọn thao tác bạn muốn thực hiện
+                      </p>
                       <div className="flex gap-4">
                         <button
                           onClick={() => setCredSub("password")}
                           className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all cursor-pointer group"
                         >
                           <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <Lock size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Lock
+                              size={20}
+                              className="text-muted-foreground group-hover:text-primary transition-colors"
+                            />
                           </div>
                           <div className="text-center space-y-1">
                             <p className="text-sm font-medium">Đổi mật khẩu</p>
-                            <p className="text-xs text-muted-foreground">Cập nhật mật khẩu hiện tại</p>
+                            <p className="text-xs text-muted-foreground">
+                              Cập nhật mật khẩu hiện tại
+                            </p>
                           </div>
                         </button>
                         <button
@@ -175,38 +233,48 @@ const AccountSettingsPage = () => {
                           className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all cursor-pointer group"
                         >
                           <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <KeyRound size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                            <KeyRound
+                              size={20}
+                              className="text-muted-foreground group-hover:text-primary transition-colors"
+                            />
                           </div>
                           <div className="text-center space-y-1">
                             <p className="text-sm font-medium">Đổi email</p>
-                            <p className="text-xs text-muted-foreground">Thay đổi địa chỉ email</p>
+                            <p className="text-xs text-muted-foreground">
+                              Thay đổi địa chỉ email
+                            </p>
                           </div>
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="max-w-sm">
-                      <button
-                        onClick={() => setCredSub(null)}
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
-                      >
-                        <ChevronRight size={12} className="rotate-180" />
-                        Quay lại
-                      </button>
-                      {credSub === "password" ? (
-                        <>
-                          <p className="text-[13px] font-semibold mb-4">Đổi mật khẩu</p>
-                          <ChangePasswordForm bare />
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-[13px] font-semibold mb-4">Đổi địa chỉ email</p>
-                          <ChangeEmailForm bare />
-                        </>
-                      )}
+                    <div className="flex flex-col items-center min-h-85">
+                      <div className="w-full max-w-md">
+                        <button
+                          onClick={() => setCredSub(null)}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
+                        >
+                          <ChevronRight size={12} className="rotate-180" />
+                          Quay lại
+                        </button>
+                        {credSub === "password" ? (
+                          <>
+                            <p className="text-[13px] font-semibold mb-4">
+                              Đổi mật khẩu
+                            </p>
+                            <ChangePasswordForm bare />
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-[13px] font-semibold mb-4">
+                              Đổi địa chỉ email
+                            </p>
+                            <ChangeEmailForm bare />
+                          </>
+                        )}
+                      </div>
                     </div>
-                  )
-                )}
+                  ))}
 
                 {/* Bảo mật */}
                 {active === "security" && (
@@ -216,7 +284,11 @@ const AccountSettingsPage = () => {
                       title="Số điện thoại"
                       description="Xác thực số điện thoại để bảo vệ tài khoản"
                       statusBadge={
-                        <StatusBadge ok={!!account?.phoneConfirmed} labelOk="Đã xác thực" labelNo="Chưa xác thực" />
+                        <StatusBadge
+                          ok={!!account?.phoneConfirmed}
+                          labelOk="Đã xác thực"
+                          labelNo="Chưa xác thực"
+                        />
                       }
                     >
                       <PhoneVerifySection bare />
@@ -227,9 +299,18 @@ const AccountSettingsPage = () => {
                       title="Xác thực 2 lớp (2FA)"
                       description="Thêm lớp bảo mật bằng ứng dụng xác thực"
                       statusBadge={
-                        <StatusBadge ok={!!account?.twoFactorEnabled} labelOk="Đang bật" labelNo="Chưa bật" />
+                        <StatusBadge
+                          ok={!!account?.twoFactorEnabled}
+                          labelOk="Đang bật"
+                          labelNo="Chưa bật"
+                        />
                       }
-                      action={<TwoFactorSetup isEnabled={account?.twoFactorEnabled ?? false} bare />}
+                      action={
+                        <TwoFactorSetup
+                          isEnabled={account?.twoFactorEnabled ?? false}
+                          bare
+                        />
+                      }
                     />
 
                     <SecurityRow

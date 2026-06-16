@@ -3,13 +3,8 @@ import {
   Shield,
   Plus,
   Lock,
-  CheckCircle,
-  MoreHorizontal,
+  EllipsisVertical,
   Loader2,
-  Edit2,
-  ToggleLeft,
-  Key,
-  Trash2,
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -113,12 +115,6 @@ export default function RolesPage() {
     });
   }, [roles, keyword, roleType]);
 
-  const activeCount = roles.filter(
-    (role) => role.status === RoleStatusEnum.Active,
-  ).length;
-  const systemCount = roles.filter((role) => role.isSystemRole).length;
-  const customCount = Math.max(roles.length - systemCount, 0);
-
   const close = () => setDialog({ type: "none" });
 
   const handleDelete = (role: RoleDto) => {
@@ -149,93 +145,53 @@ export default function RolesPage() {
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Tổng role</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {isLoading ? "--" : roles.length}
-              </p>
-            </div>
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Shield className="size-4" />
-            </span>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Đang hoạt động</p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {isLoading ? "--" : activeCount}
-              </p>
-            </div>
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <CheckCircle className="size-4" />
-            </span>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Mặc định / Tùy chỉnh
-              </p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {isLoading ? "--" : `${systemCount}/${customCount}`}
-              </p>
-            </div>
-            <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <Lock className="size-4" />
-            </span>
-          </div>
-        </Card>
-      </div>
-
-      <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold tracking-tight">
-              Danh sách role
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Gán quyền, đổi trạng thái và quản lý role hệ thống.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                placeholder="Tìm role..."
-                className="pl-8"
-              />
-            </div>
-            <div className="hidden rounded-lg border border-border bg-muted p-0.5 sm:flex">
-              {[
-                { value: RoleTypeFilter.All, label: "Tất cả" },
-                { value: RoleTypeFilter.System, label: "Mặc định" },
-                { value: RoleTypeFilter.Custom, label: "Tùy chỉnh" },
-              ].map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setRoleType(item.value)}
-                  className={`h-7 rounded-md px-2.5 text-xs font-medium transition-colors ${
-                    roleType === item.value
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Tìm theo tên role..."
+            className="pl-8"
+          />
         </div>
 
+        <Select
+          value={roleType}
+          items={[
+            { value: RoleTypeFilter.All, label: "Tất cả" },
+            { value: RoleTypeFilter.System, label: "Mặc định" },
+            { value: RoleTypeFilter.Custom, label: "Tùy chỉnh" },
+          ]}
+          onValueChange={(v) =>
+            setRoleType((v as RoleTypeFilter) ?? RoleTypeFilter.All)
+          }
+        >
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue placeholder="Loại role" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={RoleTypeFilter.All}>Tất cả</SelectItem>
+            <SelectItem value={RoleTypeFilter.System}>Mặc định</SelectItem>
+            <SelectItem value={RoleTypeFilter.Custom}>Tùy chỉnh</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {(keyword || roleType !== RoleTypeFilter.All) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setKeyword("");
+              setRoleType(RoleTypeFilter.All);
+            }}
+          >
+            Xóa bộ lọc
+          </Button>
+        )}
+      </div>
+
+      <Card className="gap-0 py-0 overflow-hidden">
         {isLoading ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -251,6 +207,7 @@ export default function RolesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Nguồn</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -259,7 +216,7 @@ export default function RolesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRoles.map((role) => {
+              {filteredRoles.map((role, index) => {
                 const s = STATUS_VARIANT[role.status] ?? {
                   label: String(role.status),
                   variant: "outline" as const,
@@ -267,6 +224,9 @@ export default function RolesPage() {
 
                 return (
                   <TableRow key={role.id}>
+                    <TableCell className="text-center text-muted-foreground tabular-nums">
+                      {index + 1}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -299,25 +259,30 @@ export default function RolesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer">
-                          <MoreHorizontal className="size-4" />
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                          >
+                            <EllipsisVertical className="size-4" />
+                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "edit", role })}
                           >
-                            <Edit2 className="mr-2 size-4" /> Chỉnh sửa
+                            Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "status", role })}
                           >
-                            <ToggleLeft className="mr-2 size-4" /> Đổi trạng
-                            thái
+                            Đổi trạng thái
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "perms", role })}
                           >
-                            <Key className="mr-2 size-4" /> Quản lý quyền
+                            Quản lý quyền
                           </DropdownMenuItem>
                           {!role.isSystemRole && (
                             <>
@@ -328,7 +293,7 @@ export default function RolesPage() {
                                   setDialog({ type: "delete", role })
                                 }
                               >
-                                <Trash2 className="mr-2 size-4" /> Xóa role
+                                Xóa role
                               </DropdownMenuItem>
                             </>
                           )}

@@ -7,8 +7,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   BatteryStatusEnum,
   type BatteryAssetDto,
@@ -34,12 +42,16 @@ const statusVariant: Record<
 
 interface BatteryAssetTableProps {
   items: BatteryAssetDto[];
+  pageNumber: number;
+  pageSize: number;
   includeDeleted?: boolean;
   onEdit: (item: BatteryAssetDto) => void;
 }
 
 export default function BatteryAssetTable({
   items,
+  pageNumber,
+  pageSize,
   includeDeleted,
   onEdit,
 }: BatteryAssetTableProps) {
@@ -51,22 +63,26 @@ export default function BatteryAssetTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12 text-center">STT</TableHead>
           <TableHead>Serial Number</TableHead>
           <TableHead>Loại pin</TableHead>
           <TableHead>Khách hàng</TableHead>
           <TableHead>Site</TableHead>
           <TableHead>Trạng thái</TableHead>
           <TableHead>Ngày lắp</TableHead>
-          <TableHead className="text-right">Hành động</TableHead>
+          <TableHead className="text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {items.map((item) => (
+        {items.map((item, index) => (
           <TableRow
             key={item.id}
             className="cursor-pointer hover:bg-muted/50"
             onClick={() => navigate(`/admin/battery-assets/${item.id}`)}
           >
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {(pageNumber - 1) * pageSize + index + 1}
+            </TableCell>
             <TableCell className="font-mono text-sm">
               {item.serialNumber}
             </TableCell>
@@ -83,50 +99,50 @@ export default function BatteryAssetTable({
               className="text-right"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-end gap-1">
-                {!includeDeleted && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onEdit(item)}
-                    >
-                      Sửa
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-7">
+                    <EllipsisVertical className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {includeDeleted ? (
+                    <DropdownMenuItem
                       onClick={() =>
-                        deleteAsset(item.id, {
-                          onSuccess: () => toast.success("Đã xóa"),
+                        restoreAsset(item.id, {
+                          onSuccess: () => toast.success("Đã khôi phục"),
                         })
                       }
                     >
-                      Xóa
-                    </Button>
-                  </>
-                )}
-                {includeDeleted && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      restoreAsset(item.id, {
-                        onSuccess: () => toast.success("Đã khôi phục"),
-                      })
-                    }
-                  >
-                    Khôi phục
-                  </Button>
-                )}
-              </div>
+                      Khôi phục
+                    </DropdownMenuItem>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => onEdit(item)}>
+                        Chỉnh sửa
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() =>
+                          deleteAsset(item.id, {
+                            onSuccess: () => toast.success("Đã xóa"),
+                          })
+                        }
+                      >
+                        Xóa
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}
         {items.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={7}
+              colSpan={8}
               className="text-center text-muted-foreground py-8"
             >
               Không có dữ liệu

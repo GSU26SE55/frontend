@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
-import { ArrowLeft, Pencil, Upload, Archive, Eye, ThumbsUp } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Upload,
+  Archive,
+  Eye,
+  ThumbsUp,
+} from "lucide-react";
 import {
   useManagerKbDetail,
   useManagerPublishKbArticle,

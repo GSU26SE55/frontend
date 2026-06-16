@@ -25,6 +25,7 @@ import BatteryTypeFormDialog from "@/features/admin/components/BatteryTypeFormDi
 import ThresholdConfigDialog from "@/features/admin/components/ThresholdConfigDialog";
 import type { BatteryTypeDto } from "@/features/admin/types/battery-type.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/common/DataPagination";
 
 const DEFAULTS = {
@@ -42,6 +43,9 @@ type ConfirmState =
 export default function BatteryTypesPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState<BatteryTypeDto | null>(null);
   const [thresholdTarget, setThresholdTarget] = useState<BatteryTypeDto | null>(
@@ -98,8 +102,8 @@ export default function BatteryTypesPage() {
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Tìm theo tên loại pin..."
-            value={filters.keyword}
-            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            value={search.value}
+            onChange={search.onChange}
             className="pl-8"
           />
         </div>
@@ -136,6 +140,8 @@ export default function BatteryTypesPage() {
         ) : (
           <BatteryTypeTable
             data={items}
+            pageNumber={filters.pageNumber}
+            pageSize={filters.pageSize}
             showRestore={!!filters.includeDeleted}
             onEdit={handleEdit}
             onDelete={(item) => setConfirmState({ type: "delete", item })}

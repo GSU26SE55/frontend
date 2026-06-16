@@ -7,6 +7,7 @@ import { useSiteList } from "@/features/manager/hooks/useSites";
 import SiteTable from "@/features/manager/components/SiteTable";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 
 const DEFAULTS = {
   keyword: "",
@@ -17,6 +18,9 @@ const DEFAULTS = {
 export default function ManagerSiteListPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
 
   const { data, isLoading } = useSiteList({
     pageNumber: filters.pageNumber,
@@ -28,16 +32,19 @@ export default function ManagerSiteListPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Manager &middot; Tài sản
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Danh sách Site
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isLoading ? "..." : totalItems} site.
-        </p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Manager &middot; Tài sản
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Danh sách Site
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : totalItems} site &mdash; quản lý site khách
+            hàng
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -45,8 +52,8 @@ export default function ManagerSiteListPage() {
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Tìm theo tên site..."
-            value={filters.keyword}
-            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            value={search.value}
+            onChange={search.onChange}
             className="pl-8"
           />
         </div>
@@ -70,7 +77,11 @@ export default function ManagerSiteListPage() {
             <span className="text-sm">Chưa có site nào.</span>
           </div>
         ) : (
-          <SiteTable data={items} />
+          <SiteTable
+            data={items}
+            pageNumber={filters.pageNumber}
+            pageSize={filters.pageSize}
+          />
         )}
       </Card>
 

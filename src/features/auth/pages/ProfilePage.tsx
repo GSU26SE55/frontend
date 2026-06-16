@@ -44,25 +44,43 @@ const ROLE_LABEL: Record<string, string> = {
 
 const STATUS_CONFIG: Record<
   number,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
 > = {
-  [AccountStatusEnum.PendingVerification]: { label: "Chờ xác thực", variant: "outline" },
-  [AccountStatusEnum.Active]:              { label: "Hoạt động",     variant: "default" },
-  [AccountStatusEnum.Locked]:             { label: "Bị khóa",        variant: "destructive" },
-  [AccountStatusEnum.Inactive]:           { label: "Không hoạt động", variant: "secondary" },
-  [AccountStatusEnum.Suspended]:          { label: "Tạm đình chỉ",   variant: "destructive" },
-  [AccountStatusEnum.Banned]:             { label: "Bị cấm",         variant: "destructive" },
+  [AccountStatusEnum.PendingVerification]: {
+    label: "Chờ xác thực",
+    variant: "outline",
+  },
+  [AccountStatusEnum.Active]: { label: "Hoạt động", variant: "default" },
+  [AccountStatusEnum.Locked]: { label: "Bị khóa", variant: "destructive" },
+  [AccountStatusEnum.Inactive]: {
+    label: "Không hoạt động",
+    variant: "secondary",
+  },
+  [AccountStatusEnum.Suspended]: {
+    label: "Tạm đình chỉ",
+    variant: "destructive",
+  },
+  [AccountStatusEnum.Banned]: { label: "Bị cấm", variant: "destructive" },
 };
 
-const TIER_LABEL: Record<number, string> = { 1: "Tier 1 — Junior", 2: "Tier 2 — Senior", 3: "Tier 3 — Expert" };
+const TIER_LABEL: Record<number, string> = {
+  1: "Tier 1 — Junior",
+  2: "Tier 2 — Senior",
+  3: "Tier 3 — Expert",
+};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const ProfilePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: account, isLoading } = useProfile();
-  const { mutateAsync: updateProfile, isPending: isUpdating } = useUpdateProfile();
+  const { mutateAsync: updateProfile, isPending: isUpdating } =
+    useUpdateProfile();
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
-  const { mutate: updateAvatar, isPending: isAvatarUpdating } = useUpdateAvatar();
+  const { mutate: updateAvatar, isPending: isAvatarUpdating } =
+    useUpdateAvatar();
 
   const avatarFileId = account?.profile?.avatarFileId;
   const { data: avatarUrl } = useFileBlobUrl(avatarFileId);
@@ -76,26 +94,32 @@ const ProfilePage = () => {
     resolver: zodResolver(profileSchema),
     values: account
       ? {
-          fullName:    account.fullName ?? "",
+          fullName: account.fullName ?? "",
           phoneNumber: account.phoneNumber ?? "",
-          address:     account.address ?? "",
-          birthDate:   account.dateOfBirth ? account.dateOfBirth.slice(0, 10) : "",
-          timeZone:    account.profile?.timeZone ?? "",
+          address: account.address ?? "",
+          birthDate: account.dateOfBirth
+            ? account.dateOfBirth.slice(0, 10)
+            : "",
+          timeZone: account.profile?.timeZone ?? "",
         }
       : undefined,
   });
 
   const initials = (account?.fullName ?? "?")
-    .split(" ").slice(-2).map((n) => n[0] ?? "").join("").toUpperCase();
+    .split(" ")
+    .slice(-2)
+    .map((n) => n[0] ?? "")
+    .join("")
+    .toUpperCase();
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
       await updateProfile({
-        fullName:    data.fullName,
+        fullName: data.fullName,
         phoneNumber: data.phoneNumber || undefined,
-        address:     data.address     || undefined,
-        birthDate:   data.birthDate   || undefined,
-        timeZone:    data.timeZone    || undefined,
+        address: data.address || undefined,
+        birthDate: data.birthDate || undefined,
+        timeZone: data.timeZone || undefined,
       });
       toast.success("Cập nhật hồ sơ thành công");
     } catch (error) {
@@ -110,12 +134,16 @@ const ProfilePage = () => {
       { file, purpose: FilePurposeEnum.Avatar },
       {
         onSuccess: (res) => {
-          if (!res.isSuccess || !res.data) { toast.error("Tải ảnh thất bại"); return; }
+          if (!res.isSuccess || !res.data) {
+            toast.error("Tải ảnh thất bại");
+            return;
+          }
           updateAvatar(
             { avatarFileId: res.data.fileId },
             {
-              onSuccess: () => toast.success("Cập nhật ảnh đại diện thành công"),
-              onError:   (err) => handleErrorApi({ error: err }),
+              onSuccess: () =>
+                toast.success("Cập nhật ảnh đại diện thành công"),
+              onError: (err) => handleErrorApi({ error: err }),
             },
           );
         },
@@ -126,7 +154,12 @@ const ProfilePage = () => {
   };
 
   const isAvatarBusy = isUploading || isAvatarUpdating;
-  const statusCfg = account ? (STATUS_CONFIG[account.status] ?? { label: String(account.status), variant: "outline" as const }) : null;
+  const statusCfg = account
+    ? (STATUS_CONFIG[account.status] ?? {
+        label: String(account.status),
+        variant: "outline" as const,
+      })
+    : null;
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -135,7 +168,9 @@ const ProfilePage = () => {
         <Skeleton className="h-28 w-full rounded-xl" />
         <Skeleton className="h-4 w-32" />
         <div className="grid sm:grid-cols-2 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-9 rounded-lg" />)}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 rounded-lg" />
+          ))}
         </div>
       </div>
     );
@@ -154,17 +189,23 @@ const ProfilePage = () => {
           aria-label="Thay đổi ảnh đại diện"
         >
           <Avatar className="size-[72px] text-2xl ring-2 ring-background shadow-sm">
-            {avatarUrl && <AvatarImage src={avatarUrl} alt={account?.fullName ?? "Avatar"} />}
+            {avatarUrl && (
+              <AvatarImage
+                src={avatarUrl}
+                alt={account?.fullName ?? "Avatar"}
+              />
+            )}
             <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
               {initials}
             </AvatarFallback>
           </Avatar>
           {/* Hover overlay — nét đứt + icon camera giữa */}
           <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            {isAvatarBusy
-              ? <Loader2 size={20} className="text-white animate-spin" />
-              : <Camera size={20} className="text-white" />
-            }
+            {isAvatarBusy ? (
+              <Loader2 size={20} className="text-white animate-spin" />
+            ) : (
+              <Camera size={20} className="text-white" />
+            )}
           </div>
           <input
             ref={fileInputRef}
@@ -178,14 +219,19 @@ const ProfilePage = () => {
         {/* Name + meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="text-lg font-semibold truncate">{account?.fullName || "—"}</h3>
+            <h3 className="text-lg font-semibold truncate">
+              {account?.fullName || "—"}
+            </h3>
             {account?.role && (
               <Badge variant="secondary" className="text-[11px] font-medium">
                 {ROLE_LABEL[account.role] ?? account.role}
               </Badge>
             )}
             {statusCfg && (
-              <Badge variant={statusCfg.variant} className="text-[11px] font-medium">
+              <Badge
+                variant={statusCfg.variant}
+                className="text-[11px] font-medium"
+              >
                 {statusCfg.label}
               </Badge>
             )}
@@ -194,13 +240,17 @@ const ProfilePage = () => {
             <span className="flex items-center gap-1">
               <Mail size={11} />
               {account?.email}
-              {account?.emailConfirmed && <BadgeCheck size={11} className="text-emerald-500" />}
+              {account?.emailConfirmed && (
+                <BadgeCheck size={11} className="text-emerald-500" />
+              )}
             </span>
             {account?.phoneNumber && (
               <span className="flex items-center gap-1">
                 <Phone size={11} />
                 {account.phoneNumber}
-                {account.phoneConfirmed && <BadgeCheck size={11} className="text-emerald-500" />}
+                {account.phoneConfirmed && (
+                  <BadgeCheck size={11} className="text-emerald-500" />
+                )}
               </span>
             )}
             {account?.createdAt && (
@@ -212,7 +262,8 @@ const ProfilePage = () => {
             {account?.lastLoginAt && (
               <span className="flex items-center gap-1">
                 <Clock size={11} />
-                Đăng nhập lần cuối {format(new Date(account.lastLoginAt), "dd/MM/yyyy HH:mm")}
+                Đăng nhập lần cuối{" "}
+                {format(new Date(account.lastLoginAt), "dd/MM/yyyy HH:mm")}
               </span>
             )}
             {account?.twoFactorEnabled && (
@@ -227,7 +278,9 @@ const ProfilePage = () => {
         {/* ID */}
         {account?.id && (
           <div className="shrink-0 hidden lg:block text-right">
-            <p className="text-[10px] text-muted-foreground mb-0.5">ID tài khoản</p>
+            <p className="text-[10px] text-muted-foreground mb-0.5">
+              ID tài khoản
+            </p>
             <p className="font-mono text-xs text-muted-foreground select-all">
               {account.id.slice(0, 8).toUpperCase()}…
             </p>
@@ -245,22 +298,42 @@ const ProfilePage = () => {
         <div className="grid gap-4 sm:grid-cols-2">
           {/* Họ và tên — full width */}
           <div className="sm:col-span-2 space-y-1.5">
-            <Label className="text-xs">Họ và tên <span className="text-destructive">*</span></Label>
+            <Label className="text-xs">
+              Họ và tên <span className="text-destructive">*</span>
+            </Label>
             <Input {...register("fullName")} className="h-9" />
-            {errors.fullName && <p className="text-xs text-destructive">{errors.fullName.message}</p>}
+            {errors.fullName && (
+              <p className="text-xs text-destructive">
+                {errors.fullName.message}
+              </p>
+            )}
           </div>
 
           {/* Email — readonly */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Email (chỉ đọc)</Label>
-            <Input value={account?.email ?? ""} disabled className="h-9 bg-muted/50 cursor-not-allowed" />
+            <Label className="text-xs text-muted-foreground">
+              Email (chỉ đọc)
+            </Label>
+            <Input
+              value={account?.email ?? ""}
+              disabled
+              className="h-9 bg-muted/50 cursor-not-allowed"
+            />
           </div>
 
           {/* Số điện thoại */}
           <div className="space-y-1.5">
             <Label className="text-xs">Số điện thoại</Label>
-            <Input {...register("phoneNumber")} className="h-9" placeholder="0912 345 678" />
-            {errors.phoneNumber && <p className="text-xs text-destructive">{errors.phoneNumber.message}</p>}
+            <Input
+              {...register("phoneNumber")}
+              className="h-9"
+              placeholder="0912 345 678"
+            />
+            {errors.phoneNumber && (
+              <p className="text-xs text-destructive">
+                {errors.phoneNumber.message}
+              </p>
+            )}
           </div>
 
           {/* Ngày sinh */}
@@ -272,13 +345,21 @@ const ProfilePage = () => {
           {/* Múi giờ */}
           <div className="space-y-1.5">
             <Label className="text-xs">Múi giờ</Label>
-            <Input {...register("timeZone")} className="h-9" placeholder="Asia/Ho_Chi_Minh" />
+            <Input
+              {...register("timeZone")}
+              className="h-9"
+              placeholder="Asia/Ho_Chi_Minh"
+            />
           </div>
 
           {/* Địa chỉ — full width */}
           <div className="sm:col-span-2 space-y-1.5">
             <Label className="text-xs">Địa chỉ</Label>
-            <Input {...register("address")} className="h-9" placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố" />
+            <Input
+              {...register("address")}
+              className="h-9"
+              placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
+            />
           </div>
         </div>
 
@@ -296,27 +377,46 @@ const ProfilePage = () => {
               {account.staffProfile.employeeCode && (
                 <div className="space-y-0.5">
                   <p className="text-xs text-muted-foreground">Mã nhân viên</p>
-                  <p className="font-mono font-medium">{account.staffProfile.employeeCode}</p>
+                  <p className="font-mono font-medium">
+                    {account.staffProfile.employeeCode}
+                  </p>
                 </div>
               )}
               {account.staffProfile.department && (
                 <div className="space-y-0.5">
                   <p className="text-xs text-muted-foreground">Phòng ban</p>
-                  <p className="font-medium">{account.staffProfile.department}</p>
+                  <p className="font-medium">
+                    {account.staffProfile.department}
+                  </p>
                 </div>
               )}
               <div className="space-y-0.5">
                 <p className="text-xs text-muted-foreground">Cấp bậc kỹ năng</p>
-                <p className="font-medium">{TIER_LABEL[account.staffProfile.skillTier] ?? `Tier ${account.staffProfile.skillTier}`}</p>
+                <p className="font-medium">
+                  {TIER_LABEL[account.staffProfile.skillTier] ??
+                    `Tier ${account.staffProfile.skillTier}`}
+                </p>
               </div>
               <div className="space-y-0.5">
-                <p className="text-xs text-muted-foreground">Ticket đồng thời tối đa</p>
-                <p className="font-medium">{account.staffProfile.maxConcurrentTickets}</p>
+                <p className="text-xs text-muted-foreground">
+                  Ticket đồng thời tối đa
+                </p>
+                <p className="font-medium">
+                  {account.staffProfile.maxConcurrentTickets}
+                </p>
               </div>
               <div className="space-y-0.5">
                 <p className="text-xs text-muted-foreground">Trạng thái</p>
-                <p className={account.staffProfile.isAvailable ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
-                  {account.staffProfile.isAvailable ? "Sẵn sàng" : "Không sẵn sàng"}
+                <p
+                  className={
+                    account.staffProfile.isAvailable
+                      ? "text-emerald-600 font-medium"
+                      : "text-muted-foreground"
+                  }
+                >
+                  {account.staffProfile.isAvailable
+                    ? "Sẵn sàng"
+                    : "Không sẵn sàng"}
                 </p>
               </div>
             </div>

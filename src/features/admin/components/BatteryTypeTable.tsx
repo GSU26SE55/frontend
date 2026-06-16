@@ -1,3 +1,4 @@
+import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,6 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   BatteryChemistryEnum,
   type BatteryTypeDto,
@@ -23,6 +31,8 @@ const CHEMISTRY_LABEL: Record<BatteryChemistryEnum, string> = {
 
 interface BatteryTypeTableProps {
   data: BatteryTypeDto[];
+  pageNumber: number;
+  pageSize: number;
   showRestore?: boolean;
   onEdit: (type: BatteryTypeDto) => void;
   onDelete: (type: BatteryTypeDto) => void;
@@ -32,6 +42,8 @@ interface BatteryTypeTableProps {
 
 export default function BatteryTypeTable({
   data,
+  pageNumber,
+  pageSize,
   showRestore,
   onEdit,
   onDelete,
@@ -42,6 +54,7 @@ export default function BatteryTypeTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12 text-center">STT</TableHead>
           <TableHead>Tên model</TableHead>
           <TableHead>Nhà sản xuất</TableHead>
           <TableHead>Hóa học</TableHead>
@@ -52,8 +65,11 @@ export default function BatteryTypeTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((type) => (
+        {data.map((type, index) => (
           <TableRow key={type.id}>
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {(pageNumber - 1) * pageSize + index + 1}
+            </TableCell>
             <TableCell className="font-medium">{type.name}</TableCell>
             <TableCell>{type.manufacturer ?? "—"}</TableCell>
             <TableCell>
@@ -70,34 +86,37 @@ export default function BatteryTypeTable({
             <TableCell className="text-right tabular-nums">
               {type.maxCycleCount}
             </TableCell>
-            <TableCell className="text-right space-x-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onConfigThreshold(type)}
-              >
-                Ngưỡng
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => onEdit(type)}>
-                Sửa
-              </Button>
-              {showRestore ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onRestore(type)}
-                >
-                  Khôi phục
-                </Button>
-              ) : (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onDelete(type)}
-                >
-                  Xoá
-                </Button>
-              )}
+            <TableCell className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-7">
+                    <EllipsisVertical className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {showRestore ? (
+                    <DropdownMenuItem onClick={() => onRestore(type)}>
+                      Khôi phục
+                    </DropdownMenuItem>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => onConfigThreshold(type)}>
+                        Cấu hình ngưỡng
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(type)}>
+                        Chỉnh sửa
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => onDelete(type)}
+                      >
+                        Xoá
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}

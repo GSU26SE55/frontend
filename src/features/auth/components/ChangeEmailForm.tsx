@@ -33,8 +33,10 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
     resolver: zodResolver(confirmOtpSchema),
   });
 
-  const { mutateAsync: changeEmail, isPending: isSendingEmail } = useChangeEmail();
-  const { mutateAsync: confirmChange, isPending: isConfirming } = useConfirmEmailChange();
+  const { mutateAsync: changeEmail, isPending: isSendingEmail } =
+    useChangeEmail();
+  const { mutateAsync: confirmChange, isPending: isConfirming } =
+    useConfirmEmailChange();
 
   const onEmailSubmit = async (data: ChangeEmailFormValues) => {
     try {
@@ -55,68 +57,94 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
     }
   };
 
-  const content = step === 1 ? (
-    <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-3">
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Email mới</Label>
-        <Input
-          type="email"
-          className="h-8 text-sm"
-          {...emailForm.register("newEmail")}
-        />
-        {emailForm.formState.errors.newEmail && (
-          <p className="text-xs text-destructive">
-            {emailForm.formState.errors.newEmail.message}
+  const content =
+    step === 1 ? (
+      <form
+        onSubmit={emailForm.handleSubmit(onEmailSubmit)}
+        className="space-y-3"
+      >
+        <div className="max-w-sm space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Email mới</Label>
+            <Input
+              type="email"
+              className="h-8 text-sm"
+              {...emailForm.register("newEmail")}
+            />
+            {emailForm.formState.errors.newEmail && (
+              <p className="text-xs text-destructive">
+                {emailForm.formState.errors.newEmail.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">
+              Mật khẩu hiện tại
+            </Label>
+            <Input
+              type="password"
+              className="h-8 text-sm"
+              {...emailForm.register("currentPassword")}
+            />
+            {emailForm.formState.errors.currentPassword && (
+              <p className="text-xs text-destructive">
+                {emailForm.formState.errors.currentPassword.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isSendingEmail}
+            className="mt-1"
+          >
+            {isSendingEmail && (
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            )}
+            Gửi OTP xác nhận
+          </Button>
+        </div>
+      </form>
+    ) : (
+      <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-3">
+        <div className="max-w-sm space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Nhập mã OTP đã gửi đến email mới của bạn.
           </p>
-        )}
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Mật khẩu hiện tại</Label>
-        <Input
-          type="password"
-          className="h-8 text-sm"
-          {...emailForm.register("currentPassword")}
-        />
-        {emailForm.formState.errors.currentPassword && (
-          <p className="text-xs text-destructive">
-            {emailForm.formState.errors.currentPassword.message}
-          </p>
-        )}
-      </div>
-      <Button type="submit" size="sm" disabled={isSendingEmail} className="mt-1">
-        {isSendingEmail && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-        Gửi OTP xác nhận
-      </Button>
-    </form>
-  ) : (
-    <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Nhập mã OTP đã gửi đến email mới của bạn.
-      </p>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Mã OTP</Label>
-        <Input
-          maxLength={6}
-          className="h-8 text-sm tracking-widest"
-          {...otpForm.register("otp")}
-        />
-        {otpForm.formState.errors.otp && (
-          <p className="text-xs text-destructive">
-            {otpForm.formState.errors.otp.message}
-          </p>
-        )}
-      </div>
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={() => setStep(1)}>
-          Quay lại
-        </Button>
-        <Button type="submit" size="sm" disabled={isConfirming}>
-          {isConfirming && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-          Xác nhận
-        </Button>
-      </div>
-    </form>
-  );
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mã OTP</Label>
+            <Input
+              maxLength={6}
+              className="h-8 text-sm tracking-widest"
+              {...otpForm.register("otp")}
+            />
+            {otpForm.formState.errors.otp && (
+              <p className="text-xs text-destructive">
+                {otpForm.formState.errors.otp.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setStep(1)}
+          >
+            Quay lại
+          </Button>
+          <Button type="submit" size="sm" disabled={isConfirming}>
+            {isConfirming && (
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            )}
+            Xác nhận
+          </Button>
+        </div>
+      </form>
+    );
 
   if (bare) return content;
 

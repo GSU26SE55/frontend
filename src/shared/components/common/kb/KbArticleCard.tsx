@@ -16,7 +16,11 @@ export function KbArticleCard({
 }: KbArticleCardProps) {
   return (
     <Card
-      className={onClick ? "cursor-pointer hover:border-primary/50 transition-colors" : ""}
+      className={
+        onClick
+          ? "cursor-pointer hover:border-primary/50 transition-colors"
+          : ""
+      }
       onClick={onClick}
     >
       <CardContent className="flex items-start justify-between gap-3 p-4">

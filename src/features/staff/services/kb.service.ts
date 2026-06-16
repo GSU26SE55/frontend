@@ -22,14 +22,26 @@ export const staffKbService = {
   getList: (params?: KbArticleListParams) => {
     let items = MOCK_KB_ARTICLES.map(
       ({ id, code, title, category, status, tags, viewCount, helpfulCount }) =>
-        ({ id, code, title, category, status, tags, viewCount, helpfulCount }) as KbArticleSummaryDTO,
+        ({
+          id,
+          code,
+          title,
+          category,
+          status,
+          tags,
+          viewCount,
+          helpfulCount,
+        }) as KbArticleSummaryDTO,
     );
 
-    if (params?.status !== undefined) items = items.filter((a) => a.status === params.status);
+    if (params?.status !== undefined)
+      items = items.filter((a) => a.status === params.status);
     if (params?.keyword) {
       const kw = params.keyword.toLowerCase();
       items = items.filter(
-        (a) => a.title.toLowerCase().includes(kw) || a.code.toLowerCase().includes(kw),
+        (a) =>
+          a.title.toLowerCase().includes(kw) ||
+          a.code.toLowerCase().includes(kw),
       );
     }
 

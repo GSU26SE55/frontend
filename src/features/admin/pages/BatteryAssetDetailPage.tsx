@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Battery, Pencil, ArrowRightLeft, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Battery,
+  Pencil,
+  ArrowRightLeft,
+  Trash2,
+} from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
@@ -64,19 +70,14 @@ const CHARGING_LABELS: Record<ChargingStateEnum, string> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const fmtDate = (s: string) => format(new Date(s), "dd/MM/yyyy", { locale: vi });
+const fmtDate = (s: string) =>
+  format(new Date(s), "dd/MM/yyyy", { locale: vi });
 const fmtNum = (v: number | null | undefined, dec = 1) =>
   v != null ? v.toFixed(dec) : "—";
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 py-2">
       <span className="text-xs text-muted-foreground shrink-0">{label}</span>
@@ -104,9 +105,7 @@ function StatTile({
         <span className="text-2xl font-bold tabular-nums tracking-tight">
           {value}
         </span>
-        {unit && (
-          <span className="text-xs font-medium opacity-60">{unit}</span>
-        )}
+        {unit && <span className="text-xs font-medium opacity-60">{unit}</span>}
       </div>
       <span className="text-[11px] opacity-60">{label}</span>
     </div>
@@ -215,9 +214,7 @@ export default function BatteryAssetDetailPage() {
                   statusCfg.badge,
                 )}
               >
-                <span
-                  className={cn("size-1.5 rounded-full", statusCfg.dot)}
-                />
+                <span className={cn("size-1.5 rounded-full", statusCfg.dot)} />
                 {statusCfg.label}
               </span>
               {rt && rt.activeAlerts > 0 && (
@@ -233,11 +230,7 @@ export default function BatteryAssetDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEditOpen(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil size={13} /> Sửa
           </Button>
           <Button
@@ -260,10 +253,8 @@ export default function BatteryAssetDetailPage() {
       {/* ── Main panel ──────────────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 px-6 pb-6">
         <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
-
           {/* Left sidebar */}
           <div className="w-[260px] shrink-0 border-r border-border flex flex-col overflow-y-auto">
-
             {/* Info */}
             <div className="px-4 pt-4 pb-3">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -424,9 +415,8 @@ export default function BatteryAssetDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa battery asset?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc muốn xóa{" "}
-              <strong>{asset.serialNumber}</strong>? Hành động này không thể
-              hoàn tác.
+              Bạn có chắc muốn xóa <strong>{asset.serialNumber}</strong>? Hành
+              động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

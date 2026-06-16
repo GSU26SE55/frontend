@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AnimatePresence, motion } from "framer-motion";
-import { Thermometer, Droplets, Sun, Settings2, X } from "lucide-react";
+import { Thermometer, Droplets, Sun, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -120,11 +126,7 @@ export default function AmbientConfigView({
           <div className="flex items-center gap-3 pt-1">
             <div className="flex items-center gap-2">
               <Label className="text-sm whitespace-nowrap">Site</Label>
-              <SiteSelect
-                sites={sites}
-                value={siteId}
-                onChange={setSiteId}
-              />
+              <SiteSelect sites={sites} value={siteId} onChange={setSiteId} />
             </div>
             <Button
               variant="outline"
@@ -141,9 +143,6 @@ export default function AmbientConfigView({
       {!siteId ? (
         /* ── Empty state — selector centered on page ───────────────────── */
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6 pb-16">
-          <div className="size-14 rounded-2xl bg-muted flex items-center justify-center">
-            <Thermometer className="size-6 text-muted-foreground/40" />
-          </div>
           <div>
             <p className="text-sm font-medium">Chọn site để bắt đầu</p>
             <p className="text-xs text-muted-foreground mt-1.5 max-w-[260px]">
@@ -238,7 +237,7 @@ function MetricItem({
   );
 }
 
-// ── Threshold panel (Framer Motion drawer) ─────────────────────────────────────
+// ── Threshold panel (Drawer) ───────────────────────────────────────────────────
 
 function ThresholdPanel({
   siteId,
@@ -250,54 +249,21 @@ function ThresholdPanel({
   onClose: () => void;
 }) {
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            key="backdrop"
-            className="fixed inset-0 z-50 bg-black/20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-          <motion.div
-            key="panel"
-            className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover shadow-2xl ring-1 ring-border sm:max-w-[480px]"
-            initial={{ x: "100%", opacity: 0.5 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 340,
-              damping: 32,
-              mass: 0.9,
-            }}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-              <div>
-                <h2 className="text-base font-semibold">Ngưỡng cảnh báo</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Cấu hình ngưỡng giám sát môi trường site
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onClose}
-                className="shrink-0"
-              >
-                <X size={16} />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-6 py-5">
-              <ThresholdFormBody siteId={siteId} onSaved={onClose} />
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    <Drawer open={open} onOpenChange={(v) => !v && onClose()} direction="right">
+      <DrawerContent className="sm:max-w-120">
+        <DrawerHeader className="border-b border-border">
+          <DrawerTitle className="text-base font-semibold">
+            Ngưỡng cảnh báo
+          </DrawerTitle>
+          <DrawerDescription className="text-xs">
+            Cấu hình ngưỡng giám sát môi trường site
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <ThresholdFormBody siteId={siteId} onSaved={onClose} />
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
@@ -513,6 +479,7 @@ function HistoryTable({ siteId }: { siteId: string }) {
         ) : (
           <Table className="table-fixed">
             <colgroup>
+              <col className="w-12" />
               <col className="w-[28%]" />
               <col className="w-[18%]" />
               <col className="w-[18%]" />
@@ -521,6 +488,7 @@ function HistoryTable({ siteId }: { siteId: string }) {
             </colgroup>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Thời điểm</TableHead>
                 <TableHead>Nhiệt độ</TableHead>
                 <TableHead>Độ ẩm</TableHead>
@@ -529,8 +497,11 @@ function HistoryTable({ siteId }: { siteId: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((r) => (
+              {items.map((r, index) => (
                 <TableRow key={r.time}>
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(pageNumber - 1) * pageSize + index + 1}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground tabular-nums">
                     {formatDateTime(r.time)}
                   </TableCell>

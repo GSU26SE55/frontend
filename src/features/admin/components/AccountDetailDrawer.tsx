@@ -223,6 +223,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                 <table className="w-full text-[12px] border-collapse">
                   <thead>
                     <tr className="border-b border-border text-left text-[10.5px] text-muted-foreground uppercase tracking-wider">
+                      <th className="py-2 pr-3">STT</th>
                       <th className="py-2 pr-3">Kết quả</th>
                       <th className="py-2 pr-3">IP</th>
                       <th className="py-2 pr-3">Phương thức</th>
@@ -230,7 +231,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((h) => {
+                    {history.map((h, index) => {
                       const ok = LOGIN_RESULT_OK.includes(
                         h.result as typeof LoginAttemptResult.Success,
                       );
@@ -239,6 +240,9 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                           key={h.id}
                           className="border-b border-border/60 hover:bg-muted/20"
                         >
+                          <td className="py-2 pr-3 text-muted-foreground">
+                            {index + 1}
+                          </td>
                           <td className="py-2 pr-3">
                             <span
                               className={`font-medium ${ok ? "text-emerald-600" : "text-red-500"}`}

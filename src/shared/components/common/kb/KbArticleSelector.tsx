@@ -37,17 +37,14 @@ export function KbArticleSelector({
     const kw = keyword.toLowerCase();
     return published.filter(
       (a) =>
-        a.title.toLowerCase().includes(kw) ||
-        a.code.toLowerCase().includes(kw),
+        a.title.toLowerCase().includes(kw) || a.code.toLowerCase().includes(kw),
     );
   }, [keyword]);
 
   const toggle = useCallback(
     (id: string) => {
       onChange(
-        value.includes(id)
-          ? value.filter((v) => v !== id)
-          : [...value, id],
+        value.includes(id) ? value.filter((v) => v !== id) : [...value, id],
       );
     },
     [value, onChange],
@@ -96,8 +93,8 @@ export function KbArticleSelector({
             />
           }
         >
-            <BookOpen className="size-3.5" />
-            Chọn bài KB
+          <BookOpen className="size-3.5" />
+          Chọn bài KB
         </DialogTrigger>
         <DialogContent className="max-w-md">
           <DialogHeader>

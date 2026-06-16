@@ -88,6 +88,10 @@ export default function TicketKbReferencesPanel({
 
             <Select
               value={refType}
+              items={Object.entries(KbReferenceTypeLabel).map(([k, label]) => ({
+                value: k,
+                label,
+              }))}
               onValueChange={(value: string | null) => {
                 if (value) setRefType(value);
               }}

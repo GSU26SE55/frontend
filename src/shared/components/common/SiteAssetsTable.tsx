@@ -72,6 +72,7 @@ export default function SiteAssetsTable({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12 text-center">STT</TableHead>
             <TableHead>Số seri</TableHead>
             <TableHead>Loại pin</TableHead>
             <TableHead>Trạng thái</TableHead>
@@ -80,8 +81,11 @@ export default function SiteAssetsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((asset) => (
+          {data.map((asset, index) => (
             <TableRow key={asset.id}>
+              <TableCell className="text-center text-muted-foreground tabular-nums">
+                {(pageNumber - 1) * pageSize + index + 1}
+              </TableCell>
               <TableCell className="font-mono text-sm">
                 {asset.serialNumber}
               </TableCell>

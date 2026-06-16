@@ -34,7 +34,11 @@ function PasswordInput({
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <div className="relative">
-        <Input type={show ? "text" : "password"} className="pr-9 h-8 text-sm" {...rest} />
+        <Input
+          type={show ? "text" : "password"}
+          className="pr-9 h-8 text-sm"
+          {...rest}
+        />
         <button
           type="button"
           className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -77,31 +81,35 @@ const ChangePasswordForm = ({ bare }: ChangePasswordFormProps = {}) => {
 
   const form = (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      <PasswordInput
-        label="Mật khẩu hiện tại"
-        show={showCurrent}
-        onToggle={() => setShowCurrent(!showCurrent)}
-        error={errors.currentPassword?.message}
-        {...register("currentPassword")}
-      />
-      <PasswordInput
-        label="Mật khẩu mới"
-        show={showNew}
-        onToggle={() => setShowNew(!showNew)}
-        error={errors.newPassword?.message}
-        {...register("newPassword")}
-      />
-      <PasswordInput
-        label="Xác nhận mật khẩu mới"
-        show={showConfirm}
-        onToggle={() => setShowConfirm(!showConfirm)}
-        error={errors.confirmPassword?.message}
-        {...register("confirmPassword")}
-      />
-      <Button type="submit" size="sm" disabled={isPending} className="mt-1">
-        {isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-        Cập nhật mật khẩu
-      </Button>
+      <div className="max-w-sm space-y-3">
+        <PasswordInput
+          label="Mật khẩu hiện tại"
+          show={showCurrent}
+          onToggle={() => setShowCurrent(!showCurrent)}
+          error={errors.currentPassword?.message}
+          {...register("currentPassword")}
+        />
+        <PasswordInput
+          label="Mật khẩu mới"
+          show={showNew}
+          onToggle={() => setShowNew(!showNew)}
+          error={errors.newPassword?.message}
+          {...register("newPassword")}
+        />
+        <PasswordInput
+          label="Xác nhận mật khẩu mới"
+          show={showConfirm}
+          onToggle={() => setShowConfirm(!showConfirm)}
+          error={errors.confirmPassword?.message}
+          {...register("confirmPassword")}
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button type="submit" size="sm" disabled={isPending} className="mt-1">
+          {isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+          Cập nhật mật khẩu
+        </Button>
+      </div>
     </form>
   );
 
