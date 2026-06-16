@@ -30,7 +30,7 @@ interface DataPaginationProps {
 }
 
 function buildPageRange(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
 
   const pages: (number | "…")[] = [1];
   const start = Math.max(2, current - 1);
