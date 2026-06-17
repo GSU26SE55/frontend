@@ -38,8 +38,9 @@ import {
   PieChart,
   Label,
 } from "recharts";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import {
-  RefreshCw,
   Download,
   CheckCircle,
   AlertCircle,
@@ -132,9 +133,7 @@ export default function ManagerDashboardPage() {
           </h1>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm">
-            <RefreshCw className="size-3.5" /> Đồng bộ
-          </Button>
+          <RefreshButton queryKeys={[KEY.sites]} label="Đồng bộ" />
           <Button variant="outline" size="sm">
             <Download className="size-3.5" /> Xuất báo cáo
           </Button>

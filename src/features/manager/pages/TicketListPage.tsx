@@ -16,6 +16,8 @@ import {
 } from "@/shared/types/ticket.types";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_LABELS: Record<string, string> = {
   New: "Mới",
@@ -72,13 +74,16 @@ export default function TicketListPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           Manager &middot; Ticket
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           Quản lý ticket
         </h1>
+        </div>
+        <RefreshButton queryKeys={[KEY.manager.tickets]} />
       </div>
 
       <div className="flex flex-wrap gap-2 items-end">

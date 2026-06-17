@@ -57,6 +57,8 @@ import ChangeRoleStatusDialog from "@/features/admin/components/ChangeRoleStatus
 import PermissionsDialog from "@/features/admin/components/PermissionsDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/admin.types";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_VARIANT: Record<
   number,
@@ -144,9 +146,12 @@ export default function RolesPage() {
             hệ thống.
           </p>
         </div>
-        <Button size="sm" onClick={() => setDialog({ type: "create" })}>
-          <Plus className="size-3.5" /> Tạo role
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.admin.roles]} />
+          <Button size="sm" onClick={() => setDialog({ type: "create" })}>
+            <Plus className="size-3.5" /> Tạo role
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">

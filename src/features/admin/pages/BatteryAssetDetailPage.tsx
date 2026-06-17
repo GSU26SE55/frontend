@@ -30,6 +30,8 @@ import {
   BatteryStatusEnum,
   ChargingStateEnum,
 } from "@/features/admin/types/battery-asset.types";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -233,6 +235,7 @@ export default function BatteryAssetDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <RefreshButton queryKeys={[KEY.batteryAssets]} size="icon" />
           <Button
             variant="outline"
             size="sm"

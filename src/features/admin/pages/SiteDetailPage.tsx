@@ -35,6 +35,8 @@ import {
 import { SiteStatusEnum } from "@/shared/types/site.types";
 import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
 import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
@@ -120,6 +122,7 @@ export default function SiteDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <RefreshButton queryKeys={[KEY.sites]} size="icon" />
             {isDecommissioned ? (
               <>
                 <Badge variant="destructive">Da ngung</Badge>

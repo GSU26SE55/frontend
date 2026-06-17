@@ -9,6 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, RotateCcw } from "lucide-react";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import {
   useManagerKbList,
@@ -65,10 +67,13 @@ export default function KbListPage() {
             Knowledge Base
           </h1>
         </div>
-        <Button onClick={() => navigate("/manager/kb/new")} className="gap-1.5">
-          <Plus className="size-4" />
-          Tạo bài viết
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.kb]} />
+          <Button onClick={() => navigate("/manager/kb/new")} className="gap-1.5">
+            <Plus className="size-4" />
+            Tạo bài viết
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 items-end">

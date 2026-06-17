@@ -26,6 +26,8 @@ import ThresholdConfigDialog from "@/features/admin/components/ThresholdConfigDi
 import type { BatteryTypeDto } from "@/features/admin/types/battery-type.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const DEFAULTS = {
   keyword: "",
@@ -88,9 +90,12 @@ export default function BatteryTypesPage() {
             {isLoading ? "..." : totalItems} loại pin.
           </p>
         </div>
-        <Button size="sm" onClick={handleCreate}>
-          <Plus className="size-3.5" /> Tạo loại pin
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.batteryTypes]} />
+          <Button size="sm" onClick={handleCreate}>
+            <Plus className="size-3.5" /> Tạo loại pin
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

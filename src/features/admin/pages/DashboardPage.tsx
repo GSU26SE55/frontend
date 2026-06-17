@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/chart";
 import { useSiteList } from "@/features/admin/hooks/useSites";
 import { SiteStatusEnum } from "@/shared/types/site.types";
-import { RefreshCw, Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { TrendDir } from "@/shared/enums/common.enum";
 
@@ -189,9 +191,7 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
-            <RefreshCw size={14} /> Đồng bộ
-          </button>
+          <RefreshButton queryKeys={[KEY.sites]} label="Đồng bộ" />
           <button
             className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             onClick={() => navigate("/admin/battery-assets")}

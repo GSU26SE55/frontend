@@ -1,31 +1,27 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
-import { ArrowLeft, Pencil, Upload, Archive, Eye, ThumbsUp } from "lucide-react";
+import { Upload, Archive } from "lucide-react";
 import {
   useManagerKbDetail,
   useManagerPublishKbArticle,
   useManagerArchiveKbArticle,
+  useManagerUpdateKbArticle,
 } from "../hooks/useManagerKb";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
+import {
+  KbArticleDetail,
+  KbArticleDetailSkeleton,
+} from "@/shared/components/common/kb/KbArticleDetail";
+import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: article, isLoading } = useManagerKbDetail(id!);
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
+  const { mutateAsync: update, isPending: updating } = useManagerUpdateKbArticle();
 
-  if (isLoading) {
-    return (
-      <div className="p-6 space-y-4 max-w-4xl mx-auto">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-[400px] w-full" />
-      </div>
-    );
-  }
+  if (isLoading) return <KbArticleDetailSkeleton />;
 
   if (!article) {
     return (
@@ -36,126 +32,47 @@ export default function KbDetailPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/manager/kb")}
-        >
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Manager &middot; Knowledge Base &middot; {article.code}
-          </p>
-          <h1 className="text-xl font-semibold tracking-tight truncate">
-            {article.title}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <KbStatusBadge status={article.status} />
+    <KbArticleDetail
+      article={article}
+      backUrl="/manager/kb"
+      breadcrumb="Manager · Knowledge Base"
+      actions={
+        <>
           {article.status === KbArticleStatusEnum.Draft && (
             <Button
               size="sm"
               variant="outline"
-              className="gap-1"
+              className="gap-1.5"
               onClick={() => publish(article.id)}
             >
-              <Upload className="size-3.5" /> Xuất bản
+              <Upload className="size-3.5" />
+              Xuất bản
             </Button>
           )}
           {article.status === KbArticleStatusEnum.Published && (
             <Button
               size="sm"
               variant="outline"
-              className="gap-1"
+              className="gap-1.5"
               onClick={() => archive(article.id)}
             >
-              <Archive className="size-3.5" /> Lưu trữ
+              <Archive className="size-3.5" />
+              Lưu trữ
             </Button>
           )}
-          <Button
-            size="sm"
-            className="gap-1"
-            onClick={() => navigate(`/manager/kb/${article.id}/edit`)}
-          >
-            <Pencil className="size-3.5" /> Chỉnh sửa
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <Eye className="size-3.5" /> {article.viewCount} lượt xem
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <ThumbsUp className="size-3.5" /> {article.helpfulCount} hữu ích
-        </span>
-        <span>Phiên bản {article.version}</span>
-        {article.createdByFullName && (
-          <span>Tạo bởi {article.createdByFullName}</span>
-        )}
-      </div>
-
-      {article.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {article.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        </>
+      }
+      renderEditor={({ onClose }) => (
+        <KbEditorPanel
+          article={article}
+          onClose={onClose}
+          isPending={updating}
+          onSave={async (payload) => {
+            await update({ id: article.id, payload });
+            onClose();
+          }}
+        />
       )}
-
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Triệu chứng</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap">{article.symptoms}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Bước chẩn đoán</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap">
-              {article.diagnosisSteps}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Hướng giải quyết</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap">
-              {article.solutionSteps}
-            </p>
-          </CardContent>
-        </Card>
-
-        {article.recommendedParts && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Linh kiện khuyến nghị</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">
-                {article.recommendedParts}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
+    />
   );
 }
