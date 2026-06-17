@@ -282,10 +282,10 @@ changeDescription: z.string().optional()   // chỉ form Update
 - [x] Bước 5: 3 hooks (list/detail/versions/compare/create/update/copyTemplate; admin+manager thêm approve/reject/publish/archive/rollback; staff không workflow). Bỏ useDeleteKbArticle. — 2026-06-17
 - [x] Bước 6: schemas (admin/manager/staff) — category nativeEnum, recommendedParts/tags array, isInternalOnly, changeDescription. — 2026-06-17
 - [x] Bước 7: shared components — KbStatusBadge(+PendingReview), KbEditorPanel (category string/recommendedParts array/isInternalOnly/changeDescription), KbArticleDetail (KbCategoryLabel/recommendedParts array/bỏ createdByFullName), KbArticleTable ×2 (bỏ tags); mới: KbVersionHistory, KbDiffViewer, KbReviewActions. — 2026-06-17
-- [ ] Bước 8: pages (KbList filter PendingReview, KbDetail workflow/version, KbEditor) + staff editor page + route.
-- [ ] Bước 8b: ticket-kb-refs — `ticket-kb.service` list/add/remove thật + `useTicketKbRefs` (3 hook trỏ API thật) + `TicketKbReferencesPanel` (referenceType string); `endpoints` `KB_REFERENCES`. **Cần BE branch merged.**
-- [ ] Bước 9: xóa **hoàn toàn** `kb.mock.ts`; grep sạch import mock (cả ticket-kb).
-- [ ] Bước 10: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS.
+- [x] Bước 8: pages admin/manager/staff (KbList filter status/q, KbDetail review/version dialog/diff/rollback, KbEditor select+array+isInternalOnly+changeDescription) + Staff KbEditorPage + route staff/kb/new,/edit + KbVersionDialog. — 2026-06-17
+- [x] Bước 8b: ticket-kb-refs — service list/add/remove thật + 3 hook (unwrap r.data.data) + panel (referenceType string, options từ KbList) ×2; KbArticleSelector nhận `options` prop. — 2026-06-17
+- [x] Bước 9: xóa hoàn toàn `kb.mock.ts`; grep sạch import mock (KbArticleSelector/Table/Card cũng đã gỡ tags). — 2026-06-17
+- [x] Bước 10: `tsc --noEmit` 0 lỗi + `eslint` KB files 0 issue + `npm run build` PASS. — 2026-06-17
 
 ---
 

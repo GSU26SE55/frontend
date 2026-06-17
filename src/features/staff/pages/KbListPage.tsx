@@ -1,7 +1,8 @@
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -9,7 +10,6 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { useStaffKbList } from "../hooks/useStaffKb";
 import KbArticleTable from "../components/KbArticleTable";
 import DataPagination from "@/shared/components/common/DataPagination";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
 
 const PAGE_SIZE = 10;
 
@@ -20,6 +20,7 @@ const DEFAULTS = {
 };
 
 export default function KbListPage() {
+  const navigate = useNavigate();
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
@@ -27,8 +28,7 @@ export default function KbListPage() {
   );
 
   const params = {
-    keyword: filters.keyword || undefined,
-    status: KbArticleStatusEnum.Published,
+    q: filters.keyword || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
@@ -50,7 +50,12 @@ export default function KbListPage() {
             cứu hướng dẫn xử lý
           </p>
         </div>
-        <RefreshButton queryKeys={[KEY.kb]} />
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.kb]} />
+          <Button size="sm" onClick={() => navigate("/staff/kb/new")}>
+            <Plus className="size-3.5" /> Tạo bài viết
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

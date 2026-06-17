@@ -1,13 +1,32 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useStaffKbDetail } from "../hooks/useStaffKb";
+import { Button } from "@/components/ui/button";
+import { History } from "lucide-react";
+import {
+  useStaffKbDetail,
+  useStaffKbUpdate,
+  useStaffKbVersions,
+  useStaffKbCompare,
+} from "../hooks/useStaffKb";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
 } from "@/shared/components/common/kb/KbArticleDetail";
+import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
+import { KbVersionDialog } from "@/shared/components/common/kb/KbVersionDialog";
+import type { KbCompareParams } from "@/shared/types/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: article, isLoading } = useStaffKbDetail(id!);
+  const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
+
+  const [verOpen, setVerOpen] = useState(false);
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
+    null,
+  );
+  const { data: versions } = useStaffKbVersions(verOpen ? id! : "");
+  const { data: diff } = useStaffKbCompare(id!, compareParams);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
@@ -20,10 +39,44 @@ export default function KbDetailPage() {
   }
 
   return (
-    <KbArticleDetail
-      article={article}
-      backUrl="/staff/kb"
-      breadcrumb="Staff · Knowledge Base"
-    />
+    <>
+      <KbArticleDetail
+        article={article}
+        backUrl="/staff/kb"
+        breadcrumb="Staff · Knowledge Base"
+        actions={
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setVerOpen(true)}
+          >
+            <History className="size-3.5" />
+            Phiên bản
+          </Button>
+        }
+        renderEditor={({ onClose }) => (
+          <KbEditorPanel
+            article={article}
+            onClose={onClose}
+            isPending={updating}
+            onSave={async (payload) => {
+              await update({ id: article.id, payload });
+              onClose();
+            }}
+          />
+        )}
+      />
+
+      <KbVersionDialog
+        open={verOpen}
+        onOpenChange={setVerOpen}
+        versions={versions ?? []}
+        diff={diff}
+        onCompare={(fromVersionId, toVersionId) =>
+          setCompareParams({ fromVersionId, toVersionId })
+        }
+      />
+    </>
   );
 }

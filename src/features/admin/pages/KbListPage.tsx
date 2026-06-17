@@ -18,7 +18,6 @@ import {
   useAdminKbList,
   usePublishKbArticle,
   useArchiveKbArticle,
-  useDeleteKbArticle,
 } from "../hooks/useAdminKb";
 import KbArticleTable from "../components/KbArticleTable";
 import DataPagination from "@/shared/components/common/DataPagination";
@@ -26,13 +25,10 @@ import {
   KbArticleStatusEnum,
   KbArticleStatusLabel,
 } from "@/shared/enums/kb.enum";
-import type { KbArticleStatusEnum as KbStatus } from "@/shared/enums/kb.enum";
 
 const PAGE_SIZE = 10;
 
-const STATUS_OPTIONS = Object.values(KbArticleStatusEnum).filter(
-  (v): v is KbStatus => typeof v === "number",
-);
+const STATUS_OPTIONS = Object.values(KbArticleStatusEnum);
 
 const DEFAULTS = {
   keyword: "",
@@ -50,8 +46,8 @@ export default function KbListPage() {
   );
 
   const params = {
-    keyword: filters.keyword || undefined,
-    status: filters.status ? (Number(filters.status) as KbStatus) : undefined,
+    q: filters.keyword || undefined,
+    status: (filters.status as KbArticleStatusEnum) || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
@@ -59,7 +55,6 @@ export default function KbListPage() {
   const { data, isLoading } = useAdminKbList(params);
   const { mutate: publish } = usePublishKbArticle();
   const { mutate: archive } = useArchiveKbArticle();
-  const { mutate: deleteArticle } = useDeleteKbArticle();
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
@@ -100,7 +95,7 @@ export default function KbListPage() {
           items={[
             { value: null, label: "Tất cả trạng thái" },
             ...STATUS_OPTIONS.map((s) => ({
-              value: String(s),
+              value: s,
               label: KbArticleStatusLabel[s],
             })),
           ]}
@@ -114,7 +109,7 @@ export default function KbListPage() {
           <SelectContent alignItemWithTrigger={false}>
             <SelectItem value={null}>Tất cả trạng thái</SelectItem>
             {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={String(s)}>
+              <SelectItem key={s} value={s}>
                 {KbArticleStatusLabel[s]}
               </SelectItem>
             ))}
@@ -136,7 +131,6 @@ export default function KbListPage() {
           pageSize={data?.pageSize ?? 10}
           onPublish={(a) => publish(a.id)}
           onArchive={(a) => archive(a.id)}
-          onDelete={(a) => deleteArticle(a.id)}
         />
       </Card>
 

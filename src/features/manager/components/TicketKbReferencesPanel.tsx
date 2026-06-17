@@ -17,9 +17,11 @@ import {
   useAddTicketKbRef,
   useRemoveTicketKbRef,
 } from "../hooks/useTicketKbRefs";
+import { useManagerKbList } from "../hooks/useManagerKb";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
+  KbArticleStatusEnum,
 } from "@/shared/enums/kb.enum";
 import { KbArticleSelector } from "@/shared/components/common/kb/KbArticleSelector";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb.enum";
@@ -35,6 +37,10 @@ export default function TicketKbReferencesPanel({
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
+  const { data: kbList } = useManagerKbList({
+    status: KbArticleStatusEnum.Published,
+    pageSize: 100,
+  });
 
   const [showAdd, setShowAdd] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -47,7 +53,7 @@ export default function TicketKbReferencesPanel({
     for (const kbArticleId of selectedIds) {
       addRef({
         kbArticleId,
-        referenceType: Number(refType) as RefType,
+        referenceType: refType as RefType,
         note: note || undefined,
       });
     }
@@ -84,7 +90,11 @@ export default function TicketKbReferencesPanel({
       {showAdd && (
         <Card>
           <CardContent className="p-4 space-y-3">
-            <KbArticleSelector value={selectedIds} onChange={setSelectedIds} />
+            <KbArticleSelector
+              value={selectedIds}
+              onChange={setSelectedIds}
+              options={kbList?.items ?? []}
+            />
 
             <Select
               value={refType}
