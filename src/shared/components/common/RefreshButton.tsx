@@ -27,8 +27,8 @@ export function RefreshButton({
       queryKeys.map((key) =>
         queryClient.invalidateQueries({
           queryKey: Array.isArray(key) ? key : [key],
-        })
-      )
+        }),
+      ),
     );
     setTimeout(() => setSpinning(false), 600);
   };
@@ -42,7 +42,11 @@ export function RefreshButton({
       className={cn(className)}
     >
       <RefreshCw className={cn("h-4 w-4", spinning && "animate-spin")} />
-      {size !== "icon" && size !== "icon-sm" && size !== "icon-xs" && size !== "icon-lg" && label}
+      {size !== "icon" &&
+        size !== "icon-sm" &&
+        size !== "icon-xs" &&
+        size !== "icon-lg" &&
+        label}
     </Button>
   );
 }

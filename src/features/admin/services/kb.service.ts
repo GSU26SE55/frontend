@@ -29,14 +29,26 @@ export const adminKbService = {
   getList: (params?: KbArticleListParams) => {
     let items = mockArticles.map(
       ({ id, code, title, category, status, tags, viewCount, helpfulCount }) =>
-        ({ id, code, title, category, status, tags, viewCount, helpfulCount }) as KbArticleSummaryDTO,
+        ({
+          id,
+          code,
+          title,
+          category,
+          status,
+          tags,
+          viewCount,
+          helpfulCount,
+        }) as KbArticleSummaryDTO,
     );
 
-    if (params?.status !== undefined) items = items.filter((a) => a.status === params.status);
+    if (params?.status !== undefined)
+      items = items.filter((a) => a.status === params.status);
     if (params?.keyword) {
       const kw = params.keyword.toLowerCase();
       items = items.filter(
-        (a) => a.title.toLowerCase().includes(kw) || a.code.toLowerCase().includes(kw),
+        (a) =>
+          a.title.toLowerCase().includes(kw) ||
+          a.code.toLowerCase().includes(kw),
       );
     }
 
@@ -94,7 +106,7 @@ export const adminKbService = {
         updatedAt: new Date().toISOString(),
       };
     }
-    return delay(ok(mockArticles[idx] ?? null as unknown as KbArticleDTO));
+    return delay(ok(mockArticles[idx] ?? (null as unknown as KbArticleDTO)));
   },
 
   delete: (id: string) => {

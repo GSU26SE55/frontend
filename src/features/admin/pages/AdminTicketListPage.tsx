@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,6 +21,7 @@ import type {
 import { useAdminTickets } from "../hooks/useAdminTickets";
 import AdminTicketTable from "../components/AdminTicketTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
@@ -73,6 +75,9 @@ const DEFAULTS = {
 export default function AdminTicketListPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
 
   const params = {
     keyword: filters.keyword || undefined,
@@ -93,20 +98,27 @@ export default function AdminTicketListPage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Admin &middot; Ticket
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Quản lý Ticket</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Danh sách ticket
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
+            dõi toàn bộ ticket hệ thống
+          </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.tickets]} />
       </div>
 
-      <div className="flex flex-wrap gap-3 items-end">
-        <Input
-          placeholder="Tìm theo mã hoặc tiêu đề..."
-          value={filters.keyword ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setFilter("keyword", e.target.value || undefined)
-          }
-          className="w-64"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo mã hoặc tiêu đề..."
+            value={search.value}
+            onChange={search.onChange}
+            className="pl-8"
+          />
+        </div>
 
         <Select
           value={filters.status || null}
@@ -118,7 +130,7 @@ export default function AdminTicketListPage() {
             setFilter("status", v || undefined)
           }
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger size="sm" className="w-44">
             <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -141,7 +153,7 @@ export default function AdminTicketListPage() {
             setFilter("priority", v || undefined)
           }
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger size="sm" className="w-36">
             <SelectValue placeholder="Tất cả priority" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -164,7 +176,7 @@ export default function AdminTicketListPage() {
             setFilter("category", v || undefined)
           }
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Tất cả loại" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -178,7 +190,7 @@ export default function AdminTicketListPage() {
         </Select>
 
         {hasActiveFilter && (
-          <Button variant="ghost" onClick={resetFilters}>
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
           </Button>
         )}

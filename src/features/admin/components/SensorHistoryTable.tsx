@@ -39,6 +39,7 @@ export default function SensorHistoryTable({
     <>
       <Table className="table-fixed">
         <colgroup>
+          <col className="w-[6%]" />
           <col className="w-[20%]" />
           <col className="w-[10%]" />
           <col className="w-[18%]" />
@@ -47,6 +48,7 @@ export default function SensorHistoryTable({
         </colgroup>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12 text-center">STT</TableHead>
             <TableHead>Thời điểm</TableHead>
             <TableHead className="text-right">Điện áp (V)</TableHead>
             <TableHead className="text-right">Dòng (A)</TableHead>
@@ -55,8 +57,11 @@ export default function SensorHistoryTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r) => (
+          {rows.map((r, index) => (
             <TableRow key={r.time}>
+              <TableCell className="text-center text-muted-foreground tabular-nums">
+                {index + 1}
+              </TableCell>
               <TableCell className="tabular-nums">
                 {new Date(r.time).toLocaleString("vi-VN")}
               </TableCell>

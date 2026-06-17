@@ -1,22 +1,24 @@
 import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Search,
   Mail,
   Plus,
-  MoreHorizontal,
+  EllipsisVertical,
   Users,
-  Edit2,
-  Shield,
-  ShieldOff,
-  KeyRound,
-  Trash2,
-  MonitorSmartphone,
-  UserCog,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -111,6 +113,9 @@ export default function AccountsPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
 
   const { data, isLoading } = useAdminAccountList({
     pageNumber: filters.pageNumber,
@@ -182,37 +187,26 @@ export default function AccountsPage() {
         </div>
       </div>
 
+      {/* Filter bar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo tên, email..."
+            value={search.value}
+            onChange={search.onChange}
+            className="pl-8"
+          />
+        </div>
+        {hasActiveFilter && (
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
+      </div>
+
       {/* Table */}
       <Card className="gap-0 py-0 overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold tracking-tight">
-              Danh sách tài khoản
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Quản lý hồ sơ, role, trạng thái và phiên đăng nhập.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Tên, email..."
-                value={filters.keyword}
-                onChange={(e) =>
-                  setFilter("keyword", e.target.value || undefined)
-                }
-                className="pl-8"
-              />
-            </div>
-            {hasActiveFilter && (
-              <Button size="sm" variant="ghost" onClick={resetFilters}>
-                Xóa bộ lọc
-              </Button>
-            )}
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -225,23 +219,19 @@ export default function AccountsPage() {
             <span className="text-sm">Chưa có tài khoản nào.</span>
           </div>
         ) : (
-          <table className="w-full text-[13px] border-collapse">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                {["Người dùng", "Roles", "Trạng thái", "Ngày tạo", ""].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map((acc) => {
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead>Người dùng</TableHead>
+                <TableHead>Roles</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {accounts.map((acc, index) => {
                 const s = STATUS_MAP[acc.status] ?? {
                   label: String(acc.status),
                   cls: "bg-gray-100 text-gray-500",
@@ -256,52 +246,58 @@ export default function AccountsPage() {
                 const isLocked = acc.status === AccountStatusEnum.Locked;
 
                 return (
-                  <tr
-                    key={acc.id}
-                    className="border-b border-border hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-4 py-3">
+                  <TableRow key={acc.id}>
+                    <TableCell className="text-center text-muted-foreground tabular-nums">
+                      {(filters.pageNumber - 1) * filters.pageSize + index + 1}
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-3">
                         <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold shrink-0">
                           {initials}
                         </span>
                         <div>
                           <div className="font-medium">{acc.fullName}</div>
-                          <div className="text-[11.5px] text-muted-foreground">
+                          <div className="text-xs text-muted-foreground">
                             {acc.email}
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {acc.role ? (
-                          <span
-                            className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${ROLE_CLS[acc.role] ?? "bg-gray-100 text-gray-600"}`}
-                          >
-                            {acc.role}
-                          </span>
-                        ) : (
-                          <span className="text-[10.5px] text-muted-foreground italic">
-                            Chưa gán
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
+                      {acc.role ? (
+                        <span
+                          className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${ROLE_CLS[acc.role] ?? "bg-gray-100 text-gray-600"}`}
+                        >
+                          {acc.role}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">
+                          Chưa gán
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <span
                         className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${s.cls}`}
                       >
                         {s.label}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-[12px] text-muted-foreground whitespace-nowrap">
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(acc.createdAt).toLocaleDateString("vi-VN")}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-                          <MoreHorizontal size={15} />
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                            />
+                          }
+                        >
+                          <EllipsisVertical className="size-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuItem
@@ -309,28 +305,27 @@ export default function AccountsPage() {
                               setDialog({ type: "edit", account: acc })
                             }
                           >
-                            <Edit2 className="mr-2 size-4" /> Chỉnh sửa
+                            Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "status", account: acc })
                             }
                           >
-                            <Shield className="mr-2 size-4" /> Đổi trạng thái
+                            Đổi trạng thái
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "role", account: acc })
                             }
                           >
-                            <UserCog className="mr-2 size-4" /> Đổi role
+                            Đổi role
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "detail", account: acc })
                             }
                           >
-                            <MonitorSmartphone className="mr-2 size-4" />{" "}
                             Sessions & Lịch sử
                           </DropdownMenuItem>
                           {isStaff && (
@@ -342,7 +337,7 @@ export default function AccountsPage() {
                                 })
                               }
                             >
-                              <UserCog className="mr-2 size-4" /> Hồ sơ Staff
+                              Hồ sơ Staff
                             </DropdownMenuItem>
                           )}
                           {acc.twoFactorEnabled && (
@@ -351,7 +346,7 @@ export default function AccountsPage() {
                                 setDialog({ type: "reset2fa", account: acc })
                               }
                             >
-                              <ShieldOff className="mr-2 size-4" /> Reset 2FA
+                              Reset 2FA
                             </DropdownMenuItem>
                           )}
                           {isLocked && (
@@ -362,27 +357,27 @@ export default function AccountsPage() {
                                   setDialog({ type: "unlock", account: acc })
                                 }
                               >
-                                <KeyRound className="mr-2 size-4" /> Mở khóa
+                                Mở khóa
                               </DropdownMenuItem>
                             </>
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-destructive"
                             onClick={() =>
                               setDialog({ type: "delete", account: acc })
                             }
                           >
-                            <Trash2 className="mr-2 size-4" /> Xóa tài khoản
+                            Xóa tài khoản
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </Card>
 

@@ -42,8 +42,13 @@ export function useManagerCreateKbArticle() {
 export function useManagerUpdateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateKbArticlePayload }) =>
-      managerKbService.update(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateKbArticlePayload;
+    }) => managerKbService.update(id, payload),
     onSuccess: (_, { id }) => {
       toast.success("Đã cập nhật bài viết");
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });

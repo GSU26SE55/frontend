@@ -74,6 +74,7 @@ export default function AdminTicketTable({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12 text-center">STT</TableHead>
               <TableHead className="w-32">Mã</TableHead>
               <TableHead>Tiêu đề</TableHead>
               <TableHead className="w-32">Loại</TableHead>
@@ -83,12 +84,15 @@ export default function AdminTicketTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tickets.map((ticket) => (
+            {tickets.map((ticket, index) => (
               <TableRow
                 key={ticket.id}
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={() => navigate(`/admin/tickets/${ticket.id}`)}
               >
+                <TableCell className="text-center text-muted-foreground tabular-nums">
+                  {(pageNumber - 1) * pageSize + index + 1}
+                </TableCell>
                 <TableCell className="font-mono text-sm">
                   <div className="flex items-center gap-1">
                     {ticket.isIncident && (

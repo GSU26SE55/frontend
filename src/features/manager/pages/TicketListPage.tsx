@@ -1,4 +1,6 @@
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -16,6 +18,7 @@ import {
 } from "@/shared/types/ticket.types";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
@@ -62,6 +65,9 @@ const DEFAULTS = {
 export default function TicketListPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
 
   const { data, isLoading } = useAdminTicketList({
     keyword: filters.keyword || undefined,
@@ -76,23 +82,30 @@ export default function TicketListPage() {
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Manager &middot; Ticket
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Quản lý ticket
-        </h1>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Manager &middot; Ticket
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Quản lý ticket
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
+            dõi và điều phối ticket
+          </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />
       </div>
 
-      <div className="flex flex-wrap gap-2 items-end">
-        <Input
-          placeholder="Tìm theo mã hoặc tiêu đề..."
-          value={filters.keyword}
-          onChange={(e) => setFilter("keyword", e.target.value || undefined)}
-          className="w-64"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo mã hoặc tiêu đề..."
+            value={search.value}
+            onChange={search.onChange}
+            className="pl-8"
+          />
+        </div>
 
         <Select
           value={filters.status || null}
@@ -104,7 +117,7 @@ export default function TicketListPage() {
             setFilter("status", v || undefined)
           }
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger size="sm" className="w-44">
             <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -128,7 +141,7 @@ export default function TicketListPage() {
             setFilter("priority", v || undefined)
           }
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger size="sm" className="w-36">
             <SelectValue placeholder="Tất cả priority" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -153,7 +166,7 @@ export default function TicketListPage() {
             setFilter("category", v || undefined)
           }
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Tất cả loại" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -167,13 +180,20 @@ export default function TicketListPage() {
         </Select>
 
         {hasActiveFilter && (
-          <Button variant="ghost" onClick={resetFilters}>
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
           </Button>
         )}
       </div>
 
-      <TicketTable tickets={data?.items ?? []} isLoading={isLoading} />
+      <Card className="gap-0 py-0 overflow-hidden">
+        <TicketTable
+          tickets={data?.items ?? []}
+          isLoading={isLoading}
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
+        />
+      </Card>
 
       <DataPagination
         totalItems={data?.totalItems ?? 0}

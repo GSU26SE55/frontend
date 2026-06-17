@@ -15,11 +15,15 @@ import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
   isLoading?: boolean;
+  pageNumber: number;
+  pageSize: number;
 }
 
 export default function KbArticleTable({
   data,
   isLoading,
+  pageNumber,
+  pageSize,
 }: KbArticleTableProps) {
   const navigate = useNavigate();
 
@@ -45,6 +49,7 @@ export default function KbArticleTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12 text-center">STT</TableHead>
           <TableHead className="w-[100px]">Mã</TableHead>
           <TableHead>Tiêu đề</TableHead>
           <TableHead className="w-[120px]">Trạng thái</TableHead>
@@ -53,12 +58,15 @@ export default function KbArticleTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((article) => (
+        {data.map((article, index) => (
           <TableRow
             key={article.id}
             className="cursor-pointer"
             onClick={() => navigate(`/staff/kb/${article.id}`)}
           >
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {(pageNumber - 1) * pageSize + index + 1}
+            </TableCell>
             <TableCell className="font-mono text-xs text-muted-foreground">
               {article.code}
             </TableCell>

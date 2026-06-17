@@ -22,10 +22,9 @@ import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types
 import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-
-const ALL = "all"; // sentinel cho "tất cả" (Select không nhận value rỗng)
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -47,6 +46,9 @@ const DEFAULTS = {
 export default function BatteryAssetsPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<BatteryAssetDto | null>(null);
 
@@ -107,23 +109,28 @@ export default function BatteryAssetsPage() {
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Tìm theo serial number..."
-            value={filters.keyword}
-            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            value={search.value}
+            onChange={search.onChange}
             className="pl-8"
           />
         </div>
 
         <Select
-          value={filters.customerId || ALL}
-          onValueChange={(v) =>
-            setFilter("customerId", v === ALL ? undefined : v ?? undefined)
-          }
+          value={filters.customerId || null}
+          items={[
+            { value: null, label: "Tất cả khách hàng" },
+            ...(customersData?.items.map((c) => ({
+              value: c.id,
+              label: c.fullName,
+            })) ?? []),
+          ]}
+          onValueChange={(v) => setFilter("customerId", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-44">
             <SelectValue placeholder="Khách hàng" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả khách hàng</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>Tất cả khách hàng</SelectItem>
             {customersData?.items.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 {c.fullName}
@@ -133,16 +140,21 @@ export default function BatteryAssetsPage() {
         </Select>
 
         <Select
-          value={filters.batteryTypeId || ALL}
-          onValueChange={(v) =>
-            setFilter("batteryTypeId", v === ALL ? undefined : v ?? undefined)
-          }
+          value={filters.batteryTypeId || null}
+          items={[
+            { value: null, label: "Tất cả loại pin" },
+            ...(batteryTypesData?.items.map((t) => ({
+              value: t.id,
+              label: t.name,
+            })) ?? []),
+          ]}
+          onValueChange={(v) => setFilter("batteryTypeId", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Loại pin" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả loại pin</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>Tất cả loại pin</SelectItem>
             {batteryTypesData?.items.map((t) => (
               <SelectItem key={t.id} value={t.id}>
                 {t.name}
@@ -152,14 +164,21 @@ export default function BatteryAssetsPage() {
         </Select>
 
         <Select
-          value={filters.siteId || ALL}
-          onValueChange={(v) => setFilter("siteId", v === ALL ? undefined : v ?? undefined)}
+          value={filters.siteId || null}
+          items={[
+            { value: null, label: "Tất cả site" },
+            ...(sitesData?.items.map((s) => ({
+              value: s.id,
+              label: s.name,
+            })) ?? []),
+          ]}
+          onValueChange={(v) => setFilter("siteId", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Site" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Tất cả site</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>Tất cả site</SelectItem>
             {sitesData?.items.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.name}
@@ -169,14 +188,21 @@ export default function BatteryAssetsPage() {
         </Select>
 
         <Select
-          value={filters.status || ALL}
-          onValueChange={(v) => setFilter("status", v === ALL ? undefined : v ?? undefined)}
+          value={filters.status || null}
+          items={[
+            { value: null, label: "Mọi trạng thái" },
+            ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          ]}
+          onValueChange={(v) => setFilter("status", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-36">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Mọi trạng thái</SelectItem>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>Mọi trạng thái</SelectItem>
             {Object.entries(STATUS_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -194,9 +220,6 @@ export default function BatteryAssetsPage() {
           />
           <span className="text-muted-foreground">Hiển thị đã xóa</span>
         </label>
-        <span className="text-sm text-muted-foreground">
-          {totalItems} kết quả
-        </span>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
@@ -219,6 +242,8 @@ export default function BatteryAssetsPage() {
         ) : (
           <BatteryAssetTable
             items={items}
+            pageNumber={filters.pageNumber}
+            pageSize={filters.pageSize}
             includeDeleted={!!filters.includeDeleted}
             onEdit={handleEdit}
           />

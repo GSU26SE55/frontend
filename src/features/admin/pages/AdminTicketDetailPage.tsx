@@ -143,7 +143,10 @@ export default function AdminTicketDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <RefreshButton queryKeys={[KEY.admin.tickets, KEY.tickets]} size="icon" />
+          <RefreshButton
+            queryKeys={[KEY.admin.tickets, KEY.tickets]}
+            size="icon"
+          />
           <Button
             variant="destructive"
             size="sm"
@@ -251,7 +254,9 @@ export default function AdminTicketDetailPage() {
               <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
                 Lý do từ chối
               </p>
-              <p className="text-xs leading-relaxed">{ticket.rejectionReason}</p>
+              <p className="text-xs leading-relaxed">
+                {ticket.rejectionReason}
+              </p>
             </div>
           )}
 
@@ -302,9 +307,9 @@ export default function AdminTicketDetailPage() {
               Đánh dấu là Incident nghiêm trọng?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là
-              Incident và xử lý theo quy trình ưu tiên cao nhất. Hành động
-              này không thể hoàn tác.
+              Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là Incident
+              và xử lý theo quy trình ưu tiên cao nhất. Hành động này không thể
+              hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">

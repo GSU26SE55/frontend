@@ -180,7 +180,10 @@ export default function TicketDetailPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <RefreshButton queryKeys={[KEY.staffTickets, KEY.tickets]} size="icon" />
+          <RefreshButton
+            queryKeys={[KEY.staffTickets, KEY.tickets]}
+            size="icon"
+          />
           {isAssigned && (
             <Button
               size="sm"
@@ -341,11 +344,9 @@ export default function TicketDetailPage() {
                       <div className="flex items-center justify-between">
                         <Badge variant="outline">{log.logType}</Badge>
                         <p className="text-xs text-muted-foreground">
-                          {format(
-                            new Date(log.startedAt),
-                            "dd/MM/yyyy HH:mm",
-                            { locale: vi },
-                          )}
+                          {format(new Date(log.startedAt), "dd/MM/yyyy HH:mm", {
+                            locale: vi,
+                          })}
                         </p>
                       </div>
                       {log.summary && (
@@ -373,10 +374,7 @@ export default function TicketDetailPage() {
             </TabsContent>
 
             {/* KB */}
-            <TabsContent
-              value="kb"
-              className="min-h-0 overflow-y-auto m-0 p-6"
-            >
+            <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel ticketId={ticketId} />
             </TabsContent>
           </Tabs>
@@ -421,9 +419,7 @@ export default function TicketDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
-                Chưa được triage.
-              </p>
+              <p className="text-xs text-muted-foreground">Chưa được triage.</p>
             )}
           </div>
 
@@ -455,14 +451,8 @@ export default function TicketDetailPage() {
           <div className="px-4 py-1 divide-y divide-border/50">
             <SideInfoRow label="Danh mục" value={ticket.category} />
             <SideInfoRow label="Nguồn" value={ticket.origin} />
-            <SideInfoRow
-              label="Phạm vi"
-              value={ticket.impactScope ?? null}
-            />
-            <SideInfoRow
-              label="Khẩn cấp"
-              value={ticket.urgencyLevel ?? null}
-            />
+            <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
+            <SideInfoRow label="Khẩn cấp" value={ticket.urgencyLevel ?? null} />
             <SideInfoRow
               label="Ngày tạo"
               value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
@@ -470,10 +460,7 @@ export default function TicketDetailPage() {
               })}
             />
             {ticket.reopenCount > 0 && (
-              <SideInfoRow
-                label="Mở lại"
-                value={`${ticket.reopenCount} lần`}
-              />
+              <SideInfoRow label="Mở lại" value={`${ticket.reopenCount} lần`} />
             )}
           </div>
         </div>

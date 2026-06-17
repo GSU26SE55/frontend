@@ -8,12 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { handleErrorApi } from "@/shared/lib/errors";
-import type { KbArticleDTO, UpdateKbArticlePayload } from "@/shared/types/kb.types";
+import type {
+  KbArticleDTO,
+  UpdateKbArticlePayload,
+} from "@/shared/types/kb.types";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const schema = z.object({
   category: z.number().min(1, "Chọn danh mục"),
-  title: z.string().min(1, "Tiêu đề không được trống").max(200, "Tối đa 200 ký tự"),
+  title: z
+    .string()
+    .min(1, "Tiêu đề không được trống")
+    .max(200, "Tối đa 200 ký tự"),
   symptoms: z.string().min(1, "Không được trống"),
   diagnosisSteps: z.string().min(1, "Không được trống"),
   solutionSteps: z.string().min(1, "Không được trống"),
@@ -116,10 +122,17 @@ export function KbEditorPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div>
-          <p className="text-[11px] text-muted-foreground font-mono mb-0.5">{article.code}</p>
+          <p className="text-[11px] text-muted-foreground font-mono mb-0.5">
+            {article.code}
+          </p>
           <h2 className="text-sm font-semibold">Chỉnh sửa bài viết</h2>
         </div>
-        <Button variant="ghost" size="icon" className="size-8" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          onClick={onClose}
+        >
           <X className="size-4" />
         </Button>
       </div>
@@ -149,7 +162,9 @@ export function KbEditorPanel({
               {...register("category", { valueAsNumber: true })}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <option value={0} disabled>Chọn danh mục</option>
+              <option value={0} disabled>
+                Chọn danh mục
+              </option>
               {CATEGORIES.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
@@ -175,7 +190,11 @@ export function KbEditorPanel({
             />
           </Field>
 
-          <Field label="Bước chẩn đoán" required error={errors.diagnosisSteps?.message}>
+          <Field
+            label="Bước chẩn đoán"
+            required
+            error={errors.diagnosisSteps?.message}
+          >
             <Textarea
               {...register("diagnosisSteps")}
               rows={5}
@@ -184,7 +203,11 @@ export function KbEditorPanel({
             />
           </Field>
 
-          <Field label="Hướng giải quyết" required error={errors.solutionSteps?.message}>
+          <Field
+            label="Hướng giải quyết"
+            required
+            error={errors.solutionSteps?.message}
+          >
             <Textarea
               {...register("solutionSteps")}
               rows={5}
@@ -206,7 +229,12 @@ export function KbEditorPanel({
 
       {/* Footer */}
       <div className="border-t border-border px-5 py-3 flex items-center justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          disabled={isPending}
+        >
           Hủy
         </Button>
         <Button

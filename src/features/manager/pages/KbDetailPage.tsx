@@ -19,7 +19,8 @@ export default function KbDetailPage() {
   const { data: article, isLoading } = useManagerKbDetail(id!);
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
-  const { mutateAsync: update, isPending: updating } = useManagerUpdateKbArticle();
+  const { mutateAsync: update, isPending: updating } =
+    useManagerUpdateKbArticle();
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 

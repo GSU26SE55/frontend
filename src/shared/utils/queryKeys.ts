@@ -167,7 +167,6 @@ export const QUERY_KEY = {
     search: (query?: string) => [KEY.kb, "search", query] as const,
   },
   ticketKbRefs: {
-    list: (ticketId: string) =>
-      [KEY.ticketKbRefs, "list", ticketId] as const,
+    list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,
   },
 } as const;

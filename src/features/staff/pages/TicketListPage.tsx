@@ -43,17 +43,23 @@ export default function TicketListPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Staff &middot; Ticket
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Ticket cua toi
+            Ticket của tôi
           </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; ticket
+            được giao cho bạn
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <RefreshButton queryKeys={[KEY.staffTickets]} size="icon" />
+        <RefreshButton queryKeys={[KEY.staffTickets]} size="icon" />
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
         <Select
           value={filters.status || null}
           items={STATUS_FILTER_OPTIONS.map((opt) => ({
@@ -64,7 +70,7 @@ export default function TicketListPage() {
             setFilter("status", v || undefined)
           }
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger size="sm" className="w-48">
             <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -76,12 +82,11 @@ export default function TicketListPage() {
             ))}
           </SelectContent>
         </Select>
-          {hasActiveFilter && (
-            <Button variant="ghost" onClick={resetFilters}>
-              Xóa bộ lọc
-            </Button>
-          )}
-        </div>
+        {hasActiveFilter && (
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       {isLoading && (

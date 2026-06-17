@@ -140,6 +140,7 @@ export default function SlaMonitorPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Ticket</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Ưu tiên</TableHead>
@@ -149,8 +150,11 @@ export default function SlaMonitorPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {monitoredTickets.map((ticket) => (
+              {monitoredTickets.map((ticket, index) => (
                 <TableRow key={ticket.id}>
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {index + 1}
+                  </TableCell>
                   <TableCell>
                     <div>
                       <p className="font-medium">{ticket.title}</p>

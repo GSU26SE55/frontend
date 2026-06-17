@@ -39,15 +39,30 @@ const CATEGORY_LABEL: Record<number, string> = {
 
 // ── Sections ─────────────────────────────────────────────────────────────────
 const SECTIONS = [
-  { key: "symptoms" as const,        label: "Triệu chứng",          icon: AlertTriangle },
-  { key: "diagnosisSteps" as const,  label: "Bước chẩn đoán",       icon: Stethoscope },
-  { key: "solutionSteps" as const,   label: "Hướng giải quyết",     icon: CheckCircle2 },
-  { key: "recommendedParts" as const,label: "Linh kiện khuyến nghị", icon: Wrench },
+  { key: "symptoms" as const, label: "Triệu chứng", icon: AlertTriangle },
+  {
+    key: "diagnosisSteps" as const,
+    label: "Bước chẩn đoán",
+    icon: Stethoscope,
+  },
+  {
+    key: "solutionSteps" as const,
+    label: "Hướng giải quyết",
+    icon: CheckCircle2,
+  },
+  {
+    key: "recommendedParts" as const,
+    label: "Linh kiện khuyến nghị",
+    icon: Wrench,
+  },
 ] as const;
 
 // ── Numbered list detection ───────────────────────────────────────────────────
 function isNumberedList(text: string): boolean {
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   return lines.length > 1 && lines.every((l) => /^\d+[.)]\s/.test(l));
 }
 
@@ -64,7 +79,10 @@ function SectionContent({ text }: { text: string }) {
     return (
       <ol className="space-y-3">
         {parseLines(text).map((step, i) => (
-          <li key={i} className="flex gap-3 text-sm leading-relaxed text-foreground/80">
+          <li
+            key={i}
+            className="flex gap-3 text-sm leading-relaxed text-foreground/80"
+          >
             <span className="shrink-0 mt-[1px] size-[22px] rounded-full border border-border bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground tabular-nums">
               {i + 1}
             </span>
@@ -227,12 +245,18 @@ export function KbArticleDetail({
               <div className="flex gap-5">
                 <div className="flex items-center gap-1.5 text-sm">
                   <Eye size={13} className="text-muted-foreground" />
-                  <span className="font-semibold tabular-nums">{article.viewCount}</span>
-                  <span className="text-muted-foreground text-xs">lượt xem</span>
+                  <span className="font-semibold tabular-nums">
+                    {article.viewCount}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    lượt xem
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-sm">
                   <ThumbsUp size={13} className="text-muted-foreground" />
-                  <span className="font-semibold tabular-nums">{article.helpfulCount}</span>
+                  <span className="font-semibold tabular-nums">
+                    {article.helpfulCount}
+                  </span>
                   <span className="text-muted-foreground text-xs">hữu ích</span>
                 </div>
               </div>
@@ -251,22 +275,39 @@ export function KbArticleDetail({
               <MetaItem
                 icon={Tag}
                 label="Danh mục"
-                value={CATEGORY_LABEL[article.category] ?? `Danh mục ${article.category}`}
+                value={
+                  CATEGORY_LABEL[article.category] ??
+                  `Danh mục ${article.category}`
+                }
               />
-              <MetaItem icon={RefreshCcw} label="Phiên bản" value={`v${article.version}`} />
+              <MetaItem
+                icon={RefreshCcw}
+                label="Phiên bản"
+                value={`v${article.version}`}
+              />
               {article.createdByFullName && (
-                <MetaItem icon={User} label="Tác giả" value={article.createdByFullName} />
+                <MetaItem
+                  icon={User}
+                  label="Tác giả"
+                  value={article.createdByFullName}
+                />
               )}
               <MetaItem
                 icon={CalendarDays}
                 label="Ngày tạo"
-                value={format(new Date(article.createdAt), "dd/MM/yyyy", { locale: vi })}
+                value={format(new Date(article.createdAt), "dd/MM/yyyy", {
+                  locale: vi,
+                })}
               />
               {article.updatedAt && (
                 <MetaItem
                   icon={Clock}
                   label="Cập nhật lần cuối"
-                  value={format(new Date(article.updatedAt), "dd/MM/yyyy HH:mm", { locale: vi })}
+                  value={format(
+                    new Date(article.updatedAt),
+                    "dd/MM/yyyy HH:mm",
+                    { locale: vi },
+                  )}
                 />
               )}
             </div>
@@ -279,7 +320,11 @@ export function KbArticleDetail({
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {article.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-[11px] font-normal px-2 py-0.5">
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="text-[11px] font-normal px-2 py-0.5"
+                    >
                       {tag}
                     </Badge>
                   ))}
@@ -310,7 +355,12 @@ export function KbArticleDetail({
                 initial={{ x: "100%", opacity: 0.5 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: "100%", opacity: 0 }}
-                transition={{ type: "spring", stiffness: 340, damping: 32, mass: 0.9 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 340,
+                  damping: 32,
+                  mass: 0.9,
+                }}
               >
                 {renderEditor({ onClose: () => setEditOpen(false) })}
               </motion.div>

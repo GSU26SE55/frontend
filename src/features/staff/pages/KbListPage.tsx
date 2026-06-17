@@ -1,9 +1,11 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Search } from "lucide-react";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { useStaffKbList } from "../hooks/useStaffKb";
 import KbArticleTable from "../components/KbArticleTable";
 import DataPagination from "@/shared/components/common/DataPagination";
@@ -20,6 +22,9 @@ const DEFAULTS = {
 export default function KbListPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
 
   const params = {
     keyword: filters.keyword || undefined,
@@ -40,29 +45,40 @@ export default function KbListPage() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Knowledge Base
           </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : (data?.totalItems ?? 0)} bài viết &mdash; tra
+            cứu hướng dẫn xử lý
+          </p>
         </div>
         <RefreshButton queryKeys={[KEY.kb]} />
       </div>
 
-      <div className="flex flex-wrap gap-3 items-end">
-        <Input
-          placeholder="Tìm theo tiêu đề, mã..."
-          value={filters.keyword ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setFilter("keyword", e.target.value || undefined)
-          }
-          className="w-64"
-        />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm theo tiêu đề, mã..."
+            value={search.value}
+            onChange={search.onChange}
+            className="pl-8"
+          />
+        </div>
 
         {hasActiveFilter && (
-          <Button variant="ghost" size="sm" onClick={resetFilters}>
-            <RotateCcw className="size-3.5 mr-1" />
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
           </Button>
         )}
       </div>
 
-      <KbArticleTable data={data?.items ?? []} isLoading={isLoading} />
+      <Card className="gap-0 py-0 overflow-hidden">
+        <KbArticleTable
+          data={data?.items ?? []}
+          isLoading={isLoading}
+          pageNumber={data?.pageNumber ?? 1}
+          pageSize={data?.pageSize ?? 10}
+        />
+      </Card>
 
       {data && (
         <DataPagination

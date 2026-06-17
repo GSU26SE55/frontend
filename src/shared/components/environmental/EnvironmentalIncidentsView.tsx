@@ -249,6 +249,7 @@ export default function EnvironmentalIncidentsView({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Site</TableHead>
                 <TableHead>Loại sự cố</TableHead>
                 <TableHead>Mức độ</TableHead>
@@ -257,12 +258,15 @@ export default function EnvironmentalIncidentsView({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((incident) => (
+              {items.map((incident, index) => (
                 <TableRow
                   key={incident.id}
                   className="cursor-pointer"
                   onClick={() => setSelectedId(incident.id)}
                 >
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(filters.pageNumber - 1) * filters.pageSize + index + 1}
+                  </TableCell>
                   <TableCell className="font-medium">
                     {siteName(incident.siteId)}
                   </TableCell>

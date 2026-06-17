@@ -39,12 +39,22 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
   const inner = (
     <div className="flex items-center gap-2">
       {!isLinked ? (
-        <Button onClick={() => googleLogin()} disabled={isLinking} variant="outline" size="sm">
+        <Button
+          onClick={() => googleLogin()}
+          disabled={isLinking}
+          variant="outline"
+          size="sm"
+        >
           {isLinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Liên kết
         </Button>
       ) : (
-        <Button variant="destructive" size="sm" onClick={handleUnlink} disabled={isUnlinking}>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleUnlink}
+          disabled={isUnlinking}
+        >
           {isUnlinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Hủy liên kết
         </Button>

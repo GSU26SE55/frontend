@@ -30,7 +30,10 @@ const PAGE_SIZE = 10;
 
 const LoginHistoryTable = () => {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useLoginHistory({ pageNumber: page, pageSize: PAGE_SIZE });
+  const { data, isLoading } = useLoginHistory({
+    pageNumber: page,
+    pageSize: PAGE_SIZE,
+  });
 
   const items = data?.items ?? [];
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
@@ -42,25 +45,47 @@ const LoginHistoryTable = () => {
         <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow className="hover:bg-transparent bg-muted/60">
-              <TableHead className="w-1/4 text-xs font-semibold">Thời gian</TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">Kết quả</TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">Phương thức</TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">Địa chỉ IP</TableHead>
+              <TableHead className="w-12 text-center text-xs font-semibold">
+                STT
+              </TableHead>
+              <TableHead className="w-1/4 text-xs font-semibold">
+                Thời gian
+              </TableHead>
+              <TableHead className="w-1/4 text-xs font-semibold">
+                Kết quả
+              </TableHead>
+              <TableHead className="w-1/4 text-xs font-semibold">
+                Phương thức
+              </TableHead>
+              <TableHead className="w-1/4 text-xs font-semibold">
+                Địa chỉ IP
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-6" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
                 </TableRow>
               ))
             ) : items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>
+                <TableCell colSpan={5}>
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
                     <Monitor size={28} className="opacity-30" />
                     <p className="text-sm">Chưa có lịch sử đăng nhập</p>
@@ -68,20 +93,29 @@ const LoginHistoryTable = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              items.map((item) => (
+              items.map((item, index) => (
                 <TableRow key={item.id} className="text-sm">
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(page - 1) * PAGE_SIZE + index + 1}
+                  </TableCell>
                   <TableCell className="tabular-nums text-xs text-muted-foreground">
                     {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm")}
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={item.result === LoginAttemptResult.Success ? "default" : "destructive"}
+                      variant={
+                        item.result === LoginAttemptResult.Success
+                          ? "default"
+                          : "destructive"
+                      }
                       className="text-[11px] px-2 py-0.5 rounded-full font-medium"
                     >
                       {RESULT_LABEL[item.result] ?? item.resultName}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{item.method}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {item.method}
+                  </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {item.ipAddress ?? "—"}
                   </TableCell>

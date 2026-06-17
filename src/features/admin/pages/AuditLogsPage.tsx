@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   ScrollText,
   Search,
@@ -13,7 +12,6 @@ import {
   Hash,
   User,
   ShieldAlert,
-  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -31,9 +29,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerClose,
+} from "@/components/ui/drawer";
 import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import type { AuditLogDto } from "@/features/admin/types/admin.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -92,7 +99,13 @@ const ACTION_LABELS: Record<string, string> = {
   PermissionRevoked: "Thu quyền",
 };
 
-type ActionCategory = "auth" | "account" | "session" | "role" | "security" | "other";
+type ActionCategory =
+  | "auth"
+  | "account"
+  | "session"
+  | "role"
+  | "security"
+  | "other";
 
 const ACTION_CATEGORY: Record<string, ActionCategory> = {
   LoginSuccess: "auth",
@@ -186,7 +199,9 @@ function parseUserAgent(ua?: string) {
   const browser = ua.match(/(Chrome|Firefox|Safari|Edge|Edg)[/\s]([\d.]+)/);
   const os = ua.match(/\(([^)]+)\)/);
   return {
-    browser: browser ? `${browser[1].replace("Edg", "Edge")} ${browser[2].split(".")[0]}` : "Unknown",
+    browser: browser
+      ? `${browser[1].replace("Edg", "Edge")} ${browser[2].split(".")[0]}`
+      : "Unknown",
     os: os ? os[1].split(";")[0].trim() : "Unknown",
     full: ua,
   };
@@ -236,218 +251,186 @@ function AuditLogDetail({
   const ua = parseUserAgent(log.userAgent);
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            key="backdrop"
-            className="fixed inset-0 z-50 bg-black/20 supports-backdrop-filter:backdrop-blur-[2px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-
-          {/* Panel */}
-          <motion.div
-            key="panel"
-            className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-[520px]"
-            initial={{ x: "100%", opacity: 0.5 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 340,
-              damping: 32,
-              mass: 0.9,
-            }}
-          >
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-border shrink-0">
-              <div className="flex items-start gap-3">
-                <div
-                  className={`mt-0.5 size-8 rounded-lg flex items-center justify-center border ${CATEGORY_STYLE[category]}`}
-                >
-                  <ShieldAlert size={16} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-base font-semibold leading-tight">
-                    {ACTION_LABELS[log.actionName] ?? log.actionName}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
-                    {log.actionName} · #{log.action}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
-                      log.isSuccess
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-red-50 text-red-600 border-red-200"
-                    }`}
-                  >
-                    {log.isSuccess ? (
-                      <CheckCircle2 size={11} />
-                    ) : (
-                      <XCircle size={11} />
-                    )}
-                    {log.isSuccess ? "Thành công" : "Thất bại"}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={onClose}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-              </div>
+    <Drawer open={open} onOpenChange={(v) => !v && onClose()} direction="right">
+      <DrawerContent className="sm:max-w-130">
+        {/* Header */}
+        <DrawerHeader className="border-b border-border p-0">
+          <div className="flex items-start gap-3 px-6 py-5">
+            <div
+              className={`mt-0.5 size-8 rounded-lg flex items-center justify-center border ${CATEGORY_STYLE[category]}`}
+            >
+              <ShieldAlert size={16} />
             </div>
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-              <section className="space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Thông tin chung
-                </h3>
-                <div className="space-y-3">
-                  <DetailRow
-                    icon={Clock}
-                    label="Thời gian"
-                    value={fmtFull(log.createdAt)}
-                  />
-                  <DetailRow icon={Hash} label="Log ID" value={log.id} mono />
-                  {log.correlationId && (
-                    <DetailRow
-                      icon={Hash}
-                      label="Correlation ID"
-                      value={log.correlationId}
-                      mono
-                    />
-                  )}
-                </div>
-              </section>
-
-              <Separator />
-
-              <section className="space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Tài khoản
-                </h3>
-                <div className="space-y-3">
-                  {log.targetEmail && (
-                    <DetailRow
-                      icon={User}
-                      label="Tài khoản bị ảnh hưởng"
-                      value={log.targetEmail}
-                    />
-                  )}
-                  {log.targetAccountId && (
-                    <DetailRow
-                      icon={Hash}
-                      label="Target Account ID"
-                      value={log.targetAccountId}
-                      mono
-                    />
-                  )}
-                  {log.actorAccountId && (
-                    <DetailRow
-                      icon={User}
-                      label="Thực hiện bởi (Actor ID)"
-                      value={log.actorAccountId}
-                      mono
-                    />
-                  )}
-                </div>
-              </section>
-
-              <Separator />
-
-              <section className="space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Thiết bị & Mạng
-                </h3>
-                <div className="space-y-3">
-                  {log.ipAddress && (
-                    <DetailRow
-                      icon={Globe}
-                      label="Địa chỉ IP"
-                      value={log.ipAddress}
-                      mono
-                    />
-                  )}
-                  {log.deviceId && (
-                    <DetailRow
-                      icon={Fingerprint}
-                      label="Device ID"
-                      value={log.deviceId}
-                      mono
-                    />
-                  )}
-                  {ua && (
-                    <DetailRow
-                      icon={Monitor}
-                      label="Trình duyệt"
-                      value={
-                        <div className="space-y-1">
-                          <p className="text-sm">
-                            {ua.browser} · {ua.os}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground font-mono break-all leading-relaxed">
-                            {ua.full}
-                          </p>
-                        </div>
-                      }
-                    />
-                  )}
-                </div>
-              </section>
-
-              {log.reason && (
-                <>
-                  <Separator />
-                  <section className="space-y-3">
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Lý do
-                    </h3>
-                    <p className="text-sm">{log.reason}</p>
-                  </section>
-                </>
+            <div className="min-w-0 flex-1">
+              <DrawerTitle className="text-base font-semibold leading-tight">
+                {ACTION_LABELS[log.actionName] ?? log.actionName}
+              </DrawerTitle>
+              <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                {log.actionName} · #{log.action}
+              </p>
+            </div>
+            <span
+              className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                log.isSuccess
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-red-50 text-red-600 border-red-200"
+              }`}
+            >
+              {log.isSuccess ? (
+                <CheckCircle2 size={11} />
+              ) : (
+                <XCircle size={11} />
               )}
+              {log.isSuccess ? "Thành công" : "Thất bại"}
+            </span>
+          </div>
+        </DrawerHeader>
 
-              {metadata && (
-                <>
-                  <Separator />
-                  <section className="space-y-3">
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Metadata
-                    </h3>
-                    <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border">
-                      {Object.entries(metadata).map(([k, v]) => (
-                        <div
-                          key={k}
-                          className="flex items-start gap-3 px-3 py-2.5"
-                        >
-                          <span className="text-[11px] font-mono text-muted-foreground shrink-0 pt-0.5 w-28 truncate">
-                            {k}
-                          </span>
-                          <span className="text-[12px] font-mono break-all">
-                            {String(v)}
-                          </span>
-                        </div>
-                      ))}
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Thông tin chung
+            </h3>
+            <div className="space-y-3">
+              <DetailRow
+                icon={Clock}
+                label="Thời gian"
+                value={fmtFull(log.createdAt)}
+              />
+              <DetailRow icon={Hash} label="Log ID" value={log.id} mono />
+              {log.correlationId && (
+                <DetailRow
+                  icon={Hash}
+                  label="Correlation ID"
+                  value={log.correlationId}
+                  mono
+                />
+              )}
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Tài khoản
+            </h3>
+            <div className="space-y-3">
+              {log.targetEmail && (
+                <DetailRow
+                  icon={User}
+                  label="Tài khoản bị ảnh hưởng"
+                  value={log.targetEmail}
+                />
+              )}
+              {log.targetAccountId && (
+                <DetailRow
+                  icon={Hash}
+                  label="Target Account ID"
+                  value={log.targetAccountId}
+                  mono
+                />
+              )}
+              {log.actorAccountId && (
+                <DetailRow
+                  icon={User}
+                  label="Thực hiện bởi (Actor ID)"
+                  value={log.actorAccountId}
+                  mono
+                />
+              )}
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Thiết bị & Mạng
+            </h3>
+            <div className="space-y-3">
+              {log.ipAddress && (
+                <DetailRow
+                  icon={Globe}
+                  label="Địa chỉ IP"
+                  value={log.ipAddress}
+                  mono
+                />
+              )}
+              {log.deviceId && (
+                <DetailRow
+                  icon={Fingerprint}
+                  label="Device ID"
+                  value={log.deviceId}
+                  mono
+                />
+              )}
+              {ua && (
+                <DetailRow
+                  icon={Monitor}
+                  label="Trình duyệt"
+                  value={
+                    <div className="space-y-1">
+                      <p className="text-sm">
+                        {ua.browser} · {ua.os}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground font-mono break-all leading-relaxed">
+                        {ua.full}
+                      </p>
                     </div>
-                  </section>
-                </>
+                  }
+                />
               )}
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+          </section>
+
+          {log.reason && (
+            <>
+              <Separator />
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Lý do
+                </h3>
+                <p className="text-sm">{log.reason}</p>
+              </section>
+            </>
+          )}
+
+          {metadata && (
+            <>
+              <Separator />
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Metadata
+                </h3>
+                <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border">
+                  {Object.entries(metadata).map(([k, v]) => (
+                    <div key={k} className="flex items-start gap-3 px-3 py-2.5">
+                      <span className="text-[11px] font-mono text-muted-foreground shrink-0 pt-0.5 w-28 truncate">
+                        {k}
+                      </span>
+                      <span className="text-[12px] font-mono break-all">
+                        {String(v)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+        </div>
+
+        {/* Footer cố định */}
+        <DrawerFooter className="border-t border-border">
+          <DrawerClose asChild>
+            <Button variant="outline" className="w-full">
+              Đóng
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
@@ -464,6 +447,9 @@ export default function AuditLogsPage() {
 
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
 
   const { data, isLoading } = useAdminAuditLogs({
     pageNumber: filters.pageNumber,
@@ -490,8 +476,8 @@ export default function AuditLogsPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()} sự kiện — lịch sử hoạt
-            động trên hệ thống.
+            {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()} sự kiện
+            — lịch sử hoạt động trên hệ thống.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.auditLogs]} />
@@ -511,10 +497,8 @@ export default function AuditLogsPage() {
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={filters.keyword}
-                onChange={(e) =>
-                  setFilter("keyword", e.target.value || undefined)
-                }
+                value={search.value}
+                onChange={search.onChange}
                 placeholder="Action, email, IP..."
                 className="pl-8"
               />
@@ -542,6 +526,7 @@ export default function AuditLogsPage() {
           <Table className="table-fixed">
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead className="w-1/5">Thời gian</TableHead>
                 <TableHead className="w-1/5">Hành động</TableHead>
                 <TableHead className="w-1/5">Kết quả</TableHead>
@@ -550,7 +535,7 @@ export default function AuditLogsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((log) => {
+              {filtered.map((log, index) => {
                 const category = ACTION_CATEGORY[log.actionName] ?? "other";
                 return (
                   <TableRow
@@ -558,6 +543,9 @@ export default function AuditLogsPage() {
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => setSelected(log)}
                   >
+                    <TableCell className="text-center text-muted-foreground tabular-nums">
+                      {(filters.pageNumber - 1) * filters.pageSize + index + 1}
+                    </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
                       {fmt(log.createdAt)}
                     </TableCell>
@@ -600,7 +588,10 @@ export default function AuditLogsPage() {
                         <span className="text-muted-foreground text-xs font-mono">
                           {log.ipAddress ?? "—"}
                         </span>
-                        <ChevronRight size={14} className="opacity-30 shrink-0" />
+                        <ChevronRight
+                          size={14}
+                          className="opacity-30 shrink-0"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

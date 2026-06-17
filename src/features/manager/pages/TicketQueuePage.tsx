@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -61,16 +62,17 @@ export default function TicketQueuePage() {
             Manager &middot; Ticket
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Hang cho Triage
+            Hàng chờ Triage
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Ticket o trang thai Open, P1 uu tien truoc.
+            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; trạng
+            thái Open, P1 ưu tiên trước
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />
       </div>
 
-      <div className="flex gap-2 items-center">
+      <div className="flex items-center gap-3 flex-wrap">
         <Select
           value={filters.priority || null}
           items={[
@@ -82,7 +84,7 @@ export default function TicketQueuePage() {
             setFilter("priority", v || undefined)
           }
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger size="sm" className="w-36">
             <SelectValue placeholder="Tất cả priority" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -107,7 +109,7 @@ export default function TicketQueuePage() {
             setFilter("category", v || undefined)
           }
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Tất cả loại" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -121,18 +123,22 @@ export default function TicketQueuePage() {
         </Select>
 
         {hasActiveFilter && (
-          <Button variant="ghost" onClick={resetFilters}>
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
           </Button>
         )}
       </div>
 
-      <TicketTable
-        tickets={data?.items ?? []}
-        isLoading={isLoading}
-        showTriage
-        onTriage={setTriageTarget}
-      />
+      <Card className="gap-0 py-0 overflow-hidden">
+        <TicketTable
+          tickets={data?.items ?? []}
+          isLoading={isLoading}
+          showTriage
+          onTriage={setTriageTarget}
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
+        />
+      </Card>
 
       <DataPagination
         totalItems={data?.totalItems ?? 0}
