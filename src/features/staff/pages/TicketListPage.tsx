@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
 import { useStaffTickets } from "../hooks/useStaffTickets";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { TicketCard } from "../components/TicketCard";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -41,7 +43,7 @@ export default function TicketListPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Staff &middot; Ticket
@@ -50,6 +52,8 @@ export default function TicketListPage() {
             Ticket cua toi
           </h1>
         </div>
+        <div className="flex items-center gap-2">
+          <RefreshButton queryKeys={[KEY.staffTickets]} size="icon" />
         <Select
           value={filters.status || null}
           items={STATUS_FILTER_OPTIONS.map((opt) => ({
@@ -72,11 +76,12 @@ export default function TicketListPage() {
             ))}
           </SelectContent>
         </Select>
-        {hasActiveFilter && (
-          <Button variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
-          </Button>
-        )}
+          {hasActiveFilter && (
+            <Button variant="ghost" onClick={resetFilters}>
+              Xóa bộ lọc
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading && (

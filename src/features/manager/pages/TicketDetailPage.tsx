@@ -32,6 +32,8 @@ import {
   TicketCategoryEnum,
 } from "@/shared/types/ticket.types";
 import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 type DialogType =
   | "triage"
@@ -186,6 +188,7 @@ export default function TicketDetailPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <RefreshButton queryKeys={[KEY.manager.tickets, KEY.tickets]} size="icon" />
           {canTriage && (
             <Button size="sm" onClick={() => setDialog("triage")}>
               Triage

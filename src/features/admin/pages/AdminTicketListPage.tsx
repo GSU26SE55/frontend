@@ -20,6 +20,8 @@ import type {
 import { useAdminTickets } from "../hooks/useAdminTickets";
 import AdminTicketTable from "../components/AdminTicketTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const PAGE_SIZE = 10;
 
@@ -86,11 +88,14 @@ export default function AdminTicketListPage() {
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
       {/* Page header */}
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Admin &middot; Ticket
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight"></h1>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Admin &middot; Ticket
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Quản lý Ticket</h1>
+        </div>
+        <RefreshButton queryKeys={[KEY.admin.tickets]} />
       </div>
 
       <div className="flex flex-wrap gap-3 items-end">

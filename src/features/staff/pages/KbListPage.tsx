@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useStaffKbList } from "../hooks/useStaffKb";
 import KbArticleTable from "../components/KbArticleTable";
@@ -30,13 +32,16 @@ export default function KbListPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Staff &middot; Knowledge Base
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Knowledge Base
-        </h1>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Staff &middot; Knowledge Base
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Knowledge Base
+          </h1>
+        </div>
+        <RefreshButton queryKeys={[KEY.kb]} />
       </div>
 
       <div className="flex flex-wrap gap-3 items-end">

@@ -31,6 +31,8 @@ import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
 import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
 import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
@@ -178,6 +180,7 @@ export default function TicketDetailPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <RefreshButton queryKeys={[KEY.staffTickets, KEY.tickets]} size="icon" />
           {isAssigned && (
             <Button
               size="sm"

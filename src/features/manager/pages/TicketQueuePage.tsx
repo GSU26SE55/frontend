@@ -17,6 +17,8 @@ import {
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Bảo trì",
@@ -53,16 +55,19 @@ export default function TicketQueuePage() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Manager &middot; Ticket
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Hang cho Triage
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Ticket o trang thai Open, P1 uu tien truoc.
-        </p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Manager &middot; Ticket
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Hang cho Triage
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ticket o trang thai Open, P1 uu tien truoc.
+          </p>
+        </div>
+        <RefreshButton queryKeys={[KEY.manager.tickets]} />
       </div>
 
       <div className="flex gap-2 items-center">

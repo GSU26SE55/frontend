@@ -35,6 +35,8 @@ import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import type { AuditLogDto } from "@/features/admin/types/admin.types";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -492,6 +494,7 @@ export default function AuditLogsPage() {
             động trên hệ thống.
           </p>
         </div>
+        <RefreshButton queryKeys={[KEY.admin.auditLogs]} />
       </div>
 
       <Card className="gap-0 py-0 overflow-hidden">
