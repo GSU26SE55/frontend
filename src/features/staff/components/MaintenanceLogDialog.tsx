@@ -1,4 +1,5 @@
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -26,6 +27,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { KbArticleSelector } from "@/shared/components/common/kb/KbArticleSelector";
+import FileUploadField from "@/features/file-storage/components/FileUploadField";
+import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
 import { MaintenanceLogTypeEnum } from "@/shared/types/ticket.types";
 import {
   maintenanceLogSchema,
@@ -52,10 +55,22 @@ export function MaintenanceLogDialog({
   onSubmit,
   isPending,
 }: Props) {
+  const [uploadingBefore, setUploadingBefore] = useState(false);
+  const [uploadingAfter, setUploadingAfter] = useState(false);
+  const uploading = uploadingBefore || uploadingAfter;
   const form = useForm<MaintenanceLogFormValues>({
     resolver: zodResolver(maintenanceLogSchema),
     defaultValues: { logType: MaintenanceLogTypeEnum.RemoteSupport },
   });
+
+  // Dialog mount sẵn (open prop điều khiển ẩn/hiện) → clear ảnh mỗi lần mở
+  // để log mới không kế thừa ảnh của log trước.
+  useEffect(() => {
+    if (open) {
+      form.setValue("beforePhotos", []);
+      form.setValue("afterPhotos", []);
+    }
+  }, [open, form]);
 
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit(data);
@@ -231,6 +246,34 @@ export function MaintenanceLogDialog({
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                control={form.control}
+                name="beforePhotos"
+                render={({ field }) => (
+                  <FileUploadField
+                    purpose={FilePurposeEnum.MaintenancePhoto}
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    onUploadingChange={setUploadingBefore}
+                    label="Ảnh trước"
+                  />
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="afterPhotos"
+                render={({ field }) => (
+                  <FileUploadField
+                    purpose={FilePurposeEnum.MaintenancePhoto}
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    onUploadingChange={setUploadingAfter}
+                    label="Ảnh sau"
+                  />
+                )}
+              />
+            </div>
             <DialogFooter>
               <Button
                 type="button"
@@ -240,7 +283,7 @@ export function MaintenanceLogDialog({
               >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending || uploading}>
                 {isPending ? "Đang lưu..." : "Lưu nhật ký"}
               </Button>
             </DialogFooter>
