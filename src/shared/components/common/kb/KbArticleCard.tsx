@@ -32,23 +32,6 @@ export function KbArticleCard({
             <KbStatusBadge status={article.status} />
           </div>
           <p className="truncate text-sm font-medium">{article.title}</p>
-          {article.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {article.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
-              {article.tags.length > 3 && (
-                <span className="text-xs text-muted-foreground">
-                  +{article.tags.length - 3}
-                </span>
-              )}
-            </div>
-          )}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Eye className="size-3" /> {article.viewCount}

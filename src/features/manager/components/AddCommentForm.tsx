@@ -1,4 +1,5 @@
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -11,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import FileUploadField from "@/features/file-storage/components/FileUploadField";
+import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
 import {
   addCommentSchema,
   type AddCommentFormValues,
@@ -23,6 +26,7 @@ interface Props {
 
 export default function AddCommentForm({ ticketId }: Props) {
   const { mutateAsync, isPending } = useAddComment();
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm<AddCommentFormValues>({
     resolver: zodResolver(addCommentSchema),
@@ -54,6 +58,19 @@ export default function AddCommentForm({ ticketId }: Props) {
           )}
         />
 
+        <Controller
+          control={form.control}
+          name="attachments"
+          render={({ field }) => (
+            <FileUploadField
+              purpose={FilePurposeEnum.TicketAttachment}
+              value={field.value ?? []}
+              onChange={field.onChange}
+              onUploadingChange={setUploading}
+            />
+          )}
+        />
+
         <div className="flex items-center justify-between">
           <FormField
             control={form.control}
@@ -74,7 +91,7 @@ export default function AddCommentForm({ ticketId }: Props) {
             )}
           />
 
-          <Button type="submit" size="sm" disabled={isPending}>
+          <Button type="submit" size="sm" disabled={isPending || uploading}>
             {isPending ? "Đang gửi..." : "Gửi"}
           </Button>
         </div>

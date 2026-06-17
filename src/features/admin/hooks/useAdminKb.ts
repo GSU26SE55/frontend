@@ -5,37 +5,58 @@ import { QUERY_KEY, KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   KbArticleListParams,
+  KbCompareParams,
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
+  RejectReviewPayload,
+  RollbackPayload,
 } from "@/shared/types/kb.types";
 
 export function useAdminKbList(params?: KbArticleListParams) {
   return useQuery({
     queryKey: QUERY_KEY.kb.list(params),
-    queryFn: () => adminKbService.getList(params),
-    select: (res) => res.data,
+    queryFn: () => adminKbService.getList(params).then((r) => r.data.data),
   });
 }
 
 export function useAdminKbDetail(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.detail(id),
-    queryFn: () => adminKbService.getDetail(id),
-    select: (res) => res.data,
+    queryFn: () => adminKbService.getDetail(id).then((r) => r.data.data),
     enabled: !!id,
   });
 }
 
+export function useAdminKbVersions(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.versions(id),
+    queryFn: () => adminKbService.getVersions(id).then((r) => r.data.data),
+    enabled: !!id,
+  });
+}
+
+export function useAdminKbCompare(id: string, params: KbCompareParams | null) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.compare(
+      id,
+      params?.fromVersionId,
+      params?.toVersionId,
+    ),
+    queryFn: () => adminKbService.compare(id, params!).then((r) => r.data.data),
+    enabled: !!id && !!params?.fromVersionId,
+  });
+}
+
+// create/update là form → component xử lý lỗi qua try/catch + setError
 export function useCreateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateKbArticlePayload) =>
-      adminKbService.create(payload),
+      adminKbService.create(payload).then((r) => r.data.data),
     onSuccess: () => {
       toast.success("Đã tạo bài viết KB");
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
-    onError: (error) => handleErrorApi({ error }),
   });
 }
 
@@ -48,50 +69,80 @@ export function useUpdateKbArticle() {
     }: {
       id: string;
       payload: UpdateKbArticlePayload;
-    }) => adminKbService.update(id, payload),
+    }) => adminKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (_, { id }) => {
       toast.success("Đã cập nhật bài viết");
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
+  });
+}
+
+export function useCopyKbTemplate() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      adminKbService.copyTemplate(id).then((r) => r.data.data),
     onError: (error) => handleErrorApi({ error }),
   });
 }
 
-export function useDeleteKbArticle() {
+// ── Workflow actions (Manager/Admin) — non-form → onError toast ──
+function useKbWorkflow<TVars>(
+  fn: (vars: TVars) => Promise<unknown>,
+  successMsg: string,
+  idOf: (vars: TVars) => string,
+) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => adminKbService.delete(id),
-    onSuccess: () => {
-      toast.success("Đã xóa bài viết");
+    mutationFn: fn,
+    onSuccess: (_, vars) => {
+      toast.success(successMsg);
+      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(idOf(vars)) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.versions(idOf(vars)) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
     onError: (error) => handleErrorApi({ error }),
   });
+}
+
+export function useApproveKbReview() {
+  return useKbWorkflow(
+    (id: string) => adminKbService.approveReview(id),
+    "Đã phê duyệt và xuất bản",
+    (id) => id,
+  );
+}
+
+export function useRejectKbReview() {
+  return useKbWorkflow(
+    (vars: { id: string; payload: RejectReviewPayload }) =>
+      adminKbService.rejectReview(vars.id, vars.payload),
+    "Đã từ chối thay đổi",
+    (vars) => vars.id,
+  );
 }
 
 export function usePublishKbArticle() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => adminKbService.publish(id),
-    onSuccess: (_, id) => {
-      toast.success("Đã xuất bản bài viết");
-      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
-      qc.invalidateQueries({ queryKey: [KEY.kb] });
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
+  return useKbWorkflow(
+    (id: string) => adminKbService.publish(id),
+    "Đã xuất bản bài viết",
+    (id) => id,
+  );
 }
 
 export function useArchiveKbArticle() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => adminKbService.archive(id),
-    onSuccess: (_, id) => {
-      toast.success("Đã lưu trữ bài viết");
-      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
-      qc.invalidateQueries({ queryKey: [KEY.kb] });
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
+  return useKbWorkflow(
+    (id: string) => adminKbService.archive(id),
+    "Đã lưu trữ bài viết",
+    (id) => id,
+  );
+}
+
+export function useRollbackKbArticle() {
+  return useKbWorkflow(
+    (vars: { id: string; payload: RollbackPayload }) =>
+      adminKbService.rollback(vars.id, vars.payload),
+    "Đã hoàn tác phiên bản",
+    (vars) => vars.id,
+  );
 }

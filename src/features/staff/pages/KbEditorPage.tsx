@@ -15,10 +15,10 @@ import {
   type KbArticleFormValues,
 } from "../schemas/kb-article.schema";
 import {
-  useManagerKbDetail,
-  useManagerCreateKbArticle,
-  useManagerUpdateKbArticle,
-} from "../hooks/useManagerKb";
+  useStaffKbDetail,
+  useStaffKbCreate,
+  useStaffKbUpdate,
+} from "../hooks/useStaffKb";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -28,11 +28,9 @@ export default function KbEditorPage() {
   const navigate = useNavigate();
   const isEdit = !!id;
 
-  const { data: existing, isLoading } = useManagerKbDetail(id ?? "");
-  const { mutateAsync: create, isPending: creating } =
-    useManagerCreateKbArticle();
-  const { mutateAsync: update, isPending: updating } =
-    useManagerUpdateKbArticle();
+  const { data: existing, isLoading } = useStaffKbDetail(id ?? "");
+  const { mutateAsync: create, isPending: creating } = useStaffKbCreate();
+  const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
 
   const {
     register,
@@ -75,11 +73,11 @@ export default function KbEditorPage() {
     try {
       if (isEdit) {
         await update({ id, payload: values });
-        navigate(`/manager/kb/${id}`);
+        navigate(`/staff/kb/${id}`);
       } else {
         const res = await create(values);
-        if (res?.id) navigate(`/manager/kb/${res.id}`);
-        else navigate("/manager/kb");
+        if (res?.id) navigate(`/staff/kb/${res.id}`);
+        else navigate("/staff/kb");
       }
     } catch (error) {
       handleErrorApi({ error });
@@ -101,13 +99,13 @@ export default function KbEditorPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")}
+          onClick={() => navigate(isEdit ? `/staff/kb/${id}` : "/staff/kb")}
         >
           <ArrowLeft className="size-4" />
         </Button>
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Manager &middot; Knowledge Base
+            Staff &middot; Knowledge Base
           </p>
           <h1 className="text-xl font-semibold tracking-tight">
             {isEdit ? "Chỉnh sửa bài viết" : "Tạo bài viết mới"}

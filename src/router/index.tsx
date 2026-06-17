@@ -50,6 +50,7 @@ import ManagerKbDetailPage from "@/features/manager/pages/KbDetailPage";
 import ManagerKbEditorPage from "@/features/manager/pages/KbEditorPage";
 import StaffKbListPage from "@/features/staff/pages/KbListPage";
 import StaffKbDetailPage from "@/features/staff/pages/KbDetailPage";
+import StaffKbEditorPage from "@/features/staff/pages/KbEditorPage";
 import StaffBatteryAlertsPage from "@/features/staff/pages/BatteryAlertsPage";
 import StaffEnvironmentalIncidentsPage from "@/features/staff/pages/EnvironmentalIncidentsPage";
 
@@ -174,7 +175,9 @@ const router = createBrowserRouter([
               { path: "tickets", element: <StaffTicketListPage /> },
               { path: "tickets/:id", element: <StaffTicketDetailPage /> },
               { path: "kb", element: <StaffKbListPage /> },
+              { path: "kb/new", element: <StaffKbEditorPage /> },
               { path: "kb/:id", element: <StaffKbDetailPage /> },
+              { path: "kb/:id/edit", element: <StaffKbEditorPage /> },
               { path: "sla", element: <StaffSlaMonitorPage /> },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },

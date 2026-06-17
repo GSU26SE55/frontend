@@ -9,6 +9,7 @@ const variantMap: Record<
   "secondary" | "default" | "outline"
 > = {
   [KbArticleStatusEnum.Draft]: "secondary",
+  [KbArticleStatusEnum.PendingReview]: "outline",
   [KbArticleStatusEnum.Published]: "default",
   [KbArticleStatusEnum.Archived]: "outline",
 };

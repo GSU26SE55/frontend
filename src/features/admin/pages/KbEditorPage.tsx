@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save } from "lucide-react";
@@ -18,6 +19,8 @@ import {
   useCreateKbArticle,
   useUpdateKbArticle,
 } from "../hooks/useAdminKb";
+import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
+import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
 
 export default function KbEditorPage() {
@@ -33,17 +36,20 @@ export default function KbEditorPage() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<KbArticleFormInput, unknown, KbArticleFormValues>({
     resolver: zodResolver(kbArticleSchema),
     defaultValues: {
-      category: 0,
+      category: TicketCategoryEnum.Charging,
       title: "",
       symptoms: "",
       diagnosisSteps: "",
       solutionSteps: "",
-      recommendedParts: "",
+      recommendedParts: [],
       tags: [],
+      isInternalOnly: false,
+      changeDescription: "",
     },
   });
 
@@ -55,8 +61,10 @@ export default function KbEditorPage() {
         symptoms: existing.symptoms,
         diagnosisSteps: existing.diagnosisSteps,
         solutionSteps: existing.solutionSteps,
-        recommendedParts: existing.recommendedParts ?? "",
+        recommendedParts: existing.recommendedParts ?? [],
         tags: existing.tags,
+        isInternalOnly: existing.isInternalOnly,
+        changeDescription: "",
       });
     }
   }, [existing, reset]);
@@ -68,7 +76,7 @@ export default function KbEditorPage() {
         navigate(`/admin/kb/${id}`);
       } else {
         const res = await create(values);
-        if (res.data?.id) navigate(`/admin/kb/${res.data.id}`);
+        if (res?.id) navigate(`/admin/kb/${res.id}`);
         else navigate("/admin/kb");
       }
     } catch (error) {
@@ -123,17 +131,36 @@ export default function KbEditorPage() {
 
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">Danh mục</label>
-              <Input
-                type="number"
-                {...register("category", { valueAsNumber: true })}
-                placeholder="Mã danh mục (số)"
-              />
+              <select
+                {...register("category")}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {KB_CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
               {errors.category && (
                 <p className="text-xs text-destructive">
                   {errors.category.message}
                 </p>
               )}
             </div>
+
+            <Controller
+              control={control}
+              name="isInternalOnly"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                  />
+                  Chỉ nội bộ (ẩn với khách hàng)
+                </label>
+              )}
+            />
           </CardContent>
         </Card>
 
@@ -184,16 +211,71 @@ export default function KbEditorPage() {
               )}
             </div>
 
-            <div className="grid gap-1.5">
-              <label className="text-sm font-medium">
-                Linh kiện khuyến nghị
-              </label>
-              <Textarea
-                {...register("recommendedParts")}
-                rows={3}
-                placeholder="Danh sách linh kiện (nếu có)..."
-              />
-            </div>
+            <Controller
+              control={control}
+              name="recommendedParts"
+              render={({ field }) => (
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium">
+                    Linh kiện khuyến nghị (mỗi dòng 1 linh kiện)
+                  </label>
+                  <Textarea
+                    rows={3}
+                    placeholder={"Cáp sạc OEM\nCảm biến nhiệt"}
+                    value={(field.value ?? []).join("\n")}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value
+                          .split("\n")
+                          .map((s) => s.trim())
+                          .filter(Boolean),
+                      )
+                    }
+                  />
+                </div>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="tags"
+              render={({ field }) => (
+                <div className="grid gap-1.5">
+                  <label className="text-sm font-medium">
+                    Thẻ (cách nhau bằng dấu phẩy)
+                  </label>
+                  <Input
+                    placeholder="quá nhiệt, sạc, BMS"
+                    value={(field.value ?? []).join(", ")}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean),
+                      )
+                    }
+                  />
+                  {errors.tags && (
+                    <p className="text-xs text-destructive">
+                      {errors.tags.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            />
+
+            {isEdit && (
+              <div className="grid gap-1.5">
+                <label className="text-sm font-medium">
+                  Mô tả thay đổi (tùy chọn)
+                </label>
+                <Input
+                  {...register("changeDescription")}
+                  placeholder="Lý do/nội dung chỉnh sửa..."
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 

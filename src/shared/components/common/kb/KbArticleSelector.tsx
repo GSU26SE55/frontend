@@ -13,24 +13,26 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Search, X } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
-import { MOCK_KB_SUMMARIES } from "@/shared/mocks/kb.mock";
 
 interface KbArticleSelectorProps {
   value: string[];
   onChange: (ids: string[]) => void;
+  /** Danh sách bài KB để chọn (parent fetch và truyền vào) */
+  options?: KbArticleSummaryDTO[];
   disabled?: boolean;
 }
 
 export function KbArticleSelector({
   value,
   onChange,
+  options = [],
   disabled,
 }: KbArticleSelectorProps) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
 
   const articles: KbArticleSummaryDTO[] = useMemo(() => {
-    const published = MOCK_KB_SUMMARIES.filter(
+    const published = options.filter(
       (a) => a.status === KbArticleStatusEnum.Published,
     );
     if (!keyword) return published;
@@ -39,7 +41,7 @@ export function KbArticleSelector({
       (a) =>
         a.title.toLowerCase().includes(kw) || a.code.toLowerCase().includes(kw),
     );
-  }, [keyword]);
+  }, [keyword, options]);
 
   const toggle = useCallback(
     (id: string) => {

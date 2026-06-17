@@ -1,4 +1,6 @@
-// TODO: Replace mock with real API when BE is ready
+import axiosInstance from "@/shared/lib/axios";
+import { ENDPOINTS } from "@/shared/utils/endpoints";
+import { KbArticleStatusCode } from "@/shared/enums/kb.enum";
 import type {
   CommonResponse,
   PaginationResponse,
@@ -6,67 +8,73 @@ import type {
 import type {
   KbArticleDTO,
   KbArticleSummaryDTO,
+  KbArticleVersionDTO,
+  KbArticleDiffDTO,
+  KbArticleTemplateDTO,
+  KbArticleActionDTO,
   KbArticleListParams,
+  KbCompareParams,
+  CreateKbArticlePayload,
+  UpdateKbArticlePayload,
 } from "@/shared/types/kb.types";
-import { MOCK_KB_ARTICLES } from "@/shared/mocks/kb.mock";
 
-function delay<T>(data: T, ms = 300): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(data), ms));
+// Map params FE → query BE (Status enum string → int)
+function toListQuery(params?: KbArticleListParams) {
+  if (!params) return undefined;
+  return {
+    PageNumber: params.pageNumber,
+    PageSize: params.pageSize,
+    Q: params.q,
+    Category: params.category,
+    Status:
+      params.status !== undefined
+        ? KbArticleStatusCode[params.status]
+        : undefined,
+    Tag: params.tag,
+  };
 }
 
-function ok<T>(data: T): CommonResponse<T> {
-  return { isSuccess: true, data, listErrors: [] };
-}
-
+// Staff: read + authoring (KHÔNG có workflow approve/publish/archive/rollback)
 export const staffKbService = {
-  getList: (params?: KbArticleListParams) => {
-    let items = MOCK_KB_ARTICLES.map(
-      ({ id, code, title, category, status, tags, viewCount, helpfulCount }) =>
-        ({
-          id,
-          code,
-          title,
-          category,
-          status,
-          tags,
-          viewCount,
-          helpfulCount,
-        }) as KbArticleSummaryDTO,
-    );
-
-    if (params?.status !== undefined)
-      items = items.filter((a) => a.status === params.status);
-    if (params?.keyword) {
-      const kw = params.keyword.toLowerCase();
-      items = items.filter(
-        (a) =>
-          a.title.toLowerCase().includes(kw) ||
-          a.code.toLowerCase().includes(kw),
-      );
-    }
-
-    const pageNumber = params?.pageNumber ?? 1;
-    const pageSize = params?.pageSize ?? 10;
-    const totalItems = items.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-    const start = (pageNumber - 1) * pageSize;
-    const paged = items.slice(start, start + pageSize);
-
-    return delay(
-      ok<PaginationResponse<KbArticleSummaryDTO>>({
-        items: paged,
-        totalItems,
-        pageNumber,
-        pageSize,
-        totalPages,
-        hasNextPage: pageNumber < totalPages,
-        hasPreviousPage: pageNumber > 1,
-      }),
-    );
-  },
-
-  getDetail: (id: string) => {
-    const article = MOCK_KB_ARTICLES.find((a) => a.id === id) ?? null;
-    return delay(ok(article as KbArticleDTO));
-  },
+  getList: (params?: KbArticleListParams) =>
+    axiosInstance.get<CommonResponse<PaginationResponse<KbArticleSummaryDTO>>>(
+      ENDPOINTS.KNOWLEDGE_BASE.LIST,
+      { params: toListQuery(params) },
+    ),
+  getDetail: (id: string) =>
+    axiosInstance.get<CommonResponse<KbArticleDTO>>(
+      ENDPOINTS.KNOWLEDGE_BASE.DETAIL(id),
+    ),
+  create: (payload: CreateKbArticlePayload) =>
+    axiosInstance.post<CommonResponse<KbArticleActionDTO>>(
+      ENDPOINTS.KB_INTERNAL.CREATE,
+      payload,
+    ),
+  update: (id: string, payload: UpdateKbArticlePayload) =>
+    axiosInstance.put<CommonResponse<KbArticleDTO>>(
+      ENDPOINTS.KB_INTERNAL.UPDATE(id),
+      payload,
+    ),
+  getVersions: (id: string) =>
+    axiosInstance.get<CommonResponse<KbArticleVersionDTO[]>>(
+      ENDPOINTS.KB_INTERNAL.VERSIONS(id),
+    ),
+  getVersionById: (id: string, versionId: string) =>
+    axiosInstance.get<CommonResponse<KbArticleVersionDTO>>(
+      ENDPOINTS.KB_INTERNAL.VERSION_DETAIL(id, versionId),
+    ),
+  compare: (id: string, params: KbCompareParams) =>
+    axiosInstance.get<CommonResponse<KbArticleDiffDTO>>(
+      ENDPOINTS.KB_INTERNAL.COMPARE(id),
+      {
+        params: {
+          FromVersionId: params.fromVersionId,
+          ToVersionId: params.toVersionId,
+        },
+      },
+    ),
+  copyTemplate: (id: string) =>
+    axiosInstance.get<CommonResponse<KbArticleTemplateDTO>>(
+      ENDPOINTS.KB_INTERNAL.COPY_TEMPLATE(id),
+    ),
 };

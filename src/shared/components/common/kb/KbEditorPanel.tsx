@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Save } from "lucide-react";
@@ -7,38 +7,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
 import type {
   KbArticleDTO,
   UpdateKbArticlePayload,
 } from "@/shared/types/kb.types";
 
-// ── Schema ────────────────────────────────────────────────────────────────────
+// ── Schema (recommendedParts dạng text, mỗi dòng 1 linh kiện → array khi submit) ──
 const schema = z.object({
-  category: z.number().min(1, "Chọn danh mục"),
+  category: z.nativeEnum(TicketCategoryEnum),
   title: z
     .string()
     .min(1, "Tiêu đề không được trống")
     .max(200, "Tối đa 200 ký tự"),
-  symptoms: z.string().min(1, "Không được trống"),
-  diagnosisSteps: z.string().min(1, "Không được trống"),
-  solutionSteps: z.string().min(1, "Không được trống"),
-  recommendedParts: z.string().optional(),
-  tags: z.array(z.string()),
+  symptoms: z
+    .string()
+    .min(1, "Không được trống")
+    .max(2000, "Tối đa 2000 ký tự"),
+  diagnosisSteps: z
+    .string()
+    .min(1, "Không được trống")
+    .max(4000, "Tối đa 4000 ký tự"),
+  solutionSteps: z
+    .string()
+    .min(1, "Không được trống")
+    .max(4000, "Tối đa 4000 ký tự"),
+  recommendedPartsText: z.string().optional(),
+  tagsText: z.string().optional(),
+  isInternalOnly: z.boolean(),
+  changeDescription: z.string().optional(),
 });
 
 type FormValues = z.output<typeof schema>;
 
-// ── Category options ─────────────────────────────────────────────────────────
-const CATEGORIES = [
-  { value: 1, label: "Pin lỗi" },
-  { value: 2, label: "Kết nối mạng" },
-  { value: 3, label: "Phần cứng" },
-  { value: 4, label: "Phần mềm" },
-  { value: 5, label: "Cảnh báo môi trường" },
-  { value: 6, label: "Bảo trì định kỳ" },
-  { value: 7, label: "Khác" },
-];
+// text (mỗi dòng / phẩy) → array
+function toList(text?: string): string[] {
+  if (!text) return [];
+  return text
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 // ── Field wrapper ─────────────────────────────────────────────────────────────
 function Field({
@@ -78,40 +90,47 @@ export function KbEditorPanel({
   onSave,
   isPending,
 }: KbEditorPanelProps) {
+  const defaults = (a: KbArticleDTO) => ({
+    category: a.category,
+    title: a.title,
+    symptoms: a.symptoms,
+    diagnosisSteps: a.diagnosisSteps,
+    solutionSteps: a.solutionSteps,
+    recommendedPartsText: (a.recommendedParts ?? []).join("\n"),
+    tagsText: (a.tags ?? []).join(", "),
+    isInternalOnly: a.isInternalOnly,
+    changeDescription: "",
+  });
+
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      category: article.category,
-      title: article.title,
-      symptoms: article.symptoms,
-      diagnosisSteps: article.diagnosisSteps,
-      solutionSteps: article.solutionSteps,
-      recommendedParts: article.recommendedParts ?? "",
-      tags: article.tags ?? [],
-    },
+    defaultValues: defaults(article),
   });
 
   // Sync if article changes
   useEffect(() => {
-    reset({
-      category: article.category,
-      title: article.title,
-      symptoms: article.symptoms,
-      diagnosisSteps: article.diagnosisSteps,
-      solutionSteps: article.solutionSteps,
-      recommendedParts: article.recommendedParts ?? "",
-      tags: article.tags ?? [],
-    });
+    reset(defaults(article));
   }, [article.id, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await onSave(values);
+      await onSave({
+        category: values.category,
+        title: values.title,
+        symptoms: values.symptoms,
+        diagnosisSteps: values.diagnosisSteps,
+        solutionSteps: values.solutionSteps,
+        recommendedParts: toList(values.recommendedPartsText),
+        tags: toList(values.tagsText),
+        isInternalOnly: values.isInternalOnly,
+        changeDescription: values.changeDescription || undefined,
+      });
     } catch (error) {
       handleErrorApi({ error });
     }
@@ -144,7 +163,6 @@ export function KbEditorPanel({
         className="flex-1 overflow-y-auto"
       >
         <div className="px-5 py-4 space-y-4">
-          {/* General info */}
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             Thông tin chung
           </p>
@@ -159,19 +177,30 @@ export function KbEditorPanel({
 
           <Field label="Danh mục" required error={errors.category?.message}>
             <select
-              {...register("category", { valueAsNumber: true })}
+              {...register("category")}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <option value={0} disabled>
-                Chọn danh mục
-              </option>
-              {CATEGORIES.map((c) => (
+              {KB_CATEGORY_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
               ))}
             </select>
           </Field>
+
+          <Controller
+            control={control}
+            name="isInternalOnly"
+            render={({ field }) => (
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(v === true)}
+                />
+                Chỉ nội bộ (ẩn với khách hàng)
+              </label>
+            )}
+          />
         </div>
 
         <Separator />
@@ -216,12 +245,32 @@ export function KbEditorPanel({
             />
           </Field>
 
-          <Field label="Linh kiện khuyến nghị">
+          <Field label="Linh kiện khuyến nghị (mỗi dòng 1 linh kiện)">
             <Textarea
-              {...register("recommendedParts")}
+              {...register("recommendedPartsText")}
               rows={3}
-              placeholder="Danh sách linh kiện (nếu có)..."
+              placeholder={"Cáp sạc OEM\nCảm biến nhiệt"}
               className="text-sm resize-y"
+            />
+          </Field>
+
+          <Field label="Thẻ (cách nhau bằng dấu phẩy)">
+            <Input
+              {...register("tagsText")}
+              placeholder="quá nhiệt, sạc, BMS"
+              className="text-sm"
+            />
+          </Field>
+        </div>
+
+        <Separator />
+
+        <div className="px-5 py-4 space-y-4">
+          <Field label="Mô tả thay đổi (tùy chọn)">
+            <Input
+              {...register("changeDescription")}
+              placeholder="Lý do/nội dung chỉnh sửa..."
+              className="text-sm"
             />
           </Field>
         </div>

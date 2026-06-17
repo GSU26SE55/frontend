@@ -5,37 +5,62 @@ import { QUERY_KEY, KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   KbArticleListParams,
+  KbCompareParams,
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
+  RejectReviewPayload,
+  RollbackPayload,
 } from "@/shared/types/kb.types";
 
 export function useManagerKbList(params?: KbArticleListParams) {
   return useQuery({
     queryKey: QUERY_KEY.kb.list(params),
-    queryFn: () => managerKbService.getList(params),
-    select: (res) => res.data,
+    queryFn: () => managerKbService.getList(params).then((r) => r.data.data),
   });
 }
 
 export function useManagerKbDetail(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.detail(id),
-    queryFn: () => managerKbService.getDetail(id),
-    select: (res) => res.data,
+    queryFn: () => managerKbService.getDetail(id).then((r) => r.data.data),
     enabled: !!id,
   });
 }
 
+export function useManagerKbVersions(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.versions(id),
+    queryFn: () => managerKbService.getVersions(id).then((r) => r.data.data),
+    enabled: !!id,
+  });
+}
+
+export function useManagerKbCompare(
+  id: string,
+  params: KbCompareParams | null,
+) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.compare(
+      id,
+      params?.fromVersionId,
+      params?.toVersionId,
+    ),
+    queryFn: () =>
+      managerKbService.compare(id, params!).then((r) => r.data.data),
+    enabled: !!id && !!params?.fromVersionId,
+  });
+}
+
+// create/update là form → component xử lý lỗi qua try/catch + setError
 export function useManagerCreateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateKbArticlePayload) =>
-      managerKbService.create(payload),
+      managerKbService.create(payload).then((r) => r.data.data),
     onSuccess: () => {
       toast.success("Đã tạo bài viết KB");
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
-    onError: (error) => handleErrorApi({ error }),
   });
 }
 
@@ -48,50 +73,80 @@ export function useManagerUpdateKbArticle() {
     }: {
       id: string;
       payload: UpdateKbArticlePayload;
-    }) => managerKbService.update(id, payload),
+    }) => managerKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (_, { id }) => {
       toast.success("Đã cập nhật bài viết");
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
+  });
+}
+
+export function useManagerCopyKbTemplate() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      managerKbService.copyTemplate(id).then((r) => r.data.data),
     onError: (error) => handleErrorApi({ error }),
   });
 }
 
-export function useManagerDeleteKbArticle() {
+// ── Workflow actions (Manager/Admin) — non-form → onError toast ──
+function useManagerKbWorkflow<TVars>(
+  fn: (vars: TVars) => Promise<unknown>,
+  successMsg: string,
+  idOf: (vars: TVars) => string,
+) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => managerKbService.delete(id),
-    onSuccess: () => {
-      toast.success("Đã xóa bài viết");
+    mutationFn: fn,
+    onSuccess: (_, vars) => {
+      toast.success(successMsg);
+      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(idOf(vars)) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.versions(idOf(vars)) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
     onError: (error) => handleErrorApi({ error }),
   });
+}
+
+export function useManagerApproveKbReview() {
+  return useManagerKbWorkflow(
+    (id: string) => managerKbService.approveReview(id),
+    "Đã phê duyệt và xuất bản",
+    (id) => id,
+  );
+}
+
+export function useManagerRejectKbReview() {
+  return useManagerKbWorkflow(
+    (vars: { id: string; payload: RejectReviewPayload }) =>
+      managerKbService.rejectReview(vars.id, vars.payload),
+    "Đã từ chối thay đổi",
+    (vars) => vars.id,
+  );
 }
 
 export function useManagerPublishKbArticle() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => managerKbService.publish(id),
-    onSuccess: (_, id) => {
-      toast.success("Đã xuất bản bài viết");
-      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
-      qc.invalidateQueries({ queryKey: [KEY.kb] });
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
+  return useManagerKbWorkflow(
+    (id: string) => managerKbService.publish(id),
+    "Đã xuất bản bài viết",
+    (id) => id,
+  );
 }
 
 export function useManagerArchiveKbArticle() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => managerKbService.archive(id),
-    onSuccess: (_, id) => {
-      toast.success("Đã lưu trữ bài viết");
-      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
-      qc.invalidateQueries({ queryKey: [KEY.kb] });
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
+  return useManagerKbWorkflow(
+    (id: string) => managerKbService.archive(id),
+    "Đã lưu trữ bài viết",
+    (id) => id,
+  );
+}
+
+export function useManagerRollbackKbArticle() {
+  return useManagerKbWorkflow(
+    (vars: { id: string; payload: RollbackPayload }) =>
+      managerKbService.rollback(vars.id, vars.payload),
+    "Đã hoàn tác phiên bản",
+    (vars) => vars.id,
+  );
 }

@@ -323,6 +323,16 @@ export default function TicketDetailPage() {
                         </p>
                       </div>
                       <p className="text-sm whitespace-pre-wrap">{c.body}</p>
+                      {c.attachmentFileIds &&
+                        c.attachmentFileIds.length > 0 && (
+                          <div className="mt-2">
+                            <TicketAttachments
+                              fileIds={c.attachmentFileIds}
+                              label={null}
+                              compact
+                            />
+                          </div>
+                        )}
                     </div>
                   ))}
                 </div>

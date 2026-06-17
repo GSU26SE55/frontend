@@ -229,21 +229,40 @@ export const ENDPOINTS = {
     REVOKE_ALL: "/api/sessions/revoke-all",
   },
 
-  KB_ARTICLES: {
-    LIST: "/api/kb-articles",
-    DETAIL: (id: string) => `/api/kb-articles/${id}`,
-    CREATE: "/api/kb-articles",
-    UPDATE: (id: string) => `/api/kb-articles/${id}`,
-    DELETE: (id: string) => `/api/kb-articles/${id}`,
-    PUBLISH: (id: string) => `/api/kb-articles/${id}/publish`,
-    ARCHIVE: (id: string) => `/api/kb-articles/${id}/archive`,
-    SEARCH: "/api/kb-articles/search",
+  // KB public/read (mọi role đã đăng nhập)
+  KNOWLEDGE_BASE: {
+    LIST: "/api/knowledge-base",
+    DETAIL: (id: string) => `/api/knowledge-base/${id}`,
   },
 
-  TICKET_KB_REFS: {
-    LIST: (ticketId: string) => `/api/tickets/${ticketId}/kb-references`,
-    ADD: (ticketId: string) => `/api/tickets/${ticketId}/kb-references`,
-    REMOVE: (ticketId: string, refId: string) =>
-      `/api/tickets/${ticketId}/kb-references/${refId}`,
+  // KB nội bộ — authoring (Staff/Manager/Admin)
+  KB_INTERNAL: {
+    CREATE: "/api/internal/knowledge-base",
+    UPDATE: (id: string) => `/api/internal/knowledge-base/${id}`,
+    VERSIONS: (id: string) => `/api/internal/knowledge-base/${id}/versions`,
+    VERSION_DETAIL: (id: string, versionId: string) =>
+      `/api/internal/knowledge-base/${id}/versions/${versionId}`,
+    COMPARE: (id: string) => `/api/internal/knowledge-base/${id}/compare`,
+    COPY_TEMPLATE: (id: string) =>
+      `/api/internal/knowledge-base/${id}/copy-template`,
+  },
+
+  // KB workflow — duyệt/xuất bản (Manager/Admin)
+  KB_ADMIN: {
+    APPROVE_REVIEW: (id: string) =>
+      `/api/admin/knowledge-base/${id}/approve-review`,
+    REJECT_REVIEW: (id: string) =>
+      `/api/admin/knowledge-base/${id}/reject-review`,
+    PUBLISH: (id: string) => `/api/admin/knowledge-base/${id}/publish`,
+    ARCHIVE: (id: string) => `/api/admin/knowledge-base/${id}/archive`,
+    ROLLBACK: (id: string) => `/api/admin/knowledge-base/${id}/rollback`,
+  },
+
+  // Gán bài KB vào Ticket (Staff/Manager/Admin)
+  KB_REFERENCES: {
+    LIST: "/api/knowledge-base/references", // GET ?ticketId=
+    ADD: "/api/knowledge-base/references", // POST
+    REMOVE: (referenceId: string) =>
+      `/api/knowledge-base/references/${referenceId}`,
   },
 } as const;

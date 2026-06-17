@@ -78,8 +78,8 @@ export const QUERY_KEY = {
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,
-    presignedUrl: (id: string) => [KEY.files, "presigned-url", id] as const,
-    blob: (id: string) => [KEY.files, "blob", id] as const,
+    presignedUrl: (id: string, expiresInMinutes?: number) =>
+      [KEY.files, "presigned-url", id, expiresInMinutes] as const,
   },
   admin: {
     accounts: {
@@ -164,7 +164,9 @@ export const QUERY_KEY = {
   kb: {
     list: (params?: object) => [KEY.kb, "list", params] as const,
     detail: (id: string) => [KEY.kb, "detail", id] as const,
-    search: (query?: string) => [KEY.kb, "search", query] as const,
+    versions: (id: string) => [KEY.kb, "versions", id] as const,
+    compare: (id: string, fromVersionId?: string, toVersionId?: string) =>
+      [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
   },
   ticketKbRefs: {
     list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,
