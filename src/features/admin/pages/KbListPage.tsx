@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search } from "lucide-react";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import {
@@ -74,9 +76,12 @@ export default function KbListPage() {
             lý kho tri thức
           </p>
         </div>
-        <Button size="sm" onClick={() => navigate("/admin/kb/new")}>
-          <Plus className="size-3.5" /> Tạo bài viết
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.kb]} />
+          <Button size="sm" onClick={() => navigate("/admin/kb/new")}>
+            <Plus className="size-3.5" /> Tạo bài viết
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

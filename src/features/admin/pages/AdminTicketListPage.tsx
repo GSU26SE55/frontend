@@ -22,6 +22,8 @@ import { useAdminTickets } from "../hooks/useAdminTickets";
 import AdminTicketTable from "../components/AdminTicketTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const PAGE_SIZE = 10;
 
@@ -104,6 +106,7 @@ export default function AdminTicketListPage() {
             dõi toàn bộ ticket hệ thống
           </p>
         </div>
+        <RefreshButton queryKeys={[KEY.admin.tickets]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin } from "lucide-react";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,14 +80,17 @@ export default function ManagerSiteDetailPage() {
     <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
       {/* Back + header */}
       <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-2 mb-2"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="size-3.5" /> Quay lai
-        </Button>
+        <div className="flex items-center justify-between mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="size-3.5" /> Quay lai
+          </Button>
+          <RefreshButton queryKeys={[KEY.sites]} size="icon" />
+        </div>
         <h1 className="text-2xl font-semibold tracking-tight">{site.name}</h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
           {site.address && <span>{site.address}</span>}

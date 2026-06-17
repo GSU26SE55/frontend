@@ -18,6 +18,8 @@ import {
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Bảo trì",
@@ -67,6 +69,7 @@ export default function TicketQueuePage() {
             thái Open, P1 ưu tiên trước
           </p>
         </div>
+        <RefreshButton queryKeys={[KEY.manager.tickets]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

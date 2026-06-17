@@ -19,6 +19,8 @@ import {
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_LABELS: Record<string, string> = {
   New: "Mới",
@@ -91,6 +93,7 @@ export default function TicketListPage() {
             dõi và điều phối ticket
           </p>
         </div>
+        <RefreshButton queryKeys={[KEY.manager.tickets]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

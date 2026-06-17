@@ -27,6 +27,8 @@ import TicketStatusBadge from "../components/TicketStatusBadge";
 import TicketPriorityBadge from "../components/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Charging: "Lỗi sạc",
@@ -140,15 +142,21 @@ export default function AdminTicketDetailPage() {
           </div>
         </div>
 
-        <Button
-          variant="destructive"
-          size="sm"
-          disabled={ticket.isIncident || isPending}
-          onClick={() => setConfirmOpen(true)}
-        >
-          <AlertTriangle size={13} />
-          {ticket.isIncident ? "Đã là Incident" : "Declare Incident"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <RefreshButton
+            queryKeys={[KEY.admin.tickets, KEY.tickets]}
+            size="icon"
+          />
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={ticket.isIncident || isPending}
+            onClick={() => setConfirmOpen(true)}
+          >
+            <AlertTriangle size={13} />
+            {ticket.isIncident ? "Đã là Incident" : "Declare Incident"}
+          </Button>
+        </div>
       </div>
 
       {/* ── Main content ────────────────────────────────────────────────── */}

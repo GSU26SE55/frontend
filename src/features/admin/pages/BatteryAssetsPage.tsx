@@ -23,6 +23,8 @@ import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -94,9 +96,12 @@ export default function BatteryAssetsPage() {
             {isLoading ? "..." : totalItems} pin &mdash; quản lý tài sản pin
           </p>
         </div>
-        <Button size="sm" onClick={handleCreate}>
-          <Plus className="size-3.5" /> Tạo mới
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.batteryAssets]} />
+          <Button size="sm" onClick={handleCreate}>
+            <Plus className="size-3.5" /> Tạo mới
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

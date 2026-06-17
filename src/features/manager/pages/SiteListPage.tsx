@@ -1,4 +1,6 @@
 import { MapPin, Search } from "lucide-react";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,6 +47,7 @@ export default function ManagerSiteListPage() {
             hàng
           </p>
         </div>
+        <RefreshButton queryKeys={[KEY.sites]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

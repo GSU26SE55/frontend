@@ -26,6 +26,8 @@ import type { SiteDto } from "@/shared/types/site.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const DEFAULTS = {
   keyword: "",
@@ -96,9 +98,12 @@ export default function SiteListPage() {
             {isLoading ? "..." : totalItems} site.
           </p>
         </div>
-        <Button size="sm" onClick={handleCreate}>
-          <Plus className="size-3.5" /> Tạo site
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.sites]} />
+          <Button size="sm" onClick={handleCreate}>
+            <Plus className="size-3.5" /> Tạo site
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

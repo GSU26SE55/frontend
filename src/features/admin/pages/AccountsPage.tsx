@@ -57,6 +57,8 @@ import AccountDetailDrawer from "@/features/admin/components/AccountDetailDrawer
 import EditStaffProfileDialog from "@/features/admin/components/EditStaffProfileDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -171,6 +173,7 @@ export default function AccountsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.admin.accounts]} />
           <Button
             size="sm"
             variant="outline"
@@ -285,14 +288,16 @@ export default function AccountsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                          >
-                            <EllipsisVertical className="size-4" />
-                          </Button>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7"
+                            />
+                          }
+                        >
+                          <EllipsisVertical className="size-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuItem

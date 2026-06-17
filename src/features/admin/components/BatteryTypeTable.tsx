@@ -88,10 +88,12 @@ export default function BatteryTypeTable({
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-7">
-                    <EllipsisVertical className="size-4" />
-                  </Button>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="ghost" size="icon" className="size-7" />
+                  }
+                >
+                  <EllipsisVertical className="size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   {showRestore ? (
