@@ -12,13 +12,13 @@ import type { KbArticleDTO, UpdateKbArticlePayload } from "@/shared/types/kb.typ
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const schema = z.object({
-  category: z.coerce.number().min(1, "Chọn danh mục"),
+  category: z.number().min(1, "Chọn danh mục"),
   title: z.string().min(1, "Tiêu đề không được trống").max(200, "Tối đa 200 ký tự"),
   symptoms: z.string().min(1, "Không được trống"),
   diagnosisSteps: z.string().min(1, "Không được trống"),
   solutionSteps: z.string().min(1, "Không được trống"),
   recommendedParts: z.string().optional(),
-  tags: z.array(z.string()).optional().default([]),
+  tags: z.array(z.string()),
 });
 
 type FormValues = z.output<typeof schema>;
