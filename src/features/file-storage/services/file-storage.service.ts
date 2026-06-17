@@ -43,6 +43,7 @@ export const fileStorageService = {
       responseType: "blob",
     }),
 
+  // Backend trả 204 No Content (body rỗng) khi thành công — không bọc CommonResponse.
   deleteFile: (id: string) =>
-    axiosInstance.delete<CommonResponse<null>>(ENDPOINTS.FILES.DELETE(id)),
+    axiosInstance.delete<void>(ENDPOINTS.FILES.DELETE(id)),
 };

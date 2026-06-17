@@ -5,7 +5,7 @@ import type { PresignedUrlOptions } from "@/features/file-storage/types/file-sto
 
 export function usePresignedUrl(fileId: string, options?: PresignedUrlOptions) {
   return useQuery({
-    queryKey: QUERY_KEY.files.presignedUrl(fileId),
+    queryKey: QUERY_KEY.files.presignedUrl(fileId, options?.expiresInMinutes),
     queryFn: () =>
       fileStorageService
         .getPresignedUrl(fileId, options)

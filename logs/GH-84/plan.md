@@ -1,7 +1,7 @@
 # Plan — GH-84: [FE] Integrate Knowledge Base (Wiki) API
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-17
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-17
 - **Issue:** #84 — https://github.com/GSU26SE55/frontend/issues/84
 - **Sprint:** Sprint 3 (due 2026-06-27)
 - **Dev:** Trần Minh Trí (@Shu1237)

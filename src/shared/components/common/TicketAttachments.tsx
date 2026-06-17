@@ -5,28 +5,38 @@ import AuthImage from "@/shared/components/common/AuthImage";
 interface TicketAttachmentsProps {
   // BE trả về mảng FileId (string[]) — không kèm metadata (fileName/contentType).
   fileIds?: string[] | null;
+  // Nhãn hiển thị phía trên lưới ảnh; truyền null/"" để ẩn nhãn. Mặc định "Ảnh đính kèm".
+  label?: string | null;
+  // Thumbnail nhỏ hơn cho ngữ cảnh inline (comment, nhật ký bảo trì).
+  compact?: boolean;
 }
 
 /**
- * Hiển thị ảnh đính kèm của ticket (do Customer cung cấp khi tạo ticket).
+ * Hiển thị ảnh đính kèm (ticket attachment, ảnh trong comment, ảnh bảo trì...).
  * Ảnh tải qua AuthImage (kèm Bearer). BE chỉ trả FileId nên hiển thị tất cả dạng ảnh;
  * AuthImage tự xử lý trường hợp file không phải ảnh (hiển thị fallback của nó).
  */
-export default function TicketAttachments({ fileIds }: TicketAttachmentsProps) {
+export default function TicketAttachments({
+  fileIds,
+  label = "Ảnh đính kèm",
+  compact = false,
+}: TicketAttachmentsProps) {
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
 
   if (!fileIds || fileIds.length === 0) return null;
 
+  const thumbCls = compact ? "h-16 w-16" : "h-24 w-24";
+
   return (
     <div>
-      <p className="text-muted-foreground text-sm mb-2">Ảnh đính kèm</p>
+      {label && <p className="text-muted-foreground text-sm mb-2">{label}</p>}
       <div className="flex flex-wrap gap-2">
         {fileIds.map((fileId) => (
           <button
             key={fileId}
             type="button"
             onClick={() => setPreviewFileId(fileId)}
-            className="h-24 w-24 overflow-hidden rounded-md border hover:opacity-80 transition-opacity"
+            className={`${thumbCls} overflow-hidden rounded-md border hover:opacity-80 transition-opacity`}
           >
             <AuthImage
               fileId={fileId}

@@ -30,6 +30,7 @@ import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
 import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
+import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -310,6 +311,16 @@ export default function TicketDetailPage() {
                       <p className="text-sm whitespace-pre-wrap">
                         {comment.body}
                       </p>
+                      {comment.attachmentFileIds &&
+                        comment.attachmentFileIds.length > 0 && (
+                          <div className="mt-2">
+                            <TicketAttachments
+                              fileIds={comment.attachmentFileIds}
+                              label={null}
+                              compact
+                            />
+                          </div>
+                        )}
                     </div>
                   ))}
                 </div>
@@ -367,6 +378,30 @@ export default function TicketDetailPage() {
                           Thời lượng: {log.durationMinutes} phút
                         </p>
                       )}
+                      {log.attachmentFileIds &&
+                        log.attachmentFileIds.length > 0 && (
+                          <TicketAttachments
+                            fileIds={log.attachmentFileIds}
+                            label="Ảnh đính kèm"
+                            compact
+                          />
+                        )}
+                      {log.beforePhotosFileIds &&
+                        log.beforePhotosFileIds.length > 0 && (
+                          <TicketAttachments
+                            fileIds={log.beforePhotosFileIds}
+                            label="Ảnh trước"
+                            compact
+                          />
+                        )}
+                      {log.afterPhotosFileIds &&
+                        log.afterPhotosFileIds.length > 0 && (
+                          <TicketAttachments
+                            fileIds={log.afterPhotosFileIds}
+                            label="Ảnh sau"
+                            compact
+                          />
+                        )}
                     </div>
                   ))}
                 </div>
@@ -432,6 +467,20 @@ export default function TicketDetailPage() {
               <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {ticket.description}
               </p>
+            </div>
+          )}
+
+          {/* Attachments (ảnh khách đính kèm khi tạo ticket) */}
+          {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Ảnh đính kèm
+              </p>
+              <TicketAttachments
+                fileIds={ticket.attachmentFileIds}
+                label={null}
+                compact
+              />
             </div>
           )}
 
