@@ -24,18 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
+import { KbCategoryLabel } from "@/shared/enums/kb.enum";
 import type { KbArticleDTO } from "@/shared/types/kb.types";
-
-// ── Category labels ──────────────────────────────────────────────────────────
-const CATEGORY_LABEL: Record<number, string> = {
-  1: "Pin lỗi",
-  2: "Kết nối mạng",
-  3: "Phần cứng",
-  4: "Phần mềm",
-  5: "Cảnh báo môi trường",
-  6: "Bảo trì định kỳ",
-  7: "Khác",
-};
 
 // ── Sections ─────────────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -161,7 +151,8 @@ export function KbArticleDetail({
   const [editOpen, setEditOpen] = useState(false);
 
   const visibleSections = SECTIONS.filter((s) => {
-    if (s.key === "recommendedParts") return !!article.recommendedParts;
+    if (s.key === "recommendedParts")
+      return (article.recommendedParts?.length ?? 0) > 0;
     return true;
   });
 
@@ -211,8 +202,8 @@ export function KbArticleDetail({
               const Icon = sec.icon;
               const text =
                 sec.key === "recommendedParts"
-                  ? (article.recommendedParts ?? "")
-                  : article[sec.key];
+                  ? (article.recommendedParts ?? []).join("\n")
+                  : (article[sec.key] as string);
 
               return (
                 <div key={sec.key}>
@@ -275,22 +266,15 @@ export function KbArticleDetail({
               <MetaItem
                 icon={Tag}
                 label="Danh mục"
-                value={
-                  CATEGORY_LABEL[article.category] ??
-                  `Danh mục ${article.category}`
-                }
+                value={KbCategoryLabel[article.category] ?? article.category}
               />
               <MetaItem
                 icon={RefreshCcw}
                 label="Phiên bản"
                 value={`v${article.version}`}
               />
-              {article.createdByFullName && (
-                <MetaItem
-                  icon={User}
-                  label="Tác giả"
-                  value={article.createdByFullName}
-                />
+              {article.isInternalOnly && (
+                <MetaItem icon={User} label="Phạm vi" value="Chỉ nội bộ" />
               )}
               <MetaItem
                 icon={CalendarDays}

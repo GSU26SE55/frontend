@@ -87,21 +87,7 @@ export default function KbArticleTable({
               {article.code}
             </TableCell>
             <TableCell>
-              <div className="space-y-1">
-                <p className="text-sm font-medium">{article.title}</p>
-                {article.tags.length > 0 && (
-                  <div className="flex gap-1">
-                    {article.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <p className="text-sm font-medium">{article.title}</p>
             </TableCell>
             <TableCell>
               <KbStatusBadge status={article.status} />

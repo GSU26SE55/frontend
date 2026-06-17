@@ -280,8 +280,8 @@ changeDescription: z.string().optional()   // chỉ form Update
 - [x] Bước 3: `kb.enum.ts` (status string + KbArticleStatusCode + KbVersionStatusEnum + refType string) + `kb.types.ts` (DTO/payload/params khớp BE). — 2026-06-17
 - [x] Bước 4: 3 service (admin/manager/staff) mock → axios thật + method mới (toListQuery map Q/Tag/Status int; compare/versions/template/workflow). — 2026-06-17
 - [x] Bước 5: 3 hooks (list/detail/versions/compare/create/update/copyTemplate; admin+manager thêm approve/reject/publish/archive/rollback; staff không workflow). Bỏ useDeleteKbArticle. — 2026-06-17
-- [ ] Bước 6: schemas (recommendedParts array, isInternalOnly, changeDescription; staff schema).
-- [ ] Bước 7: shared components (KbStatusBadge, KbEditorPanel, KbArticleDetail) + mới (KbVersionHistory, KbDiffViewer, KbReviewActions).
+- [x] Bước 6: schemas (admin/manager/staff) — category nativeEnum, recommendedParts/tags array, isInternalOnly, changeDescription. — 2026-06-17
+- [x] Bước 7: shared components — KbStatusBadge(+PendingReview), KbEditorPanel (category string/recommendedParts array/isInternalOnly/changeDescription), KbArticleDetail (KbCategoryLabel/recommendedParts array/bỏ createdByFullName), KbArticleTable ×2 (bỏ tags); mới: KbVersionHistory, KbDiffViewer, KbReviewActions. — 2026-06-17
 - [ ] Bước 8: pages (KbList filter PendingReview, KbDetail workflow/version, KbEditor) + staff editor page + route.
 - [ ] Bước 8b: ticket-kb-refs — `ticket-kb.service` list/add/remove thật + `useTicketKbRefs` (3 hook trỏ API thật) + `TicketKbReferencesPanel` (referenceType string); `endpoints` `KB_REFERENCES`. **Cần BE branch merged.**
 - [ ] Bước 9: xóa **hoàn toàn** `kb.mock.ts`; grep sạch import mock (cả ticket-kb).
