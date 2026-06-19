@@ -165,8 +165,11 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.kb, "list", params] as const,
     detail: (id: string) => [KEY.kb, "detail", id] as const,
     versions: (id: string) => [KEY.kb, "versions", id] as const,
+    versionDetail: (id: string, versionId: string | null) =>
+      [KEY.kb, "version-detail", id, versionId] as const,
     compare: (id: string, fromVersionId?: string, toVersionId?: string) =>
       [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
+    suggest: (params?: object) => [KEY.kb, "suggest", params] as const,
   },
   ticketKbRefs: {
     list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,

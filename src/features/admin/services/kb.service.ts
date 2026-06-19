@@ -14,6 +14,7 @@ import type {
   KbArticleActionDTO,
   KbArticleListParams,
   KbCompareParams,
+  KbSuggestItemDTO,
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
   RejectReviewPayload,
@@ -46,6 +47,15 @@ export const adminKbService = {
   getDetail: (id: string) =>
     axiosInstance.get<CommonResponse<KbArticleDTO>>(
       ENDPOINTS.KNOWLEDGE_BASE.DETAIL(id),
+    ),
+  markHelpful: (id: string) =>
+    axiosInstance.post<CommonResponse<void>>(
+      ENDPOINTS.KNOWLEDGE_BASE.HELPFUL(id),
+    ),
+  suggest: (ticketId: string) =>
+    axiosInstance.get<CommonResponse<KbSuggestItemDTO[]>>(
+      ENDPOINTS.KNOWLEDGE_BASE.SUGGEST,
+      { params: { TicketId: ticketId } },
     ),
 
   // ── Authoring (Staff/Manager/Admin) ──
@@ -105,4 +115,6 @@ export const adminKbService = {
       ENDPOINTS.KB_ADMIN.ROLLBACK(id),
       payload,
     ),
+  delete: (id: string) =>
+    axiosInstance.delete<CommonResponse<void>>(ENDPOINTS.KB_ADMIN.DELETE(id)),
 };

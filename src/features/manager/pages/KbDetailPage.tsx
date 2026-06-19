@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Upload, Archive, History } from "lucide-react";
+import { Upload, Archive, History, Copy } from "lucide-react";
 import {
   useManagerKbDetail,
   useManagerPublishKbArticle,
@@ -12,6 +12,9 @@ import {
   useManagerKbVersions,
   useManagerKbCompare,
   useManagerRollbackKbArticle,
+  useManagerKbVersionDetail,
+  useMarkManagerKbHelpful,
+  useManagerCopyKbTemplate,
 } from "../hooks/useManagerKb";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
 import {
@@ -25,22 +28,24 @@ import type { KbCompareParams } from "@/shared/types/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: article, isLoading } = useManagerKbDetail(id!);
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: approve, isPending: approving } = useManagerApproveKbReview();
   const { mutate: reject, isPending: rejecting } = useManagerRejectKbReview();
-  const { mutateAsync: update, isPending: updating } =
-    useManagerUpdateKbArticle();
-  const { mutate: rollback, isPending: rollingBack } =
-    useManagerRollbackKbArticle();
+  const { mutateAsync: update, isPending: updating } = useManagerUpdateKbArticle();
+  const { mutate: rollback, isPending: rollingBack } = useManagerRollbackKbArticle();
+  const { mutate: markHelpful, isPending: helpfulPending } = useMarkManagerKbHelpful();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } = useManagerCopyKbTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
-  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
-    null,
-  );
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(null);
+  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
+
   const { data: versions } = useManagerKbVersions(verOpen ? id! : "");
   const { data: diff } = useManagerKbCompare(id!, compareParams);
+  const { data: versionDetail } = useManagerKbVersionDetail(id!, viewVersionId);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
@@ -58,6 +63,8 @@ export default function KbDetailPage() {
         article={article}
         backUrl="/manager/kb"
         breadcrumb="Manager · Knowledge Base"
+        onMarkHelpful={() => markHelpful(article.id)}
+        helpfulPending={helpfulPending}
         actions={
           <>
             <Button
@@ -68,6 +75,19 @@ export default function KbDetailPage() {
             >
               <History className="size-3.5" />
               Phiên bản
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={copyingTemplate}
+              onClick={async () => {
+                const template = await copyTemplate(article.id);
+                if (template) navigate("/manager/kb/new", { state: { template } });
+              }}
+            >
+              <Copy className="size-3.5" />
+              Sao chép template
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -121,10 +141,12 @@ export default function KbDetailPage() {
         onOpenChange={setVerOpen}
         versions={versions ?? []}
         diff={diff}
+        versionDetail={versionDetail}
         isPending={rollingBack}
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
         }
+        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }

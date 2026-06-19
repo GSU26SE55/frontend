@@ -33,6 +33,15 @@ export function useStaffKbVersions(id: string) {
   });
 }
 
+export function useStaffKbVersionDetail(id: string, versionId: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
+    queryFn: () =>
+      staffKbService.getVersionById(id, versionId!).then((r) => r.data.data),
+    enabled: !!id && !!versionId,
+  });
+}
+
 export function useStaffKbCompare(id: string, params: KbCompareParams | null) {
   return useQuery({
     queryKey: QUERY_KEY.kb.compare(
@@ -42,6 +51,15 @@ export function useStaffKbCompare(id: string, params: KbCompareParams | null) {
     ),
     queryFn: () => staffKbService.compare(id, params!).then((r) => r.data.data),
     enabled: !!id && !!params?.fromVersionId,
+  });
+}
+
+export function useStaffKbSuggest(ticketId?: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.suggest({ ticketId }),
+    queryFn: () => staffKbService.suggest(ticketId!).then((r) => r.data.data),
+    enabled: !!ticketId,
+    staleTime: 30_000,
   });
 }
 
@@ -80,6 +98,36 @@ export function useStaffKbCopyTemplate() {
   return useMutation({
     mutationFn: (id: string) =>
       staffKbService.copyTemplate(id).then((r) => r.data.data),
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+export function useMarkStaffKbHelpful() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => staffKbService.markHelpful(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: [KEY.kb] });
+      qc.setQueriesData<{ items: { id: string; helpfulCount: number }[] }>(
+        { queryKey: [KEY.kb], type: "active" },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id
+                ? { ...item, helpfulCount: item.helpfulCount + 1 }
+                : item,
+            ),
+          };
+        },
+      );
+    },
+    onSuccess: (_, id) => {
+      toast.success("Đã đánh dấu hữu ích");
+      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
+      qc.invalidateQueries({ queryKey: [KEY.kb] });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

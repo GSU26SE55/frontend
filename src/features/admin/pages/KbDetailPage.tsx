@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Upload, Archive, History } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Upload, Archive, History, Trash2, Copy } from "lucide-react";
 import {
   useAdminKbDetail,
   usePublishKbArticle,
@@ -12,6 +23,10 @@ import {
   useAdminKbVersions,
   useAdminKbCompare,
   useRollbackKbArticle,
+  useAdminKbVersionDetail,
+  useMarkKbHelpful,
+  useDeleteKbArticle,
+  useCopyKbTemplate,
 } from "../hooks/useAdminKb";
 import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
 import {
@@ -25,6 +40,7 @@ import type { KbCompareParams } from "@/shared/types/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: article, isLoading } = useAdminKbDetail(id!);
   const { mutate: publish } = usePublishKbArticle();
   const { mutate: archive } = useArchiveKbArticle();
@@ -32,13 +48,17 @@ export default function KbDetailPage() {
   const { mutate: reject, isPending: rejecting } = useRejectKbReview();
   const { mutateAsync: update, isPending: updating } = useUpdateKbArticle();
   const { mutate: rollback, isPending: rollingBack } = useRollbackKbArticle();
+  const { mutate: markHelpful, isPending: helpfulPending } = useMarkKbHelpful();
+  const { mutate: deleteArticle, isPending: deleting } = useDeleteKbArticle();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } = useCopyKbTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
-  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
-    null,
-  );
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(null);
+  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
+
   const { data: versions } = useAdminKbVersions(verOpen ? id! : "");
   const { data: diff } = useAdminKbCompare(id!, compareParams);
+  const { data: versionDetail } = useAdminKbVersionDetail(id!, viewVersionId);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
@@ -56,6 +76,8 @@ export default function KbDetailPage() {
         article={article}
         backUrl="/admin/kb"
         breadcrumb="Admin · Knowledge Base"
+        onMarkHelpful={() => markHelpful(article.id)}
+        helpfulPending={helpfulPending}
         actions={
           <>
             <Button
@@ -66,6 +88,19 @@ export default function KbDetailPage() {
             >
               <History className="size-3.5" />
               Phiên bản
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={copyingTemplate}
+              onClick={async () => {
+                const template = await copyTemplate(article.id);
+                if (template) navigate("/admin/kb/new", { state: { template } });
+              }}
+            >
+              <Copy className="size-3.5" />
+              Sao chép template
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -99,6 +134,42 @@ export default function KbDetailPage() {
                 Lưu trữ
               </Button>
             )}
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="gap-1.5"
+                    disabled={deleting}
+                  />
+                }
+              >
+                <Trash2 className="size-3.5" />
+                Xóa
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xóa bài viết KB?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bài viết <strong>{article.code}</strong> sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() =>
+                      deleteArticle(article.id, {
+                        onSuccess: () => navigate("/admin/kb"),
+                      })
+                    }
+                  >
+                    Xóa
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         }
         renderEditor={({ onClose }) => (
@@ -119,9 +190,13 @@ export default function KbDetailPage() {
         onOpenChange={setVerOpen}
         versions={versions ?? []}
         diff={diff}
+        versionDetail={versionDetail}
         isPending={rollingBack}
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
+        }
+        onViewVersion={(versionId) =>
+          setViewVersionId(versionId || null)
         }
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })

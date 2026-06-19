@@ -14,6 +14,7 @@ import type {
   KbArticleActionDTO,
   KbArticleListParams,
   KbCompareParams,
+  KbSuggestItemDTO,
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
 } from "@/shared/types/kb.types";
@@ -44,6 +45,15 @@ export const staffKbService = {
   getDetail: (id: string) =>
     axiosInstance.get<CommonResponse<KbArticleDTO>>(
       ENDPOINTS.KNOWLEDGE_BASE.DETAIL(id),
+    ),
+  markHelpful: (id: string) =>
+    axiosInstance.post<CommonResponse<void>>(
+      ENDPOINTS.KNOWLEDGE_BASE.HELPFUL(id),
+    ),
+  suggest: (ticketId: string) =>
+    axiosInstance.get<CommonResponse<KbSuggestItemDTO[]>>(
+      ENDPOINTS.KNOWLEDGE_BASE.SUGGEST,
+      { params: { TicketId: ticketId } },
     ),
   create: (payload: CreateKbArticlePayload) =>
     axiosInstance.post<CommonResponse<KbArticleActionDTO>>(

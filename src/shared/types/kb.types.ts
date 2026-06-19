@@ -162,3 +162,17 @@ export interface KbCompareParams {
   fromVersionId: string;
   toVersionId?: string;
 }
+
+// Suggest API trả DTO riêng (không có category/status)
+export interface KbSuggestItemDTO {
+  id: string;
+  code: string;
+  title: string;
+  symptoms: string;
+  helpfulCount: number;
+  viewCount: number;
+}
+
+export interface KbSuggestParams {
+  ticketId: string;
+}
