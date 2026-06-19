@@ -233,6 +233,8 @@ export const ENDPOINTS = {
   KNOWLEDGE_BASE: {
     LIST: "/api/knowledge-base",
     DETAIL: (id: string) => `/api/knowledge-base/${id}`,
+    HELPFUL: (id: string) => `/api/knowledge-base/${id}/helpful`,
+    SUGGEST: "/api/knowledge-base/suggest",
   },
 
   // KB nội bộ — authoring (Staff/Manager/Admin)
@@ -256,6 +258,7 @@ export const ENDPOINTS = {
     PUBLISH: (id: string) => `/api/admin/knowledge-base/${id}/publish`,
     ARCHIVE: (id: string) => `/api/admin/knowledge-base/${id}/archive`,
     ROLLBACK: (id: string) => `/api/admin/knowledge-base/${id}/rollback`,
+    DELETE: (id: string) => `/api/admin/knowledge-base/${id}`,
   },
 
   // Gán bài KB vào Ticket (Staff/Manager/Admin)

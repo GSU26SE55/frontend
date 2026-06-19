@@ -35,6 +35,15 @@ export function useAdminKbVersions(id: string) {
   });
 }
 
+export function useAdminKbVersionDetail(id: string, versionId: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
+    queryFn: () =>
+      adminKbService.getVersionById(id, versionId!).then((r) => r.data.data),
+    enabled: !!id && !!versionId,
+  });
+}
+
 export function useAdminKbCompare(id: string, params: KbCompareParams | null) {
   return useQuery({
     queryKey: QUERY_KEY.kb.compare(
@@ -44,6 +53,15 @@ export function useAdminKbCompare(id: string, params: KbCompareParams | null) {
     ),
     queryFn: () => adminKbService.compare(id, params!).then((r) => r.data.data),
     enabled: !!id && !!params?.fromVersionId,
+  });
+}
+
+export function useAdminKbSuggest(ticketId?: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.suggest({ ticketId }),
+    queryFn: () => adminKbService.suggest(ticketId!).then((r) => r.data.data),
+    enabled: !!ticketId,
+    staleTime: 30_000,
   });
 }
 
@@ -82,6 +100,48 @@ export function useCopyKbTemplate() {
   return useMutation({
     mutationFn: (id: string) =>
       adminKbService.copyTemplate(id).then((r) => r.data.data),
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+export function useMarkKbHelpful() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminKbService.markHelpful(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: [KEY.kb] });
+      qc.setQueriesData<{ items: { id: string; helpfulCount: number }[] }>(
+        { queryKey: [KEY.kb], type: "active" },
+        (old) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id
+                ? { ...item, helpfulCount: item.helpfulCount + 1 }
+                : item,
+            ),
+          };
+        },
+      );
+    },
+    onSuccess: (_, id) => {
+      toast.success("Đã đánh dấu hữu ích");
+      qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
+      qc.invalidateQueries({ queryKey: [KEY.kb] });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+export function useDeleteKbArticle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminKbService.delete(id),
+    onSuccess: () => {
+      toast.success("Đã xóa bài viết");
+      qc.invalidateQueries({ queryKey: [KEY.kb] });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

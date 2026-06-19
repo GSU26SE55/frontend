@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { History } from "lucide-react";
+import { History, Copy } from "lucide-react";
 import {
   useStaffKbDetail,
   useStaffKbUpdate,
   useStaffKbVersions,
   useStaffKbCompare,
+  useStaffKbVersionDetail,
+  useMarkStaffKbHelpful,
+  useStaffKbCopyTemplate,
 } from "../hooks/useStaffKb";
 import {
   KbArticleDetail,
@@ -18,15 +21,19 @@ import type { KbCompareParams } from "@/shared/types/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: article, isLoading } = useStaffKbDetail(id!);
   const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
+  const { mutate: markHelpful, isPending: helpfulPending } = useMarkStaffKbHelpful();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } = useStaffKbCopyTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
-  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
-    null,
-  );
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(null);
+  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
+
   const { data: versions } = useStaffKbVersions(verOpen ? id! : "");
   const { data: diff } = useStaffKbCompare(id!, compareParams);
+  const { data: versionDetail } = useStaffKbVersionDetail(id!, viewVersionId);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
@@ -44,16 +51,33 @@ export default function KbDetailPage() {
         article={article}
         backUrl="/staff/kb"
         breadcrumb="Staff · Knowledge Base"
+        onMarkHelpful={() => markHelpful(article.id)}
+        helpfulPending={helpfulPending}
         actions={
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => setVerOpen(true)}
-          >
-            <History className="size-3.5" />
-            Phiên bản
-          </Button>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setVerOpen(true)}
+            >
+              <History className="size-3.5" />
+              Phiên bản
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={copyingTemplate}
+              onClick={async () => {
+                const template = await copyTemplate(article.id);
+                if (template) navigate("/staff/kb/new", { state: { template } });
+              }}
+            >
+              <Copy className="size-3.5" />
+              Sao chép template
+            </Button>
+          </>
         }
         renderEditor={({ onClose }) => (
           <KbEditorPanel
@@ -73,9 +97,11 @@ export default function KbDetailPage() {
         onOpenChange={setVerOpen}
         versions={versions ?? []}
         diff={diff}
+        versionDetail={versionDetail}
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
         }
+        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
       />
     </>
   );

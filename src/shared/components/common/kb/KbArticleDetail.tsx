@@ -10,7 +10,6 @@ import {
   Wrench,
   Eye,
   ThumbsUp,
-  User,
   CalendarDays,
   Clock,
   Hash,
@@ -18,14 +17,18 @@ import {
   Tag,
   RefreshCcw,
   Pencil,
+  Lock,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
+import { KbVisibilityBadge } from "./KbVisibilityBadge";
 import { KbCategoryLabel } from "@/shared/enums/kb.enum";
 import type { KbArticleDTO } from "@/shared/types/kb.types";
+import { cn } from "@/lib/utils";
 
 // ── Sections ─────────────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -121,7 +124,8 @@ export function KbArticleDetailSkeleton() {
           <Skeleton className="h-6 w-80" />
         </div>
       </div>
-      <div className="grid lg:grid-cols-[1fr_272px] gap-5 mt-2">
+      <div className="grid lg:grid-cols-[180px_1fr_272px] gap-5 mt-2">
+        <Skeleton className="h-[200px] rounded-xl hidden lg:block" />
         <Skeleton className="h-[500px] rounded-xl" />
         <Skeleton className="h-[320px] rounded-xl" />
       </div>
@@ -138,6 +142,8 @@ interface KbArticleDetailProps {
   actions?: React.ReactNode;
   /** If provided, shows "Chỉnh sửa" button + renders a slide-in edit panel */
   renderEditor?: (props: { onClose: () => void }) => React.ReactNode;
+  onMarkHelpful?: () => void;
+  helpfulPending?: boolean;
 }
 
 export function KbArticleDetail({
@@ -146,6 +152,8 @@ export function KbArticleDetail({
   breadcrumb,
   actions,
   renderEditor,
+  onMarkHelpful,
+  helpfulPending,
 }: KbArticleDetailProps) {
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
@@ -153,8 +161,9 @@ export function KbArticleDetail({
   const visibleSections = SECTIONS.filter((s) => {
     if (s.key === "recommendedParts")
       return (article.recommendedParts?.length ?? 0) > 0;
-    return true;
+    return !!(article[s.key] as string | null)?.trim();
   });
+
 
   return (
     <>
@@ -180,6 +189,7 @@ export function KbArticleDetail({
           </div>
           <div className="flex items-center gap-2 shrink-0 pt-0.5">
             <KbStatusBadge status={article.status} />
+            <KbVisibilityBadge isInternalOnly={article.isInternalOnly} />
             {actions}
             {renderEditor && (
               <Button
@@ -194,7 +204,7 @@ export function KbArticleDetail({
           </div>
         </div>
 
-        {/* ── Two-column body ─────────────────────────────────────────────── */}
+        {/* ── Two-column body (content + meta) ─────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_272px] gap-5 items-start">
           {/* Left — article content */}
           <div className="border border-border rounded-xl overflow-hidden bg-card">
@@ -211,10 +221,10 @@ export function KbArticleDetail({
                   <div className="px-6 py-5">
                     {/* Section header */}
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="size-6 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        <Icon size={12} className="text-muted-foreground" />
+                      <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                        <Icon size={14} className="text-muted-foreground" />
                       </div>
-                      <h2 className="text-[13px] font-semibold text-foreground">
+                      <h2 className="text-base font-semibold text-foreground">
                         {sec.label}
                       </h2>
                     </div>
@@ -243,13 +253,31 @@ export function KbArticleDetail({
                     lượt xem
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm">
-                  <ThumbsUp size={13} className="text-muted-foreground" />
+                <button
+                  type="button"
+                  disabled={!onMarkHelpful || helpfulPending}
+                  onClick={onMarkHelpful}
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm",
+                    onMarkHelpful &&
+                      !helpfulPending &&
+                      "cursor-pointer hover:text-primary transition-colors",
+                    (!onMarkHelpful || helpfulPending) && "cursor-default",
+                  )}
+                  title={onMarkHelpful ? "Đánh dấu hữu ích" : undefined}
+                >
+                  <ThumbsUp
+                    size={13}
+                    className={cn(
+                      "text-muted-foreground",
+                      onMarkHelpful && !helpfulPending && "hover:text-primary",
+                    )}
+                  />
                   <span className="font-semibold tabular-nums">
                     {article.helpfulCount}
                   </span>
                   <span className="text-muted-foreground text-xs">hữu ích</span>
-                </div>
+                </button>
               </div>
             </div>
 
@@ -273,9 +301,11 @@ export function KbArticleDetail({
                 label="Phiên bản"
                 value={`v${article.version}`}
               />
-              {article.isInternalOnly && (
-                <MetaItem icon={User} label="Phạm vi" value="Chỉ nội bộ" />
-              )}
+              <MetaItem
+                icon={article.isInternalOnly ? Lock : Globe}
+                label="Phạm vi"
+                value={article.isInternalOnly ? "Chỉ nội bộ" : "Công khai cho khách"}
+              />
               <MetaItem
                 icon={CalendarDays}
                 label="Ngày tạo"

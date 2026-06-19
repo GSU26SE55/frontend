@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
+import { KbVisibilityBadge } from "./KbVisibilityBadge";
 import type {
   KbArticleDTO,
   UpdateKbArticlePayload,
@@ -192,13 +193,16 @@ export function KbEditorPanel({
             control={control}
             name="isInternalOnly"
             render={({ field }) => (
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={(v) => field.onChange(v === true)}
-                />
-                Chỉ nội bộ (ẩn với khách hàng)
-              </label>
+              <div className="flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                  />
+                  Chỉ nội bộ (ẩn với khách hàng)
+                </label>
+                <KbVisibilityBadge isInternalOnly={field.value} />
+              </div>
             )}
           />
         </div>
