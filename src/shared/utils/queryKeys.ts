@@ -24,6 +24,7 @@ export const KEY = {
     permissions: ["admin", "permissions"] as const,
     auditLogs: ["admin", "auditLogs"] as const,
     tickets: ["admin", "tickets"] as const,
+    smsGateway: ["admin", "smsGateway"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -131,6 +132,9 @@ export const QUERY_KEY = {
     },
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
+    },
+    smsGateway: {
+      list: (params?: object) => [...KEY.admin.smsGateway, "list", params],
     },
   },
   alerts: {

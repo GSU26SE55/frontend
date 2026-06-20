@@ -1,7 +1,7 @@
 # Plan — GH-90: [FE] Tích hợp SMS Gateway — Admin management
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-20
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-20
 - **Issue:** #90 — https://github.com/GSU26SE55/frontend/issues/90
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 - **Dev:** Trần Minh Trí (SE183109)
@@ -134,13 +134,16 @@ dailyLimit: z.coerce.number().int().min(1, "Tối thiểu 1").max(10000, "Tối 
 - [ ] `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` PASS
 
 ## Steps
-- [ ] Bước 1: Types (`sms-gateway.types.ts`) + Schema (`sms-gateway.schema.ts`)
-- [ ] Bước 2: Endpoints (`ADMIN.SMS_GATEWAY`) + queryKeys (`admin.smsGateway`)
-- [ ] Bước 3: Service (`admin-sms-gateway.service.ts`)
-- [ ] Bước 4: Hooks (`useAdminSmsGateway.ts` — 1 query + 2 mutation)
-- [ ] Bước 5: Components + Page (`SmsGatewayPage`, `CreateSmsDeviceDialog`, `ApiKeyRevealDialog` có clipboard fallback, `SmsDeviceTable` có online badge)
-- [ ] Bước 6: Wire router (`/admin/sms-gateway`) + sidebar nav (section "Hệ thống")
-- [ ] Bước 7: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS + Manual QA checklist
+- [x] Bước 1: Types (`sms-gateway.types.ts`) + Schema (`sms-gateway.schema.ts`) — 2026-06-20
+- [x] Bước 2: Endpoints (`ADMIN.SMS_GATEWAY`) + queryKeys (`admin.smsGateway`) — 2026-06-20
+- [x] Bước 3: Service (`admin-sms-gateway.service.ts`) — 2026-06-20
+- [x] Bước 4: Hooks (`useAdminSmsGateway.ts` — `useAdminSmsDevices` + `useAdminCreateSmsDevice` + `useAdminRevokeSmsDevice`) — 2026-06-20
+- [x] Bước 5: Components + Page (`SmsGatewayPage`, `CreateSmsDeviceDialog`, `ApiKeyRevealDialog` clipboard fallback, `SmsDeviceTable` online badge) — 2026-06-20
+- [x] Bước 6: Wire router (`/admin/sms-gateway`) + sidebar nav (section "Hệ thống") — 2026-06-20
+- [x] Bước 7: `tsc --noEmit` ✅ + `eslint --max-warnings=0` ✅ + `npm run build` ✅ — 2026-06-20 (Manual QA chạy ở `/kltn-test`)
+
+> **Lưu ý implement (lệch nhỏ so với plan):** schema `dailyLimit` dùng `z.number()` + `register(..., { valueAsNumber: true })` thay vì `z.coerce.number()` — vì `z.coerce` gây lệch input(`unknown`)/output(`number`) với RHF resolver (build TS2322). Theo đúng pattern `BatteryTypeFormDialog`. Hành vi không đổi: FE vẫn luôn gửi `dailyLimit` là số (default 100).
+> Clipboard fallback dùng `<textarea>` tạm + `execCommand` (không ref vào shadcn `Input` vì base-ui không forward ref kiểu cũ).
 
 ## Câu hỏi đã giải đáp
 - **Cancel SMS có làm không?** → **KHÔNG** trong issue này. Endpoint tồn tại nhưng BE không có list SMS → admin không lấy được `smsId` trên web. Tách sang issue sau.
