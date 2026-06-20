@@ -130,7 +130,7 @@ export function KbArticleSelector({
           <BookOpen className="size-3.5" />
           Chọn bài KB
         </DialogTrigger>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="!w-[94vw] !max-w-[1040px]">
           <DialogHeader>
             <DialogTitle>Chọn bài viết Knowledge Base</DialogTitle>
           </DialogHeader>
@@ -192,7 +192,7 @@ export function KbArticleSelector({
           </div>
 
           {/* Two-column body: list + preview */}
-          <div className="grid md:grid-cols-[1fr_280px] gap-3 max-h-[420px]">
+          <div className="grid gap-4 h-[58vh] min-h-[360px] max-h-[520px] md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             {/* Left: list */}
             <div className="overflow-y-auto space-y-1 pr-1">
               {articles.map((article) => {
@@ -202,8 +202,8 @@ export function KbArticleSelector({
                   <div
                     key={article.id}
                     className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors",
-                      isPreview && "bg-muted",
+                      "flex cursor-pointer items-center gap-3 rounded-md border border-transparent px-2.5 py-2 transition-colors",
+                      isPreview && "bg-muted border-border",
                       !isPreview && "hover:bg-muted/60",
                     )}
                     onClick={() => setPreviewId(article.id)}
@@ -215,15 +215,15 @@ export function KbArticleSelector({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-mono text-muted-foreground">
+                        <span className="shrink-0 whitespace-nowrap text-xs font-mono text-muted-foreground">
                           {article.code}
                         </span>
-                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                           {KbCategoryLabel[article.category] ??
                             article.category}
                         </span>
                       </div>
-                      <p className="truncate text-sm">{article.title}</p>
+                      <p className="truncate text-sm mt-0.5">{article.title}</p>
                     </div>
                   </div>
                 );
