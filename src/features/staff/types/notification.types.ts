@@ -2,12 +2,12 @@ import type {
   NotificationTypeEnum,
   NotificationChannelEnum,
   NotificationStatusEnum,
-} from "@/features/staff/enums/notification.enum";
+} from "@/shared/enums/notification.enum";
 export {
   NotificationTypeEnum,
   NotificationChannelEnum,
   NotificationStatusEnum,
-} from "@/features/staff/enums/notification.enum";
+} from "@/shared/enums/notification.enum";
 export interface StaffNotificationsParams {
   pageNumber?: number;
   pageSize?: number;

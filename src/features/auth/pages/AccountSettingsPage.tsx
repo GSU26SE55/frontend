@@ -11,6 +11,7 @@ import {
   Lock,
   KeyRound,
   MonitorSmartphone,
+  BellRing,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import GoogleLinkSection from "@/features/auth/components/GoogleLinkSection";
 import TrustedDevicesSection from "@/features/auth/components/TrustedDevicesSection";
 import LoginHistoryTable from "@/features/auth/components/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/DangerZone";
+import DeviceTokensSection from "@/shared/components/device-tokens/DeviceTokensSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
@@ -45,6 +47,12 @@ const MENU = [
     label: "Bảo mật",
     icon: ShieldCheck,
     desc: "Xác thực 2 lớp, số điện thoại và liên kết bên ngoài",
+  },
+  {
+    key: "devices",
+    label: "Thiết bị thông báo",
+    icon: BellRing,
+    desc: "Quản lý thiết bị nhận thông báo đẩy (push)",
   },
   {
     key: "history",
@@ -331,6 +339,9 @@ const AccountSettingsPage = () => {
                     </SecurityRow>
                   </div>
                 )}
+
+                {/* Thiết bị thông báo (push device tokens) */}
+                {active === "devices" && <DeviceTokensSection />}
 
                 {/* Lịch sử — fills remaining height, table scrolls, pagination fixed */}
                 {active === "history" && <LoginHistoryTable />}

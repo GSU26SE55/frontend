@@ -17,6 +17,7 @@ import AcceptInvitePage from "@/features/auth/pages/AcceptInvitePage";
 import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
+import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
 import AdminSiteDetailPage from "@/features/admin/pages/SiteDetailPage";
@@ -136,6 +137,7 @@ const router = createBrowserRouter([
               { path: "ambient", element: <AdminAmbientConfigPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
+              { path: "notifications", element: <NotificationAdminPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],
           },
