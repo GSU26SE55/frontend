@@ -17,6 +17,7 @@ import type {
   GetAccountSessionsParams,
   SessionDto,
   LoginAttemptDto,
+  MergeAccountPayload,
 } from "@/features/admin/types/admin.types";
 
 export const adminAccountsService = {
@@ -93,5 +94,12 @@ export const adminAccountsService = {
   reset2fa: (id: string) =>
     axiosInstance.delete<CommonResponse<string>>(
       ENDPOINTS.ADMIN.ACCOUNTS.RESET_2FA(id),
+    ),
+
+  // #AUTH-47: merge secondary account vào primary (path id = primaryAccountId)
+  merge: (primaryId: string, payload: MergeAccountPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.ADMIN.ACCOUNTS.MERGE(primaryId),
+      payload,
     ),
 };

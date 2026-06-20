@@ -164,7 +164,6 @@ export function KbArticleDetail({
     return !!(article[s.key] as string | null)?.trim();
   });
 
-
   return (
     <>
       <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -304,7 +303,9 @@ export function KbArticleDetail({
               <MetaItem
                 icon={article.isInternalOnly ? Lock : Globe}
                 label="Phạm vi"
-                value={article.isInternalOnly ? "Chỉ nội bộ" : "Công khai cho khách"}
+                value={
+                  article.isInternalOnly ? "Chỉ nội bộ" : "Công khai cho khách"
+                }
               />
               <MetaItem
                 icon={CalendarDays}

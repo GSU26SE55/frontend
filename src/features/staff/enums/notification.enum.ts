@@ -13,6 +13,10 @@ export const NotificationTypeEnum = {
   AccountActivated: 12,
   AdminInvite: 13,
   IncidentDeclared: 14,
+  // 15 bị skip ở BE (NotificationTypeEnum không liên tục)
+  BatteryAlertEscalationPending: 16,
+  AlertTicketSagaFailed: 17,
+  IotDeviceWentOffline: 18,
   System: 99,
 } as const;
 export type NotificationTypeEnum =

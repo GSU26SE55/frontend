@@ -19,10 +19,7 @@ import {
 import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
 import { Eye, ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
-import {
-  KbArticleStatusEnum,
-  KbCategoryLabel,
-} from "@/shared/enums/kb.enum";
+import { KbArticleStatusEnum, KbCategoryLabel } from "@/shared/enums/kb.enum";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];

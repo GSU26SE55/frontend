@@ -76,7 +76,9 @@ export default function KbEditorPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPartsText((existing.recommendedParts ?? []).join("\n"));
     } else if (template) {
-      const catOption = KB_CATEGORY_OPTIONS.find((c) => c.code === template.category);
+      const catOption = KB_CATEGORY_OPTIONS.find(
+        (c) => c.code === template.category,
+      );
       reset({
         category: catOption?.value ?? TicketCategoryEnum.Charging,
         title: "",

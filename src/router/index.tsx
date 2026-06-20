@@ -8,6 +8,8 @@ import AppLayout from "@/shared/components/layout/AppLayout";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import Login2faPage from "@/features/auth/pages/Login2faPage";
+import ReactivatePage from "@/features/auth/pages/ReactivatePage";
+import CrossDeviceConfirmPage from "@/features/auth/pages/CrossDeviceConfirmPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import OtpVerifyPage from "@/features/auth/pages/OtpVerifyPage";
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
@@ -64,6 +66,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/login", element: <LoginPage /> },
       { path: "/login/2fa", element: <Login2faPage /> },
+      { path: "/reactivate", element: <ReactivatePage /> },
       { path: "/register", element: <RegisterPage /> },
       { path: "/register/verify-otp", element: <OtpVerifyPage /> },
       { path: "/forgot-password", element: <ForgotPasswordPage /> },
@@ -94,6 +97,11 @@ const router = createBrowserRouter([
         path: "/settings",
         element: <AppLayout />,
         children: [{ index: true, element: <AccountSettingsPage /> }],
+      },
+      {
+        // #AUTH-51: Device B confirm — chỉ cần đăng nhập (mọi role), không qua AppLayout
+        path: "/2fa/cross-device-confirm",
+        element: <CrossDeviceConfirmPage />,
       },
       {
         element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,

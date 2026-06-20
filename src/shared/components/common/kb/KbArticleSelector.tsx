@@ -39,9 +39,8 @@ export function KbArticleSelector({
 }: KbArticleSelectorProps) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<
-    TicketCategoryEnum | null
-  >(defaultCategory ?? null);
+  const [categoryFilter, setCategoryFilter] =
+    useState<TicketCategoryEnum | null>(defaultCategory ?? null);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   const handleOpenChange = (next: boolean) => {
@@ -187,7 +186,8 @@ export function KbArticleSelector({
             </div>
 
             <p className="text-[11px] text-muted-foreground">
-              {articles.length} kết quả{value.length > 0 && ` · đã chọn ${value.length}`}
+              {articles.length} kết quả
+              {value.length > 0 && ` · đã chọn ${value.length}`}
             </p>
           </div>
 
@@ -219,7 +219,8 @@ export function KbArticleSelector({
                           {article.code}
                         </span>
                         <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                          {KbCategoryLabel[article.category] ?? article.category}
+                          {KbCategoryLabel[article.category] ??
+                            article.category}
                         </span>
                       </div>
                       <p className="truncate text-sm">{article.title}</p>

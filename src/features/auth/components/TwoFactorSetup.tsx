@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,13 @@ import { useInitTwoFactor } from "@/features/auth/hooks/useInitTwoFactor";
 import { useConfirmTwoFactor } from "@/features/auth/hooks/useConfirmTwoFactor";
 import { useDisableTwoFactor } from "@/features/auth/hooks/useDisableTwoFactor";
 import { useRegenerateBackupCodes } from "@/features/auth/hooks/useRegenerateBackupCodes";
+import { useRequestCrossDevice2fa } from "@/features/auth/hooks/useRequestCrossDevice2fa";
 import { handleErrorApi } from "@/shared/lib/errors";
-import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import type { Init2faResponseData } from "@/features/auth/types/account.types";
+import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import type {
+  Init2faResponseData,
+  CrossDeviceRequestResponseData,
+} from "@/features/auth/types/account.types";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
@@ -51,12 +55,48 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
   const [showRegen, setShowRegen] = useState(false);
   const [regenTotp, setRegenTotp] = useState("");
 
+  // #AUTH-51: cross-device setup (Device A) state
+  const [crossData, setCrossData] =
+    useState<CrossDeviceRequestResponseData | null>(null);
+  const [crossRemaining, setCrossRemaining] = useState(0);
+
   const { mutate: initTwoFa, isPending: isIniting } = useInitTwoFactor();
   const { mutate: confirmTwoFa, isPending: isConfirming } =
     useConfirmTwoFactor();
   const { mutate: disableTwoFa, isPending: isDisabling } =
     useDisableTwoFactor();
   const { mutate: regenCodes, isPending: isRegen } = useRegenerateBackupCodes();
+  const { mutate: requestCross, isPending: isRequestingCross } =
+    useRequestCrossDevice2fa();
+
+  // countdown TTL của confirm token
+  useEffect(() => {
+    if (!crossData || crossRemaining <= 0) return;
+    const t = setInterval(() => setCrossRemaining((s) => s - 1), 1000);
+    return () => clearInterval(t);
+  }, [crossData, crossRemaining]);
+
+  const handleRequestCross = () => {
+    requestCross(undefined, {
+      onSuccess: (res) => {
+        const data = res.data.data;
+        if (data) {
+          setCrossData(data);
+          setCrossRemaining(data.expiresInSeconds);
+        } else {
+          toast.error(res.data.message ?? "Không thể tạo yêu cầu");
+        }
+      },
+      onError: (error) => handleErrorApi({ error }),
+    });
+  };
+
+  // Device A refresh tay — load lại trạng thái 2FA sau khi Device B confirm
+  const handleRefreshStatus = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
+    queryClient.invalidateQueries({ queryKey: [KEY.currentUser] });
+    toast.info("Đang làm mới trạng thái 2FA...");
+  };
 
   const resetEnroll = () => {
     setInitData(null);
@@ -133,10 +173,23 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
   const actionRow = (
     <div className="flex items-center gap-2">
       {!isEnabled ? (
-        <Button onClick={handleInit} disabled={isIniting} size="sm">
-          {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Bật 2FA
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleInit} disabled={isIniting} size="sm">
+            {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Bật 2FA
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRequestCross}
+            disabled={isRequestingCross}
+          >
+            {isRequestingCross && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            Qua thiết bị khác
+          </Button>
+        </div>
       ) : (
         <div className="flex gap-2">
           <Button
@@ -299,6 +352,45 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* #AUTH-51: Cross-device setup (Device A) — QR + secret + countdown + refresh tay */}
+      <Dialog
+        open={!!crossData}
+        onOpenChange={(open) => !open && setCrossData(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Setup 2FA qua thiết bị khác</DialogTitle>
+          </DialogHeader>
+          {crossData && (
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Quét QR bằng Authenticator trên điện thoại, hoặc mở link xác
+                nhận vừa gửi tới email của bạn để hoàn tất trên thiết bị thứ 2.
+              </p>
+              <QRCodeSVG value={crossData.otpAuthUri} size={200} />
+              <p className="text-xs text-muted-foreground break-all">
+                Secret: {crossData.secret}
+              </p>
+              <p className="text-xs font-medium">
+                {crossRemaining > 0
+                  ? `Link hết hạn sau ${Math.floor(crossRemaining / 60)}:${String(
+                      crossRemaining % 60,
+                    ).padStart(2, "0")}`
+                  : "Link đã hết hạn — vui lòng tạo lại."}
+              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleRefreshStatus}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Tôi đã xác nhận xong — Làm mới trạng thái
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 
@@ -321,10 +413,22 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           {isEnabled ? "Xác thực 2 lớp đang bật." : "Chưa bật xác thực 2 lớp."}
         </p>
         {!isEnabled ? (
-          <Button onClick={handleInit} disabled={isIniting}>
-            {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Bật 2FA
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleInit} disabled={isIniting}>
+              {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Bật 2FA
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRequestCross}
+              disabled={isRequestingCross}
+            >
+              {isRequestingCross && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Qua thiết bị khác
+            </Button>
+          </div>
         ) : (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowRegen(true)}>
