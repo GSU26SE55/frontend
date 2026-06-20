@@ -4,6 +4,7 @@ export const KEY = {
   profile: "profile",
   staff: "staff",
   sessions: "sessions",
+  trustedDevices: "trustedDevices",
   sites: "sites",
   files: "files",
   batteryAssets: "batteryAssets",
@@ -46,6 +47,9 @@ export const QUERY_KEY = {
   },
   sessions: {
     me: (activeOnly?: boolean) => [KEY.sessions, "me", activeOnly] as const,
+  },
+  trustedDevices: {
+    list: () => [KEY.trustedDevices, "list"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,

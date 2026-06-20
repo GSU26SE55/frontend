@@ -61,17 +61,19 @@ export default function TicketKbReferencesPanel({
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
   const { data: suggestItems } = useManagerKbSuggest(ticketId);
-  const selectorOptions: KbArticleSummaryDTO[] = (suggestItems ?? []).map((item) => ({
-    id: item.id,
-    code: item.code,
-    title: item.title,
-    category: defaultCategory ?? TicketCategoryEnum.Other,
-    status: KbArticleStatusEnum.Published,
-    viewCount: item.viewCount,
-    helpfulCount: item.helpfulCount,
-    reviewRequired: false,
-    createdAt: "",
-  }));
+  const selectorOptions: KbArticleSummaryDTO[] = (suggestItems ?? []).map(
+    (item) => ({
+      id: item.id,
+      code: item.code,
+      title: item.title,
+      category: defaultCategory ?? TicketCategoryEnum.Other,
+      status: KbArticleStatusEnum.Published,
+      viewCount: item.viewCount,
+      helpfulCount: item.helpfulCount,
+      reviewRequired: false,
+      createdAt: "",
+    }),
+  );
 
   const [showAdd, setShowAdd] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

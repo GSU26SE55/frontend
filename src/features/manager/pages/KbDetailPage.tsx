@@ -34,13 +34,19 @@ export default function KbDetailPage() {
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: approve, isPending: approving } = useManagerApproveKbReview();
   const { mutate: reject, isPending: rejecting } = useManagerRejectKbReview();
-  const { mutateAsync: update, isPending: updating } = useManagerUpdateKbArticle();
-  const { mutate: rollback, isPending: rollingBack } = useManagerRollbackKbArticle();
-  const { mutate: markHelpful, isPending: helpfulPending } = useMarkManagerKbHelpful();
-  const { mutateAsync: copyTemplate, isPending: copyingTemplate } = useManagerCopyKbTemplate();
+  const { mutateAsync: update, isPending: updating } =
+    useManagerUpdateKbArticle();
+  const { mutate: rollback, isPending: rollingBack } =
+    useManagerRollbackKbArticle();
+  const { mutate: markHelpful, isPending: helpfulPending } =
+    useMarkManagerKbHelpful();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
+    useManagerCopyKbTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
-  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(null);
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
+    null,
+  );
   const [viewVersionId, setViewVersionId] = useState<string | null>(null);
 
   const { data: versions } = useManagerKbVersions(verOpen ? id! : "");
@@ -83,7 +89,8 @@ export default function KbDetailPage() {
               disabled={copyingTemplate}
               onClick={async () => {
                 const template = await copyTemplate(article.id);
-                if (template) navigate("/manager/kb/new", { state: { template } });
+                if (template)
+                  navigate("/manager/kb/new", { state: { template } });
               }}
             >
               <Copy className="size-3.5" />

@@ -50,10 +50,13 @@ export default function KbDetailPage() {
   const { mutate: rollback, isPending: rollingBack } = useRollbackKbArticle();
   const { mutate: markHelpful, isPending: helpfulPending } = useMarkKbHelpful();
   const { mutate: deleteArticle, isPending: deleting } = useDeleteKbArticle();
-  const { mutateAsync: copyTemplate, isPending: copyingTemplate } = useCopyKbTemplate();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
+    useCopyKbTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
-  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(null);
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
+    null,
+  );
   const [viewVersionId, setViewVersionId] = useState<string | null>(null);
 
   const { data: versions } = useAdminKbVersions(verOpen ? id! : "");
@@ -96,7 +99,8 @@ export default function KbDetailPage() {
               disabled={copyingTemplate}
               onClick={async () => {
                 const template = await copyTemplate(article.id);
-                if (template) navigate("/admin/kb/new", { state: { template } });
+                if (template)
+                  navigate("/admin/kb/new", { state: { template } });
               }}
             >
               <Copy className="size-3.5" />
@@ -152,7 +156,8 @@ export default function KbDetailPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Xóa bài viết KB?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Bài viết <strong>{article.code}</strong> sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
+                    Bài viết <strong>{article.code}</strong> sẽ bị xóa vĩnh
+                    viễn. Hành động này không thể hoàn tác.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -195,9 +200,7 @@ export default function KbDetailPage() {
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
         }
-        onViewVersion={(versionId) =>
-          setViewVersionId(versionId || null)
-        }
+        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }

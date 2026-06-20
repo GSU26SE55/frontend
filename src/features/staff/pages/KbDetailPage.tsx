@@ -24,11 +24,15 @@ export default function KbDetailPage() {
   const navigate = useNavigate();
   const { data: article, isLoading } = useStaffKbDetail(id!);
   const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
-  const { mutate: markHelpful, isPending: helpfulPending } = useMarkStaffKbHelpful();
-  const { mutateAsync: copyTemplate, isPending: copyingTemplate } = useStaffKbCopyTemplate();
+  const { mutate: markHelpful, isPending: helpfulPending } =
+    useMarkStaffKbHelpful();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
+    useStaffKbCopyTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
-  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(null);
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
+    null,
+  );
   const [viewVersionId, setViewVersionId] = useState<string | null>(null);
 
   const { data: versions } = useStaffKbVersions(verOpen ? id! : "");
@@ -71,7 +75,8 @@ export default function KbDetailPage() {
               disabled={copyingTemplate}
               onClick={async () => {
                 const template = await copyTemplate(article.id);
-                if (template) navigate("/staff/kb/new", { state: { template } });
+                if (template)
+                  navigate("/staff/kb/new", { state: { template } });
               }}
             >
               <Copy className="size-3.5" />

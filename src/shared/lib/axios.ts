@@ -5,6 +5,7 @@ import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 import { decodeToken } from "@/shared/types/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { getDeviceId } from "@/shared/lib/deviceId";
 import { EntityError, HttpError } from "@/shared/lib/errors";
 import type { ErrorEntity } from "@/shared/types/api.types";
 
@@ -95,6 +96,9 @@ const tryRefresh = async (): Promise<string | null> => {
 };
 
 axiosInstance.interceptors.request.use(async (config) => {
+  // #AUTH-48: gửi device id cho mọi request (BE chỉ đọc với trusted-devices).
+  config.headers["X-Device-Id"] = getDeviceId();
+
   const accessToken = Cookies.get("accessToken");
   if (!accessToken) return config;
 

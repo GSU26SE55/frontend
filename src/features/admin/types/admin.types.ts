@@ -126,6 +126,12 @@ export interface ChangeAccountRolePayload {
   roleId: string;
 }
 
+// #AUTH-47: POST /api/admin/accounts/{primaryId}/merge — body { secondaryAccountId, reason }
+export interface MergeAccountPayload {
+  secondaryAccountId: string;
+  reason: string;
+}
+
 export interface AdminRevokeAllSessionsPayload {
   reason?: string;
 }

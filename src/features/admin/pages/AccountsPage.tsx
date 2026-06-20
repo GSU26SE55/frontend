@@ -55,6 +55,7 @@ import ChangeAccountStatusDialog from "@/features/admin/components/ChangeAccount
 import ChangeRoleDialog from "@/features/admin/components/ChangeRoleDialog";
 import AccountDetailDrawer from "@/features/admin/components/AccountDetailDrawer";
 import EditStaffProfileDialog from "@/features/admin/components/EditStaffProfileDialog";
+import MergeAccountDialog from "@/features/admin/components/MergeAccountDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
@@ -105,6 +106,7 @@ type DialogState =
   | { type: "reset2fa"; account: AccountDto }
   | { type: "delete"; account: AccountDto }
   | { type: "detail"; account: AccountDto }
+  | { type: "merge"; account: AccountDto }
   | { type: "staffProfile"; account: AccountDto };
 
 const DEFAULTS = { keyword: "", pageNumber: 1, pageSize: 10 };
@@ -363,6 +365,13 @@ export default function AccountsPage() {
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
+                            onClick={() =>
+                              setDialog({ type: "merge", account: acc })
+                            }
+                          >
+                            Gộp tài khoản
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             className="text-destructive"
                             onClick={() =>
                               setDialog({ type: "delete", account: acc })
@@ -415,6 +424,9 @@ export default function AccountsPage() {
       )}
       {dialog.type === "staffProfile" && (
         <EditStaffProfileDialog open onClose={close} account={dialog.account} />
+      )}
+      {dialog.type === "merge" && (
+        <MergeAccountDialog open onClose={close} account={dialog.account} />
       )}
 
       {/* Unlock confirm */}

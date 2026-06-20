@@ -70,8 +70,8 @@ export function KbVersionDialog({
           hasSideBySide
             ? "!w-[94vw] !max-w-[94vw] p-0 overflow-hidden"
             : showingDetail && versionDetail
-            ? "max-w-3xl max-h-[85vh] overflow-y-auto"
-            : "max-w-2xl max-h-[80vh] overflow-y-auto"
+              ? "max-w-3xl max-h-[85vh] overflow-y-auto"
+              : "max-w-2xl max-h-[80vh] overflow-y-auto"
         }
       >
         {hasSideBySide ? (

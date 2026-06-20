@@ -10,6 +10,7 @@ import {
   Link2,
   Lock,
   KeyRound,
+  MonitorSmartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import ChangeEmailForm from "@/features/auth/components/ChangeEmailForm";
 import PhoneVerifySection from "@/features/auth/components/PhoneVerifySection";
 import TwoFactorSetup from "@/features/auth/components/TwoFactorSetup";
 import GoogleLinkSection from "@/features/auth/components/GoogleLinkSection";
+import TrustedDevicesSection from "@/features/auth/components/TrustedDevicesSection";
 import LoginHistoryTable from "@/features/auth/components/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/DangerZone";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
@@ -319,6 +321,14 @@ const AccountSettingsPage = () => {
                       description="Đăng nhập nhanh bằng tài khoản Google"
                       action={<GoogleLinkSection isLinked={false} bare />}
                     />
+
+                    <SecurityRow
+                      icon={MonitorSmartphone}
+                      title="Thiết bị tin cậy"
+                      description="Thiết bị được bỏ qua xác thực 2FA trong 30 ngày"
+                    >
+                      <TrustedDevicesSection />
+                    </SecurityRow>
                   </div>
                 )}
 

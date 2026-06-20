@@ -15,6 +15,9 @@ import type {
   LinkGooglePayload,
   LoginHistoryParams,
   LoginHistoryResponseData,
+  CrossDeviceRequestResponseData,
+  CrossDeviceConfirmPayload,
+  AccountDataExportDto,
 } from "@/features/auth/types/account.types";
 
 export const accountService = {
@@ -88,5 +91,24 @@ export const accountService = {
     axiosInstance.get<CommonResponse<LoginHistoryResponseData>>(
       ENDPOINTS.ACCOUNTS.ME.LOGIN_HISTORY,
       { params },
+    ),
+
+  // #AUTH-51: cross-device 2FA — Device A request (body rỗng) → secret + token + QR uri
+  requestCrossDevice2fa: () =>
+    axiosInstance.post<CommonResponse<CrossDeviceRequestResponseData>>(
+      ENDPOINTS.AUTH.TWO_FA_CROSS_DEVICE_REQUEST,
+    ),
+
+  // #AUTH-51: Device B confirm với token (email link) + TOTP → bật 2FA
+  confirmCrossDevice2fa: (payload: CrossDeviceConfirmPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.TWO_FA_CROSS_DEVICE_CONFIRM,
+      payload,
+    ),
+
+  // #AUTH-62: GDPR export — BE trả CommonResponse<AccountDataExportDto> (JSON body).
+  exportMyData: () =>
+    axiosInstance.get<CommonResponse<AccountDataExportDto>>(
+      ENDPOINTS.ACCOUNTS.ME.EXPORT,
     ),
 };

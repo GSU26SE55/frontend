@@ -2,6 +2,11 @@ export const ENDPOINTS = {
   AUTH: {
     LOGIN: "/api/auth/login",
     LOGIN_VERIFY_2FA: "/api/auth/login/verify-2fa", // GH-295 — bước 2 của 2FA login
+    LOGIN_2FA_SMS: "/api/auth/login/2fa/sms", // #AUTH-58 — gửi OTP SMS fallback (header X-Challenge-Token)
+    TWO_FA_CROSS_DEVICE_REQUEST: "/api/auth/2fa/cross-device-confirm/request", // #AUTH-51 — Device A
+    TWO_FA_CROSS_DEVICE_CONFIRM: "/api/auth/2fa/cross-device-confirm", // #AUTH-51 — Device B
+    REACTIVATE_REQUEST: "/api/auth/reactivate-request", // #AUTH-50 — bước 1
+    REACTIVATE_VERIFY: "/api/auth/reactivate-verify", // #AUTH-50 — bước 2
     LOGOUT: "/api/auth/logout",
     REGISTER: "/api/auth/register",
     VERIFY_OTP: "/api/auth/verify-otp",
@@ -36,6 +41,10 @@ export const ENDPOINTS = {
       DEACTIVATE: "/api/accounts/me/deactivate",
       DELETE: "/api/accounts/me",
       LOGIN_HISTORY: "/api/accounts/me/login-history",
+      EXPORT: "/api/accounts/me/export", // #AUTH-62 — GDPR data export (JSON)
+      // #AUTH-48 — Trusted Devices
+      TRUSTED_DEVICES: "/api/accounts/me/trusted-devices",
+      TRUSTED_DEVICE: (id: string) => `/api/accounts/me/trusted-devices/${id}`,
     },
   },
 
@@ -60,8 +69,6 @@ export const ENDPOINTS = {
 
   NOTIFICATIONS: {
     LIST: "/api/notifications",
-    MARK_READ: (id: string) => `/api/notifications/${id}/read`,
-    MARK_ALL_READ: "/api/notifications/read-all",
   },
 
   ALERTS: {
@@ -118,6 +125,7 @@ export const ENDPOINTS = {
       LOGIN_HISTORY: (id: string) => `/api/admin/accounts/${id}/login-history`,
       ROLE: (id: string) => `/api/admin/accounts/${id}/role`,
       RESET_2FA: (id: string) => `/api/admin/accounts/${id}/2fa`, // GH-295 — admin reset 2FA (DELETE)
+      MERGE: (id: string) => `/api/admin/accounts/${id}/merge`, // #AUTH-47 — merge secondary vào primary (path = primaryId)
     },
     STAFF: {
       PROFILE: (id: string) => `/api/admin/staff/${id}/profile`,

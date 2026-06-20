@@ -82,7 +82,8 @@ export default function KbListPage() {
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: markHelpful } = useMarkManagerKbHelpful();
-  const { mutateAsync: update, isPending: updating } = useManagerUpdateKbArticle();
+  const { mutateAsync: update, isPending: updating } =
+    useManagerUpdateKbArticle();
 
   const [editArticleId, setEditArticleId] = useState<string | null>(null);
   const { data: editArticle } = useManagerKbDetail(editArticleId ?? "");

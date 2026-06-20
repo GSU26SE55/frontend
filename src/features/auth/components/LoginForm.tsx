@@ -178,6 +178,16 @@ const LoginForm = () => {
             Đăng ký
           </Link>
         </p>
+
+        <p className="text-center text-sm text-slate-400">
+          Tài khoản đã bị xóa?{" "}
+          <Link
+            to="/reactivate"
+            className="font-medium text-slate-500 hover:text-emerald-600 underline-offset-4 hover:underline"
+          >
+            Khôi phục tài khoản
+          </Link>
+        </p>
       </form>
     </div>
   );
