@@ -171,6 +171,10 @@ export const ENDPOINTS = {
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
     },
+    SMS_GATEWAY: {
+      DEVICES: "/api/admin/sms-gateway/devices",
+      DEVICE_REVOKE: (id: string) => `/api/admin/sms-gateway/devices/${id}`,
+    },
   },
 
   SITES: {

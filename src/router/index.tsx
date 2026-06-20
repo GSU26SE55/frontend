@@ -31,6 +31,7 @@ import AdminTicketDetailPage from "@/features/admin/pages/AdminTicketDetailPage"
 import AdminAlertsPage from "@/features/admin/pages/AlertsPage";
 import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/EnvironmentalIncidentsPage";
 import AdminAmbientConfigPage from "@/features/admin/pages/AmbientConfigPage";
+import AdminSmsGatewayPage from "@/features/admin/pages/SmsGatewayPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
@@ -135,6 +136,7 @@ const router = createBrowserRouter([
                 element: <AdminEnvironmentalIncidentsPage />,
               },
               { path: "ambient", element: <AdminAmbientConfigPage /> },
+              { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               { path: "notifications", element: <NotificationAdminPage /> },

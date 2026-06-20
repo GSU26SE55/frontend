@@ -19,6 +19,7 @@ import {
   BookOpen,
   ShieldAlert,
   Thermometer,
+  MessageSquare,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -202,6 +203,7 @@ const ADMIN_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
+      { label: "SMS Gateway", path: "/admin/sms-gateway", icon: MessageSquare },
       { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
       { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
       { label: "Cài đặt", path: "/admin/settings", icon: Settings },
