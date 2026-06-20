@@ -24,7 +24,10 @@ import SiteTable from "@/features/admin/components/SiteTable";
 import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
 import type { SiteDto } from "@/shared/types/site.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const DEFAULTS = {
   keyword: "",
@@ -41,6 +44,9 @@ type ConfirmState =
 export default function SiteListPage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
+  const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
+    setFilter("keyword", kw),
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState<SiteDto | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>({
@@ -92,9 +98,12 @@ export default function SiteListPage() {
             {isLoading ? "..." : totalItems} site.
           </p>
         </div>
-        <Button size="sm" onClick={handleCreate}>
-          <Plus className="size-3.5" /> Tạo site
-        </Button>
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.sites]} />
+          <Button size="sm" onClick={handleCreate}>
+            <Plus className="size-3.5" /> Tạo site
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -102,8 +111,8 @@ export default function SiteListPage() {
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Tìm theo tên site..."
-            value={filters.keyword}
-            onChange={(e) => setFilter("keyword", e.target.value || undefined)}
+            value={search.value}
+            onChange={search.onChange}
             className="pl-8"
           />
         </div>
@@ -140,6 +149,8 @@ export default function SiteListPage() {
         ) : (
           <SiteTable
             data={items}
+            pageNumber={filters.pageNumber}
+            pageSize={filters.pageSize}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onRestore={handleRestore}

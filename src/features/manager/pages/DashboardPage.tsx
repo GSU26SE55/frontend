@@ -38,8 +38,9 @@ import {
   PieChart,
   Label,
 } from "recharts";
+import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import {
-  RefreshCw,
   Download,
   CheckCircle,
   AlertCircle,
@@ -132,9 +133,7 @@ export default function ManagerDashboardPage() {
           </h1>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm">
-            <RefreshCw className="size-3.5" /> Đồng bộ
-          </Button>
+          <RefreshButton queryKeys={[KEY.sites]} label="Đồng bộ" />
           <Button variant="outline" size="sm">
             <Download className="size-3.5" /> Xuất báo cáo
           </Button>
@@ -374,6 +373,7 @@ export default function ManagerDashboardPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Site</TableHead>
                 <TableHead>Khách hàng</TableHead>
                 <TableHead>Pin</TableHead>
@@ -384,7 +384,7 @@ export default function ManagerDashboardPage() {
             <TableBody>
               {atRisk.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center">
+                  <TableCell colSpan={6} className="h-32 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <CheckCircle className="size-8 text-emerald-500" />
                       <p className="text-sm text-muted-foreground">
@@ -394,12 +394,15 @@ export default function ManagerDashboardPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                atRisk.slice(0, 6).map((s) => (
+                atRisk.slice(0, 6).map((s, index) => (
                   <TableRow
                     key={s.id}
                     className="cursor-pointer"
                     onClick={() => navigate(`/manager/sites/${s.id}`)}
                   >
+                    <TableCell className="text-center text-muted-foreground tabular-nums">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {s.customerName}

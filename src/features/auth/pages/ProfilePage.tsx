@@ -1,16 +1,27 @@
 import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Camera } from "lucide-react";
+import { format } from "date-fns";
+import {
+  Loader2,
+  Camera,
+  ShieldCheck,
+  Phone,
+  Mail,
+  Clock,
+  CalendarDays,
+  Briefcase,
+  BadgeCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useFileBlobUrl } from "@/features/file-storage/hooks/useFileBlobUrl";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useFileBlobUrl } from "@/features/file-storage/hooks/useFileBlobUrl";
 import {
   profileSchema,
   type ProfileFormValues,
@@ -21,7 +32,47 @@ import { useUpdateAvatar } from "@/features/auth/hooks/useUpdateAvatar";
 import { useUploadFile } from "@/features/file-storage/hooks/useUploadFile";
 import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AccountStatusEnum } from "@/shared/enums/account.enum";
 
+// ── Maps ─────────────────────────────────────────────────────────────────────
+const ROLE_LABEL: Record<string, string> = {
+  Admin: "Quản trị viên",
+  Manager: "Quản lý",
+  Staff: "Kỹ thuật viên",
+  Customer: "Khách hàng",
+};
+
+const STATUS_CONFIG: Record<
+  number,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
+  [AccountStatusEnum.PendingVerification]: {
+    label: "Chờ xác thực",
+    variant: "outline",
+  },
+  [AccountStatusEnum.Active]: { label: "Hoạt động", variant: "default" },
+  [AccountStatusEnum.Locked]: { label: "Bị khóa", variant: "destructive" },
+  [AccountStatusEnum.Inactive]: {
+    label: "Không hoạt động",
+    variant: "secondary",
+  },
+  [AccountStatusEnum.Suspended]: {
+    label: "Tạm đình chỉ",
+    variant: "destructive",
+  },
+  [AccountStatusEnum.Banned]: { label: "Bị cấm", variant: "destructive" },
+};
+
+const TIER_LABEL: Record<number, string> = {
+  1: "Tier 1 — Junior",
+  2: "Tier 2 — Senior",
+  3: "Tier 3 — Expert",
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 const ProfilePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: account, isLoading } = useProfile();
@@ -46,7 +97,9 @@ const ProfilePage = () => {
           fullName: account.fullName ?? "",
           phoneNumber: account.phoneNumber ?? "",
           address: account.address ?? "",
-          birthDate: account.dateOfBirth ?? "",
+          birthDate: account.dateOfBirth
+            ? account.dateOfBirth.slice(0, 10)
+            : "",
           timeZone: account.profile?.timeZone ?? "",
         }
       : undefined,
@@ -77,7 +130,6 @@ const ProfilePage = () => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     uploadFile(
       { file, purpose: FilePurposeEnum.Avatar },
       {
@@ -98,162 +150,289 @@ const ProfilePage = () => {
         onError: (err) => handleErrorApi({ error: err }),
       },
     );
-
     e.target.value = "";
   };
 
+  const isAvatarBusy = isUploading || isAvatarUpdating;
+  const statusCfg = account
+    ? (STATUS_CONFIG[account.status] ?? {
+        label: String(account.status),
+        variant: "outline" as const,
+      })
+    : null;
+
+  // ── Loading ──────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-6 max-w-2xl mx-auto space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-4 w-64" />
+      <div className="p-6 space-y-5">
+        <Skeleton className="h-28 w-full rounded-xl" />
+        <Skeleton className="h-4 w-32" />
+        <div className="grid sm:grid-cols-2 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 rounded-lg" />
+          ))}
         </div>
-        <Skeleton className="h-32 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
 
-  const isAvatarBusy = isUploading || isAvatarUpdating;
-
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Hồ sơ của tôi</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Quản lý thông tin cá nhân và ảnh đại diện
-        </p>
-        <Separator className="mt-4" />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        {/* Avatar */}
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle className="text-base">Ảnh đại diện</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4 text-center">
-            <div className="relative">
-              <Avatar className="size-24 text-3xl">
-                {avatarUrl && (
-                  <AvatarImage
-                    src={avatarUrl}
-                    alt={account?.fullName ?? "Avatar"}
-                  />
-                )}
-                <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                disabled={isAvatarBusy}
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 size-8 rounded-full shadow-sm"
-                aria-label="Thay đổi ảnh đại diện"
-              >
-                {isAvatarBusy ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Camera className="size-3.5" />
-                )}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp"
-                className="hidden"
-                onChange={handleAvatarChange}
+    <div className="p-6 space-y-6">
+      {/* ── Profile banner ── */}
+      <div className="flex items-center gap-5 p-5 rounded-xl bg-muted/40 border border-border/60">
+        {/* Avatar — toàn bộ vùng tròn clickable */}
+        <button
+          type="button"
+          disabled={isAvatarBusy}
+          onClick={() => fileInputRef.current?.click()}
+          className="relative shrink-0 rounded-full group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Thay đổi ảnh đại diện"
+        >
+          <Avatar className="size-[72px] text-2xl ring-2 ring-background shadow-sm">
+            {avatarUrl && (
+              <AvatarImage
+                src={avatarUrl}
+                alt={account?.fullName ?? "Avatar"}
               />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              <p>Nhấn vào biểu tượng camera để thay đổi ảnh đại diện.</p>
-              <p className="mt-1">Hỗ trợ JPG, PNG, WEBP. Tối đa 20MB.</p>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+            <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          {/* Hover overlay — nét đứt + icon camera giữa */}
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            {isAvatarBusy ? (
+              <Loader2 size={20} className="text-white animate-spin" />
+            ) : (
+              <Camera size={20} className="text-white" />
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+        </button>
 
-        {/* Profile form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Thông tin cá nhân</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2 space-y-1.5">
-                  <Label htmlFor="fullName">Họ và tên</Label>
-                  <Input id="fullName" {...register("fullName")} />
-                  {errors.fullName && (
-                    <p className="text-xs text-destructive">
-                      {errors.fullName.message}
-                    </p>
-                  )}
-                </div>
+        {/* Name + meta */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h3 className="text-lg font-semibold truncate">
+              {account?.fullName || "—"}
+            </h3>
+            {account?.role && (
+              <Badge variant="secondary" className="text-[11px] font-medium">
+                {ROLE_LABEL[account.role] ?? account.role}
+              </Badge>
+            )}
+            {statusCfg && (
+              <Badge
+                variant={statusCfg.variant}
+                className="text-[11px] font-medium"
+              >
+                {statusCfg.label}
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Mail size={11} />
+              {account?.email}
+              {account?.emailConfirmed && (
+                <BadgeCheck size={11} className="text-emerald-500" />
+              )}
+            </span>
+            {account?.phoneNumber && (
+              <span className="flex items-center gap-1">
+                <Phone size={11} />
+                {account.phoneNumber}
+                {account.phoneConfirmed && (
+                  <BadgeCheck size={11} className="text-emerald-500" />
+                )}
+              </span>
+            )}
+            {account?.createdAt && (
+              <span className="flex items-center gap-1">
+                <CalendarDays size={11} />
+                Tham gia {format(new Date(account.createdAt), "dd/MM/yyyy")}
+              </span>
+            )}
+            {account?.lastLoginAt && (
+              <span className="flex items-center gap-1">
+                <Clock size={11} />
+                Đăng nhập lần cuối{" "}
+                {format(new Date(account.lastLoginAt), "dd/MM/yyyy HH:mm")}
+              </span>
+            )}
+            {account?.twoFactorEnabled && (
+              <span className="flex items-center gap-1 text-emerald-600">
+                <ShieldCheck size={11} />
+                2FA bật
+              </span>
+            )}
+          </div>
+        </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    value={account?.email ?? ""}
-                    disabled
-                    className="bg-muted"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="phoneNumber">Số điện thoại</Label>
-                  <Input
-                    id="phoneNumber"
-                    {...register("phoneNumber")}
-                    placeholder="0912345678"
-                  />
-                  {errors.phoneNumber && (
-                    <p className="text-xs text-destructive">
-                      {errors.phoneNumber.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="birthDate">Ngày sinh</Label>
-                  <Input
-                    id="birthDate"
-                    type="date"
-                    {...register("birthDate")}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="timeZone">Múi giờ</Label>
-                  <Input
-                    id="timeZone"
-                    {...register("timeZone")}
-                    placeholder="Asia/Ho_Chi_Minh"
-                  />
-                </div>
-
-                <div className="sm:col-span-2 space-y-1.5">
-                  <Label htmlFor="address">Địa chỉ</Label>
-                  <Input id="address" {...register("address")} />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={isUpdating}>
-                  {isUpdating && (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  )}
-                  Lưu thay đổi
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        {/* ID */}
+        {account?.id && (
+          <div className="shrink-0 hidden lg:block text-right">
+            <p className="text-[10px] text-muted-foreground mb-0.5">
+              ID tài khoản
+            </p>
+            <p className="font-mono text-xs text-muted-foreground select-all">
+              {account.id.slice(0, 8).toUpperCase()}…
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* ── Editable info form ── */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div>
+          <p className="text-[13px] font-semibold mb-3">Thông tin cá nhân</p>
+          <Separator />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Họ và tên — full width */}
+          <div className="sm:col-span-2 space-y-1.5">
+            <Label className="text-xs">
+              Họ và tên <span className="text-destructive">*</span>
+            </Label>
+            <Input {...register("fullName")} className="h-9" />
+            {errors.fullName && (
+              <p className="text-xs text-destructive">
+                {errors.fullName.message}
+              </p>
+            )}
+          </div>
+
+          {/* Email — readonly */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">
+              Email (chỉ đọc)
+            </Label>
+            <Input
+              value={account?.email ?? ""}
+              disabled
+              className="h-9 bg-muted/50 cursor-not-allowed"
+            />
+          </div>
+
+          {/* Số điện thoại */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Số điện thoại</Label>
+            <Input
+              {...register("phoneNumber")}
+              className="h-9"
+              placeholder="0912 345 678"
+            />
+            {errors.phoneNumber && (
+              <p className="text-xs text-destructive">
+                {errors.phoneNumber.message}
+              </p>
+            )}
+          </div>
+
+          {/* Ngày sinh */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Ngày sinh</Label>
+            <Input type="date" {...register("birthDate")} className="h-9" />
+          </div>
+
+          {/* Múi giờ */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Múi giờ</Label>
+            <Input
+              {...register("timeZone")}
+              className="h-9"
+              placeholder="Asia/Ho_Chi_Minh"
+            />
+          </div>
+
+          {/* Địa chỉ — full width */}
+          <div className="sm:col-span-2 space-y-1.5">
+            <Label className="text-xs">Địa chỉ</Label>
+            <Input
+              {...register("address")}
+              className="h-9"
+              placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
+            />
+          </div>
+        </div>
+
+        {/* Staff info — read-only block */}
+        {account?.staffProfile && (
+          <div className="space-y-3">
+            <div>
+              <p className="text-[13px] font-semibold mb-3 flex items-center gap-1.5">
+                <Briefcase size={13} />
+                Thông tin nhân viên
+              </p>
+              <Separator />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 text-sm">
+              {account.staffProfile.employeeCode && (
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Mã nhân viên</p>
+                  <p className="font-mono font-medium">
+                    {account.staffProfile.employeeCode}
+                  </p>
+                </div>
+              )}
+              {account.staffProfile.department && (
+                <div className="space-y-0.5">
+                  <p className="text-xs text-muted-foreground">Phòng ban</p>
+                  <p className="font-medium">
+                    {account.staffProfile.department}
+                  </p>
+                </div>
+              )}
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Cấp bậc kỹ năng</p>
+                <p className="font-medium">
+                  {TIER_LABEL[account.staffProfile.skillTier] ??
+                    `Tier ${account.staffProfile.skillTier}`}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">
+                  Ticket đồng thời tối đa
+                </p>
+                <p className="font-medium">
+                  {account.staffProfile.maxConcurrentTickets}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xs text-muted-foreground">Trạng thái</p>
+                <p
+                  className={
+                    account.staffProfile.isAvailable
+                      ? "text-emerald-600 font-medium"
+                      : "text-muted-foreground"
+                  }
+                >
+                  {account.staffProfile.isAvailable
+                    ? "Sẵn sàng"
+                    : "Không sẵn sàng"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-xs text-muted-foreground">
+            Hỗ trợ ảnh đại diện: JPG, PNG, WEBP · Tối đa 20MB
+          </p>
+          <Button type="submit" size="sm" disabled={isUpdating}>
+            {isUpdating && <Loader2 className="mr-2 size-3.5 animate-spin" />}
+            Lưu thay đổi
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

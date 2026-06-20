@@ -8,6 +8,8 @@ import AppLayout from "@/shared/components/layout/AppLayout";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import Login2faPage from "@/features/auth/pages/Login2faPage";
+import ReactivatePage from "@/features/auth/pages/ReactivatePage";
+import CrossDeviceConfirmPage from "@/features/auth/pages/CrossDeviceConfirmPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import OtpVerifyPage from "@/features/auth/pages/OtpVerifyPage";
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
@@ -15,6 +17,7 @@ import AcceptInvitePage from "@/features/auth/pages/AcceptInvitePage";
 import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
+import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
 import AdminSiteDetailPage from "@/features/admin/pages/SiteDetailPage";
@@ -28,6 +31,7 @@ import AdminTicketDetailPage from "@/features/admin/pages/AdminTicketDetailPage"
 import AdminAlertsPage from "@/features/admin/pages/AlertsPage";
 import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/EnvironmentalIncidentsPage";
 import AdminAmbientConfigPage from "@/features/admin/pages/AmbientConfigPage";
+import AdminSmsGatewayPage from "@/features/admin/pages/SmsGatewayPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
@@ -42,6 +46,15 @@ import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
 import StaffSlaMonitorPage from "@/features/staff/pages/SlaMonitorPage";
 import StaffAlertsPage from "@/features/staff/pages/AlertsPage";
+import AdminKbListPage from "@/features/admin/pages/KbListPage";
+import AdminKbDetailPage from "@/features/admin/pages/KbDetailPage";
+import AdminKbEditorPage from "@/features/admin/pages/KbEditorPage";
+import ManagerKbListPage from "@/features/manager/pages/KbListPage";
+import ManagerKbDetailPage from "@/features/manager/pages/KbDetailPage";
+import ManagerKbEditorPage from "@/features/manager/pages/KbEditorPage";
+import StaffKbListPage from "@/features/staff/pages/KbListPage";
+import StaffKbDetailPage from "@/features/staff/pages/KbDetailPage";
+import StaffKbEditorPage from "@/features/staff/pages/KbEditorPage";
 import StaffBatteryAlertsPage from "@/features/staff/pages/BatteryAlertsPage";
 import StaffEnvironmentalIncidentsPage from "@/features/staff/pages/EnvironmentalIncidentsPage";
 
@@ -55,6 +68,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/login", element: <LoginPage /> },
       { path: "/login/2fa", element: <Login2faPage /> },
+      { path: "/reactivate", element: <ReactivatePage /> },
       { path: "/register", element: <RegisterPage /> },
       { path: "/register/verify-otp", element: <OtpVerifyPage /> },
       { path: "/forgot-password", element: <ForgotPasswordPage /> },
@@ -87,6 +101,11 @@ const router = createBrowserRouter([
         children: [{ index: true, element: <AccountSettingsPage /> }],
       },
       {
+        // #AUTH-51: Device B confirm — chỉ cần đăng nhập (mọi role), không qua AppLayout
+        path: "/2fa/cross-device-confirm",
+        element: <CrossDeviceConfirmPage />,
+      },
+      {
         element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
         children: [
           {
@@ -107,14 +126,20 @@ const router = createBrowserRouter([
               { path: "roles", element: <RolesPage /> },
               { path: "tickets", element: <AdminTicketListPage /> },
               { path: "tickets/:id", element: <AdminTicketDetailPage /> },
+              { path: "kb", element: <AdminKbListPage /> },
+              { path: "kb/new", element: <AdminKbEditorPage /> },
+              { path: "kb/:id", element: <AdminKbDetailPage /> },
+              { path: "kb/:id/edit", element: <AdminKbEditorPage /> },
               { path: "alerts", element: <AdminAlertsPage /> },
               {
                 path: "environmental-incidents",
                 element: <AdminEnvironmentalIncidentsPage />,
               },
               { path: "ambient", element: <AdminAmbientConfigPage /> },
+              { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
+              { path: "notifications", element: <NotificationAdminPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],
           },
@@ -134,6 +159,10 @@ const router = createBrowserRouter([
               { path: "tickets", element: <ManagerTicketListPage /> },
               { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
               { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
+              { path: "kb", element: <ManagerKbListPage /> },
+              { path: "kb/new", element: <ManagerKbEditorPage /> },
+              { path: "kb/:id", element: <ManagerKbDetailPage /> },
+              { path: "kb/:id/edit", element: <ManagerKbEditorPage /> },
               { path: "alerts", element: <ManagerAlertsPage /> },
               {
                 path: "environmental-incidents",
@@ -157,6 +186,10 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <StaffDashboardPage /> },
               { path: "tickets", element: <StaffTicketListPage /> },
               { path: "tickets/:id", element: <StaffTicketDetailPage /> },
+              { path: "kb", element: <StaffKbListPage /> },
+              { path: "kb/new", element: <StaffKbEditorPage /> },
+              { path: "kb/:id", element: <StaffKbDetailPage /> },
+              { path: "kb/:id/edit", element: <StaffKbEditorPage /> },
               { path: "sla", element: <StaffSlaMonitorPage /> },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },

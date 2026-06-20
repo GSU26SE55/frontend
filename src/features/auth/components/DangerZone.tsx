@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useDeactivateAccount } from "@/features/auth/hooks/useDeactivateAccount";
 import { useDeleteAccount } from "@/features/auth/hooks/useDeleteAccount";
+import { useExportMyData } from "@/features/auth/hooks/useExportMyData";
 import { handleErrorApi } from "@/shared/lib/errors";
 
 const DangerZone = () => {
@@ -23,6 +25,7 @@ const DangerZone = () => {
   const { mutate: deactivate, isPending: isDeactivating } =
     useDeactivateAccount();
   const { mutate: deleteAcc, isPending: isDeleting } = useDeleteAccount();
+  const { mutate: exportData, isPending: isExporting } = useExportMyData();
 
   const handleDeactivate = () => {
     deactivate(undefined, {
@@ -36,12 +39,40 @@ const DangerZone = () => {
     });
   };
 
+  const handleExport = () => {
+    exportData(undefined, {
+      onSuccess: () => toast.success("Đã tải dữ liệu tài khoản (JSON)"),
+      onError: (error) => handleErrorApi({ error }),
+    });
+  };
+
   return (
     <Card className="border-destructive">
       <CardHeader>
         <CardTitle className="text-destructive">Vùng nguy hiểm</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Tải dữ liệu của tôi (GDPR)</p>
+            <p className="text-xs text-muted-foreground">
+              Xuất toàn bộ dữ liệu tài khoản dưới dạng file JSON
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Tải dữ liệu
+          </Button>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Vô hiệu hóa tài khoản</p>

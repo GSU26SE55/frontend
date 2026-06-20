@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   MapPin,
@@ -12,13 +12,14 @@ import {
   BellRing,
   ChevronDown,
   LogOut,
-  User,
   Ticket,
   Clock,
   FileText,
   ScrollText,
+  BookOpen,
   ShieldAlert,
   Thermometer,
+  MessageSquare,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -29,7 +30,6 @@ import ThemeToggle from "@/shared/components/common/ThemeToggle";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
-  const navigate = useNavigate();
   const { user } = useSessionStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const { mutate: logout } = useLogout();
@@ -108,21 +108,6 @@ function Topbar() {
                   {user?.email}
                 </div>
               </div>
-              <DropMenuItem
-                icon={<User size={14} />}
-                onClick={() => {
-                  const path =
-                    user?.role === UserRole.ADMIN
-                      ? "/admin/profile"
-                      : user?.role === UserRole.MANAGER
-                        ? "/manager/profile"
-                        : "/staff/profile";
-                  navigate(path);
-                  setMenuOpen(false);
-                }}
-              >
-                Hồ sơ của tôi
-              </DropMenuItem>
               <div className="border-t border-border my-1" />
               <DropMenuItem
                 icon={<LogOut size={14} />}
@@ -199,7 +184,10 @@ const ADMIN_NAV: NavSection[] = [
     title: "Hỗ trợ",
     collapsible: true,
     defaultOpen: true,
-    items: [{ label: "Tickets", path: "/admin/tickets", icon: Ticket }],
+    items: [
+      { label: "Tickets", path: "/admin/tickets", icon: Ticket },
+      { label: "Knowledge Base", path: "/admin/kb", icon: BookOpen },
+    ],
   },
   {
     title: "Người dùng",
@@ -215,7 +203,9 @@ const ADMIN_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
+      { label: "SMS Gateway", path: "/admin/sms-gateway", icon: MessageSquare },
       { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
+      { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
       { label: "Cài đặt", path: "/admin/settings", icon: Settings },
     ],
   },
@@ -235,6 +225,7 @@ const MANAGER_NAV: NavSection[] = [
       { label: "Sites", path: "/manager/sites", icon: MapPin },
       { label: "Tickets", path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Knowledge Base", path: "/manager/kb", icon: BookOpen },
       { label: "Cảnh báo pin", path: "/manager/alerts", icon: BellRing },
       {
         label: "Sự cố môi trường",
@@ -257,6 +248,7 @@ const STAFF_NAV: NavSection[] = [
     items: [
       { label: "Tổng quan", path: "/staff/dashboard", icon: LayoutDashboard },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
+      { label: "Knowledge Base", path: "/staff/kb", icon: BookOpen },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
     ],
   },

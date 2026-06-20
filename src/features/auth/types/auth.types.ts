@@ -67,10 +67,29 @@ export interface LoginResultData {
 }
 
 // Bước 2 của 2FA login (POST /api/auth/login/verify-2fa)
+// Khớp BE Verify2FALoginCommand: isSmsCode (#AUTH-58) mutex với isBackupCode;
+// trustDevice + trustDeviceLabel (#AUTH-48) chỉ áp dụng với TOTP/SMS path.
 export interface Verify2faLoginPayload {
   challengeToken: string;
   code: string;
   isBackupCode: boolean;
+  isSmsCode?: boolean; // true ⇒ code là OTP nhận qua SMS (fallback)
+  trustDevice?: boolean; // true ⇒ skip 2FA từ device này 30 ngày
+  trustDeviceLabel?: string; // label friendly (max 120), optional
+}
+
+// #AUTH-58: POST /api/auth/login/2fa/sms — gửi OTP SMS fallback (header X-Challenge-Token)
+export interface Sms2faPayload {
+  challengeToken: string;
+}
+
+// #AUTH-50: khôi phục account đã soft-delete (window 90 ngày)
+export interface ReactivateRequestPayload {
+  email: string;
+}
+export interface ReactivateVerifyPayload {
+  email: string;
+  otp: string;
 }
 
 // Key sessionStorage giữ challengeToken giữa /login → /login/2fa (TTL 5 phút server-side)

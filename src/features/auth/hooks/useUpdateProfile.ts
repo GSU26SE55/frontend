@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { profileService } from "@/features/auth/services/profile.service";
-import { KEY } from "@/shared/utils/queryKeys";
+import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { UpdateProfilePayload } from "@/features/auth/types/auth.types";
 
 export const useUpdateProfile = () => {
@@ -10,7 +10,9 @@ export const useUpdateProfile = () => {
     mutationFn: (payload: UpdateProfilePayload) =>
       profileService.updateProfile(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [KEY.profile] });
+      // Invalidate với exact key để trigger refetch ngay, không dùng setQueryData
+      // vì useCurrentUser & useProfile share key nhưng khác queryFn transform shape
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
     },
   });
 };

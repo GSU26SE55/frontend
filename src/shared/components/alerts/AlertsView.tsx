@@ -178,9 +178,6 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
           </SelectContent>
         </Select>
 
-        <span className="text-sm text-muted-foreground">
-          {totalItems} kết quả
-        </span>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
             Xóa bộ lọc
@@ -204,6 +201,7 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Serial pin</TableHead>
                 <TableHead>Loại bất thường</TableHead>
                 <TableHead>Mức độ</TableHead>
@@ -213,12 +211,15 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((alert) => (
+              {items.map((alert, index) => (
                 <TableRow
                   key={alert.id}
                   className="cursor-pointer"
                   onClick={() => setSelectedId(alert.id)}
                 >
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(filters.pageNumber - 1) * filters.pageSize + index + 1}
+                  </TableCell>
                   <TableCell className="font-medium">
                     {alert.batterySerialNumber}
                   </TableCell>

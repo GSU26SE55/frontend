@@ -172,6 +172,7 @@ export default function AlertsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">STT</TableHead>
                 <TableHead>Nội dung</TableHead>
                 <TableHead>Loại</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -180,8 +181,11 @@ export default function AlertsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {notifications.map((item) => (
+              {notifications.map((item, index) => (
                 <TableRow key={item.id}>
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(page - 1) * PAGE_SIZE + index + 1}
+                  </TableCell>
                   <TableCell>
                     <div className="max-w-xl">
                       <p className="font-medium">{item.title}</p>

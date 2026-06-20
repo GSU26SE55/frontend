@@ -4,6 +4,8 @@ export const KEY = {
   profile: "profile",
   staff: "staff",
   sessions: "sessions",
+  trustedDevices: "trustedDevices",
+  deviceTokens: "deviceTokens",
   sites: "sites",
   files: "files",
   batteryAssets: "batteryAssets",
@@ -22,10 +24,13 @@ export const KEY = {
     permissions: ["admin", "permissions"] as const,
     auditLogs: ["admin", "auditLogs"] as const,
     tickets: ["admin", "tickets"] as const,
+    smsGateway: ["admin", "smsGateway"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
   },
+  kb: "kb",
+  ticketKbRefs: "ticketKbRefs",
 } as const;
 
 export const QUERY_KEY = {
@@ -44,6 +49,12 @@ export const QUERY_KEY = {
   },
   sessions: {
     me: (activeOnly?: boolean) => [KEY.sessions, "me", activeOnly] as const,
+  },
+  trustedDevices: {
+    list: () => [KEY.trustedDevices, "list"] as const,
+  },
+  deviceTokens: {
+    list: () => [KEY.deviceTokens, "list"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,
@@ -76,8 +87,8 @@ export const QUERY_KEY = {
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,
-    presignedUrl: (id: string) => [KEY.files, "presigned-url", id] as const,
-    blob: (id: string) => [KEY.files, "blob", id] as const,
+    presignedUrl: (id: string, expiresInMinutes?: number) =>
+      [KEY.files, "presigned-url", id, expiresInMinutes] as const,
   },
   admin: {
     accounts: {
@@ -122,6 +133,9 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
     },
+    smsGateway: {
+      list: (params?: object) => [...KEY.admin.smsGateway, "list", params],
+    },
   },
   alerts: {
     list: (params?: object) => [KEY.alerts, "list", params] as const,
@@ -158,5 +172,18 @@ export const QUERY_KEY = {
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },
+  },
+  kb: {
+    list: (params?: object) => [KEY.kb, "list", params] as const,
+    detail: (id: string) => [KEY.kb, "detail", id] as const,
+    versions: (id: string) => [KEY.kb, "versions", id] as const,
+    versionDetail: (id: string, versionId: string | null) =>
+      [KEY.kb, "version-detail", id, versionId] as const,
+    compare: (id: string, fromVersionId?: string, toVersionId?: string) =>
+      [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
+    suggest: (params?: object) => [KEY.kb, "suggest", params] as const,
+  },
+  ticketKbRefs: {
+    list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,
   },
 } as const;

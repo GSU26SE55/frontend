@@ -6,6 +6,9 @@ import type {
   LoginPayload,
   LoginResultData,
   Verify2faLoginPayload,
+  Sms2faPayload,
+  ReactivateRequestPayload,
+  ReactivateVerifyPayload,
   RegisterPayload,
   OtpVerifyPayload,
   ResendOtpPayload,
@@ -25,10 +28,32 @@ export const authService = {
       payload,
     ),
 
-  // GH-295: bước 2 của 2FA login — verify TOTP/backup code bằng challengeToken
+  // GH-295: bước 2 của 2FA login — verify TOTP/backup/SMS code bằng challengeToken
   verify2faLogin: (payload: Verify2faLoginPayload) =>
     axiosInstance.post<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.LOGIN_VERIFY_2FA,
+      payload,
+    ),
+
+  // #AUTH-58: gửi OTP SMS fallback — partition rate-limit theo header X-Challenge-Token.
+  // data trả về là số điện thoại đã mask (vd "******1234").
+  send2faSms: (payload: Sms2faPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.LOGIN_2FA_SMS,
+      payload,
+      { headers: { "X-Challenge-Token": payload.challengeToken } },
+    ),
+
+  // #AUTH-50: khôi phục account đã soft-delete (window 90 ngày)
+  reactivateRequest: (payload: ReactivateRequestPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.REACTIVATE_REQUEST,
+      payload,
+    ),
+
+  reactivateVerify: (payload: ReactivateVerifyPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.REACTIVATE_VERIFY,
       payload,
     ),
 

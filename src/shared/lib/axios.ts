@@ -1,11 +1,27 @@
-import axios from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 import { decodeToken } from "@/shared/types/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { getDeviceId } from "@/shared/lib/deviceId";
 import { EntityError, HttpError } from "@/shared/lib/errors";
+import type { ErrorEntity } from "@/shared/types/api.types";
+
+// Mở rộng config chuẩn của axios để mang số lần đã retry — type-safe thay cho `any`.
+declare module "axios" {
+  export interface InternalAxiosRequestConfig {
+    _retryCount?: number;
+  }
+}
+
+// Shape của body lỗi BE trả về (CommonResponse) — errorCode nằm trong data.
+interface ApiErrorData {
+  message?: string;
+  data?: { errorCode?: string };
+  listErrors?: ErrorEntity[];
+}
 
 const CLOCK_SKEW_MS = 30_000;
 
@@ -19,9 +35,12 @@ export const isTokenExpired = (token: string): boolean => {
 };
 
 // SECURITY: non-httpOnly cookie, acceptable for capstone scope
+// accessToken cookie sống 7 ngày như refreshToken — KHÔNG set expires = exp.
+// Nếu cookie hết hạn đúng mốc JWT exp, sau mốc đó browser xoá cookie → request gửi
+// thiếu Bearer → BE trả MISSING_TOKEN → logout oan. Việc token hết hạn được phát hiện
+// qua isTokenExpired (JWT exp) để trigger refresh, không phụ thuộc vào vòng đời cookie.
 export const saveTokens = (accessToken: string, refreshToken: string) => {
-  const { exp } = jwtDecode<{ exp: number }>(accessToken);
-  Cookies.set("accessToken", accessToken, { expires: new Date(exp * 1000) });
+  Cookies.set("accessToken", accessToken, { expires: 7 });
   Cookies.set("refreshToken", refreshToken, { expires: 7 });
 };
 
@@ -77,6 +96,9 @@ const tryRefresh = async (): Promise<string | null> => {
 };
 
 axiosInstance.interceptors.request.use(async (config) => {
+  // #AUTH-48: gửi device id cho mọi request (BE chỉ đọc với trusted-devices).
+  config.headers["X-Device-Id"] = getDeviceId();
+
   const accessToken = Cookies.get("accessToken");
   if (!accessToken) return config;
 
@@ -112,25 +134,45 @@ const getErrorMessage = (status: number, serverMessage?: string): string =>
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError<ApiErrorData>) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig;
     const status: number | undefined = error.response?.status;
     const data = error.response?.data;
 
-    if (status === 401 && !originalRequest._retry) {
+    if (status === 401) {
       const errorCode = data?.data?.errorCode;
-      if (errorCode === "MISSING_TOKEN") {
+      const retryCount: number = originalRequest._retryCount ?? 0;
+
+      // CHỈ TOKEN_EXPIRED mới thử refresh — token còn hợp lệ nhưng hết hạn.
+      // MISSING_TOKEN (không có token), INVALID_SIGNATURE / INVALID_TOKEN (token hỏng/giả mạo)
+      // → refresh vô nghĩa → logout ngay.
+      if (errorCode !== "TOKEN_EXPIRED") {
         logout();
         return Promise.reject(
           new HttpError(401, getErrorMessage(401, data?.message)),
         );
       }
-      originalRequest._retry = true;
+
+      // Đã retry 1 lần (refresh xong gọi lại) mà vẫn TOKEN_EXPIRED → logout.
+      if (retryCount >= 1) {
+        logout();
+        return Promise.reject(
+          new HttpError(401, getErrorMessage(401, data?.message)),
+        );
+      }
+
+      originalRequest._retryCount = retryCount + 1;
       const newToken = await tryRefresh();
+      // tryRefresh thành công → đã saveTokens (cookie) + setSession (zustand) với token mới.
+      // Đệ quy gọi lại request vừa bị missing token với accessToken mới.
       if (newToken) {
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosInstance(originalRequest);
       }
+      // tryRefresh trả null → bên trong đã logout() rồi, chỉ cần reject.
+      return Promise.reject(
+        new HttpError(401, getErrorMessage(401, data?.message)),
+      );
     }
 
     // 400 / 422 — parse listErrors for form field mapping

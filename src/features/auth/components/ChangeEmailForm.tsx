@@ -19,7 +19,11 @@ import { useChangeEmail } from "@/features/auth/hooks/useChangeEmail";
 import { useConfirmEmailChange } from "@/features/auth/hooks/useConfirmEmailChange";
 import { handleErrorApi } from "@/shared/lib/errors";
 
-const ChangeEmailForm = () => {
+interface ChangeEmailFormProps {
+  bare?: boolean;
+}
+
+const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
   const [step, setStep] = useState<1 | 2>(1);
 
   const emailForm = useForm<ChangeEmailFormValues>({
@@ -53,80 +57,103 @@ const ChangeEmailForm = () => {
     }
   };
 
+  const content =
+    step === 1 ? (
+      <form
+        onSubmit={emailForm.handleSubmit(onEmailSubmit)}
+        className="space-y-3"
+      >
+        <div className="max-w-sm space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Email mới</Label>
+            <Input
+              type="email"
+              className="h-8 text-sm"
+              {...emailForm.register("newEmail")}
+            />
+            {emailForm.formState.errors.newEmail && (
+              <p className="text-xs text-destructive">
+                {emailForm.formState.errors.newEmail.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">
+              Mật khẩu hiện tại
+            </Label>
+            <Input
+              type="password"
+              className="h-8 text-sm"
+              {...emailForm.register("currentPassword")}
+            />
+            {emailForm.formState.errors.currentPassword && (
+              <p className="text-xs text-destructive">
+                {emailForm.formState.errors.currentPassword.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isSendingEmail}
+            className="mt-1"
+          >
+            {isSendingEmail && (
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            )}
+            Gửi OTP xác nhận
+          </Button>
+        </div>
+      </form>
+    ) : (
+      <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-3">
+        <div className="max-w-sm space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Nhập mã OTP đã gửi đến email mới của bạn.
+          </p>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mã OTP</Label>
+            <Input
+              maxLength={6}
+              className="h-8 text-sm tracking-widest"
+              {...otpForm.register("otp")}
+            />
+            {otpForm.formState.errors.otp && (
+              <p className="text-xs text-destructive">
+                {otpForm.formState.errors.otp.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setStep(1)}
+          >
+            Quay lại
+          </Button>
+          <Button type="submit" size="sm" disabled={isConfirming}>
+            {isConfirming && (
+              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+            )}
+            Xác nhận
+          </Button>
+        </div>
+      </form>
+    );
+
+  if (bare) return content;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Đổi email</CardTitle>
       </CardHeader>
-      <CardContent>
-        {step === 1 ? (
-          <form
-            onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-            className="space-y-4"
-          >
-            <div className="space-y-1">
-              <Label>Email mới</Label>
-              <Input type="email" {...emailForm.register("newEmail")} />
-              {emailForm.formState.errors.newEmail && (
-                <p className="text-sm text-destructive">
-                  {emailForm.formState.errors.newEmail.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label>Mật khẩu hiện tại</Label>
-              <Input
-                type="password"
-                {...emailForm.register("currentPassword")}
-              />
-              {emailForm.formState.errors.currentPassword && (
-                <p className="text-sm text-destructive">
-                  {emailForm.formState.errors.currentPassword.message}
-                </p>
-              )}
-            </div>
-            <Button type="submit" disabled={isSendingEmail}>
-              {isSendingEmail && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Gửi OTP
-            </Button>
-          </form>
-        ) : (
-          <form
-            onSubmit={otpForm.handleSubmit(onOtpSubmit)}
-            className="space-y-4"
-          >
-            <p className="text-sm text-muted-foreground">
-              Nhập mã OTP đã gửi đến email mới của bạn.
-            </p>
-            <div className="space-y-1">
-              <Label>Mã OTP</Label>
-              <Input maxLength={6} {...otpForm.register("otp")} />
-              {otpForm.formState.errors.otp && (
-                <p className="text-sm text-destructive">
-                  {otpForm.formState.errors.otp.message}
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep(1)}
-              >
-                Quay lại
-              </Button>
-              <Button type="submit" disabled={isConfirming}>
-                {isConfirming && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Xác nhận
-              </Button>
-            </div>
-          </form>
-        )}
-      </CardContent>
+      <CardContent>{content}</CardContent>
     </Card>
   );
 };

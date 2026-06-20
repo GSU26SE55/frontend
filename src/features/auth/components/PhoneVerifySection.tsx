@@ -17,7 +17,11 @@ import { handleErrorApi } from "@/shared/lib/errors";
 
 const COOLDOWN_SECONDS = 60;
 
-const PhoneVerifySection = () => {
+interface PhoneVerifySectionProps {
+  bare?: boolean;
+}
+
+const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
   const [otpSent, setOtpSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
@@ -60,37 +64,44 @@ const PhoneVerifySection = () => {
     }
   };
 
+  const inner = (
+    <div className="space-y-4">
+      <Button
+        onClick={handleSendOtp}
+        disabled={isSending || cooldown > 0}
+        variant="outline"
+        size="sm"
+      >
+        {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : "Gửi OTP"}
+      </Button>
+
+      {otpSent && (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 max-w-xs">
+          <div className="space-y-1">
+            <Label>Mã OTP</Label>
+            <Input maxLength={6} {...register("otp")} />
+            {errors.otp && (
+              <p className="text-sm text-destructive">{errors.otp.message}</p>
+            )}
+          </div>
+          <Button type="submit" size="sm" disabled={isVerifying}>
+            {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Xác nhận
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+
+  if (bare) return inner;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Xác thực số điện thoại</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Button
-          onClick={handleSendOtp}
-          disabled={isSending || cooldown > 0}
-          variant="outline"
-        >
-          {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : "Gửi OTP"}
-        </Button>
-
-        {otpSent && (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1">
-              <Label>Mã OTP</Label>
-              <Input maxLength={6} {...register("otp")} />
-              {errors.otp && (
-                <p className="text-sm text-destructive">{errors.otp.message}</p>
-              )}
-            </div>
-            <Button type="submit" disabled={isVerifying}>
-              {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Xác nhận
-            </Button>
-          </form>
-        )}
-      </CardContent>
+      <CardContent>{inner}</CardContent>
     </Card>
   );
 };

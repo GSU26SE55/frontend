@@ -1,0 +1,163 @@
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Upload, Archive, History, Copy } from "lucide-react";
+import {
+  useManagerKbDetail,
+  useManagerPublishKbArticle,
+  useManagerArchiveKbArticle,
+  useManagerUpdateKbArticle,
+  useManagerApproveKbReview,
+  useManagerRejectKbReview,
+  useManagerKbVersions,
+  useManagerKbCompare,
+  useManagerRollbackKbArticle,
+  useManagerKbVersionDetail,
+  useMarkManagerKbHelpful,
+  useManagerCopyKbTemplate,
+} from "../hooks/useManagerKb";
+import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
+import {
+  KbArticleDetail,
+  KbArticleDetailSkeleton,
+} from "@/shared/components/common/kb/KbArticleDetail";
+import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
+import { KbReviewActions } from "@/shared/components/common/kb/KbReviewActions";
+import { KbVersionDialog } from "@/shared/components/common/kb/KbVersionDialog";
+import type { KbCompareParams } from "@/shared/types/kb.types";
+
+export default function KbDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data: article, isLoading } = useManagerKbDetail(id!);
+  const { mutate: publish } = useManagerPublishKbArticle();
+  const { mutate: archive } = useManagerArchiveKbArticle();
+  const { mutate: approve, isPending: approving } = useManagerApproveKbReview();
+  const { mutate: reject, isPending: rejecting } = useManagerRejectKbReview();
+  const { mutateAsync: update, isPending: updating } =
+    useManagerUpdateKbArticle();
+  const { mutate: rollback, isPending: rollingBack } =
+    useManagerRollbackKbArticle();
+  const { mutate: markHelpful, isPending: helpfulPending } =
+    useMarkManagerKbHelpful();
+  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
+    useManagerCopyKbTemplate();
+
+  const [verOpen, setVerOpen] = useState(false);
+  const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
+    null,
+  );
+  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
+
+  const { data: versions } = useManagerKbVersions(verOpen ? id! : "");
+  const { data: diff } = useManagerKbCompare(id!, compareParams);
+  const { data: versionDetail } = useManagerKbVersionDetail(id!, viewVersionId);
+
+  if (isLoading) return <KbArticleDetailSkeleton />;
+
+  if (!article) {
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        Không tìm thấy bài viết.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <KbArticleDetail
+        article={article}
+        backUrl="/manager/kb"
+        breadcrumb="Manager · Knowledge Base"
+        onMarkHelpful={() => markHelpful(article.id)}
+        helpfulPending={helpfulPending}
+        actions={
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setVerOpen(true)}
+            >
+              <History className="size-3.5" />
+              Phiên bản
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={copyingTemplate}
+              onClick={async () => {
+                const template = await copyTemplate(article.id);
+                if (template)
+                  navigate("/manager/kb/new", { state: { template } });
+              }}
+            >
+              <Copy className="size-3.5" />
+              Sao chép template
+            </Button>
+            {article.status === KbArticleStatusEnum.PendingReview && (
+              <KbReviewActions
+                isPending={approving || rejecting}
+                onApprove={() => approve(article.id)}
+                onReject={(reason) =>
+                  reject({ id: article.id, payload: { reason } })
+                }
+              />
+            )}
+            {(article.status === KbArticleStatusEnum.Draft ||
+              article.status === KbArticleStatusEnum.PendingReview) && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => publish(article.id)}
+              >
+                <Upload className="size-3.5" />
+                Xuất bản
+              </Button>
+            )}
+            {article.status === KbArticleStatusEnum.Published && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => archive(article.id)}
+              >
+                <Archive className="size-3.5" />
+                Lưu trữ
+              </Button>
+            )}
+          </>
+        }
+        renderEditor={({ onClose }) => (
+          <KbEditorPanel
+            article={article}
+            onClose={onClose}
+            isPending={updating}
+            onSave={async (payload) => {
+              await update({ id: article.id, payload });
+              onClose();
+            }}
+          />
+        )}
+      />
+
+      <KbVersionDialog
+        open={verOpen}
+        onOpenChange={setVerOpen}
+        versions={versions ?? []}
+        diff={diff}
+        versionDetail={versionDetail}
+        isPending={rollingBack}
+        onCompare={(fromVersionId, toVersionId) =>
+          setCompareParams({ fromVersionId, toVersionId })
+        }
+        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
+        onRollback={(versionId) =>
+          rollback({ id: article.id, payload: { toVersionId: versionId } })
+        }
+      />
+    </>
+  );
+}
