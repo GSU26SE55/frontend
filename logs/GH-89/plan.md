@@ -1,7 +1,7 @@
 # Plan — GH-89: Tích hợp NotificationService API (notifications + device tokens)
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-20
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-20
 - **Issue:** #89 — https://github.com/GSU26SE55/frontend/issues/89
 - **Sprint:** Sprint 3 (due 2026-06-27)
 - **Dev:** Trần Minh Trí (SE183109)
@@ -126,11 +126,16 @@ deviceInfo: z.string().max(500).optional()
 - [ ] `npx tsc --noEmit` + `npx eslint . --max-warnings=0` + `npm run build` PASS.
 
 ## Steps
-- [ ] Bước 1 — Enums: tạo `shared/enums/notification.enum.ts`, xóa staff enum, sửa `staff/types/notification.types.ts` re-export.
-- [ ] Bước 2 — Endpoints + queryKeys: thêm CREATE + DEVICE_TOKENS + deviceTokens keys.
-- [ ] Bước 3 — Device-tokens data layer (shared): types → schema → service → hooks.
-- [ ] Bước 4 — Admin create data layer: types → schema → service → hook.
-- [ ] Bước 5 — UI: `DeviceTokensSection` (+ label platform inline) + wire vào `AccountSettingsPage`; `CreateNotificationForm` (option type/channel/status inline) + `NotificationAdminPage` + route + nav item admin trong `AppLayout.tsx` (role ADMIN gate).
+- [x] Bước 1 — Enums: tạo `shared/enums/notification.enum.ts`, xóa staff enum, sửa `staff/types/notification.types.ts` re-export. — 2026-06-20
+- [x] Bước 2 — Endpoints + queryKeys: thêm CREATE + DEVICE_TOKENS + deviceTokens keys. — 2026-06-20
+- [x] Bước 3 — Device-tokens data layer (shared): types → schema → service → hooks. — 2026-06-20
+- [x] Bước 4 — Admin create data layer: types → schema → service → hook. — 2026-06-20
+- [x] Bước 5 — UI: `DeviceTokensSection` (+ label platform inline) + wire vào `AccountSettingsPage`; `CreateNotificationForm` (option type/channel/status inline) + `NotificationAdminPage` + route + nav item admin trong `AppLayout.tsx` (role ADMIN gate). — 2026-06-20
+- [x] Bước 6 — `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS. — 2026-06-20
+
+## Ghi chú implement
+- **Ràng buộc API device-token:** `GET` không trả raw token nhưng `DELETE` định danh theo token → KHÔNG revoke được từ list. UI: list read-only + form đăng ký (token/platform/deviceInfo) + ô "hủy theo token" (paste token). Đã ghi rõ trong component.
+- Section device-token đặt tên "Thiết bị thông báo" để phân biệt với "Thiết bị tin cậy" (2FA) đã có sẵn trong tab Bảo mật.
 - [ ] Bước 6 — `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS.
 
 ## Câu hỏi đã giải đáp

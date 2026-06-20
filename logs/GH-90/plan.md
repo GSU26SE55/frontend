@@ -1,7 +1,7 @@
 # Plan — GH-90: [FE] Tích hợp SMS Gateway — Admin management
 
 ## Metadata
-- **Status:** PLANNING | **Role:** FE | **Ngày:** 2026-06-20
+- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-20
 - **Issue:** #90 — https://github.com/GSU26SE55/frontend/issues/90
 - **Sprint:** Sprint 1 (deadline 2026-05-30)
 - **Dev:** Trần Minh Trí (SE183109)
@@ -91,16 +91,20 @@ dailyLimit: z.coerce.number().int().min(1, "Tối thiểu 1").max(10000, "Tối 
 
 ## Approach
 - **Service** import `axiosInstance` + `ENDPOINTS` (không hardcode URL); `getDevices(params)`, `createDevice(payload)`, `revokeDevice(id)`.
-- **Hooks**: `useAdminSmsDevices(params)` (query, `staleTime: 30s`, refresh tay — không auto-poll); `useAdminCreateSmsDevice()` + `useAdminRevokeSmsDevice()` (mutation, `onSuccess` invalidate `KEY.admin.smsGateway`).
+- **Hooks** (tên export chốt cứng, theo pattern hành động như `useAdminCreateAccount`):
+  - `useAdminSmsDevices(params)` — query, `staleTime: 30s`, refresh tay (không auto-poll)
+  - `useAdminCreateSmsDevice()` — mutation, `onSuccess` invalidate `KEY.admin.smsGateway`
+  - `useAdminRevokeSmsDevice()` — mutation, `onSuccess` invalidate `KEY.admin.smsGateway` + toast `"Đã thu hồi {deviceCode}"`
 - **Create flow**: submit form trong `try-catch` + `handleErrorApi({ error, setError })`; `onSuccess` → lưu `CreateGatewayDeviceResponseDto` vào state của page → mở `ApiKeyRevealDialog` → invalidate list.
 - **Copy apiKey (có guard)**: thử `navigator.clipboard.writeText` trong `try-catch` (chỉ chạy ở secure context HTTPS/localhost); nếu reject/undefined → fallback select text trong `<input readonly>` + `document.execCommand("copy")`; **luôn** render apiKey trong ô monospace selectable để admin copy tay nếu cả 2 fail. Toast báo "Đã copy" / "Copy thủ công nếu cần".
-- **Online badge**: device "online" nếu `lastSeenAt != null` và `now - lastSeenAt < 10 phút` (ngưỡng theo controller remark); ngược lại "offline". Tách badge "Đã thu hồi" khi `isActive=false`.
-- **Revoke flow**: confirm dialog → `mutate(id)`; `onError: handleErrorApi({ error })` (toast). Device revoke vẫn nằm trong list khi toggle bật "hiện đã thu hồi".
+- **Online badge**: device "online" nếu `lastSeenAt != null` và `now - lastSeenAt < 10 phút` (ngưỡng theo controller remark); ngược lại "offline". Khi `isActive=false` → badge "Đã thu hồi" + dòng muted hiển thị `revokedAt` ("Thu hồi lúc {date}") — tận dụng field `revokedAt` thay vì để khai báo thừa.
+- **Revoke flow**: confirm dialog → `mutate(id)`; `onSuccess` → invalidate list + toast `"Đã thu hồi {deviceCode}"`; `onError: handleErrorApi({ error })` (toast). **UX (chốt):** vì FE default `includeRevoked=false`, sau revoke device **biến mất khỏi bảng** (đúng filter active-only) — KHÔNG "đổi badge tại chỗ". Muốn xem device đã thu hồi (cùng badge + `revokedAt`) → admin bật toggle "Hiện đã thu hồi".
 - **Toolbar**: toggle `includeRevoked` (FE **default false** = chỉ hiện active; bật để xem cả revoked), nút Refresh (`refetch`), nút "Thêm thiết bị".
 
 ## Edge Cases (verify từ handler BE)
 - **Validation 400** (deviceName/deviceCode rỗng/>64, dailyLimit ∉ [1..10000]) → body có `listErrors` → axios interceptor tạo `EntityError` → lỗi dưới từng field. Zod chặn client trước; BE là lớp 2.
 - **409 DeviceCode đã tồn tại** (`message:"DeviceCode đã tồn tại."`, `listErrors:null`, HTTP 409 thật) → `HttpError` → toast lỗi (không map field, không crash form).
+  - **Verify `axios.ts`:** `EntityError` CHỈ được tạo khi `status === 400 || status === 422` **và** có `listErrors` (dòng 179–181); mọi status khác (gồm 409) rơi vào nhánh `status !== undefined` (dòng 188) → **luôn `HttpError`**. Phân loại theo HTTP status, KHÔNG phải "mọi 4xx có body" → 409 không thể rơi nhầm `EntityError`. ✅
 - **dailyLimit**: FE luôn gửi số (default 100) — KHÔNG gửi `null`/omit để tránh BE 400 (DailyLimit là non-nullable int, validation chặn <1).
 - **apiKey hiển thị 1 lần**: đóng `ApiKeyRevealDialog` là mất vĩnh viễn — modal phải cảnh báo rõ + nút copy có fallback + ô text selectable; mất key → phải revoke + tạo mới.
 - **404 khi revoke** (device đã soft-delete) → `HttpError` → toast "Device không tồn tại."
@@ -115,15 +119,15 @@ dailyLimit: z.coerce.number().int().min(1, "Tối thiểu 1").max(10000, "Tối 
 - [ ] Tắt secure context (mở qua IP HTTP) → Copy fallback hoạt động / vẫn select-copy tay được
 - [ ] Đóng modal → mở lại GET /devices → KHÔNG còn thấy apiKey (chỉ thấy device trong list)
 - [ ] Tạo trùng DeviceCode → toast "DeviceCode đã tồn tại.", form không vỡ
-- [ ] Revoke device → badge "Đã thu hồi"; toggle "chỉ active" → device biến mất khỏi bảng
+- [ ] Revoke device (toggle đang chỉ active) → toast "Đã thu hồi {deviceCode}" + device biến mất khỏi bảng; bật toggle "Hiện đã thu hồi" → device xuất hiện lại với badge "Đã thu hồi" + "Thu hồi lúc {revokedAt}"
 
 ## Acceptance Criteria
 - [ ] `/admin/sms-gateway` hiển thị bảng device từ `GET /devices` (deviceName, deviceCode, online/offline, sentToday/dailyLimit, lastSeenAt)
-- [ ] Badge "online" khi `lastSeenAt < 10 phút`, "offline" ngược lại, "Đã thu hồi" khi `isActive=false`
+- [ ] Badge "online" khi `lastSeenAt < 10 phút`, "offline" ngược lại, "Đã thu hồi" + "Thu hồi lúc {revokedAt}" khi `isActive=false`
 - [ ] Tạo device qua form → BE trả `apiKey` → modal hiện apiKey 1 lần + nút copy (có fallback) + cảnh báo
 - [ ] Validation form (required, max 64, dailyLimit 1..10000) hiện lỗi dưới field; FE luôn gửi dailyLimit hợp lệ
 - [ ] 409 DeviceCode trùng → toast lỗi (không crash form)
-- [ ] Thu hồi device qua confirm → badge chuyển "Đã thu hồi", list cập nhật
+- [ ] Thu hồi device qua confirm → toast "Đã thu hồi {deviceCode}" → device biến mất khỏi bảng (default chỉ active); bật toggle "Hiện đã thu hồi" thấy lại device với badge "Đã thu hồi" + revokedAt
 - [ ] Toggle `includeRevoked` (default chỉ active) ẩn/hiện device đã thu hồi
 - [ ] Sidebar (ADMIN_NAV) có mục "SMS Gateway", điều hướng đúng `/admin/sms-gateway`
 - [ ] Manual QA checklist (luồng apiKey 1 lần) PASS

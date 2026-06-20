@@ -69,6 +69,13 @@ export const ENDPOINTS = {
 
   NOTIFICATIONS: {
     LIST: "/api/notifications",
+    CREATE: "/api/notifications", // Admin only — tạo notification thủ công
+  },
+
+  DEVICE_TOKENS: {
+    REGISTER: "/api/device-tokens",
+    UNREGISTER: "/api/device-tokens", // DELETE — body { token }
+    LIST: "/api/device-tokens",
   },
 
   ALERTS: {

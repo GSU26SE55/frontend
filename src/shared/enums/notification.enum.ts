@@ -39,3 +39,21 @@ export const NotificationStatusEnum = {
 } as const;
 export type NotificationStatusEnum =
   (typeof NotificationStatusEnum)[keyof typeof NotificationStatusEnum];
+
+// Tần suất gửi (NotificationPreference per-user) — khai báo để đủ domain,
+// không xuất hiện trên 2 endpoint REST hiện tại.
+export const NotificationFrequencyEnum = {
+  Immediate: 1,
+  Daily: 2,
+} as const;
+export type NotificationFrequencyEnum =
+  (typeof NotificationFrequencyEnum)[keyof typeof NotificationFrequencyEnum];
+
+// Platform của device token — dùng cho các endpoint /api/device-tokens.
+export const DevicePlatformEnum = {
+  Ios: 1,
+  Android: 2,
+  Web: 3,
+} as const;
+export type DevicePlatformEnum =
+  (typeof DevicePlatformEnum)[keyof typeof DevicePlatformEnum];

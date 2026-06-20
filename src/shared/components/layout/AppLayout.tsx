@@ -203,6 +203,7 @@ const ADMIN_NAV: NavSection[] = [
     defaultOpen: false,
     items: [
       { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
+      { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
       { label: "Cài đặt", path: "/admin/settings", icon: Settings },
     ],
   },

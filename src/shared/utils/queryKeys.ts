@@ -5,6 +5,7 @@ export const KEY = {
   staff: "staff",
   sessions: "sessions",
   trustedDevices: "trustedDevices",
+  deviceTokens: "deviceTokens",
   sites: "sites",
   files: "files",
   batteryAssets: "batteryAssets",
@@ -50,6 +51,9 @@ export const QUERY_KEY = {
   },
   trustedDevices: {
     list: () => [KEY.trustedDevices, "list"] as const,
+  },
+  deviceTokens: {
+    list: () => [KEY.deviceTokens, "list"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,
