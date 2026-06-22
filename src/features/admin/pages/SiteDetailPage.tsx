@@ -141,14 +141,14 @@ export default function SiteDetailPage() {
                   size="sm"
                   onClick={() => setEditOpen(true)}
                 >
-                  Sua
+                  Sửa
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setConfirm({ type: "delete" })}
                 >
-                  Xoa
+                  Xóa
                 </Button>
               </>
             )}

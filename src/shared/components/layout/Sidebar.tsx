@@ -191,7 +191,7 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* ── Footer ── */}
+      {/* ── Footer ──
       <div className="border-t p-2">
         <button
           className={cn(
@@ -203,7 +203,7 @@ export default function Sidebar({
           <HelpCircle size={14} className="shrink-0" />
           {!collapsed && "Trợ giúp & phím tắt"}
         </button>
-      </div>
+      </div> */}
     </aside>
   );
 }
