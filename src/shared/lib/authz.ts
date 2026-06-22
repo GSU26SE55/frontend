@@ -35,6 +35,9 @@ export const P = {
 
   MAINTENANCE_LOG_VIEW: "maintenance_log.view" as PermissionType,
   MAINTENANCE_LOG_CREATE: "maintenance_log.create" as PermissionType,
+
+  TICKET_SAGA_VIEW: "ticket.saga.view" as PermissionType,
+  TICKET_SAGA_REPROCESS: "ticket.saga.reprocess" as PermissionType,
 } as const;
 
 export const checkPermission = (

@@ -20,6 +20,8 @@ import {
   ShieldAlert,
   Thermometer,
   MessageSquare,
+  Wrench,
+  Workflow,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -204,6 +206,7 @@ const ADMIN_NAV: NavSection[] = [
     defaultOpen: false,
     items: [
       { label: "SMS Gateway", path: "/admin/sms-gateway", icon: MessageSquare },
+      { label: "Saga Debug", path: "/admin/sagas", icon: Workflow },
       { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
       { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
       { label: "Cài đặt", path: "/admin/settings", icon: Settings },
@@ -248,6 +251,11 @@ const STAFF_NAV: NavSection[] = [
     items: [
       { label: "Tổng quan", path: "/staff/dashboard", icon: LayoutDashboard },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
+      {
+        label: "Lịch sử bảo trì",
+        path: "/staff/maintenance-logs",
+        icon: Wrench,
+      },
       { label: "Knowledge Base", path: "/staff/kb", icon: BookOpen },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
     ],

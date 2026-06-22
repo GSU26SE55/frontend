@@ -22,9 +22,10 @@ import { useAddComment } from "@/features/manager/hooks/useManagerTickets";
 
 interface Props {
   ticketId: string;
+  onTyping?: () => void;
 }
 
-export default function AddCommentForm({ ticketId }: Props) {
+export default function AddCommentForm({ ticketId, onTyping }: Props) {
   const { mutateAsync, isPending } = useAddComment();
   const [uploading, setUploading] = useState(false);
 
@@ -51,6 +52,10 @@ export default function AddCommentForm({ ticketId }: Props) {
                   placeholder="Nhập bình luận..."
                   className="min-h-[80px]"
                   {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    onTyping?.();
+                  }}
                 />
               </FormControl>
               <FormMessage />

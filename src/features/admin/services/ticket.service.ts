@@ -9,6 +9,7 @@ import type {
   TicketDetailDTO,
   TicketActivityDTO,
   TicketActionResponse,
+  MaintenanceLogDTO,
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
@@ -55,6 +56,13 @@ export const adminTicketService = {
       .get<
         CommonResponse<TicketActivityDTO[]>
       >(ENDPOINTS.TICKETS.ACTIVITIES(id))
+      .then((r) => r.data),
+
+  getMaintenanceLogs: (id: string) =>
+    axiosInstance
+      .get<
+        CommonResponse<MaintenanceLogDTO[]>
+      >(ENDPOINTS.TICKETS.MAINTENANCE_LOGS(id))
       .then((r) => r.data),
 
   declareIncident: (id: string, incidentDescription: string) =>
