@@ -12,7 +12,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Upload, Archive, History, Trash2, Copy } from "lucide-react";
+import {
+  Upload,
+  Archive,
+  History,
+  Trash2,
+  Copy,
+  BarChart3,
+} from "lucide-react";
+import { KbUsageStatsDialog } from "../components/KbUsageStatsDialog";
 import {
   useAdminKbDetail,
   usePublishKbArticle,
@@ -54,6 +62,7 @@ export default function KbDetailPage() {
     useCopyKbTemplate();
 
   const [verOpen, setVerOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
     null,
   );
@@ -91,6 +100,15 @@ export default function KbDetailPage() {
             >
               <History className="size-3.5" />
               Phiên bản
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setStatsOpen(true)}
+            >
+              <BarChart3 className="size-3.5" />
+              Thống kê
             </Button>
             <Button
               size="sm"
@@ -204,6 +222,12 @@ export default function KbDetailPage() {
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }
+      />
+
+      <KbUsageStatsDialog
+        articleId={article.id}
+        open={statsOpen}
+        onClose={() => setStatsOpen(false)}
       />
     </>
   );

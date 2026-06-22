@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
 import {
   useStaffTicketDetail,
   useStaffTicketActivities,
@@ -30,6 +31,7 @@ import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
 import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
+import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
@@ -71,6 +73,7 @@ export default function TicketDetailPage() {
   const [resolveOpen, setResolveOpen] = useState(false);
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
 
   const ticketId = id ?? "";
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
@@ -115,6 +118,8 @@ export default function TicketDetailPage() {
   );
   const canComment = isInProgress || isWaiting || isAssigned;
   const canAddLog = isInProgress || isWaiting;
+  // Khoá sửa log khi ticket đã Resolved/ClosedPendingRate/Closed (BE enforce).
+  const canEditLog = isInProgress || isWaiting;
 
   const handleHoldSubmit = (data: HoldFormValues) => {
     holdMutation.mutate(data, { onSuccess: () => setHoldOpen(false) });
@@ -352,13 +357,27 @@ export default function TicketDetailPage() {
                       key={log.id}
                       className="border border-border rounded-lg p-4 space-y-2 text-sm"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Badge variant="outline">{log.logType}</Badge>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(log.startedAt), "dd/MM/yyyy HH:mm", {
-                            locale: vi,
-                          })}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {format(
+                              new Date(log.startedAt),
+                              "dd/MM/yyyy HH:mm",
+                              { locale: vi },
+                            )}
+                          </p>
+                          {canEditLog && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => setEditingLog(log)}
+                            >
+                              Sửa
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       {log.summary && (
                         <p className="font-medium">{log.summary}</p>
@@ -410,7 +429,10 @@ export default function TicketDetailPage() {
 
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
-              <TicketKbReferencesPanel ticketId={ticketId} />
+              <TicketKbReferencesPanel
+                ticketId={ticketId}
+                canAdd={status === TicketStatusEnum.Open || isInProgress}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -540,6 +562,14 @@ export default function TicketDetailPage() {
         onSubmit={handleLogSubmit}
         isPending={logMutation.isPending}
       />
+      {editingLog && (
+        <EditMaintenanceLogDialog
+          ticketId={ticketId}
+          log={editingLog}
+          open
+          onClose={() => setEditingLog(null)}
+        />
+      )}
     </div>
   );
 }

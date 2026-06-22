@@ -15,6 +15,7 @@ import type {
   KbArticleListParams,
   KbCompareParams,
   KbSuggestItemDTO,
+  KbUsageStatsDTO,
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
   RejectReviewPayload,
@@ -56,6 +57,10 @@ export const adminKbService = {
     axiosInstance.get<CommonResponse<KbSuggestItemDTO[]>>(
       ENDPOINTS.KNOWLEDGE_BASE.SUGGEST,
       { params: { TicketId: ticketId } },
+    ),
+  getUsageStats: (id: string) =>
+    axiosInstance.get<CommonResponse<KbUsageStatsDTO>>(
+      ENDPOINTS.KNOWLEDGE_BASE.USAGE_STATS(id),
     ),
 
   // ── Authoring (Staff/Manager/Admin) ──

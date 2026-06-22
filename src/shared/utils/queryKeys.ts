@@ -6,6 +6,7 @@ export const KEY = {
   sessions: "sessions",
   trustedDevices: "trustedDevices",
   deviceTokens: "deviceTokens",
+  notificationPreferences: "notificationPreferences",
   sites: "sites",
   files: "files",
   batteryAssets: "batteryAssets",
@@ -17,6 +18,7 @@ export const KEY = {
   environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
   staffTickets: "staffTickets",
+  ticketHealth: "ticketHealth",
   admin: {
     accounts: ["admin", "accounts"] as const,
     staff: ["admin", "staff"] as const,
@@ -25,6 +27,7 @@ export const KEY = {
     auditLogs: ["admin", "auditLogs"] as const,
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
+    sagas: ["admin", "sagas"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -36,6 +39,7 @@ export const KEY = {
 export const QUERY_KEY = {
   currentUser: {
     session: () => [KEY.currentUser, "session"] as const,
+    permissions: () => [KEY.currentUser, "permissions"] as const, // GH-106 — server-resolved permissions
   },
   loginHistory: {
     list: (params?: object) => [KEY.loginHistory, "list", params] as const,
@@ -55,6 +59,9 @@ export const QUERY_KEY = {
   },
   deviceTokens: {
     list: () => [KEY.deviceTokens, "list"] as const,
+  },
+  notificationPreferences: {
+    me: () => [KEY.notificationPreferences, "me"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,
@@ -136,6 +143,15 @@ export const QUERY_KEY = {
     smsGateway: {
       list: (params?: object) => [...KEY.admin.smsGateway, "list", params],
     },
+    sagas: {
+      list: (params?: object) => [...KEY.admin.sagas, "alert-ticket", params],
+      detail: (alertId: string) => [
+        ...KEY.admin.sagas,
+        "alert-ticket",
+        "detail",
+        alertId,
+      ],
+    },
   },
   alerts: {
     list: (params?: object) => [KEY.alerts, "list", params] as const,
@@ -160,10 +176,19 @@ export const QUERY_KEY = {
   tickets: {
     detail: (id: string) => [KEY.tickets, "detail", id] as const,
     activities: (id: string) => [KEY.tickets, "activities", id] as const,
+    maintenanceLogs: (id: string) =>
+      [KEY.tickets, "maintenanceLogs", id] as const,
+    comments: (id: string) => [KEY.tickets, "comments", id] as const,
   },
   staffTickets: {
     list: (params?: object) => [KEY.staffTickets, "list", params] as const,
     detail: (id: string) => [KEY.staffTickets, "detail", id] as const,
+    myMaintenanceLogs: () => [KEY.staffTickets, "myMaintenanceLogs"] as const,
+  },
+  ticketHealth: {
+    health: () => [KEY.ticketHealth, "health"] as const,
+    syncLag: () => [KEY.ticketHealth, "sync-lag"] as const,
+    saga: () => [KEY.ticketHealth, "saga"] as const,
   },
   manager: {
     tickets: {
@@ -182,6 +207,7 @@ export const QUERY_KEY = {
     compare: (id: string, fromVersionId?: string, toVersionId?: string) =>
       [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
     suggest: (params?: object) => [KEY.kb, "suggest", params] as const,
+    usageStats: (id: string) => [KEY.kb, "usage-stats", id] as const,
   },
   ticketKbRefs: {
     list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,

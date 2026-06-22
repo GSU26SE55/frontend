@@ -106,6 +106,14 @@ export interface MaintenanceLogDTO {
   createdAt: string;
 }
 
+// GET /api/staff/tickets/maintenance-logs/me — log cá nhân gom theo ticket.
+export interface StaffMaintenanceLogGroupDTO {
+  ticketId: string;
+  ticketCode: string;
+  ticketTitle: string;
+  logs: MaintenanceLogDTO[];
+}
+
 export interface TicketDetailDTO extends TicketDTO {
   description?: string | null;
   resolutionSummary?: string | null;
@@ -191,6 +199,12 @@ export interface ReassignPayload {
 }
 
 export interface RejectPayload {
+  reason: string;
+}
+
+// Tách riêng khỏi RejectPayload — gắn 1-1 với TicketTriageRejectCommand
+// (luồng Open|Escalated → ClosedRejected), khác RejectPayload (Resolved → InProgress).
+export interface TriageRejectPayload {
   reason: string;
 }
 

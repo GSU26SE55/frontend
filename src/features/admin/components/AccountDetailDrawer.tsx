@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, History } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerClose,
+} from "@/components/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -94,22 +96,30 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={(v: boolean) => !v && onClose()}>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-xl flex flex-col gap-0 p-0"
-        >
-          <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <SheetTitle className="text-base">
-              Sessions & Lịch sử —{" "}
-              <span className="text-muted-foreground font-normal">
-                {account.fullName}
-              </span>
-            </SheetTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {account.email}
-            </p>
-          </SheetHeader>
+      <Drawer
+        open={open}
+        onOpenChange={(v: boolean) => !v && onClose()}
+        direction="right"
+      >
+        <DrawerContent className="sm:max-w-130 flex flex-col gap-0 p-0">
+          <DrawerHeader className="border-b border-border p-0">
+            <div className="flex items-start gap-3 px-6 py-5">
+              <div className="mt-0.5 size-8 rounded-lg flex items-center justify-center border bg-muted/40 text-muted-foreground">
+                <History size={16} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <DrawerTitle className="text-base font-semibold leading-tight">
+                  Sessions & Lịch sử —{" "}
+                  <span className="text-muted-foreground font-normal">
+                    {account.fullName}
+                  </span>
+                </DrawerTitle>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {account.email}
+                </p>
+              </div>
+            </div>
+          </DrawerHeader>
 
           <Tabs
             defaultValue="sessions"
@@ -267,8 +277,16 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
               )}
             </TabsContent>
           </Tabs>
-        </SheetContent>
-      </Sheet>
+
+          <DrawerFooter className="border-t border-border">
+            <DrawerClose asChild>
+              <Button variant="outline" className="w-full">
+                Đóng
+              </Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       <Dialog
         open={confirmRevokeAll}

@@ -14,6 +14,7 @@ import TriageDialog from "@/features/manager/components/TriageDialog";
 import AssignDialog from "@/features/manager/components/AssignDialog";
 import ReassignDialog from "@/features/manager/components/ReassignDialog";
 import RejectDialog from "@/features/manager/components/RejectDialog";
+import TriageRejectDialog from "@/features/manager/components/TriageRejectDialog";
 import EscalateDialog from "@/features/manager/components/EscalateDialog";
 import DeclareIncidentDialog from "@/features/manager/components/DeclareIncidentDialog";
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
@@ -23,7 +24,9 @@ import {
   useManagerTicketDetail,
   useTicketActivities,
   useApproveTicket,
+  useTicketComments,
 } from "@/features/manager/hooks/useManagerTickets";
+import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
 import {
   TicketStatusEnum,
   ActorRoleEnum,
@@ -37,6 +40,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 
 type DialogType =
   | "triage"
+  | "triage-reject"
   | "assign"
   | "reassign"
   | "reject"
@@ -98,6 +102,8 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
+  const { data: comments = [] } = useTicketComments(id);
+  const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
 
   if (isError) {
@@ -124,6 +130,11 @@ export default function TicketDetailPage() {
 
   const status = ticket.status;
   const canTriage = status === TicketStatusEnum.Open;
+  // triage-reject: Open|Escalated → ClosedRejected (BE verified — state machine
+  // cho phép cả 2 source). Tách khỏi canTriage (chỉ Open) vốn dùng cho nút Triage.
+  const canTriageReject = (
+    [TicketStatusEnum.Open, TicketStatusEnum.Escalated] as TicketStatusEnum[]
+  ).includes(status);
   const canAssign = status === TicketStatusEnum.Approved;
   const canReassign = (
     [
@@ -142,7 +153,7 @@ export default function TicketDetailPage() {
   ).includes(status);
   const canDeclareIncident = !ticket.isIncident;
 
-  const comments = ticket.comments ?? [];
+  // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
 
   const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
   const slaBarCls =
@@ -247,6 +258,15 @@ export default function TicketDetailPage() {
               Khai báo Incident
             </Button>
           )}
+          {canTriageReject && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDialog("triage-reject")}
+            >
+              Từ chối (Triage)
+            </Button>
+          )}
         </div>
       </div>
 
@@ -292,7 +312,12 @@ export default function TicketDetailPage() {
               value="comments"
               className="min-h-0 overflow-y-auto m-0 p-6 space-y-4"
             >
-              <AddCommentForm ticketId={id} />
+              <AddCommentForm ticketId={id} onTyping={sendTyping} />
+              {typingNames.length > 0 && (
+                <p className="text-xs text-muted-foreground italic">
+                  {typingNames.join(", ")} đang gõ…
+                </p>
+              )}
               {comments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Chưa có bình luận nào.
@@ -488,6 +513,13 @@ export default function TicketDetailPage() {
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}
       {dialog === "triage" && (
         <TriageDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "triage-reject" && (
+        <TriageRejectDialog
+          ticketId={id}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "assign" && (
         <AssignDialog ticketId={id} open onClose={() => setDialog(null)} />

@@ -20,6 +20,7 @@ export const ENDPOINTS = {
     GOOGLE_LOGIN: "/api/auth/google/login",
     GOOGLE_CALLBACK: "/api/auth/google/callback",
     ME: "/api/auth/me",
+    ME_PERMISSIONS: "/api/auth/me/permissions", // GH-106 — permission server-resolved (DB), không đọc perm[] JWT
     UPDATE_PROFILE: "/api/auth/me/profile",
     UPDATE_AVATAR: "/api/auth/me/avatar",
   },
@@ -55,10 +56,20 @@ export const ENDPOINTS = {
     ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
     COMMENTS: (id: string) => `/api/tickets/${id}/comments`,
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
+    MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
+      `/api/tickets/${id}/maintenance-logs/${logId}`,
+  },
+
+  // Health metrics (public — JSON thuần, KHÔNG bọc CommonResponse).
+  TICKET_HEALTH: {
+    HEALTH: "/api/ticket/health",
+    SYNC_LAG: "/api/ticket/health/sync-lag",
+    SAGA: "/api/ticket/health/saga",
   },
 
   STAFF_TICKETS: {
     ME: "/api/staff/tickets/me",
+    MAINTENANCE_LOGS_ME: "/api/staff/tickets/maintenance-logs/me",
     START: (id: string) => `/api/staff/tickets/${id}/start`,
     HOLD: (id: string) => `/api/staff/tickets/${id}/hold`,
     RESUME: (id: string) => `/api/staff/tickets/${id}/resume`,
@@ -76,6 +87,11 @@ export const ENDPOINTS = {
     REGISTER: "/api/device-tokens",
     UNREGISTER: "/api/device-tokens", // DELETE — body { token }
     LIST: "/api/device-tokens",
+  },
+
+  NOTIFICATION_PREFERENCES: {
+    GET: "/api/notification-preferences",
+    UPDATE: "/api/notification-preferences", // PUT — upsert preference của user hiện tại
   },
 
   ALERTS: {
@@ -163,6 +179,7 @@ export const ENDPOINTS = {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
+      TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
       REASSIGN: (id: string) => `/api/admin/tickets/${id}/reassign`,
       APPROVE: (id: string) => `/api/admin/tickets/${id}/approve`,
@@ -174,6 +191,13 @@ export const ENDPOINTS = {
     SMS_GATEWAY: {
       DEVICES: "/api/admin/sms-gateway/devices",
       DEVICE_REVOKE: (id: string) => `/api/admin/sms-gateway/devices/${id}`,
+    },
+    SAGAS: {
+      ALERT_TICKET_LIST: "/api/admin/sagas/alert-ticket",
+      ALERT_TICKET_DETAIL: (alertId: string) =>
+        `/api/admin/sagas/alert-ticket/${alertId}`,
+      ALERT_TICKET_REPROCESS: (alertId: string) =>
+        `/api/admin/sagas/alert-ticket/${alertId}/reprocess`,
     },
   },
 
@@ -254,6 +278,7 @@ export const ENDPOINTS = {
     DETAIL: (id: string) => `/api/knowledge-base/${id}`,
     HELPFUL: (id: string) => `/api/knowledge-base/${id}/helpful`,
     SUGGEST: "/api/knowledge-base/suggest",
+    USAGE_STATS: (id: string) => `/api/knowledge-base/${id}/usage-stats`,
   },
 
   // KB nội bộ — authoring (Staff/Manager/Admin)

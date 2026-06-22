@@ -144,6 +144,10 @@ export default function CreateNotificationForm() {
             render={({ field }) => (
               <Select
                 value={field.value != null ? String(field.value) : ""}
+                items={TYPE_OPTIONS.map((o) => ({
+                  value: String(o.value),
+                  label: o.label,
+                }))}
                 onValueChange={(v) => field.onChange(Number(v))}
               >
                 <SelectTrigger>
@@ -174,6 +178,10 @@ export default function CreateNotificationForm() {
             render={({ field }) => (
               <Select
                 value={field.value != null ? String(field.value) : ""}
+                items={CHANNEL_OPTIONS.map((o) => ({
+                  value: String(o.value),
+                  label: o.label,
+                }))}
                 onValueChange={(v) => field.onChange(Number(v))}
               >
                 <SelectTrigger>

@@ -35,6 +35,17 @@ export function useAdminTicketActivities(id: string) {
   });
 }
 
+// GET /api/tickets/{ticketId}/maintenance-logs (Manager/Admin).
+export function useAdminTicketMaintenanceLogs(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.tickets.maintenanceLogs(id),
+    queryFn: () => adminTicketService.getMaintenanceLogs(id),
+    select: (res) => res.data ?? [],
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
 export function useDeclareIncident() {
   const queryClient = useQueryClient();
 
