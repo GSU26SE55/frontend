@@ -6,6 +6,7 @@ export const KEY = {
   sessions: "sessions",
   trustedDevices: "trustedDevices",
   deviceTokens: "deviceTokens",
+  notificationPreferences: "notificationPreferences",
   sites: "sites",
   files: "files",
   batteryAssets: "batteryAssets",
@@ -57,6 +58,9 @@ export const QUERY_KEY = {
   },
   deviceTokens: {
     list: () => [KEY.deviceTokens, "list"] as const,
+  },
+  notificationPreferences: {
+    me: () => [KEY.notificationPreferences, "me"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,

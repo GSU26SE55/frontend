@@ -178,7 +178,19 @@ axiosInstance.interceptors.response.use(
     // 400 / 422 — parse listErrors for form field mapping
     if (status === 400 || status === 422) {
       if (Array.isArray(data?.listErrors) && data.listErrors.length > 0) {
-        return Promise.reject(new EntityError(data.listErrors, status));
+        // BE trả `field` PascalCase (vd "QuietHoursStart") — RHF register field
+        // camelCase, nên hạ chữ cái đầu để setError() khớp đúng input field.
+        // Guard: nếu key JSON là "Field" (PascalCase) → e.field undefined; giữ nguyên,
+        // không gọi charAt trên undefined (interceptor app-wide → tránh throw).
+        const normalized = data.listErrors.map((e) =>
+          typeof e.field === "string"
+            ? {
+                ...e,
+                field: e.field.charAt(0).toLowerCase() + e.field.slice(1),
+              }
+            : e,
+        );
+        return Promise.reject(new EntityError(normalized, status));
       }
       return Promise.reject(
         new HttpError(status, getErrorMessage(status, data?.message)),

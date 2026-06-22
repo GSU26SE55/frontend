@@ -12,6 +12,7 @@ import {
   KeyRound,
   MonitorSmartphone,
   BellRing,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import TrustedDevicesSection from "@/features/auth/components/TrustedDevicesSect
 import LoginHistoryTable from "@/features/auth/components/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/DangerZone";
 import DeviceTokensSection from "@/shared/components/device-tokens/DeviceTokensSection";
+import NotificationPreferencesSection from "@/shared/components/notification-preferences/NotificationPreferencesSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
@@ -53,6 +55,12 @@ const MENU = [
     label: "Thiết bị thông báo",
     icon: BellRing,
     desc: "Quản lý thiết bị nhận thông báo đẩy (push)",
+  },
+  {
+    key: "notifications",
+    label: "Tùy chọn thông báo",
+    icon: Bell,
+    desc: "Bật/tắt kênh thông báo, khung giờ yên tĩnh và múi giờ",
   },
   {
     key: "history",
@@ -342,6 +350,10 @@ const AccountSettingsPage = () => {
 
                 {/* Thiết bị thông báo (push device tokens) */}
                 {active === "devices" && <DeviceTokensSection />}
+
+                {active === "notifications" && (
+                  <NotificationPreferencesSection />
+                )}
 
                 {/* Lịch sử — fills remaining height, table scrolls, pagination fixed */}
                 {active === "history" && <LoginHistoryTable />}

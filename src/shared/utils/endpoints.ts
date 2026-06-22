@@ -88,6 +88,11 @@ export const ENDPOINTS = {
     LIST: "/api/device-tokens",
   },
 
+  NOTIFICATION_PREFERENCES: {
+    GET: "/api/notification-preferences",
+    UPDATE: "/api/notification-preferences", // PUT — upsert preference của user hiện tại
+  },
+
   ALERTS: {
     LIST: "/api/alerts",
     DETAIL: (id: string) => `/api/alerts/${id}`,
