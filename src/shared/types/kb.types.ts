@@ -115,6 +115,21 @@ export interface TicketKbReferenceDTO {
   createdAt: string;
 }
 
+// GET /api/knowledge-base/{id}/usage-stats — thống kê theo KbReferenceTypeEnum.
+export interface KbUsageByTypeDTO {
+  consultedDuringResolve: number;
+  providedToCustomer: number;
+  generatedAfterResolve: number;
+}
+
+export interface KbUsageStatsDTO {
+  kbArticleId: string;
+  kbArticleCode: string;
+  kbArticleTitle: string;
+  totalReferences: number;
+  byType: KbUsageByTypeDTO;
+}
+
 // ── Payloads ──
 
 export interface CreateKbArticlePayload {

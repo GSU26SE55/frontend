@@ -33,6 +33,7 @@ import { AlertSeverityEnum, AlertStatusEnum } from "@/shared/enums/alert.enum";
 import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
 import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/environmental.enum";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { TicketHealthCard } from "@/features/admin/components/TicketHealthCard";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
@@ -113,10 +114,12 @@ export default function AdminDashboardPage() {
     pageNumber: 1,
     pageSize: 200,
   });
-  const { data: accountData, isLoading: accountsLoading } = useAdminAccountList({
-    pageNumber: 1,
-    pageSize: 200,
-  });
+  const { data: accountData, isLoading: accountsLoading } = useAdminAccountList(
+    {
+      pageNumber: 1,
+      pageSize: 200,
+    },
+  );
   const { data: auditData, isLoading: auditLoading } = useAdminAuditLogs({
     pageNumber: 1,
     pageSize: 10,
@@ -307,6 +310,9 @@ export default function AdminDashboardPage() {
         />
       </div>
 
+      {/* ── Ticket Service Health ── */}
+      <TicketHealthCard />
+
       {/* ── Bento grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-0">
         {/* Alerts 7-day — stacked area */}
@@ -322,7 +328,10 @@ export default function AdminDashboardPage() {
               config={alertChartConfig}
               className="h-full w-full aspect-auto min-h-0"
             >
-              <AreaChart data={alertSeries} margin={{ left: 0, right: 6, top: 4 }}>
+              <AreaChart
+                data={alertSeries}
+                margin={{ left: 0, right: 6, top: 4 }}
+              >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="day"
@@ -470,7 +479,9 @@ export default function AdminDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla.running}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Running</p>
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Running
+                    </p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p

@@ -1,7 +1,7 @@
 # Plan — GH-98: [FE] Bổ sung toàn bộ ticket endpoints còn thiếu + realtime SignalR (Web)
 
 ## Metadata
-- **Status:** IN_PROGRESS (umbrella approved — gộp #99–103) | **Role:** FE | **Ngày:** 2026-06-22
+- **Status:** REVIEWING (code xong S1–S6, gate PASS) | **Role:** FE | **Ngày:** 2026-06-22
 - **Issue:** #98 — https://github.com/GSU26SE55/frontend/issues/98 (gộp #99–103 đã đóng)
 - **Sprint:** Sprint 3 (due 2026-06-27) | **Priority:** P2 (vì gộp realtime)
 - **Dev:** Trần Minh Trí (SE183109)
@@ -89,7 +89,8 @@ DTO: `{ kbArticleId, kbArticleCode, kbArticleTitle, totalReferences, byType: { c
 | Layer | Action | Chi tiết |
 |------|--------|----------|
 | package | **install** | `npm install @microsoft/signalr` (FE Leader đã duyệt; api-ticket.md chỉ định) → `package.json` + lock |
-| config | create | `shared/lib/signalr.ts` — `createTicketCommentConnection()` dùng `HubConnectionBuilder().withUrl(HUB_URL, { accessTokenFactory })` + `withAutomaticReconnect()`. URL từ `config/env.ts` (base WS) — thêm `VITE_*` nếu cần |
+| env | modify | `config/env.ts`: thêm `VITE_WS_URL: z.string().min(1)` vào `envSchema` (biến **riêng**, không tái dùng `VITE_API_BASE_URL`). Cập nhật `.env` + `.env.example`. Giá trị = origin của hub, ví dụ `http://localhost:5xxx` (SignalR `withUrl` tự negotiate; path `/hubs/ticket-comments` ghép trong `signalr.ts`). Biến này đưa vào **commit S4** để không vỡ boot S1–S3. |
+| config | create | `shared/lib/signalr.ts` — `createTicketCommentConnection()`: `new HubConnectionBuilder().withUrl(\`${env.VITE_WS_URL}/hubs/ticket-comments\`, { accessTokenFactory: () => Cookies.get("accessToken") }).withAutomaticReconnect().build()` |
 | hook | create | `useTicketCommentsRealtime(ticketId)` — start connection, `JoinTicket` on mount / `LeaveTicket`+stop on unmount; on `CommentAdded` → `queryClient.invalidateQueries(comments(ticketId))` hoặc setQueryData; expose `typingUsers` từ `UserTyping`; `sendTyping()` |
 | hook | create | `useTicketComments(ticketId)` — tách query comments riêng (hiện comments embed trong ticket detail) để realtime invalidate được |
 | service | modify | thêm `getComments(ticketId)` query (đã có ở staff service — chuẩn hoá dùng chung) |
@@ -147,13 +148,13 @@ DTO `AlertTicketSagaDTO`: `{ correlationId, currentState, alertId, batteryAssetI
 - [ ] `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS
 
 ## Steps (theo nhóm — mỗi nhóm 1 commit)
-- [ ] S1: triage-reject (đã chi tiết) → build PASS
-- [ ] S2: maintenance logs (GET me + GET list + PATCH) → build PASS
-- [ ] S3: KB usage-stats → build PASS
-- [ ] S5: saga debug page → build PASS
-- [ ] S6: health metrics card → build PASS
-- [ ] S4: SignalR realtime (làm cuối — rủi ro cao) → build PASS
-- [ ] Cuối: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` toàn bộ → PASS
+- [x] S1: triage-reject — 2026-06-22 (tsc + eslint PASS)
+- [x] S2: maintenance logs (GET me + GET list + PATCH) — 2026-06-22 (tsc + eslint PASS)
+- [x] S3: KB usage-stats — 2026-06-22 (tsc + eslint PASS)
+- [x] S5: saga debug page — 2026-06-22 (tsc + eslint PASS)
+- [x] S6: health metrics card — 2026-06-22 (tsc + eslint PASS)
+- [x] S4: SignalR realtime — 2026-06-22 (tsc + eslint PASS)
+- [x] Cuối: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` toàn bộ → PASS (2026-06-22)
 
 ## Đối chiếu Backend
 Đã verify trực tiếp code .cs (2026-06-22): `MaintenanceLogsController.cs`, `KnowledgeBaseController.cs:114`, `Admin/AdminAlertTicketSagasController.cs`, `HealthController.cs`, `Realtime/TicketCommentHub.cs` + `Program.cs:139` (MapHub, JWT query auth), `Admin/AdminTicketsController.cs` (triage-reject). Tất cả 12 endpoint + hub **tồn tại đúng** route/auth/DTO như ghi trong từng section.
@@ -165,7 +166,7 @@ DTO `AlertTicketSagaDTO`: `{ correlationId, currentState, alertId, batteryAssetI
 - **S4 cần package mới?** → Có, `@microsoft/signalr` (đã xác nhận chưa có trong package.json; api-ticket.md chỉ định; Leader duyệt).
 - **Saga/Health có trên BE không?** → CÓ (agent đọc code BE xác nhận); FE chưa wire gì — tạo mới hoàn toàn.
 
-## ⚠️ Điểm cần Leader xác nhận trước khi implement
-1. **Thứ tự / tách commit:** đồng ý làm S1→S2→S3→S5→S6→S4 (SignalR cuối), mỗi nhóm 1 commit trong cùng branch `feat/GH-98-...`?
-2. **S4 env:** base URL cho WS hub lấy từ đâu (tái dùng `VITE_API_URL` bỏ `/api`, hay thêm biến `VITE_WS_URL` vào `config/env.ts`)?
-3. **S5/S6 navigation:** thêm menu mới `/admin/sagas` (Saga debug) và card health trong Dashboard — OK chứ?
+## Quyết định đã chốt (Leader)
+1. **Thứ tự / tách commit:** S1→S2→S3→S5→S6→S4 (SignalR cuối), mỗi nhóm 1 commit trong branch `feat/GH-98-...`.
+2. **S4 env:** ✅ Thêm biến **riêng** `VITE_WS_URL` vào `config/env.ts` (không tái dùng `VITE_API_BASE_URL`) — xem bảng S4.
+3. **S5/S6 navigation:** ✅ Thêm menu `/admin/sagas` (Saga debug, gate `ticket.saga.view`) + card "Ticket Service Health" trong Admin Dashboard.

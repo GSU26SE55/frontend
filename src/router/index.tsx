@@ -27,6 +27,7 @@ import BatteryAssetDetailPage from "@/features/admin/pages/BatteryAssetDetailPag
 import AccountsPage from "@/features/admin/pages/AccountsPage";
 import RolesPage from "@/features/admin/pages/RolesPage";
 import AdminTicketListPage from "@/features/admin/pages/AdminTicketListPage";
+import AdminSagaDebugPage from "@/features/admin/pages/SagaDebugPage";
 import AdminTicketDetailPage from "@/features/admin/pages/AdminTicketDetailPage";
 import AdminAlertsPage from "@/features/admin/pages/AlertsPage";
 import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/EnvironmentalIncidentsPage";
@@ -44,6 +45,7 @@ import ManagerAmbientConfigPage from "@/features/manager/pages/AmbientConfigPage
 import StaffDashboardPage from "@/features/staff/pages/DashboardPage";
 import StaffTicketListPage from "@/features/staff/pages/TicketListPage";
 import StaffTicketDetailPage from "@/features/staff/pages/TicketDetailPage";
+import StaffMyMaintenanceLogsPage from "@/features/staff/pages/MyMaintenanceLogsPage";
 import StaffSlaMonitorPage from "@/features/staff/pages/SlaMonitorPage";
 import StaffAlertsPage from "@/features/staff/pages/AlertsPage";
 import AdminKbListPage from "@/features/admin/pages/KbListPage";
@@ -137,6 +139,7 @@ const router = createBrowserRouter([
               },
               { path: "ambient", element: <AdminAmbientConfigPage /> },
               { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
+              { path: "sagas", element: <AdminSagaDebugPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               { path: "notifications", element: <NotificationAdminPage /> },
@@ -186,6 +189,10 @@ const router = createBrowserRouter([
               { path: "dashboard", element: <StaffDashboardPage /> },
               { path: "tickets", element: <StaffTicketListPage /> },
               { path: "tickets/:id", element: <StaffTicketDetailPage /> },
+              {
+                path: "maintenance-logs",
+                element: <StaffMyMaintenanceLogsPage />,
+              },
               { path: "kb", element: <StaffKbListPage /> },
               { path: "kb/new", element: <StaffKbEditorPage /> },
               { path: "kb/:id", element: <StaffKbDetailPage /> },

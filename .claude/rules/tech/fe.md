@@ -18,6 +18,7 @@
 | Theme | next-themes | Light / dark mode |
 | Date | date-fns | Format SLA countdown, audit log |
 | Env validate | Zod | Throw ngay khi thiếu biến môi trường |
+| Realtime | @microsoft/signalr | SignalR client cho hub `/hubs/ticket-comments` (comment realtime, typing). Auth qua query `access_token` (`accessTokenFactory`). Wrapper: `shared/lib/signalr.ts`. Origin hub từ `VITE_WS_URL` (fallback `VITE_API_BASE_URL`) |
 
 ---
 
