@@ -20,6 +20,7 @@ export const ENDPOINTS = {
     GOOGLE_LOGIN: "/api/auth/google/login",
     GOOGLE_CALLBACK: "/api/auth/google/callback",
     ME: "/api/auth/me",
+    ME_PERMISSIONS: "/api/auth/me/permissions", // GH-106 — permission server-resolved (DB), không đọc perm[] JWT
     UPDATE_PROFILE: "/api/auth/me/profile",
     UPDATE_AVATAR: "/api/auth/me/avatar",
   },

@@ -39,6 +39,7 @@ export const KEY = {
 export const QUERY_KEY = {
   currentUser: {
     session: () => [KEY.currentUser, "session"] as const,
+    permissions: () => [KEY.currentUser, "permissions"] as const, // GH-106 — server-resolved permissions
   },
   loginHistory: {
     list: (params?: object) => [KEY.loginHistory, "list", params] as const,
