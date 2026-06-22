@@ -50,11 +50,14 @@ const REF_TYPE_DESC: Record<RefType, string> = {
 interface TicketKbReferencesPanelProps {
   ticketId: string;
   defaultCategory?: TicketCategoryEnum;
+  /** Chỉ cho phép gắn bài viết sau khi đã "Bắt đầu xử lý" (InProgress/Waiting). */
+  canAdd?: boolean;
 }
 
 export default function TicketKbReferencesPanel({
   ticketId,
   defaultCategory,
+  canAdd = true,
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
@@ -132,6 +135,12 @@ export default function TicketKbReferencesPanel({
           size="sm"
           variant="outline"
           className="gap-1.5"
+          disabled={!canAdd}
+          title={
+            !canAdd
+              ? "Cần bắt đầu xử lý ticket trước khi gắn bài viết"
+              : undefined
+          }
           onClick={() => setShowAdd(!showAdd)}
         >
           {showAdd ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
@@ -218,14 +227,20 @@ export default function TicketKbReferencesPanel({
           <p className="text-sm text-muted-foreground mb-3">
             Chưa có bài viết KB nào được gắn vào ticket này.
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => setShowAdd(true)}
-          >
-            <Plus className="size-3.5" /> Gán bài hướng dẫn
-          </Button>
+          {canAdd ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setShowAdd(true)}
+            >
+              <Plus className="size-3.5" /> Gán bài hướng dẫn
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Cần bắt đầu xử lý ticket trước khi gắn bài viết hướng dẫn.
+            </p>
+          )}
         </div>
       )}
 

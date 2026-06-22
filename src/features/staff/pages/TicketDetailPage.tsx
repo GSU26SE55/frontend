@@ -410,7 +410,10 @@ export default function TicketDetailPage() {
 
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
-              <TicketKbReferencesPanel ticketId={ticketId} />
+              <TicketKbReferencesPanel
+                ticketId={ticketId}
+                canAdd={status === TicketStatusEnum.Open || isInProgress}
+              />
             </TabsContent>
           </Tabs>
         </div>

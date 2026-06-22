@@ -236,6 +236,14 @@ const ProfilePage = () => {
               </Badge>
             )}
           </div>
+          {account?.id && (
+            <p className="text-[11px] text-muted-foreground mb-1.5">
+              ID tài khoản:{" "}
+              <span className="font-mono select-all text-foreground/70">
+                {account.id.slice(0, 8).toUpperCase()}…
+              </span>
+            </p>
+          )}
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Mail size={11} />
@@ -274,18 +282,6 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
-
-        {/* ID */}
-        {account?.id && (
-          <div className="shrink-0 hidden lg:block text-right">
-            <p className="text-[10px] text-muted-foreground mb-0.5">
-              ID tài khoản
-            </p>
-            <p className="font-mono text-xs text-muted-foreground select-all">
-              {account.id.slice(0, 8).toUpperCase()}…
-            </p>
-          </div>
-        )}
       </div>
 
       {/* ── Editable info form ── */}
