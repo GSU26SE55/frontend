@@ -54,6 +54,59 @@ tiếp BE. **PASS.**
 - **Build warning** chunk > 500kB là **pre-existing**, không do thay đổi này.
 - Chưa kiểm thử runtime (chỉ static gate) — `/kltn-test 98` sẽ chạy tsc+eslint+build lại.
 
-## KẾT LUẬN
+## KẾT LUẬN (S1–S6)
 **PASS** — Độ tự tin: **Cao** (static gate xanh toàn bộ; contract BE đã verify; theo đúng pattern repo).
 Khuyến nghị chạy `/kltn-test 98` rồi `/kltn-ship 98`.
+
+---
+
+# BỔ SUNG REVIEW — S7: Notification read-state + Bell UI — 2026-06-23
+
+## TÓM TẮT
+BE `NotificationService` hoàn thiện → bổ sung FE phần notification còn thiếu. 8 file (4 modify + 4
+create). `tsc` sạch · `eslint --max-warnings=0` sạch · `npm run build` ✓. **PASS.**
+
+Phạm vi: wire 3 endpoint read-state (`PATCH /{id}/read`, `POST /read-all`, `GET /unread-count`) +
+thay bell stub ở Header bằng dropdown thật (badge unread poll 30s, list 10 noti, click→mark-read +
+deep-link, "đánh dấu tất cả đã đọc").
+
+## SignalR? — KHÔNG cần
+Verify toàn backend: chỉ 2 hub (`TicketCommentHub`, `SmsGatewayHub`) — **NotificationService không có
+hub** (`find *Hub*.cs` rỗng, `grep MapHub` rỗng). Notification web theo cơ chế **pull**: InApp lưu DB →
+`GET /api/notifications` + `unread-count`; Push (Expo/FCM) chỉ cho mobile. Polling 30s là đúng thiết kế
+BE — khác S4 (comment có hub thật nên dùng SignalR).
+
+## PHÂN TÍCH
+
+### 🔴 Critical
+- Không có.
+
+### 🟡 Warning / Lưu ý
+- 🟡 `NotificationDto` tồn tại 2 nơi (`staff/types/notification.types.ts` + `shared/types/...`) — giữ
+  staff nguyên để **surgical** (bell dùng service shared mới, không refactor staff page). Có thể gộp ở
+  issue dọn dẹp sau.
+- 🟡 Doc BE `api-notification.md` **stale** (thiếu 3 endpoint read-state) — đã dùng `NotificationsController.cs`
+  làm nguồn chuẩn. Đáng đề xuất issue `role: BE` cập nhật doc.
+
+### ✅ Pass
+- **Architecture:** Không gọi API trong component — qua `notificationService` → hook TanStack Query.
+  Bell ở `shared/components/layout/` (dùng cross-feature, hợp lệ).
+- **Query keys:** `KEY.notifications` + factory `list(params)`/`unreadCount()`; mark-read/all invalidate
+  `[KEY.notifications]` (bao cả list + badge). Không inline string.
+- **Error handling:** `useMarkNotificationRead`/`useMarkAllRead` non-form → `onError: handleErrorApi({ error })`
+  toast. Không tự `toast.error` trong hook.
+- **Axios/Endpoint:** Dùng `shared/lib/axios` + `ENDPOINTS.NOTIFICATIONS.*`, không hardcode URL.
+- **Convention:** Enum `as const` (reuse `notification.enum.ts`, khớp BE gồm 16/17/18), types re-export.
+- **Deep-link verified:** cả admin/manager/staff đều có route `tickets/:id` → `/${prefix}/tickets/${id}`
+  không 404. Role prefix map qua `UserRole` enum.
+- **Efficiency:** list query gate `enabled: open` — chỉ fetch khi mở dropdown, badge dùng query riêng.
+- **No smells:** không `console.log`, không `localStorage`, không tạo axios instance mới.
+
+## RỦI RO & LƯU Ý
+- Badge cập nhật tối đa trễ 30s (polling) — chấp nhận được, không có server-push để realtime.
+- `unread-count` lỗi → badge ẩn, `refetchInterval` tự dừng khi error → bell không crash.
+- Chưa kiểm thử runtime với BE thật + seed noti (chỉ static gate).
+
+## KẾT LUẬN (S7)
+**PASS** — Độ tự tin: **Cao**. Static gate xanh; contract verify trực tiếp controller; SignalR đã xác
+nhận không cần; theo đúng pattern repo.
