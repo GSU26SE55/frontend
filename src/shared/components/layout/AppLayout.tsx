@@ -29,6 +29,7 @@ import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/session.types";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/shared/components/common/ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────
 function Topbar() {
@@ -67,13 +68,7 @@ function Topbar() {
       <ThemeToggle />
 
       {/* Notification bell */}
-      <button
-        className="relative p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        title="Thông báo"
-      >
-        <Bell size={17} />
-        <span className="absolute top-1.25 right-1.25 w-1.5 h-1.5 rounded-full bg-red-500" />
-      </button>
+      <NotificationBell />
 
       {/* User menu */}
       <div className="relative">

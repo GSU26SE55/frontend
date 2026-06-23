@@ -19,6 +19,7 @@ Bổ sung **toàn bộ ticket endpoint Web còn thiếu** (`logs/missing-ticket-
 - **S4** — Realtime comments qua SignalR (thay polling) — cài `@microsoft/signalr`
 - **S5** — Admin debug: Saga alert→ticket (list/detail/reprocess)
 - **S6** — Ticket health metrics (public) cho Admin dashboard
+- **S7** — Notification read-state (mark-read / read-all / unread-count) + Bell UI thật ở Header (bổ sung 2026-06-23 — BE NotificationService update)
 
 **Ngoài scope:**
 - KHÔNG đụng `RejectDialog`/`rejectSchema`/`RejectPayload` (reject **kết quả** — luồng khác)
@@ -128,6 +129,26 @@ DTO `AlertTicketSagaDTO`: `{ correlationId, currentState, alertId, batteryAssetI
 | hook | create | `useTicketHealth()` gộp 3 query — `refetchInterval: 30s` |
 | component | modify | Admin `DashboardPage`: card "Ticket Service Health" (3 badge màu theo status) |
 
+## S7 — Notification read-state + Bell UI  ✅ (bổ sung 2026-06-23)
+**Bối cảnh:** BE `NotificationService` vừa hoàn thiện (consumers + dispatch + read-state). FE đã có sẵn enums, device-tokens, preferences (đều wire vào `AccountSettingsPage`), admin create page, staff list. **Gap:** 3 endpoint read-state chưa wire + bell ở Header là stub (chấm đỏ tĩnh).
+
+**BE verified trực tiếp `NotificationsController.cs` (2026-06-23):** 5 endpoint, đều `[Authorize]` (POST create `Roles="Admin"`), `UserId` từ JWT claim. ⚠️ Doc `backend/docs/api-notification.md` **stale** — chỉ ghi GET+POST, thiếu 3 endpoint dưới:
+- `PATCH /api/notifications/{id}/read` → `CommonResponse<string>` (idempotent 200; 404 nếu không thuộc user)
+- `POST /api/notifications/read-all` → `CommonResponse<int>` (số đã mark)
+- `GET /api/notifications/unread-count` → `CommonResponse<int>` (badge)
+
+| Layer | Action | Chi tiết |
+|------|--------|----------|
+| endpoint | modify | `NOTIFICATIONS.MARK_READ(id)` · `MARK_ALL_READ` · `UNREAD_COUNT` (`endpoints.ts`) |
+| queryKey | create | `KEY.notifications` + `QUERY_KEY.notifications.list(params)` · `unreadCount()` |
+| type | create | `shared/types/notification.types.ts` — `NotificationDto`, `NotificationsParams` (re-export enum) |
+| service | create | `shared/services/notification.service.ts` — `getList`, `markRead`, `markAllRead`, `getUnreadCount` |
+| hook | create | `shared/hooks/useNotifications.ts` — `useNotifications` (staleTime 30s), `useUnreadCount` (refetchInterval 30s), `useMarkNotificationRead`, `useMarkAllRead` (onError → `handleErrorApi` toast) |
+| component | create | `shared/components/layout/NotificationBell.tsx` — badge unread (ẩn nếu 0, "99+"), dropdown 10 noti gần nhất, click → markRead + deep-link Ticket theo role, "đánh dấu tất cả đã đọc", empty state |
+| layout | modify | `AppLayout.tsx`: thay block bell stub bằng `<NotificationBell />` |
+
+**Tận dụng lại (không sửa):** staff notification service/hook giữ nguyên; device-tokens & preferences đã wire sẵn vào `AccountSettingsPage`.
+
 ---
 
 ## Edge Cases (chung)
@@ -154,10 +175,13 @@ DTO `AlertTicketSagaDTO`: `{ correlationId, currentState, alertId, batteryAssetI
 - [x] S5: saga debug page — 2026-06-22 (tsc + eslint PASS)
 - [x] S6: health metrics card — 2026-06-22 (tsc + eslint PASS)
 - [x] S4: SignalR realtime — 2026-06-22 (tsc + eslint PASS)
+- [ ] S7: notification read-state + bell UI — 2026-06-23 (BE NotificationService update)
 - [x] Cuối: `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` toàn bộ → PASS (2026-06-22)
 
 ## Đối chiếu Backend
 Đã verify trực tiếp code .cs (2026-06-22): `MaintenanceLogsController.cs`, `KnowledgeBaseController.cs:114`, `Admin/AdminAlertTicketSagasController.cs`, `HealthController.cs`, `Realtime/TicketCommentHub.cs` + `Program.cs:139` (MapHub, JWT query auth), `Admin/AdminTicketsController.cs` (triage-reject). Tất cả 12 endpoint + hub **tồn tại đúng** route/auth/DTO như ghi trong từng section.
+
+**S7 (2026-06-23):** verify `NotificationService/.../NotificationsController.cs` — 5 endpoint (GET/POST/PATCH read/POST read-all/GET unread-count). ⚠️ Doc `backend/docs/api-notification.md` **stale**, chưa ghi 3 endpoint read-state mới — đã dùng code controller làm nguồn chuẩn.
 
 ## Câu hỏi đã giải đáp
 - **Gộp issue?** → Gộp **toàn bộ #99–103 vào #98**, 1 issue/1 branch (Leader quyết). #98 retitle umbrella, priority P3→P2.

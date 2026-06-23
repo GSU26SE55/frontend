@@ -81,6 +81,9 @@ export const ENDPOINTS = {
   NOTIFICATIONS: {
     LIST: "/api/notifications",
     CREATE: "/api/notifications", // Admin only — tạo notification thủ công
+    MARK_READ: (id: string) => `/api/notifications/${id}/read`, // PATCH — idempotent
+    MARK_ALL_READ: "/api/notifications/read-all", // POST — body rỗng
+    UNREAD_COUNT: "/api/notifications/unread-count", // GET — badge count
   },
 
   DEVICE_TOKENS: {

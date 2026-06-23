@@ -1,13 +1,13 @@
-import { useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
+import { useLayoutEffect, useRef } from "react";
+import { animate, createTimeline, onScroll } from "animejs";
 import { ArrowRight } from "lucide-react";
+import {
+  createCleanupBag,
+  prefersReducedMotion,
+} from "@/features/landing/lib/animation";
 import solarOnlyImg from "@/assets/solar_only.png";
 import solarBatteryImg from "@/assets/solar_battery.png";
 import solarMonitoringImg from "@/assets/solar_monitoring.png";
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const PRODUCT_ITEMS = [
   {
@@ -36,121 +36,100 @@ const PRODUCT_ITEMS = [
 const ProductSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
 
-  useGSAP(
-    () => {
-      const prefersReduced = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      if (prefersReduced) return;
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    if (prefersReducedMotion()) return;
 
-      // Header slide-up + fade
-      gsap.from("[data-gsap='header']", {
-        y: 40,
-        autoAlpha: 0,
-        duration: 1,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: "[data-gsap='header']",
-          start: "top 85%",
-          end: "top 55%",
-          scrub: 0.6,
-        },
+    const bag = createCleanupBag();
+
+    const header = section.querySelector<HTMLElement>("[data-anim='header']");
+    const ctaLink = section.querySelector<HTMLElement>(
+      "[data-anim='cta-link']",
+    );
+
+    if (header) {
+      bag.add(
+        animate(header, {
+          opacity: [0, 1],
+          translateY: [40, 0],
+          duration: 800,
+          ease: "outQuart",
+          autoplay: onScroll({ target: header, repeat: false }),
+        }),
+      );
+    }
+
+    if (ctaLink) {
+      bag.add(
+        animate(ctaLink, {
+          opacity: [0, 1],
+          translateX: [30, 0],
+          duration: 800,
+          ease: "outQuart",
+          autoplay: onScroll({ target: ctaLink, repeat: false }),
+        }),
+      );
+    }
+
+    const cards = Array.from(
+      section.querySelectorAll<HTMLElement>("[data-anim='card']"),
+    );
+
+    cards.forEach((card, i) => {
+      const img = card.querySelector<HTMLElement>("[data-anim='card-img']");
+      const footer = card.querySelector<HTMLElement>(
+        "[data-anim='card-footer']",
+      );
+      const badge = card.querySelector<HTMLElement>(
+        "[data-anim='card-badge']",
+      );
+
+      const tl = createTimeline({
+        defaults: { ease: "outExpo" },
+        autoplay: onScroll({ target: card, repeat: false }),
       });
 
-      // CTA link slide-in from right
-      gsap.from("[data-gsap='cta-link']", {
-        x: 30,
-        autoAlpha: 0,
-        duration: 1,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: "[data-gsap='header']",
-          start: "top 80%",
-          end: "top 50%",
-          scrub: 0.6,
-        },
+      tl.add(card, {
+        opacity: [0, 1],
+        translateY: [70, 0],
+        scale: [0.93, 1],
+        duration: 900,
+        delay: i * 60,
       });
 
-      // Each product card: staggered scroll-driven entrance
-      const cards = gsap.utils.toArray<HTMLElement>("[data-gsap='card']");
-      cards.forEach((card, i) => {
-        const img = card.querySelector("[data-gsap='card-img']");
-        const footer = card.querySelector("[data-gsap='card-footer']");
-        const badge = card.querySelector("[data-gsap='card-badge']");
+      if (footer) {
+        tl.add(
+          footer,
+          { opacity: [0, 1], translateY: [16, 0], duration: 700 },
+          "-=500",
+        );
+      }
 
-        // Card body: fade + slide up + scale
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: card,
-            start: "top 90%",
-            end: "top 40%",
-            scrub: 0.5,
-          },
-        });
+      if (badge) {
+        tl.add(
+          badge,
+          { opacity: [0, 1], scale: [0, 1], duration: 600, ease: "outBack" },
+          "-=500",
+        );
+      }
 
-        tl.from(card, {
-          y: 70,
-          autoAlpha: 0,
-          scale: 0.93,
-          duration: 1,
-          ease: "power2.out",
-          delay: i * 0.08,
-        });
+      bag.add(tl);
 
-        // Image parallax: moves slower than content
-        if (img) {
-          gsap.fromTo(
-            img,
-            { yPercent: 8, scale: 1.08 },
-            {
-              yPercent: -4,
-              scale: 1,
-              ease: "none",
-              scrollTrigger: {
-                trigger: card,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: true,
-              },
-            },
-          );
-        }
+      if (img) {
+        bag.add(
+          animate(img, {
+            translateY: [36, -20],
+            scale: [1.1, 1],
+            ease: "linear",
+            autoplay: onScroll({ target: card, sync: true }),
+          }),
+        );
+      }
+    });
 
-        // Footer metrics: delayed reveal within card
-        if (footer) {
-          gsap.from(footer, {
-            y: 16,
-            autoAlpha: 0,
-            duration: 0.8,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 60%",
-              end: "top 30%",
-              scrub: 0.5,
-            },
-          });
-        }
-
-        // Monitoring badge
-        if (badge) {
-          gsap.from(badge, {
-            scale: 0,
-            autoAlpha: 0,
-            duration: 0.6,
-            ease: "back.out(1.7)",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 50%",
-              end: "top 25%",
-              scrub: 0.5,
-            },
-          });
-        }
-      });
-    },
-    { scope: sectionRef },
-  );
+    return () => bag.flush();
+  }, []);
 
   return (
     <section
@@ -161,7 +140,7 @@ const ProductSection = () => {
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
-          <div data-gsap="header" className="max-w-2xl">
+          <div data-anim="header" className="max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
               Gói sản phẩm
             </p>
@@ -169,7 +148,7 @@ const ProductSection = () => {
               Our energy system, simplified.
             </h2>
           </div>
-          <div data-gsap="cta-link">
+          <div data-anim="cta-link">
             <a
               href="#login"
               className="inline-flex items-center gap-1.5 font-medium text-slate-900 border-b border-slate-900 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all duration-300 group"
@@ -188,25 +167,23 @@ const ProductSection = () => {
             return (
               <div
                 key={item.title}
-                data-gsap="card"
-                className="group flex flex-col h-full bg-white will-change-transform"
-                style={{ visibility: "hidden" }}
+                data-anim="card"
+                className="group flex flex-col h-full bg-white"
               >
                 {/* Image */}
                 <div className="relative h-64 sm:h-72 md:h-80 w-full flex items-center justify-center overflow-hidden rounded-lg">
                   <img
-                    data-gsap="card-img"
+                    data-anim="card-img"
                     src={item.image}
                     alt={item.title}
-                    className="h-full w-auto object-contain will-change-transform transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
 
                   {isMonitoring && (
                     <div
-                      data-gsap="card-badge"
+                      data-anim="card-badge"
                       className="absolute bottom-4 left-4 z-20 w-16 aspect-square bg-white border border-slate-950/10 rounded-xl shadow-md p-1.5 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-rotate-3"
-                      style={{ visibility: "hidden" }}
                     >
                       <img
                         src={solarMonitoringImg}
@@ -228,9 +205,8 @@ const ProductSection = () => {
 
                   {/* Footer metrics */}
                   <div
-                    data-gsap="card-footer"
+                    data-anim="card-footer"
                     className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100 text-xs"
-                    style={{ visibility: "hidden" }}
                   >
                     <div>
                       <span className="block font-semibold tracking-wider text-slate-400 uppercase">

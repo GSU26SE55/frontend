@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { animate, createTimeline, set, splitText, stagger } from "animejs";
 import {
   AlertTriangle,
   BatteryCharging,
@@ -19,6 +19,7 @@ import {
   TICKET_ROWS,
 } from "@/features/landing/landing.constants";
 import type { HeroDemoId } from "@/features/landing/types/landing.types";
+import { prefersReducedMotion } from "@/features/landing/lib/animation";
 import heroImage from "@/assets/hero1.jpg";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -117,113 +118,132 @@ const sohColor = (v: number) =>
 
 // ─── Left canvas panel ────────────────────────────────────────────────────────
 
-const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => (
-  <div className="relative hidden overflow-hidden border-r border-white/[0.06] lg:block">
-    {/* Dot grid */}
-    <div
-      aria-hidden
-      className="absolute inset-0"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)",
-        backgroundSize: "22px 22px",
-      }}
-    />
-    {/* Drag controls (decorative, Railway-style) */}
-    <div className="absolute left-3 top-3 flex flex-col gap-1" aria-hidden>
-      {["+", "−"].map((s) => (
-        <div
-          key={s}
-          className="flex h-6 w-6 items-center justify-center rounded border border-white/[0.08] bg-white/[0.04] text-xs text-white/30"
-        >
-          {s}
-        </div>
-      ))}
-    </div>
+const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    {/* Battery service nodes */}
-    <div className="relative z-10 flex flex-col gap-3 p-4 pt-14">
-      <p className="mb-1 font-mono text-[10px] font-medium uppercase tracking-widest text-white/25">
-        Battery Services
-      </p>
-      {BATTERY_ROWS.map((row, i) => {
-        const isHighlighted =
-          (activeTab === "alerts" && row.status === "Critical") ||
-          (activeTab === "health" && i === 0) ||
-          (activeTab === "tickets" && i < 2) ||
-          (activeTab === "sla" && row.soh < 80);
+  useEffect(() => {
+    const bars = barRefs.current.filter(
+      (el): el is HTMLDivElement => el !== null,
+    );
+    if (bars.length === 0) return;
 
-        return (
-          <motion.div
-            key={row.id}
-            layout
-            className={cn(
-              "rounded-lg border p-3 transition-colors duration-300",
-              isHighlighted
-                ? row.status === "Critical"
-                  ? "border-red-500/30 bg-red-500/[0.07]"
-                  : "border-emerald-500/25 bg-emerald-500/[0.05]"
-                : "border-white/[0.07] bg-white/[0.03]",
-            )}
+    if (prefersReducedMotion()) {
+      bars.forEach((el, i) => {
+        el.style.width = `${BATTERY_ROWS[i].soh}%`;
+      });
+      return;
+    }
+
+    const anim = animate(bars, {
+      width: (_el: HTMLElement, i: number) => `${BATTERY_ROWS[i].soh}%`,
+      duration: 900,
+      ease: "outQuad",
+      delay: stagger(100, { start: 400 }),
+    });
+
+    return () => {
+      anim.revert();
+    };
+  }, []);
+
+  return (
+    <div className="relative hidden overflow-hidden border-r border-white/[0.06] lg:block">
+      {/* Dot grid */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+      {/* Drag controls (decorative, Railway-style) */}
+      <div className="absolute left-3 top-3 flex flex-col gap-1" aria-hidden>
+        {["+", "−"].map((s) => (
+          <div
+            key={s}
+            className="flex h-6 w-6 items-center justify-center rounded border border-white/[0.08] bg-white/[0.04] text-xs text-white/30"
           >
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <BatteryCharging className="size-3.5 shrink-0 text-white/50" />
-                <span className="truncate font-mono text-xs font-medium text-white/80">
-                  {row.id}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {isHighlighted && (
-                  <motion.span
-                    className="relative flex h-2 w-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+            {s}
+          </div>
+        ))}
+      </div>
+
+      {/* Battery service nodes */}
+      <div className="relative z-10 flex flex-col gap-3 p-4 pt-14">
+        <p className="mb-1 font-mono text-[10px] font-medium uppercase tracking-widest text-white/25">
+          Battery Services
+        </p>
+        {BATTERY_ROWS.map((row, i) => {
+          const isHighlighted =
+            (activeTab === "alerts" && row.status === "Critical") ||
+            (activeTab === "health" && i === 0) ||
+            (activeTab === "tickets" && i < 2) ||
+            (activeTab === "sla" && row.soh < 80);
+
+          return (
+            <div
+              key={row.id}
+              className={cn(
+                "rounded-lg border p-3 transition-colors duration-300",
+                isHighlighted
+                  ? row.status === "Critical"
+                    ? "border-red-500/30 bg-red-500/[0.07]"
+                    : "border-emerald-500/25 bg-emerald-500/[0.05]"
+                  : "border-white/[0.07] bg-white/[0.03]",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <BatteryCharging className="size-3.5 shrink-0 text-white/50" />
+                  <span className="truncate font-mono text-xs font-medium text-white/80">
+                    {row.id}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="relative flex h-2 w-2">
+                    <span
+                      className={cn(
+                        "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 transition-opacity duration-300",
+                        isHighlighted ? "opacity-60" : "opacity-0",
+                      )}
+                    />
                     <span
                       className={cn(
                         "relative inline-flex h-2 w-2 rounded-full",
                         sohColor(row.soh),
                       )}
                     />
-                  </motion.span>
-                )}
-                {!isHighlighted && (
-                  <span
-                    className={cn("h-2 w-2 rounded-full", sohColor(row.soh))}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-2.5">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.07]">
+                  <div
+                    ref={(el) => {
+                      barRefs.current[i] = el;
+                    }}
+                    className={cn("h-full rounded-full", sohColor(row.soh))}
+                    style={{ width: 0 }}
                   />
-                )}
+                </div>
+              </div>
+
+              <div className="mt-1.5 flex items-center justify-between">
+                <span className="text-[10px] text-white/35">{row.site}</span>
+                <span className="font-mono text-[10px] text-white/50">
+                  SOH {row.soh}%
+                </span>
               </div>
             </div>
-
-            <div className="mt-2.5">
-              <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.07]">
-                <motion.div
-                  className={cn("h-full rounded-full", sohColor(row.soh))}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${row.soh}%` }}
-                  transition={{
-                    delay: i * 0.1 + 0.4,
-                    duration: 0.9,
-                    ease: "easeOut",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="mt-1.5 flex items-center justify-between">
-              <span className="text-[10px] text-white/35">{row.site}</span>
-              <span className="font-mono text-[10px] text-white/50">
-                SOH {row.soh}%
-              </span>
-            </div>
-          </motion.div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Right panel content ──────────────────────────────────────────────────────
 
@@ -390,12 +410,123 @@ const SlaContent = () => (
   </div>
 );
 
+// ─── Crossfade helper ─────────────────────────────────────────────────────────
+
+const useCrossfade = <T extends HTMLElement>(dep: unknown) => {
+  const ref = useRef<T>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || prefersReducedMotion()) return;
+
+    const anim = animate(node, {
+      opacity: [0, 1],
+      translateY: [8, 0],
+      duration: 260,
+      ease: "outQuad",
+    });
+
+    return () => {
+      anim.revert();
+    };
+  }, [dep]);
+
+  return ref;
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
   const [activeDemoId, setActiveDemoId] = useState<HeroDemoId>("health");
   const meta = DEMO_META[activeDemoId];
   const ActiveIcon = meta.icon;
+
+  const crumbRef = useCrossfade<HTMLSpanElement>(activeDemoId);
+  const headerLabelRef = useCrossfade<HTMLDivElement>(activeDemoId);
+  const contentRef = useCrossfade<HTMLDivElement>(activeDemoId);
+
+  // Hero entrance: split heading into words, timeline heading → subhead → CTA
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const heroImgRef = useRef<HTMLImageElement>(null);
+
+  useLayoutEffect(() => {
+    const heading = headingRef.current;
+    const sub = subRef.current;
+    const cta = ctaRef.current;
+    if (!heading || !sub || !cta) return;
+
+    if (prefersReducedMotion()) return;
+
+    const splitter = splitText(heading, { words: true });
+    const tl = createTimeline({ defaults: { ease: "outExpo" } });
+
+    tl.add(splitter.words, {
+      opacity: [0, 1],
+      translateY: [28, 0],
+      duration: 800,
+      delay: stagger(35),
+    })
+      .add(sub, { opacity: [0, 1], translateY: [16, 0], duration: 600 }, "-=500")
+      .add(cta, { opacity: [0, 1], translateY: [16, 0], duration: 600 }, "-=480");
+
+    if (heroImgRef.current) {
+      animate(heroImgRef.current, {
+        scale: [1.12, 1],
+        duration: 1800,
+        ease: "outQuad",
+      });
+    }
+
+    return () => {
+      tl.revert();
+      splitter.revert();
+    };
+  }, []);
+
+  // Sliding tab indicator
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const tabButtonRefs = useRef<Record<HeroDemoId, HTMLButtonElement | null>>({
+    health: null,
+    alerts: null,
+    tickets: null,
+    sla: null,
+  });
+  const indicatorReady = useRef(false);
+
+  useLayoutEffect(() => {
+    const bar = tabBarRef.current;
+    const indicator = indicatorRef.current;
+    const activeBtn = tabButtonRefs.current[activeDemoId];
+    if (!bar || !indicator || !activeBtn) return;
+
+    const barRect = bar.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    const x = btnRect.left - barRect.left;
+    const y = btnRect.top - barRect.top;
+    const { width, height } = btnRect;
+
+    if (!indicatorReady.current || prefersReducedMotion()) {
+      set(indicator, { translateX: x, translateY: y, width, height });
+      indicatorReady.current = true;
+      return;
+    }
+
+    const anim = animate(indicator, {
+      translateX: x,
+      translateY: y,
+      width,
+      height,
+      duration: 420,
+      ease: "outExpo",
+    });
+
+    return () => {
+      anim.revert();
+    };
+  }, [activeDemoId]);
 
   const renderContent = () => {
     if (activeDemoId === "health")
@@ -413,6 +544,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
       <div className="w-full overflow-hidden bg-slate-950">
         <div className="relative min-h-svh overflow-hidden">
           <img
+            ref={heroImgRef}
             src={heroImage}
             alt="Solar battery operations overview"
             className="absolute inset-0 h-full w-full object-cover object-bottom"
@@ -430,13 +562,19 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
           <div className="relative z-10 flex min-h-svh items-center px-5 pt-20 lg:px-8">
             <div className="mx-auto w-full max-w-7xl">
               <div className="max-w-3xl text-white">
-                <h1 className="text-4xl font-semibold leading-[1.04] sm:text-5xl xl:text-6xl xl:leading-[1.02]">
+                <h1
+                  ref={headingRef}
+                  className="text-4xl font-semibold leading-[1.04] sm:text-5xl xl:text-6xl xl:leading-[1.02]"
+                >
                   Giám sát pin mặt trời. Xử lý sự cố nhanh hơn.
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-white/78 sm:text-lg">
+                <p
+                  ref={subRef}
+                  className="mt-5 max-w-2xl text-base leading-7 text-white/78 sm:text-lg"
+                >
                   Một console cho SOH, cảnh báo, ticket và SLA bảo trì.
                 </p>
-                <div className="mt-8">
+                <div ref={ctaRef} className="mt-8">
                   <Button
                     size="lg"
                     className="h-12 gap-2 bg-white px-5 font-semibold text-slate-950 hover:bg-slate-100"
@@ -472,18 +610,12 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                       solar-battery-system
                     </span>
                     <span className="text-white/20">›</span>
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={activeDemoId}
-                        className="font-medium text-white/85"
-                        initial={{ opacity: 0, x: -6 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 6 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        {meta.title}
-                      </motion.span>
-                    </AnimatePresence>
+                    <span
+                      ref={crumbRef}
+                      className="font-medium text-white/85"
+                    >
+                      {meta.title}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-white/35">
                     <span className="relative flex h-2 w-2">
@@ -502,38 +634,22 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                   <div className="flex flex-col">
                     {/* Right panel header — icon + title + inline status */}
                     <div className="flex items-center gap-2.5 border-b border-white/[0.06] bg-white/[0.01] px-4 py-3">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={activeDemoId + "_header"}
-                          className="flex items-center gap-2"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15 }}
-                        >
-                          <div className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.06]">
-                            <ActiveIcon className="size-3.5 text-white/60" />
-                          </div>
-                          <span className="text-sm font-medium text-white/80">
-                            {meta.title}
-                          </span>
-                        </motion.div>
-                      </AnimatePresence>
+                      <div
+                        ref={headerLabelRef}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.06]">
+                          <ActiveIcon className="size-3.5 text-white/60" />
+                        </div>
+                        <span className="text-sm font-medium text-white/80">
+                          {meta.title}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Content */}
                     <div className="min-h-[268px] flex-1">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={activeDemoId}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -8 }}
-                          transition={{ duration: 0.18 }}
-                        >
-                          {renderContent()}
-                        </motion.div>
-                      </AnimatePresence>
+                      <div ref={contentRef}>{renderContent()}</div>
                     </div>
                   </div>
                 </div>
@@ -541,18 +657,30 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
 
               {/* Floating tab bar — centered, overlap đáy panel */}
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                <div className="flex items-center gap-0.5 rounded-xl border border-white/[0.1] bg-[oklch(0.12_0.015_245)] px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-sm">
+                <div
+                  ref={tabBarRef}
+                  className="relative flex items-center gap-0.5 rounded-xl border border-white/[0.1] bg-[oklch(0.12_0.015_245)] px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-sm"
+                >
+                  <div
+                    ref={indicatorRef}
+                    aria-hidden
+                    className="absolute left-0 top-0 rounded-lg bg-white/[0.1]"
+                    style={{ width: 0, height: 0 }}
+                  />
                   {TABS.map((tab) => {
                     const active = tab.id === activeDemoId;
                     return (
                       <button
                         key={tab.id}
+                        ref={(el) => {
+                          tabButtonRefs.current[tab.id] = el;
+                        }}
                         type="button"
                         className={cn(
-                          "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20",
+                          "relative z-10 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20",
                           active
-                            ? "bg-white/[0.1] text-white"
-                            : "text-white/35 hover:bg-white/[0.05] hover:text-white/65",
+                            ? "text-white"
+                            : "text-white/35 hover:text-white/65",
                         )}
                         onClick={() => setActiveDemoId(tab.id)}
                       >
