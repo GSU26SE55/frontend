@@ -158,11 +158,24 @@ export default function DeviceTokensSection() {
           <Label htmlFor="dt-token">
             Push token <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="dt-token"
-            placeholder="Expo/FCM push token"
-            {...registerField("token")}
-          />
+          <div className="flex gap-2">
+            <Input
+              id="dt-token"
+              placeholder="Expo/FCM push token"
+              className="flex-1"
+              {...registerField("token")}
+            />
+            <Button
+              type="submit"
+              disabled={register.isPending}
+              className="shrink-0"
+            >
+              {register.isPending && (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              )}
+              Đăng ký
+            </Button>
+          </div>
           {errors.token && (
             <p className="text-xs text-red-500">{errors.token.message}</p>
           )}
@@ -175,6 +188,10 @@ export default function DeviceTokensSection() {
             render={({ field }) => (
               <Select
                 value={String(field.value)}
+                items={PLATFORM_OPTIONS.map((o) => ({
+                  value: String(o.value),
+                  label: o.label,
+                }))}
                 onValueChange={(v) => field.onChange(Number(v))}
               >
                 <SelectTrigger>
@@ -205,12 +222,6 @@ export default function DeviceTokensSection() {
             <p className="text-xs text-red-500">{errors.deviceInfo.message}</p>
           )}
         </div>
-        <Button type="submit" disabled={register.isPending}>
-          {register.isPending && (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          )}
-          Đăng ký
-        </Button>
       </form>
 
       {/* Hủy đăng ký theo token (GET không trả raw token nên không thể hủy từ list) */}

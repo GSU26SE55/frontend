@@ -10,7 +10,15 @@ import {
 // SignalR realtime cho comment panel: join phòng ticket, nhận CommentAdded
 // (invalidate query comment) + UserTyping. Lỗi connect được nuốt → UI không crash,
 // query vẫn dùng được (chỉ mất push realtime).
-export function useTicketCommentsRealtime(ticketId: string) {
+//
+// extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có CommentAdded.
+// Manager render comment từ QUERY_KEY.tickets.comments (default), nhưng staff/admin
+// render comment NHÚNG trong ticket detail (key khác) → truyền key detail tương ứng
+// để comment mới hiện realtime mà không phải reload.
+export function useTicketCommentsRealtime(
+  ticketId: string,
+  extraInvalidateKeys: readonly unknown[][] = [],
+) {
   const qc = useQueryClient();
   const connRef = useRef<HubConnection | null>(null);
   const typingTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>(
@@ -27,6 +35,9 @@ export function useTicketCommentsRealtime(ticketId: string) {
 
     conn.on("CommentAdded", () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.comments(ticketId) });
+      for (const key of extraInvalidateKeys) {
+        qc.invalidateQueries({ queryKey: key });
+      }
     });
 
     conn.on(
@@ -60,7 +71,9 @@ export function useTicketCommentsRealtime(ticketId: string) {
       conn.stop().catch(() => {});
       connRef.current = null;
     };
-  }, [ticketId, qc]);
+    // extraInvalidateKeys hoá chuỗi để deps ổn định — caller truyền inline array mỗi render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId, qc, JSON.stringify(extraInvalidateKeys)]);
 
   const sendTyping = useCallback(() => {
     const conn = connRef.current;
