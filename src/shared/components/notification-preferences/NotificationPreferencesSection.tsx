@@ -258,10 +258,12 @@ export default function NotificationPreferencesSection() {
         )}
       </div>
 
-      <Button type="submit" disabled={update.isPending}>
-        {update.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-        Lưu cài đặt
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={update.isPending}>
+          {update.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+          Lưu cài đặt
+        </Button>
+      </div>
     </form>
   );
 }
