@@ -17,7 +17,7 @@ import {
 // để comment mới hiện realtime mà không phải reload.
 export function useTicketCommentsRealtime(
   ticketId: string,
-  extraInvalidateKeys: readonly unknown[][] = [],
+  extraInvalidateKeys: readonly (readonly unknown[])[] = [],
 ) {
   const qc = useQueryClient();
   const connRef = useRef<HubConnection | null>(null);

@@ -33,9 +33,11 @@ import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
 import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
@@ -77,6 +79,7 @@ export default function TicketDetailPage() {
   const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
 
   const ticketId = id ?? "";
+  const currentUserId = useSessionStore((s) => s.user?.accountId);
 
   // Realtime: staff render comment NHÚNG trong staffTickets.detail → invalidate đúng key
   // đó khi CommentAdded để comment customer gửi hiện ngay, không phải reload.
@@ -282,60 +285,20 @@ export default function TicketDetailPage() {
             {/* Comments */}
             <TabsContent
               value="comments"
-              className="min-h-0 overflow-y-auto m-0 p-6 space-y-4"
+              className="min-h-0 m-0 flex flex-col overflow-hidden"
             >
-              {canComment && (
-                <AddCommentForm
-                  onSubmit={handleCommentSubmit}
-                  isPending={commentMutation.isPending}
+              <div className="flex-1 overflow-y-auto p-6">
+                <TicketCommentThread
+                  comments={comments}
+                  currentUserId={currentUserId}
                 />
-              )}
-              {comments.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Chưa có bình luận nào.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="p-3 rounded-lg border border-border bg-muted/30"
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <p className="text-xs font-medium">
-                          {comment.authorDisplayName ?? comment.authorRole}
-                        </p>
-                        {comment.isInternal && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] h-4 px-1.5"
-                          >
-                            Nội bộ
-                          </Badge>
-                        )}
-                        <p className="text-xs text-muted-foreground ml-auto">
-                          {format(
-                            new Date(comment.createdAt),
-                            "dd/MM/yyyy HH:mm",
-                            { locale: vi },
-                          )}
-                        </p>
-                      </div>
-                      <p className="text-sm whitespace-pre-wrap">
-                        {comment.body}
-                      </p>
-                      {comment.attachmentFileIds &&
-                        comment.attachmentFileIds.length > 0 && (
-                          <div className="mt-2">
-                            <TicketAttachments
-                              fileIds={comment.attachmentFileIds}
-                              label={null}
-                              compact
-                            />
-                          </div>
-                        )}
-                    </div>
-                  ))}
+              </div>
+              {canComment && (
+                <div className="shrink-0 border-t border-border p-3">
+                  <AddCommentForm
+                    onSubmit={handleCommentSubmit}
+                    isPending={commentMutation.isPending}
+                  />
                 </div>
               )}
             </TabsContent>
