@@ -20,6 +20,7 @@ import DeclareIncidentDialog from "@/features/manager/components/DeclareIncident
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -29,7 +30,6 @@ import {
 import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
 import {
   TicketStatusEnum,
-  ActorRoleEnum,
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketCategoryEnum,
@@ -37,6 +37,7 @@ import {
 import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { useSessionStore } from "@/shared/stores/sessionStore";
 
 type DialogType =
   | "triage"
@@ -69,14 +70,6 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   High: "Cao",
 };
 
-const ROLE_LABEL: Record<ActorRoleEnum, string> = {
-  Admin: "Admin",
-  Manager: "Manager",
-  Staff: "Staff",
-  Customer: "Khách hàng",
-  System: "Hệ thống",
-};
-
 function SideInfoRow({
   label,
   value,
@@ -105,6 +98,7 @@ export default function TicketDetailPage() {
   const { data: comments = [] } = useTicketComments(id);
   const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
+  const currentUserId = useSessionStore((s) => s.user?.accountId);
 
   if (isError) {
     return (
@@ -310,58 +304,22 @@ export default function TicketDetailPage() {
             {/* Comments */}
             <TabsContent
               value="comments"
-              className="min-h-0 overflow-y-auto m-0 p-6 space-y-4"
+              className="min-h-0 m-0 flex flex-col overflow-hidden"
             >
-              <AddCommentForm ticketId={id} onTyping={sendTyping} />
-              {typingNames.length > 0 && (
-                <p className="text-xs text-muted-foreground italic">
-                  {typingNames.join(", ")} đang gõ…
-                </p>
-              )}
-              {comments.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Chưa có bình luận nào.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {comments.map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-3 rounded-lg border border-border bg-muted/30"
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <p className="text-xs font-medium">
-                          {c.authorDisplayName ?? ROLE_LABEL[c.authorRole]}
-                        </p>
-                        {c.isInternal && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] h-4 px-1.5"
-                          >
-                            Nội bộ
-                          </Badge>
-                        )}
-                        <p className="text-xs text-muted-foreground ml-auto">
-                          {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
-                            locale: vi,
-                          })}
-                        </p>
-                      </div>
-                      <p className="text-sm whitespace-pre-wrap">{c.body}</p>
-                      {c.attachmentFileIds &&
-                        c.attachmentFileIds.length > 0 && (
-                          <div className="mt-2">
-                            <TicketAttachments
-                              fileIds={c.attachmentFileIds}
-                              label={null}
-                              compact
-                            />
-                          </div>
-                        )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="flex-1 overflow-y-auto p-6">
+                <TicketCommentThread
+                  comments={comments}
+                  currentUserId={currentUserId}
+                />
+              </div>
+              <div className="shrink-0 border-t border-border p-3">
+                {typingNames.length > 0 && (
+                  <p className="px-1 pb-2 text-xs text-muted-foreground italic">
+                    {typingNames.join(", ")} đang gõ…
+                  </p>
+                )}
+                <AddCommentForm ticketId={id} onTyping={sendTyping} />
+              </div>
             </TabsContent>
 
             {/* Timeline */}
