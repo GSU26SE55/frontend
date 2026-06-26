@@ -36,8 +36,9 @@ import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
-import { KEY } from "@/shared/utils/queryKeys";
+import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
 import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
 import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
@@ -79,6 +80,13 @@ export default function TicketDetailPage() {
 
   const ticketId = id ?? "";
   const currentUserId = useSessionStore((s) => s.user?.accountId);
+
+  // Realtime: staff render comment NHÚNG trong staffTickets.detail → invalidate đúng key
+  // đó khi CommentAdded để comment customer gửi hiện ngay, không phải reload.
+  useTicketCommentsRealtime(ticketId, [
+    QUERY_KEY.staffTickets.detail(ticketId),
+  ]);
+
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
