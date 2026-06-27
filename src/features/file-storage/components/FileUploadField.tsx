@@ -113,10 +113,15 @@ export default function FileUploadField({
   const canAdd = !disabled && remaining > 0;
 
   return (
-    <div className="space-y-2">
+    <div className={cn(compact ? "flex shrink-0 items-center" : "space-y-2")}>
       {label && <p className="text-muted-foreground text-sm">{label}</p>}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          compact ? "shrink-0" : "flex-wrap",
+        )}
+      >
         {!hideThumbnails &&
           items.map((att) => (
             <div

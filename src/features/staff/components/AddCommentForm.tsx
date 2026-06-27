@@ -104,16 +104,16 @@ export function AddCommentForm({ onSubmit, isPending }: Props) {
             control={form.control}
             name="body"
             render={({ field }) => (
-              <FormItem className="flex-1 self-center">
+              <FormItem className="flex-1 space-y-0">
                 <FormControl>
                   <Textarea
                     placeholder="Thêm bình luận..."
                     rows={1}
-                    className="h-9 min-h-9 resize-none rounded-xl border-0 bg-transparent py-2 leading-[1.125rem] shadow-none focus-visible:ring-0"
+                    className="flex h-9 min-h-9 resize-none items-center rounded-xl border-0 bg-transparent py-1.75 leading-4.5 shadow-none focus-visible:ring-0"
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="px-2" />
               </FormItem>
             )}
           />
