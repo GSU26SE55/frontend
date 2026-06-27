@@ -26,6 +26,15 @@ export function useTicketCommentsRealtime(
   );
   const [typingNames, setTypingNames] = useState<string[]>([]);
 
+  // extraInvalidateKeys giữ trong ref — caller truyền inline array MỚI mỗi render.
+  // Nếu để trong deps, connection bị rebuild liên tục → race teardown → nhận event
+  // trùng. Ref cho phép handler đọc keys mới nhất mà KHÔNG tái tạo connection.
+  // Cập nhật trong effect (không phải trong render) để không vi phạm react-hooks/refs.
+  const extraKeysRef = useRef(extraInvalidateKeys);
+  useEffect(() => {
+    extraKeysRef.current = extraInvalidateKeys;
+  });
+
   useEffect(() => {
     if (!ticketId) return;
     const conn = createTicketCommentConnection();
@@ -35,7 +44,7 @@ export function useTicketCommentsRealtime(
 
     conn.on("CommentAdded", () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.comments(ticketId) });
-      for (const key of extraInvalidateKeys) {
+      for (const key of extraKeysRef.current) {
         qc.invalidateQueries({ queryKey: key });
       }
     });
@@ -53,7 +62,10 @@ export function useTicketCommentsRealtime(
       },
     );
 
-    conn
+    // Giữ promise start() để cleanup CHỜ nó settle trước khi stop(). Gọi stop() khi
+    // start() còn pending → SignalR ném "Failed to start the HttpConnection before
+    // stop() was called" (lỗi thấy khi StrictMode mount kép / remount nhanh).
+    const startPromise = conn
       .start()
       .then(() => {
         if (!cancelled) return conn.invoke("JoinTicket", ticketId);
@@ -65,15 +77,27 @@ export function useTicketCommentsRealtime(
     return () => {
       cancelled = true;
       Object.values(timers).forEach(clearTimeout);
-      if (conn.state === HubConnectionState.Connected) {
-        conn.invoke("LeaveTicket", ticketId).catch(() => {});
-      }
-      conn.stop().catch(() => {});
+      // Gỡ handler TRƯỚC khi stop — chống event treo bắn vào connection đang teardown
+      // (StrictMode mount kép / rebuild) gây invalidate trùng.
+      conn.off("CommentAdded");
+      conn.off("UserTyping");
+      // CHỜ start() xong rồi mới leave + stop — tránh stop-trước-start.
+      void startPromise.finally(() => {
+        if (conn.state === HubConnectionState.Connected) {
+          conn
+            .invoke("LeaveTicket", ticketId)
+            .catch(() => {})
+            .finally(() => {
+              conn.stop().catch(() => {});
+            });
+        } else {
+          conn.stop().catch(() => {});
+        }
+      });
       connRef.current = null;
     };
-    // extraInvalidateKeys hoá chuỗi để deps ổn định — caller truyền inline array mỗi render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId, qc, JSON.stringify(extraInvalidateKeys)]);
+    // Chỉ rebuild connection theo ticketId — extraInvalidateKeys đọc qua ref.
+  }, [ticketId, qc]);
 
   const sendTyping = useCallback(() => {
     const conn = connRef.current;

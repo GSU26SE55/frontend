@@ -8,12 +8,16 @@ import type {
   NotificationDto,
   NotificationsParams,
 } from "@/shared/types/notification.types";
+import { NotificationChannelEnum } from "@/shared/enums/notification.enum";
 
 export const notificationService = {
+  // Mặc định chỉ lấy channel InApp. BE ghi 1 record/channel (InApp + Push) cho mỗi
+  // sự kiện ⇒ nếu không lọc, list hiện trùng 2 dòng (record Push chỉ để đẩy device,
+  // không thuộc danh sách in-app). Caller vẫn override channel được nếu cần.
   getList: (params: NotificationsParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<NotificationDto>>>(
       ENDPOINTS.NOTIFICATIONS.LIST,
-      { params },
+      { params: { channel: NotificationChannelEnum.InApp, ...params } },
     ),
 
   // PATCH — body rỗng. data = id của notification vừa mark.

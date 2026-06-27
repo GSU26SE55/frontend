@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -23,7 +24,10 @@ import {
   type CreateNotificationFormValues,
 } from "@/features/admin/schemas/notification.schema";
 import { useCreateNotification } from "@/features/admin/hooks/useCreateNotification";
+import { useAdminAccountList } from "@/features/admin/hooks/useAdminAccounts";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { handleErrorApi } from "@/shared/lib/errors";
+import type { AccountDto } from "@/shared/types/account.types";
 
 // Map int → nhãn (inline theo pattern repo — không có util chung)
 const TYPE_OPTIONS: { value: NotificationTypeEnum; label: string }[] = [
@@ -77,6 +81,14 @@ const CHANNEL_OPTIONS: { value: NotificationChannelEnum; label: string }[] = [
 
 export default function CreateNotificationForm() {
   const { mutateAsync, isPending } = useCreateNotification();
+  const [userSearch, setUserSearch] = useState("");
+  const debouncedUserSearch = useDebounce(userSearch, 300);
+  const { data: accountList, isLoading: isLoadingAccounts } =
+    useAdminAccountList({
+      pageSize: 100,
+      keyword: debouncedUserSearch || undefined,
+    });
+  const accounts: AccountDto[] = accountList?.items ?? [];
 
   const {
     register,
@@ -117,19 +129,59 @@ export default function CreateNotificationForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
       <div className="space-y-1.5">
-        <Label htmlFor="notif-userId">
-          User ID <span className="text-red-500">*</span>
+        <Label>
+          Người nhận <span className="text-red-500">*</span>
         </Label>
-        <Input
-          id="notif-userId"
-          placeholder="UUID của user nhận notification"
-          {...register("userId")}
+        <Controller
+          name="userId"
+          control={control}
+          render={({ field }) => (
+            <Select
+              value={field.value ?? ""}
+              items={accounts.map((a) => ({
+                value: a.id,
+                label: `${a.fullName} — ${a.email}`,
+              }))}
+              onValueChange={field.onChange}
+              disabled={isLoadingAccounts}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    isLoadingAccounts ? "Đang tải user..." : "Chọn user nhận"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                <div className="p-1.5">
+                  <Input
+                    placeholder="Tìm theo tên hoặc email..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="h-8"
+                  />
+                </div>
+                {accounts.length === 0 ? (
+                  <p className="px-2 py-3 text-center text-xs text-muted-foreground">
+                    {isLoadingAccounts ? "Đang tải..." : "Không tìm thấy user"}
+                  </p>
+                ) : (
+                  accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.fullName} — {a.email}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          )}
         />
         {errors.userId && (
           <p className="text-xs text-red-500">{errors.userId.message}</p>
         )}
         <p className="text-[11px] text-muted-foreground">
-          Nhập UUID thủ công — hệ thống không kiểm tra user có tồn tại.
+          Chọn user từ danh sách tài khoản — không cần nhập UUID thủ công.
         </p>
       </div>
 
