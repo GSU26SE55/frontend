@@ -24,6 +24,7 @@ const toUtcEnd = (d?: string) => (d ? `${d}T23:59:59Z` : undefined);
 interface AuditPanelProps {
   data: PaginationResponse<BatteryAuditLogDto> | undefined;
   isLoading: boolean;
+  isError: boolean;
   filters: AuditLogFilterValues;
   onFilterChange: <K extends keyof AuditLogFilterValues>(
     key: K,
@@ -41,6 +42,7 @@ interface AuditPanelProps {
 function AuditPanel({
   data,
   isLoading,
+  isError,
   filters,
   onFilterChange,
   onReset,
@@ -64,6 +66,7 @@ function AuditPanel({
         <BatteryAuditLogTable
           logs={data?.items ?? []}
           isLoading={isLoading}
+          isError={isError}
           pageNumber={pageNumber}
           pageSize={pageSize}
         />
@@ -110,21 +113,29 @@ function useAuditTabState() {
   };
 }
 
+// Range hợp lệ → mới gọi API (chặn 422 from > to trước khi gọi).
+const rangeValid = (f: AuditLogFilterValues) =>
+  !(f.dateFrom && f.dateTo && f.dateFrom > f.dateTo);
+
 function BatteryAuditTab() {
   const s = useAuditTabState();
-  const { data, isLoading } = useBatteryAuditLogs({
-    action: s.filters.action,
-    batteryId: s.filters.target,
-    from: toUtcStart(s.filters.dateFrom),
-    to: toUtcEnd(s.filters.dateTo),
-    pageNumber: s.pageNumber,
-    pageSize: s.pageSize,
-  });
+  const { data, isLoading, isError } = useBatteryAuditLogs(
+    {
+      action: s.filters.action,
+      batteryId: s.filters.target,
+      from: toUtcStart(s.filters.dateFrom),
+      to: toUtcEnd(s.filters.dateTo),
+      pageNumber: s.pageNumber,
+      pageSize: s.pageSize,
+    },
+    rangeValid(s.filters),
+  );
 
   return (
     <AuditPanel
       data={data}
       isLoading={isLoading}
+      isError={isError}
       filters={s.filters}
       onFilterChange={s.onFilterChange}
       onReset={s.onReset}
@@ -140,19 +151,23 @@ function BatteryAuditTab() {
 
 function AlertAuditTab() {
   const s = useAuditTabState();
-  const { data, isLoading } = useAlertAuditLogs({
-    action: s.filters.action,
-    alertId: s.filters.target,
-    from: toUtcStart(s.filters.dateFrom),
-    to: toUtcEnd(s.filters.dateTo),
-    pageNumber: s.pageNumber,
-    pageSize: s.pageSize,
-  });
+  const { data, isLoading, isError } = useAlertAuditLogs(
+    {
+      action: s.filters.action,
+      alertId: s.filters.target,
+      from: toUtcStart(s.filters.dateFrom),
+      to: toUtcEnd(s.filters.dateTo),
+      pageNumber: s.pageNumber,
+      pageSize: s.pageSize,
+    },
+    rangeValid(s.filters),
+  );
 
   return (
     <AuditPanel
       data={data}
       isLoading={isLoading}
+      isError={isError}
       filters={s.filters}
       onFilterChange={s.onFilterChange}
       onReset={s.onReset}

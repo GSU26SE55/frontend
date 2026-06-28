@@ -38,6 +38,9 @@ export default function AuditLogFilterBar({
 }: AuditLogFilterBarProps) {
   const hasActive =
     !!values.action || !!values.target || !!values.dateFrom || !!values.dateTo;
+  // YYYY-MM-DD so sánh chuỗi đúng thứ tự thời gian.
+  const dateError =
+    !!values.dateFrom && !!values.dateTo && values.dateFrom > values.dateTo;
 
   return (
     <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:flex-wrap lg:items-end">
@@ -97,6 +100,12 @@ export default function AuditLogFilterBar({
         <Button variant="ghost" size="sm" onClick={onReset}>
           Xóa bộ lọc
         </Button>
+      )}
+
+      {dateError && (
+        <p className="w-full text-sm text-destructive">
+          "Từ ngày" phải ≤ "Đến ngày".
+        </p>
       )}
     </div>
   );

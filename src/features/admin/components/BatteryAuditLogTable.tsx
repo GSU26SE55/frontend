@@ -24,6 +24,7 @@ const SEVERITY_STYLE: Record<string, string> = {
 interface BatteryAuditLogTableProps {
   logs: BatteryAuditLogDto[];
   isLoading: boolean;
+  isError?: boolean;
   pageNumber: number;
   pageSize: number;
 }
@@ -31,6 +32,7 @@ interface BatteryAuditLogTableProps {
 export default function BatteryAuditLogTable({
   logs,
   isLoading,
+  isError,
   pageNumber,
   pageSize,
 }: BatteryAuditLogTableProps) {
@@ -40,6 +42,17 @@ export default function BatteryAuditLogTable({
         {Array.from({ length: 8 }).map((_, i) => (
           <Skeleton key={i} className="h-10 w-full" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="py-16 flex flex-col items-center gap-3 text-destructive">
+        <ScrollText size={32} className="opacity-40" />
+        <span className="text-sm">
+          Không tải được audit log. Kiểm tra lại bộ lọc hoặc thử lại.
+        </span>
       </div>
     );
   }
