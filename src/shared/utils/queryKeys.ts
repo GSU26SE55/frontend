@@ -20,6 +20,8 @@ export const KEY = {
   tickets: "tickets",
   staffTickets: "staffTickets",
   ticketHealth: "ticketHealth",
+  batteryDashboard: "batteryDashboard",
+  reports: "reports",
   admin: {
     accounts: ["admin", "accounts"] as const,
     staff: ["admin", "staff"] as const,
@@ -216,5 +218,23 @@ export const QUERY_KEY = {
   },
   ticketKbRefs: {
     list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,
+  },
+  batteryDashboard: {
+    stats: (params?: object) =>
+      [KEY.batteryDashboard, "stats", params] as const,
+  },
+  reports: {
+    batteryHealthByType: () => [KEY.reports, "battery-health-by-type"] as const,
+    alertVolume: (params?: object) =>
+      [KEY.reports, "alert-volume", params] as const,
+    topAnomalies: (params?: object) =>
+      [KEY.reports, "top-anomalies", params] as const,
+    assetLifecycle: () => [KEY.reports, "asset-lifecycle"] as const,
+    warrantyExpiring: (params?: object) =>
+      [KEY.reports, "warranty-expiring", params] as const,
+    environmentalIncidents: (params?: object) =>
+      [KEY.reports, "environmental-incidents", params] as const,
+    ambientTrend: (params?: object) =>
+      [KEY.reports, "ambient-trend", params] as const,
   },
 } as const;

@@ -252,6 +252,21 @@ export const ENDPOINTS = {
     RESTORE: (id: string) => `/api/admin/battery-types/${id}/restore`,
   },
 
+  BATTERY_DASHBOARD: {
+    STATS: "/api/battery/dashboard/stats",
+  },
+
+  // Reports (Sprint 7 #114) — thêm ?format=csv|xlsx để export file; không truyền → JSON.
+  REPORTS: {
+    BATTERY_HEALTH_BY_TYPE: "/api/reports/battery-health-by-type",
+    ALERT_VOLUME: "/api/reports/alert-volume",
+    TOP_ANOMALIES: "/api/reports/top-anomalies",
+    ASSET_LIFECYCLE: "/api/reports/asset-lifecycle",
+    WARRANTY_EXPIRING: "/api/reports/warranty-expiring",
+    ENVIRONMENTAL_INCIDENTS: "/api/reports/environmental-incidents",
+    AMBIENT_TREND: "/api/reports/ambient-trend",
+  },
+
   THRESHOLDS: {
     LIST: "/api/thresholds",
     BY_TYPE: (batteryTypeId: string) =>

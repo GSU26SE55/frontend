@@ -19,6 +19,7 @@ import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
 import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
+import AdminAnalyticsPage from "@/features/admin/pages/AnalyticsPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
 import AdminSiteDetailPage from "@/features/admin/pages/SiteDetailPage";
 import BatteryAssetsPage from "@/features/admin/pages/BatteryAssetsPage";
@@ -34,6 +35,7 @@ import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/Environmenta
 import AdminAmbientConfigPage from "@/features/admin/pages/AmbientConfigPage";
 import AdminSmsGatewayPage from "@/features/admin/pages/SmsGatewayPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
+import ManagerAnalyticsPage from "@/features/manager/pages/AnalyticsPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
 import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
@@ -116,6 +118,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <AdminDashboardPage /> },
               { path: "dashboard", element: <AdminDashboardPage /> },
+              { path: "analytics", element: <AdminAnalyticsPage /> },
               { path: "sites", element: <AdminSiteListPage /> },
               { path: "sites/:id", element: <AdminSiteDetailPage /> },
               { path: "battery-assets", element: <BatteryAssetsPage /> },
@@ -157,6 +160,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <ManagerDashboardPage /> },
               { path: "dashboard", element: <ManagerDashboardPage /> },
+              { path: "analytics", element: <ManagerAnalyticsPage /> },
               { path: "sites", element: <ManagerSiteListPage /> },
               { path: "sites/:id", element: <ManagerSiteDetailPage /> },
               { path: "tickets", element: <ManagerTicketListPage /> },
