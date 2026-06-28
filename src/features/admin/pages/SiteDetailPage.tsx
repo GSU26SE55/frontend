@@ -69,7 +69,7 @@ export default function SiteDetailPage() {
 
   if (loadingSite) {
     return (
-      <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div className="p-6 space-y-6 max-w-360 mx-auto">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
         <Card className="p-6">
@@ -85,7 +85,7 @@ export default function SiteDetailPage() {
 
   if (!site) {
     return (
-      <div className="p-6 max-w-[1440px] mx-auto">
+      <div className="p-6 max-w-360 mx-auto">
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
           <span className="text-sm">Khong tim thay site.</span>
@@ -100,7 +100,7 @@ export default function SiteDetailPage() {
   const isDecommissioned = site.status === SiteStatusEnum.Decommissioned;
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       {/* Back + header */}
       <div>
         <Button

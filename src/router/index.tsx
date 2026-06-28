@@ -19,11 +19,19 @@ import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
 import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
+import AdminAnalyticsPage from "@/features/admin/pages/AnalyticsPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
 import AdminSiteDetailPage from "@/features/admin/pages/SiteDetailPage";
 import BatteryAssetsPage from "@/features/admin/pages/BatteryAssetsPage";
 import BatteryTypesPage from "@/features/admin/pages/BatteryTypesPage";
 import BatteryAssetDetailPage from "@/features/admin/pages/BatteryAssetDetailPage";
+import IoTDevicesPage from "@/features/admin/pages/IoTDevicesPage";
+import IoTDeviceFormPage from "@/features/admin/pages/IoTDeviceFormPage";
+import IoTDeviceDetailPage from "@/features/admin/pages/IoTDeviceDetailPage";
+import IoTFirmwareReleasesPage from "@/features/admin/pages/IoTFirmwareReleasesPage";
+import IoTFirmwareFormPage from "@/features/admin/pages/IoTFirmwareFormPage";
+import ManagerCalibrationsExpiringPage from "@/features/manager/pages/CalibrationsExpiringPage";
+import StaffIoTCalibrationsPage from "@/features/staff/pages/IoTCalibrationsPage";
 import AccountsPage from "@/features/admin/pages/AccountsPage";
 import RolesPage from "@/features/admin/pages/RolesPage";
 import AdminTicketListPage from "@/features/admin/pages/AdminTicketListPage";
@@ -34,6 +42,7 @@ import AdminEnvironmentalIncidentsPage from "@/features/admin/pages/Environmenta
 import AdminAmbientConfigPage from "@/features/admin/pages/AmbientConfigPage";
 import AdminSmsGatewayPage from "@/features/admin/pages/SmsGatewayPage";
 import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
+import ManagerAnalyticsPage from "@/features/manager/pages/AnalyticsPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
 import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
@@ -116,6 +125,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <AdminDashboardPage /> },
               { path: "dashboard", element: <AdminDashboardPage /> },
+              { path: "analytics", element: <AdminAnalyticsPage /> },
               { path: "sites", element: <AdminSiteListPage /> },
               { path: "sites/:id", element: <AdminSiteDetailPage /> },
               { path: "battery-assets", element: <BatteryAssetsPage /> },
@@ -124,6 +134,15 @@ const router = createBrowserRouter([
                 path: "battery-assets/:id",
                 element: <BatteryAssetDetailPage />,
               },
+              { path: "iot-devices", element: <IoTDevicesPage /> },
+              { path: "iot-devices/new", element: <IoTDeviceFormPage /> },
+              { path: "iot-devices/:id", element: <IoTDeviceDetailPage /> },
+              {
+                path: "iot-devices/:id/edit",
+                element: <IoTDeviceFormPage />,
+              },
+              { path: "iot-firmware", element: <IoTFirmwareReleasesPage /> },
+              { path: "iot-firmware/new", element: <IoTFirmwareFormPage /> },
               { path: "accounts", element: <AccountsPage /> },
               { path: "roles", element: <RolesPage /> },
               { path: "tickets", element: <AdminTicketListPage /> },
@@ -157,6 +176,7 @@ const router = createBrowserRouter([
             children: [
               { index: true, element: <ManagerDashboardPage /> },
               { path: "dashboard", element: <ManagerDashboardPage /> },
+              { path: "analytics", element: <ManagerAnalyticsPage /> },
               { path: "sites", element: <ManagerSiteListPage /> },
               { path: "sites/:id", element: <ManagerSiteDetailPage /> },
               { path: "tickets", element: <ManagerTicketListPage /> },
@@ -172,6 +192,10 @@ const router = createBrowserRouter([
                 element: <ManagerEnvironmentalIncidentsPage />,
               },
               { path: "ambient", element: <ManagerAmbientConfigPage /> },
+              {
+                path: "iot-calibrations",
+                element: <ManagerCalibrationsExpiringPage />,
+              },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],
@@ -198,6 +222,10 @@ const router = createBrowserRouter([
               { path: "kb/:id", element: <StaffKbDetailPage /> },
               { path: "kb/:id/edit", element: <StaffKbEditorPage /> },
               { path: "sla", element: <StaffSlaMonitorPage /> },
+              {
+                path: "iot-calibrations",
+                element: <StaffIoTCalibrationsPage />,
+              },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },
               {

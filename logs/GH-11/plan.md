@@ -347,6 +347,8 @@ if (user.role === 'CUSTOMER') {
 | `UserRole` | `shared/enums/session.enum.ts` |
 | `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
 
+> **Cleanup (2026-06-28, local):** Đã xoá 2 file orphan trùng lặp `shared/types/session.enums.ts` + `shared/types/account.enums.ts` (0 import, dead-code). Bản canonical đang dùng là `shared/enums/*.enum.ts` ở bảng trên — không ảnh hưởng. `tsc` + `eslint` PASS.
+
 ---
 
 ## Approach

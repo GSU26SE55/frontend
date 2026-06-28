@@ -180,7 +180,7 @@ export default function AdminTicketDetailPage() {
         </div>
 
         {/* Right: Sidebar */}
-        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+        <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
           <div className="p-4">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">

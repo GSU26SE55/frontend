@@ -188,7 +188,7 @@ const ProfilePage = () => {
           className="relative shrink-0 rounded-full group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Thay đổi ảnh đại diện"
         >
-          <Avatar className="size-[72px] text-2xl ring-2 ring-background shadow-sm">
+          <Avatar className="size-18 text-2xl ring-2 ring-background shadow-sm">
             {avatarUrl && (
               <AvatarImage
                 src={avatarUrl}
