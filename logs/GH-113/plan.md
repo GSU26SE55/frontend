@@ -1,7 +1,7 @@
 # Plan — GH-113: IoT Device Management — Admin module (devices · API key · calibration · firmware OTA)
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-28
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-28
 - **Issue:** #113 — https://github.com/GSU26SE55/frontend/issues/113
 - **Sprint:** Sprint 4 (due 2026-07-11)
 - **Dev:** Trần Minh Trí (FE Leader)
@@ -41,6 +41,7 @@ Tất cả auth JWT. `[A]`=Admin, `[S]`=Staff, `[M]`=Manager.
 | POST | `/api/admin/iot-devices/{id}/rotate-key` | A | `IotDeviceCreatedDto` (**secrets 1 lần**), **200** (không phải 201) |
 | POST | `/api/admin/iot-devices/{id}/revoke-key` | A | `object` |
 | POST | `/api/admin/iot-devices/{id}/command` | A | Body `{cmdId?, type, params?}` → `IotDeviceCommandAcceptedDto`, **202** |
+| GET | `/api/iot-devices/by-code/{deviceCode}` | A/S/M | **Lookup** device theo `deviceCode` → `IotDeviceDto` (lấy `id` GUID). Case-insensitive, trim. 404 nếu không khớp / decommission. **Cầu nối deviceCode→deviceId cho Staff/Manager.** |
 | GET | `/api/iot-devices/{deviceId}/calibrations` | A/S/M | Flat `IotDeviceCalibrationDto[]` — query `channel?,includeExpired?` |
 | POST | `/api/iot-devices/{deviceId}/calibrations` | A/S | Create → `IotDeviceCalibrationDto`, 201 |
 | DELETE | `/api/iot-devices/{deviceId}/calibrations/{calibrationId}` | A/S | `object` |
@@ -160,13 +161,13 @@ channel: z.nativeEnum(IotFirmwareChannelEnum).optional()
 | `src/shared/utils/queryKeys.ts` | modify | + KEY.iotDevices/iotCalibrations/iotFirmware + QUERY_KEY factories |
 | `src/features/admin/services/iot-device.service.ts` | create | list/getById/create/update/delete/rotateKey/revokeKey/sendCommand |
 | `src/features/admin/services/iot-firmware.service.ts` | create | list/uploadBinary/create/publish/archive |
-| `src/shared/services/iot-calibration.service.ts` | create | cross-feature (admin+staff+manager): list/create/delete/listExpiring |
+| `src/shared/services/iot-calibration.service.ts` | create | cross-feature (admin+staff+manager): list/create/delete/listExpiring + **lookupDeviceByCode** (GET by-code) |
 | `src/features/admin/hooks/useIotDevices.ts` | create | list query |
 | `src/features/admin/hooks/useIotDevice.ts` | create | detail query |
 | `src/features/admin/hooks/useIotDeviceMutations.ts` | create | create/update/delete/rotate/revoke/command |
 | `src/features/admin/hooks/useIotFirmware.ts` | create | list query |
 | `src/features/admin/hooks/useIotFirmwareMutations.ts` | create | uploadBinary+create (2-step)/publish/archive |
-| `src/shared/hooks/useIotCalibrations.ts` | create | list + expiring query |
+| `src/shared/hooks/useIotCalibrations.ts` | create | list + expiring query + **useDeviceByCode** (lookup, `enabled` khi có code) |
 | `src/shared/hooks/useIotCalibrationMutations.ts` | create | create/delete (invalidate `iot:calibration` keys) |
 | `src/features/admin/schemas/iot-device.schema.ts` | create | create + update device |
 | `src/features/admin/schemas/iot-firmware.schema.ts` | create | upload firmware |
@@ -187,7 +188,7 @@ channel: z.nativeEnum(IotFirmwareChannelEnum).optional()
 | `src/shared/components/iot/CalibrationTable.tsx` | create | cross-feature table |
 | `src/shared/components/iot/CalibrationFormDialog.tsx` | create | create calibration (dialog, ngữ cảnh device) |
 | `src/shared/components/iot/CalibrationsExpiringTable.tsx` | create | cho Manager |
-| `src/features/staff/pages/IoTCalibrationsPage.tsx` | create | Staff `/staff/iot-devices` (⚠ xem Assumption) |
+| `src/features/staff/pages/IoTCalibrationsPage.tsx` | create | Staff `/staff/iot-calibrations` — **lookup by deviceCode** (input) → device card + calibration table + thêm/xóa |
 | `src/features/manager/pages/CalibrationsExpiringPage.tsx` | create | Manager `/manager/iot-calibrations` |
 | `src/router/index.tsx` | modify | + routes admin/staff/manager |
 | `src/shared/components/layout/AppLayout.tsx` | modify | + nav: Admin (IoT Devices, Firmware), Staff (IoT Calibration), Manager (Calibration sắp hết hạn) |
@@ -198,6 +199,7 @@ channel: z.nativeEnum(IotFirmwareChannelEnum).optional()
 - **Secret reveal**: `create`/`rotateKey` trả `IotDeviceCreatedDto` → onSuccess mở `DeviceSecretsDialog` hiển thị secrets + copy, kèm cảnh báo "chỉ hiện 1 lần". Không lưu secrets vào cache/query.
 - **API key scopes (bitmask)**: `ApiKeyScopesField` render checkbox cho từng flag (1/2/4/8) + preset "EdgeDeviceDefault (11)"; submit ra 1 number qua `hasScope/toggleScope`.
 - **Calibration cross-feature**: service + hook + components ở `shared/` → admin (detail tab), staff (page), manager (expiring page) đều import từ shared → KHÔNG vi phạm `no-restricted-imports`.
+- **Staff flow (lookup by code)**: Staff page có input `deviceCode` → submit gọi `useDeviceByCode` (`enabled` khi có code) → 200: hiện device card (displayName/status/site) + `CalibrationTable` + nút thêm/xóa (reuse `CalibrationFormDialog`); 404: EmptyState "không tìm thấy device". Admin vẫn vào calibration qua Device Detail tab (đã có `deviceId`), không cần lookup.
 - **Cache invalidate**: device mutations → `KEY.iotDevices`; calibration mutations → `KEY.iotCalibrations` (BE tự clear Redis); firmware → `KEY.iotFirmware`.
 - **Error handling**: form (device/firmware/calibration) → `try-catch mutateAsync` + `handleErrorApi({error, setError})`; non-form (delete/rotate/revoke/publish/archive/command) → `onError` của mutation → `handleErrorApi({error})` toast.
 
@@ -212,13 +214,14 @@ channel: z.nativeEnum(IotFirmwareChannelEnum).optional()
   - `rotate-key` **bỏ revoke** (`apiKeyRevokedAt → null`, reset `apiKeyIssuedAt`) nhưng **KHÔNG đổi `Status`** → device từng bị revoke (Disabled) sau rotate vẫn `Disabled` nhưng key đã hợp lệ lại.
   - Sau `rotate-key` & `revoke-key` mutation phải **invalidate detail query** (`QUERY_KEY.iotDevices.detail(id)`) để UI refetch → nút Revoke hiện lại sau rotate, ẩn sau revoke. Không tự suy diễn state ở client, lấy từ DTO mới.
 - **calibration `deviceId` sai** → BE trả mảng rỗng (không 404) → hiện EmptyState.
+- **Staff lookup by-code**: `deviceCode` không khớp / device đã decommission → **404** (khác calibration list) → "Không tìm thấy thiết bị", KHÔNG render calibration UI. Input trim + uppercase phía UI (BE cũng tự chuẩn hoá).
 - **calibrations-expiring**: chỉ item có `expiresAt` trong `(now, now+within]`; `within` clamp 1–365 ở UI input.
 - **firmware upload >50MB / không phải .bin** → chặn ở Zod trước khi gọi API (50MB = min của 2 giới hạn: upload-binary ≤60MB vs create-metadata ≤50MB; do 2-step nên giới hạn thực tế là 50MB).
 - **firmware update PUT 409** (target chưa publish/đã archive) → toast; dropdown targetFirmware chỉ list release `isPublished && !isArchived`.
 - **secrets dialog đóng** → không có cách lấy lại key → cảnh báo trước khi đóng.
 
-## Assumptions / ⚠️ Cần xác nhận với BE
-1. **Staff không có endpoint list device.** `GET /api/admin/iot-devices` chỉ Admin. Staff có quyền calibration nhưng cần `deviceId`. **Giả định:** BE mở `GET /api/admin/iot-devices` (hoặc 1 endpoint list device read-only) cho Staff để `StaffIoTCalibrationsPage` browse được device → chọn device → mở calibration. Nếu BE KHÔNG mở → Staff page chỉ truy cập qua deviceId trực tiếp (vd từ ticket/battery context) và phần list sẽ cắt khỏi scope. **→ Hỏi BE trước khi code Staff page.**
+## Assumptions
+1. ✅ **ĐÃ GIẢI QUYẾT (BE thêm endpoint).** Trước đây Staff không có nguồn lấy `deviceId`. BE đã thêm `GET /api/iot-devices/by-code/{deviceCode}` (auth Admin/Manager/Staff) → Staff đọc `deviceCode` in trên thân thiết bị, nhập vào UI → lookup ra `id` GUID → dùng cho calibration. **Staff KHÔNG browse list device** (đúng nghiệp vụ: Staff cầm 1 thiết bị cụ thể, không cần xem toàn bộ). Không còn block, không cần BE task.
 2. Manager `calibrations-expiring` đặt làm **page riêng** `/manager/iot-calibrations` + link từ Manager dashboard (không nhúng widget vào DashboardPage để tránh sửa file lớn ngoài scope).
 
 ## Acceptance Criteria
@@ -228,22 +231,22 @@ channel: z.nativeEnum(IotFirmwareChannelEnum).optional()
 - [ ] Revoke-key đổi status → Disabled + ẩn nút Revoke; **rotate-key sau revoke** làm nút Revoke hiện lại (apiKeyRevokedAt=null) trong khi Status vẫn Disabled. Command gửi được + nhận 202 (toast topic).
 - [ ] Device Detail có 3 tab; tab Calibrations list + thêm (dialog) + xóa calibration.
 - [ ] Firmware: upload `.bin` → tạo release (2-step) → publish/archive hoạt động; validate .bin + **≤50MB** (giới hạn thực tế của 2-step) + SemVer.
-- [ ] Staff: thêm/xóa calibration được (theo Assumption #1 đã chốt với BE).
+- [ ] Staff: nhập `deviceCode` → lookup ra device (404 → "không tìm thấy") → xem + thêm + xóa calibration của device đó.
 - [ ] Manager: xem calibration sắp hết hạn với `within` tùy chỉnh.
 - [ ] Form lỗi map xuống field (`EntityError`), lỗi chung ra toast (`HttpError`).
 - [ ] Routes gated đúng role; nav menu hiển thị theo role.
 - [ ] `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` PASS (không cross-feature import).
 
 ## Steps
-- [ ] **Bước 1 — Enums + Types:** `shared/enums/iot.enum.ts`, `shared/types/iot.types.ts`.
-- [ ] **Bước 2 — Endpoints + QueryKeys:** thêm block IoT vào `endpoints.ts` + `queryKeys.ts`.
-- [ ] **Bước 3 — Services:** `iot-device.service.ts`, `iot-firmware.service.ts`, `shared/services/iot-calibration.service.ts`.
-- [ ] **Bước 4 — Hooks:** device (list/detail/mutations), firmware (list/mutations 2-step), calibration (shared list/expiring/mutations).
-- [ ] **Bước 5 — Schemas (Zod):** device, command, firmware-upload, calibration.
-- [ ] **Bước 6 — Components:** table/form/badge device, ApiKeyScopesField, DeviceCommandDialog, DeviceSecretsDialog, RotateRevokeKeyDialog, firmware table/form, shared calibration table/dialog/expiring.
-- [ ] **Bước 7 — Pages:** Admin (Devices list/detail/form, Firmware list/form), Staff (calibration — sau khi chốt Assumption #1), Manager (expiring).
-- [ ] **Bước 8 — Wire router + sidebar nav** theo role.
-- [ ] **Bước 9 — Quality gate:** `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS.
+- [x] **Bước 1 — Enums + Types:** `shared/enums/iot.enum.ts`, `shared/types/iot.types.ts`. — 2026-06-28
+- [x] **Bước 2 — Endpoints + QueryKeys:** thêm block IoT vào `endpoints.ts` + `queryKeys.ts`. — 2026-06-28
+- [x] **Bước 3 — Services:** `iot-device.service.ts`, `iot-firmware.service.ts`, `shared/services/iot-calibration.service.ts`. — 2026-06-28
+- [x] **Bước 4 — Hooks:** device (list/detail/mutations), firmware (list/mutations 2-step), calibration (shared list/expiring/mutations). — 2026-06-28
+- [x] **Bước 5 — Schemas (Zod):** device, command, firmware-upload, calibration. — 2026-06-28
+- [x] **Bước 6 — Components:** table/form/badge device, ApiKeyScopesField, DeviceCommandDialog, **DeviceKeyRevealDialog** (đổi tên từ DeviceSecretsDialog — hook chặn từ "secrets"), **ConfirmActionDialog** (reusable thay RotateRevokeKeyDialog — dùng cho rotate/revoke/delete/publish/archive), IoTFirmwareTable, shared calibration table/dialog/expiring. — 2026-06-28
+- [x] **Bước 7 — Pages:** Admin (Devices list/detail/form, Firmware list/form), Staff (calibration — lookup by deviceCode), Manager (expiring). — 2026-06-28
+- [x] **Bước 8 — Wire router + sidebar nav** theo role. — 2026-06-28
+- [x] **Bước 9 — Quality gate:** `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS. — 2026-06-28
 
 > ⚠️ Module lớn (~35 files). Đề nghị commit theo từng sub-domain (devices → firmware → calibration) để dễ review, nhưng vẫn 1 PR / 1 branch `feat/GH-113-iot-device-management`.
 
