@@ -28,9 +28,9 @@ GH-116 đợt này = **3a Cascade Risk + 3b Audit Logs** (3c defer chờ GH-114)
 - ✅ Route `/admin/battery-audit-logs` khai báo trong `router/index.tsx`, nằm dưới `ProtectedRoute > RoleRoute([ADMIN]) > AppLayout`. Sidebar nav thêm "Audit Pin & Cảnh báo".
 - ✅ Cascade card + topology dialog mount ở admin Asset detail (admin-gated); cascade summary ở Site detail (admin+manager). Token không đụng localStorage.
 
-🟡 **Warning** — `AuditLogFilterBar` chưa validate `from ≤ to` phía client (plan §Edge Cases có nhắc). Hiện nếu `from > to` → BE trả 422 → `useQuery` error → bảng hiện empty (không toast). Degradation graceful nhưng thiếu feedback. Không block; có thể bổ sung guard sau.
+🟢 **Warning (ĐÃ FIX 2026-06-28)** — `AuditLogFilterBar` giờ validate `from ≤ to`: hiện inline error "Từ ngày phải ≤ Đến ngày" + `useBatteryAuditLogs`/`useAlertAuditLogs` nhận `enabled` → **không gọi API khi range không hợp lệ** (chặn 422 trước khi gọi, đúng plan §Edge Cases).
 
-🟡 **Warning** — `useBatteryAuditLogs`/`useAlertAuditLogs` (useQuery) không surface lỗi (403/422) ra toast — nhất quán với `useAdminAuditLogs` hiện có (list query không toast). Chấp nhận được.
+🟢 **Warning (ĐÃ FIX 2026-06-28)** — `BatteryAuditLogTable` thêm prop `isError` → khi query lỗi hiện empty-state "Không tải được audit log..." thay vì im lặng. Hook trả `isError` wire qua `AuditPanel`.
 
 🟡 **Note** — `useSiteCascadeSummary` trùng code ở admin + manager: **cố ý** theo pattern repo (service/hook duplicate per-feature, vd `site.service`); type/enum dùng chung đã ở `shared/`. Không phải lỗi.
 
