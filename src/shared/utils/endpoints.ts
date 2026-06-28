@@ -202,6 +202,9 @@ export const ENDPOINTS = {
       ALERT_TICKET_REPROCESS: (alertId: string) =>
         `/api/admin/sagas/alert-ticket/${alertId}/reprocess`,
     },
+    // Audit log Pin & Cảnh báo (BatteryService fallback — Admin only)
+    BATTERY_AUDIT_LOGS: "/api/admin/battery/audit-logs",
+    ALERT_AUDIT_LOGS: "/api/admin/alerts/audit-logs",
   },
 
   SITES: {
@@ -210,6 +213,8 @@ export const ENDPOINTS = {
     DETAIL: (id: string) => `/api/sites/${id}`,
     DASHBOARD: (id: string) => `/api/sites/${id}/dashboard`,
     ASSETS: (siteId: string) => `/api/sites/${siteId}/assets`,
+    CASCADE_RISK_SUMMARY: (id: string) =>
+      `/api/sites/${id}/cascade-risk-summary`,
     // Write ops live under /api/admin/sites (AdminSitesController)
     CREATE: "/api/admin/sites",
     UPDATE: (id: string) => `/api/admin/sites/${id}`,
@@ -226,6 +231,8 @@ export const ENDPOINTS = {
     LIST: "/api/battery-assets",
     DETAIL: (id: string) => `/api/battery-assets/${id}`,
     REALTIME: (id: string) => `/api/battery-assets/${id}/realtime`,
+    CASCADE_RISK: (id: string) => `/api/battery-assets/${id}/cascade-risk`,
+    TOPOLOGY: (id: string) => `/api/battery-assets/${id}/topology`,
     // Write ops live under /api/admin/battery-assets (AdminBatteryAssetsController)
     CREATE: "/api/admin/battery-assets",
     UPDATE: (id: string) => `/api/admin/battery-assets/${id}`,

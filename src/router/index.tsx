@@ -17,6 +17,7 @@ import AcceptInvitePage from "@/features/auth/pages/AcceptInvitePage";
 import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
+import BatteryAuditLogsPage from "@/features/admin/pages/BatteryAuditLogsPage";
 import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminAnalyticsPage from "@/features/admin/pages/AnalyticsPage";
@@ -145,6 +146,10 @@ const router = createBrowserRouter([
               { path: "sagas", element: <AdminSagaDebugPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
+              {
+                path: "battery-audit-logs",
+                element: <BatteryAuditLogsPage />,
+              },
               { path: "notifications", element: <NotificationAdminPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],

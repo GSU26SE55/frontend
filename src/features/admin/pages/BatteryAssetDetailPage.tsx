@@ -32,6 +32,7 @@ import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/TransferOwnerDialog";
 import SensorChart from "@/features/admin/components/SensorChart";
 import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
+import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
 import {
   BatteryStatusEnum,
   ChargingStateEnum,
@@ -382,6 +383,7 @@ export default function BatteryAssetDetailPage() {
                 <TabsList>
                   <TabsTrigger value="chart">Biểu đồ</TabsTrigger>
                   <TabsTrigger value="history">Lịch sử cảm biến</TabsTrigger>
+                  <TabsTrigger value="cascade">Rủi ro lan truyền</TabsTrigger>
                 </TabsList>
               </div>
               <TabsContent
@@ -395,6 +397,12 @@ export default function BatteryAssetDetailPage() {
                 className="min-h-0 overflow-hidden m-0"
               >
                 <SensorHistoryTable assetId={id} fillHeight />
+              </TabsContent>
+              <TabsContent
+                value="cascade"
+                className="min-h-0 overflow-y-auto m-0 p-5"
+              >
+                <CascadeRiskCard assetId={id} />
               </TabsContent>
             </Tabs>
           </div>

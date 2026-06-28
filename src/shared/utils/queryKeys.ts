@@ -28,6 +28,8 @@ export const KEY = {
     roles: ["admin", "roles"] as const,
     permissions: ["admin", "permissions"] as const,
     auditLogs: ["admin", "auditLogs"] as const,
+    batteryAuditLogs: ["admin", "batteryAuditLogs"] as const,
+    alertAuditLogs: ["admin", "alertAuditLogs"] as const,
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
@@ -76,11 +78,14 @@ export const QUERY_KEY = {
     dashboard: (id: string) => [KEY.sites, "dashboard", id] as const,
     assets: (siteId: string, params?: object) =>
       [KEY.sites, "assets", siteId, params] as const,
+    cascadeSummary: (id: string) => [KEY.sites, "cascade-summary", id] as const,
   },
   batteryAssets: {
     list: (params?: object) => [KEY.batteryAssets, "list", params] as const,
     detail: (id: string) => [KEY.batteryAssets, "detail", id] as const,
     realtime: (id: string) => [KEY.batteryAssets, "realtime", id] as const,
+    cascadeRisk: (id: string) =>
+      [KEY.batteryAssets, "cascade-risk", id] as const,
   },
   batteryTypes: {
     list: (params?: object) => [KEY.batteryTypes, "list", params] as const,
@@ -143,6 +148,16 @@ export const QUERY_KEY = {
         accountId,
         params,
       ],
+    },
+    batteryAuditLogs: {
+      list: (params?: object) => [
+        ...KEY.admin.batteryAuditLogs,
+        "list",
+        params,
+      ],
+    },
+    alertAuditLogs: {
+      list: (params?: object) => [...KEY.admin.alertAuditLogs, "list", params],
     },
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
