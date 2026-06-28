@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
+import CascadeRiskSummary from "@/shared/components/common/CascadeRiskSummary";
+import { useSiteCascadeSummary } from "@/features/manager/hooks/useSiteCascadeSummary";
 import {
   useSiteDetail,
   useSiteDashboard,
@@ -41,6 +43,8 @@ export default function ManagerSiteDetailPage() {
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
   const { data: dashboard } = useSiteDashboard(id);
+  const { data: cascade, isLoading: loadingCascade } =
+    useSiteCascadeSummary(id);
   const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(
     id,
     assetsParams,
@@ -100,6 +104,9 @@ export default function ManagerSiteDetailPage() {
 
       {/* Dashboard summary */}
       {dashboard && <SiteDashboardCard data={dashboard} />}
+
+      {/* Cascade risk summary */}
+      <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
 
       {/* Assets table */}
       <div>

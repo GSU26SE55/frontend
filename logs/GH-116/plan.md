@@ -1,7 +1,7 @@
 # Plan — GH-116: Battery Monitoring Extras (Cascade Risk + Audit Logs + Sensor Stream)
 
 ## Metadata
-- **Status:** IN_PROGRESS | **Role:** FE | **Ngày:** 2026-06-28
+- **Status:** REVIEWING | **Role:** FE | **Ngày:** 2026-06-28
 - **Issue:** #116 — https://github.com/GSU26SE55/frontend/issues/116
 - **Sprint:** Sprint 4 (due 2026-07-11)
 - **Dev:** Trần Minh Trí (Shu1237)
@@ -13,6 +13,8 @@ Bổ sung 3 mảng monitoring (Admin/Manager) consume 6 endpoint BatteryService,
 - **3c Sensor Stream** — telemetry live qua SSE (`EventSource`) cho asset (event `reading`) và site (event `summary`).
 
 > ⚠️ **De-dup với GH-114 (Hướng A):** nền tảng SSE shared (`sse.ts`, `useSensorStream` nhánh asset, `LiveReadingDto`/`SensorStreamState`, `LiveTelemetryCard`, `SENSOR_READINGS.STREAM`, wire asset card vào admin `BatteryAssetDetailPage`) **do GH-114 sở hữu**. GH-116 (3c) **reuse**, chỉ thêm: nhánh `site:{id}` summary (`items`/`BatterySummaryDto`) trong `useSensorStream`, `SiteLiveTelemetryPanel`, wire Site detail (admin+manager). **Phụ thuộc: merge GH-114 trước** (hoặc phối hợp tránh đụng file).
+
+> 🚧 **QUYẾT ĐỊNH IMPLEMENT (2026-06-28):** GH-114 **chưa merge** (file SSE foundation chưa tồn tại) → **3c DEFER** sang đợt sau (sau khi GH-114 merge). Lần implement này **chỉ làm 3a + 3b**. Branch tạo từ `feat/GH-115`. Các file/bước 3c (`sensor-stream.types.ts`, `sse.ts`, `useSensorStream`, `LiveTelemetryCard`, `SiteLiveTelemetryPanel`, `SENSOR_READINGS.STREAM`, mount telemetry panel) **bỏ qua trong đợt này**.
 
 Output: UI + service + TanStack Query hook (3a/3b) + SSE hook (3c), type-check sạch, lint 0 warning, build pass.
 
@@ -193,13 +195,16 @@ electricalTopology: z.number().int().min(1).max(4)   // hoặc z.nativeEnum(Elec
 - [ ] `npx tsc --noEmit` sạch + `npx eslint . --max-warnings=0` 0 warning + `npm run build` pass.
 - [ ] Không cross-feature import (admin↔manager); type/enum dùng chung đặt ở `shared/`.
 
-## Steps
-- [ ] Bước 1 — Types/Enums: `shared/enums/cascade.enum.ts`, `shared/enums/audit.enum.ts` (AuditSeverity/Category cross-service), `shared/types/cascade.types.ts`, `admin/enums/battery-audit.enum.ts`, `admin/types/battery-audit.types.ts`; thêm `endpoints.ts` (cascade/audit) + `queryKeys.ts`. **`sensor-stream.types.ts`: reuse GH-114, chỉ thêm `BatterySummaryDto`+`items?`.**
-- [ ] Bước 2 — Services: `admin/cascade.service.ts`, `manager/cascade.service.ts`, `admin/battery-audit-logs.service.ts`. **`shared/lib/sse.ts`: reuse GH-114 (không tạo lại).**
-- [ ] Bước 3 — Hooks: `useCascadeRisk`, `useSiteCascadeSummary` (admin+manager), `useSetTopology`, `useBatteryAuditLogs`, `useAlertAuditLogs`. **`useSensorStream`: reuse GH-114, thêm nhánh site `summary`.**
-- [ ] Bước 4 — Components + Pages: shared presentational `SiteLiveTelemetryPanel`, `CascadeRiskSummary` (**`LiveTelemetryCard`: reuse GH-114**); admin `CascadeRiskCard`, `SetTopologyDialog`, `topology.schema`, `BatteryAuditLogTable`, `AuditLogFilterBar`, `BatteryAuditLogsPage`; mount vào Asset/Site detail (admin+manager).
-- [ ] Bước 5 — Wire router (`/admin/battery-audit-logs`) + sidebar nav (`AppLayout.tsx`).
-- [ ] Bước 6 — `tsc --noEmit` + `eslint --max-warnings=0` + `npm run build` → PASS.
+## Steps (đợt này = 3a + 3b; 3c DEFER chờ GH-114)
+- [x] Bước 1 — Types/Enums: `shared/enums/cascade.enum.ts`, `shared/enums/audit.enum.ts` (AuditSeverity/Category cross-service), `shared/types/cascade.types.ts`, `admin/enums/battery-audit.enum.ts`, `admin/types/battery-audit.types.ts`; thêm `endpoints.ts` (cascade/audit) + `queryKeys.ts` (cascade/audit). ~~sensor-stream.types.ts~~ (3c defer). — 2026-06-28
+- [x] Bước 2 — Services: `admin/cascade.service.ts`, `manager/cascade.service.ts`, `admin/battery-audit-logs.service.ts`. ~~sse.ts~~ (3c defer). — 2026-06-28
+- [x] Bước 3 — Hooks: `useCascadeRisk`, `useSiteCascadeSummary` (admin+manager), `useSetTopology`, `useBatteryAuditLogs`, `useAlertAuditLogs`. ~~useSensorStream~~ (3c defer). — 2026-06-28
+- [x] Bước 4 — Components + Pages: shared `CascadeRiskSummary`; admin `CascadeRiskCard`, `SetTopologyDialog`, `topology.schema`, `BatteryAuditLogTable`, `AuditLogFilterBar`, `BatteryAuditLogsPage`; mount cascade vào Asset detail (admin, tab "Rủi ro lan truyền") + Site detail (admin+manager). ~~SiteLiveTelemetryPanel, LiveTelemetryCard mount~~ (3c defer). — 2026-06-28
+- [x] Bước 5 — Wire router (`/admin/battery-audit-logs`) + sidebar nav (`AppLayout.tsx`, mục "Audit Pin & Cảnh báo"). — 2026-06-28
+- [x] Bước 6 — `tsc --noEmit` ✅ + `eslint . --max-warnings=0` ✅ (0 warning) + `npm run build` ✅ → PASS. — 2026-06-28
+
+### 3c — DEFER (đợt sau, sau khi GH-114 merge)
+- [ ] `sensor-stream.types.ts` thêm `BatterySummaryDto`+`items?`; `useSensorStream` thêm nhánh site `summary`; `SiteLiveTelemetryPanel`; mount telemetry vào Asset/Site detail; `SENSOR_READINGS.STREAM` (reuse GH-114).
 
 ## Nguồn & xác minh (source-of-truth)
 | Phần | Nguồn xác minh | Trạng thái |
