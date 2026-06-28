@@ -239,6 +239,9 @@ export const ENDPOINTS = {
     LATEST: (assetId: string) => `/api/sensor-readings/${assetId}/latest`,
     HISTORY: (assetId: string) => `/api/sensor-readings/${assetId}/history`,
     AGGREGATE: (assetId: string) => `/api/sensor-readings/${assetId}/aggregate`,
+    // SSE live telemetry — text/event-stream. Token qua ?access_token= (EventSource
+    // không set được header). Chỉ trả PATH; wrapper sse.ts ghép ?scope=&access_token=.
+    STREAM: "/api/sensor-readings/stream",
     // POST /api/sensor-readings/batch: IoT gateway (API Key) — không thuộc web FE
   },
 
