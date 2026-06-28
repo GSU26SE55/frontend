@@ -22,6 +22,9 @@ export const KEY = {
   ticketHealth: "ticketHealth",
   batteryDashboard: "batteryDashboard",
   reports: "reports",
+  iotDevices: "iotDevices",
+  iotCalibrations: "iotCalibrations",
+  iotFirmware: "iotFirmware",
   admin: {
     accounts: ["admin", "accounts"] as const,
     staff: ["admin", "staff"] as const,
@@ -218,6 +221,21 @@ export const QUERY_KEY = {
   },
   ticketKbRefs: {
     list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,
+  },
+  iotDevices: {
+    list: (params?: object) => [KEY.iotDevices, "list", params] as const,
+    detail: (id: string) => [KEY.iotDevices, "detail", id] as const,
+    byCode: (deviceCode: string) =>
+      [KEY.iotDevices, "by-code", deviceCode] as const,
+  },
+  iotCalibrations: {
+    list: (deviceId: string, params?: object) =>
+      [KEY.iotCalibrations, "list", deviceId, params] as const,
+    expiring: (within?: number) =>
+      [KEY.iotCalibrations, "expiring", within] as const,
+  },
+  iotFirmware: {
+    list: (params?: object) => [KEY.iotFirmware, "list", params] as const,
   },
   batteryDashboard: {
     stats: (params?: object) =>

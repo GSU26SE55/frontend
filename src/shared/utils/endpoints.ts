@@ -256,6 +256,39 @@ export const ENDPOINTS = {
     STATS: "/api/battery/dashboard/stats",
   },
 
+  // IoT Device Management (Nhóm 11). Self-service 11A (provision/heartbeat/firmware-check)
+  // dùng ApiKey per-device do ESP32 gọi — FE không có.
+  IOT_DEVICES: {
+    // Admin (JWT Admin)
+    LIST: "/api/admin/iot-devices",
+    DETAIL: (id: string) => `/api/admin/iot-devices/${id}`,
+    CREATE: "/api/admin/iot-devices",
+    UPDATE: (id: string) => `/api/admin/iot-devices/${id}`,
+    DELETE: (id: string) => `/api/admin/iot-devices/${id}`,
+    ROTATE_KEY: (id: string) => `/api/admin/iot-devices/${id}/rotate-key`,
+    REVOKE_KEY: (id: string) => `/api/admin/iot-devices/${id}/revoke-key`,
+    COMMAND: (id: string) => `/api/admin/iot-devices/${id}/command`,
+    // Lookup deviceCode → deviceId (Admin/Manager/Staff) — cầu nối cho Staff calibration.
+    BY_CODE: (deviceCode: string) =>
+      `/api/iot-devices/by-code/${encodeURIComponent(deviceCode)}`,
+  },
+
+  IOT_CALIBRATIONS: {
+    LIST: (deviceId: string) => `/api/iot-devices/${deviceId}/calibrations`,
+    CREATE: (deviceId: string) => `/api/iot-devices/${deviceId}/calibrations`,
+    DELETE: (deviceId: string, calibrationId: string) =>
+      `/api/iot-devices/${deviceId}/calibrations/${calibrationId}`,
+    EXPIRING: "/api/iot-devices/calibrations-expiring",
+  },
+
+  IOT_FIRMWARE: {
+    LIST: "/api/admin/iot-firmware-releases",
+    CREATE: "/api/admin/iot-firmware-releases",
+    UPLOAD_BINARY: "/api/admin/iot-firmware-releases/upload-binary",
+    PUBLISH: (id: string) => `/api/admin/iot-firmware-releases/${id}/publish`,
+    ARCHIVE: (id: string) => `/api/admin/iot-firmware-releases/${id}/archive`,
+  },
+
   // Reports (Sprint 7 #114) — thêm ?format=csv|xlsx để export file; không truyền → JSON.
   REPORTS: {
     BATTERY_HEALTH_BY_TYPE: "/api/reports/battery-health-by-type",

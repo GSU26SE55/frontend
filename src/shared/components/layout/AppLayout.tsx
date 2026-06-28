@@ -23,6 +23,9 @@ import {
   Wrench,
   Workflow,
   BarChart3,
+  Cpu,
+  HardDrive,
+  SlidersHorizontal,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -177,6 +180,8 @@ const ADMIN_NAV: NavSection[] = [
         icon: ShieldAlert,
       },
       { label: "Môi trường site", path: "/admin/ambient", icon: Thermometer },
+      { label: "IoT Devices", path: "/admin/iot-devices", icon: Cpu },
+      { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
     ],
   },
   {
@@ -234,6 +239,11 @@ const MANAGER_NAV: NavSection[] = [
         icon: ShieldAlert,
       },
       { label: "Môi trường site", path: "/manager/ambient", icon: Thermometer },
+      {
+        label: "Calibration sắp hết hạn",
+        path: "/manager/iot-calibrations",
+        icon: SlidersHorizontal,
+      },
     ],
   },
   {
@@ -256,6 +266,11 @@ const STAFF_NAV: NavSection[] = [
       },
       { label: "Knowledge Base", path: "/staff/kb", icon: BookOpen },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
+      {
+        label: "Calibration thiết bị",
+        path: "/staff/iot-calibrations",
+        icon: SlidersHorizontal,
+      },
     ],
   },
   {
