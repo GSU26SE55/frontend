@@ -196,7 +196,7 @@ export default function BatteryAssetDetailPage() {
       <div className="flex-1 min-h-0 px-6 pb-6">
         <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
           {/* Left sidebar */}
-          <div className="w-[260px] shrink-0 border-r border-border flex flex-col overflow-y-auto">
+          <div className="w-65 shrink-0 border-r border-border flex flex-col overflow-y-auto">
             {/* Info */}
             <div className="px-4 pt-4 pb-3">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">

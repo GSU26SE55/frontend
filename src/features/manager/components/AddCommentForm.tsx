@@ -112,7 +112,7 @@ export default function AddCommentForm({ ticketId, onTyping }: Props) {
                   <Textarea
                     placeholder="Nhập bình luận..."
                     rows={1}
-                    className="h-9 min-h-9 resize-none rounded-xl border-0 bg-transparent py-2 leading-[1.125rem] shadow-none focus-visible:ring-0"
+                    className="h-9 min-h-9 resize-none rounded-xl border-0 bg-transparent py-2 leading-4.5 shadow-none focus-visible:ring-0"
                     {...field}
                     onChange={(e) => {
                       field.onChange(e);
