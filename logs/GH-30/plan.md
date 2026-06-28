@@ -107,6 +107,8 @@ UI pages tách thành issue riêng per feature. Router giữ placeholder hiện 
 | `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
 | `SiteStatusEnum` | `shared/enums/site.enum.ts` |
 
+> **Cleanup (2026-06-28, local):** Đã xoá 3 file orphan trùng lặp `shared/types/account.enums.ts` + `shared/types/battery.enums.ts` + `shared/types/site.enums.ts` (0 import, dead-code). Bản canonical đang dùng là `shared/enums/*.enum.ts` ở bảng trên — không ảnh hưởng. `tsc` + `eslint` PASS.
+
 ## Types
 
 ### `shared/types/account.types.ts`

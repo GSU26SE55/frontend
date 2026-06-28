@@ -128,6 +128,8 @@ Triển khai types, endpoints, service, hooks, schemas, components và page cho 
 | `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
 | `LoginAttemptResult`, `AuditActionEnum` | `features/admin/enums/audit.enum.ts` |
 
+> **Cleanup (2026-06-28, local):** Đã xoá file orphan trùng lặp `shared/types/account.enums.ts` (0 import, dead-code). Bản canonical đang dùng là `shared/enums/account.enum.ts` ở bảng trên — không ảnh hưởng. `tsc` + `eslint` PASS.
+
 ## Types
 
 ```ts

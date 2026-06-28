@@ -51,6 +51,8 @@ Xây dựng FE quản lý địa điểm (Site) cho hệ thống Solar Battery M
 | `SiteStatusEnum` | `shared/enums/site.enum.ts` |
 | `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
 
+> **Cleanup (2026-06-28, local):** Đã xoá 2 file orphan trùng lặp `shared/types/site.enums.ts` + `shared/types/battery.enums.ts` (0 import, dead-code). Bản canonical đang dùng là `shared/enums/*.enum.ts` ở bảng trên — không ảnh hưởng. `tsc` + `eslint` PASS.
+
 ```ts
 // shared/enums/site.enum.ts
 export const SiteStatusEnum = {
