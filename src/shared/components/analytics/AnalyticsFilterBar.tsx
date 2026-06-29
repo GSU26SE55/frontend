@@ -21,7 +21,7 @@ interface AnalyticsFilterBarProps {
   onChange: (next: AnalyticsFilter) => void;
 }
 
-const ALL_SITES = "__all__";
+const ALL_SITES = "Tất cả sites";
 
 const GRANULARITY_LABEL: Record<ReportGranularityEnum, string> = {
   [ReportGranularityEnum.Day]: "Ngày",

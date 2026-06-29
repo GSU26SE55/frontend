@@ -51,13 +51,50 @@ export const ENDPOINTS = {
 
   // Base /api/tickets chung (đọc shared cho mọi role). Action theo role nằm ở
   // STAFF_TICKETS / ADMIN.TICKETS — KHÔNG có LIST/CREATE/status/close generic (api-ticket.md).
+  // BE đổi ticket_comments → ticket_chats (migration 20260622) — path chính xác là /chats.
   TICKETS: {
     DETAIL: (id: string) => `/api/tickets/${id}`,
     ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
-    COMMENTS: (id: string) => `/api/tickets/${id}/comments`,
+    CHATS: (id: string) => `/api/tickets/${id}/chats`,
+    CHAT_DETAIL: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}`,
+    CHAT_HISTORY: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/history`,
+    CHAT_REPLIES: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/replies`,
+    CHAT_PIN: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/pin`,
+    CHAT_REACTIONS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/reactions`,
+    CHAT_MARK_READ: (tid: string) => `/api/tickets/${tid}/chats/mark-read`,
+    CHAT_READERS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/readers`,
+    CHAT_UNREAD_COUNT: (tid: string) => `/api/tickets/${tid}/chats/unread-count`,
+    CHAT_CURSOR: (tid: string) => `/api/tickets/${tid}/chats/cursor`,
+    CHAT_ATTACHMENTS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/attachments`,
+    CHAT_ATTACHMENT: (tid: string, cid: string, aid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/attachments/${aid}`,
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,
+    PARTICIPANTS: (tid: string) => `/api/tickets/${tid}/participants`,
+    PARTICIPANT: (tid: string, uid: string) => `/api/tickets/${tid}/participants/${uid}`,
+    PARTICIPANTS_BULK: (tid: string) => `/api/tickets/${tid}/participants/bulk`,
+    PARTICIPANTS_LEAVE: (tid: string) => `/api/tickets/${tid}/participants/leave`,
+    PARTICIPANTS_HISTORY: (tid: string) => `/api/tickets/${tid}/participants/history`,
+  },
+
+  CHAT_TEMPLATES: {
+    LIST: "/api/chat-templates",
+    DETAIL: (id: string) => `/api/chat-templates/${id}`,
+  },
+
+  CHAT_MENTIONS: {
+    ME: "/api/chats/mentions/me",
+    ACKNOWLEDGE: (id: string) => `/api/chats/mentions/${id}/acknowledge`,
+  },
+
+  MY_CHATS: {
+    LIST: "/api/chats/me",
+    ERASE: "/api/chats/erase-my-data",
+  },
+
+  ADMIN_CHAT_SEARCH: {
+    SEARCH: "/api/chats/search",
   },
 
   // Health metrics (public — JSON thuần, KHÔNG bọc CommonResponse).
@@ -205,6 +242,25 @@ export const ENDPOINTS = {
     // Audit log Pin & Cảnh báo (BatteryService fallback — Admin only)
     BATTERY_AUDIT_LOGS: "/api/admin/battery/audit-logs",
     ALERT_AUDIT_LOGS: "/api/admin/alerts/audit-logs",
+    // Audit log nội bộ TicketService (Option C, #AUDIT-28) — khác với AuditAggregator
+    TICKET_AUDIT_LOGS: "/api/admin/ticket/audit-logs",
+    // Admin chat override (ticket đã Closed)
+    CHAT_CLOSED_OVERRIDE: (tid: string) => `/api/admin/tickets/${tid}/chats/closed-override`,
+    CHAT_RESTORE: (tid: string, cid: string) => `/api/admin/tickets/${tid}/chats/${cid}/restore`,
+  },
+
+  // AuditAggregatorService — cross-service audit read-store (Sprint audit #AUDIT-17).
+  // Tách biệt hoàn toàn với ADMIN.AUDIT_LOGS (/api/admin/audit-logs của AuthService).
+  AUDIT_AGGREGATOR: {
+    SEARCH: "/api/admin/audit/search",
+    DETAIL: (id: string) => `/api/admin/audit/${id}`,
+    CORRELATION: (corrId: string) => `/api/admin/audit/correlation/${corrId}`,
+    ACCOUNT_TIMELINE: (accountId: string) =>
+      `/api/admin/audit/account/${accountId}/timeline`,
+    STATS: "/api/admin/audit/stats",
+    EXPORT: "/api/admin/audit/export",
+    REPLAY: "/api/admin/audit/replay",
+    REDACT: "/api/admin/audit/redact",
   },
 
   SITES: {
@@ -299,8 +355,10 @@ export const ENDPOINTS = {
     ARCHIVE: (id: string) => `/api/admin/iot-firmware-releases/${id}/archive`,
   },
 
-  // Reports (Sprint 7 #114) — thêm ?format=csv|xlsx để export file; không truyền → JSON.
+  // Reports — BatteryService (Sprint 7 #114) + TicketService (Sprint 7 #114 §5.2).
+  // Thêm ?format=csv|xlsx để export file; không truyền → JSON.
   REPORTS: {
+    // BatteryService reports
     BATTERY_HEALTH_BY_TYPE: "/api/reports/battery-health-by-type",
     ALERT_VOLUME: "/api/reports/alert-volume",
     TOP_ANOMALIES: "/api/reports/top-anomalies",
@@ -308,6 +366,16 @@ export const ENDPOINTS = {
     WARRANTY_EXPIRING: "/api/reports/warranty-expiring",
     ENVIRONMENTAL_INCIDENTS: "/api/reports/environmental-incidents",
     AMBIENT_TREND: "/api/reports/ambient-trend",
+    // TicketService reports
+    SLA_BY_STAFF: "/api/reports/sla-by-staff",
+    SLA_BY_PRIORITY: "/api/reports/sla-by-priority",
+    TICKET_VOLUME: "/api/reports/ticket-volume",
+    TOP_REOPEN_ISSUES: "/api/reports/top-reopen-issues",
+    STAFF_PERFORMANCE: "/api/reports/staff-performance",
+    CSAT: "/api/reports/csat",
+    RESOLUTION_TIME_HISTOGRAM: "/api/reports/resolution-time-histogram",
+    CATEGORY_BREAKDOWN: "/api/reports/category-breakdown",
+    SAGA_FAILED_RATE: "/api/reports/saga-failed-rate",
   },
 
   THRESHOLDS: {

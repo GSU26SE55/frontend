@@ -33,6 +33,7 @@ export const KEY = {
     auditLogs: ["admin", "auditLogs"] as const,
     batteryAuditLogs: ["admin", "batteryAuditLogs"] as const,
     alertAuditLogs: ["admin", "alertAuditLogs"] as const,
+    ticketAuditLogs: ["admin", "ticketAuditLogs"] as const,
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
@@ -42,6 +43,12 @@ export const KEY = {
   },
   kb: "kb",
   ticketKbRefs: "ticketKbRefs",
+  slaRules: "slaRules",
+  auditAggregate: "auditAggregate",
+  chatTemplates: "chatTemplates",
+  chatMentions: "chatMentions",
+  myChats: "myChats",
+  ticketParticipants: "ticketParticipants",
 } as const;
 
 export const QUERY_KEY = {
@@ -162,6 +169,9 @@ export const QUERY_KEY = {
     alertAuditLogs: {
       list: (params?: object) => [...KEY.admin.alertAuditLogs, "list", params],
     },
+    ticketAuditLogs: {
+      list: (params?: object) => [...KEY.admin.ticketAuditLogs, "list", params],
+    },
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
     },
@@ -203,7 +213,19 @@ export const QUERY_KEY = {
     activities: (id: string) => [KEY.tickets, "activities", id] as const,
     maintenanceLogs: (id: string) =>
       [KEY.tickets, "maintenanceLogs", id] as const,
-    comments: (id: string) => [KEY.tickets, "comments", id] as const,
+    chats: (id: string) => [KEY.tickets, "chats", id] as const,
+    chatDetail: (tid: string, cid: string) =>
+      [KEY.tickets, "chat", tid, cid] as const,
+    chatReplies: (tid: string, cid: string) =>
+      [KEY.tickets, "replies", tid, cid] as const,
+    chatReactions: (tid: string, cid: string) =>
+      [KEY.tickets, "reactions", tid, cid] as const,
+    chatUnreadCount: (tid: string) => [KEY.tickets, "unread", tid] as const,
+    chatReaders: (tid: string, cid: string) =>
+      [KEY.tickets, "readers", tid, cid] as const,
+    participants: (tid: string) => [KEY.tickets, "participants", tid] as const,
+    participantsHistory: (tid: string) =>
+      [KEY.tickets, "participants-history", tid] as const,
   },
   staffTickets: {
     list: (params?: object) => [KEY.staffTickets, "list", params] as const,
@@ -269,5 +291,50 @@ export const QUERY_KEY = {
       [KEY.reports, "environmental-incidents", params] as const,
     ambientTrend: (params?: object) =>
       [KEY.reports, "ambient-trend", params] as const,
+    slaByStaff: (params?: object) =>
+      [KEY.reports, "sla-by-staff", params] as const,
+    slaByPriority: (params?: object) =>
+      [KEY.reports, "sla-by-priority", params] as const,
+    ticketVolume: (params?: object) =>
+      [KEY.reports, "ticket-volume", params] as const,
+    topReopenIssues: (params?: object) =>
+      [KEY.reports, "top-reopen-issues", params] as const,
+    staffPerformance: (params?: object) =>
+      [KEY.reports, "staff-performance", params] as const,
+    csat: (params?: object) => [KEY.reports, "csat", params] as const,
+    resolutionTimeHistogram: (params?: object) =>
+      [KEY.reports, "resolution-time-histogram", params] as const,
+    categoryBreakdown: (params?: object) =>
+      [KEY.reports, "category-breakdown", params] as const,
+    sagaFailedRate: (params?: object) =>
+      [KEY.reports, "saga-failed-rate", params] as const,
+  },
+  slaRules: {
+    list: () => [KEY.slaRules, "list"] as const,
+  },
+  auditAggregate: {
+    search: (params?: object) =>
+      [KEY.auditAggregate, "search", params] as const,
+    detail: (id: string) => [KEY.auditAggregate, "detail", id] as const,
+    correlation: (id: string) =>
+      [KEY.auditAggregate, "correlation", id] as const,
+    accountTimeline: (accountId: string, limit?: number) =>
+      [KEY.auditAggregate, "timeline", accountId, limit] as const,
+    stats: (params?: object) => [KEY.auditAggregate, "stats", params] as const,
+  },
+  chatTemplates: {
+    list: (params?: object) => [KEY.chatTemplates, "list", params] as const,
+    detail: (id: string) => [KEY.chatTemplates, "detail", id] as const,
+  },
+  chatMentions: {
+    me: (params?: object) => [KEY.chatMentions, "me", params] as const,
+  },
+  myChats: {
+    list: (params?: object) => [KEY.myChats, "list", params] as const,
+  },
+  ticketParticipants: {
+    list: (tid: string) => [KEY.ticketParticipants, "list", tid] as const,
+    history: (tid: string) =>
+      [KEY.ticketParticipants, "history", tid] as const,
   },
 } as const;

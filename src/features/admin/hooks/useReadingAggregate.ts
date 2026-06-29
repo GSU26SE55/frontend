@@ -22,6 +22,7 @@ export function useReadingAggregate(
         .then((r) => r.data.data);
     },
     enabled: !!assetId,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 }

@@ -80,7 +80,7 @@ export function useAddComment(ticketId: string) {
     onSuccess: () => {
       toast.success("Đã thêm bình luận");
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEY.staffTickets.detail(ticketId),
+        queryKey: QUERY_KEY.tickets.chats(ticketId),
       });
     },
     onError: (error) => handleErrorApi({ error }),

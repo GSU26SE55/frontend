@@ -12,6 +12,7 @@ import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
 import {
   useStaffTicketDetail,
   useStaffTicketActivities,
+  useStaffTicketComments,
 } from "../hooks/useStaffTicketDetail";
 import {
   useStartTicket,
@@ -36,7 +37,7 @@ import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
-import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
@@ -81,15 +82,13 @@ export default function TicketDetailPage() {
   const ticketId = id ?? "";
   const currentUserId = useSessionStore((s) => s.user?.accountId);
 
-  // Realtime: staff render comment NHÚNG trong staffTickets.detail → invalidate đúng key
-  // đó khi CommentAdded để comment customer gửi hiện ngay, không phải reload.
-  useTicketCommentsRealtime(ticketId, [
-    QUERY_KEY.staffTickets.detail(ticketId),
-  ]);
+  // Realtime: invalidate tickets.chats khi CommentAdded (cùng key với useStaffTicketComments).
+  useTicketCommentsRealtime(ticketId);
 
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
+  const { data: comments = [] } = useStaffTicketComments(ticketId);
 
   const startMutation = useStartTicket(ticketId);
   const holdMutation = useHoldTicket(ticketId);
@@ -152,7 +151,6 @@ export default function TicketDetailPage() {
     logMutation.mutate(data, { onSuccess: () => setLogOpen(false) });
   };
 
-  const comments = ticket.comments ?? [];
   const logs = ticket.maintenanceLogs ?? [];
 
   const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
