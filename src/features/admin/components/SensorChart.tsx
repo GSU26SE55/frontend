@@ -28,6 +28,11 @@ const chartConfig = {
 
 // Range lớn → dùng /aggregate (TimescaleDB time_bucket), không dùng /history.
 const RANGES = {
+  "1h": {
+    hours: 1,
+    interval: "1m" as SensorReadingInterval,
+    label: "1 giờ",
+  },
   "24h": {
     hours: 24,
     interval: "1h" as SensorReadingInterval,
@@ -85,71 +90,94 @@ function ChartBody({
       </div>
     );
   }
+
+  const isSparse = chartData.length <= 5;
+  const dotProps = isSparse ? { r: 4, strokeWidth: 2 } : false;
+
   return (
-    <ChartContainer
-      config={chartConfig}
-      className={`${containerClassName} aspect-auto`}
-      initialDimension={{ width: 640, height: chartHeight }}
-    >
-      <LineChart accessibilityLayer data={chartData}>
-        <CartesianGrid vertical={false} strokeDasharray="3 3" />
-        <XAxis
-          dataKey="label"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          minTickGap={32}
-        />
-        <YAxis width={36} tickLine={false} axisLine={false} tickMargin={8} />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent />} />
-        <Line
-          dataKey="avgVoltage"
-          stroke="var(--color-avgVoltage)"
-          dot={false}
-          strokeWidth={2}
-        />
-        <Line
-          dataKey="avgTemperature"
-          stroke="var(--color-avgTemperature)"
-          dot={false}
-          strokeWidth={2}
-        />
-        <Line
-          dataKey="avgSocPercent"
-          stroke="var(--color-avgSocPercent)"
-          dot={false}
-          strokeWidth={2}
-        />
-        <Line
-          dataKey="avgSohPercent"
-          stroke="var(--color-avgSohPercent)"
-          dot={false}
-          strokeWidth={2}
-          connectNulls
-        />
-      </LineChart>
-    </ChartContainer>
+    <div className={`${containerClassName} flex flex-col`}>
+      {isSparse && (
+        <p className="text-[11px] text-muted-foreground text-center pb-1 shrink-0">
+          Đang thu thập dữ liệu — hiển thị {chartData.length} điểm đo gần nhất
+        </p>
+      )}
+      <ChartContainer
+        config={chartConfig}
+        className="flex-1 min-h-0 w-full aspect-auto"
+        initialDimension={{ width: 640, height: chartHeight }}
+      >
+        <LineChart accessibilityLayer data={chartData}>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            minTickGap={32}
+          />
+          <YAxis width={36} tickLine={false} axisLine={false} tickMargin={8} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <ChartLegend content={<ChartLegendContent />} />
+          <Line
+            dataKey="avgVoltage"
+            stroke="var(--color-avgVoltage)"
+            dot={dotProps}
+            strokeWidth={2}
+            connectNulls
+          />
+          <Line
+            dataKey="avgTemperature"
+            stroke="var(--color-avgTemperature)"
+            dot={dotProps}
+            strokeWidth={2}
+            connectNulls
+          />
+          <Line
+            dataKey="avgSocPercent"
+            stroke="var(--color-avgSocPercent)"
+            dot={dotProps}
+            strokeWidth={2}
+            connectNulls
+          />
+          <Line
+            dataKey="avgSohPercent"
+            stroke="var(--color-avgSohPercent)"
+            dot={dotProps}
+            strokeWidth={2}
+            connectNulls
+          />
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 }
 
-function buildChartData(data: ReturnType<typeof useReadingAggregate>["data"]) {
-  return (data ?? []).map((d) => ({
-    ...d,
-    label: new Date(d.time).toLocaleString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-  }));
+function buildChartData(
+  data: ReturnType<typeof useReadingAggregate>["data"],
+  hours: number,
+) {
+  const items = data ?? [];
+  return items.map((d, i) => {
+    const date = new Date(d.time);
+    let label: string;
+    if (hours <= 1) {
+      const prev = i > 0 ? new Date(items[i - 1].time) : null;
+      const dayChanged = prev !== null && prev.getDate() !== date.getDate();
+      label = dayChanged
+        ? date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+        : date.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    } else {
+      label = date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    }
+    return { ...d, label };
+  });
 }
 
 export default function SensorChart({ assetId, fillHeight }: SensorChartProps) {
-  const [range, setRange] = useState<RangeKey>("24h");
+  const [range, setRange] = useState<RangeKey>("1h");
   const { hours, interval } = RANGES[range];
   const { data, isLoading } = useReadingAggregate(assetId, { hours, interval });
-  const chartData = buildChartData(data);
+  const chartData = buildChartData(data, hours);
 
   const rangeSelect = (
     <Select

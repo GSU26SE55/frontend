@@ -64,7 +64,7 @@ export const useTicketMaintenanceLogs = (id: string) =>
 // staleTime cao + KHÔNG refetchInterval: comment mới đến qua SignalR push (S4).
 export const useTicketComments = (id: string) =>
   useQuery({
-    queryKey: QUERY_KEY.tickets.comments(id),
+    queryKey: QUERY_KEY.tickets.chats(id),
     queryFn: () =>
       managerTicketService
         .getComments(id)
@@ -201,10 +201,10 @@ export const useAddComment = () => {
       qc.invalidateQueries({
         queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
       });
-      // Comment panel dùng query riêng (tickets.comments) — invalidate để
+      // Comment panel dùng query riêng (tickets.chats) — invalidate để
       // tác giả thấy ngay comment của mình (không chờ realtime broadcast).
       qc.invalidateQueries({
-        queryKey: QUERY_KEY.tickets.comments(ticketId),
+        queryKey: QUERY_KEY.tickets.chats(ticketId),
       });
     },
     onError: (error) => handleErrorApi({ error }),

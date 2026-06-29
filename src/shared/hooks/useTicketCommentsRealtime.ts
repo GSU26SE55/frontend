@@ -12,7 +12,7 @@ import {
 // query vẫn dùng được (chỉ mất push realtime).
 //
 // extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có CommentAdded.
-// Manager render comment từ QUERY_KEY.tickets.comments (default), nhưng staff/admin
+// Manager render comment từ QUERY_KEY.tickets.chats (default), nhưng staff/admin
 // render comment NHÚNG trong ticket detail (key khác) → truyền key detail tương ứng
 // để comment mới hiện realtime mà không phải reload.
 export function useTicketCommentsRealtime(
@@ -43,7 +43,7 @@ export function useTicketCommentsRealtime(
     const timers = typingTimers.current;
 
     conn.on("CommentAdded", () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.comments(ticketId) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
       for (const key of extraKeysRef.current) {
         qc.invalidateQueries({ queryKey: key });
       }

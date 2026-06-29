@@ -2,6 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { staffTicketService } from "../services/ticket.service";
 
+export function useStaffTicketComments(ticketId: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.tickets.chats(ticketId),
+    queryFn: () =>
+      staffTicketService
+        .getComments(ticketId)
+        .then((r) => r.data.data?.items ?? []),
+    enabled: !!ticketId,
+    staleTime: 60_000,
+  });
+}
+
 export function useStaffTicketDetail(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.staffTickets.detail(id),

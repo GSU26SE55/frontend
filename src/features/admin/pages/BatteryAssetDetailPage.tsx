@@ -33,10 +33,7 @@ import TransferOwnerDialog from "@/features/admin/components/TransferOwnerDialog
 import SensorChart from "@/features/admin/components/SensorChart";
 import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
 import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
-import {
-  BatteryStatusEnum,
-  ChargingStateEnum,
-} from "@/features/admin/types/battery-asset.types";
+import { BatteryStatusEnum } from "@/features/admin/types/battery-asset.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/common/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/useSensorStream";
@@ -253,13 +250,13 @@ export default function BatteryAssetDetailPage() {
               </div>
               <TabsContent
                 value="chart"
-                className="min-h-0 overflow-hidden m-0"
+                className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
                 <SensorChart assetId={id} fillHeight />
               </TabsContent>
               <TabsContent
                 value="history"
-                className="min-h-0 overflow-hidden m-0"
+                className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
                 <SensorHistoryTable assetId={id} fillHeight />
               </TabsContent>

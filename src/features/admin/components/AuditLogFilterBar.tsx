@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const ALL = "__all__";
+const ALL = "Tất cả hành động";
 
 export interface AuditLogFilterValues {
   action?: string;

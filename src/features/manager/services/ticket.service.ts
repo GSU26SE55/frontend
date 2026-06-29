@@ -76,7 +76,7 @@ export const managerTicketService = {
 
   getComments: (ticketId: string) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketCommentDTO>>>(
-      ENDPOINTS.TICKETS.COMMENTS(ticketId),
+      ENDPOINTS.TICKETS.CHATS(ticketId),
       { params: { page: 1, pageSize: 50 } },
     ),
 
@@ -131,7 +131,7 @@ export const managerTicketService = {
 
   addComment: (ticketId: string, payload: AddCommentPayload) =>
     axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.TICKETS.COMMENTS(ticketId),
+      ENDPOINTS.TICKETS.CHATS(ticketId),
       payload,
     ),
 };
