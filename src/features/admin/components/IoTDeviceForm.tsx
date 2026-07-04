@@ -145,6 +145,12 @@ export default function IoTDeviceForm({
               render={({ field }) => (
                 <Select
                   value={field.value ?? null}
+                  items={
+                    sitesData?.items.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    })) ?? []
+                  }
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger>
@@ -342,6 +348,12 @@ export default function IoTDeviceForm({
             render={({ field }) => (
               <Select
                 value={field.value ?? null}
+                items={
+                  sitesData?.items.map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                  })) ?? []
+                }
                 onValueChange={field.onChange}
               >
                 <SelectTrigger>

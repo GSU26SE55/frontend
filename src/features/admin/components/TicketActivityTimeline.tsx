@@ -27,6 +27,8 @@ const ACTION_LABEL: Partial<Record<string, string>> = {
   ResolvedByEscalatedStaff: "Giải quyết sau escalation",
   TriageApproved: "Manager duyệt triage",
   Closed: "Đã đóng ticket",
+  Chatted: "Bình luận",
+  ChatFlagged: "Cảnh báo bình luận",
 };
 
 interface Props {
