@@ -68,16 +68,12 @@ function StatTile({
  * ngưỡng mặc định bên dưới.
  */
 export interface TelemetryThresholds {
-  sohWarning?: number | null; // ≥ warning: khỏe; < warning ≥ critical: cảnh báo; < critical: nguy
-  sohCritical?: number | null;
   socWarning?: number | null;
   socCritical?: number | null;
   temperatureMax?: number | null; // ≥ max: nguy; trong khoảng [max-10, max): cảnh báo
 }
 
 // Ngưỡng mặc định (khi BatteryType chưa cấu hình ThresholdConfig) — giữ nguyên giá trị cũ.
-const DEFAULT_SOH_WARN = 80;
-const DEFAULT_SOH_CRIT = 60;
 const DEFAULT_SOC_WARN = 50;
 const DEFAULT_SOC_CRIT = 20;
 const DEFAULT_TEMP_MAX = 50;
@@ -98,22 +94,11 @@ export function LiveTelemetryCard({
   status,
   thresholds,
 }: LiveTelemetryCardProps) {
-  const sohWarn = thresholds?.sohWarning ?? DEFAULT_SOH_WARN;
-  const sohCrit = thresholds?.sohCritical ?? DEFAULT_SOH_CRIT;
   const socWarn = thresholds?.socWarning ?? DEFAULT_SOC_WARN;
   const socCrit = thresholds?.socCritical ?? DEFAULT_SOC_CRIT;
   const tempMax = thresholds?.temperatureMax ?? DEFAULT_TEMP_MAX;
   // Vùng "cảnh báo" nhiệt: 10°C trước ngưỡng nguy hiểm (giữ nguyên logic 2 mức cũ 40/50).
   const tempWarn = tempMax - 10;
-
-  const sohCls =
-    data?.sohPercent == null
-      ? "bg-muted/60 text-foreground"
-      : data.sohPercent >= sohWarn
-        ? "bg-emerald-50 text-emerald-800"
-        : data.sohPercent >= sohCrit
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
 
   const socCls =
     data?.socPercent == null
@@ -181,12 +166,6 @@ export function LiveTelemetryCard({
               value={fmtNum(data.socPercent, 0)}
               unit="%"
               className={socCls}
-            />
-            <StatTile
-              label="SOH"
-              value={fmtNum(data.sohPercent, 0)}
-              unit="%"
-              className={sohCls}
             />
             <StatTile
               label="Chu kỳ"

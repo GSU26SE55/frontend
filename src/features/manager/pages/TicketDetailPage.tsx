@@ -45,6 +45,7 @@ import {
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketCategoryEnum,
+  EscalationReasonEnum,
 } from "@/shared/types/ticket.types";
 import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
@@ -81,6 +82,14 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   Low: "Thấp",
   Medium: "Trung bình",
   High: "Cao",
+};
+
+const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
+  SkillGap: "Thiếu kỹ năng xử lý",
+  PartsRequired: "Cần linh kiện thay thế",
+  SafetyConcern: "Nguy cơ an toàn",
+  SlaBreach: "Vi phạm SLA",
+  CustomerComplaint: "Khách hàng khiếu nại",
 };
 
 function SideInfoRow({
@@ -495,9 +504,58 @@ export default function TicketDetailPage() {
               <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                 Kết quả giải quyết
               </p>
-              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+              <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
                 {ticket.resolutionSummary}
               </p>
+              {ticket.resolvedAt && (
+                <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
+                  Xử lý xong lúc{" "}
+                  {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
+                    locale: vi,
+                  })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Escalation */}
+          {ticket.escalatedAt && (
+            <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
+              <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
+                Chuyển cấp
+              </p>
+              {ticket.escalationReason && (
+                <p className="text-xs leading-relaxed">
+                  {ESCALATION_REASON_LABEL[ticket.escalationReason] ??
+                    ticket.escalationReason}
+                </p>
+              )}
+              <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
+                {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              </p>
+            </div>
+          )}
+
+          {/* Customer rating */}
+          {ticket.rating != null && (
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Đánh giá khách hàng
+              </p>
+              <p className="text-xs font-medium">
+                {"★".repeat(ticket.rating)}
+                {"☆".repeat(5 - ticket.rating)}
+                <span className="text-muted-foreground font-normal ml-1">
+                  ({ticket.rating}/5)
+                </span>
+              </p>
+              {ticket.ratingComment && (
+                <p className="text-xs leading-relaxed text-foreground/90 mt-1.5 whitespace-pre-wrap">
+                  {ticket.ratingComment}
+                </p>
+              )}
             </div>
           )}
 
@@ -534,6 +592,22 @@ export default function TicketDetailPage() {
               <SideInfoRow
                 label="Cập nhật"
                 value={format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+            )}
+            {ticket.approvedAt && (
+              <SideInfoRow
+                label="Duyệt lúc"
+                value={format(new Date(ticket.approvedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+            )}
+            {ticket.closedAt && (
+              <SideInfoRow
+                label="Đóng lúc"
+                value={format(new Date(ticket.closedAt), "dd/MM/yyyy HH:mm", {
                   locale: vi,
                 })}
               />

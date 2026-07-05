@@ -244,8 +244,6 @@ export default function BatteryAssetDetailPage() {
               thresholds={
                 threshold
                   ? {
-                      sohWarning: threshold.sohWarningThreshold,
-                      sohCritical: threshold.sohCriticalThreshold,
                       socWarning: threshold.socWarningThreshold,
                       socCritical: threshold.socCriticalThreshold,
                       temperatureMax: threshold.temperatureMax,

@@ -72,10 +72,6 @@ export default function BatteryRealtimeCard({
           <span className="font-medium">{fmt(data.socPercent, "%")}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">SOH</span>
-          <span className="font-medium">{fmt(data.sohPercent, "%")}</span>
-        </div>
-        <div className="flex justify-between">
           <span className="text-muted-foreground">Số chu kỳ</span>
           <span className="font-medium">{fmt(data.cycleCount)}</span>
         </div>

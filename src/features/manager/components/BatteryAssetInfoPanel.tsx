@@ -107,7 +107,6 @@ export default function BatteryAssetInfoPanel({
             </>
           }
         />
-        <InfoRow label="Vị trí" value={asset.location} />
       </div>
 
       <div className="mt-5 space-y-5">

@@ -102,7 +102,6 @@ export default function BatteryAssetInfoPanel({ batteryAssetId }: Props) {
             </>
           }
         />
-        <InfoRow label="Vị trí" value={asset.location} />
       </div>
 
       <div className="mt-5">
