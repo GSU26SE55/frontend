@@ -7,11 +7,11 @@ import {
   type HubConnection,
 } from "@/shared/lib/signalr";
 
-// SignalR realtime cho comment panel: join phòng ticket, nhận CommentAdded
+// SignalR realtime cho comment panel: join phòng ticket, nhận ChatAdded
 // (invalidate query comment) + UserTyping. Lỗi connect được nuốt → UI không crash,
 // query vẫn dùng được (chỉ mất push realtime).
 //
-// extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có CommentAdded.
+// extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có ChatAdded.
 // Manager render comment từ QUERY_KEY.tickets.chats (default), nhưng staff/admin
 // render comment NHÚNG trong ticket detail (key khác) → truyền key detail tương ứng
 // để comment mới hiện realtime mà không phải reload.
@@ -42,7 +42,7 @@ export function useTicketCommentsRealtime(
     let cancelled = false;
     const timers = typingTimers.current;
 
-    conn.on("CommentAdded", () => {
+    conn.on("ChatAdded", () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
       for (const key of extraKeysRef.current) {
         qc.invalidateQueries({ queryKey: key });
@@ -79,7 +79,7 @@ export function useTicketCommentsRealtime(
       Object.values(timers).forEach(clearTimeout);
       // Gỡ handler TRƯỚC khi stop — chống event treo bắn vào connection đang teardown
       // (StrictMode mount kép / rebuild) gây invalidate trùng.
-      conn.off("CommentAdded");
+      conn.off("ChatAdded");
       conn.off("UserTyping");
       // CHỜ start() xong rồi mới leave + stop — tránh stop-trước-start.
       void startPromise.finally(() => {

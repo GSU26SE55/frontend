@@ -71,15 +71,6 @@ interface LiveTelemetryCardProps {
  * Dùng cho admin asset detail (GH-114) và reuse cho summary item (GH-116).
  */
 export function LiveTelemetryCard({ data, status }: LiveTelemetryCardProps) {
-  const sohCls =
-    data?.sohPercent == null
-      ? "bg-muted/60 text-foreground"
-      : data.sohPercent >= 80
-        ? "bg-emerald-50 text-emerald-800"
-        : data.sohPercent >= 60
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
-
   const socCls =
     data?.socPercent == null
       ? "bg-muted/60 text-foreground"
@@ -148,16 +139,10 @@ export function LiveTelemetryCard({ data, status }: LiveTelemetryCardProps) {
               className={socCls}
             />
             <StatTile
-              label="SOH"
-              value={fmtNum(data.sohPercent, 0)}
-              unit="%"
-              className={sohCls}
-            />
-            <StatTile
               label="Chu kỳ"
               value={data.cycleCount != null ? String(data.cycleCount) : "—"}
               unit=""
-              className="bg-muted/50 text-foreground"
+              className="bg-muted/50 text-foreground col-span-2"
             />
           </div>
 

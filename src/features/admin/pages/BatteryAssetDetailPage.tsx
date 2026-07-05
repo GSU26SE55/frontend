@@ -252,7 +252,11 @@ export default function BatteryAssetDetailPage() {
                 value="chart"
                 className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
-                <SensorChart assetId={id} fillHeight />
+                <SensorChart
+                  assetId={id}
+                  batteryTypeId={asset?.batteryTypeId}
+                  fillHeight
+                />
               </TabsContent>
               <TabsContent
                 value="history"

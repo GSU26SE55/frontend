@@ -82,7 +82,7 @@ export default function TicketDetailPage() {
   const ticketId = id ?? "";
   const currentUserId = useSessionStore((s) => s.user?.accountId);
 
-  // Realtime: invalidate tickets.chats khi CommentAdded (cùng key với useStaffTicketComments).
+  // Realtime: invalidate tickets.chats khi ChatAdded (cùng key với useStaffTicketComments).
   useTicketCommentsRealtime(ticketId);
 
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
