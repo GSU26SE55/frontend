@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import TicketStatusBadge from "./TicketStatusBadge";
-import TicketPriorityBadge from "./TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 

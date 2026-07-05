@@ -99,7 +99,7 @@ export function KbArticleSelector({
             const article = options?.find((a) => a.id === id);
             return (
               <Badge key={id} variant="secondary" className="gap-1 pr-1">
-                <span className="max-w-[160px] truncate text-xs">
+                <span className="max-w-40 truncate text-xs">
                   {article?.code ?? id.slice(0, 8)}
                 </span>
                 <button
@@ -130,7 +130,7 @@ export function KbArticleSelector({
           <BookOpen className="size-3.5" />
           Chọn bài KB
         </DialogTrigger>
-        <DialogContent className="!w-[94vw] !max-w-[1040px]">
+        <DialogContent className="!w-[94vw] !max-w-260">
           <DialogHeader>
             <DialogTitle>Chọn bài viết Knowledge Base</DialogTitle>
           </DialogHeader>
@@ -192,7 +192,7 @@ export function KbArticleSelector({
           </div>
 
           {/* Two-column body: list + preview */}
-          <div className="grid gap-4 h-[58vh] min-h-[360px] max-h-[520px] md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="grid gap-4 h-[58vh] min-h-90 max-h-130 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             {/* Left: list */}
             <div className="overflow-y-auto space-y-1 pr-1">
               {articles.map((article) => {

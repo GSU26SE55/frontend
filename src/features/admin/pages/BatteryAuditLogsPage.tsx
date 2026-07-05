@@ -183,7 +183,7 @@ function AlertAuditTab() {
 
 export default function BatteryAuditLogsPage() {
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">

@@ -137,7 +137,7 @@ const LoginHistoryTable = () => {
         >
           <ChevronLeft size={13} />
         </Button>
-        <span className="text-xs text-muted-foreground px-2 tabular-nums min-w-[48px] text-center">
+        <span className="text-xs text-muted-foreground px-2 tabular-nums min-w-12 text-center">
           {page} / {totalPages}
         </span>
         <Button

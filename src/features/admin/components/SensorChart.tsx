@@ -164,10 +164,20 @@ function buildChartData(
       const prev = i > 0 ? new Date(items[i - 1].time) : null;
       const dayChanged = prev !== null && prev.getDate() !== date.getDate();
       label = dayChanged
-        ? date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+        ? date.toLocaleString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
         : date.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     } else {
-      label = date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      label = date.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     }
     return { ...d, label };
   });
@@ -227,7 +237,7 @@ export default function SensorChart({ assetId, fillHeight }: SensorChartProps) {
         <ChartBody
           isLoading={isLoading}
           chartData={chartData}
-          containerClassName="h-[240px] w-full"
+          containerClassName="h-60 w-full"
           chartHeight={240}
         />
       </CardContent>

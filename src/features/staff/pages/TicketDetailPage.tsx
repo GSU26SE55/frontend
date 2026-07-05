@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { slaBarColorClass } from "@/shared/lib/sla";
 import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
 import {
   useStaffTicketDetail,
@@ -23,8 +24,8 @@ import {
   useAddComment,
   useAddMaintenanceLog,
 } from "../hooks/useStaffTicketMutations";
-import { TicketStatusBadge } from "../components/TicketStatusBadge";
-import { TicketPriorityBadge } from "../components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import { SlaCountdown } from "../components/SlaCountdown";
 import { HoldDialog } from "../components/HoldDialog";
 import { ResolveDialog } from "../components/ResolveDialog";
@@ -34,7 +35,10 @@ import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -78,6 +82,8 @@ export default function TicketDetailPage() {
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
+  // Tab chat: bình luận mới gửi theo tab đang mở (public/internal).
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
 
   const ticketId = id ?? "";
   const currentUserId = useSessionStore((s) => s.user?.accountId);
@@ -131,6 +137,17 @@ export default function TicketDetailPage() {
   const canAddLog = isInProgress || isWaiting;
   // Khoá sửa log khi ticket đã Resolved/ClosedPendingRate/Closed (BE enforce).
   const canEditLog = isInProgress || isWaiting;
+  // Gắn KB reference: khớp BE (AddTicketKbReferenceCommandHandler) — chỉ chặn
+  // Resolved/ClosedPendingRate/Closed, cho phép mọi state trước đó
+  // (New/Open/Assigned/InProgress/Waiting/Escalated). Trước đây FE hẹp hơn BE
+  // (chỉ Open||InProgress) khiến staff không gắn được khi Assigned/Waiting.
+  const canAddKb = !(
+    [
+      TicketStatusEnum.Resolved,
+      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Closed,
+    ] as TicketStatusEnum[]
+  ).includes(status);
 
   const handleHoldSubmit = (data: HoldFormValues) => {
     holdMutation.mutate(data, { onSuccess: () => setHoldOpen(false) });
@@ -154,13 +171,7 @@ export default function TicketDetailPage() {
 
   const logs = ticket.maintenanceLogs ?? [];
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -290,6 +301,8 @@ export default function TicketDetailPage() {
                 <TicketCommentThread
                   comments={comments}
                   currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
                 />
               </div>
               {canComment && (
@@ -303,6 +316,7 @@ export default function TicketDetailPage() {
                     onSubmit={handleCommentSubmit}
                     isPending={commentMutation.isPending}
                     onTyping={sendTyping}
+                    isInternal={chatTab === "internal"}
                   />
                 </div>
               )}
@@ -405,10 +419,7 @@ export default function TicketDetailPage() {
 
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
-              <TicketKbReferencesPanel
-                ticketId={ticketId}
-                canAdd={status === TicketStatusEnum.Open || isInProgress}
-              />
+              <TicketKbReferencesPanel ticketId={ticketId} canAdd={canAddKb} />
             </TabsContent>
           </Tabs>
         </div>

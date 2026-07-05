@@ -32,6 +32,15 @@ const TOPOLOGY_LABEL: Record<ElectricalTopologyName, string> = {
   SeriesParallel: "Hỗn hợp (Series-Parallel)",
 };
 
+// Fallback an toàn: nếu BE trả giá trị ngoài enum (vd số thay vì string name)
+// thì hiển thị chính giá trị thô thay vì render trống im lặng.
+const levelStyle = (lvl: CascadeRiskLevelName) =>
+  LEVEL_STYLE[lvl] ?? "bg-muted text-muted-foreground border-border";
+const levelLabel = (lvl: CascadeRiskLevelName) =>
+  LEVEL_LABEL[lvl] ?? String(lvl);
+const topologyLabel = (t: ElectricalTopologyName) =>
+  TOPOLOGY_LABEL[t] ?? String(t);
+
 export default function CascadeRiskCard({ assetId }: { assetId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data, isLoading } = useCascadeRisk(assetId);
@@ -73,15 +82,15 @@ export default function CascadeRiskCard({ assetId }: { assetId: string }) {
             </span>
             <Badge
               variant="outline"
-              className={`text-xs ${LEVEL_STYLE[data.level]}`}
+              className={`text-xs ${levelStyle(data.level)}`}
             >
-              {LEVEL_LABEL[data.level]}
+              {levelLabel(data.level)}
             </Badge>
           </div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             <dt className="text-muted-foreground">Cách đấu nối</dt>
             <dd className="text-right font-medium">
-              {TOPOLOGY_LABEL[data.electricalTopology]}
+              {topologyLabel(data.electricalTopology)}
             </dd>
             <dt className="text-muted-foreground">Cập nhật gần nhất</dt>
             <dd className="text-right font-medium">

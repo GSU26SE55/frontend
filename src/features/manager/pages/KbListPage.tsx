@@ -26,6 +26,7 @@ import {
 } from "../hooks/useManagerKb";
 import KbArticleTable from "../components/KbArticleTable";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { ErrorState } from "@/shared/components/common/ErrorState";
 import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
 import {
   KbArticleStatusEnum,
@@ -78,7 +79,7 @@ export default function KbListPage() {
     pageSize: filters.pageSize,
   };
 
-  const { data, isLoading } = useManagerKbList(params);
+  const { data, isLoading, isError, refetch } = useManagerKbList(params);
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: markHelpful } = useMarkManagerKbHelpful();
@@ -89,7 +90,7 @@ export default function KbListPage() {
   const { data: editArticle } = useManagerKbDetail(editArticleId ?? "");
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -199,18 +200,25 @@ export default function KbListPage() {
       </div>
 
       <Card className="gap-0 py-0 overflow-hidden">
-        <KbArticleTable
-          data={data?.items ?? []}
-          isLoading={isLoading}
-          pageNumber={data?.pageNumber ?? 1}
-          pageSize={data?.pageSize ?? 10}
-          hasFilter={hasActiveFilter}
-          onResetFilter={resetFilters}
-          onPublish={(a) => publish(a.id)}
-          onArchive={(a) => archive(a.id)}
-          onMarkHelpful={(a) => markHelpful(a.id)}
-          onEdit={(a) => setEditArticleId(a.id)}
-        />
+        {isError ? (
+          <ErrorState
+            message="Không thể tải danh sách bài viết."
+            onRetry={() => refetch()}
+          />
+        ) : (
+          <KbArticleTable
+            data={data?.items ?? []}
+            isLoading={isLoading}
+            pageNumber={data?.pageNumber ?? 1}
+            pageSize={data?.pageSize ?? 10}
+            hasFilter={hasActiveFilter}
+            onResetFilter={resetFilters}
+            onPublish={(a) => publish(a.id)}
+            onArchive={(a) => archive(a.id)}
+            onMarkHelpful={(a) => markHelpful(a.id)}
+            onEdit={(a) => setEditArticleId(a.id)}
+          />
+        )}
       </Card>
 
       {data && (
@@ -239,7 +247,7 @@ export default function KbListPage() {
             />
             <motion.div
               key="kb-list-edit-panel"
-              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-[560px]"
+              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
               initial={{ x: "100%", opacity: 0.5 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}

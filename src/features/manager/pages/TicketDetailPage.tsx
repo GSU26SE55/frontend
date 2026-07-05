@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import TicketStatusBadge from "@/features/manager/components/TicketStatusBadge";
-import TicketPriorityBadge from "@/features/manager/components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import SlaCountdown from "@/features/manager/components/SlaCountdown";
 import TriageDialog from "@/features/manager/components/TriageDialog";
 import AssignDialog from "@/features/manager/components/AssignDialog";
@@ -20,7 +20,10 @@ import DeclareIncidentDialog from "@/features/manager/components/DeclareIncident
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -36,6 +39,7 @@ import {
 } from "@/shared/types/ticket.types";
 import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { slaBarColorClass } from "@/shared/lib/sla";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
@@ -91,6 +95,7 @@ export default function TicketDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<DialogType>(null);
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
 
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
@@ -139,23 +144,24 @@ export default function TicketDetailPage() {
   ).includes(status);
   const canApprove = status === TicketStatusEnum.Resolved;
   const canReject = status === TicketStatusEnum.Resolved;
-  const canEscalate = !(
+  // Escalate = thêm nhân lực/cấp bậc khi ticket ĐANG được xử lý. Siết allow-list
+  // (thay vì "mọi status trừ Closed") để nút không hiện ở New/Open/Approved/
+  // Resolved/ClosedRejected — nơi escalate vô nghĩa (chưa triage/đã xong).
+  const canEscalate = (
     [
-      TicketStatusEnum.Closed,
-      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Assigned,
+      TicketStatusEnum.InProgress,
+      TicketStatusEnum.WaitingCustomer,
+      TicketStatusEnum.WaitingParts,
+      TicketStatusEnum.WaitingOnsiteSchedule,
+      TicketStatusEnum.Escalated,
     ] as TicketStatusEnum[]
   ).includes(status);
   const canDeclareIncident = !ticket.isIncident;
 
   // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -310,6 +316,8 @@ export default function TicketDetailPage() {
                 <TicketCommentThread
                   comments={comments}
                   currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">
@@ -318,7 +326,11 @@ export default function TicketDetailPage() {
                     {typingNames.join(", ")} đang gõ…
                   </p>
                 )}
-                <AddCommentForm ticketId={id} onTyping={sendTyping} />
+                <AddCommentForm
+                  ticketId={id}
+                  onTyping={sendTyping}
+                  isInternal={chatTab === "internal"}
+                />
               </div>
             </TabsContent>
 
@@ -346,7 +358,7 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Right: Sidebar */}
-        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+        <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
           <div className="p-4">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">

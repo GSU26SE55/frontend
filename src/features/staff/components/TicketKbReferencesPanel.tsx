@@ -50,7 +50,7 @@ const REF_TYPE_DESC: Record<RefType, string> = {
 interface TicketKbReferencesPanelProps {
   ticketId: string;
   defaultCategory?: TicketCategoryEnum;
-  /** Chỉ cho phép gắn bài viết sau khi đã "Bắt đầu xử lý" (InProgress/Waiting). */
+  /** Cho phép gắn bài viết khi ticket chưa hoàn thành (khớp BE: chặn từ Resolved). */
   canAdd?: boolean;
 }
 
@@ -138,7 +138,7 @@ export default function TicketKbReferencesPanel({
           disabled={!canAdd}
           title={
             !canAdd
-              ? "Cần bắt đầu xử lý ticket trước khi gắn bài viết"
+              ? "Ticket đã hoàn thành — không thể gắn thêm bài viết"
               : undefined
           }
           onClick={() => setShowAdd(!showAdd)}

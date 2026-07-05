@@ -122,7 +122,7 @@ export default function KbEditorPage() {
     return (
       <div className="p-6 space-y-4 max-w-5xl mx-auto">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-100 w-full" />
       </div>
     );
   }

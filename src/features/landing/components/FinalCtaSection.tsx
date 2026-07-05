@@ -84,7 +84,7 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
       >
         <div
           ref={glowRef}
-          className="h-80 w-[700px] rounded-full bg-emerald-500/10 blur-[96px]"
+          className="h-80 w-175 rounded-full bg-emerald-500/10 blur-[96px]"
         />
       </div>
 
@@ -101,7 +101,11 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
 
       <div className="relative z-10 mx-auto max-w-4xl text-center">
         {/* Eyebrow badge */}
-        <div data-anim="badge" style={{ opacity: 0 }} className="mb-5 flex justify-center">
+        <div
+          data-anim="badge"
+          style={{ opacity: 0 }}
+          className="mb-5 flex justify-center"
+        >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-emerald-300">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -128,8 +132,8 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
           style={{ opacity: 0 }}
           className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg"
         >
-          Một console cho SOH, cảnh báo bất thường, work order và SLA — từ
-          phát hiện đến đóng ticket đều có audit trail rõ ràng.
+          Một console cho SOH, cảnh báo bất thường, work order và SLA — từ phát
+          hiện đến đóng ticket đều có audit trail rõ ràng.
         </p>
 
         {/* CTA Buttons */}

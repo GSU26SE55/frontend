@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { SlaTimerStatusEnum } from "@/shared/types/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket.types";
+import { isNearBreachPercent } from "@/shared/lib/sla";
 
 function formatDuration(ms: number): string {
   if (ms <= 0) return "00:00:00";
@@ -60,7 +61,10 @@ export default function SlaCountdown({ slaTimer }: Props) {
     );
   }
 
-  const isWarning = remaining < 3_600_000; // < 1h
+  // Ngưỡng cảnh báo THỐNG NHẤT với staff SlaCountdown + dashboard isNearBreach:
+  // dùng remainingPercent (tương đối, đúng cho mọi priority P1/P2/P3) thay vì
+  // mốc <1h tuyệt đối — tránh cùng 1 ticket 2 role hiển thị mức khẩn khác nhau.
+  const isWarning = isNearBreachPercent(slaTimer.remainingPercent);
   return (
     <span
       className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${

@@ -23,12 +23,13 @@ import {
   useAdminTicketActivities,
   useDeclareIncident,
 } from "../hooks/useAdminTickets";
-import TicketStatusBadge from "../components/TicketStatusBadge";
-import TicketPriorityBadge from "../components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { slaBarColorClass } from "@/shared/lib/sla";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Charging: "Lỗi sạc",
@@ -99,13 +100,7 @@ export default function AdminTicketDetailPage() {
     );
   }
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">

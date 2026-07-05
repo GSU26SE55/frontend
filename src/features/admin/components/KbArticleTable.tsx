@@ -87,25 +87,25 @@ export default function KbArticleTable({
           <TableHead className="w-12 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             STT
           </TableHead>
-          <TableHead className="w-[100px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-25 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Mã
           </TableHead>
           <TableHead className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Tiêu đề
           </TableHead>
-          <TableHead className="w-[110px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-27.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Danh mục
           </TableHead>
-          <TableHead className="w-[120px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-30 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Trạng thái
           </TableHead>
-          <TableHead className="w-[90px] text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-22.5 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Lượt xem
           </TableHead>
-          <TableHead className="w-[90px] text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-22.5 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Hữu ích
           </TableHead>
-          <TableHead className="w-[80px] text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-20 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Thao tác
           </TableHead>
         </TableRow>

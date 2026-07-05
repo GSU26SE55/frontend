@@ -62,7 +62,7 @@ export function DashboardStatsSection({
             <Skeleton key={i} className="h-16 w-full" />
           ))}
         </div>
-        <Skeleton className="h-[280px] w-full" />
+        <Skeleton className="h-70 w-full" />
       </div>
     );
   }
@@ -119,21 +119,21 @@ export function DashboardStatsSection({
 
       {/* Donut distributions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <DashboardPanel title="Trạng thái pin" className="h-[200px]">
+        <DashboardPanel title="Trạng thái pin" className="h-50">
           <DashboardDonut
             data={statusDonut}
             centerValue={stats.totalAssets}
             centerLabel="pin"
           />
         </DashboardPanel>
-        <DashboardPanel title="Phân bố SOH" className="h-[200px]">
+        <DashboardPanel title="Phân bố SOH" className="h-50">
           <DashboardDonut
             data={sohDonut(stats.sohDistribution)}
             centerValue={stats.totalAssets}
             centerLabel="pin"
           />
         </DashboardPanel>
-        <DashboardPanel title="Hóa học pin" className="h-[200px]">
+        <DashboardPanel title="Hóa học pin" className="h-50">
           <DashboardDonut
             data={chemistryDonut}
             centerValue={stats.totalAssets}

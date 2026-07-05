@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Send } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Send } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -24,9 +23,16 @@ interface Props {
   onSubmit: (data: AddCommentFormValues) => void;
   isPending: boolean;
   onTyping?: () => void;
+  /** Bình luận gửi ở chế độ nội bộ (theo tab đang mở của thread). */
+  isInternal?: boolean;
 }
 
-export function AddCommentForm({ onSubmit, isPending, onTyping }: Props) {
+export function AddCommentForm({
+  onSubmit,
+  isPending,
+  onTyping,
+  isInternal = false,
+}: Props) {
   const [uploading, setUploading] = useState(false);
   const form = useForm<AddCommentFormValues>({
     resolver: zodResolver(addCommentSchema),
@@ -37,7 +43,7 @@ export function AddCommentForm({ onSubmit, isPending, onTyping }: Props) {
     useWatch({ control: form.control, name: "attachments" }) ?? [];
 
   const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
+    onSubmit({ ...data, isInternal });
     form.reset();
   });
 
@@ -45,7 +51,11 @@ export function AddCommentForm({ onSubmit, isPending, onTyping }: Props) {
     <Form {...form}>
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-1.5 rounded-2xl border border-border bg-background p-1.5"
+        className={
+          isInternal
+            ? "flex flex-col gap-1.5 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-1.5"
+            : "flex flex-col gap-1.5 rounded-2xl border border-border bg-background p-1.5"
+        }
       >
         <AttachmentPreviewStrip
           items={attachments}
@@ -77,38 +87,16 @@ export function AddCommentForm({ onSubmit, isPending, onTyping }: Props) {
 
           <FormField
             control={form.control}
-            name="isInternal"
-            render={({ field }) => (
-              <div className="group relative shrink-0">
-                <button
-                  type="button"
-                  aria-pressed={field.value}
-                  aria-label="Đánh dấu bình luận nội bộ"
-                  onClick={() => field.onChange(!field.value)}
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full transition-colors",
-                    field.value
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <Lock size={16} />
-                </button>
-                <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-[10px] text-background opacity-0 transition-opacity group-hover:opacity-100">
-                  Nội bộ
-                </span>
-              </div>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="body"
             render={({ field }) => (
               <FormItem className="flex-1 space-y-0">
                 <FormControl>
                   <Textarea
-                    placeholder="Thêm bình luận..."
+                    placeholder={
+                      isInternal
+                        ? "Ghi chú nội bộ (khách không thấy)..."
+                        : "Thêm bình luận..."
+                    }
                     rows={1}
                     className="flex h-9 min-h-9 resize-none items-center rounded-xl border-0 bg-transparent py-1.75 leading-4.5 shadow-none focus-visible:ring-0"
                     {...field}

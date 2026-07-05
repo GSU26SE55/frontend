@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { ErrorState } from "@/shared/components/common/ErrorState";
+import { EmptyState } from "@/shared/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -119,7 +121,7 @@ export default function AccountsPage() {
     setFilter("keyword", kw),
   );
 
-  const { data, isLoading } = useAdminAccountList({
+  const { data, isLoading, isError, refetch } = useAdminAccountList({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
@@ -159,7 +161,7 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -215,11 +217,13 @@ export default function AccountsPage() {
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState
+            message="Không thể tải danh sách tài khoản."
+            onRetry={() => refetch()}
+          />
         ) : accounts.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
-            <Users size={32} className="opacity-30" />
-            <span className="text-sm">Chưa có tài khoản nào.</span>
-          </div>
+          <EmptyState icon={Users} title="Chưa có tài khoản nào" />
         ) : (
           <Table>
             <TableHeader>

@@ -22,6 +22,12 @@ const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
   High: "Cao",
 };
 
+// Fallback an toàn nếu BE trả level ngoài enum (tránh badge trống im lặng).
+const levelStyle = (lvl: CascadeRiskLevelName) =>
+  LEVEL_STYLE[lvl] ?? "bg-muted text-muted-foreground border-border";
+const levelLabel = (lvl: CascadeRiskLevelName) =>
+  LEVEL_LABEL[lvl] ?? String(lvl);
+
 interface CascadeRiskSummaryProps {
   summary: SiteCascadeRiskSummaryDto | undefined;
   isLoading?: boolean;
@@ -125,9 +131,9 @@ export default function CascadeRiskSummary({
                   </span>
                   <Badge
                     variant="outline"
-                    className={`text-[10.5px] ${LEVEL_STYLE[a.level]}`}
+                    className={`text-[10.5px] ${levelStyle(a.level)}`}
                   >
-                    {LEVEL_LABEL[a.level]}
+                    {levelLabel(a.level)}
                   </Badge>
                 </div>
               </li>

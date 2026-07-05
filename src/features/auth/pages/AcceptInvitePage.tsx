@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,12 @@ const AcceptInvitePage = () => {
           Liên kết mời không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ Admin để
           được gửi lại.
         </p>
+        <Link
+          to="/login"
+          className="inline-block text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+        >
+          Quay lại đăng nhập
+        </Link>
       </div>
     );
   }
