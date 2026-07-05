@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import TicketStatusBadge from "@/features/manager/components/TicketStatusBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
 import { useAdminTicketList } from "@/features/manager/hooks/useManagerTickets";
 
 interface Props {

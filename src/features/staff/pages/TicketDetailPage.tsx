@@ -41,6 +41,8 @@ import {
 } from "@/shared/components/common/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
+import SubIssuePanel from "../components/SubIssuePanel";
+import BatteryAssetInfoPanel from "../components/BatteryAssetInfoPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -291,6 +293,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="logs">
                   Nhật ký{logs.length > 0 && ` (${logs.length})`}
                 </TabsTrigger>
+                <TabsTrigger value="sub-issues">Sub Issue</TabsTrigger>
                 <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
               </TabsList>
             </div>
@@ -454,6 +457,14 @@ export default function TicketDetailPage() {
               )}
             </TabsContent>
 
+            {/* Sub Issue — staff tự chia nhỏ ticket thành các việc con */}
+            <TabsContent
+              value="sub-issues"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              <SubIssuePanel key={ticketId} ticketId={ticketId} />
+            </TabsContent>
+
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel ticketId={ticketId} canAdd={canAddKb} />
@@ -526,6 +537,11 @@ export default function TicketDetailPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
+          <div className="p-4">
+            <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
           </div>
 
           {/* Description */}
