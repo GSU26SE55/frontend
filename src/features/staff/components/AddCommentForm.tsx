@@ -23,9 +23,10 @@ import {
 interface Props {
   onSubmit: (data: AddCommentFormValues) => void;
   isPending: boolean;
+  onTyping?: () => void;
 }
 
-export function AddCommentForm({ onSubmit, isPending }: Props) {
+export function AddCommentForm({ onSubmit, isPending, onTyping }: Props) {
   const [uploading, setUploading] = useState(false);
   const form = useForm<AddCommentFormValues>({
     resolver: zodResolver(addCommentSchema),
@@ -111,6 +112,10 @@ export function AddCommentForm({ onSubmit, isPending }: Props) {
                     rows={1}
                     className="flex h-9 min-h-9 resize-none items-center rounded-xl border-0 bg-transparent py-1.75 leading-4.5 shadow-none focus-visible:ring-0"
                     {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      onTyping?.();
+                    }}
                   />
                 </FormControl>
                 <FormMessage className="px-2" />

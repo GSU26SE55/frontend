@@ -42,10 +42,25 @@ export function useTicketCommentsRealtime(
     let cancelled = false;
     const timers = typingTimers.current;
 
-    conn.on("ChatAdded", () => {
+    // Tên event PHẢI khớp BE (SignalRTicketChatNotifier): "ChatAdded"/"ChatEdited"/
+    // "ChatDeleted"/"ReactionChanged" — KHÔNG phải "CommentAdded".
+    const invalidateChatList = () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
       for (const key of extraKeysRef.current) {
         qc.invalidateQueries({ queryKey: key });
+      }
+    };
+
+    conn.on("ChatAdded", invalidateChatList);
+    conn.on("ChatEdited", invalidateChatList);
+    conn.on("ChatDeleted", invalidateChatList);
+
+    // ReactionChanged payload: { chatId, reactions } → refetch reactions của đúng chat.
+    conn.on("ReactionChanged", (payload: { chatId: string }) => {
+      if (payload?.chatId) {
+        qc.invalidateQueries({
+          queryKey: QUERY_KEY.tickets.chatReactions(ticketId, payload.chatId),
+        });
       }
     });
 
@@ -80,6 +95,9 @@ export function useTicketCommentsRealtime(
       // Gỡ handler TRƯỚC khi stop — chống event treo bắn vào connection đang teardown
       // (StrictMode mount kép / rebuild) gây invalidate trùng.
       conn.off("ChatAdded");
+      conn.off("ChatEdited");
+      conn.off("ChatDeleted");
+      conn.off("ReactionChanged");
       conn.off("UserTyping");
       // CHỜ start() xong rồi mới leave + stop — tránh stop-trước-start.
       void startPromise.finally(() => {

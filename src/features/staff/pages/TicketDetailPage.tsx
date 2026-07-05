@@ -82,8 +82,9 @@ export default function TicketDetailPage() {
   const ticketId = id ?? "";
   const currentUserId = useSessionStore((s) => s.user?.accountId);
 
-  // Realtime: invalidate tickets.chats khi ChatAdded (cùng key với useStaffTicketComments).
-  useTicketCommentsRealtime(ticketId);
+  // Realtime: invalidate tickets.chats khi ChatAdded (cùng key với useStaffTicketComments)
+  // + typing indicator (typingNames render "đang gõ", sendTyping báo khi mình gõ).
+  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
 
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
   const { data: activities = [], isLoading: activitiesLoading } =
@@ -293,9 +294,15 @@ export default function TicketDetailPage() {
               </div>
               {canComment && (
                 <div className="shrink-0 border-t border-border p-3">
+                  {typingNames.length > 0 && (
+                    <p className="px-1 pb-2 text-xs text-muted-foreground italic">
+                      {typingNames.join(", ")} đang gõ…
+                    </p>
+                  )}
                   <AddCommentForm
                     onSubmit={handleCommentSubmit}
                     isPending={commentMutation.isPending}
+                    onTyping={sendTyping}
                   />
                 </div>
               )}
