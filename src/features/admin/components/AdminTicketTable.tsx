@@ -12,8 +12,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import type { PaginationResponse } from "@/shared/types/api.types";
-import TicketStatusBadge from "./TicketStatusBadge";
-import TicketPriorityBadge from "./TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import DataPagination from "@/shared/components/common/DataPagination";
 import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";

@@ -55,9 +55,18 @@ const CrossDeviceConfirmPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {!token ? (
-            <p className="text-sm text-destructive">
-              Link không hợp lệ — thiếu token. Vui lòng mở lại link từ email.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-destructive">
+                Link không hợp lệ — thiếu token. Vui lòng mở lại link từ email.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/settings")}
+              >
+                Tới Cài đặt bảo mật
+              </Button>
+            </div>
           ) : done ? (
             <div className="space-y-3">
               <p className="text-sm">

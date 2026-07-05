@@ -230,7 +230,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                   Không có lịch sử đăng nhập.
                 </p>
               ) : (
-                <table className="w-full text-[12px] border-collapse">
+                <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-border text-left text-[10.5px] text-muted-foreground uppercase tracking-wider">
                       <th className="py-2 pr-3">STT</th>

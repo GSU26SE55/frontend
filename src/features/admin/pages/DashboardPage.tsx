@@ -319,7 +319,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Cảnh báo 7 ngày"
           desc="Theo mức độ nghiêm trọng"
-          className="lg:col-span-5 min-h-[240px] lg:min-h-0"
+          className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
           {alertsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -404,7 +404,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Cảnh báo theo loại"
           desc="Top loại · màu theo mức độ"
-          className="lg:col-span-4 min-h-[240px] lg:min-h-0"
+          className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
           {alertsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -428,7 +428,7 @@ export default function AdminDashboardPage() {
                             className="size-2 rounded-full shrink-0"
                             style={{ background: d.color }}
                           />
-                          <span className="text-[12px] font-medium truncate">
+                          <span className="text-xs font-medium truncate">
                             {d.label}
                           </span>
                         </span>
@@ -454,7 +454,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Tuân thủ SLA hệ thống"
           desc={`${openTickets}/${totalTickets} ticket mở`}
-          className="lg:col-span-3 min-h-[240px] lg:min-h-0"
+          className="lg:col-span-3 min-h-60 lg:min-h-0"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -502,7 +502,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Pin theo trạng thái"
           desc={`${batteries.length} pin`}
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
           {batteryLoading ? (
             <Skeleton className="h-full w-full" />
@@ -523,7 +523,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Người dùng theo vai trò"
           desc={`${totalAccounts} tài khoản`}
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
           {accountsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -544,7 +544,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Sức khỏe site"
           desc={`Trung bình ${avgHealth}%`}
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {sitesLoading ? (
@@ -560,7 +560,7 @@ export default function AdminDashboardPage() {
               {sitesH.map((s) => (
                 <div key={s.id} className="flex items-center gap-2.5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium truncate">{s.name}</p>
+                    <p className="text-xs font-medium truncate">{s.name}</p>
                     <p className="text-[10.5px] text-muted-foreground tabular-nums">
                       {s.activeBatteryAssetCount}/{s.batteryAssetCount} pin
                     </p>
@@ -590,7 +590,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Nhật ký hệ thống"
           desc="Audit log gần đây"
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {auditLoading ? (
@@ -616,7 +616,7 @@ export default function AdminDashboardPage() {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] font-medium truncate">
+                      <span className="text-xs font-medium truncate">
                         {item.targetEmail ?? "—"}
                       </span>
                       <span className="font-mono-num text-[10px] text-muted-foreground shrink-0">

@@ -1,34 +1,9 @@
-import { cn } from "@/lib/utils";
-import { ActivityActionEnum, ActorRoleEnum } from "@/shared/types/ticket.types";
+import { ActorRoleEnum } from "@/shared/types/ticket.types";
 import type { TicketActivityDTO } from "@/shared/types/ticket.types";
-import { getActivityBadgeClass } from "@/shared/utils/activityActionColor";
-
-const ACTION_LABEL: Partial<Record<ActivityActionEnum, string>> = {
-  Created: "Tạo ticket",
-  StatusChanged: "Đổi trạng thái",
-  PriorityAssigned: "Gán priority",
-  StaffAssigned: "Gán Staff",
-  StaffReassigned: "Điều chuyển Staff",
-  Commented: "Bình luận mới",
-  MaintenanceLogged: "Ghi nhật ký bảo trì",
-  SlaPaused: "SLA tạm dừng",
-  SlaResumed: "SLA tiếp tục",
-  SlaWarning: "Cảnh báo SLA sắp hết",
-  SlaBreached: "Vi phạm SLA",
-  EscalationRequested: "Yêu cầu chuyển cấp",
-  Escalated: "Chuyển cấp",
-  IncidentDeclared: "Khai báo Incident",
-  Resolved: "Staff báo đã xong",
-  Approved: "Manager phê duyệt",
-  Rejected: "Manager từ chối",
-  Rated: "Customer đánh giá",
-  Reopened: "Mở lại ticket",
-  AutoClosed: "Tự động đóng",
-  ResolvedByEscalatedStaff: "Giải quyết bởi Staff cấp cao",
-  TriageApproved: "Triage — phê duyệt hợp lệ",
-  AttachmentAdded: "Đính kèm file",
-  Closed: "Đã đóng ticket",
-};
+import {
+  getActivityMeta,
+  activityToneStyle,
+} from "@/shared/components/common/ticketActivityMeta";
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
   Admin: "Admin",
@@ -52,37 +27,43 @@ export default function TicketActivityTimeline({ activities }: Props) {
   }
 
   return (
-    <ol className="relative border-l border-muted ml-3 space-y-6">
-      {activities.map((act) => (
-        <li key={act.id} className="ml-6">
-          <span
-            className={cn(
-              "absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-background text-xs font-medium",
-              getActivityBadgeClass(act.action),
-            )}
-          >
-            {ROLE_LABEL[act.actorRole]?.charAt(0) ?? "?"}
-          </span>
-          <div className="text-sm">
-            <span className="font-medium">
-              {act.actorDisplayName ?? ROLE_LABEL[act.actorRole]}
+    <ol className="relative border-l border-muted ml-3 space-y-5">
+      {activities.map((act) => {
+        const meta = getActivityMeta(act.action);
+        const style = activityToneStyle(meta.tone);
+        const Icon = meta.icon;
+        return (
+          <li key={act.id} className="ml-6">
+            <span
+              className={`absolute -left-3.5 flex size-7 items-center justify-center rounded-full border border-background ${style.bg}`}
+            >
+              <Icon className={`size-3.5 ${style.iconColor}`} />
             </span>
-            {" — "}
-            <span>{ACTION_LABEL[act.action] ?? act.action}</span>
-            {act.oldValue && act.newValue && (
-              <span className="text-muted-foreground ml-1">
-                ({act.oldValue} → {act.newValue})
+            <div className="text-sm">
+              <span className="font-semibold" style={{ color: style.dot }}>
+                {meta.label}
               </span>
-            )}
-            {act.reason && (
-              <span className="ml-1 text-muted-foreground">: {act.reason}</span>
-            )}
-          </div>
-          <time className="text-xs text-muted-foreground">
-            {new Date(act.createdAt).toLocaleString("vi-VN")}
-          </time>
-        </li>
-      ))}
+              <span className="text-muted-foreground">
+                {" · "}
+                {act.actorDisplayName ?? ROLE_LABEL[act.actorRole]}
+              </span>
+              {act.oldValue && act.newValue && (
+                <span className="text-muted-foreground ml-1">
+                  ({act.oldValue} → {act.newValue})
+                </span>
+              )}
+              {act.reason && (
+                <span className="ml-1 text-muted-foreground italic">
+                  : {act.reason}
+                </span>
+              )}
+            </div>
+            <time className="text-xs text-muted-foreground">
+              {new Date(act.createdAt).toLocaleString("vi-VN")}
+            </time>
+          </li>
+        );
+      })}
     </ol>
   );
 }

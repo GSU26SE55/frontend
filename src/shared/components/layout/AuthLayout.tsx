@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import logoImg from "@/assets/logo.png";
 import { useAuthContext } from "@/shared/context/authContext";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -8,6 +8,7 @@ const AuthLayout = () => {
   const { isHydrating } = useAuthContext();
   const user = useSessionStore((s) => s.user);
   const isAuthenticated = useSessionStore((s) => s.isAuthenticated);
+  const location = useLocation();
 
   if (!isHydrating && isAuthenticated && user) {
     return <Navigate to={redirectByRole(user.role)} replace />;
@@ -27,7 +28,7 @@ const AuthLayout = () => {
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed left-1/2 top-0 -translate-x-1/2 h-72 w-[600px] rounded-full bg-primary/10 blur-[80px]"
+        className="pointer-events-none fixed left-1/2 top-0 -translate-x-1/2 h-72 w-150 rounded-full bg-primary/10 blur-[80px]"
       />
 
       <div className="relative z-10 mb-7 flex flex-col items-center gap-2">
@@ -39,7 +40,10 @@ const AuthLayout = () => {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-border bg-card p-8 shadow-sm">
+      <div
+        key={location.pathname}
+        className="page-enter relative z-10 w-full max-w-105 rounded-2xl border border-border bg-card p-8 shadow-sm"
+      >
         <Outlet />
       </div>
 

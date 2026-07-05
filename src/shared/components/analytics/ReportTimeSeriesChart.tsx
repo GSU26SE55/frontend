@@ -44,7 +44,7 @@ export function ReportTimeSeriesChart({
   isLoading,
   emptyText = "Không có dữ liệu.",
 }: ReportTimeSeriesChartProps) {
-  if (isLoading) return <Skeleton className="h-[300px] w-full" />;
+  if (isLoading) return <Skeleton className="h-75 w-full" />;
 
   if (!data || data.length === 0) {
     return (
@@ -60,7 +60,7 @@ export function ReportTimeSeriesChart({
   }, {});
 
   return (
-    <ChartContainer config={chartConfig} className="h-[300px] w-full">
+    <ChartContainer config={chartConfig} className="h-75 w-full">
       <LineChart
         data={data as Record<string, unknown>[]}
         margin={{ left: 4, right: 12, top: 8 }}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import TicketStatusBadge from "@/features/manager/components/TicketStatusBadge";
-import TicketPriorityBadge from "@/features/manager/components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import SlaCountdown from "@/features/manager/components/SlaCountdown";
 import TriageDialog from "@/features/manager/components/TriageDialog";
 import AssignDialog from "@/features/manager/components/AssignDialog";
@@ -20,7 +20,10 @@ import DeclareIncidentDialog from "@/features/manager/components/DeclareIncident
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import BatteryAssetInfoPanel from "@/features/manager/components/BatteryAssetInfoPanel";
 import {
@@ -45,6 +48,7 @@ import {
 } from "@/shared/types/ticket.types";
 import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { slaBarColorClass } from "@/shared/lib/sla";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
@@ -100,22 +104,12 @@ export default function TicketDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<DialogType>(null);
-  const [commentSubTab, setCommentSubTab] = useState<"public" | "internal">(
-    "public",
-  );
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
 
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
   const { data: comments = [] } = useTicketComments(id);
-  const publicComments = useMemo(
-    () => comments.filter((c) => !c.isInternal),
-    [comments],
-  );
-  const internalComments = useMemo(
-    () => comments.filter((c) => c.isInternal),
-    [comments],
-  );
   const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
   const user = useSessionStore((s) => s.user);
@@ -170,23 +164,24 @@ export default function TicketDetailPage() {
   ).includes(status);
   const canApprove = status === TicketStatusEnum.Resolved;
   const canReject = status === TicketStatusEnum.Resolved;
-  const canEscalate = !(
+  // Escalate = thêm nhân lực/cấp bậc khi ticket ĐANG được xử lý. Siết allow-list
+  // (thay vì "mọi status trừ Closed") để nút không hiện ở New/Open/Approved/
+  // Resolved/ClosedRejected — nơi escalate vô nghĩa (chưa triage/đã xong).
+  const canEscalate = (
     [
-      TicketStatusEnum.Closed,
-      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Assigned,
+      TicketStatusEnum.InProgress,
+      TicketStatusEnum.WaitingCustomer,
+      TicketStatusEnum.WaitingParts,
+      TicketStatusEnum.WaitingOnsiteSchedule,
+      TicketStatusEnum.Escalated,
     ] as TicketStatusEnum[]
   ).includes(status);
   const canDeclareIncident = !ticket.isIncident;
 
   // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -341,82 +336,31 @@ export default function TicketDetailPage() {
               value="comments"
               className="min-h-0 m-0 flex flex-col overflow-hidden"
             >
-              <Tabs
-                value={commentSubTab}
-                onValueChange={(v) =>
-                  setCommentSubTab(v as "public" | "internal")
-                }
-                className="flex-1 min-h-0 flex flex-col gap-0"
-              >
-                <div className="px-6 pt-2 shrink-0">
-                  <TabsList variant="line">
-                    <TabsTrigger value="public">
-                      Công khai
-                      {publicComments.length > 0 &&
-                        ` (${publicComments.length})`}
-                    </TabsTrigger>
-                    <TabsTrigger value="internal">
-                      Nội bộ
-                      {internalComments.length > 0 &&
-                        ` (${internalComments.length})`}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                <TabsContent
-                  value="public"
-                  className="flex-1 min-h-0 overflow-y-auto p-6"
-                >
-                  <TicketCommentThread
-                    comments={publicComments}
-                    currentUserId={currentUserId}
-                    emptyText="Chưa có bình luận công khai nào."
-                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
-                    ticketClosed={status === TicketStatusEnum.Closed}
-                    onEdit={(chat, body, editReason) =>
-                      updateChat({
-                        ticketId: id,
-                        chatId: chat.id,
-                        payload: { body, editReason },
-                      })
-                    }
-                    onDelete={(chat, reason) =>
-                      deleteChat({ ticketId: id, chatId: chat.id, reason })
-                    }
-                    editPending={editChatPending}
-                    deletePending={deleteChatPending}
-                    onMarkRead={handleMarkRead}
-                    onTranslate={handleTranslate}
-                  />
-                </TabsContent>
-                <TabsContent
-                  value="internal"
-                  className="flex-1 min-h-0 overflow-y-auto p-6"
-                >
-                  <TicketCommentThread
-                    comments={internalComments}
-                    currentUserId={currentUserId}
-                    emptyText="Chưa có bình luận nội bộ nào."
-                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
-                    ticketClosed={status === TicketStatusEnum.Closed}
-                    onEdit={(chat, body, editReason) =>
-                      updateChat({
-                        ticketId: id,
-                        chatId: chat.id,
-                        payload: { body, editReason },
-                      })
-                    }
-                    onDelete={(chat, reason) =>
-                      deleteChat({ ticketId: id, chatId: chat.id, reason })
-                    }
-                    editPending={editChatPending}
-                    deletePending={deleteChatPending}
-                    onMarkRead={handleMarkRead}
-                    onTranslate={handleTranslate}
-                  />
-                </TabsContent>
-              </Tabs>
+              <div className="flex-1 overflow-y-auto p-6">
+                <TicketCommentThread
+                  comments={comments}
+                  currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
+                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                  ticketClosed={status === TicketStatusEnum.Closed}
+                  onEdit={(chat, body, editReason) =>
+                    updateChat({
+                      ticketId: id,
+                      chatId: chat.id,
+                      payload: { body, editReason },
+                    })
+                  }
+                  onDelete={(chat, reason) =>
+                    deleteChat({ ticketId: id, chatId: chat.id, reason })
+                  }
+                  editPending={editChatPending}
+                  deletePending={deleteChatPending}
+                  onMarkRead={handleMarkRead}
+                  onTranslate={handleTranslate}
+                />
+              </div>
               <div className="shrink-0 border-t border-border p-3">
                 {typingNames.length > 0 && (
                   <p className="px-1 pb-2 text-xs text-muted-foreground italic">
@@ -426,7 +370,7 @@ export default function TicketDetailPage() {
                 <AddCommentForm
                   ticketId={id}
                   onTyping={sendTyping}
-                  defaultIsInternal={commentSubTab === "internal"}
+                  isInternal={chatTab === "internal"}
                 />
               </div>
             </TabsContent>
@@ -455,7 +399,7 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Right: Sidebar */}
-        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+        <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
           <div className="p-4">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">

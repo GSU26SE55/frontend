@@ -113,7 +113,7 @@ export default function KbArticleTable({
             activeSortKey={sortKey}
             direction={sortDirection}
             onSort={toggleSort}
-            className="w-[100px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="w-25 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             Mã
           </SortableTableHead>
@@ -131,7 +131,7 @@ export default function KbArticleTable({
             activeSortKey={sortKey}
             direction={sortDirection}
             onSort={toggleSort}
-            className="w-[110px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="w-27.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             Danh mục
           </SortableTableHead>
@@ -140,7 +140,7 @@ export default function KbArticleTable({
             activeSortKey={sortKey}
             direction={sortDirection}
             onSort={toggleSort}
-            className="w-[120px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="w-30 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             Trạng thái
           </SortableTableHead>
@@ -149,7 +149,7 @@ export default function KbArticleTable({
             activeSortKey={sortKey}
             direction={sortDirection}
             onSort={toggleSort}
-            className="w-[90px] justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="w-22.5 justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             Lượt xem
           </SortableTableHead>
@@ -158,11 +158,11 @@ export default function KbArticleTable({
             activeSortKey={sortKey}
             direction={sortDirection}
             onSort={toggleSort}
-            className="w-[90px] justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            className="w-22.5 justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
           >
             Hữu ích
           </SortableTableHead>
-          <TableHead className="w-[80px] text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <TableHead className="w-20 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Thao tác
           </TableHead>
         </TableRow>

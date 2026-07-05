@@ -17,6 +17,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { useStaffKbList, useMarkStaffKbHelpful } from "../hooks/useStaffKb";
 import KbArticleTable from "../components/KbArticleTable";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { ErrorState } from "@/shared/components/common/ErrorState";
 import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 
@@ -48,11 +49,11 @@ export default function KbListPage() {
     pageSize: filters.pageSize,
   };
 
-  const { data, isLoading } = useStaffKbList(params);
+  const { data, isLoading, isError, refetch } = useStaffKbList(params);
   const { mutate: markHelpful } = useMarkStaffKbHelpful();
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -135,15 +136,22 @@ export default function KbListPage() {
       </div>
 
       <Card className="gap-0 py-0 overflow-hidden">
-        <KbArticleTable
-          data={data?.items ?? []}
-          isLoading={isLoading}
-          pageNumber={data?.pageNumber ?? 1}
-          pageSize={data?.pageSize ?? 10}
-          hasFilter={hasActiveFilter}
-          onResetFilter={resetFilters}
-          onMarkHelpful={(a) => markHelpful(a.id)}
-        />
+        {isError ? (
+          <ErrorState
+            message="Không thể tải danh sách bài viết."
+            onRetry={() => refetch()}
+          />
+        ) : (
+          <KbArticleTable
+            data={data?.items ?? []}
+            isLoading={isLoading}
+            pageNumber={data?.pageNumber ?? 1}
+            pageSize={data?.pageSize ?? 10}
+            hasFilter={hasActiveFilter}
+            onResetFilter={resetFilters}
+            onMarkHelpful={(a) => markHelpful(a.id)}
+          />
+        )}
       </Card>
 
       {data && (

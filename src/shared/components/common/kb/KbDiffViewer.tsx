@@ -35,7 +35,7 @@ function Gutter({
     <td
       className={cn(
         "select-none text-right align-top tabular-nums",
-        "w-12 px-3 py-1 text-[12px] font-mono border-r",
+        "w-12 px-3 py-1 text-xs font-mono border-r",
         type === "del"
           ? "bg-[#ffebe9] border-[#ffc0bc] text-[#82071e]/60"
           : type === "add"
@@ -87,7 +87,7 @@ function CodeCell({
   return (
     <td
       className={cn(
-        "px-3 py-1 align-top whitespace-pre-wrap break-words text-[13px] font-mono leading-[20px]",
+        "px-3 py-1 align-top whitespace-pre-wrap break-words text-[13px] font-mono leading-5",
         type === "del"
           ? "bg-[#ffebe9]"
           : type === "add"
@@ -205,7 +205,7 @@ function SectionBlock({
           {label}
         </span>
         {diff.isChanged ? (
-          <div className="flex items-center gap-2 text-[12px] font-mono font-semibold">
+          <div className="flex items-center gap-2 text-xs font-mono font-semibold">
             {added > 0 && (
               <span className="text-[#116329] dark:text-emerald-400">
                 +{added}
@@ -282,11 +282,11 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
       <div className="flex items-center justify-between gap-3 flex-wrap rounded-md border border-[#d0d7de] bg-[#f6f8fa] dark:bg-muted/30 px-4 py-2.5">
         <div className="flex items-center gap-2 text-[13px]">
           <span className="text-[#57606a]">So sánh</span>
-          <code className="rounded border border-[#d0d7de] bg-white dark:bg-background px-2 py-0.5 font-mono text-[12px] font-semibold">
+          <code className="rounded border border-[#d0d7de] bg-white dark:bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.fromVersion}
           </code>
           <span className="text-[#57606a]">→</span>
-          <code className="rounded border border-[#d0d7de] bg-white dark:bg-background px-2 py-0.5 font-mono text-[12px] font-semibold">
+          <code className="rounded border border-[#d0d7de] bg-white dark:bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.toVersion}
           </code>
           <span className="ml-3 flex items-center gap-1.5 font-mono font-semibold text-[13px]">
@@ -303,7 +303,7 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
           <Button
             size="sm"
             variant={view === "unified" ? "default" : "ghost"}
-            className="h-7 px-3 text-[12px] gap-1.5"
+            className="h-7 px-3 text-xs gap-1.5"
             onClick={() => setView("unified")}
           >
             <Rows className="size-3.5" />
@@ -312,7 +312,7 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
           <Button
             size="sm"
             variant={view === "split" ? "default" : "ghost"}
-            className="h-7 px-3 text-[12px] gap-1.5"
+            className="h-7 px-3 text-xs gap-1.5"
             onClick={() => setView("split")}
           >
             <Columns2 className="size-3.5" />

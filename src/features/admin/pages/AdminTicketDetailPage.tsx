@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -26,11 +26,14 @@ import {
   useDeclareIncident,
 } from "../hooks/useAdminTickets";
 import AddCommentForm from "../components/AddCommentForm";
-import TicketStatusBadge from "../components/TicketStatusBadge";
-import TicketPriorityBadge from "../components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -44,6 +47,7 @@ import {
   useTranslateTicketChat,
 } from "@/shared/hooks/useTicketChatActions";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { slaBarColorClass } from "@/shared/lib/sla";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Charging: "Lỗi sạc",
@@ -77,22 +81,12 @@ export default function AdminTicketDetailPage() {
   const ticketId = id ?? "";
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
-  const [commentSubTab, setCommentSubTab] = useState<"public" | "internal">(
-    "public",
-  );
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
-  const publicComments = useMemo(
-    () => comments.filter((c) => !c.isInternal),
-    [comments],
-  );
-  const internalComments = useMemo(
-    () => comments.filter((c) => c.isInternal),
-    [comments],
-  );
   const { mutate: declareIncident, isPending } = useDeclareIncident();
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
@@ -140,13 +134,7 @@ export default function AdminTicketDetailPage() {
     );
   }
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -234,82 +222,31 @@ export default function AdminTicketDetailPage() {
               value="comments"
               className="min-h-0 m-0 flex flex-col overflow-hidden"
             >
-              <Tabs
-                value={commentSubTab}
-                onValueChange={(v) =>
-                  setCommentSubTab(v as "public" | "internal")
-                }
-                className="flex-1 min-h-0 flex flex-col gap-0"
-              >
-                <div className="px-6 pt-2 shrink-0">
-                  <TabsList variant="line">
-                    <TabsTrigger value="public">
-                      Công khai
-                      {publicComments.length > 0 &&
-                        ` (${publicComments.length})`}
-                    </TabsTrigger>
-                    <TabsTrigger value="internal">
-                      Nội bộ
-                      {internalComments.length > 0 &&
-                        ` (${internalComments.length})`}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                <TabsContent
-                  value="public"
-                  className="flex-1 min-h-0 overflow-y-auto p-6"
-                >
-                  <TicketCommentThread
-                    comments={publicComments}
-                    currentUserId={currentUserId}
-                    emptyText="Chưa có bình luận công khai nào."
-                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
-                    ticketClosed={ticket.status === TicketStatusEnum.Closed}
-                    onEdit={(chat, body, editReason) =>
-                      updateChat({
-                        ticketId,
-                        chatId: chat.id,
-                        payload: { body, editReason },
-                      })
-                    }
-                    onDelete={(chat, reason) =>
-                      deleteChat({ ticketId, chatId: chat.id, reason })
-                    }
-                    editPending={editChatPending}
-                    deletePending={deleteChatPending}
-                    onMarkRead={handleMarkRead}
-                    onTranslate={handleTranslate}
-                  />
-                </TabsContent>
-                <TabsContent
-                  value="internal"
-                  className="flex-1 min-h-0 overflow-y-auto p-6"
-                >
-                  <TicketCommentThread
-                    comments={internalComments}
-                    currentUserId={currentUserId}
-                    emptyText="Chưa có bình luận nội bộ nào."
-                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
-                    ticketClosed={ticket.status === TicketStatusEnum.Closed}
-                    onEdit={(chat, body, editReason) =>
-                      updateChat({
-                        ticketId,
-                        chatId: chat.id,
-                        payload: { body, editReason },
-                      })
-                    }
-                    onDelete={(chat, reason) =>
-                      deleteChat({ ticketId, chatId: chat.id, reason })
-                    }
-                    editPending={editChatPending}
-                    deletePending={deleteChatPending}
-                    onMarkRead={handleMarkRead}
-                    onTranslate={handleTranslate}
-                  />
-                </TabsContent>
-              </Tabs>
+              <div className="flex-1 overflow-y-auto p-6">
+                <TicketCommentThread
+                  comments={comments}
+                  currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
+                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                  ticketClosed={ticket.status === TicketStatusEnum.Closed}
+                  onEdit={(chat, body, editReason) =>
+                    updateChat({
+                      ticketId,
+                      chatId: chat.id,
+                      payload: { body, editReason },
+                    })
+                  }
+                  onDelete={(chat, reason) =>
+                    deleteChat({ ticketId, chatId: chat.id, reason })
+                  }
+                  editPending={editChatPending}
+                  deletePending={deleteChatPending}
+                  onMarkRead={handleMarkRead}
+                  onTranslate={handleTranslate}
+                />
+              </div>
               <div className="shrink-0 border-t border-border p-3">
                 {typingNames.length > 0 && (
                   <p className="px-1 pb-2 text-xs text-muted-foreground italic">
@@ -319,7 +256,7 @@ export default function AdminTicketDetailPage() {
                 <AddCommentForm
                   ticketId={ticketId}
                   onTyping={sendTyping}
-                  defaultIsInternal={commentSubTab === "internal"}
+                  isInternal={chatTab === "internal"}
                 />
               </div>
             </TabsContent>

@@ -1,6 +1,9 @@
 import { Badge } from "@/components/ui/badge";
-import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { TicketStatusEnum } from "@/shared/enums/ticket.enum";
 
+// Badge trạng thái ticket DÙNG CHUNG cho admin/manager/staff — trước đây có 3 bản
+// riêng lệch nhau về label + màu (cùng status hiển thị khác nhau tuỳ role).
+// 1 nguồn label + variant duy nhất để nhất quán cross-role.
 const STATUS_CONFIG: Record<
   TicketStatusEnum,
   {
@@ -9,7 +12,7 @@ const STATUS_CONFIG: Record<
   }
 > = {
   [TicketStatusEnum.New]: { label: "Mới", variant: "secondary" },
-  [TicketStatusEnum.Open]: { label: "Đang mở", variant: "secondary" },
+  [TicketStatusEnum.Open]: { label: "Chờ triage", variant: "outline" },
   [TicketStatusEnum.Approved]: { label: "Đã duyệt", variant: "default" },
   [TicketStatusEnum.Assigned]: { label: "Đã gán", variant: "default" },
   [TicketStatusEnum.InProgress]: { label: "Đang xử lý", variant: "default" },
@@ -25,15 +28,18 @@ const STATUS_CONFIG: Record<
     label: "Chờ lịch hẹn",
     variant: "outline",
   },
-  [TicketStatusEnum.Resolved]: { label: "Đã giải quyết", variant: "default" },
-  [TicketStatusEnum.Escalated]: { label: "Chuyển cấp", variant: "destructive" },
+  [TicketStatusEnum.Resolved]: { label: "Đã xử lý", variant: "default" },
+  [TicketStatusEnum.Escalated]: {
+    label: "Đã chuyển cấp",
+    variant: "destructive",
+  },
   [TicketStatusEnum.ClosedPendingRate]: {
     label: "Chờ đánh giá",
     variant: "secondary",
   },
   [TicketStatusEnum.Closed]: { label: "Đã đóng", variant: "secondary" },
   [TicketStatusEnum.ClosedRejected]: {
-    label: "Từ chối đóng",
+    label: "Bị từ chối",
     variant: "destructive",
   },
   [TicketStatusEnum.Incident]: { label: "Sự cố", variant: "destructive" },

@@ -52,7 +52,7 @@ export default function ManagerSiteDetailPage() {
 
   if (loadingSite) {
     return (
-      <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div className="p-6 space-y-6 max-w-360 mx-auto">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
         <Card className="p-6">
@@ -68,12 +68,12 @@ export default function ManagerSiteDetailPage() {
 
   if (!site) {
     return (
-      <div className="p-6 max-w-[1440px] mx-auto">
+      <div className="p-6 max-w-360 mx-auto">
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
-          <span className="text-sm">Khong tim thay site.</span>
+          <span className="text-sm">Không tìm thấy site.</span>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-3.5" /> Quay lai
+            <ArrowLeft className="size-3.5" /> Quay lại
           </Button>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function ManagerSiteDetailPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       {/* Back + header */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -91,7 +91,7 @@ export default function ManagerSiteDetailPage() {
             className="-ml-2"
             onClick={() => navigate(-1)}
           >
-            <ArrowLeft className="size-3.5" /> Quay lai
+            <ArrowLeft className="size-3.5" /> Quay lại
           </Button>
           <RefreshButton queryKeys={[KEY.sites]} size="icon" />
         </div>
@@ -111,7 +111,7 @@ export default function ManagerSiteDetailPage() {
       {/* Assets table */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Danh sach pin</h2>
+          <h2 className="text-lg font-semibold">Danh sách pin</h2>
           <Select
             value={
               assetsParams.status != null

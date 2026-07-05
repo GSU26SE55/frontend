@@ -145,7 +145,7 @@ export default function AmbientConfigView({
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6 pb-16">
           <div>
             <p className="text-sm font-medium">Chọn site để bắt đầu</p>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-[260px]">
+            <p className="text-xs text-muted-foreground mt-1.5 max-w-65">
               Dữ liệu nhiệt độ, độ ẩm và lịch sử đo lường sẽ hiển thị tại đây
             </p>
           </div>

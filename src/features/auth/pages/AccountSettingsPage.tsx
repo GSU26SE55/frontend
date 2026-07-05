@@ -148,7 +148,7 @@ const AccountSettingsPage = () => {
   const current = MENU.find((m) => m.key === active)!;
 
   return (
-    <div className="p-6 space-y-5 max-w-[1100px] mx-auto">
+    <div className="p-6 space-y-5 max-w-275 mx-auto">
       {/* Page header */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -164,7 +164,7 @@ const AccountSettingsPage = () => {
       </div>
 
       {/* Body card — fixed height so content stays inside */}
-      <Card className="min-h-[520px] gap-0 overflow-hidden rounded-xl py-0 md:flex-row">
+      <Card className="min-h-130 gap-0 overflow-hidden rounded-xl py-0 md:flex-row">
         {/* ── Nav ── */}
         <nav className="w-full shrink-0 border-b border-border bg-muted/30 px-2 py-3 md:w-52 md:border-b-0 md:border-r">
           {MENU.map((item) => {
@@ -224,7 +224,7 @@ const AccountSettingsPage = () => {
                 {/* Mật khẩu & Email — chọn action rồi hiện form */}
                 {active === "credentials" &&
                   (credSub === null ? (
-                    <div className="flex flex-col items-center justify-center min-h-[340px] gap-6">
+                    <div className="flex flex-col items-center justify-center min-h-85 gap-6">
                       <p className="text-sm text-muted-foreground">
                         Chọn thao tác bạn muốn thực hiện
                       </p>
@@ -335,7 +335,12 @@ const AccountSettingsPage = () => {
                       icon={Link2}
                       title="Liên kết Google"
                       description="Đăng nhập nhanh bằng tài khoản Google"
-                      action={<GoogleLinkSection isLinked={false} bare />}
+                      action={
+                        // TODO(BE): AccountDto (GET /api/auth/me) chưa trả trạng
+                        // thái Google-linked (googleId/isGoogleLinked). Khi BE bổ
+                        // sung field, đổi thành isLinked={!!account?.googleId}.
+                        <GoogleLinkSection isLinked={false} bare />
+                      }
                     />
 
                     <SecurityRow

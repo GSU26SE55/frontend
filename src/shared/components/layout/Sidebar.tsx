@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import {
-  PanelLeftClose,
-  PanelLeftOpen,
-  
-  ChevronDown,
-} from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/logo.png";
 
@@ -156,6 +151,7 @@ export default function Sidebar({
             className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={onToggle}
             title="Mở menu"
+            aria-label="Mở rộng thanh bên"
           >
             <PanelLeftOpen size={16} />
           </button>
@@ -177,6 +173,7 @@ export default function Sidebar({
               className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
               onClick={onToggle}
               title="Thu gọn"
+              aria-label="Thu gọn thanh bên"
             >
               <PanelLeftClose size={15} />
             </button>
@@ -195,7 +192,7 @@ export default function Sidebar({
       <div className="border-t p-2">
         <button
           className={cn(
-            "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+            "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
             collapsed && "justify-center px-2",
           )}
           title={collapsed ? "Trợ giúp" : undefined}

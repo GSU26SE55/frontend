@@ -204,7 +204,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                               onChange={() => toggle(p.id)}
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="text-[12px] font-mono leading-none truncate">
+                              <div className="text-xs font-mono leading-none truncate">
                                 {p.code}
                               </div>
                               {p.description && (

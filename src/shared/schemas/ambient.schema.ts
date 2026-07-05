@@ -59,6 +59,22 @@ export const ambientThresholdSchema = z
         message: "Phải ≥ ngưỡng cảnh báo",
       });
     }
+
+    // Combo rule chỉ active khi có ĐỦ cả 2 ngưỡng (nhiệt + ẩm). Chặn cấu hình
+    // combo half-configured (chỉ 1 field) — BE bỏ qua nhưng dễ gây hiểu nhầm.
+    const comboTemp = num(data.comboTempThreshold);
+    const comboHum = num(data.comboHumidityThreshold);
+    if ((comboTemp === undefined) !== (comboHum === undefined)) {
+      const missing =
+        comboTemp === undefined
+          ? "comboTempThreshold"
+          : "comboHumidityThreshold";
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [missing],
+        message: "Combo rule cần đủ cả ngưỡng nhiệt độ và độ ẩm",
+      });
+    }
   });
 
 export type AmbientThresholdFormValues = z.infer<typeof ambientThresholdSchema>;

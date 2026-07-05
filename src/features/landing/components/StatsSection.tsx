@@ -60,7 +60,7 @@ const StatItem = ({ stat }: { stat: (typeof STATS_DATA)[number] }) => (
     <p className="mt-2 text-sm sm:text-base font-semibold text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
       {stat.label}
     </p>
-    <p className="mt-1 hidden sm:block text-xs text-slate-300/80 max-w-[180px] leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+    <p className="mt-1 hidden sm:block text-xs text-slate-300/80 max-w-45 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
       {stat.sub}
     </p>
   </div>
@@ -143,7 +143,7 @@ const StatsSection = () => {
 
   return (
     <section
-      className="relative w-full h-[420px] sm:h-[560px] lg:h-[680px] bg-cover bg-center bg-no-repeat overflow-hidden"
+      className="relative w-full h-105 sm:h-140 lg:h-170 bg-cover bg-center bg-no-repeat overflow-hidden"
       style={{ backgroundImage: `url("${test1Img}")` }}
     >
       {/* Top gradient: blend from white (WorkflowSection) */}

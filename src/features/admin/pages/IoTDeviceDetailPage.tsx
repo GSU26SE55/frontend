@@ -47,7 +47,7 @@ export default function IoTDeviceDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-[1440px] mx-auto space-y-4">
+      <div className="p-6 max-w-360 mx-auto space-y-4">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -55,7 +55,7 @@ export default function IoTDeviceDetailPage() {
   }
   if (!device) {
     return (
-      <div className="p-6 max-w-[1440px] mx-auto">
+      <div className="p-6 max-w-360 mx-auto">
         <p className="text-muted-foreground">Không tìm thấy thiết bị.</p>
       </div>
     );
@@ -64,9 +64,13 @@ export default function IoTDeviceDetailPage() {
   const isDecommissioned = device.status === IotDeviceStatusEnum.Decommissioned;
   const isRevoked = device.apiKeyRevokedAt != null;
   const isDisabled = device.status === IotDeviceStatusEnum.Disabled;
+  // Chưa provision (Pending) → chưa có kết nối MQTT, command sẽ rơi vào topic
+  // không ai nghe. Ẩn nút để tránh báo "đã gửi" gây hiểu nhầm.
+  const isPending = device.status === IotDeviceStatusEnum.Pending;
+  const canSendCommand = !isDisabled && !isDecommissioned && !isPending;
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button
@@ -96,7 +100,7 @@ export default function IoTDeviceDetailPage() {
           >
             Chỉnh sửa
           </Button>
-          {!isDisabled && !isDecommissioned && (
+          {canSendCommand && (
             <Button
               variant="outline"
               size="sm"
