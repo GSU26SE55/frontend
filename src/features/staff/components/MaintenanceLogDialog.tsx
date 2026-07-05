@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,10 +26,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { KbArticleSelector } from "@/shared/components/common/kb/KbArticleSelector";
+import {
+  KbArticleSelector,
+  type KbArticleSearchParams,
+} from "@/shared/components/common/kb/KbArticleSelector";
 import FileUploadField from "@/features/file-storage/components/FileUploadField";
 import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
 import { MaintenanceLogTypeEnum } from "@/shared/types/ticket.types";
+import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb.enum";
+import { staffKbService } from "../services/kb.service";
 import {
   maintenanceLogSchema,
   type MaintenanceLogFormValues,
@@ -75,6 +80,19 @@ export function MaintenanceLogDialog({
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit(data);
   });
+
+  const searchArticles = useCallback(
+    ({ q, category }: KbArticleSearchParams) =>
+      staffKbService
+        .getList({
+          q,
+          category: category ? KbCategoryCode[category] : undefined,
+          status: KbArticleStatusEnum.Published,
+          pageSize: 20,
+        })
+        .then((r) => r.data.data?.items ?? []),
+    [],
+  );
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -240,6 +258,7 @@ export function MaintenanceLogDialog({
                     <KbArticleSelector
                       value={field.value ?? []}
                       onChange={field.onChange}
+                      searchFn={searchArticles}
                     />
                   </FormControl>
                   <FormMessage />

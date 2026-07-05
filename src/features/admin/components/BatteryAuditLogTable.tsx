@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BatteryAuditLogDto } from "@/features/admin/types/battery-audit.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 // severity → màu badge (display-only; KHÔNG phải filter).
 const SEVERITY_STYLE: Record<string, string> = {
@@ -36,6 +38,26 @@ export default function BatteryAuditLogTable({
   pageNumber,
   pageSize,
 }: BatteryAuditLogTableProps) {
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<BatteryAuditLogDto>(logs, (log, key) => {
+      switch (key) {
+        case "occurredAt":
+          return new Date(log.occurredAt);
+        case "actionCode":
+          return log.actionCode;
+        case "severity":
+          return log.severity;
+        case "targetDisplay":
+          return log.targetDisplay ?? log.targetId ?? "";
+        case "actorAccountId":
+          return log.actorAccountId ?? "";
+        case "isSuccess":
+          return log.isSuccess ? 1 : 0;
+        default:
+          return null;
+      }
+    });
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-3">
@@ -71,16 +93,62 @@ export default function BatteryAuditLogTable({
       <TableHeader>
         <TableRow className="bg-muted/40">
           <TableHead className="w-12 text-center">STT</TableHead>
-          <TableHead className="w-44">Thời gian</TableHead>
-          <TableHead>Hành động</TableHead>
-          <TableHead className="w-28">Mức độ</TableHead>
-          <TableHead>Đối tượng</TableHead>
-          <TableHead className="w-40">Thực hiện</TableHead>
-          <TableHead className="w-24 text-center">Kết quả</TableHead>
+          <SortableTableHead
+            sortKey="occurredAt"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-44"
+          >
+            Thời gian
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="actionCode"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Hành động
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="severity"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-28"
+          >
+            Mức độ
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="targetDisplay"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Đối tượng
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="actorAccountId"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-40"
+          >
+            Thực hiện
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="isSuccess"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-24 justify-center"
+          >
+            Kết quả
+          </SortableTableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {logs.map((log, index) => (
+        {sorted.map((log, index) => (
           <TableRow
             key={log.id}
             className="hover:bg-muted/50 transition-colors"

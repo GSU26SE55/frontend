@@ -18,10 +18,11 @@ import {
   TicketStatusEnum,
 } from "@/shared/types/ticket.types";
 import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";
-import { TicketStatusBadge } from "@/features/staff/components/TicketStatusBadge";
-import { TicketPriorityBadge } from "@/features/staff/components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket.types";
+import { isNearBreachPercent } from "@/shared/lib/sla";
 
 const OPEN_STATUSES = new Set<string>([
   TicketStatusEnum.Assigned,
@@ -57,11 +58,11 @@ export default function SlaMonitorPage() {
   );
   const warning = monitoredTickets.filter((ticket) => {
     const percent = ticket.slaTimer?.remainingPercent;
-    return percent !== undefined && percent > 0 && percent <= 25;
+    return percent !== undefined && percent > 0 && isNearBreachPercent(percent);
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">

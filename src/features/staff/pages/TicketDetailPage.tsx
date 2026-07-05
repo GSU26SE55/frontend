@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { slaBarColorClass } from "@/shared/lib/sla";
 import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
 import {
   useStaffTicketDetail,
@@ -23,8 +24,8 @@ import {
   useAddComment,
   useAddMaintenanceLog,
 } from "../hooks/useStaffTicketMutations";
-import { TicketStatusBadge } from "../components/TicketStatusBadge";
-import { TicketPriorityBadge } from "../components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import { SlaCountdown } from "../components/SlaCountdown";
 import { HoldDialog } from "../components/HoldDialog";
 import { ResolveDialog } from "../components/ResolveDialog";
@@ -34,12 +35,25 @@ import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
+import SubIssuePanel from "../components/SubIssuePanel";
+import BatteryAssetInfoPanel from "../components/BatteryAssetInfoPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { checkPermission, P } from "@/shared/lib/authz";
 import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import {
+  useUpdateTicketChat,
+  useDeleteTicketChat,
+  useMarkTicketChatsRead,
+  useTranslateTicketChat,
+} from "@/shared/hooks/useTicketChatActions";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
 import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
 import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
@@ -78,9 +92,12 @@ export default function TicketDetailPage() {
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
+  // Tab chat: bình luận mới gửi theo tab đang mở (public/internal).
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
 
   const ticketId = id ?? "";
-  const currentUserId = useSessionStore((s) => s.user?.accountId);
+  const user = useSessionStore((s) => s.user);
+  const currentUserId = user?.accountId;
 
   // Realtime: invalidate tickets.chats khi ChatAdded (cùng key với useStaffTicketComments)
   // + typing indicator (typingNames render "đang gõ", sendTyping báo khi mình gõ).
@@ -98,6 +115,16 @@ export default function TicketDetailPage() {
   const escalateMutation = useEscalateTicket(ticketId);
   const commentMutation = useAddComment(ticketId);
   const logMutation = useAddMaintenanceLog(ticketId);
+  const { mutate: updateChat, isPending: editChatPending } =
+    useUpdateTicketChat();
+  const { mutate: deleteChat, isPending: deleteChatPending } =
+    useDeleteTicketChat();
+  const { mutate: markChatsRead } = useMarkTicketChatsRead();
+  const handleMarkRead = (chatIds: string[]) =>
+    markChatsRead({ ticketId, payload: { chatIds } });
+  const { mutateAsync: translateChat } = useTranslateTicketChat();
+  const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
+    translateChat({ ticketId, chatId: chat.id, targetLanguage });
 
   if (isError) {
     return (
@@ -131,6 +158,17 @@ export default function TicketDetailPage() {
   const canAddLog = isInProgress || isWaiting;
   // Khoá sửa log khi ticket đã Resolved/ClosedPendingRate/Closed (BE enforce).
   const canEditLog = isInProgress || isWaiting;
+  // Gắn KB reference: khớp BE (AddTicketKbReferenceCommandHandler) — chỉ chặn
+  // Resolved/ClosedPendingRate/Closed, cho phép mọi state trước đó
+  // (New/Open/Assigned/InProgress/Waiting/Escalated). Trước đây FE hẹp hơn BE
+  // (chỉ Open||InProgress) khiến staff không gắn được khi Assigned/Waiting.
+  const canAddKb = !(
+    [
+      TicketStatusEnum.Resolved,
+      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Closed,
+    ] as TicketStatusEnum[]
+  ).includes(status);
 
   const handleHoldSubmit = (data: HoldFormValues) => {
     holdMutation.mutate(data, { onSuccess: () => setHoldOpen(false) });
@@ -154,13 +192,7 @@ export default function TicketDetailPage() {
 
   const logs = ticket.maintenanceLogs ?? [];
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -261,6 +293,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="logs">
                   Nhật ký{logs.length > 0 && ` (${logs.length})`}
                 </TabsTrigger>
+                <TabsTrigger value="sub-issues">Sub Issue</TabsTrigger>
                 <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
               </TabsList>
             </div>
@@ -290,6 +323,25 @@ export default function TicketDetailPage() {
                 <TicketCommentThread
                   comments={comments}
                   currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
+                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                  ticketClosed={status === TicketStatusEnum.Closed}
+                  onEdit={(chat, body, editReason) =>
+                    updateChat({
+                      ticketId,
+                      chatId: chat.id,
+                      payload: { body, editReason },
+                    })
+                  }
+                  onDelete={(chat, reason) =>
+                    deleteChat({ ticketId, chatId: chat.id, reason })
+                  }
+                  editPending={editChatPending}
+                  deletePending={deleteChatPending}
+                  onMarkRead={handleMarkRead}
+                  onTranslate={handleTranslate}
                 />
               </div>
               {canComment && (
@@ -300,9 +352,11 @@ export default function TicketDetailPage() {
                     </p>
                   )}
                   <AddCommentForm
+                    ticketId={ticketId}
                     onSubmit={handleCommentSubmit}
                     isPending={commentMutation.isPending}
                     onTyping={sendTyping}
+                    isInternal={chatTab === "internal"}
                   />
                 </div>
               )}
@@ -403,12 +457,17 @@ export default function TicketDetailPage() {
               )}
             </TabsContent>
 
+            {/* Sub Issue — staff tự chia nhỏ ticket thành các việc con */}
+            <TabsContent
+              value="sub-issues"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              <SubIssuePanel key={ticketId} ticketId={ticketId} />
+            </TabsContent>
+
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
-              <TicketKbReferencesPanel
-                ticketId={ticketId}
-                canAdd={status === TicketStatusEnum.Open || isInProgress}
-              />
+              <TicketKbReferencesPanel ticketId={ticketId} canAdd={canAddKb} />
             </TabsContent>
           </Tabs>
         </div>
@@ -454,6 +513,35 @@ export default function TicketDetailPage() {
             ) : (
               <p className="text-xs text-muted-foreground">Chưa được triage.</p>
             )}
+          </div>
+
+          {/* Trạng thái + thời gian xử lý */}
+          <div className="p-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Trạng thái
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Hiện tại
+                </span>
+                <TicketStatusBadge status={ticket.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Thời gian xử lý
+                </span>
+                <ProcessingDurationTimer
+                  activities={activities}
+                  status={ticket.status}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
+          <div className="p-4">
+            <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
           </div>
 
           {/* Description */}

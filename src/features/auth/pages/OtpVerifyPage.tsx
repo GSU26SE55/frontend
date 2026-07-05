@@ -15,7 +15,12 @@ const OtpVerifyPage = () => {
 
   if (!email) return null;
 
-  return <OtpVerifyForm email={email} />;
+  return (
+    <OtpVerifyForm
+      email={email}
+      onSuccess={() => navigate("/login", { replace: true })}
+    />
+  );
 };
 
 export default OtpVerifyPage;

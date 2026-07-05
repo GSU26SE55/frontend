@@ -51,7 +51,7 @@ const FeatureCard = ({ card }: { card: (typeof FEATURE_CARDS)[number] }) => {
       data-anim="feature-card"
       style={{ opacity: 0 }}
       className={`
-        group relative h-[280px] rounded-[22px] p-7 flex flex-col justify-between
+        group relative h-70 rounded-[22px] p-7 flex flex-col justify-between
         transition-all duration-300 cursor-default
         ${
           card.isDark
@@ -147,10 +147,7 @@ const GovernanceSection = () => {
           </div>
         </Reveal>
 
-        <div
-          ref={gridRef}
-          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
-        >
+        <div ref={gridRef} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURE_CARDS.map((card) => (
             <FeatureCard key={card.title} card={card} />
           ))}

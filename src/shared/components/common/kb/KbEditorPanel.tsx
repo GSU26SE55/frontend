@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
+import { TagInput } from "@/shared/components/common/TagInput";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
 import type {
   KbArticleDTO,
@@ -37,11 +38,16 @@ const schema = z.object({
     .min(1, "Không được trống")
     .max(4000, "Tối đa 4000 ký tự"),
   recommendedPartsText: z.string().optional(),
-  tagsText: z.string().optional(),
+  tags: z
+    .array(z.string().max(50, "Mỗi thẻ tối đa 50 ký tự"))
+    .max(10, "Tối đa 10 thẻ")
+    .optional()
+    .default([]),
   isInternalOnly: z.boolean(),
   changeDescription: z.string().optional(),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
 
 // text (mỗi dòng / phẩy) → array
@@ -98,7 +104,7 @@ export function KbEditorPanel({
     diagnosisSteps: a.diagnosisSteps,
     solutionSteps: a.solutionSteps,
     recommendedPartsText: (a.recommendedParts ?? []).join("\n"),
-    tagsText: (a.tags ?? []).join(", "),
+    tags: a.tags ?? [],
     isInternalOnly: a.isInternalOnly,
     changeDescription: "",
   });
@@ -109,7 +115,7 @@ export function KbEditorPanel({
     reset,
     control,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaults(article),
   });
@@ -128,7 +134,7 @@ export function KbEditorPanel({
         diagnosisSteps: values.diagnosisSteps,
         solutionSteps: values.solutionSteps,
         recommendedParts: toList(values.recommendedPartsText),
-        tags: toList(values.tagsText),
+        tags: values.tags,
         isInternalOnly: values.isInternalOnly,
         changeDescription: values.changeDescription || undefined,
       });
@@ -258,11 +264,19 @@ export function KbEditorPanel({
             />
           </Field>
 
-          <Field label="Thẻ (cách nhau bằng dấu phẩy)">
-            <Input
-              {...register("tagsText")}
-              placeholder="quá nhiệt, sạc, BMS"
-              className="text-sm"
+          <Field label="Thẻ (tối đa 10 thẻ)">
+            <Controller
+              control={control}
+              name="tags"
+              render={({ field }) => (
+                <TagInput
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  placeholder="quá nhiệt, sạc, BMS..."
+                  maxTags={10}
+                  maxTagLength={50}
+                />
+              )}
             />
           </Field>
         </div>

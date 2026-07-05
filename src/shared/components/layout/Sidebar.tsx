@@ -1,12 +1,7 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import {
-  PanelLeftClose,
-  PanelLeftOpen,
-  
-  ChevronDown,
-} from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/logo.png";
 
@@ -31,13 +26,30 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
+// Active khi pathname trùng khớp item.path hoặc là route con của nó (vd item
+// "Tickets" /manager/tickets vẫn active ở trang chi tiết /manager/tickets/:id).
+// Khi 1 item khác trong sidebar có path CỤ THỂ HƠN cũng khớp (vd "Hàng chờ"
+// /manager/tickets/queue là con của "Tickets"), chỉ item cụ thể hơn được active —
+// tránh 2 mục cùng sáng lên khi đứng ở /manager/tickets/queue.
+function isPathActive(path: string, pathname: string, allPaths: string[]): boolean {
+  const matches = (p: string) => pathname === p || pathname.startsWith(`${p}/`);
+  if (!matches(path)) return false;
+  return !allPaths.some(
+    (other) => other !== path && other.startsWith(`${path}/`) && matches(other),
+  );
+}
+
 // ── Collapsible section ────────────────────────────────────────────────────
 function Section({
   section,
   sidebarCollapsed,
+  allPaths,
+  pathname,
 }: {
   section: NavSection;
   sidebarCollapsed: boolean;
+  allPaths: string[];
+  pathname: string;
 }) {
   const storageKey = section.title ? `sidebar-section-${section.title}` : null;
   const [open, setOpen] = useState(() => {
@@ -93,37 +105,37 @@ function Section({
         }}
       >
         <ul className="space-y-0.5">
-          {section.items.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                end
-                replace
-                title={sidebarCollapsed ? item.label : undefined}
-                className={({ isActive }) =>
-                  cn(
+          {section.items.map((item) => {
+            const active = isPathActive(item.path, pathname, allPaths);
+            return (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  replace
+                  title={sidebarCollapsed ? item.label : undefined}
+                  className={cn(
                     "flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-colors duration-100",
                     sidebarCollapsed && "justify-center px-2",
-                    isActive
+                    active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )
-                }
-              >
-                <item.icon size={15} className="shrink-0" />
-                {!sidebarCollapsed && (
-                  <>
-                    <span className="flex-1 truncate">{item.label}</span>
-                    {item.badge !== undefined && (
-                      <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none">
-                        {item.badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </NavLink>
-            </li>
-          ))}
+                  )}
+                >
+                  <item.icon size={15} className="shrink-0" />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {item.badge !== undefined && (
+                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none">
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
@@ -137,6 +149,9 @@ export default function Sidebar({
   collapsed,
   onToggle,
 }: SidebarProps) {
+  const { pathname } = useLocation();
+  const allPaths = sections.flatMap((s) => s.items.map((i) => i.path));
+
   return (
     <aside
       className={cn(
@@ -156,6 +171,7 @@ export default function Sidebar({
             className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={onToggle}
             title="Mở menu"
+            aria-label="Mở rộng thanh bên"
           >
             <PanelLeftOpen size={16} />
           </button>
@@ -177,6 +193,7 @@ export default function Sidebar({
               className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
               onClick={onToggle}
               title="Thu gọn"
+              aria-label="Thu gọn thanh bên"
             >
               <PanelLeftClose size={15} />
             </button>
@@ -187,7 +204,13 @@ export default function Sidebar({
       {/* ── Navigation ── */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-3">
         {sections.map((section, si) => (
-          <Section key={si} section={section} sidebarCollapsed={collapsed} />
+          <Section
+            key={si}
+            section={section}
+            sidebarCollapsed={collapsed}
+            allPaths={allPaths}
+            pathname={pathname}
+          />
         ))}
       </nav>
 
@@ -195,7 +218,7 @@ export default function Sidebar({
       <div className="border-t p-2">
         <button
           className={cn(
-            "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+            "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
             collapsed && "justify-center px-2",
           )}
           title={collapsed ? "Trợ giúp" : undefined}

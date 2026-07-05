@@ -81,9 +81,7 @@ const ProductSection = () => {
       const footer = card.querySelector<HTMLElement>(
         "[data-anim='card-footer']",
       );
-      const badge = card.querySelector<HTMLElement>(
-        "[data-anim='card-badge']",
-      );
+      const badge = card.querySelector<HTMLElement>("[data-anim='card-badge']");
 
       const tl = createTimeline({
         defaults: { ease: "outExpo" },
@@ -199,7 +197,7 @@ const ProductSection = () => {
                   <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors duration-300">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm text-slate-500 leading-relaxed min-h-[40px] lg:min-h-[48px]">
+                  <p className="mt-2 text-sm text-slate-500 leading-relaxed min-h-10 lg:min-h-12">
                     {item.desc}
                   </p>
 

@@ -40,7 +40,7 @@ const LandingFooter = () => {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
       >
-        <div className="h-px w-[600px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+        <div className="h-px w-150 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
       </div>
 
       <Reveal className="mx-auto max-w-7xl relative z-10">

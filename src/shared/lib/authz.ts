@@ -63,6 +63,12 @@ export const P = {
   // ticket.saga.* (Sprint 5B #241)
   TICKET_SAGA_VIEW: "ticket.saga.view" as PermissionType,
   TICKET_SAGA_REPROCESS: "ticket.saga.reprocess" as PermissionType,
+
+  // chat.* (#CHAT-16)
+  CHAT_CREATE_INTERNAL: "chat.create.internal" as PermissionType,
+  CHAT_EDIT_ANY: "chat.edit.any" as PermissionType,
+  CHAT_DELETE_ANY: "chat.delete.any" as PermissionType,
+  CHAT_VIEW_INTERNAL: "chat.view.internal" as PermissionType,
 } as const;
 
 export const checkPermission = (

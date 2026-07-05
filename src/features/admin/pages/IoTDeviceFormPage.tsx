@@ -25,7 +25,7 @@ export default function IoTDeviceFormPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"

@@ -37,10 +37,11 @@ import {
   countTicketsByStatus,
   groupTicketsByDay,
 } from "@/shared/utils/dashboard.utils";
+import { isNearBreachPercent } from "@/shared/lib/sla";
 
 function isNearBreach(ticket: TicketDTO) {
   const percent = ticket.slaTimer?.remainingPercent;
-  return percent !== undefined && percent > 0 && percent <= 25;
+  return percent !== undefined && percent > 0 && isNearBreachPercent(percent);
 }
 function isBreached(ticket: TicketDTO) {
   return ticket.slaTimer?.status === SlaTimerStatusEnum.Breached;
@@ -223,7 +224,7 @@ export default function StaffDashboardPage() {
         <DashboardPanel
           title="Tuân thủ SLA cá nhân"
           desc="met / (met + breach)"
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
           {isLoading ? (
             <Skeleton className="h-full w-full" />
@@ -248,7 +249,9 @@ export default function StaffDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla.running}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Running</p>
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Running
+                    </p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -269,7 +272,7 @@ export default function StaffDashboardPage() {
         <DashboardPanel
           title="Ticket · 7 ngày"
           desc="Ticket được giao theo ngày"
-          className="lg:col-span-5 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-5 min-h-55 lg:min-h-0"
         >
           {isLoading ? (
             <Skeleton className="h-full w-full" />
@@ -295,7 +298,13 @@ export default function StaffDashboardPage() {
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <defs>
-                  <linearGradient id="fillStaffTickets" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient
+                    id="fillStaffTickets"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
                     <stop
                       offset="5%"
                       stopColor="var(--color-count)"
@@ -324,7 +333,7 @@ export default function StaffDashboardPage() {
         <DashboardPanel
           title="Trạng thái ticket"
           desc={`${totalTickets} ticket của tôi`}
-          className="lg:col-span-4 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-4 min-h-55 lg:min-h-0"
         >
           {isLoading ? (
             <Skeleton className="h-full w-full" />
@@ -345,7 +354,7 @@ export default function StaffDashboardPage() {
         <DashboardPanel
           title="Ưu tiên xử lý"
           desc="Sắp theo % SLA còn lại"
-          className="lg:col-span-6 min-h-[260px] lg:min-h-0"
+          className="lg:col-span-6 min-h-65 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {isLoading ? (
@@ -379,7 +388,7 @@ export default function StaffDashboardPage() {
         <DashboardPanel
           title="Rủi ro SLA"
           desc="Trên ticket đang mở"
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
           {isLoading ? (
             <Skeleton className="h-full w-full" />
@@ -405,7 +414,7 @@ export default function StaffDashboardPage() {
         <DashboardPanel
           title="Thông báo gần đây"
           desc={`${unread} chưa đọc`}
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {notifLoading ? (
@@ -433,7 +442,7 @@ export default function StaffDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2">
                         <span
-                          className={`text-[12px] truncate ${
+                          className={`text-xs truncate ${
                             isUnread ? "font-semibold" : "font-medium"
                           }`}
                         >

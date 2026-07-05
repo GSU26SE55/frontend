@@ -7,11 +7,11 @@ import {
   type HubConnection,
 } from "@/shared/lib/signalr";
 
-// SignalR realtime cho comment panel: join phòng ticket, nhận CommentAdded
+// SignalR realtime cho comment panel: join phòng ticket, nhận ChatAdded
 // (invalidate query comment) + UserTyping. Lỗi connect được nuốt → UI không crash,
 // query vẫn dùng được (chỉ mất push realtime).
 //
-// extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có CommentAdded.
+// extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có ChatAdded.
 // Manager render comment từ QUERY_KEY.tickets.chats (default), nhưng staff/admin
 // render comment NHÚNG trong ticket detail (key khác) → truyền key detail tương ứng
 // để comment mới hiện realtime mà không phải reload.

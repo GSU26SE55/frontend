@@ -251,7 +251,7 @@ export default function ManagerDashboardPage() {
         <DashboardPanel
           title="Pipeline xử lý ticket"
           desc={`${totalTickets} ticket theo giai đoạn`}
-          className="lg:col-span-5 min-h-[240px] lg:min-h-0"
+          className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -297,7 +297,7 @@ export default function ManagerDashboardPage() {
         <DashboardPanel
           title="Tuân thủ SLA"
           desc="met / (met + breach)"
-          className="lg:col-span-3 min-h-[240px] lg:min-h-0"
+          className="lg:col-span-3 min-h-60 lg:min-h-0"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -322,7 +322,9 @@ export default function ManagerDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla.running}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Running</p>
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Running
+                    </p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -343,7 +345,7 @@ export default function ManagerDashboardPage() {
         <DashboardPanel
           title="Ticket mới · 7 ngày"
           desc="Số ticket tạo theo ngày"
-          className="lg:col-span-4 min-h-[240px] lg:min-h-0"
+          className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -369,7 +371,13 @@ export default function ManagerDashboardPage() {
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <defs>
-                  <linearGradient id="fillMgrTickets" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient
+                    id="fillMgrTickets"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
                     <stop
                       offset="5%"
                       stopColor="var(--color-count)"
@@ -398,7 +406,7 @@ export default function ManagerDashboardPage() {
         <DashboardPanel
           title="Tải nhân sự"
           desc={`${workload.length} staff · ticket đang xử lý / tối đa`}
-          className="lg:col-span-5 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-5 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {staffLoading ? (
@@ -429,7 +437,7 @@ export default function ManagerDashboardPage() {
                       }}
                       title={w.available ? "Sẵn sàng" : "Bận"}
                     />
-                    <span className="text-[12px] font-medium truncate flex-1 min-w-0">
+                    <span className="text-xs font-medium truncate flex-1 min-w-0">
                       {w.name}
                     </span>
                     <div className="w-24 h-1.5 rounded-full bg-border shrink-0">
@@ -455,7 +463,7 @@ export default function ManagerDashboardPage() {
         <DashboardPanel
           title="Hàng chờ triage"
           desc={`${queueCount} ticket chờ phân loại`}
-          className="lg:col-span-4 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-4 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {queueLoading ? (
@@ -485,9 +493,7 @@ export default function ManagerDashboardPage() {
                       <p className="text-[10.5px] font-mono-num text-muted-foreground">
                         {t.code}
                       </p>
-                      <p className="text-[12px] font-medium truncate">
-                        {t.title}
-                      </p>
+                      <p className="text-xs font-medium truncate">{t.title}</p>
                     </div>
                     <ArrowRight className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
                   </button>
@@ -501,7 +507,7 @@ export default function ManagerDashboardPage() {
         <DashboardPanel
           title="Sites cần chú ý"
           desc={`Sức khỏe < 80% · ${atRisk.length} site`}
-          className="lg:col-span-3 min-h-[220px] lg:min-h-0"
+          className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {sitesLoading ? (
@@ -528,7 +534,7 @@ export default function ManagerDashboardPage() {
                   onClick={() => navigate(`/manager/sites/${s.id}`)}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium truncate group-hover:text-primary transition-colors">
+                    <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">
                       {s.name}
                     </p>
                     <p className="text-[10.5px] text-muted-foreground truncate">

@@ -36,6 +36,7 @@ export default function IoTFirmwareFormPage() {
   } = useForm<UploadFirmwareForm>({
     resolver: zodResolver(uploadFirmwareSchema),
     defaultValues: {
+      version: "1.0.0",
       channel: IotFirmwareChannelEnum.Stable,
       isRequired: false,
       publishImmediately: false,
@@ -65,7 +66,7 @@ export default function IoTFirmwareFormPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"

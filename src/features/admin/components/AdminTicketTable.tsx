@@ -12,9 +12,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import type { PaginationResponse } from "@/shared/types/api.types";
-import TicketStatusBadge from "./TicketStatusBadge";
-import TicketPriorityBadge from "./TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Bảo trì",
@@ -49,6 +51,25 @@ export default function AdminTicketTable({
 }: Props) {
   const navigate = useNavigate();
   const tickets = data?.items ?? [];
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<TicketDTO>(tickets, (t, key) => {
+      switch (key) {
+        case "code":
+          return t.code;
+        case "title":
+          return t.title;
+        case "category":
+          return CATEGORY_LABELS[t.category] ?? t.category;
+        case "status":
+          return t.status;
+        case "priority":
+          return t.priority ?? "";
+        case "createdAt":
+          return new Date(t.createdAt);
+        default:
+          return null;
+      }
+    });
 
   if (isLoading) {
     return (
@@ -75,16 +96,63 @@ export default function AdminTicketTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-12 text-center">STT</TableHead>
-              <TableHead className="w-32">Mã</TableHead>
-              <TableHead>Tiêu đề</TableHead>
-              <TableHead className="w-32">Loại</TableHead>
-              <TableHead className="w-36">Trạng thái</TableHead>
-              <TableHead className="w-32">Priority</TableHead>
-              <TableHead className="w-36">Ngày tạo</TableHead>
+              <SortableTableHead
+                sortKey="code"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-32"
+              >
+                Mã
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="title"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+              >
+                Tiêu đề
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="category"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-32"
+              >
+                Loại
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="status"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-36"
+              >
+                Trạng thái
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="priority"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-32"
+              >
+                Priority
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="createdAt"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-36"
+              >
+                Ngày tạo
+              </SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tickets.map((ticket, index) => (
+            {sorted.map((ticket, index) => (
               <TableRow
                 key={ticket.id}
                 className="cursor-pointer hover:bg-muted/50"

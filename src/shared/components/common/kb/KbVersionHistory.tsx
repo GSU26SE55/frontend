@@ -4,6 +4,16 @@ import { History, GitCompare, Undo2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   KbVersionStatusEnum,
   KbVersionStatusLabel,
 } from "@/shared/enums/kb.enum";
@@ -109,16 +119,41 @@ export function KbVersionHistory({
                 </Button>
               )}
               {onRollback && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-7"
-                  title="Hoàn tác về phiên bản này"
-                  disabled={isPending}
-                  onClick={() => onRollback(v.id)}
-                >
-                  <Undo2 className="size-3.5" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-7"
+                        title="Hoàn tác về phiên bản này"
+                        disabled={isPending}
+                      />
+                    }
+                  >
+                    <Undo2 className="size-3.5" />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Hoàn tác về v{v.majorVersion}.{v.minorVersion}?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Nội dung bài viết sẽ được khôi phục về phiên bản này và
+                        tạo một phiên bản mới. Bạn có chắc chắn?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                      <AlertDialogCancel
+                        variant="default"
+                        onClick={() => onRollback(v.id)}
+                      >
+                        Hoàn tác
+                      </AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           );

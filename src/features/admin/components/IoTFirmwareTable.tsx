@@ -25,11 +25,19 @@ import {
 import { handleErrorApi } from "@/shared/lib/errors";
 import { IotFirmwareChannelEnum } from "@/shared/enums/iot.enum";
 import type { IotFirmwareReleaseDto } from "@/shared/types/iot.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function statusLabel(item: IotFirmwareReleaseDto): string {
+  if (item.isArchived) return "Archived";
+  if (item.isPublished) return "Published";
+  return "Draft";
 }
 
 interface Props {
@@ -42,6 +50,25 @@ export default function IoTFirmwareTable({ items }: Props) {
   const { mutate: publish } = usePublishFirmwareRelease();
   const { mutate: archive } = useArchiveFirmwareRelease();
   const [pending, setPending] = useState<PendingAction>(null);
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<IotFirmwareReleaseDto>(items, (item, key) => {
+      switch (key) {
+        case "version":
+          return item.version;
+        case "hardwareRevision":
+          return item.hardwareRevision;
+        case "channel":
+          return item.channel;
+        case "status":
+          return statusLabel(item);
+        case "artifactSizeBytes":
+          return item.artifactSizeBytes;
+        case "createdAt":
+          return new Date(item.createdAt);
+        default:
+          return null;
+      }
+    });
 
   const runAction = () => {
     if (!pending) return;
@@ -60,17 +87,59 @@ export default function IoTFirmwareTable({ items }: Props) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Version</TableHead>
-            <TableHead>Hardware Rev</TableHead>
-            <TableHead>Channel</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Kích thước</TableHead>
-            <TableHead>Ngày tạo</TableHead>
+            <SortableTableHead
+              sortKey="version"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Version
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="hardwareRevision"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Hardware Rev
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="channel"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Channel
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="status"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Trạng thái
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="artifactSizeBytes"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Kích thước
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="createdAt"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Ngày tạo
+            </SortableTableHead>
             <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
+          {sorted.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="font-mono text-sm">
                 {item.version}

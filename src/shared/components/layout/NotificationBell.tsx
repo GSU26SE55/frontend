@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -36,6 +36,16 @@ export default function NotificationBell() {
 
   const badge = unreadCount > 99 ? "99+" : String(unreadCount);
 
+  // Đóng dropdown bằng Esc (a11y).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   const handleItemClick = (n: NotificationDto) => {
     if (n.status !== NotificationStatusEnum.Read) markRead.mutate(n.id);
     setOpen(false);
@@ -49,12 +59,20 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={
+          unreadCount > 0 ? `Thông báo — ${unreadCount} chưa đọc` : "Thông báo"
+        }
         className="relative p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         title="Thông báo"
       >
         <Bell size={17} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold leading-none">
+          <span
+            className="absolute -top-0.5 -right-0.5 min-w-3.75 h-3.75 px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold leading-none"
+            style={{ backgroundColor: "var(--p1)" }}
+          >
             {badge}
           </span>
         )}
@@ -63,7 +81,11 @@ export default function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="fade-up absolute right-0 top-full mt-1.5 w-80 bg-card border border-border rounded-xl z-50 shadow-md overflow-hidden">
+          <div
+            role="menu"
+            aria-label="Danh sách thông báo"
+            className="fade-up absolute right-0 top-full mt-1.5 w-80 bg-card border border-border rounded-xl z-50 shadow-md overflow-hidden"
+          >
             <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
               <span className="text-[13px] font-semibold">Thông báo</span>
               {unreadCount > 0 && (
@@ -78,13 +100,16 @@ export default function NotificationBell() {
               )}
             </div>
 
-            <div className="max-h-[360px] overflow-y-auto">
+            <div className="max-h-90 overflow-y-auto">
               {isLoading ? (
-                <div className="px-3.5 py-6 text-center text-[12px] text-muted-foreground">
+                <div
+                  role="status"
+                  className="px-3.5 py-6 text-center text-xs text-muted-foreground"
+                >
                   Đang tải…
                 </div>
               ) : items.length === 0 ? (
-                <div className="px-3.5 py-6 text-center text-[12px] text-muted-foreground">
+                <div className="px-3.5 py-6 text-center text-xs text-muted-foreground">
                   Không có thông báo
                 </div>
               ) : (
@@ -101,9 +126,14 @@ export default function NotificationBell() {
                     >
                       <div className="flex items-start gap-2">
                         {unread && (
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                          <span
+                            className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: "var(--p1)" }}
+                          />
                         )}
-                        <div className={cn("flex-1 min-w-0", !unread && "pl-3.5")}>
+                        <div
+                          className={cn("flex-1 min-w-0", !unread && "pl-3.5")}
+                        >
                           <div className="text-[12.5px] font-medium text-foreground truncate">
                             {n.title}
                           </div>

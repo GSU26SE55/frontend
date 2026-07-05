@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { ErrorState } from "@/shared/components/common/ErrorState";
+import { EmptyState } from "@/shared/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,6 +62,8 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -119,7 +123,7 @@ export default function AccountsPage() {
     setFilter("keyword", kw),
   );
 
-  const { data, isLoading } = useAdminAccountList({
+  const { data, isLoading, isError, refetch } = useAdminAccountList({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
@@ -131,6 +135,21 @@ export default function AccountsPage() {
 
   const accounts = data?.items ?? [];
   const total = data?.totalItems ?? 0;
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<AccountDto>(accounts, (acc, key) => {
+      switch (key) {
+        case "fullName":
+          return acc.fullName;
+        case "role":
+          return acc.role ?? "";
+        case "status":
+          return STATUS_MAP[acc.status]?.label ?? String(acc.status);
+        case "createdAt":
+          return new Date(acc.createdAt);
+        default:
+          return null;
+      }
+    });
 
   const close = () => setDialog({ type: "none" });
 
@@ -159,7 +178,7 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -215,25 +234,55 @@ export default function AccountsPage() {
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState
+            message="Không thể tải danh sách tài khoản."
+            onRetry={() => refetch()}
+          />
         ) : accounts.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
-            <Users size={32} className="opacity-30" />
-            <span className="text-sm">Chưa có tài khoản nào.</span>
-          </div>
+          <EmptyState icon={Users} title="Chưa có tài khoản nào" />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12 text-center">STT</TableHead>
-                <TableHead>Người dùng</TableHead>
-                <TableHead>Roles</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
+                <SortableTableHead
+                  sortKey="fullName"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Người dùng
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="role"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Roles
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="status"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Trạng thái
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="createdAt"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Ngày tạo
+                </SortableTableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.map((acc, index) => {
+              {sorted.map((acc, index) => {
                 const s = STATUS_MAP[acc.status] ?? {
                   label: String(acc.status),
                   cls: "bg-gray-100 text-gray-500",

@@ -9,10 +9,12 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import TicketStatusBadge from "./TicketStatusBadge";
-import TicketPriorityBadge from "./TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 interface Props {
   tickets: TicketDTO[];
@@ -41,6 +43,25 @@ export default function TicketTable({
   pageSize = 0,
 }: Props) {
   const navigate = useNavigate();
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<TicketDTO>(tickets, (t, key) => {
+      switch (key) {
+        case "code":
+          return t.code;
+        case "title":
+          return t.title;
+        case "status":
+          return t.status;
+        case "priority":
+          return t.priority ?? "";
+        case "category":
+          return CATEGORY_LABEL[t.category] ?? t.category;
+        case "createdAt":
+          return new Date(t.createdAt);
+        default:
+          return null;
+      }
+    });
 
   if (isLoading) {
     return (
@@ -66,18 +87,60 @@ export default function TicketTable({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12 text-center">STT</TableHead>
-            <TableHead>Mã</TableHead>
-            <TableHead>Tiêu đề</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Loại</TableHead>
+            <SortableTableHead
+              sortKey="code"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Mã
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="title"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Tiêu đề
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="status"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Trạng thái
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="priority"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Priority
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="category"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Loại
+            </SortableTableHead>
             <TableHead>SLA</TableHead>
-            <TableHead>Tạo lúc</TableHead>
+            <SortableTableHead
+              sortKey="createdAt"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Tạo lúc
+            </SortableTableHead>
             {showTriage && <TableHead />}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tickets.map((ticket, index) => (
+          {sorted.map((ticket, index) => (
             <TableRow
               key={ticket.id}
               className="cursor-pointer hover:bg-muted/50"

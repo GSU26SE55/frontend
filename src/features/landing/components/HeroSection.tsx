@@ -468,8 +468,16 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
       duration: 800,
       delay: stagger(35),
     })
-      .add(sub, { opacity: [0, 1], translateY: [16, 0], duration: 600 }, "-=500")
-      .add(cta, { opacity: [0, 1], translateY: [16, 0], duration: 600 }, "-=480");
+      .add(
+        sub,
+        { opacity: [0, 1], translateY: [16, 0], duration: 600 },
+        "-=500",
+      )
+      .add(
+        cta,
+        { opacity: [0, 1], translateY: [16, 0], duration: 600 },
+        "-=480",
+      );
 
     if (heroImgRef.current) {
       animate(heroImgRef.current, {
@@ -610,10 +618,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                       solar-battery-system
                     </span>
                     <span className="text-white/20">›</span>
-                    <span
-                      ref={crumbRef}
-                      className="font-medium text-white/85"
-                    >
+                    <span ref={crumbRef} className="font-medium text-white/85">
                       {meta.title}
                     </span>
                   </div>
@@ -648,7 +653,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                     </div>
 
                     {/* Content */}
-                    <div className="min-h-[268px] flex-1">
+                    <div className="min-h-67 flex-1">
                       <div ref={contentRef}>{renderContent()}</div>
                     </div>
                   </div>

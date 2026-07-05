@@ -58,7 +58,9 @@ export function DashboardKpi({
         <span className="text-xl font-semibold tabular-nums leading-none">
           {value}
         </span>
-        {sub && <span className="text-[11px] text-muted-foreground">{sub}</span>}
+        {sub && (
+          <span className="text-[11px] text-muted-foreground">{sub}</span>
+        )}
       </div>
       {hint && (
         <span className="text-[10.5px] text-muted-foreground truncate">
@@ -135,7 +137,7 @@ export function DashboardDonut({
     <div className="flex items-center gap-4 h-full">
       <ChartContainer
         config={donutConfig}
-        className="h-full aspect-square max-w-[150px] min-h-0 shrink-0"
+        className="h-full aspect-square max-w-37.5 min-h-0 shrink-0"
       >
         <PieChart>
           <Pie
@@ -226,7 +228,7 @@ export function DashboardGauge({
       <div className="relative flex-1 min-h-0 grid place-items-center">
         <ChartContainer
           config={gaugeConfig}
-          className="h-full aspect-square max-w-[170px] min-h-0"
+          className="h-full aspect-square max-w-42.5 min-h-0"
         >
           <RadialBarChart
             data={[{ name: "v", value: percent, fill: color }]}

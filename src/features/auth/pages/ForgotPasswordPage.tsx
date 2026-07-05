@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Check, ChevronLeft } from "lucide-react";
 import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
@@ -80,6 +80,7 @@ const STEP_META = {
 };
 
 const ForgotPasswordPage = () => {
+  const navigate = useNavigate();
   const [state, dispatch] = useReducer(forgotPasswordReducer, initialState);
 
   useEffect(() => {
@@ -191,7 +192,10 @@ const ForgotPasswordPage = () => {
           />
         )}
         {state.step === 3 && (
-          <ResetPasswordForm resetToken={state.resetToken} />
+          <ResetPasswordForm
+            resetToken={state.resetToken}
+            onSuccess={() => navigate("/login", { replace: true })}
+          />
         )}
       </div>
 

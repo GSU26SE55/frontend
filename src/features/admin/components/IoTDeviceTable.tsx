@@ -23,6 +23,8 @@ import ConfirmActionDialog from "@/features/admin/components/ConfirmActionDialog
 import { useDeleteIotDevice } from "@/features/admin/hooks/useIotDeviceMutations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceDto } from "@/shared/types/iot.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 interface Props {
   items: IotDeviceDto[];
@@ -34,6 +36,25 @@ export default function IoTDeviceTable({ items, pageNumber, pageSize }: Props) {
   const navigate = useNavigate();
   const { mutate: deleteDevice } = useDeleteIotDevice();
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<IotDeviceDto>(items, (item, key) => {
+      switch (key) {
+        case "deviceCode":
+          return item.deviceCode;
+        case "displayName":
+          return item.displayName;
+        case "siteName":
+          return item.siteName ?? "";
+        case "status":
+          return item.status;
+        case "currentFirmwareVersion":
+          return item.currentFirmwareVersion ?? "";
+        case "lastSeenAt":
+          return item.lastSeenAt ? new Date(item.lastSeenAt) : null;
+        default:
+          return null;
+      }
+    });
 
   return (
     <>
@@ -41,17 +62,59 @@ export default function IoTDeviceTable({ items, pageNumber, pageSize }: Props) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-12 text-center">STT</TableHead>
-            <TableHead>Device Code</TableHead>
-            <TableHead>Tên hiển thị</TableHead>
-            <TableHead>Site</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Firmware</TableHead>
-            <TableHead>Heartbeat gần nhất</TableHead>
+            <SortableTableHead
+              sortKey="deviceCode"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Device Code
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="displayName"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Tên hiển thị
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="siteName"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Site
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="status"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Trạng thái
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="currentFirmwareVersion"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Firmware
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="lastSeenAt"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Heartbeat gần nhất
+            </SortableTableHead>
             <TableHead className="text-right">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item, index) => (
+          {sorted.map((item, index) => (
             <TableRow
               key={item.id}
               className="cursor-pointer hover:bg-muted/50"

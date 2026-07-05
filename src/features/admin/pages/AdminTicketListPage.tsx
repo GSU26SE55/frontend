@@ -23,6 +23,8 @@ import AdminTicketTable from "../components/AdminTicketTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { ErrorState } from "@/shared/components/common/ErrorState";
+import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const PAGE_SIZE = 10;
@@ -88,10 +90,10 @@ export default function AdminTicketListPage() {
     pageSize: filters.pageSize,
   };
 
-  const { data, isLoading } = useAdminTickets(params);
+  const { data, isLoading, isError, refetch } = useAdminTickets(params);
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       {/* Page header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -196,14 +198,23 @@ export default function AdminTicketListPage() {
         )}
       </div>
 
-      <AdminTicketTable
-        data={data}
-        isLoading={isLoading}
-        pageNumber={filters.pageNumber}
-        pageSize={filters.pageSize}
-        onPageChange={(p) => setFilter("pageNumber", p)}
-        onPageSizeChange={(s) => setFilter("pageSize", s)}
-      />
+      {isError ? (
+        <Card className="gap-0 py-0 overflow-hidden">
+          <ErrorState
+            message="Không thể tải danh sách ticket."
+            onRetry={() => refetch()}
+          />
+        </Card>
+      ) : (
+        <AdminTicketTable
+          data={data}
+          isLoading={isLoading}
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
+          onPageChange={(p) => setFilter("pageNumber", p)}
+          onPageSizeChange={(s) => setFilter("pageSize", s)}
+        />
+      )}
     </div>
   );
 }

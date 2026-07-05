@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import TicketStatusBadge from "@/features/manager/components/TicketStatusBadge";
-import TicketPriorityBadge from "@/features/manager/components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import SlaCountdown from "@/features/manager/components/SlaCountdown";
 import TriageDialog from "@/features/manager/components/TriageDialog";
 import AssignDialog from "@/features/manager/components/AssignDialog";
@@ -20,7 +20,12 @@ import DeclareIncidentDialog from "@/features/manager/components/DeclareIncident
 import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
+import BatteryAssetInfoPanel from "@/features/manager/components/BatteryAssetInfoPanel";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -29,13 +34,22 @@ import {
 } from "@/features/manager/hooks/useManagerTickets";
 import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
 import {
+  useUpdateTicketChat,
+  useDeleteTicketChat,
+  useMarkTicketChatsRead,
+  useTranslateTicketChat,
+} from "@/shared/hooks/useTicketChatActions";
+import { checkPermission, P } from "@/shared/lib/authz";
+import {
   TicketStatusEnum,
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketCategoryEnum,
+  EscalationReasonEnum,
 } from "@/shared/types/ticket.types";
 import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { slaBarColorClass } from "@/shared/lib/sla";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
@@ -70,6 +84,14 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   High: "Cao",
 };
 
+const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
+  SkillGap: "Thiếu kỹ năng xử lý",
+  PartsRequired: "Cần linh kiện thay thế",
+  SafetyConcern: "Nguy cơ an toàn",
+  SlaBreach: "Vi phạm SLA",
+  CustomerComplaint: "Khách hàng khiếu nại",
+};
+
 function SideInfoRow({
   label,
   value,
@@ -91,6 +113,7 @@ export default function TicketDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<DialogType>(null);
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
 
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
@@ -98,7 +121,18 @@ export default function TicketDetailPage() {
   const { data: comments = [] } = useTicketComments(id);
   const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
-  const currentUserId = useSessionStore((s) => s.user?.accountId);
+  const user = useSessionStore((s) => s.user);
+  const currentUserId = user?.accountId;
+  const { mutate: updateChat, isPending: editChatPending } =
+    useUpdateTicketChat();
+  const { mutate: deleteChat, isPending: deleteChatPending } =
+    useDeleteTicketChat();
+  const { mutate: markChatsRead } = useMarkTicketChatsRead();
+  const handleMarkRead = (chatIds: string[]) =>
+    markChatsRead({ ticketId: id, payload: { chatIds } });
+  const { mutateAsync: translateChat } = useTranslateTicketChat();
+  const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
+    translateChat({ ticketId: id, chatId: chat.id, targetLanguage });
 
   if (isError) {
     return (
@@ -139,23 +173,24 @@ export default function TicketDetailPage() {
   ).includes(status);
   const canApprove = status === TicketStatusEnum.Resolved;
   const canReject = status === TicketStatusEnum.Resolved;
-  const canEscalate = !(
+  // Escalate = thêm nhân lực/cấp bậc khi ticket ĐANG được xử lý. Siết allow-list
+  // (thay vì "mọi status trừ Closed") để nút không hiện ở New/Open/Approved/
+  // Resolved/ClosedRejected — nơi escalate vô nghĩa (chưa triage/đã xong).
+  const canEscalate = (
     [
-      TicketStatusEnum.Closed,
-      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Assigned,
+      TicketStatusEnum.InProgress,
+      TicketStatusEnum.WaitingCustomer,
+      TicketStatusEnum.WaitingParts,
+      TicketStatusEnum.WaitingOnsiteSchedule,
+      TicketStatusEnum.Escalated,
     ] as TicketStatusEnum[]
   ).includes(status);
   const canDeclareIncident = !ticket.isIncident;
 
   // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -281,24 +316,28 @@ export default function TicketDetailPage() {
               </TabsList>
             </div>
 
-            {/* Info — attachments only; description/resolution are in sidebar */}
+            {/* Info — battery asset info + attachments */}
             <TabsContent
               value="info"
-              className="min-h-0 overflow-y-auto m-0 p-6"
+              className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
             >
-              {ticket.attachmentFileIds &&
-              ticket.attachmentFileIds.length > 0 ? (
-                <div>
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Tệp đính kèm
-                  </p>
-                  <TicketAttachments fileIds={ticket.attachmentFileIds} />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-12">
-                  Không có tệp đính kèm.
+              <BatteryAssetInfoPanel
+                batteryAssetId={ticket.batteryAssetId}
+                currentTicketId={id}
+              />
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Tệp đính kèm
                 </p>
-              )}
+                {ticket.attachmentFileIds &&
+                ticket.attachmentFileIds.length > 0 ? (
+                  <TicketAttachments fileIds={ticket.attachmentFileIds} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Không có tệp đính kèm.
+                  </p>
+                )}
+              </div>
             </TabsContent>
 
             {/* Comments */}
@@ -310,6 +349,25 @@ export default function TicketDetailPage() {
                 <TicketCommentThread
                   comments={comments}
                   currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
+                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                  ticketClosed={status === TicketStatusEnum.Closed}
+                  onEdit={(chat, body, editReason) =>
+                    updateChat({
+                      ticketId: id,
+                      chatId: chat.id,
+                      payload: { body, editReason },
+                    })
+                  }
+                  onDelete={(chat, reason) =>
+                    deleteChat({ ticketId: id, chatId: chat.id, reason })
+                  }
+                  editPending={editChatPending}
+                  deletePending={deleteChatPending}
+                  onMarkRead={handleMarkRead}
+                  onTranslate={handleTranslate}
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">
@@ -318,7 +376,11 @@ export default function TicketDetailPage() {
                     {typingNames.join(", ")} đang gõ…
                   </p>
                 )}
-                <AddCommentForm ticketId={id} onTyping={sendTyping} />
+                <AddCommentForm
+                  ticketId={id}
+                  onTyping={sendTyping}
+                  isInternal={chatTab === "internal"}
+                />
               </div>
             </TabsContent>
 
@@ -346,7 +408,7 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Right: Sidebar */}
-        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+        <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
           <div className="p-4">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -388,6 +450,30 @@ export default function TicketDetailPage() {
             )}
           </div>
 
+          {/* Trạng thái + thời gian xử lý */}
+          <div className="p-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Trạng thái
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Hiện tại
+                </span>
+                <TicketStatusBadge status={ticket.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Thời gian xử lý
+                </span>
+                <ProcessingDurationTimer
+                  activities={activities}
+                  status={ticket.status}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Description */}
           {ticket.description && (
             <div className="p-4">
@@ -418,9 +504,58 @@ export default function TicketDetailPage() {
               <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                 Kết quả giải quyết
               </p>
-              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+              <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
                 {ticket.resolutionSummary}
               </p>
+              {ticket.resolvedAt && (
+                <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
+                  Xử lý xong lúc{" "}
+                  {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
+                    locale: vi,
+                  })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Escalation */}
+          {ticket.escalatedAt && (
+            <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
+              <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
+                Chuyển cấp
+              </p>
+              {ticket.escalationReason && (
+                <p className="text-xs leading-relaxed">
+                  {ESCALATION_REASON_LABEL[ticket.escalationReason] ??
+                    ticket.escalationReason}
+                </p>
+              )}
+              <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
+                {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              </p>
+            </div>
+          )}
+
+          {/* Customer rating */}
+          {ticket.rating != null && (
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Đánh giá khách hàng
+              </p>
+              <p className="text-xs font-medium">
+                {"★".repeat(ticket.rating)}
+                {"☆".repeat(5 - ticket.rating)}
+                <span className="text-muted-foreground font-normal ml-1">
+                  ({ticket.rating}/5)
+                </span>
+              </p>
+              {ticket.ratingComment && (
+                <p className="text-xs leading-relaxed text-foreground/90 mt-1.5 whitespace-pre-wrap">
+                  {ticket.ratingComment}
+                </p>
+              )}
             </div>
           )}
 
@@ -457,6 +592,22 @@ export default function TicketDetailPage() {
               <SideInfoRow
                 label="Cập nhật"
                 value={format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+            )}
+            {ticket.approvedAt && (
+              <SideInfoRow
+                label="Duyệt lúc"
+                value={format(new Date(ticket.approvedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+            )}
+            {ticket.closedAt && (
+              <SideInfoRow
+                label="Đóng lúc"
+                value={format(new Date(ticket.closedAt), "dd/MM/yyyy HH:mm", {
                   locale: vi,
                 })}
               />

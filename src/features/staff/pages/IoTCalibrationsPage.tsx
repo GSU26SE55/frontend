@@ -26,7 +26,7 @@ export default function IoTCalibrationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           Staff &middot; IoT

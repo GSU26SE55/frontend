@@ -85,7 +85,7 @@ export function KbVersionDialog({
             </div>
             {/* Body: left list + right diff */}
             <div className="flex flex-1 min-h-0">
-              <div className="w-[300px] shrink-0 border-r border-border overflow-y-auto px-4 py-4">
+              <div className="w-75 shrink-0 border-r border-border overflow-y-auto px-4 py-4">
                 <KbVersionHistory
                   versions={versions}
                   onCompare={onCompare}
