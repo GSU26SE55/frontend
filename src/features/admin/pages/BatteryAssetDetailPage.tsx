@@ -26,6 +26,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useBatteryAsset } from "@/features/admin/hooks/useBatteryAsset";
+import { useThresholdByType } from "@/features/admin/hooks/useThresholds";
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
 import { useBatteryAssetRealtime } from "@/features/admin/hooks/useBatteryAssetRealtime";
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
@@ -93,6 +94,9 @@ export default function BatteryAssetDetailPage() {
   const stream = useSensorStream(id ? `asset:${id}` : null);
   // Ưu tiên live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
   const live = stream.reading ?? rt ?? null;
+  // Ngưỡng cảnh báo telemetry theo BatteryType (BE ThresholdConfig) — tô màu SOH/SOC/Temp
+  // đúng theo chemistry thay vì hardcode. enabled tự tắt khi chưa có batteryTypeId.
+  const { data: threshold } = useThresholdByType(asset?.batteryTypeId ?? "");
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
   const handleDelete = () => {
@@ -235,7 +239,21 @@ export default function BatteryAssetDetailPage() {
             <Separator />
 
             {/* Realtime — live SSE (~5s), seed/fallback từ rt (polling 30s) */}
-            <LiveTelemetryCard data={live} status={stream.status} />
+            <LiveTelemetryCard
+              data={live}
+              status={stream.status}
+              thresholds={
+                threshold
+                  ? {
+                      sohWarning: threshold.sohWarningThreshold,
+                      sohCritical: threshold.sohCriticalThreshold,
+                      socWarning: threshold.socWarningThreshold,
+                      socCritical: threshold.socCriticalThreshold,
+                      temperatureMax: threshold.temperatureMax,
+                    }
+                  : undefined
+              }
+            />
           </div>
 
           {/* Right: chart / history tabs */}
