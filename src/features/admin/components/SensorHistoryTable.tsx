@@ -9,6 +9,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useReadingHistory } from "@/features/admin/hooks/useReadingHistory";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const num = (v: number | null, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
@@ -26,6 +28,27 @@ export default function SensorHistoryTable({
     useReadingHistory(assetId, { limit: 50 });
 
   const rows = data?.pages.flatMap((p) => p?.items ?? []) ?? [];
+  const {
+    sorted: sortedRows,
+    sortKey,
+    sortDirection,
+    toggleSort,
+  } = useSortableData(rows, (r, key) => {
+    switch (key) {
+      case "time":
+        return new Date(r.time);
+      case "voltage":
+        return r.voltage;
+      case "current":
+        return r.current;
+      case "temperature":
+        return r.temperature;
+      case "socPercent":
+        return r.socPercent;
+      default:
+        return null;
+    }
+  });
 
   const tableContent = isLoading ? (
     <div className="py-12 text-center text-sm text-muted-foreground">
@@ -49,15 +72,54 @@ export default function SensorHistoryTable({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12 text-center">STT</TableHead>
-            <TableHead>Thời điểm</TableHead>
-            <TableHead className="text-right">Điện áp (V)</TableHead>
-            <TableHead className="text-right">Dòng (A)</TableHead>
-            <TableHead className="text-right">Nhiệt độ (°C)</TableHead>
-            <TableHead className="text-right">SOC (%)</TableHead>
+            <SortableTableHead
+              sortKey="time"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+            >
+              Thời điểm
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="voltage"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+              className="text-right"
+            >
+              Điện áp (V)
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="current"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+              className="text-right"
+            >
+              Dòng (A)
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="temperature"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+              className="text-right"
+            >
+              Nhiệt độ (°C)
+            </SortableTableHead>
+            <SortableTableHead
+              sortKey="socPercent"
+              activeSortKey={sortKey}
+              direction={sortDirection}
+              onSort={toggleSort}
+              className="text-right"
+            >
+              SOC (%)
+            </SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r, index) => (
+          {sortedRows.map((r, index) => (
             <TableRow key={r.time}>
               <TableCell className="text-center text-muted-foreground tabular-nums">
                 {index + 1}

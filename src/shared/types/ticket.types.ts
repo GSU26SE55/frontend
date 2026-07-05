@@ -85,6 +85,9 @@ export interface TicketCommentDTO {
   isInternal: boolean;
   attachmentFileIds?: string[] | null;
   createdAt: string;
+  // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
+  editCount?: number;
+  updatedAt?: string | null;
 }
 
 export interface MaintenanceLogDTO {

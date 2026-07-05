@@ -20,6 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SiteStatusEnum, type SiteDto } from "@/shared/types/site.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
   [SiteStatusEnum.Active]: "Hoạt động",
@@ -56,6 +58,23 @@ export default function SiteTable({
   onRestore,
 }: SiteTableProps) {
   const navigate = useNavigate();
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<SiteDto>(data, (site, key) => {
+      switch (key) {
+        case "name":
+          return site.name;
+        case "customerName":
+          return site.customerName;
+        case "status":
+          return STATUS_LABEL[site.status];
+        case "batteryAssetCount":
+          return site.batteryAssetCount;
+        case "installDate":
+          return new Date(site.installDate);
+        default:
+          return null;
+      }
+    });
 
   if (isLoading) {
     return (
@@ -80,16 +99,51 @@ export default function SiteTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-12 text-center">STT</TableHead>
-          <TableHead>Tên site</TableHead>
-          <TableHead>Khách hàng</TableHead>
-          <TableHead>Trạng thái</TableHead>
-          <TableHead>Số pin</TableHead>
-          <TableHead>Ngày lắp</TableHead>
+          <SortableTableHead
+            sortKey="name"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Tên site
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="customerName"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Khách hàng
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="status"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Trạng thái
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="batteryAssetCount"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Số pin
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="installDate"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Ngày lắp
+          </SortableTableHead>
           <TableHead className="text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((site, index) => (
+        {sorted.map((site, index) => (
           <TableRow
             key={site.id}
             className="cursor-pointer hover:bg-muted/50"

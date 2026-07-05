@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { GatewayDeviceDto } from "@/features/admin/types/sms-gateway.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const ONLINE_THRESHOLD_MS = 10 * 60 * 1000; // 10 phút — theo controller remark BE
 
@@ -39,25 +41,83 @@ function StatusBadge({ device }: { device: GatewayDeviceDto }) {
   );
 }
 
+function statusSortValue(d: GatewayDeviceDto): string {
+  if (!d.isActive) return "0-revoked";
+  return isOnline(d.lastSeenAt) ? "1-online" : "2-offline";
+}
+
 export default function SmsDeviceTable({
   data,
   onRevoke,
 }: SmsDeviceTableProps) {
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<GatewayDeviceDto>(data, (d, key) => {
+      switch (key) {
+        case "deviceName":
+          return d.deviceName;
+        case "status":
+          return statusSortValue(d);
+        case "sentToday":
+          return d.sentToday;
+        case "lastSeenAt":
+          return d.lastSeenAt ? new Date(d.lastSeenAt) : null;
+        case "createdAt":
+          return d.createdAt ? new Date(d.createdAt) : null;
+        default:
+          return null;
+      }
+    });
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-12 text-center">STT</TableHead>
-          <TableHead>Thiết bị</TableHead>
-          <TableHead>Trạng thái</TableHead>
-          <TableHead>Hôm nay</TableHead>
-          <TableHead>Hoạt động gần nhất</TableHead>
-          <TableHead>Tạo lúc</TableHead>
+          <SortableTableHead
+            sortKey="deviceName"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Thiết bị
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="status"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Trạng thái
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="sentToday"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Hôm nay
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="lastSeenAt"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Hoạt động gần nhất
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="createdAt"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Tạo lúc
+          </SortableTableHead>
           <TableHead className="text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((d, i) => (
+        {sorted.map((d, i) => (
           <TableRow key={d.id}>
             <TableCell className="text-center text-muted-foreground">
               {i + 1}

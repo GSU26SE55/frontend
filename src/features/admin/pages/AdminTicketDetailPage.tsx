@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -21,14 +22,28 @@ import {
 import {
   useAdminTicketDetail,
   useAdminTicketActivities,
+  useAdminTicketComments,
   useDeclareIncident,
 } from "../hooks/useAdminTickets";
+import AddCommentForm from "../components/AddCommentForm";
 import TicketStatusBadge from "../components/TicketStatusBadge";
 import TicketPriorityBadge from "../components/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { checkPermission, P } from "@/shared/lib/authz";
+import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import {
+  useUpdateTicketChat,
+  useDeleteTicketChat,
+  useMarkTicketChatsRead,
+  useTranslateTicketChat,
+} from "@/shared/hooks/useTicketChatActions";
+import { TicketStatusEnum } from "@/shared/types/ticket.types";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Charging: "Lỗi sạc",
@@ -59,13 +74,39 @@ function SideInfoRow({
 export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const ticketId = id ?? "";
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
+  const [commentSubTab, setCommentSubTab] = useState<"public" | "internal">(
+    "public",
+  );
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
-  const { data: activities, isLoading: loadingActivities } =
+  const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
+  const { data: comments = [] } = useAdminTicketComments(ticketId);
+  const publicComments = useMemo(
+    () => comments.filter((c) => !c.isInternal),
+    [comments],
+  );
+  const internalComments = useMemo(
+    () => comments.filter((c) => c.isInternal),
+    [comments],
+  );
   const { mutate: declareIncident, isPending } = useDeclareIncident();
+  const user = useSessionStore((s) => s.user);
+  const currentUserId = user?.accountId;
+  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
+  const { mutate: updateChat, isPending: editChatPending } =
+    useUpdateTicketChat();
+  const { mutate: deleteChat, isPending: deleteChatPending } =
+    useDeleteTicketChat();
+  const { mutate: markChatsRead } = useMarkTicketChatsRead();
+  const handleMarkRead = (chatIds: string[]) =>
+    markChatsRead({ ticketId, payload: { chatIds } });
+  const { mutateAsync: translateChat } = useTranslateTicketChat();
+  const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
+    translateChat({ ticketId, chatId: chat.id, targetLanguage });
 
   function handleConfirm() {
     declareIncident(
@@ -161,22 +202,128 @@ export default function AdminTicketDetailPage() {
 
       {/* ── Main content ────────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 flex">
-        {/* Left: Timeline (full height) */}
+        {/* Left: Timeline / Bình luận */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <div className="px-6 py-2.5 border-b border-border shrink-0">
-            <span className="text-sm font-medium">Lịch sử hoạt động</span>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto p-6">
-            {loadingActivities ? (
-              <div className="space-y-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
+          <Tabs defaultValue="timeline" className="h-full gap-0">
+            <div className="px-6 py-2.5 border-b border-border shrink-0">
+              <TabsList>
+                <TabsTrigger value="timeline">Lịch sử hoạt động</TabsTrigger>
+                <TabsTrigger value="comments">
+                  Bình luận
+                  {comments.length > 0 && ` (${comments.length})`}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent
+              value="timeline"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              {loadingActivities ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12" />
+                  ))}
+                </div>
+              ) : (
+                <TicketActivityTimeline activities={activities} />
+              )}
+            </TabsContent>
+
+            <TabsContent
+              value="comments"
+              className="min-h-0 m-0 flex flex-col overflow-hidden"
+            >
+              <Tabs
+                value={commentSubTab}
+                onValueChange={(v) =>
+                  setCommentSubTab(v as "public" | "internal")
+                }
+                className="flex-1 min-h-0 flex flex-col gap-0"
+              >
+                <div className="px-6 pt-2 shrink-0">
+                  <TabsList variant="line">
+                    <TabsTrigger value="public">
+                      Công khai
+                      {publicComments.length > 0 &&
+                        ` (${publicComments.length})`}
+                    </TabsTrigger>
+                    <TabsTrigger value="internal">
+                      Nội bộ
+                      {internalComments.length > 0 &&
+                        ` (${internalComments.length})`}
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                <TabsContent
+                  value="public"
+                  className="flex-1 min-h-0 overflow-y-auto p-6"
+                >
+                  <TicketCommentThread
+                    comments={publicComments}
+                    currentUserId={currentUserId}
+                    emptyText="Chưa có bình luận công khai nào."
+                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                    ticketClosed={ticket.status === TicketStatusEnum.Closed}
+                    onEdit={(chat, body, editReason) =>
+                      updateChat({
+                        ticketId,
+                        chatId: chat.id,
+                        payload: { body, editReason },
+                      })
+                    }
+                    onDelete={(chat, reason) =>
+                      deleteChat({ ticketId, chatId: chat.id, reason })
+                    }
+                    editPending={editChatPending}
+                    deletePending={deleteChatPending}
+                    onMarkRead={handleMarkRead}
+                    onTranslate={handleTranslate}
+                  />
+                </TabsContent>
+                <TabsContent
+                  value="internal"
+                  className="flex-1 min-h-0 overflow-y-auto p-6"
+                >
+                  <TicketCommentThread
+                    comments={internalComments}
+                    currentUserId={currentUserId}
+                    emptyText="Chưa có bình luận nội bộ nào."
+                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                    ticketClosed={ticket.status === TicketStatusEnum.Closed}
+                    onEdit={(chat, body, editReason) =>
+                      updateChat({
+                        ticketId,
+                        chatId: chat.id,
+                        payload: { body, editReason },
+                      })
+                    }
+                    onDelete={(chat, reason) =>
+                      deleteChat({ ticketId, chatId: chat.id, reason })
+                    }
+                    editPending={editChatPending}
+                    deletePending={deleteChatPending}
+                    onMarkRead={handleMarkRead}
+                    onTranslate={handleTranslate}
+                  />
+                </TabsContent>
+              </Tabs>
+              <div className="shrink-0 border-t border-border p-3">
+                {typingNames.length > 0 && (
+                  <p className="px-1 pb-2 text-xs text-muted-foreground italic">
+                    {typingNames.join(", ")} đang gõ…
+                  </p>
+                )}
+                <AddCommentForm
+                  ticketId={ticketId}
+                  onTyping={sendTyping}
+                  defaultIsInternal={commentSubTab === "internal"}
+                />
               </div>
-            ) : (
-              <TicketActivityTimeline activities={activities} />
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Right: Sidebar */}
@@ -224,6 +371,30 @@ export default function AdminTicketDetailPage() {
                 Chưa có SLA timer.
               </p>
             )}
+          </div>
+
+          {/* Trạng thái + thời gian xử lý */}
+          <div className="p-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Trạng thái
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Hiện tại
+                </span>
+                <TicketStatusBadge status={ticket.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Thời gian xử lý
+                </span>
+                <ProcessingDurationTimer
+                  activities={activities}
+                  status={ticket.status}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Description */}

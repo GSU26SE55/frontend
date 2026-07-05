@@ -22,8 +22,8 @@ import { useTranscribeVoiceChat } from "@/shared/hooks/useTicketChatActions";
 import {
   addCommentSchema,
   type AddCommentFormValues,
-} from "@/features/manager/schemas/ticket.schema";
-import { useAddComment } from "@/features/manager/hooks/useManagerTickets";
+} from "../schemas/ticket-comment.schema";
+import { useAdminAddComment } from "../hooks/useAdminTickets";
 
 const MAX_TEXTAREA_HEIGHT = 120; // ~5 dòng trước khi cuộn nội bộ
 
@@ -39,7 +39,7 @@ export default function AddCommentForm({
   onTyping,
   defaultIsInternal = false,
 }: Props) {
-  const { mutateAsync, isPending } = useAddComment();
+  const { mutateAsync, isPending } = useAdminAddComment(ticketId);
   const [uploading, setUploading] = useState(false);
 
   const form = useForm<AddCommentFormValues>({
@@ -55,7 +55,6 @@ export default function AddCommentForm({
   const attachments =
     useWatch({ control: form.control, name: "attachments" }) ?? [];
 
-  // Ô nhập tự giãn theo nội dung gõ (giống WhatsApp/Messenger) thay vì cố định 1 dòng.
   // resetCount đổi key của Textarea sau submit → remount, tự về chiều cao ban đầu
   // (không đọc/ghi ref trong callback truyền vào handleSubmit — vi phạm rules-of-refs).
   const [resetCount, setResetCount] = useState(0);
@@ -65,12 +64,11 @@ export default function AddCommentForm({
   };
 
   const onSubmit = async (values: AddCommentFormValues) => {
-    await mutateAsync({ ticketId, payload: values });
+    await mutateAsync(values);
     form.reset();
     setResetCount((c) => c + 1);
   };
 
-  // Ghi âm — BE luôn tạo chat với IsInternal=false, nên khoá khi đang ở sub-tab Nội bộ.
   const { isRecording, elapsedSeconds, waveform, start, stop, cancel } =
     useVoiceRecorder();
   const { mutateAsync: transcribeVoice, isPending: transcribing } =
@@ -86,14 +84,6 @@ export default function AddCommentForm({
   const handleStopRecording = async () => {
     const file = await stop();
     if (!file) return;
-    console.log("[AddCommentForm] sending voice file", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
-    // TEMP DEBUG — phát lại chính file vừa ghi để nghe xem mic có thu được tiếng không
-    const debugUrl = URL.createObjectURL(file);
-    new Audio(debugUrl).play().catch((e) => console.warn("[Debug] playback failed", e));
     await transcribeVoice({ ticketId, audioFile: file }).catch(() => {});
   };
 

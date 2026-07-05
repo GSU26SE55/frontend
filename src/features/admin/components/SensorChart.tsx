@@ -175,7 +175,15 @@ function MetricMiniChart({
       ? { min: threshold.voltageMin, max: threshold.voltageMax }
       : metric.key === "avgTemperature" && threshold
         ? { min: threshold.temperatureMin, max: threshold.temperatureMax }
-        : null;
+        : metric.key === "avgCurrent" &&
+            threshold &&
+            threshold.currentMaxDischarge != null &&
+            threshold.currentMaxCharge != null
+          ? {
+              min: -threshold.currentMaxDischarge,
+              max: threshold.currentMaxCharge,
+            }
+          : null;
 
   const isSoc = metric.key === "avgSocPercent";
   const [low, high]: [number, number] = isSoc

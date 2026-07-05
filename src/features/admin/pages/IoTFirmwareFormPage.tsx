@@ -36,6 +36,7 @@ export default function IoTFirmwareFormPage() {
   } = useForm<UploadFirmwareForm>({
     resolver: zodResolver(uploadFirmwareSchema),
     defaultValues: {
+      version: "1.0.0",
       channel: IotFirmwareChannelEnum.Stable,
       isRequired: false,
       publishImmediately: false,

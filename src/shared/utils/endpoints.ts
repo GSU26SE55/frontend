@@ -68,6 +68,9 @@ export const ENDPOINTS = {
     CHAT_ATTACHMENTS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/attachments`,
     CHAT_ATTACHMENT: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}`,
+    CHAT_TRANSLATE: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/translate`,
+    CHAT_VOICE: (tid: string) => `/api/tickets/${tid}/chats/voice`,
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,

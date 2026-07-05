@@ -60,6 +60,8 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -131,6 +133,21 @@ export default function AccountsPage() {
 
   const accounts = data?.items ?? [];
   const total = data?.totalItems ?? 0;
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<AccountDto>(accounts, (acc, key) => {
+      switch (key) {
+        case "fullName":
+          return acc.fullName;
+        case "role":
+          return acc.role ?? "";
+        case "status":
+          return STATUS_MAP[acc.status]?.label ?? String(acc.status);
+        case "createdAt":
+          return new Date(acc.createdAt);
+        default:
+          return null;
+      }
+    });
 
   const close = () => setDialog({ type: "none" });
 
@@ -225,15 +242,43 @@ export default function AccountsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12 text-center">STT</TableHead>
-                <TableHead>Người dùng</TableHead>
-                <TableHead>Roles</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
+                <SortableTableHead
+                  sortKey="fullName"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Người dùng
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="role"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Roles
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="status"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Trạng thái
+                </SortableTableHead>
+                <SortableTableHead
+                  sortKey="createdAt"
+                  activeSortKey={sortKey}
+                  direction={sortDirection}
+                  onSort={toggleSort}
+                >
+                  Ngày tạo
+                </SortableTableHead>
                 <TableHead className="text-right">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.map((acc, index) => {
+              {sorted.map((acc, index) => {
                 const s = STATUS_MAP[acc.status] ?? {
                   label: String(acc.status),
                   cls: "bg-gray-100 text-gray-500",

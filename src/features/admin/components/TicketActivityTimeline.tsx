@@ -1,6 +1,8 @@
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketActivityDTO } from "@/shared/types/ticket.types";
+import { getActivityDotClass } from "@/shared/utils/activityActionColor";
 
 const ACTION_LABEL: Partial<Record<string, string>> = {
   Created: "Tạo ticket",
@@ -62,7 +64,12 @@ export default function TicketActivityTimeline({
     <ol className="relative border-l border-border ml-3 space-y-4">
       {activities.map((activity) => (
         <li key={activity.id} className="ml-6">
-          <span className="absolute -left-1.5 mt-1 h-3 w-3 rounded-full border border-background bg-muted-foreground" />
+          <span
+            className={cn(
+              "absolute -left-1.5 mt-1 h-3 w-3 rounded-full border border-background",
+              getActivityDotClass(activity.action),
+            )}
+          />
           <div className="rounded-lg border bg-card px-4 py-2 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium">

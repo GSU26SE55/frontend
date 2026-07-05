@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save } from "lucide-react";
+import { TagInput } from "@/shared/components/common/TagInput";
 import {
   kbArticleSchema,
   type KbArticleFormInput,
@@ -207,21 +208,15 @@ export default function KbEditorPage() {
                     <label className="text-sm font-medium">
                       Thẻ{" "}
                       <span className="text-muted-foreground font-normal">
-                        (cách nhau bằng dấu phẩy)
+                        (tối đa 10 thẻ)
                       </span>
                     </label>
-                    <Input
-                      placeholder="quá nhiệt, sạc, BMS"
-                      className="text-sm"
-                      value={(field.value ?? []).join(", ")}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean),
-                        )
-                      }
+                    <TagInput
+                      placeholder="quá nhiệt, sạc, BMS..."
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      maxTags={10}
+                      maxTagLength={50}
                     />
                   </div>
                 )}

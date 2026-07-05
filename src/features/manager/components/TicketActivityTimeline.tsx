@@ -1,5 +1,7 @@
+import { cn } from "@/lib/utils";
 import { ActivityActionEnum, ActorRoleEnum } from "@/shared/types/ticket.types";
 import type { TicketActivityDTO } from "@/shared/types/ticket.types";
+import { getActivityBadgeClass } from "@/shared/utils/activityActionColor";
 
 const ACTION_LABEL: Partial<Record<ActivityActionEnum, string>> = {
   Created: "Tạo ticket",
@@ -53,7 +55,12 @@ export default function TicketActivityTimeline({ activities }: Props) {
     <ol className="relative border-l border-muted ml-3 space-y-6">
       {activities.map((act) => (
         <li key={act.id} className="ml-6">
-          <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-muted ring-2 ring-background text-xs">
+          <span
+            className={cn(
+              "absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full ring-2 ring-background text-xs font-medium",
+              getActivityBadgeClass(act.action),
+            )}
+          >
             {ROLE_LABEL[act.actorRole]?.charAt(0) ?? "?"}
           </span>
           <div className="text-sm">

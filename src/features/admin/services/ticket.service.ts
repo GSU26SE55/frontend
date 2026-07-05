@@ -10,6 +10,8 @@ import type {
   TicketActivityDTO,
   TicketActionResponse,
   MaintenanceLogDTO,
+  TicketCommentDTO,
+  AddCommentPayload,
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
@@ -73,5 +75,17 @@ export const adminTicketService = {
           incidentDescription,
         },
       )
+      .then((r) => r.data),
+
+  getComments: (id: string) =>
+    axiosInstance
+      .get<
+        CommonResponse<PaginationResponse<TicketCommentDTO>>
+      >(ENDPOINTS.TICKETS.CHATS(id))
+      .then((r) => r.data),
+
+  addComment: (id: string, payload: AddCommentPayload) =>
+    axiosInstance
+      .post<TicketActionResponse>(ENDPOINTS.TICKETS.CHATS(id), payload)
       .then((r) => r.data),
 };

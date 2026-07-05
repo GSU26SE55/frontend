@@ -206,7 +206,6 @@ export default function BatteryAssetDetailPage() {
               <div className="divide-y divide-border/50">
                 <InfoRow label="Khách hàng" value={asset.customerName} />
                 <InfoRow label="Site" value={asset.siteName} />
-                <InfoRow label="Vị trí" value={asset.location} />
                 <InfoRow
                   label="Ngày lắp đặt"
                   value={asset.installDate ? fmtDate(asset.installDate) : null}

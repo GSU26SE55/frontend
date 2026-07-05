@@ -62,7 +62,10 @@ export default function IoTDeviceForm({
 
   const createForm = useForm<CreateIotDeviceForm>({
     resolver: zodResolver(createIotDeviceSchema),
-    defaultValues: { apiKeyScopes: IotApiKeyScopeEnum.EdgeDeviceDefault },
+    defaultValues: {
+      apiKeyScopes: IotApiKeyScopeEnum.EdgeDeviceDefault,
+      heartbeatIntervalSeconds: 60,
+    },
   });
   const editForm = useForm<UpdateIotDeviceForm>({
     resolver: zodResolver(updateIotDeviceSchema),
@@ -398,24 +401,10 @@ export default function IoTDeviceForm({
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label>API key scopes</Label>
-        <Controller
-          control={control}
-          name="apiKeyScopes"
-          render={({ field }) => (
-            <ApiKeyScopesField
-              value={field.value ?? IotApiKeyScopeEnum.EdgeDeviceDefault}
-              onChange={field.onChange}
-            />
-          )}
-        />
-        {errors.apiKeyScopes && (
-          <p className="text-sm text-destructive">
-            {errors.apiKeyScopes.message}
-          </p>
-        )}
-      </div>
+      <p className="text-xs text-muted-foreground">
+        API key scopes mặc định "Edge Device" (đủ cho thiết bị gửi sensor +
+        heartbeat) — chỉnh lại sau trong màn Sửa thiết bị nếu cần scope khác.
+      </p>
 
       <div className="space-y-1">
         <Label htmlFor="notes">Ghi chú</Label>

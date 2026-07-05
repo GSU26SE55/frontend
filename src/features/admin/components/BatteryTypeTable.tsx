@@ -20,6 +20,8 @@ import {
   BatteryChemistryEnum,
   type BatteryTypeDto,
 } from "@/features/admin/types/battery-type.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const CHEMISTRY_LABEL: Record<BatteryChemistryEnum, string> = {
   [BatteryChemistryEnum.LI_FE_PO4]: "LiFePO4",
@@ -50,22 +52,87 @@ export default function BatteryTypeTable({
   onRestore,
   onConfigThreshold,
 }: BatteryTypeTableProps) {
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<BatteryTypeDto>(data, (type, key) => {
+      switch (key) {
+        case "name":
+          return type.name;
+        case "manufacturer":
+          return type.manufacturer ?? "";
+        case "chemistry":
+          return CHEMISTRY_LABEL[type.chemistry] ?? "";
+        case "nominalCapacityAh":
+          return type.nominalCapacityAh;
+        case "nominalVoltage":
+          return type.nominalVoltage;
+        case "maxCycleCount":
+          return type.maxCycleCount;
+        default:
+          return null;
+      }
+    });
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-12 text-center">STT</TableHead>
-          <TableHead>Tên model</TableHead>
-          <TableHead>Nhà sản xuất</TableHead>
-          <TableHead>Hóa học</TableHead>
-          <TableHead className="text-right">Dung lượng (Ah)</TableHead>
-          <TableHead className="text-right">Điện áp (V)</TableHead>
-          <TableHead className="text-right">Chu kỳ</TableHead>
+          <SortableTableHead
+            sortKey="name"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Tên model
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="manufacturer"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Nhà sản xuất
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="chemistry"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Hóa học
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="nominalCapacityAh"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="justify-end text-right"
+          >
+            Dung lượng (Ah)
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="nominalVoltage"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="justify-end text-right"
+          >
+            Điện áp (V)
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="maxCycleCount"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="justify-end text-right"
+          >
+            Chu kỳ
+          </SortableTableHead>
           <TableHead className="text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((type, index) => (
+        {sorted.map((type, index) => (
           <TableRow key={type.id}>
             <TableCell className="text-center text-muted-foreground tabular-nums">
               {(pageNumber - 1) * pageSize + index + 1}

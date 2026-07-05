@@ -1,7 +1,9 @@
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import type { TicketActivityDTO } from "@/shared/types/ticket.types";
 import { ActivityActionEnum, ActorRoleEnum } from "@/shared/types/ticket.types";
+import { getActivityDotClass } from "@/shared/utils/activityActionColor";
 
 const ACTION_LABELS: Partial<Record<string, string>> = {
   [ActivityActionEnum.Created]: "Ticket được tạo",
@@ -55,7 +57,12 @@ export function TicketTimeline({ activities }: Props) {
     <ol className="relative border-l border-border ml-3 space-y-6">
       {activities.map((activity) => (
         <li key={activity.id} className="ml-6">
-          <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-background bg-muted-foreground" />
+          <span
+            className={cn(
+              "absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-background",
+              getActivityDotClass(activity.action),
+            )}
+          />
           <div className="flex flex-col gap-0.5">
             <p className="text-sm font-medium">
               {ACTION_LABELS[activity.action] ?? activity.action}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -21,6 +21,8 @@ import TicketActivityTimeline from "@/features/manager/components/TicketActivity
 import AddCommentForm from "@/features/manager/components/AddCommentForm";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import { TicketCommentThread } from "@/shared/components/common/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
+import BatteryAssetInfoPanel from "@/features/manager/components/BatteryAssetInfoPanel";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -28,6 +30,13 @@ import {
   useTicketComments,
 } from "@/features/manager/hooks/useManagerTickets";
 import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import {
+  useUpdateTicketChat,
+  useDeleteTicketChat,
+  useMarkTicketChatsRead,
+  useTranslateTicketChat,
+} from "@/shared/hooks/useTicketChatActions";
+import { checkPermission, P } from "@/shared/lib/authz";
 import {
   TicketStatusEnum,
   ImpactScopeEnum,
@@ -91,14 +100,36 @@ export default function TicketDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<DialogType>(null);
+  const [commentSubTab, setCommentSubTab] = useState<"public" | "internal">(
+    "public",
+  );
 
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
   const { data: comments = [] } = useTicketComments(id);
+  const publicComments = useMemo(
+    () => comments.filter((c) => !c.isInternal),
+    [comments],
+  );
+  const internalComments = useMemo(
+    () => comments.filter((c) => c.isInternal),
+    [comments],
+  );
   const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
-  const currentUserId = useSessionStore((s) => s.user?.accountId);
+  const user = useSessionStore((s) => s.user);
+  const currentUserId = user?.accountId;
+  const { mutate: updateChat, isPending: editChatPending } =
+    useUpdateTicketChat();
+  const { mutate: deleteChat, isPending: deleteChatPending } =
+    useDeleteTicketChat();
+  const { mutate: markChatsRead } = useMarkTicketChatsRead();
+  const handleMarkRead = (chatIds: string[]) =>
+    markChatsRead({ ticketId: id, payload: { chatIds } });
+  const { mutateAsync: translateChat } = useTranslateTicketChat();
+  const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
+    translateChat({ ticketId: id, chatId: chat.id, targetLanguage });
 
   if (isError) {
     return (
@@ -281,24 +312,28 @@ export default function TicketDetailPage() {
               </TabsList>
             </div>
 
-            {/* Info — attachments only; description/resolution are in sidebar */}
+            {/* Info — battery asset info + attachments */}
             <TabsContent
               value="info"
-              className="min-h-0 overflow-y-auto m-0 p-6"
+              className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
             >
-              {ticket.attachmentFileIds &&
-              ticket.attachmentFileIds.length > 0 ? (
-                <div>
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Tệp đính kèm
-                  </p>
-                  <TicketAttachments fileIds={ticket.attachmentFileIds} />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-12">
-                  Không có tệp đính kèm.
+              <BatteryAssetInfoPanel
+                batteryAssetId={ticket.batteryAssetId}
+                currentTicketId={id}
+              />
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Tệp đính kèm
                 </p>
-              )}
+                {ticket.attachmentFileIds &&
+                ticket.attachmentFileIds.length > 0 ? (
+                  <TicketAttachments fileIds={ticket.attachmentFileIds} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Không có tệp đính kèm.
+                  </p>
+                )}
+              </div>
             </TabsContent>
 
             {/* Comments */}
@@ -306,19 +341,93 @@ export default function TicketDetailPage() {
               value="comments"
               className="min-h-0 m-0 flex flex-col overflow-hidden"
             >
-              <div className="flex-1 overflow-y-auto p-6">
-                <TicketCommentThread
-                  comments={comments}
-                  currentUserId={currentUserId}
-                />
-              </div>
+              <Tabs
+                value={commentSubTab}
+                onValueChange={(v) =>
+                  setCommentSubTab(v as "public" | "internal")
+                }
+                className="flex-1 min-h-0 flex flex-col gap-0"
+              >
+                <div className="px-6 pt-2 shrink-0">
+                  <TabsList variant="line">
+                    <TabsTrigger value="public">
+                      Công khai
+                      {publicComments.length > 0 &&
+                        ` (${publicComments.length})`}
+                    </TabsTrigger>
+                    <TabsTrigger value="internal">
+                      Nội bộ
+                      {internalComments.length > 0 &&
+                        ` (${internalComments.length})`}
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                <TabsContent
+                  value="public"
+                  className="flex-1 min-h-0 overflow-y-auto p-6"
+                >
+                  <TicketCommentThread
+                    comments={publicComments}
+                    currentUserId={currentUserId}
+                    emptyText="Chưa có bình luận công khai nào."
+                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                    ticketClosed={status === TicketStatusEnum.Closed}
+                    onEdit={(chat, body, editReason) =>
+                      updateChat({
+                        ticketId: id,
+                        chatId: chat.id,
+                        payload: { body, editReason },
+                      })
+                    }
+                    onDelete={(chat, reason) =>
+                      deleteChat({ ticketId: id, chatId: chat.id, reason })
+                    }
+                    editPending={editChatPending}
+                    deletePending={deleteChatPending}
+                    onMarkRead={handleMarkRead}
+                    onTranslate={handleTranslate}
+                  />
+                </TabsContent>
+                <TabsContent
+                  value="internal"
+                  className="flex-1 min-h-0 overflow-y-auto p-6"
+                >
+                  <TicketCommentThread
+                    comments={internalComments}
+                    currentUserId={currentUserId}
+                    emptyText="Chưa có bình luận nội bộ nào."
+                    canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                    canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                    ticketClosed={status === TicketStatusEnum.Closed}
+                    onEdit={(chat, body, editReason) =>
+                      updateChat({
+                        ticketId: id,
+                        chatId: chat.id,
+                        payload: { body, editReason },
+                      })
+                    }
+                    onDelete={(chat, reason) =>
+                      deleteChat({ ticketId: id, chatId: chat.id, reason })
+                    }
+                    editPending={editChatPending}
+                    deletePending={deleteChatPending}
+                    onMarkRead={handleMarkRead}
+                    onTranslate={handleTranslate}
+                  />
+                </TabsContent>
+              </Tabs>
               <div className="shrink-0 border-t border-border p-3">
                 {typingNames.length > 0 && (
                   <p className="px-1 pb-2 text-xs text-muted-foreground italic">
                     {typingNames.join(", ")} đang gõ…
                   </p>
                 )}
-                <AddCommentForm ticketId={id} onTyping={sendTyping} />
+                <AddCommentForm
+                  ticketId={id}
+                  onTyping={sendTyping}
+                  defaultIsInternal={commentSubTab === "internal"}
+                />
               </div>
             </TabsContent>
 
@@ -386,6 +495,30 @@ export default function TicketDetailPage() {
             ) : (
               <p className="text-xs text-muted-foreground">Chưa được triage.</p>
             )}
+          </div>
+
+          {/* Trạng thái + thời gian xử lý */}
+          <div className="p-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Trạng thái
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Hiện tại
+                </span>
+                <TicketStatusBadge status={ticket.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Thời gian xử lý
+                </span>
+                <ProcessingDurationTimer
+                  activities={activities}
+                  status={ticket.status}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Description */}

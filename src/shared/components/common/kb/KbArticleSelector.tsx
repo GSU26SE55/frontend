@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,13 +19,21 @@ import {
   KB_CATEGORY_OPTIONS,
 } from "@/shared/enums/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/lib/utils";
+
+export interface KbArticleSearchParams {
+  q?: string;
+  category?: TicketCategoryEnum;
+}
 
 interface KbArticleSelectorProps {
   value: string[];
   onChange: (ids: string[]) => void;
-  /** Danh sách bài KB để chọn (parent fetch và truyền vào) */
+  /** Danh sách bài KB để chọn (parent fetch và truyền vào) — dùng khi không có searchFn */
   options?: KbArticleSummaryDTO[];
+  /** Tìm kiếm live trên toàn bộ catalog KB (khuyến nghị) — ưu tiên hơn options nếu có */
+  searchFn?: (params: KbArticleSearchParams) => Promise<KbArticleSummaryDTO[]>;
   disabled?: boolean;
   /** Khi mở dialog, pre-filter theo category này */
   defaultCategory?: TicketCategoryEnum;
@@ -34,25 +43,51 @@ export function KbArticleSelector({
   value,
   onChange,
   options = [],
+  searchFn,
   disabled,
   defaultCategory,
 }: KbArticleSelectorProps) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const debouncedKeyword = useDebounce(keyword, 400);
   const [categoryFilter, setCategoryFilter] =
     useState<TicketCategoryEnum | null>(defaultCategory ?? null);
   const [previewId, setPreviewId] = useState<string | null>(null);
+
+  // searchFn đọc qua ref — tránh query key phụ thuộc vào function reference
+  // không ổn định giữa các lần render (cùng pattern useTicketCommentsRealtime).
+  const searchFnRef = useRef(searchFn);
+  useEffect(() => {
+    searchFnRef.current = searchFn;
+  });
+
+  // Cache lại metadata của các bài đã chọn — để badge bên ngoài dialog vẫn
+  // hiển thị được code/title dù kết quả search hiện tại không còn chứa nó.
+  const [selectedMeta, setSelectedMeta] = useState<
+    Map<string, KbArticleSummaryDTO>
+  >(new Map());
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
       // Reset category filter to default + clear preview on each open
       setCategoryFilter(defaultCategory ?? null);
       setPreviewId(null);
+      setKeyword("");
     }
     setOpen(next);
   };
 
-  const articles: KbArticleSummaryDTO[] = useMemo(() => {
+  const { data: searchResult, isFetching: searching } = useQuery({
+    queryKey: ["kbArticleSelectorSearch", debouncedKeyword, categoryFilter],
+    queryFn: () =>
+      searchFnRef.current!({
+        q: debouncedKeyword.trim() || undefined,
+        category: categoryFilter ?? undefined,
+      }),
+    enabled: open && !!searchFn,
+  });
+
+  const filteredOptions: KbArticleSummaryDTO[] = useMemo(() => {
     let list = options.filter(
       (a) => a.status === KbArticleStatusEnum.Published,
     );
@@ -69,6 +104,31 @@ export function KbArticleSelector({
     }
     return list;
   }, [keyword, options, categoryFilter]);
+
+  const articles: KbArticleSummaryDTO[] = useMemo(
+    () => (searchFn ? (searchResult ?? []) : filteredOptions),
+    [searchFn, searchResult, filteredOptions],
+  );
+
+  useEffect(() => {
+    if (articles.length === 0) return;
+    // setState hoãn qua callback (không gọi đồng bộ trong thân effect) — tránh
+    // cascading render, cùng pattern với react-hooks/set-state-in-effect.
+    const id = setTimeout(() => {
+      setSelectedMeta((prev) => {
+        let changed = false;
+        const next = new Map(prev);
+        for (const a of articles) {
+          if (value.includes(a.id) && next.get(a.id) !== a) {
+            next.set(a.id, a);
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 0);
+    return () => clearTimeout(id);
+  }, [articles, value]);
 
   const previewArticle = useMemo(
     () => articles.find((a) => a.id === previewId) ?? null,
@@ -96,7 +156,8 @@ export function KbArticleSelector({
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {value.map((id) => {
-            const article = options?.find((a) => a.id === id);
+            const article =
+              options?.find((a) => a.id === id) ?? selectedMeta.get(id);
             return (
               <Badge key={id} variant="secondary" className="gap-1 pr-1">
                 <span className="max-w-[160px] truncate text-xs">
@@ -186,7 +247,7 @@ export function KbArticleSelector({
             </div>
 
             <p className="text-[11px] text-muted-foreground">
-              {articles.length} kết quả
+              {searching ? "Đang tìm..." : `${articles.length} kết quả`}
               {value.length > 0 && ` · đã chọn ${value.length}`}
             </p>
           </div>
@@ -230,7 +291,7 @@ export function KbArticleSelector({
               })}
               {articles.length === 0 && (
                 <div className="py-12 text-center text-sm text-muted-foreground">
-                  Không tìm thấy bài viết
+                  {searching ? "Đang tìm kiếm..." : "Không tìm thấy bài viết"}
                 </div>
               )}
             </div>

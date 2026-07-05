@@ -24,6 +24,8 @@ import {
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
 import { useRestoreBatteryAsset } from "@/features/admin/hooks/useRestoreBatteryAsset";
 import { toast } from "sonner";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -58,23 +60,84 @@ export default function BatteryAssetTable({
   const navigate = useNavigate();
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
   const { mutate: restoreAsset } = useRestoreBatteryAsset();
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<BatteryAssetDto>(items, (item, key) => {
+      switch (key) {
+        case "serialNumber":
+          return item.serialNumber;
+        case "batteryTypeName":
+          return item.batteryTypeName;
+        case "customerName":
+          return item.customerName;
+        case "siteName":
+          return item.siteName ?? "";
+        case "status":
+          return statusLabel[item.status];
+        case "installDate":
+          return new Date(item.installDate);
+        default:
+          return null;
+      }
+    });
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-12 text-center">STT</TableHead>
-          <TableHead>Serial Number</TableHead>
-          <TableHead>Loại pin</TableHead>
-          <TableHead>Khách hàng</TableHead>
-          <TableHead>Site</TableHead>
-          <TableHead>Trạng thái</TableHead>
-          <TableHead>Ngày lắp</TableHead>
+          <SortableTableHead
+            sortKey="serialNumber"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Serial Number
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="batteryTypeName"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Loại pin
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="customerName"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Khách hàng
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="siteName"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Site
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="status"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Trạng thái
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="installDate"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+          >
+            Ngày lắp
+          </SortableTableHead>
           <TableHead className="text-right">Thao tác</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {items.map((item, index) => (
+        {sorted.map((item, index) => (
           <TableRow
             key={item.id}
             className="cursor-pointer hover:bg-muted/50"

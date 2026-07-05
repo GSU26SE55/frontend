@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import { useLoginHistory } from "@/features/auth/hooks/useLoginHistory";
 import { LoginAttemptResult } from "@/features/auth/types/account.types";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.Success]: "Thành công",
@@ -37,6 +39,21 @@ const LoginHistoryTable = () => {
 
   const items = data?.items ?? [];
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData(items, (item, key) => {
+      switch (key) {
+        case "createdAt":
+          return new Date(item.createdAt);
+        case "result":
+          return RESULT_LABEL[item.result] ?? item.resultName;
+        case "method":
+          return item.method;
+        case "ipAddress":
+          return item.ipAddress ?? "";
+        default:
+          return null;
+      }
+    });
 
   return (
     <div className="flex flex-col gap-3">
@@ -48,18 +65,42 @@ const LoginHistoryTable = () => {
               <TableHead className="w-12 text-center text-xs font-semibold">
                 STT
               </TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">
+              <SortableTableHead
+                sortKey="createdAt"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-1/4 text-xs font-semibold"
+              >
                 Thời gian
-              </TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="result"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-1/4 text-xs font-semibold"
+              >
                 Kết quả
-              </TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="method"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-1/4 text-xs font-semibold"
+              >
                 Phương thức
-              </TableHead>
-              <TableHead className="w-1/4 text-xs font-semibold">
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="ipAddress"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-1/4 text-xs font-semibold"
+              >
                 Địa chỉ IP
-              </TableHead>
+              </SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -93,7 +134,7 @@ const LoginHistoryTable = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              items.map((item, index) => (
+              sorted.map((item, index) => (
                 <TableRow key={item.id} className="text-sm">
                   <TableCell className="text-center text-muted-foreground tabular-nums">
                     {(page - 1) * PAGE_SIZE + index + 1}

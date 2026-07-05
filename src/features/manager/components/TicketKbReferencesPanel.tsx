@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,18 @@ import {
   useAddTicketKbRef,
   useRemoveTicketKbRef,
 } from "../hooks/useTicketKbRefs";
-import { useManagerKbSuggest } from "../hooks/useManagerKb";
+import { managerKbService } from "../services/kb.service";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
   KbArticleStatusEnum,
+  KbCategoryCode,
 } from "@/shared/enums/kb.enum";
-import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
-import { KbArticleSelector } from "@/shared/components/common/kb/KbArticleSelector";
+import {
+  KbArticleSelector,
+  type KbArticleSearchParams,
+} from "@/shared/components/common/kb/KbArticleSelector";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb.enum";
 import { cn } from "@/lib/utils";
 
@@ -60,19 +63,18 @@ export default function TicketKbReferencesPanel({
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
-  const { data: suggestItems } = useManagerKbSuggest(ticketId);
-  const selectorOptions: KbArticleSummaryDTO[] = (suggestItems ?? []).map(
-    (item) => ({
-      id: item.id,
-      code: item.code,
-      title: item.title,
-      category: defaultCategory ?? TicketCategoryEnum.Other,
-      status: KbArticleStatusEnum.Published,
-      viewCount: item.viewCount,
-      helpfulCount: item.helpfulCount,
-      reviewRequired: false,
-      createdAt: "",
-    }),
+
+  const searchArticles = useCallback(
+    ({ q, category }: KbArticleSearchParams) =>
+      managerKbService
+        .getList({
+          q,
+          category: category ? KbCategoryCode[category] : undefined,
+          status: KbArticleStatusEnum.Published,
+          pageSize: 20,
+        })
+        .then((r) => r.data.data?.items ?? []),
+    [],
   );
 
   const [showAdd, setShowAdd] = useState(false);
@@ -153,7 +155,7 @@ export default function TicketKbReferencesPanel({
                 <KbArticleSelector
                   value={selectedIds}
                   onChange={setSelectedIds}
-                  options={selectorOptions}
+                  searchFn={searchArticles}
                   defaultCategory={defaultCategory}
                 />
 
