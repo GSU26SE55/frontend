@@ -5,13 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Plus, Trash2, ExternalLink, X } from "lucide-react";
+import {
+  BookOpen,
+  FilePlus2,
+  Plus,
+  Trash2,
+  ExternalLink,
+  X,
+  Sparkles,
+} from "lucide-react";
 import {
   useTicketKbRefs,
   useAddTicketKbRef,
   useRemoveTicketKbRef,
 } from "../hooks/useTicketKbRefs";
 import { staffKbService } from "../services/kb.service";
+import { useStaffKbSuggest, useStaffKbCreate } from "../hooks/useStaffKb";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
@@ -23,7 +32,9 @@ import {
   KbArticleSelector,
   type KbArticleSearchParams,
 } from "@/shared/components/common/kb/KbArticleSelector";
+import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb.enum";
+import type { UpdateKbArticlePayload } from "@/shared/types/kb.types";
 import { cn } from "@/lib/utils";
 
 const REF_TYPE_ORDER: RefType[] = [
@@ -64,8 +75,16 @@ export default function TicketKbReferencesPanel({
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
+  const { data: suggestions } = useStaffKbSuggest(ticketId);
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
+  const { mutateAsync: createArticle, isPending: creatingArticle } =
+    useStaffKbCreate();
+
+  const suggested = useMemo(() => {
+    const attachedIds = new Set((refs ?? []).map((r) => r.kbArticleId));
+    return (suggestions ?? []).filter((s) => !attachedIds.has(s.id));
+  }, [suggestions, refs]);
 
   const searchArticles = useCallback(
     ({ q, category }: KbArticleSearchParams) =>
@@ -80,7 +99,13 @@ export default function TicketKbReferencesPanel({
     [],
   );
 
+  const getArticleDetail = useCallback(
+    (id: string) => staffKbService.getDetail(id).then((r) => r.data.data!),
+    [],
+  );
+
   const [showAdd, setShowAdd] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [refType, setRefType] = useState<RefType>(
     KbReferenceTypeEnum.ConsultedDuringResolve,
@@ -110,6 +135,17 @@ export default function TicketKbReferencesPanel({
     setShowAdd(false);
   };
 
+  const handleCreateSave = async (payload: UpdateKbArticlePayload) => {
+    const res = await createArticle(payload);
+    if (res?.id) {
+      addRef({
+        kbArticleId: res.id,
+        referenceType: KbReferenceTypeEnum.GeneratedAfterResolve,
+      });
+    }
+    setShowCreate(false);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-3 p-4">
@@ -133,22 +169,82 @@ export default function TicketKbReferencesPanel({
             </span>
           )}
         </h3>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5"
-          disabled={!canAdd}
-          title={
-            !canAdd
-              ? "Ticket đã hoàn thành — không thể gắn thêm bài viết"
-              : undefined
-          }
-          onClick={() => setShowAdd(!showAdd)}
-        >
-          {showAdd ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
-          {showAdd ? "Đóng" : "Gắn bài viết"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={!canAdd}
+            title={
+              !canAdd
+                ? "Ticket đã hoàn thành — không thể tạo bài viết"
+                : undefined
+            }
+            onClick={() => setShowCreate(true)}
+          >
+            <FilePlus2 className="size-3.5" /> Tạo bài viết mới
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={!canAdd}
+            title={
+              !canAdd
+                ? "Ticket đã hoàn thành — không thể gắn thêm bài viết"
+                : undefined
+            }
+            onClick={() => setShowAdd(!showAdd)}
+          >
+            {showAdd ? (
+              <X className="size-3.5" />
+            ) : (
+              <Plus className="size-3.5" />
+            )}
+            {showAdd ? "Đóng" : "Gắn bài viết"}
+          </Button>
+        </div>
       </div>
+
+      {suggested.length > 0 && (
+        <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="size-3.5 text-primary" />
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              Gợi ý cho ticket này
+            </h4>
+          </div>
+          <div className="space-y-1.5">
+            {suggested.slice(0, 5).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 rounded-md bg-background px-2.5 py-1.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="mr-1.5 font-mono text-[11px] text-muted-foreground">
+                    {item.code}
+                  </span>
+                  <span className="truncate text-xs">{item.title}</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+                  disabled={!canAdd || adding}
+                  onClick={() =>
+                    addRef({
+                      kbArticleId: item.id,
+                      referenceType: KbReferenceTypeEnum.ConsultedDuringResolve,
+                    })
+                  }
+                >
+                  <Plus className="size-3" /> Gắn
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AnimatePresence initial={false}>
         {showAdd && (
@@ -165,6 +261,7 @@ export default function TicketKbReferencesPanel({
                   value={selectedIds}
                   onChange={setSelectedIds}
                   searchFn={searchArticles}
+                  getDetailFn={getArticleDetail}
                   defaultCategory={defaultCategory}
                 />
 
@@ -220,6 +317,42 @@ export default function TicketKbReferencesPanel({
               </CardContent>
             </Card>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCreate && (
+          <>
+            <motion.div
+              key="kb-create-backdrop"
+              className="fixed inset-0 z-50 bg-black/20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowCreate(false)}
+            />
+            <motion.div
+              key="kb-create-panel"
+              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
+              initial={{ x: "100%", opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 340,
+                damping: 32,
+                mass: 0.9,
+              }}
+            >
+              <KbEditorPanel
+                initialCategory={defaultCategory}
+                onClose={() => setShowCreate(false)}
+                isPending={creatingArticle}
+                onSave={handleCreateSave}
+              />
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

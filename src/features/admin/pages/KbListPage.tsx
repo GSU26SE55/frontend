@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, Tag, X } from "lucide-react";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -50,6 +50,7 @@ const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
 
 const DEFAULTS = {
   keyword: "",
+  tag: "",
   status: "",
   category: "",
   pageNumber: 1,
@@ -63,6 +64,9 @@ export default function KbListPage() {
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const tagSearch = useDebouncedSearch(filters.tag ?? "", (t) =>
+    setFilter("tag", t),
+  );
 
   const categoryValue = filters.category
     ? (filters.category as TicketCategoryEnum)
@@ -73,6 +77,7 @@ export default function KbListPage() {
 
   const params = {
     q: filters.keyword || undefined,
+    tag: filters.tag || undefined,
     status: statusValue,
     category: categoryValue ? KbCategoryCode[categoryValue] : undefined,
     pageNumber: filters.pageNumber,
@@ -116,7 +121,7 @@ export default function KbListPage() {
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo tiêu đề, mã hoặc tag…"
+              placeholder="Tìm theo tiêu đề hoặc mã…"
               value={search.value}
               onChange={search.onChange}
               className="pl-8 pr-8"
@@ -132,6 +137,31 @@ export default function KbListPage() {
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
                 aria-label="Xóa từ khóa"
+              >
+                <X className="size-3.5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          <div className="relative w-full sm:w-44">
+            <Tag className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Lọc theo tag…"
+              value={tagSearch.value}
+              onChange={tagSearch.onChange}
+              className="pl-8 pr-8"
+            />
+            {tagSearch.value && (
+              <button
+                type="button"
+                onClick={() => {
+                  tagSearch.onChange({
+                    target: { value: "" },
+                  } as React.ChangeEvent<HTMLInputElement>);
+                  setFilter("tag", undefined);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
+                aria-label="Xóa tag"
               >
                 <X className="size-3.5 text-muted-foreground" />
               </button>
@@ -191,7 +221,7 @@ export default function KbListPage() {
           )}
         </div>
 
-        {search.value.length === 1 && (
+        {(search.value.length === 1 || tagSearch.value.length === 1) && (
           <p className="text-[11px] text-muted-foreground -mt-1.5">
             Nhập ít nhất 2 ký tự để tìm
           </p>

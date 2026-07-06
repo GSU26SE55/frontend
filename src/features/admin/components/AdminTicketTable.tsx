@@ -169,7 +169,7 @@ export default function AdminTicketTable({
                     {ticket.code}
                   </div>
                 </TableCell>
-                <TableCell className="max-w-xs truncate">
+                <TableCell className="max-w-xs truncate" title={ticket.title}>
                   {ticket.title}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">

@@ -150,7 +150,10 @@ export default function TicketTable({
                 {(pageNumber - 1) * pageSize + index + 1}
               </TableCell>
               <TableCell className="font-mono text-xs">{ticket.code}</TableCell>
-              <TableCell className="max-w-xs truncate font-medium">
+              <TableCell
+                className="max-w-xs truncate font-medium"
+                title={ticket.title}
+              >
                 {ticket.title}
               </TableCell>
               <TableCell>

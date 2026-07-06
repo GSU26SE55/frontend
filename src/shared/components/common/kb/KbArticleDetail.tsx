@@ -67,7 +67,7 @@ function parseLines(text: string): string[] {
 }
 
 // ── Section content renderer ─────────────────────────────────────────────────
-function SectionContent({ text }: { text: string }) {
+export function SectionContent({ text }: { text: string }) {
   if (isNumberedList(text)) {
     return (
       <ol className="space-y-3">
