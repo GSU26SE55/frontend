@@ -193,6 +193,52 @@ channel: z.nativeEnum(IotFirmwareChannelEnum).optional()
 | `src/router/index.tsx` | modify | + routes admin/staff/manager |
 | `src/shared/components/layout/AppLayout.tsx` | modify | + nav: Admin (IoT Devices, Firmware), Staff (IoT Calibration), Manager (Calibration sắp hết hạn) |
 
+## Workflow
+
+**Admin — quản lý device (CRUD + list):**
+```
+Vào /admin/iot-devices → useIotDevices(params) → IoTDeviceTable + filter(site/status/keyword) + pagination
+  → "Tạo device" → IoTDeviceFormPage → submit useIotDeviceMutations.create
+      → 201 IotDeviceCreatedDto → mở DeviceKeyRevealDialog (rawApiKey + QR + MQTT, copy, cảnh báo 1 lần)
+  → row click → IoTDeviceDetailPage (tabs Overview · Calibrations · Firmware)
+  → "Sửa" → FormPage /:id/edit → update → IotDeviceDto
+  → "Xóa" (decommission) → ConfirmActionDialog → delete → invalidate KEY.iotDevices
+```
+
+**Admin — API key (rotate/revoke) + command:**
+```
+Device Detail → "Rotate key" → ConfirmActionDialog → rotateKey → 200 IotDeviceCreatedDto
+    → DeviceKeyRevealDialog (secrets mới) → invalidate detail query → nút Revoke hiện lại
+  → "Revoke key" → ConfirmActionDialog → revokeKey → Status=Disabled → invalidate detail → ẩn nút Revoke
+  → "Gửi lệnh" → DeviceCommandDialog (type dropdown + params JSON)
+    → JSON.parse params (fail → setError, không gọi API) → command → 202 → toast topic
+```
+
+**Admin — firmware OTA (upload 2-step):**
+```
+Vào /admin/iot-firmware → useIotFirmware → IoTFirmwareTable + publish/archive
+  → "Tạo release" → IoTFirmwareFormPage → chọn .bin (Zod: .bin + ≤50MB + SemVer)
+    → useIotFirmwareMutations.create: uploadBinary(file) → {artifactUrl,sha256,size}
+      → createRelease({...metadata, ...artifact}) → 201 → invalidate KEY.iotFirmware
+  → "Publish"/"Archive" → AlertDialog → mutation → invalidate
+```
+
+**Staff — calibration qua lookup deviceCode:**
+```
+Vào /staff/iot-calibrations → nhập deviceCode (trim + uppercase) → submit
+  → useDeviceByCode(code) (enabled khi có code) → GET by-code
+    → 200: device card (displayName/status/site) + CalibrationTable (useIotCalibrations)
+        → "Thêm" → CalibrationFormDialog → create → invalidate iot:calibration
+        → "Xóa" → ConfirmActionDialog → delete → invalidate
+    → 404: EmptyState "Không tìm thấy thiết bị" (KHÔNG render calibration UI)
+```
+
+**Manager — calibration sắp hết hạn:**
+```
+Vào /manager/iot-calibrations → useIotCalibrations expiring(within, clamp 1–365)
+  → CalibrationsExpiringTable (cross-device, chỉ item expiresAt trong (now, now+within])
+```
+
 ## Approach
 - **Service layer** (rule: không gọi API trong component): mỗi service import `axiosInstance` + `ENDPOINTS`. Upload firmware dùng `FormData` + `headers:{ "Content-Type": undefined }` (theo `file-storage.service.ts`).
 - **Firmware 2-step** (`useIotFirmwareMutations.create`): `mutationFn` chạy tuần tự `uploadBinary(file)` → lấy `{artifactUrl, sha256Checksum, artifactSizeBytes}` → `createRelease({...metadata, ...artifact, publishImmediately})`. 1 mutation, 2 API call.

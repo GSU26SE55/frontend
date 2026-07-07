@@ -108,6 +108,42 @@ falseAlarmSchema: falseAlarmReason z.string().trim().min(5).max(2000)
 | `src/router/index.tsx` | modify | import + routes admin/manager/staff |
 | `src/shared/components/layout/Sidebar.tsx` | modify | nav entries (nếu có cấu trúc menu — confirm khi implement) |
 
+## Workflow
+
+**Incident list flow:**
+```
+Vào trang Environmental Incidents → useIncidentList(params) (staleTime 30s + refetchInterval 30s)
+  → OK:   render list + filter (site/status/type/from-to) + detail dialog
+  → FAIL: handleErrorApi({ error }) → toast
+```
+
+**Incident lifecycle flow (acknowledge / resolve / false-alarm):**
+```
+Nút action (gate checkRole: ack/resolve = A/M/S, false-alarm = A/M) →
+  ack:         useAcknowledgeIncident.mutate(id)
+  resolve:     form { resolutionNote } → mutateAsync (try/catch)
+  false-alarm: form { falseAlarmReason } → mutateAsync (try/catch)
+  → OK:   invalidate incident list + detail (+ active-by-site) → status đổi → toast
+  → FAIL: handleErrorApi({ error, setError }) form / handleErrorApi({ error }) non-form → toast (409 sai state)
+```
+
+**Ambient threshold config flow:**
+```
+Chọn site (site selector) → useThresholdConfigBySite(siteId)
+  → 404 (chưa cấu hình): form ở chế độ "tạo mới"
+  → có config: form edit
+Submit form (Zod cross-field: Critical >= Warning) → upsertThresholdConfig.mutateAsync
+  → OK:   invalidate threshold config → toast
+  → FAIL: handleErrorApi({ error, setError }) → lỗi dưới input / toast (400 Critical<Warning)
+```
+
+**Ambient readings flow:**
+```
+Chọn site → useAmbientLatest(siteId) (staleTime 1') + useAmbientHistory(params) (staleTime 5')
+  → OK:   hiển thị reading mới nhất + history (nullable humidity/solarIrradiance → "—")
+  → latest 404: empty state "Chưa có dữ liệu"
+```
+
 ## Approach
 - **Tái dùng 100% pattern #72:** service object (axios + ENDPOINTS) → hook (`useQuery`/`useMutation` + `handleErrorApi` + `toast`) → shared `*View` component → per-role page wrapper → router.
 - **RBAC ở UI:** dùng `checkRole(user, ...)` từ `shared/lib/authz.ts` để ẩn/hiện nút action. `false-alarm` chỉ render cho Admin/Manager; `acknowledge`/`resolve` cho A/M/S. Backend vẫn là source of truth (403).

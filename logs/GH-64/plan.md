@@ -3,7 +3,7 @@
 ## Metadata
 - **Status:** REVIEWING → **NEEDS REWORK (GH-295)** | **Role:** FE | **Ngày:** 2026-06-06, cập nhật 2026-06-14
 - **Issue:** #64 — https://github.com/GSU26SE55/frontend/issues/64
-- **Sprint:** Sprint 1 (deadline 2026-05-30)
+- **Sprint:** Sprint 2 (deadline 2026-06-13)
 
 ---
 
@@ -184,6 +184,65 @@ if (account.status === AccountStatusEnum.PendingVerification) { ... }
 ```ts
 import { AccountStatusEnum } from "@/shared/enums/account.enum";
 status: z.nativeEnum(AccountStatusEnum)  // ✅ — không dùng z.enum([...])
+```
+
+## Types
+Types mới tạo/sửa (chi tiết binding xem §Files):
+
+```ts
+// features/auth/types/auth.types.ts
+interface AcceptInviteFormValues { password: string; confirmPassword: string; } // state form (Zod .refine match)
+interface AcceptInvitePayload { invitationToken: string; password: string; confirmPassword: string; } // API body — gửi đủ 3 (C4)
+
+// features/admin/types/admin.types.ts
+interface ChangeAccountRolePayload { roleId: string; } // PUT /api/admin/accounts/{id}/role
+```
+> Các DTO còn lại (`AccountDto`, `RoleDto`, `AuditLogDto`, sessions/login-history) đã có sẵn — tái dùng, không định nghĩa lại.
+
+## Schema (Zod)
+| Schema file | Field + rule |
+|-------------|--------------|
+| `accept-invite.schema.ts` | `password` (min 8, regex mạnh), `confirmPassword` — `.refine(p === cp)` cross-field |
+| `profile.schema.ts` | `fullName`, `phone`, `dob?`, `address?` (edit profile) |
+| `admin-account.schema.ts` | invite/create/edit/status/role — `status: z.nativeEnum(AccountStatusEnum)` (KHÔNG `z.enum`) |
+| `role.schema.ts` | create/edit role: `name`, `description?` |
+| `staff-profile.schema.ts` | edit staff profile + add skill |
+
+## Workflow
+
+**Accept Invite flow (public):**
+```
+/invite/accept?token=... → đọc token từ useSearchParams
+  → form (password + confirmPassword, Zod .refine) → useAcceptInvite.mutateAsync({ invitationToken, password, confirmPassword })
+  → OK: saveTokens(data.tokens.*) → decodeToken → CUSTOMER guard → setSession
+        → setQueryData(currentUser.session(), user) → navigate(redirectByRole)
+  → 401: "Link mời không hợp lệ/hết hạn" (không redirect)
+  → 422: confirmPassword mismatch → setError dưới field
+  → 409: "Tài khoản đã kích hoạt"
+```
+
+**Profile edit + avatar flow:**
+```
+ProfilePage → useProfile() hiển thị data
+  edit form → useUpdateProfile.mutateAsync → OK: invalidate [KEY.profile] + toast
+  avatar: chọn file → useUploadFile({ file, purpose: Avatar }) → fileId
+        → useUpdateAvatar({ avatarFileId }) → invalidate [KEY.profile] → render displayAvatarUrl
+```
+
+**Admin AccountsPage row action flow:**
+```
+Row dropdown → Edit / ChangeStatus / ChangeRole / Sessions / Delete
+  Locked account → "Mở khóa" → inline AlertDialog → useAdminUnlockAccount
+  Staff account → "Edit Staff Profile" → EditStaffProfileDialog
+  mỗi mutation onSuccess → invalidate KEY.admin.accounts + toast
+```
+
+**Admin RolesPage + PermissionsDialog flow:**
+```
+Row dropdown → Edit / ChangeStatus / Permissions / Delete (ẩn nếu isSystemRole)
+  PermissionsDialog: load all + current → checkbox → PUT replace
+    → chọn 0 permission: AlertDialog xác nhận → PUT permissionIds:[]
+  onSuccess → invalidate KEY.admin.roles / roles.permissions(roleId)
 ```
 
 ## Approach

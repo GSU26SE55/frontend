@@ -65,6 +65,79 @@ Bỏ toàn bộ tính KPI/count/chart **client-side** (cap 100–200 → đếm 
 | `src/features/staff/pages/TicketDetailPage.tsx` + `src/features/manager/pages/TicketDetailPage.tsx` | modify | H (canAddKb cho Resolved+after-resolve) |
 | `src/shared/utils/dashboard.utils.ts` | modify | cleanup helper hết consumer |
 
+## Enums
+Không tạo enum mới. Dùng lại enum có sẵn cho map hiển thị (`countByStatus`/`countByPriority`):
+
+| Enum | File nguồn |
+|------|-----------|
+| `TicketStatusEnum` | `shared/enums/ticket.enum.ts` |
+| `TicketPriorityEnum` | `shared/enums/ticket.enum.ts` |
+| `UserRole` | `shared/enums/session.enum.ts` (D — countByRole donut) |
+
+## Types
+Types mới/sửa (JSON camelCase — BE PascalCase serialize camelCase). Shape đầy đủ xem §BE contract đã verify:
+
+```ts
+// shared/types/ticket.types.ts
+interface SlaSummaryDto { met: number; breached: number; running: number; paused: number; compliancePercent: number; }
+interface DailyCountPointDto { date: string; count: number; }
+interface StaffOpenCountDto { staffId: string; activeCount: number; }
+interface TicketDashboardStatsDto { total; openCount; sla: SlaSummaryDto; countByStatus; countByPriority; createdTrend7Days: DailyCountPointDto[]; openCountByStaff: StaffOpenCountDto[]; } // A
+interface StaffTicketDashboardStatsDto { openCount; resolvedCount; nearBreachCount; breachedCount; pausedCount; slaMonitoredCount; sla: SlaSummaryDto; countByStatus; slaRisk: SlaRiskDto; createdTrend7Days: DailyCountPointDto[]; } // B
+interface SlaRiskDto { healthy: number; near: number; breached: number; }
+// shared/types/site.types.ts
+interface SiteDashboardStatsDto { total; activeCount; totalBatteries; activeBatteries; avgHealth; atRiskCount; } // C
+// shared/types/account.types.ts
+interface AccountStatsDto { total: number; countByRole: Record<string, number>; }   // D
+// AccountDto += isGoogleLinked: boolean (F)
+// shared/types/kb.types.ts — KbSuggestItemDTO += isInternalOnly: boolean (G)
+```
+
+## Schema (Zod)
+Không có form mới → **không cần Zod schema**. Đây là data-source swap (client-calc → server aggregate) + toggle/filter server-side; không thêm form nhập liệu.
+
+## Endpoints
+Chi tiết auth + DTO xem §BE contract đã verify (A–H). Tóm tắt path thêm vào `endpoints.ts`:
+
+| # | Method | Path | Auth |
+|---|--------|------|------|
+| A | GET | `/api/tickets/dashboard/stats` | Manager, Admin |
+| B | GET | `/api/staff/tickets/dashboard/stats` | Staff |
+| C | GET | `/api/sites/dashboard/stats` | Admin, Manager |
+| D | GET | `/api/admin/accounts/stats` | Admin, Manager |
+| E | GET | `/api/staff/tickets/me?slaOpen=true&sortBy=slaRemaining` | Staff |
+| F | GET | `/api/auth/me` (+`isGoogleLinked`) | auth |
+| G/H | POST | `/api/knowledge-base/references` | (422 internal-only guard, Resolved gate) |
+
+## Workflow
+
+**Dashboard aggregate flow (A/B/C/D — thay client-calc):**
+```
+DashboardPage (Admin/Manager/Staff) → useTicketDashboardStats / useStaffTicketDashboardStats / useSiteDashboardStats / useAccountStats [staleTime 60s]
+  → repoint biến client-side → field DTO server (giữ nguyên card/gauge/donut layout)
+  → countByStatus → pipeline buckets (KHÔNG gộp ClosedRejected vào "Hoàn tất"); countByPriority → P1/P2/P3
+  → mỗi hook lỗi/loading → skeleton card độc lập, domain khác không ảnh hưởng
+```
+
+**SLA Monitor server filter+sort (E):**
+```
+SlaMonitorPage → useStaffTickets({ slaOpen:true, sortBy:'slaRemaining' }) [staleTime 30s]
+  → list render trực tiếp từ server (bỏ filter+sort client, bỏ cap 100) · KPI từ B
+```
+
+**Settings Google-link (F):**
+```
+AccountSettingsPage → useProfile → isLinked={!!account?.isGoogleLinked}
+  → nút hiện "Hủy liên kết" khi đã link
+```
+
+**KB reference guard (G/H):**
+```
+KbArticleSelector: bài isInternalOnly + ProvidedToCustomer → badge "Nội bộ" + cảnh báo/disable
+  → vẫn gửi → BE 422 → handleErrorApi (HttpError) → toast
+TicketDetailPage (staff/manager): canAddKb cho Resolved + afterResolveOnly refType (khớp BE H)
+```
+
 ## Approach
 - **Hạ tầng:** copy pattern `useBatteryDashboardStats` (hook + service fn) cho A/B/C/D — endpoint + type + service + hook, staleTime 60s (SLA Monitor B: 30s).
 - **Data-source swap giữ layout:** repoint biến client-side → field DTO; giữ card/gauge/donut. `countByStatus` map sang pipeline/statusBuckets như FE đang nhóm (KHÔNG gộp `ClosedRejected` vào "Hoàn tất").

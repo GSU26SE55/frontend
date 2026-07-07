@@ -151,6 +151,15 @@ invalidateQueries(QUERY_KEY.currentUser.permissions())  // sẽ wire ở ticket 
   → useMyPermissions refetch → setPermissions → UI cập nhật quyền mới
 ```
 
+## Acceptance Criteria
+- [ ] `P.*` trong `authz.ts` khớp đúng 40 permission code BE (giữ 2 saga code đang dùng), không còn code không tồn tại BE.
+- [ ] `SagaDebugPage` vẫn dùng `P.TICKET_SAGA_VIEW` / `P.TICKET_SAGA_REPROCESS` không vỡ.
+- [ ] Thêm `ENDPOINTS.AUTH.ME_PERMISSIONS` + type `MyPermissionsDto`/`PermissionDto` + `permission.service.ts` gọi `GET /me/permissions`.
+- [ ] `useMyPermissions` gate theo `isAuthenticated`, sync `setPermissions` vào `sessionStore` (server truth override perm[] JWT; error/pending giữ perm[] JWT làm fallback).
+- [ ] Wire sync 1 chỗ trong `authContext` phủ cả 4 flow login (login/2FA/accept-invite/google).
+- [ ] `QUERY_KEY.currentUser.permissions()` tạo sẵn để invalidate được (wiring mutation là follow-up).
+- [ ] tsc --noEmit + eslint --max-warnings=0 + npm run build → PASS
+
 ## Steps
 - [x] Bước 1: Viết lại `P` trong `authz.ts` (40 code), xác nhận `SagaDebugPage` vẫn dùng `P.TICKET_SAGA_VIEW/REPROCESS` OK. — 2026-06-22
 - [x] Bước 2: Thêm `ENDPOINTS.AUTH.ME_PERMISSIONS`. — 2026-06-22

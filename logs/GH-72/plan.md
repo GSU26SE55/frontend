@@ -60,6 +60,9 @@ interface AlertListParams {
 }
 ```
 
+## Schema (Zod)
+Không có form → không cần Zod schema.
+
 ## Files
 | File | Action | Ghi chú |
 |------|--------|---------|
@@ -77,6 +80,31 @@ interface AlertListParams {
 | `src/features/staff/pages/BatteryAlertsPage.tsx` | create | render `<AlertsView />` — tên `BatteryAlertsPage` tránh trùng `AlertsPage.tsx` (notifications) đã có |
 | `src/router/index.tsx` | modify | `/admin/alerts`, `/manager/alerts`, `/staff/battery-alerts` |
 | `src/shared/components/layout/Sidebar.tsx` | modify | thêm menu Alerts cho 3 portal |
+
+## Workflow
+
+**List flow:**
+```
+Vào trang Alerts → useAlertList(params) (staleTime 30s + refetchInterval 30s)
+  → OK:   render bảng + phân trang; filter severity/status/from-to đổi params → refetch
+          excludeMerged=true mặc định → Merged ẩn trừ khi lọc status=Merged
+  → empty: EmptyState
+  → FAIL:  handleErrorApi({ error }) → toast
+```
+
+**Acknowledge flow:**
+```
+Nút "Acknowledge" (chỉ enable khi status=Open) → useAcknowledgeAlert.mutate(id)
+  → OK:   invalidateQueries([KEY.alerts]) → list/detail cập nhật status=Acknowledged → toast
+  → FAIL: handleErrorApi({ error }) → toast (409/404 message từ BE)
+```
+
+**Resolve flow:**
+```
+Nút "Resolve" (enable khi status=Open/Acknowledged) → useResolveAlert.mutate(id)
+  → OK:   invalidateQueries([KEY.alerts]) → list/detail cập nhật status=Resolved → toast
+  → FAIL: handleErrorApi({ error }) → toast (409 khi Merged / 404 message từ BE)
+```
 
 ## Approach
 - **1 data layer dùng chung** (`shared/`): cả 3 portal gọi cùng API → service + hooks + types + enums đặt ở shared, không nhân 3.

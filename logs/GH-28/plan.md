@@ -360,7 +360,7 @@ useRevokeAllSessions() → sessionService.revokeAllSessions(payload)
 
 ---
 
-## Success Criteria
+## Acceptance Criteria
 
 | Tiêu chí | Cách verify |
 |----------|------------|

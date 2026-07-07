@@ -112,6 +112,50 @@ interface FileAuditLogParams { action?: string; fileId?: string; from?: string; 
 | `src/router/index.tsx` | modify | C5 — route `files-audit-logs` |
 | `src/shared/components/layout/AppLayout.tsx` | modify | C5 — nav item "Audit File" nhóm HỆ THỐNG |
 
+## Workflow
+
+**C2 — AI chat panel flow (Staff/Manager/Admin):**
+```
+User bấm Suggest/Sentiment/Summarize/Export trong ChatAiPanel (gate checkRole STAFF/MANAGER/ADMIN)
+→ Suggest:   useSuggestChat.mutate({ ticketId, intent }) → OK: 3 gợi ý → user Copy vào composer
+→ Sentiment: useSentimentCheck.mutate(ticketId)          → OK: score + label hiện badge/dialog
+→ Summarize: useSummarizeChat.mutate(ticketId)           → OK: summary hiện dialog
+→ Export:    useExportChatPdf.mutate(ticketId)           → OK: Blob → URL.createObjectURL → tải ticket-{tid}-chats.pdf
+→ FAIL (Gemini 429): isSuccess:false, message "AI đang bận…" → hiện message, KHÔNG throw đỏ
+```
+
+**C3 — Download attachment flow (virus-scan gating):**
+```
+User bấm nút download trong TicketAttachments → useDownloadChatAttachment.mutate({ ticketId, chatId, attachmentId })
+→ 200: có url → mở tab / tải file
+→ 202: file đang quét virus → toast "file đang quét virus, thử lại"
+→ 451: file nhiễm virus → toast "file nhiễm virus, không tải được"
+→ 404: toast lỗi
+```
+
+**C4 — Admin override chat trên ticket Closed:**
+```
+Ticket ở Closed/ClosedPendingRate + role Admin → hiện affordance edit/delete trong AdminTicketDetailPage
+→ mở AdminClosedOverrideDialog (bắt buộc overrideReason, Zod min(1))
+→ Edit:   useOverrideEditChat.mutate({ tid, cid, body, overrideReason })
+→ Delete: useOverrideDeleteChat.mutate({ tid, cid, overrideReason })
+→ OK:   invalidateQueries chat list của ticket → thread refresh
+→ FAIL: handleErrorApi({ error }) (dialog: try-catch + setError) — 400 thiếu reason, 403 sai role
+```
+
+**C5 — Files audit logs page:**
+```
+User mở /admin/files-audit-logs → useFileAuditLogs(params) (pageSize mặc định 50, BE cap 100)
+→ render AuditLogFilterBar (targetLabel="File ID") + BatteryAuditLogTable + DataPagination + RefreshButton
+→ User đổi filter/trang → query refetch; filter rỗng = trả tất cả
+```
+
+**C1 — Permissions catalog (callable layer, chưa có UI):**
+```
+Consumer tương lai → usePermissionsCatalog(module?) → GET /api/permissions → CommonResponse<PermissionDto[]>
+→ staleTime 5 phút; hiện chưa có màn Manager/Staff tiêu thụ → chỉ deliver hook, không dựng UI
+```
+
 ## Approach
 - **Không gọi API trong component** — mọi call qua `services/` → TanStack Query hook. Không tạo axios instance mới.
 - **C2 (AI):** dùng `useMutation` (không cache — mỗi lần bấm là 1 lần gọi). `ChatAiPanel` đặt trong `TicketCommentThread` (shared, render ở cả 3 role) — gate bằng `checkRole(user,'STAFF','MANAGER','ADMIN')`. Suggest trả 3 gợi ý → user chọn → chèn vào `AddCommentForm` composer. Summarize/sentiment hiện qua dialog/badge. Export-pdf: service trả `Blob` (`responseType:'blob'`) → tạo `URL.createObjectURL` → trigger download.

@@ -102,6 +102,25 @@ timeZone:        z.string().min(1, "TimeZone không được trống").max(100, 
 ```
 > `.refine()` ở schema chặn state lệch (1 null 1 có) **trước khi** gửi BE — không chỉ dựa UI switch. UI switch là lớp UX, `.refine()` là lớp đảm bảo invariant.
 
+## Workflow
+
+**Load preferences flow:**
+```
+AccountSettings → tab "Tùy chọn thông báo" → NotificationPreferencesSection → useNotificationPreferences() (GET)
+  → isLoading: render spinner/skeleton
+  → data về: reset(toFormValues(data)) fill form (quiet hours null → switch off)
+  → GET lỗi (400 thiếu claim / network): trạng thái lỗi + nút thử lại (không crash tab)
+```
+
+**Save preferences flow:**
+```
+Toggle 4 channel + quiet hours (switch + 2 input time) + Select timezone → form dirty → "Lưu" → useUpdateNotificationPreferences.mutateAsync(values)
+  (tắt quiet hours → gửi quietHoursStart/End = null; không gửi userId)
+  → OK:   invalidate QUERY_KEY.notificationPreferences.me() → toast "Đã lưu cài đặt thông báo"
+  → FAIL: handleErrorApi({ error, setError }) (EntityError sai HH:mm/timezone → dưới field camelCase; HttpError → toast)
+Bật quiet hours nhưng chỉ điền 1/2 ô → .refine() chặn submit client-side → lỗi dưới field (không gửi BE state lệch)
+```
+
 ## Approach
 - **Data flow load (pattern MỚI vs DeviceTokensSection):** `DeviceTokensSection` là form đăng-ký nên dùng `defaultValues` tĩnh. GH-97 là **load+edit** nên cần load-then-reset: `useNotificationPreferences()` (`useQuery`, staleTime 5 phút) → khi `data` về thì fill form bằng:
   ```ts

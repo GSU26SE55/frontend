@@ -305,7 +305,7 @@ useReadingHistory(assetId, params)     → SensorHistoryTable (infinite scroll c
 - Sensor history/aggregate: luôn truyền `from`/`to`; range lớn → dùng `/aggregate`
 - Swagger có query param thừa `BatteryAssetId` (trùng path) → FE bỏ qua, chỉ dùng path
 
-## Success Criteria
+## Acceptance Criteria
 
 | Tiêu chí | Verify |
 |----------|--------|

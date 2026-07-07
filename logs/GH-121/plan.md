@@ -4,6 +4,7 @@
 - **Status:** IMPLEMENTING (retro — plan viết sau khi code đã tồn tại trên branch `chat-auditlog-iot_ui`) | **Role:** FE | **Ngày:** 2026-07-01
 - **Issue:** #121 — https://github.com/GSU26SE55/frontend/issues/121
 - **Branch:** `chat-auditlog-iot_ui` (không theo naming convention `feat/GH-[number]-slug` — branch tạo trước khi có issue)
+- **Sprint:** Sprint 4 (deadline 2026-07-11)
 - **Commit:** `6cdad1d` — feat: add ticket participants and reports hooks, services, and types
 
 > ⚠️ **Ghi chú quy trình:** Plan này được viết SAU khi code đã có mặt (vi phạm rule "TUYỆT ĐỐI KHÔNG CODE khi chưa có plan.md approved" ở `workflow.md`). Ghi lại đây để đồng bộ log folder với thực tế, không phải để hợp thức hoá việc bỏ qua quy trình cho các issue sau.
@@ -48,6 +49,47 @@ Xem diff đầy đủ: `git show 6cdad1d --stat` (51 files, +2087/-87). Nhóm ch
 |------|------|---------|
 | `TicketParticipantRole` | `shared/types/ticket-participant.types.ts` | Union string literal `"Owner"\|"PrimaryAssignee"\|"Helper"\|"Watcher"` — **chưa theo pattern `as const` enum ở `shared/enums/`** (xem review.md Warning) |
 | `ChatTemplateScope` | `shared/types/chat-template.types.ts` | Union string literal `"Personal"\|"Team"\|"Global"` — cùng vấn đề |
+
+## Types
+7 file type mới dưới `shared/types/` (data layer — không tạo enum inline, xem §Enums cho 2 union literal):
+
+| File | Nội dung chính |
+|------|----------------|
+| `chat.types.ts` | `TicketChatDTO` (giữ shape `TicketCommentDTO` cũ), reply/reaction/pin fields |
+| `chat-mention.types.ts` | `ChatMentionDTO` |
+| `chat-template.types.ts` | `ChatTemplateDTO` + `ChatTemplateScope` (union literal) |
+| `ticket-participant.types.ts` | `TicketParticipantDTO` + `TicketParticipantRole` (union literal) |
+| `ticket-report.types.ts` | 9 report row types (SLA by staff/priority, ticket volume, top reopen, staff perf, CSAT, resolution histogram, category breakdown, saga failed rate) |
+| `audit-aggregate.types.ts` | `AuditAggregateDTO` (cross-service) |
+| `sla.types.ts` | `SlaRuleDTO` (admin) |
+
+> Shape re-dùng contract BE hiện có; rename `comments`→`chats` **không đổi DTO**, chỉ đổi path/key.
+
+## Schema (Zod)
+Data layer thuần (endpoints/types/services/hooks) — **không có form** nên **không cần Zod schema**. Validation form sẽ nằm ở ticket UI wiring (ngoài scope, để issue sau).
+
+## Endpoints
+Danh sách đầy đủ liệt kê trong §Scope (thêm vào `shared/utils/endpoints.ts`). Tóm tắt nhóm:
+
+| Nhóm | Path tiêu biểu | Method |
+|------|----------------|--------|
+| Ticket Chat | `TICKETS.CHATS`, `CHAT_TEMPLATES`, `CHAT_MENTIONS`, `MY_CHATS`, `ADMIN_CHAT_SEARCH` | GET/POST/PATCH |
+| Participants | `TICKETS.PARTICIPANTS*` | GET/POST/DELETE |
+| Admin chat mod | `ADMIN.CHAT_CLOSED_OVERRIDE`, `ADMIN.CHAT_RESTORE`, `ADMIN.TICKET_AUDIT_LOGS` | PATCH/GET |
+| Audit Aggregator | `AUDIT_AGGREGATOR.*` | GET |
+| Reports (9) | `REPORTS.SLA_BY_STAFF/SLA_BY_PRIORITY/TICKET_VOLUME/TOP_REOPEN_ISSUES/STAFF_PERFORMANCE/CSAT/RESOLUTION_TIME_HISTOGRAM/CATEGORY_BREAKDOWN/SAGA_FAILED_RATE` | GET |
+
+> Response bọc `CommonResponse<T>` / `CommonResponse<PaginationResponse<T>>` như convention chung.
+
+## Workflow
+Data layer only — **chưa có UI**. Luồng ở cấp hook (UI wiring để issue sau):
+
+```
+Component (issue sau) → useTicketChats(ticketId) / useTicketReports(params) / useAuditAggregator(...)
+  → service gọi axiosInstance + ENDPOINTS → CommonResponse<T>
+  → query: QUERY_KEY factory · mutation: onSuccess invalidate KEY/QUERY_KEY, onError handleErrorApi({ error })
+Rename comments→chats: path/key/hub đổi, DTO giữ nguyên → realtime SignalR /hubs/ticket-chats
+```
 
 ## Approach
 - Toàn bộ service dùng `axiosInstance` từ `shared/lib/axios.ts` + `ENDPOINTS` — không hardcode URL.

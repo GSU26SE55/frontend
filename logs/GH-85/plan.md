@@ -60,8 +60,30 @@ interface FileUploadFieldProps {
 }
 ```
 
+## Schema (Zod)
+Dùng schema có sẵn (`staff-ticket.schema.ts`, `manager/schemas/ticket.schema.ts`) — không tạo mới. Field `attachments`/`beforePhotos`/`afterPhotos` là mảng fileId.
+
 ## Endpoints
 Không thêm endpoint. Dùng lại `useUploadFile` → `POST /api/files/upload` (multipart, đã có).
+
+## Workflow
+
+**Upload per-file flow (Pha A — ngay khi chọn ảnh):**
+```
+Chọn ảnh (accept="image/*", tối đa max=5/nhóm) → useUploadFile.mutateAsync({ file, purpose })
+  → OK:   onChange([...value, { fileId, fileName, contentType, sizeBytes }])
+          preview <AuthImage fileId compact /> + nút X (X chỉ bỏ khỏi value, không delete)
+          onUploadingChange(false) khi hết ảnh đang upload
+  → FAIL: handleErrorApi({ error }) → toast (413 quá lớn / 400 sai extension) → KHÔNG chèn vào value
+```
+
+**Submit flow (Pha B — form gửi mảng fileId):**
+```
+Đang upload → onUploadingChange(true) → nút "Gửi"/"Lưu" disabled
+Submit (RHF, Controller attachments/beforePhotos/afterPhotos = mảng fileId) → mutateAsync
+  → OK:   form.reset() → xóa attachments + clear preview → toast
+  → FAIL: handleErrorApi({ error, setError }) → toast
+```
 
 ## Approach
 - `FileUploadField` là **controlled component**: nhận `value`/`onChange` → hoạt động ở cả 2 kiểu wiring
