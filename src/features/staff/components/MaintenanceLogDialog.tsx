@@ -94,6 +94,11 @@ export function MaintenanceLogDialog({
     [],
   );
 
+  const getArticleDetail = useCallback(
+    (id: string) => staffKbService.getDetail(id).then((r) => r.data.data!),
+    [],
+  );
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -259,6 +264,7 @@ export function MaintenanceLogDialog({
                       value={field.value ?? []}
                       onChange={field.onChange}
                       searchFn={searchArticles}
+                      getDetailFn={getArticleDetail}
                     />
                   </FormControl>
                   <FormMessage />

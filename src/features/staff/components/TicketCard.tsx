@@ -19,7 +19,10 @@ export function TicketCard({ ticket }: Props) {
               <p className="text-xs text-muted-foreground font-mono">
                 {ticket.code}
               </p>
-              <p className="font-medium leading-snug line-clamp-2 mt-0.5">
+              <p
+                className="font-medium leading-snug line-clamp-2 mt-0.5"
+                title={ticket.title}
+              >
                 {ticket.title}
               </p>
             </div>

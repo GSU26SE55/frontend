@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Eye, FileText, Search, ThumbsUp, X } from "lucide-react";
-import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
+import type { KbArticleDTO, KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import {
   KbArticleStatusEnum,
   KbCategoryLabel,
@@ -21,6 +21,8 @@ import {
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/lib/utils";
+import { SectionContent } from "./KbArticleDetail";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface KbArticleSearchParams {
   q?: string;
@@ -37,6 +39,8 @@ interface KbArticleSelectorProps {
   disabled?: boolean;
   /** Khi mở dialog, pre-filter theo category này */
   defaultCategory?: TicketCategoryEnum;
+  /** Lấy full detail (triệu chứng/chẩn đoán/giải pháp/tags) cho panel xem trước */
+  getDetailFn?: (id: string) => Promise<KbArticleDTO>;
 }
 
 export function KbArticleSelector({
@@ -46,6 +50,7 @@ export function KbArticleSelector({
   searchFn,
   disabled,
   defaultCategory,
+  getDetailFn,
 }: KbArticleSelectorProps) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
@@ -59,6 +64,11 @@ export function KbArticleSelector({
   const searchFnRef = useRef(searchFn);
   useEffect(() => {
     searchFnRef.current = searchFn;
+  });
+
+  const getDetailFnRef = useRef(getDetailFn);
+  useEffect(() => {
+    getDetailFnRef.current = getDetailFn;
   });
 
   // Cache lại metadata của các bài đã chọn — để badge bên ngoài dialog vẫn
@@ -134,6 +144,12 @@ export function KbArticleSelector({
     () => articles.find((a) => a.id === previewId) ?? null,
     [articles, previewId],
   );
+
+  const { data: previewDetail, isFetching: previewLoading } = useQuery({
+    queryKey: ["kbArticleSelectorDetail", previewId],
+    queryFn: () => getDetailFnRef.current!(previewId!),
+    enabled: !!previewId && !!getDetailFn,
+  });
 
   const toggle = useCallback(
     (id: string) => {
@@ -328,6 +344,56 @@ export function KbArticleSelector({
                       <span>hữu ích</span>
                     </div>
                   </div>
+
+                  {getDetailFn && (
+                    <>
+                      {previewLoading ? (
+                        <div className="space-y-2 pt-1">
+                          <Skeleton className="h-3 w-full" />
+                          <Skeleton className="h-3 w-4/5" />
+                          <Skeleton className="h-3 w-3/5" />
+                        </div>
+                      ) : previewDetail ? (
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                              Triệu chứng
+                            </p>
+                            <SectionContent text={previewDetail.symptoms} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                              Bước chẩn đoán
+                            </p>
+                            <SectionContent
+                              text={previewDetail.diagnosisSteps}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                              Hướng giải quyết
+                            </p>
+                            <SectionContent
+                              text={previewDetail.solutionSteps}
+                            />
+                          </div>
+                          {previewDetail.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {previewDetail.tags.map((tag) => (
+                                <Badge
+                                  key={tag}
+                                  variant="secondary"
+                                  className="text-[11px] font-normal px-2 py-0.5"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center gap-2 m-auto text-muted-foreground">

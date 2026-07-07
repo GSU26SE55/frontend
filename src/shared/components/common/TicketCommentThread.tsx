@@ -71,14 +71,14 @@ interface TicketCommentThreadProps {
   /** Controlled tab — nếu truyền, bình luận mới sẽ gửi theo tab này (page điều khiển). */
   activeTab?: ChatTab;
   onTabChange?: (tab: ChatTab) => void;
-  /** = checkPermission(user, P.CHAT_EDIT_ANY) — sửa tin của người khác kèm lý do */
+  /** = checkPermission(user, P.CHAT_EDIT_ANY) — sửa tin của người khác */
   canEditAny?: boolean;
-  /** = checkPermission(user, P.CHAT_DELETE_ANY) — xóa tin của người khác kèm lý do */
+  /** = checkPermission(user, P.CHAT_DELETE_ANY) — xóa tin của người khác */
   canDeleteAny?: boolean;
   /** Ticket đã Closed — khóa toàn bộ sửa/xóa (BE enforce tương tự) */
   ticketClosed?: boolean;
-  onEdit?: (chat: TicketCommentDTO, body: string, editReason?: string) => void;
-  onDelete?: (chat: TicketCommentDTO, reason?: string) => void;
+  onEdit?: (chat: TicketCommentDTO, body: string) => void;
+  onDelete?: (chat: TicketCommentDTO) => void;
   editPending?: boolean;
   deletePending?: boolean;
   /** Housekeeping — báo đã đọc các chat đang hiển thị (không có unread badge để wire) */
@@ -153,12 +153,10 @@ export function TicketCommentThread({
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
-  const [editReason, setEditReason] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState<TicketCommentDTO | null>(
     null,
   );
-  const [deleteReason, setDeleteReason] = useState("");
 
   // "now" lấy qua state cập nhật định kỳ — tránh gọi Date.now() (impure) trực
   // tiếp trong quá trình render khi tính withinEditWindow cho từng comment.
@@ -176,27 +174,20 @@ export function TicketCommentThread({
   const startEdit = (c: TicketCommentDTO) => {
     setEditingId(c.id);
     setEditBody(c.body);
-    setEditReason("");
   };
   const cancelEdit = () => {
     setEditingId(null);
     setEditBody("");
-    setEditReason("");
   };
-  const saveEdit = (c: TicketCommentDTO, needsReason: boolean) => {
-    onEdit?.(c, editBody.trim(), needsReason ? editReason.trim() : undefined);
+  const saveEdit = (c: TicketCommentDTO) => {
+    onEdit?.(c, editBody.trim());
     cancelEdit();
   };
 
-  const deleteTargetNeedsReason = !!deleteTarget && !isOwnComment(deleteTarget);
   const confirmDelete = () => {
     if (!deleteTarget) return;
-    onDelete?.(
-      deleteTarget,
-      deleteTargetNeedsReason ? deleteReason.trim() : undefined,
-    );
+    onDelete?.(deleteTarget);
     setDeleteTarget(null);
-    setDeleteReason("");
   };
 
   // Bản dịch giữ cục bộ theo chatId — cho phép toggle gốc/dịch không cần gọi
@@ -300,7 +291,6 @@ export function TicketCommentThread({
             const authorWindowOk = isOwn && withinEditWindow(c);
             const canEditThis = !ticketClosed && (authorWindowOk || canEditAny);
             const canDeleteThis = !ticketClosed && (isOwn || canDeleteAny);
-            const editNeedsReason = canEditThis && !authorWindowOk;
             const isEditing = editingId === c.id;
             const translation = translations[c.id];
             const showingOriginal = !translation || showOriginalIds.has(c.id);
@@ -350,27 +340,14 @@ export function TicketCommentThread({
                         className="text-sm"
                         autoFocus
                       />
-                      {editNeedsReason && (
-                        <Textarea
-                          value={editReason}
-                          onChange={(e) => setEditReason(e.target.value)}
-                          placeholder="Lý do chỉnh sửa (bắt buộc)..."
-                          rows={1}
-                          className="text-xs"
-                        />
-                      )}
                       <div className="flex justify-end gap-1.5">
                         <Button size="sm" variant="ghost" onClick={cancelEdit}>
                           Hủy
                         </Button>
                         <Button
                           size="sm"
-                          disabled={
-                            editPending ||
-                            !editBody.trim() ||
-                            (editNeedsReason && !editReason.trim())
-                          }
-                          onClick={() => saveEdit(c, editNeedsReason)}
+                          disabled={editPending || !editBody.trim()}
+                          onClick={() => saveEdit(c)}
                         >
                           Lưu
                         </Button>
@@ -451,10 +428,7 @@ export function TicketCommentThread({
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null);
-            setDeleteReason("");
-          }
+          if (!open) setDeleteTarget(null);
         }}
       >
         <AlertDialogContent>
@@ -464,23 +438,11 @@ export function TicketCommentThread({
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {deleteTargetNeedsReason && (
-            <Textarea
-              value={deleteReason}
-              onChange={(e) => setDeleteReason(e.target.value)}
-              placeholder="Lý do xóa (bắt buộc)..."
-              rows={2}
-              className="text-sm"
-            />
-          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
-              disabled={
-                deletePending ||
-                (deleteTargetNeedsReason && !deleteReason.trim())
-              }
+              disabled={deletePending}
               onClick={confirmDelete}
             >
               Xóa

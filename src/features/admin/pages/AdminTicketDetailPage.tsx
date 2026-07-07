@@ -165,7 +165,10 @@ export default function AdminTicketDetailPage() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-base font-semibold truncate leading-tight mt-0.5">
+            <h1
+              className="text-base font-semibold truncate leading-tight mt-0.5"
+              title={ticket.title}
+            >
               {ticket.title}
             </h1>
           </div>
@@ -231,15 +234,15 @@ export default function AdminTicketDetailPage() {
                   canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
                   canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={ticket.status === TicketStatusEnum.Closed}
-                  onEdit={(chat, body, editReason) =>
+                  onEdit={(chat, body) =>
                     updateChat({
                       ticketId,
                       chatId: chat.id,
-                      payload: { body, editReason },
+                      payload: { body },
                     })
                   }
-                  onDelete={(chat, reason) =>
-                    deleteChat({ ticketId, chatId: chat.id, reason })
+                  onDelete={(chat) =>
+                    deleteChat({ ticketId, chatId: chat.id })
                   }
                   editPending={editChatPending}
                   deletePending={deleteChatPending}

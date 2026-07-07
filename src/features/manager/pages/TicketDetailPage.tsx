@@ -220,7 +220,10 @@ export default function TicketDetailPage() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-base font-semibold truncate leading-tight mt-0.5">
+            <h1
+              className="text-base font-semibold truncate leading-tight mt-0.5"
+              title={ticket.title}
+            >
               {ticket.title}
             </h1>
           </div>
@@ -354,15 +357,15 @@ export default function TicketDetailPage() {
                   canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
                   canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={status === TicketStatusEnum.Closed}
-                  onEdit={(chat, body, editReason) =>
+                  onEdit={(chat, body) =>
                     updateChat({
                       ticketId: id,
                       chatId: chat.id,
-                      payload: { body, editReason },
+                      payload: { body },
                     })
                   }
-                  onDelete={(chat, reason) =>
-                    deleteChat({ ticketId: id, chatId: chat.id, reason })
+                  onDelete={(chat) =>
+                    deleteChat({ ticketId: id, chatId: chat.id })
                   }
                   editPending={editChatPending}
                   deletePending={deleteChatPending}
@@ -402,7 +405,10 @@ export default function TicketDetailPage() {
 
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
-              <TicketKbReferencesPanel ticketId={id} />
+              <TicketKbReferencesPanel
+                ticketId={id}
+                defaultCategory={ticket.category}
+              />
             </TabsContent>
           </Tabs>
         </div>
