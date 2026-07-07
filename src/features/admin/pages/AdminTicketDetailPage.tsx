@@ -30,7 +30,9 @@ import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
 import TypingIndicator from "@/shared/components/common/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
+import AdminClosedOverrideDialog from "../components/AdminClosedOverrideDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import type { TicketCommentDTO } from "@/shared/types/ticket.types";
 import {
   TicketCommentThread,
   type ChatTab,
@@ -83,6 +85,11 @@ export default function AdminTicketDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  // GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed.
+  const [overrideTarget, setOverrideTarget] = useState<{
+    chat: TicketCommentDTO;
+    mode: "edit" | "delete";
+  } | null>(null);
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
   const { data: activities = [], isLoading: loadingActivities } =
@@ -235,6 +242,8 @@ export default function AdminTicketDetailPage() {
                   canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
                   canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={ticket.status === TicketStatusEnum.Closed}
+                  ticketId={ticketId}
+                  aiEnabled
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId,
@@ -247,6 +256,12 @@ export default function AdminTicketDetailPage() {
                   deletePending={deleteChatPending}
                   onMarkRead={handleMarkRead}
                   onTranslate={handleTranslate}
+                  onOverrideEdit={(chat) =>
+                    setOverrideTarget({ chat, mode: "edit" })
+                  }
+                  onOverrideDelete={(chat) =>
+                    setOverrideTarget({ chat, mode: "delete" })
+                  }
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">
@@ -441,6 +456,14 @@ export default function AdminTicketDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdminClosedOverrideDialog
+        open={!!overrideTarget}
+        onOpenChange={(open) => !open && setOverrideTarget(null)}
+        mode={overrideTarget?.mode ?? "edit"}
+        ticketId={ticketId}
+        chat={overrideTarget?.chat ?? null}
+      />
     </div>
   );
 }

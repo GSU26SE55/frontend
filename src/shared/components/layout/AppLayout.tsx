@@ -237,6 +237,11 @@ const ADMIN_NAV: NavSection[] = [
         path: "/admin/battery-audit-logs",
         icon: FileClock,
       },
+      {
+        label: "Audit Truy cập File",
+        path: "/admin/files-audit-logs",
+        icon: FileClock,
+      },
       { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
       { label: "Cài đặt", path: "/admin/settings", icon: Settings },
     ],

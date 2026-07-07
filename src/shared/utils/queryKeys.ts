@@ -38,6 +38,8 @@ export const KEY = {
     batteryAuditLogs: ["admin", "batteryAuditLogs"] as const,
     alertAuditLogs: ["admin", "alertAuditLogs"] as const,
     ticketAuditLogs: ["admin", "ticketAuditLogs"] as const,
+    fileAuditLogs: ["admin", "fileAuditLogs"] as const, // GH-133 C5
+
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
@@ -53,6 +55,7 @@ export const KEY = {
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
+  permissionsCatalog: "permissionsCatalog", // GH-133 C1 — catalog full mọi role
 } as const;
 
 export const QUERY_KEY = {
@@ -62,6 +65,10 @@ export const QUERY_KEY = {
   },
   loginHistory: {
     list: (params?: object) => [KEY.loginHistory, "list", params] as const,
+  },
+  permissionsCatalog: {
+    list: (module?: string) =>
+      [KEY.permissionsCatalog, "list", module] as const, // GH-133 C1
   },
   profile: {
     me: () => [KEY.profile, "me"] as const,
@@ -175,6 +182,9 @@ export const QUERY_KEY = {
     },
     ticketAuditLogs: {
       list: (params?: object) => [...KEY.admin.ticketAuditLogs, "list", params],
+    },
+    fileAuditLogs: {
+      list: (params?: object) => [...KEY.admin.fileAuditLogs, "list", params],
     },
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],

@@ -1,3 +1,6 @@
+import type { ChatAiIntentEnum } from "@/shared/enums/chat.enum";
+export { ChatAiIntentEnum } from "@/shared/enums/chat.enum";
+
 export interface ChatDto {
   id: string;
   ticketId: string;
@@ -64,4 +67,33 @@ export interface ChatVoiceActionDTO {
   code: string | null;
   status: string;
   warnings?: string[] | null;
+}
+
+// ── AI chat (GH-133 Nhóm C) ──────────────────────────────────────────────
+// POST /api/tickets/{id}/chats/suggest — body
+export interface ChatSuggestPayload {
+  intent: ChatAiIntentEnum;
+}
+
+// POST /api/tickets/{id}/chats/suggest — response data
+export interface ChatSuggestDTO {
+  suggestionId: string;
+  suggestions: string[];
+}
+
+// POST /api/tickets/{id}/chats/sentiment-check — response data
+export type ChatSentimentLabel =
+  | "Positive"
+  | "Neutral"
+  | "Negative"
+  | "Critical";
+export interface ChatSentimentCheckDTO {
+  score: number; // [-1, 1]
+  label: ChatSentimentLabel;
+  isAlertSent: boolean;
+}
+
+// POST /api/tickets/{id}/chats/summarize — response data
+export interface ChatSummarizeDTO {
+  summary: string;
 }

@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 import { ticketChatActionsService } from "@/shared/services/ticket-chat-actions.service";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   UpdateChatPayload,
   ChatMarkReadPayload,
+  ChatSuggestPayload,
 } from "@/shared/types/chat.types";
 
 // Edit/Delete/Mark-read cho ticket chat — dùng chung staff & manager.
@@ -99,5 +101,94 @@ export function useTranscribeVoiceChat() {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+// ── GH-133 Nhóm C — AI chats + download attachment ─────────────────────────
+// C2 (AI). Trả nguyên CommonResponse để caller phân biệt isSuccess=false
+// (Gemini 429 → BE trả isSuccess:false + message, HTTP vẫn 200) với suggestions thật.
+export function useSuggestChat() {
+  return useMutation({
+    mutationFn: ({
+      ticketId,
+      payload,
+    }: {
+      ticketId: string;
+      payload: ChatSuggestPayload;
+    }) =>
+      ticketChatActionsService.suggest(ticketId, payload).then((r) => r.data),
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+export function useSentimentCheck() {
+  return useMutation({
+    mutationFn: ({ ticketId }: { ticketId: string }) =>
+      ticketChatActionsService.sentimentCheck(ticketId).then((r) => r.data),
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+export function useSummarizeChat() {
+  return useMutation({
+    mutationFn: ({ ticketId }: { ticketId: string }) =>
+      ticketChatActionsService.summarize(ticketId).then((r) => r.data),
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+// C2 — export PDF: nhận blob rồi trigger tải file.
+export function useExportChatPdf() {
+  return useMutation({
+    mutationFn: ({ ticketId }: { ticketId: string }) =>
+      ticketChatActionsService
+        .exportPdf(ticketId)
+        .then((r) => ({ blob: r.data, ticketId })),
+    onSuccess: ({ blob, ticketId }) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ticket-${ticketId}-chats.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+// C3 — download attachment: 200 (mở url) · 202 (đang scan) · 451 (nhiễm virus).
+export function useDownloadChatAttachment() {
+  return useMutation({
+    mutationFn: ({
+      ticketId,
+      chatId,
+      attachmentId,
+    }: {
+      ticketId: string;
+      chatId: string;
+      attachmentId: string;
+    }) =>
+      ticketChatActionsService.downloadAttachment(
+        ticketId,
+        chatId,
+        attachmentId,
+      ),
+    onSuccess: (res) => {
+      if (res.status === 202) {
+        toast.info("File đang được quét virus, vui lòng thử lại sau ít giây.");
+        return;
+      }
+      const url = res.data?.data;
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+    },
+    onError: (error) => {
+      if (error instanceof AxiosError && error.response?.status === 451) {
+        toast.error("File bị nhiễm virus — không thể tải xuống.");
+        return;
+      }
+      handleErrorApi({ error });
+    },
   });
 }

@@ -359,6 +359,8 @@ export default function TicketDetailPage() {
                   canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
                   canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={status === TicketStatusEnum.Closed}
+                  ticketId={id}
+                  aiEnabled
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId: id,

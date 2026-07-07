@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import VoiceMessagePlayer from "@/shared/components/common/VoiceMessagePlayer";
+import ChatAiPanel from "@/shared/components/common/ChatAiPanel";
 import {
   isFileId,
   useAudioAttachment,
@@ -75,6 +76,8 @@ interface CommentBubbleContentProps {
   isOwn: boolean;
   canShowActions: boolean;
   actionsMenu: React.ReactNode;
+  /** GH-133 C3 — bật nút download attachment (chat-attachment endpoint) khi có ticketId. */
+  ticketId?: string;
 }
 
 /**
@@ -91,6 +94,7 @@ function CommentBubbleContent({
   isOwn,
   canShowActions,
   actionsMenu,
+  ticketId,
 }: CommentBubbleContentProps) {
   const fileIds = (comment.attachmentFileIds ?? []).filter(isFileId);
   const hasBody = !!comment.body?.trim();
@@ -141,7 +145,13 @@ function CommentBubbleContent({
 
       {fileIds.length > 0 && (
         <div className="mt-1.5">
-          <TicketAttachments fileIds={fileIds} label={null} compact />
+          <TicketAttachments
+            fileIds={fileIds}
+            label={null}
+            compact
+            ticketId={ticketId}
+            chatId={comment.id}
+          />
         </div>
       )}
     </>
@@ -162,6 +172,10 @@ interface TicketCommentThreadProps {
   canDeleteAny?: boolean;
   /** Ticket đã Closed — khóa toàn bộ sửa/xóa (BE enforce tương tự) */
   ticketClosed?: boolean;
+  /** GH-133 C2 — ticketId để gọi AI endpoint (bắt buộc nếu bật aiEnabled) */
+  ticketId?: string;
+  /** GH-133 C2 — hiện thanh AI (suggest/summarize/sentiment/export). Page tự gate role. */
+  aiEnabled?: boolean;
   onEdit?: (chat: TicketCommentDTO, body: string) => void;
   onDelete?: (chat: TicketCommentDTO) => void;
   editPending?: boolean;
@@ -173,6 +187,9 @@ interface TicketCommentThreadProps {
     chat: TicketCommentDTO,
     targetLanguage: string,
   ) => Promise<{ translatedBody: string; targetLanguage: string } | undefined>;
+  /** GH-133 C4 — Admin override sửa/xóa chat khi ticket đã Closed (chỉ Admin truyền cả 2). */
+  onOverrideEdit?: (chat: TicketCommentDTO) => void;
+  onOverrideDelete?: (chat: TicketCommentDTO) => void;
 }
 
 /** Khung chat dạng bong bóng — TÁCH 2 tab: Công khai (khách thấy) & Nội bộ (chỉ nhân viên). */
@@ -184,12 +201,16 @@ export function TicketCommentThread({
   canEditAny = false,
   canDeleteAny = false,
   ticketClosed = false,
+  ticketId,
+  aiEnabled = false,
   onEdit,
   onDelete,
   editPending = false,
   deletePending = false,
   onMarkRead,
   onTranslate,
+  onOverrideEdit,
+  onOverrideDelete,
 }: TicketCommentThreadProps) {
   const [internalTab, setInternalTab] = useState<ChatTab>("public");
   const tab = activeTab ?? internalTab;
@@ -352,6 +373,11 @@ export function TicketCommentThread({
             ({internalCount})
           </span>
         </button>
+        {aiEnabled && ticketId && (
+          <div className="ml-auto">
+            <ChatAiPanel ticketId={ticketId} />
+          </div>
+        )}
       </div>
 
       {/* Ghi chú ngữ cảnh tab đang xem */}
@@ -380,8 +406,11 @@ export function TicketCommentThread({
             const translation = translations[c.id];
             const showingOriginal = !translation || showOriginalIds.has(c.id);
             const displayBody = showingOriginal ? c.body : translation.text;
+            // C4 — Admin override chỉ khi ticket Closed và page có truyền handler.
+            const canOverride =
+              ticketClosed && !!onOverrideEdit && !!onOverrideDelete;
             const canShowActions =
-              canEditThis || canDeleteThis || !!onTranslate;
+              canEditThis || canDeleteThis || !!onTranslate || canOverride;
 
             return (
               <div
@@ -444,15 +473,19 @@ export function TicketCommentThread({
                       displayBody={displayBody}
                       isOwn={isOwn}
                       canShowActions={canShowActions}
+                      ticketId={ticketId}
                       actionsMenu={
                         <CommentActionsMenu
                           canEdit={canEditThis}
                           canDelete={canDeleteThis}
                           canTranslate={!!onTranslate}
+                          canOverride={canOverride}
                           translating={translatingId === c.id}
                           onEdit={() => startEdit(c)}
                           onDelete={() => setDeleteTarget(c)}
                           onTranslate={(lang) => handleTranslate(c, lang)}
+                          onOverrideEdit={() => onOverrideEdit?.(c)}
+                          onOverrideDelete={() => onOverrideDelete?.(c)}
                         />
                       }
                     />
@@ -516,18 +549,24 @@ function CommentActionsMenu({
   canEdit,
   canDelete,
   canTranslate,
+  canOverride,
   translating,
   onEdit,
   onDelete,
   onTranslate,
+  onOverrideEdit,
+  onOverrideDelete,
 }: {
   canEdit: boolean;
   canDelete: boolean;
   canTranslate: boolean;
+  canOverride: boolean;
   translating: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onTranslate: (lang: string) => void;
+  onOverrideEdit: () => void;
+  onOverrideDelete: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -566,6 +605,16 @@ function CommentActionsMenu({
         {canDelete && (
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
             Xóa
+          </DropdownMenuItem>
+        )}
+        {canOverride && (
+          <DropdownMenuItem onClick={onOverrideEdit}>
+            Sửa (override)
+          </DropdownMenuItem>
+        )}
+        {canOverride && (
+          <DropdownMenuItem variant="destructive" onClick={onOverrideDelete}>
+            Xóa (override)
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

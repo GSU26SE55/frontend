@@ -21,6 +21,7 @@ export const ENDPOINTS = {
     GOOGLE_CALLBACK: "/api/auth/google/callback",
     ME: "/api/auth/me",
     ME_PERMISSIONS: "/api/auth/me/permissions", // GH-106 — permission server-resolved (DB), không đọc perm[] JWT
+    PERMISSIONS_CATALOG: "/api/permissions", // GH-133 C1 — catalog full mọi role (khác /api/admin/permissions Admin-only)
     UPDATE_PROFILE: "/api/auth/me/profile",
     UPDATE_AVATAR: "/api/auth/me/avatar",
   },
@@ -80,6 +81,14 @@ export const ENDPOINTS = {
     CHAT_TRANSLATE: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/translate`,
     CHAT_VOICE: (tid: string) => `/api/tickets/${tid}/chats/voice`,
+    // GH-133 Nhóm C — AI chats + download attachment
+    CHAT_ATTACHMENT_DOWNLOAD: (tid: string, cid: string, aid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/attachments/${aid}/download`, // C3
+    CHAT_SUGGEST: (tid: string) => `/api/tickets/${tid}/chats/suggest`, // C2 (AI)
+    CHAT_SENTIMENT: (tid: string) =>
+      `/api/tickets/${tid}/chats/sentiment-check`, // C2 (AI)
+    CHAT_SUMMARIZE: (tid: string) => `/api/tickets/${tid}/chats/summarize`, // C2 (AI)
+    CHAT_EXPORT_PDF: (tid: string) => `/api/tickets/${tid}/chats/export-pdf`, // C2
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,
@@ -261,9 +270,14 @@ export const ENDPOINTS = {
     ALERT_AUDIT_LOGS: "/api/admin/alerts/audit-logs",
     // Audit log nội bộ TicketService (Option C, #AUDIT-28) — khác với AuditAggregator
     TICKET_AUDIT_LOGS: "/api/admin/ticket/audit-logs",
+    // Audit truy cập file GDPR (FileStorageService — Admin only) — GH-133 C5
+    FILES_AUDIT_LOGS: "/api/admin/files/audit-logs",
     // Admin chat override (ticket đã Closed)
     CHAT_CLOSED_OVERRIDE: (tid: string) =>
-      `/api/admin/tickets/${tid}/chats/closed-override`,
+      `/api/admin/tickets/${tid}/chats/closed-override`, // POST-add
+    // GH-133 C4 — per-chat PUT (edit) + DELETE trên ticket Closed (khác POST-add ở trên)
+    CHAT_CLOSED_OVERRIDE_ITEM: (tid: string, cid: string) =>
+      `/api/admin/tickets/${tid}/chats/${cid}/closed-override`,
     CHAT_RESTORE: (tid: string, cid: string) =>
       `/api/admin/tickets/${tid}/chats/${cid}/restore`,
   },
