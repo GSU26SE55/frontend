@@ -4,7 +4,7 @@ import CreateNotificationForm from "@/features/admin/components/CreateNotificati
 
 export default function NotificationAdminPage() {
   return (
-    <div className="p-6 space-y-5 max-w-[1100px] mx-auto">
+    <div className="p-6 space-y-5 max-w-275 mx-auto">
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           <BellRing className="inline size-3 mr-1 -mt-0.5" />

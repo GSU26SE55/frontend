@@ -108,6 +108,10 @@ export interface PresignedUrlOptions {
 }
 ```
 
+## Schema (Zod)
+
+Không có form → không cần Zod schema. Ticket này chỉ implement data layer (types, endpoints, service, hooks) cho FileStorage API — không có React Hook Form / `z.object`. Upload dùng `FormData` thô (payload `UploadFilePayload` là TypeScript type, không validate qua Zod); feature consumer (avatar/attachment UI) tự định nghĩa schema nếu cần khi implement.
+
 ## Endpoints
 
 ```ts
@@ -191,7 +195,7 @@ Consumer → useDeleteFile.mutate(fileId)
 - `fileId` null/rỗng → hook disabled qua `enabled: !!fileId`
 - `publicUrl` null → feature consumer dùng `publicUrl ?? ENDPOINTS.FILES.DOWNLOAD(fileId)`
 
-## Success Criteria
+## Acceptance Criteria
 | Tiêu chí | Cách verify |
 |----------|------------|
 | TypeScript không lỗi | `npx tsc --noEmit` |

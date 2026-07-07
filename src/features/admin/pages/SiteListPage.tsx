@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/shared/components/common/ErrorState";
+import { EmptyState } from "@/shared/components/common/EmptyState";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -53,7 +55,7 @@ export default function SiteListPage() {
     type: "none",
   });
 
-  const { data, isLoading } = useSiteList({
+  const { data, isLoading, isError, refetch } = useSiteList({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
@@ -85,7 +87,7 @@ export default function SiteListPage() {
   const closeConfirm = () => setConfirmState({ type: "none" });
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -141,11 +143,13 @@ export default function SiteListPage() {
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState
+            message="Không thể tải danh sách site."
+            onRetry={() => refetch()}
+          />
         ) : items.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
-            <MapPin className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có site nào.</span>
-          </div>
+          <EmptyState icon={MapPin} title="Chưa có site nào." />
         ) : (
           <SiteTable
             data={items}

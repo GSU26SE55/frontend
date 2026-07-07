@@ -9,6 +9,10 @@ export interface StaffTicketsParams {
   status?: TicketStatusEnum;
   pageNumber: number;
   pageSize: number;
+  /** GH-132 (E) — chỉ ticket đang mở còn SLA timer (cho SLA Monitor). */
+  slaOpen?: boolean;
+  /** GH-132 (E) — "slaRemaining" = sort theo hạn SLA còn lại tăng dần. */
+  sortBy?: "slaRemaining";
 }
 
 export interface StartTicketRequest {
@@ -60,6 +64,23 @@ export interface AddMaintenanceLogRequest {
   resolutionNote?: string;
   startedAt?: string;
   completedAt?: string;
+  partsUsed?: string;
+  attachments?: MaintenanceAttachmentInput[];
+  beforePhotos?: MaintenanceAttachmentInput[];
+  afterPhotos?: MaintenanceAttachmentInput[];
+  relatedKbArticleIds?: string[];
+}
+
+// PATCH /api/tickets/{ticketId}/maintenance-logs/{logId} — partial update.
+// Mọi field optional; chỉ Staff tạo log mới sửa được; khoá khi ticket
+// Resolved/ClosedPendingRate/Closed (BE enforce).
+export interface UpdateMaintenanceLogRequest {
+  logType?: MaintenanceLogTypeEnum;
+  summary?: string;
+  diagnosisDetails?: string;
+  actionsTaken?: string;
+  durationMinutes?: number;
+  resolutionNote?: string;
   partsUsed?: string;
   attachments?: MaintenanceAttachmentInput[];
   beforePhotos?: MaintenanceAttachmentInput[];

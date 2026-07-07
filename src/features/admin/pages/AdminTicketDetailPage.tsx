@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -21,14 +22,35 @@ import {
 import {
   useAdminTicketDetail,
   useAdminTicketActivities,
+  useAdminTicketComments,
   useDeclareIncident,
 } from "../hooks/useAdminTickets";
-import TicketStatusBadge from "../components/TicketStatusBadge";
-import TicketPriorityBadge from "../components/TicketPriorityBadge";
+import AddCommentForm from "../components/AddCommentForm";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TypingIndicator from "@/shared/components/common/TypingIndicator";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
+import AdminClosedOverrideDialog from "../components/AdminClosedOverrideDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import type { TicketCommentDTO } from "@/shared/types/ticket.types";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { checkPermission, P } from "@/shared/lib/authz";
+import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import {
+  useUpdateTicketChat,
+  useDeleteTicketChat,
+  useMarkTicketChatsRead,
+  useTranslateTicketChat,
+} from "@/shared/hooks/useTicketChatActions";
+import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { slaBarColorClass } from "@/shared/lib/sla";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Charging: "Lỗi sạc",
@@ -59,13 +81,34 @@ function SideInfoRow({
 export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const ticketId = id ?? "";
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
+  // GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed.
+  const [overrideTarget, setOverrideTarget] = useState<{
+    chat: TicketCommentDTO;
+    mode: "edit" | "delete";
+  } | null>(null);
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
-  const { data: activities, isLoading: loadingActivities } =
+  const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
+  const { data: comments = [] } = useAdminTicketComments(ticketId);
   const { mutate: declareIncident, isPending } = useDeclareIncident();
+  const user = useSessionStore((s) => s.user);
+  const currentUserId = user?.accountId;
+  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
+  const { mutate: updateChat, isPending: editChatPending } =
+    useUpdateTicketChat();
+  const { mutate: deleteChat, isPending: deleteChatPending } =
+    useDeleteTicketChat();
+  const { mutate: markChatsRead } = useMarkTicketChatsRead();
+  const handleMarkRead = (chatIds: string[]) =>
+    markChatsRead({ ticketId, payload: { chatIds } });
+  const { mutateAsync: translateChat } = useTranslateTicketChat();
+  const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
+    translateChat({ ticketId, chatId: chat.id, targetLanguage });
 
   function handleConfirm() {
     declareIncident(
@@ -99,13 +142,7 @@ export default function AdminTicketDetailPage() {
     );
   }
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -136,7 +173,10 @@ export default function AdminTicketDetailPage() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-base font-semibold truncate leading-tight mt-0.5">
+            <h1
+              className="text-base font-semibold truncate leading-tight mt-0.5"
+              title={ticket.title}
+            >
               {ticket.title}
             </h1>
           </div>
@@ -161,26 +201,83 @@ export default function AdminTicketDetailPage() {
 
       {/* ── Main content ────────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 flex">
-        {/* Left: Timeline (full height) */}
+        {/* Left: Timeline / Bình luận */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <div className="px-6 py-2.5 border-b border-border shrink-0">
-            <span className="text-sm font-medium">Lịch sử hoạt động</span>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto p-6">
-            {loadingActivities ? (
-              <div className="space-y-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
+          <Tabs defaultValue="timeline" className="h-full gap-0">
+            <div className="px-6 py-2.5 border-b border-border shrink-0">
+              <TabsList>
+                <TabsTrigger value="timeline">Lịch sử hoạt động</TabsTrigger>
+                <TabsTrigger value="comments">
+                  Bình luận
+                  {comments.length > 0 && ` (${comments.length})`}
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent
+              value="timeline"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              {loadingActivities ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12" />
+                  ))}
+                </div>
+              ) : (
+                <TicketActivityTimeline activities={activities} />
+              )}
+            </TabsContent>
+
+            <TabsContent
+              value="comments"
+              className="min-h-0 m-0 flex flex-col overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto p-6">
+                <TicketCommentThread
+                  comments={comments}
+                  currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
+                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                  ticketClosed={ticket.status === TicketStatusEnum.Closed}
+                  ticketId={ticketId}
+                  aiEnabled
+                  onEdit={(chat, body) =>
+                    updateChat({
+                      ticketId,
+                      chatId: chat.id,
+                      payload: { body },
+                    })
+                  }
+                  onDelete={(chat) => deleteChat({ ticketId, chatId: chat.id })}
+                  editPending={editChatPending}
+                  deletePending={deleteChatPending}
+                  onMarkRead={handleMarkRead}
+                  onTranslate={handleTranslate}
+                  onOverrideEdit={(chat) =>
+                    setOverrideTarget({ chat, mode: "edit" })
+                  }
+                  onOverrideDelete={(chat) =>
+                    setOverrideTarget({ chat, mode: "delete" })
+                  }
+                />
               </div>
-            ) : (
-              <TicketActivityTimeline activities={activities} />
-            )}
-          </div>
+              <div className="shrink-0 border-t border-border p-3">
+                <TypingIndicator names={typingNames} />
+                <AddCommentForm
+                  ticketId={ticketId}
+                  onTyping={sendTyping}
+                  isInternal={chatTab === "internal"}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Right: Sidebar */}
-        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+        <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
           <div className="p-4">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -224,6 +321,28 @@ export default function AdminTicketDetailPage() {
                 Chưa có SLA timer.
               </p>
             )}
+          </div>
+
+          {/* Trạng thái + thời gian xử lý */}
+          <div className="p-4">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Trạng thái
+            </p>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Hiện tại</span>
+                <TicketStatusBadge status={ticket.status} />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Thời gian xử lý
+                </span>
+                <ProcessingDurationTimer
+                  activities={activities}
+                  status={ticket.status}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Description */}
@@ -337,6 +456,14 @@ export default function AdminTicketDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdminClosedOverrideDialog
+        open={!!overrideTarget}
+        onOpenChange={(open) => !open && setOverrideTarget(null)}
+        mode={overrideTarget?.mode ?? "edit"}
+        ticketId={ticketId}
+        chat={overrideTarget?.chat ?? null}
+      />
     </div>
   );
 }

@@ -347,7 +347,54 @@ if (user.role === 'CUSTOMER') {
 | `UserRole` | `shared/enums/session.enum.ts` |
 | `AccountStatusEnum`, `AvatarSourceEnum`, `RefreshTokenStatus` | `shared/enums/account.enum.ts` |
 
+> **Cleanup (2026-06-28, local):** Đã xoá 2 file orphan trùng lặp `shared/types/session.enums.ts` + `shared/types/account.enums.ts` (0 import, dead-code). Bản canonical đang dùng là `shared/enums/*.enum.ts` ở bảng trên — không ảnh hưởng. `tsc` + `eslint` PASS.
+
 ---
+
+## Workflow
+
+**Login (Case A — không 2FA):**
+```
+Submit LoginForm → useLogin.mutateAsync({ email, password })
+  → POST /api/auth/login → data.requiresTwoFactor === false
+  → saveTokens(data.tokens.accessToken, data.tokens.refreshToken)
+  → decodeToken → setSession(user)
+  → user.role === CUSTOMER? toast "dùng Mobile App" + logout() (ở lại /login)
+  → else navigate(redirectByRole(role))
+  FAIL: handleErrorApi({ error, setError }) → lỗi dưới input / toast
+```
+
+**Login (Case B — 2FA on) — GH-295 bước 1:**
+```
+Submit LoginForm → POST /api/auth/login → data.requiresTwoFactor === true
+  → giữ data.challenge.challengeToken trong memory (KHÔNG cookie)
+  → navigate('/login/2fa')  (page verify-2fa: migrate ticket riêng)
+  → POST /api/auth/login/verify-2fa { challengeToken, code, isBackupCode }
+  → response giống Case A (data.tokens.*) → saveTokens → decode → setSession → redirect
+```
+
+**Token refresh (Axios interceptor, ngoài React tree):**
+```
+Request sắp gửi → isTokenExpired(accessToken)?
+  false → attach Bearer → gửi
+  true  → tryRefresh(): POST /api/auth/refresh-token { refreshToken }
+            → OK:   const { accessToken, refreshToken } = res.data.data.tokens (GH-295)
+                    → saveTokens → setSession → attach token mới → gửi / flush queue
+            → fail: logout() → window.location.href = '/login' / flush queue(null)
+Response 401 (backup) → tryRefresh() nếu chưa refresh lần này → OK retry / fail logout
+  (chống double-refresh: isRefreshing flag + pendingQueue, timeout 10s, finally reset)
+```
+
+**Google OAuth:**
+```
+Click "Sign in with Google" → window.location.href = VITE_API_BASE_URL + GOOGLE_LOGIN
+  → Google → BE /api/auth/google/callback (BE xử lý, trả JSON)
+GoogleCallbackPage mount /auth/google/callback → đọc ?code&state
+  → authService.googleCallback(code, state) (GET, qua axios)
+  → const { accessToken, refreshToken } = res.data.data.tokens (GH-295, challenge null)
+  → saveTokens → decodeToken → setSession → navigate(redirectByRole(role))
+  FAIL: console.error + toast.error → navigate('/login')
+```
 
 ## Approach
 
@@ -721,7 +768,7 @@ export const checkRole = (
 - **Resend OTP 429:** disable nút + countdown 60s
 - **Multi-tab logout/refresh race:** Known Limitation — document, không fix Sprint 1
 
-## Success Criteria
+## Acceptance Criteria
 | Tiêu chí | Cách verify |
 |----------|------------|
 | Login valid creds → redirect đúng role | Manual test + kiểm tra cookie |

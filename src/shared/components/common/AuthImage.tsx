@@ -13,6 +13,11 @@ interface AuthImageProps {
  * Tải ảnh từ FileStorageService qua axios (interceptor tự gắn Bearer) rồi hiển thị
  * bằng object URL. Dùng cho ảnh cần auth — `<img src>` thường không gửi được token.
  */
+// File vừa upload xong có thể chưa sẵn sàng để tải về ngay (BE xử lý/lưu trễ) — thử lại
+// vài lần trước khi báo lỗi, tránh thumbnail bị treo lỗi oan vì trễ tạm thời.
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 800;
+
 export default function AuthImage({ fileId, alt, className }: AuthImageProps) {
   const [state, setState] = useState<{ url: string | null; error: boolean }>({
     url: null,
@@ -23,16 +28,26 @@ export default function AuthImage({ fileId, alt, className }: AuthImageProps) {
     let active = true;
     let objectUrl: string | null = null;
 
-    axiosInstance
-      .get(ENDPOINTS.FILES.DOWNLOAD(fileId), { responseType: "blob" })
-      .then((res) => {
+    const load = async (attempt: number) => {
+      try {
+        const res = await axiosInstance.get(ENDPOINTS.FILES.DOWNLOAD(fileId), {
+          responseType: "blob",
+        });
         if (!active) return;
         objectUrl = URL.createObjectURL(res.data as Blob);
         setState({ url: objectUrl, error: false });
-      })
-      .catch(() => {
-        if (active) setState({ url: null, error: true });
-      });
+      } catch {
+        if (!active) return;
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+          if (active) await load(attempt + 1);
+        } else {
+          setState({ url: null, error: true });
+        }
+      }
+    };
+
+    load(0);
 
     return () => {
       active = false;

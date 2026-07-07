@@ -137,7 +137,20 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError<ApiErrorData>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig;
     const status: number | undefined = error.response?.status;
-    const data = error.response?.data;
+    let data = error.response?.data;
+
+    // Request dùng responseType: "blob" (AuthImage, downloadFile) — khi lỗi, axios vẫn
+    // ép body thành Blob theo config của request dù BE trả JSON, khiến errorCode/message
+    // luôn đọc ra undefined → 401 TOKEN_EXPIRED bị hiểu nhầm thành token giả mạo và logout
+    // oan thay vì tự refresh. Tự parse lại nếu body blob thực chất là JSON.
+    const rawData: unknown = error.response?.data;
+    if (rawData instanceof Blob && rawData.type.includes("json")) {
+      try {
+        data = JSON.parse(await rawData.text()) as ApiErrorData;
+      } catch {
+        // không parse được — giữ nguyên data dạng Blob, rơi về luồng xử lý mặc định.
+      }
+    }
 
     if (status === 401) {
       const errorCode = data?.data?.errorCode;
@@ -178,7 +191,19 @@ axiosInstance.interceptors.response.use(
     // 400 / 422 — parse listErrors for form field mapping
     if (status === 400 || status === 422) {
       if (Array.isArray(data?.listErrors) && data.listErrors.length > 0) {
-        return Promise.reject(new EntityError(data.listErrors, status));
+        // BE trả `field` PascalCase (vd "QuietHoursStart") — RHF register field
+        // camelCase, nên hạ chữ cái đầu để setError() khớp đúng input field.
+        // Guard: nếu key JSON là "Field" (PascalCase) → e.field undefined; giữ nguyên,
+        // không gọi charAt trên undefined (interceptor app-wide → tránh throw).
+        const normalized = data.listErrors.map((e) =>
+          typeof e.field === "string"
+            ? {
+                ...e,
+                field: e.field.charAt(0).toLowerCase() + e.field.slice(1),
+              }
+            : e,
+        );
+        return Promise.reject(new EntityError(normalized, status));
       }
       return Promise.reject(
         new HttpError(status, getErrorMessage(status, data?.message)),

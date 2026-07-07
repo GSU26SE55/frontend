@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { TicketDTO } from "@/shared/types/ticket.types";
-import { TicketStatusBadge } from "./TicketStatusBadge";
-import { TicketPriorityBadge } from "./TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import { SlaCountdown } from "./SlaCountdown";
 
 interface Props {
@@ -19,7 +19,10 @@ export function TicketCard({ ticket }: Props) {
               <p className="text-xs text-muted-foreground font-mono">
                 {ticket.code}
               </p>
-              <p className="font-medium leading-snug line-clamp-2 mt-0.5">
+              <p
+                className="font-medium leading-snug line-clamp-2 mt-0.5"
+                title={ticket.title}
+              >
                 {ticket.title}
               </p>
             </div>

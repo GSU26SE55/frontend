@@ -7,6 +7,7 @@ import type {
   AdminTicketListParams,
   AdminTicketQueueParams,
   TriagePayload,
+  TriageRejectPayload,
   AssignPayload,
   ReassignPayload,
   RejectPayload,
@@ -47,6 +48,31 @@ export const useTicketActivities = (id: string) =>
     enabled: !!id,
   });
 
+// GET /api/tickets/{ticketId}/maintenance-logs (Manager/Admin).
+export const useTicketMaintenanceLogs = (id: string) =>
+  useQuery({
+    queryKey: QUERY_KEY.tickets.maintenanceLogs(id),
+    queryFn: () =>
+      managerTicketService
+        .getMaintenanceLogs(id)
+        .then((r) => r.data.data ?? []),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+
+// GET /api/tickets/{ticketId}/comments — query riêng để realtime invalidate.
+// staleTime cao + KHÔNG refetchInterval: comment mới đến qua SignalR push (S4).
+export const useTicketComments = (id: string) =>
+  useQuery({
+    queryKey: QUERY_KEY.tickets.chats(id),
+    queryFn: () =>
+      managerTicketService
+        .getComments(id)
+        .then((r) => r.data.data?.items ?? []),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+
 export const useTriageTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
@@ -54,6 +80,21 @@ export const useTriageTicket = (id: string) => {
       managerTicketService.triage(id, payload),
     onSuccess: () => {
       toast.success("Triage ticket thành công");
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+};
+
+export const useTriageRejectTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: TriageRejectPayload) =>
+      managerTicketService.triageReject(id, payload),
+    onSuccess: () => {
+      toast.success("Đã từ chối ticket ở bước Triage");
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
@@ -159,6 +200,11 @@ export const useAddComment = () => {
       toast.success("Đã thêm bình luận");
       qc.invalidateQueries({
         queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
+      });
+      // Comment panel dùng query riêng (tickets.chats) — invalidate để
+      // tác giả thấy ngay comment của mình (không chờ realtime broadcast).
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.tickets.chats(ticketId),
       });
     },
     onError: (error) => handleErrorApi({ error }),

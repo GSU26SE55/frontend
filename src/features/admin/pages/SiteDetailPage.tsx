@@ -24,7 +24,9 @@ import {
 } from "@/components/ui/select";
 import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
+import CascadeRiskSummary from "@/shared/components/common/CascadeRiskSummary";
 import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
+import { useSiteCascadeSummary } from "@/features/admin/hooks/useSiteCascadeSummary";
 import {
   useSiteDetail,
   useSiteDashboard,
@@ -63,13 +65,15 @@ export default function SiteDetailPage() {
     id,
     assetsParams,
   );
+  const { data: cascade, isLoading: loadingCascade } =
+    useSiteCascadeSummary(id);
 
   const { mutate: deleteSite } = useDeleteSite();
   const { mutate: restoreSite } = useRestoreSite();
 
   if (loadingSite) {
     return (
-      <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+      <div className="p-6 space-y-6 max-w-360 mx-auto">
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
         <Card className="p-6">
@@ -85,12 +89,12 @@ export default function SiteDetailPage() {
 
   if (!site) {
     return (
-      <div className="p-6 max-w-[1440px] mx-auto">
+      <div className="p-6 max-w-360 mx-auto">
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
-          <span className="text-sm">Khong tim thay site.</span>
+          <span className="text-sm">Không tìm thấy site.</span>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-3.5" /> Quay lai
+            <ArrowLeft className="size-3.5" /> Quay lại
           </Button>
         </div>
       </div>
@@ -100,7 +104,7 @@ export default function SiteDetailPage() {
   const isDecommissioned = site.status === SiteStatusEnum.Decommissioned;
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       {/* Back + header */}
       <div>
         <Button
@@ -109,7 +113,7 @@ export default function SiteDetailPage() {
           className="-ml-2 mb-2"
           onClick={() => navigate(-1)}
         >
-          <ArrowLeft className="size-3.5" /> Quay lai
+          <ArrowLeft className="size-3.5" /> Quay lại
         </Button>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -131,7 +135,7 @@ export default function SiteDetailPage() {
                   size="sm"
                   onClick={() => setConfirm({ type: "restore" })}
                 >
-                  Khoi phuc
+                  Khôi phục
                 </Button>
               </>
             ) : (
@@ -141,14 +145,14 @@ export default function SiteDetailPage() {
                   size="sm"
                   onClick={() => setEditOpen(true)}
                 >
-                  Sua
+                  Sửa
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setConfirm({ type: "delete" })}
                 >
-                  Xoa
+                  Xóa
                 </Button>
               </>
             )}
@@ -159,10 +163,13 @@ export default function SiteDetailPage() {
       {/* Dashboard summary */}
       {dashboard && <SiteDashboardCard data={dashboard} />}
 
+      {/* Cascade risk summary */}
+      <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
+
       {/* Assets table */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Danh sach pin</h2>
+          <h2 className="text-lg font-semibold">Danh sách pin</h2>
           <Select
             value={
               assetsParams.status != null
@@ -228,9 +235,9 @@ export default function SiteDetailPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoa site?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa site?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ban co chac muon xoa site <strong>{site.name}</strong>?
+              Bạn có chắc muốn xóa site <strong>{site.name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -244,7 +251,7 @@ export default function SiteDetailPage() {
                 setConfirm({ type: "none" });
               }}
             >
-              Xoa
+              Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -257,9 +264,9 @@ export default function SiteDetailPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Khoi phuc site?</AlertDialogTitle>
+            <AlertDialogTitle>Khôi phục site?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ban co chac muon khoi phuc site <strong>{site.name}</strong>?
+              Bạn có chắc muốn khôi phục site <strong>{site.name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -270,7 +277,7 @@ export default function SiteDetailPage() {
                 setConfirm({ type: "none" });
               }}
             >
-              Khoi phuc
+              Khôi phục
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

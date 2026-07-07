@@ -67,7 +67,7 @@ function parseLines(text: string): string[] {
 }
 
 // ── Section content renderer ─────────────────────────────────────────────────
-function SectionContent({ text }: { text: string }) {
+export function SectionContent({ text }: { text: string }) {
   if (isNumberedList(text)) {
     return (
       <ol className="space-y-3">
@@ -76,7 +76,7 @@ function SectionContent({ text }: { text: string }) {
             key={i}
             className="flex gap-3 text-sm leading-relaxed text-foreground/80"
           >
-            <span className="shrink-0 mt-[1px] size-[22px] rounded-full border border-border bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground tabular-nums">
+            <span className="shrink-0 mt-[1px] size-5.5 rounded-full border border-border bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground tabular-nums">
               {i + 1}
             </span>
             <span>{step}</span>
@@ -125,9 +125,9 @@ export function KbArticleDetailSkeleton() {
         </div>
       </div>
       <div className="grid lg:grid-cols-[180px_1fr_272px] gap-5 mt-2">
-        <Skeleton className="h-[200px] rounded-xl hidden lg:block" />
-        <Skeleton className="h-[500px] rounded-xl" />
-        <Skeleton className="h-[320px] rounded-xl" />
+        <Skeleton className="h-50 rounded-xl hidden lg:block" />
+        <Skeleton className="h-125 rounded-xl" />
+        <Skeleton className="h-80 rounded-xl" />
       </div>
     </div>
   );
@@ -366,7 +366,7 @@ export function KbArticleDetail({
               />
               <motion.div
                 key="kb-edit-panel"
-                className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-[560px]"
+                className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
                 initial={{ x: "100%", opacity: 0.5 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: "100%", opacity: 0 }}

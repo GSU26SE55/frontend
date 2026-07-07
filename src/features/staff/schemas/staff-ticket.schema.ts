@@ -38,7 +38,8 @@ export const escalateRequestSchema = z.object({
 export type EscalateRequestFormValues = z.infer<typeof escalateRequestSchema>;
 
 export const addCommentSchema = z.object({
-  body: z.string().min(1, "Nội dung bình luận không được để trống"),
+  // Không validate rỗng — UI disable nút gửi khi rỗng thay vì báo lỗi.
+  body: z.string(),
   isInternal: z.boolean(),
   attachments: z.array(commentAttachmentSchema).optional(),
 });
@@ -62,3 +63,17 @@ export const maintenanceLogSchema = z.object({
   relatedKbArticleIds: z.array(z.string()).optional(),
 });
 export type MaintenanceLogFormValues = z.infer<typeof maintenanceLogSchema>;
+
+// PATCH partial update — chỉ các field text chính. summary nếu nhập thì không rỗng.
+export const maintenanceLogUpdateSchema = z.object({
+  logType: z.nativeEnum(MaintenanceLogTypeEnum),
+  summary: z.string().min(1, "Tóm tắt công việc không được để trống"),
+  diagnosisDetails: z.string().optional(),
+  actionsTaken: z.string().optional(),
+  durationMinutes: z.number().int().min(0).optional(),
+  resolutionNote: z.string().optional(),
+  partsUsed: z.string().optional(),
+});
+export type MaintenanceLogUpdateFormValues = z.infer<
+  typeof maintenanceLogUpdateSchema
+>;

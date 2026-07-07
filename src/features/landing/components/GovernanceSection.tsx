@@ -1,6 +1,8 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { animate, onScroll, stagger } from "animejs";
 import { Clock, Database, ShieldCheck, Zap } from "lucide-react";
 import Reveal from "@/features/landing/components/Reveal";
+import { prefersReducedMotion } from "@/features/landing/lib/animation";
 
 const FEATURE_CARDS = [
   {
@@ -41,23 +43,15 @@ const FEATURE_CARDS = [
   },
 ] as const;
 
-const FeatureCard = ({
-  card,
-  index,
-}: {
-  card: (typeof FEATURE_CARDS)[number];
-  index: number;
-}) => {
+const FeatureCard = ({ card }: { card: (typeof FEATURE_CARDS)[number] }) => {
   const Icon = card.icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.08, duration: 0.45, ease: "easeOut" }}
+    <div
+      data-anim="feature-card"
+      style={{ opacity: 0 }}
       className={`
-        group relative h-[280px] rounded-[22px] p-7 flex flex-col justify-between
+        group relative h-70 rounded-[22px] p-7 flex flex-col justify-between
         transition-all duration-300 cursor-default
         ${
           card.isDark
@@ -101,54 +95,82 @@ const FeatureCard = ({
           {card.desc}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-const GovernanceSection = () => (
-  <section id="governance" className="bg-white px-5 py-18 lg:px-8 lg:py-24">
-    <div className="mx-auto max-w-7xl">
-      <Reveal>
-        <div className="max-w-3xl mb-12">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
-            Kiểm soát vận hành
-          </p>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
-            Quy trình bảo trì
-            <br />
-            đúng chuẩn ITIL 4.
-          </h2>
-          <p className="mt-4 text-base text-slate-600 leading-relaxed max-w-2xl">
-            SLA, escalation và audit trail được thiết kế để không bao giờ để
-            ticket rơi vào khoảng trống — mọi hành động đều có người chịu trách
-            nhiệm.
-          </p>
-        </div>
-      </Reveal>
+const GovernanceSection = () => {
+  const gridRef = useRef<HTMLDivElement>(null);
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURE_CARDS.map((card, i) => (
-          <FeatureCard key={card.title} card={card} index={i} />
-        ))}
-      </div>
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    if (prefersReducedMotion()) return;
 
-      {/* Supporting quote / callout */}
-      <Reveal delay={200}>
-        <div className="mt-10 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-7 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-            <ShieldCheck className="size-5 text-emerald-700" />
+    const cards = Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-anim='feature-card']"),
+    );
+    if (cards.length === 0) return;
+
+    const anim = animate(cards, {
+      opacity: [0, 1],
+      translateY: [18, 0],
+      duration: 550,
+      ease: "outQuad",
+      delay: stagger(80),
+      autoplay: onScroll({ target: grid, repeat: false }),
+    });
+
+    return () => {
+      anim.revert();
+    };
+  }, []);
+
+  return (
+    <section id="governance" className="bg-white px-5 py-18 lg:px-8 lg:py-24">
+      <div className="mx-auto max-w-7xl">
+        <Reveal>
+          <div className="max-w-3xl mb-12">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
+              Kiểm soát vận hành
+            </p>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
+              Quy trình bảo trì
+              <br />
+              đúng chuẩn ITIL 4.
+            </h2>
+            <p className="mt-4 text-base text-slate-600 leading-relaxed max-w-2xl">
+              SLA, escalation và audit trail được thiết kế để không bao giờ để
+              ticket rơi vào khoảng trống — mọi hành động đều có người chịu
+              trách nhiệm.
+            </p>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">
-            <span className="font-semibold text-slate-900">
-              Priority không thay đổi trong vòng đời ticket.
-            </span>{" "}
-            SLA breach kéo thêm nhân lực, không extend deadline — giữ audit
-            trail chính xác cho báo cáo vận hành.
-          </p>
+        </Reveal>
+
+        <div ref={gridRef} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURE_CARDS.map((card) => (
+            <FeatureCard key={card.title} card={card} />
+          ))}
         </div>
-      </Reveal>
-    </div>
-  </section>
-);
+
+        {/* Supporting quote / callout */}
+        <Reveal delay={200}>
+          <div className="mt-10 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-7 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+              <ShieldCheck className="size-5 text-emerald-700" />
+            </div>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              <span className="font-semibold text-slate-900">
+                Priority không thay đổi trong vòng đời ticket.
+              </span>{" "}
+              SLA breach kéo thêm nhân lực, không extend deadline — giữ audit
+              trail chính xác cho báo cáo vận hành.
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+};
 
 export default GovernanceSection;

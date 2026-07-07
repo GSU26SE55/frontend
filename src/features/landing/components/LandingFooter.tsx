@@ -1,6 +1,7 @@
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import Reveal from "@/features/landing/components/Reveal";
 import logoImg from "@/assets/logo.png";
 
 const PRODUCT_LINKS = [
@@ -39,10 +40,10 @@ const LandingFooter = () => {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 flex justify-center"
       >
-        <div className="h-px w-[600px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+        <div className="h-px w-150 bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl relative z-10">
+      <Reveal className="mx-auto max-w-7xl relative z-10">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5 mb-12">
           {/* Brand */}
           <div className="lg:col-span-2 space-y-4">
@@ -153,7 +154,7 @@ const LandingFooter = () => {
             </a>
           </div>
         </div>
-      </div>
+      </Reveal>
     </footer>
   );
 };

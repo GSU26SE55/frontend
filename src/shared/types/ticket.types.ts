@@ -85,6 +85,9 @@ export interface TicketCommentDTO {
   isInternal: boolean;
   attachmentFileIds?: string[] | null;
   createdAt: string;
+  // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
+  editCount?: number;
+  updatedAt?: string | null;
 }
 
 export interface MaintenanceLogDTO {
@@ -104,6 +107,14 @@ export interface MaintenanceLogDTO {
   afterPhotosFileIds?: string[] | null;
   relatedKbArticleIds?: string[] | null;
   createdAt: string;
+}
+
+// GET /api/staff/tickets/maintenance-logs/me — log cá nhân gom theo ticket.
+export interface StaffMaintenanceLogGroupDTO {
+  ticketId: string;
+  ticketCode: string;
+  ticketTitle: string;
+  logs: MaintenanceLogDTO[];
 }
 
 export interface TicketDetailDTO extends TicketDTO {
@@ -191,6 +202,12 @@ export interface ReassignPayload {
 }
 
 export interface RejectPayload {
+  reason: string;
+}
+
+// Tách riêng khỏi RejectPayload — gắn 1-1 với TicketTriageRejectCommand
+// (luồng Open|Escalated → ClosedRejected), khác RejectPayload (Resolved → InProgress).
+export interface TriageRejectPayload {
   reason: string;
 }
 

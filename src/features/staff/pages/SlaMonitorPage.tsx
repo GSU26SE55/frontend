@@ -13,55 +13,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { KpiCard } from "@/shared/components/common/KpiCard";
-import {
-  SlaTimerStatusEnum,
-  TicketStatusEnum,
-} from "@/shared/types/ticket.types";
 import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";
-import { TicketStatusBadge } from "@/features/staff/components/TicketStatusBadge";
-import { TicketPriorityBadge } from "@/features/staff/components/TicketPriorityBadge";
+import { useStaffTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/SlaCountdown";
-import type { TicketDTO } from "@/shared/types/ticket.types";
-
-const OPEN_STATUSES = new Set<string>([
-  TicketStatusEnum.Assigned,
-  TicketStatusEnum.InProgress,
-  TicketStatusEnum.WaitingCustomer,
-  TicketStatusEnum.WaitingParts,
-  TicketStatusEnum.WaitingOnsiteSchedule,
-  TicketStatusEnum.Escalated,
-]);
-
-function getSlaSortValue(ticket: TicketDTO) {
-  if (!ticket.slaTimer) return 999;
-  if (ticket.slaTimer.status === SlaTimerStatusEnum.Breached) return -1;
-  return ticket.slaTimer.remainingPercent;
-}
 
 export default function SlaMonitorPage() {
   const navigate = useNavigate();
+  // E — filter + sort server-side (thay lọc client trên 1 trang cap 100).
   const { data, isLoading, isError, refetch, isFetching } = useStaffTickets({
     pageNumber: 1,
     pageSize: 100,
+    slaOpen: true,
+    sortBy: "slaRemaining",
   });
+  // B — KPI đếm chính xác toàn bộ (không phụ thuộc trang).
+  const { data: staffStats, isLoading: statsLoading } =
+    useStaffTicketDashboardStats();
 
-  const tickets = data?.items ?? [];
-  const monitoredTickets = tickets
-    .filter((ticket) => OPEN_STATUSES.has(ticket.status) && ticket.slaTimer)
-    .sort((a, b) => getSlaSortValue(a) - getSlaSortValue(b));
-  const breached = monitoredTickets.filter(
-    (ticket) => ticket.slaTimer?.status === SlaTimerStatusEnum.Breached,
-  );
-  const paused = monitoredTickets.filter(
-    (ticket) => ticket.slaTimer?.status === SlaTimerStatusEnum.Paused,
-  );
-  const warning = monitoredTickets.filter((ticket) => {
-    const percent = ticket.slaTimer?.remainingPercent;
-    return percent !== undefined && percent > 0 && percent <= 25;
-  });
+  const monitoredTickets = data?.items ?? [];
+  const monitoredCount = staffStats?.slaMonitoredCount ?? 0;
+  const nearBreach = staffStats?.nearBreachCount ?? 0;
+  const breachedCount = staffStats?.breachedCount ?? 0;
+  const pausedCount = staffStats?.pausedCount ?? 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -88,13 +66,13 @@ export default function SlaMonitorPage() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard
           label="Đang theo dõi"
-          value={isLoading ? "--" : monitoredTickets.length}
+          value={statsLoading ? "--" : monitoredCount}
           sub="tickets"
           icon={<Clock className="size-4" />}
         />
         <KpiCard
           label="Sắp breach"
-          value={isLoading ? "--" : warning.length}
+          value={statsLoading ? "--" : nearBreach}
           sub="<= 25%"
           icon={<AlertTriangle className="size-4" />}
           iconBg="bg-amber-500/10"
@@ -102,7 +80,7 @@ export default function SlaMonitorPage() {
         />
         <KpiCard
           label="Đã breach"
-          value={isLoading ? "--" : breached.length}
+          value={statsLoading ? "--" : breachedCount}
           sub="tickets"
           icon={<AlertTriangle className="size-4" />}
           iconBg="bg-destructive/10"
@@ -110,7 +88,7 @@ export default function SlaMonitorPage() {
         />
         <KpiCard
           label="Tạm dừng"
-          value={isLoading ? "--" : paused.length}
+          value={statsLoading ? "--" : pausedCount}
           sub="tickets"
           icon={<CheckCircle className="size-4" />}
           iconBg="bg-muted"
@@ -121,6 +99,12 @@ export default function SlaMonitorPage() {
       <Card className="gap-0 py-0">
         <CardHeader className="border-b border-border py-4">
           <CardTitle>Ticket SLA</CardTitle>
+          {monitoredCount > monitoredTickets.length && (
+            <p className="text-xs text-muted-foreground">
+              Hiển thị {monitoredTickets.length}/{monitoredCount} ticket — gần
+              breach nhất trước.
+            </p>
+          )}
         </CardHeader>
         {isLoading ? (
           <div className="p-4 space-y-3">

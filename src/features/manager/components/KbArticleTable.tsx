@@ -20,6 +20,8 @@ import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
 import { Eye, ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbArticleStatusEnum, KbCategoryLabel } from "@/shared/enums/kb.enum";
+import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { useSortableData } from "@/shared/hooks/useSortableData";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
@@ -49,6 +51,25 @@ export default function KbArticleTable({
   onEdit,
 }: KbArticleTableProps) {
   const navigate = useNavigate();
+  const { sorted, sortKey, sortDirection, toggleSort } =
+    useSortableData<KbArticleSummaryDTO>(data, (article, key) => {
+      switch (key) {
+        case "code":
+          return article.code;
+        case "title":
+          return article.title;
+        case "category":
+          return KbCategoryLabel[article.category] ?? article.category;
+        case "status":
+          return article.status;
+        case "viewCount":
+          return article.viewCount;
+        case "helpfulCount":
+          return article.helpfulCount;
+        default:
+          return null;
+      }
+    });
 
   if (isLoading) {
     return (
@@ -85,31 +106,67 @@ export default function KbArticleTable({
           <TableHead className="w-12 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             STT
           </TableHead>
-          <TableHead className="w-[100px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <SortableTableHead
+            sortKey="code"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-25 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             Mã
-          </TableHead>
-          <TableHead className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="title"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             Tiêu đề
-          </TableHead>
-          <TableHead className="w-[110px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="category"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-27.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             Danh mục
-          </TableHead>
-          <TableHead className="w-[120px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="status"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-30 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             Trạng thái
-          </TableHead>
-          <TableHead className="w-[90px] text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="viewCount"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-22.5 justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             Lượt xem
-          </TableHead>
-          <TableHead className="w-[90px] text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          </SortableTableHead>
+          <SortableTableHead
+            sortKey="helpfulCount"
+            activeSortKey={sortKey}
+            direction={sortDirection}
+            onSort={toggleSort}
+            className="w-22.5 justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
             Hữu ích
-          </TableHead>
-          <TableHead className="w-[80px] text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          </SortableTableHead>
+          <TableHead className="w-20 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Thao tác
           </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((article, index) => (
+        {sorted.map((article, index) => (
           <TableRow
             key={article.id}
             className="cursor-pointer h-11 hover:bg-muted/40"

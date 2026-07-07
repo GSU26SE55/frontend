@@ -6,6 +6,7 @@ import {
 } from "../services/ticket.service";
 import { QUERY_KEY, KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
+import type { AddCommentPayload } from "@/shared/types/ticket.types";
 
 export function useAdminTickets(params?: GetAdminTicketsParams) {
   return useQuery({
@@ -32,6 +33,40 @@ export function useAdminTicketActivities(id: string) {
     queryFn: () => adminTicketService.getActivities(id),
     select: (res) => res.data ?? [],
     enabled: !!id,
+  });
+}
+
+// GET /api/tickets/{ticketId}/maintenance-logs (Manager/Admin).
+export function useAdminTicketMaintenanceLogs(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.tickets.maintenanceLogs(id),
+    queryFn: () => adminTicketService.getMaintenanceLogs(id),
+    select: (res) => res.data ?? [],
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
+// GET /api/tickets/{ticketId}/chats — dùng chung endpoint với staff/manager.
+export function useAdminTicketComments(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.tickets.chats(id),
+    queryFn: () => adminTicketService.getComments(id),
+    select: (res) => res.data?.items ?? [],
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+}
+
+export function useAdminAddComment(ticketId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AddCommentPayload) =>
+      adminTicketService.addComment(ticketId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+    },
+    onError: (error) => handleErrorApi({ error }),
   });
 }
 

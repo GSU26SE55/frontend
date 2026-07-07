@@ -410,7 +410,7 @@ function AuditLogDetail({
                       <span className="text-[11px] font-mono text-muted-foreground shrink-0 pt-0.5 w-28 truncate">
                         {k}
                       </span>
-                      <span className="text-[12px] font-mono break-all">
+                      <span className="text-xs font-mono break-all">
                         {String(v)}
                       </span>
                     </div>
@@ -468,7 +468,7 @@ export default function AuditLogsPage() {
     : logs;
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -578,7 +578,7 @@ export default function AuditLogsPage() {
                         {log.isSuccess ? "OK" : "FAIL"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm max-w-[200px] truncate">
+                    <TableCell className="text-sm max-w-50 truncate">
                       {log.targetEmail ?? (
                         <span className="text-muted-foreground">—</span>
                       )}

@@ -351,7 +351,7 @@ useEffect(() => {
 - SLA `status === 'Paused'`: SlaCountdown dừng interval, hiển thị "Đang tạm dừng" — không countdown xuống âm
 - SLA `status === 'Breached'`: hiển thị "Đã vi phạm SLA" với màu đỏ, remaining = 0
 
-## Success Criteria
+## Acceptance Criteria
 
 | Tiêu chí | Cách verify |
 |----------|------------|

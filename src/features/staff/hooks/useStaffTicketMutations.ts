@@ -9,6 +9,7 @@ import type {
   EscalateTicketRequest,
   AddCommentRequest,
   AddMaintenanceLogRequest,
+  UpdateMaintenanceLogRequest,
 } from "../types/staff-ticket.types";
 
 function useTicketMutation<TData>(
@@ -79,7 +80,7 @@ export function useAddComment(ticketId: string) {
     onSuccess: () => {
       toast.success("Đã thêm bình luận");
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEY.staffTickets.detail(ticketId),
+        queryKey: QUERY_KEY.tickets.chats(ticketId),
       });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -95,6 +96,29 @@ export function useAddMaintenanceLog(ticketId: string) {
       toast.success("Đã thêm nhật ký bảo trì");
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.staffTickets.detail(ticketId),
+      });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+export function useUpdateMaintenanceLog(ticketId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      logId,
+      data,
+    }: {
+      logId: string;
+      data: UpdateMaintenanceLogRequest;
+    }) => staffTicketService.updateMaintenanceLog(ticketId, logId, data),
+    onSuccess: () => {
+      toast.success("Đã cập nhật nhật ký bảo trì");
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEY.staffTickets.detail(ticketId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEY.staffTickets.myMaintenanceLogs(),
       });
     },
     onError: (error) => handleErrorApi({ error }),

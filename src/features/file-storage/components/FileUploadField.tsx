@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ImagePlus, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import AuthImage from "@/shared/components/common/AuthImage";
 import { useUploadFile } from "@/features/file-storage/hooks/useUploadFile";
 import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
@@ -25,6 +26,10 @@ interface FileUploadFieldProps {
   max?: number;
   label?: string;
   disabled?: boolean;
+  /** Trigger icon-only tròn (cho thanh chat) thay vì khung dashed có chữ "Thêm". */
+  compact?: boolean;
+  /** Ẩn thumbnail trong component này — dùng khi consumer tự hiển thị preview ở nơi khác. */
+  hideThumbnails?: boolean;
 }
 
 /**
@@ -40,6 +45,8 @@ export default function FileUploadField({
   max = 5,
   label,
   disabled = false,
+  compact = false,
+  hideThumbnails = false,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync } = useUploadFile();
@@ -106,33 +113,58 @@ export default function FileUploadField({
   const canAdd = !disabled && remaining > 0;
 
   return (
-    <div className="space-y-2">
+    <div className={cn(compact ? "flex shrink-0 items-center" : "space-y-2")}>
       {label && <p className="text-muted-foreground text-sm">{label}</p>}
 
-      <div className="flex flex-wrap gap-2">
-        {items.map((att) => (
-          <div
-            key={att.fileId}
-            className="relative h-16 w-16 overflow-hidden rounded-md border"
-          >
-            <AuthImage
-              fileId={att.fileId}
-              alt={att.fileName ?? "Ảnh đính kèm"}
-              className="h-full w-full object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => handleRemove(att.fileId)}
-              disabled={disabled}
-              aria-label="Xóa ảnh"
-              className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80 disabled:opacity-50"
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          compact ? "shrink-0" : "flex-wrap",
+        )}
+      >
+        {!hideThumbnails &&
+          items.map((att) => (
+            <div
+              key={att.fileId}
+              className={cn(
+                "relative overflow-hidden rounded-md border",
+                compact ? "h-9 w-9" : "h-16 w-16",
+              )}
             >
-              <X size={12} />
-            </button>
-          </div>
-        ))}
+              <AuthImage
+                fileId={att.fileId}
+                alt={att.fileName ?? "Ảnh đính kèm"}
+                className="h-full w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => handleRemove(att.fileId)}
+                disabled={disabled}
+                aria-label="Xóa ảnh"
+                className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80 disabled:opacity-50"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
 
-        {canAdd && (
+        {canAdd && compact && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            aria-label="Thêm ảnh"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+          >
+            {uploading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <ImagePlus size={16} />
+            )}
+          </button>
+        )}
+
+        {canAdd && !compact && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}

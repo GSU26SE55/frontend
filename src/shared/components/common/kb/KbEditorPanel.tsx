@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
+import { TagInput } from "@/shared/components/common/TagInput";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
 import type {
   KbArticleDTO,
@@ -37,11 +38,16 @@ const schema = z.object({
     .min(1, "Không được trống")
     .max(4000, "Tối đa 4000 ký tự"),
   recommendedPartsText: z.string().optional(),
-  tagsText: z.string().optional(),
+  tags: z
+    .array(z.string().max(50, "Mỗi thẻ tối đa 50 ký tự"))
+    .max(10, "Tối đa 10 thẻ")
+    .optional()
+    .default([]),
   isInternalOnly: z.boolean(),
   changeDescription: z.string().optional(),
 });
 
+type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
 
 // text (mỗi dòng / phẩy) → array
@@ -79,7 +85,10 @@ function Field({
 
 // ── Panel ─────────────────────────────────────────────────────────────────────
 interface KbEditorPanelProps {
-  article: KbArticleDTO;
+  /** Không truyền → chế độ tạo mới */
+  article?: KbArticleDTO;
+  /** Danh mục mặc định khi tạo mới (vd: category của ticket đang mở) */
+  initialCategory?: TicketCategoryEnum;
   onClose: () => void;
   onSave: (payload: UpdateKbArticlePayload) => Promise<void>;
   isPending?: boolean;
@@ -87,19 +96,22 @@ interface KbEditorPanelProps {
 
 export function KbEditorPanel({
   article,
+  initialCategory,
   onClose,
   onSave,
   isPending,
 }: KbEditorPanelProps) {
-  const defaults = (a: KbArticleDTO) => ({
-    category: a.category,
-    title: a.title,
-    symptoms: a.symptoms,
-    diagnosisSteps: a.diagnosisSteps,
-    solutionSteps: a.solutionSteps,
-    recommendedPartsText: (a.recommendedParts ?? []).join("\n"),
-    tagsText: (a.tags ?? []).join(", "),
-    isInternalOnly: a.isInternalOnly,
+  const isCreate = !article;
+
+  const defaults = (a?: KbArticleDTO) => ({
+    category: a?.category ?? initialCategory ?? TicketCategoryEnum.Charging,
+    title: a?.title ?? "",
+    symptoms: a?.symptoms ?? "",
+    diagnosisSteps: a?.diagnosisSteps ?? "",
+    solutionSteps: a?.solutionSteps ?? "",
+    recommendedPartsText: (a?.recommendedParts ?? []).join("\n"),
+    tags: a?.tags ?? [],
+    isInternalOnly: a?.isInternalOnly ?? false,
     changeDescription: "",
   });
 
@@ -109,7 +121,7 @@ export function KbEditorPanel({
     reset,
     control,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaults(article),
   });
@@ -117,7 +129,7 @@ export function KbEditorPanel({
   // Sync if article changes
   useEffect(() => {
     reset(defaults(article));
-  }, [article.id, reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [article?.id, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -128,9 +140,11 @@ export function KbEditorPanel({
         diagnosisSteps: values.diagnosisSteps,
         solutionSteps: values.solutionSteps,
         recommendedParts: toList(values.recommendedPartsText),
-        tags: toList(values.tagsText),
+        tags: values.tags,
         isInternalOnly: values.isInternalOnly,
-        changeDescription: values.changeDescription || undefined,
+        ...(isCreate
+          ? {}
+          : { changeDescription: values.changeDescription || undefined }),
       });
     } catch (error) {
       handleErrorApi({ error });
@@ -142,10 +156,14 @@ export function KbEditorPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div>
-          <p className="text-[11px] text-muted-foreground font-mono mb-0.5">
-            {article.code}
-          </p>
-          <h2 className="text-sm font-semibold">Chỉnh sửa bài viết</h2>
+          {article && (
+            <p className="text-[11px] text-muted-foreground font-mono mb-0.5">
+              {article.code}
+            </p>
+          )}
+          <h2 className="text-sm font-semibold">
+            {isCreate ? "Tạo bài viết mới" : "Chỉnh sửa bài viết"}
+          </h2>
         </div>
         <Button
           variant="ghost"
@@ -258,26 +276,37 @@ export function KbEditorPanel({
             />
           </Field>
 
-          <Field label="Thẻ (cách nhau bằng dấu phẩy)">
-            <Input
-              {...register("tagsText")}
-              placeholder="quá nhiệt, sạc, BMS"
-              className="text-sm"
+          <Field label="Thẻ (tối đa 10 thẻ)">
+            <Controller
+              control={control}
+              name="tags"
+              render={({ field }) => (
+                <TagInput
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  placeholder="quá nhiệt, sạc, BMS..."
+                  maxTags={10}
+                  maxTagLength={50}
+                />
+              )}
             />
           </Field>
         </div>
 
-        <Separator />
-
-        <div className="px-5 py-4 space-y-4">
-          <Field label="Mô tả thay đổi (tùy chọn)">
-            <Input
-              {...register("changeDescription")}
-              placeholder="Lý do/nội dung chỉnh sửa..."
-              className="text-sm"
-            />
-          </Field>
-        </div>
+        {!isCreate && (
+          <>
+            <Separator />
+            <div className="px-5 py-4 space-y-4">
+              <Field label="Mô tả thay đổi (tùy chọn)">
+                <Input
+                  {...register("changeDescription")}
+                  placeholder="Lý do/nội dung chỉnh sửa..."
+                  className="text-sm"
+                />
+              </Field>
+            </div>
+          </>
+        )}
       </form>
 
       {/* Footer */}
@@ -298,7 +327,13 @@ export function KbEditorPanel({
           className="gap-1.5"
         >
           <Save className="size-3.5" />
-          {isPending ? "Đang lưu..." : "Lưu thay đổi"}
+          {isPending
+            ? isCreate
+              ? "Đang tạo..."
+              : "Đang lưu..."
+            : isCreate
+              ? "Tạo bài viết"
+              : "Lưu thay đổi"}
         </Button>
       </div>
     </div>

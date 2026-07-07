@@ -9,9 +9,12 @@ import type {
   TicketDetailDTO,
   TicketActivityDTO,
   TicketActionResponse,
+  TicketCommentDTO,
+  MaintenanceLogDTO,
   AdminTicketListParams,
   AdminTicketQueueParams,
   TriagePayload,
+  TriageRejectPayload,
   AssignPayload,
   ReassignPayload,
   RejectPayload,
@@ -66,9 +69,26 @@ export const managerTicketService = {
       ENDPOINTS.TICKETS.ACTIVITIES(id),
     ),
 
+  getMaintenanceLogs: (ticketId: string) =>
+    axiosInstance.get<CommonResponse<MaintenanceLogDTO[]>>(
+      ENDPOINTS.TICKETS.MAINTENANCE_LOGS(ticketId),
+    ),
+
+  getComments: (ticketId: string) =>
+    axiosInstance.get<CommonResponse<PaginationResponse<TicketCommentDTO>>>(
+      ENDPOINTS.TICKETS.CHATS(ticketId),
+      { params: { page: 1, pageSize: 50 } },
+    ),
+
   triage: (id: string, payload: TriagePayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.TRIAGE(id),
+      payload,
+    ),
+
+  triageReject: (id: string, payload: TriageRejectPayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.TRIAGE_REJECT(id),
       payload,
     ),
 
@@ -111,7 +131,7 @@ export const managerTicketService = {
 
   addComment: (ticketId: string, payload: AddCommentPayload) =>
     axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.TICKETS.COMMENTS(ticketId),
+      ENDPOINTS.TICKETS.CHATS(ticketId),
       payload,
     ),
 };

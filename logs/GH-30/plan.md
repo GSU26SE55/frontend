@@ -107,6 +107,8 @@ UI pages tách thành issue riêng per feature. Router giữ placeholder hiện 
 | `BatteryStatusEnum` | `shared/enums/battery.enum.ts` |
 | `SiteStatusEnum` | `shared/enums/site.enum.ts` |
 
+> **Cleanup (2026-06-28, local):** Đã xoá 3 file orphan trùng lặp `shared/types/account.enums.ts` + `shared/types/battery.enums.ts` + `shared/types/site.enums.ts` (0 import, dead-code). Bản canonical đang dùng là `shared/enums/*.enum.ts` ở bảng trên — không ảnh hưởng. `tsc` + `eslint` PASS.
+
 ## Types
 
 ### `shared/types/account.types.ts`
@@ -319,6 +321,10 @@ export interface GetAuditLogsParams {
 }
 ```
 
+## Schema (Zod)
+
+Không có form → không cần Zod schema. Ticket này chỉ implement data layer (types, endpoints, services, hooks) — không có React Hook Form / `z.object` nào. Form account create/edit thuộc các issue UI riêng (GH-64) sẽ tự định nghĩa schema khi implement.
+
 ## Endpoints
 
 ```ts
@@ -473,7 +479,7 @@ Ticket này chỉ implement data layer (types, services, hooks) — không có U
 | `UpdateStaffProfilePayload` thiếu `skillTier` | `skillTier` là bắt buộc trong Swagger — form UI phải có field này. UI page (issue riêng) chịu trách nhiệm lấy giá trị hiện tại từ `staffProfile.skillTier` làm default |
 | `POST /api/admin/accounts` trả HTTP 201 | Axios mặc định treat 2xx là success → không cần handle riêng |
 
-## Success Criteria
+## Acceptance Criteria
 
 | Tiêu chí | Cách verify |
 |----------|------------|

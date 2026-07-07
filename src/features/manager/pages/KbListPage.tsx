@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, Tag, X } from "lucide-react";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -26,6 +26,7 @@ import {
 } from "../hooks/useManagerKb";
 import KbArticleTable from "../components/KbArticleTable";
 import DataPagination from "@/shared/components/common/DataPagination";
+import { ErrorState } from "@/shared/components/common/ErrorState";
 import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
 import {
   KbArticleStatusEnum,
@@ -49,6 +50,7 @@ const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
 
 const DEFAULTS = {
   keyword: "",
+  tag: "",
   status: "",
   category: "",
   pageNumber: 1,
@@ -62,6 +64,9 @@ export default function KbListPage() {
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const tagSearch = useDebouncedSearch(filters.tag ?? "", (t) =>
+    setFilter("tag", t),
+  );
 
   const categoryValue = filters.category
     ? (filters.category as TicketCategoryEnum)
@@ -72,13 +77,14 @@ export default function KbListPage() {
 
   const params = {
     q: filters.keyword || undefined,
+    tag: filters.tag || undefined,
     status: statusValue,
     category: categoryValue ? KbCategoryCode[categoryValue] : undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
 
-  const { data, isLoading } = useManagerKbList(params);
+  const { data, isLoading, isError, refetch } = useManagerKbList(params);
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: markHelpful } = useMarkManagerKbHelpful();
@@ -89,7 +95,7 @@ export default function KbListPage() {
   const { data: editArticle } = useManagerKbDetail(editArticleId ?? "");
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -116,7 +122,7 @@ export default function KbListPage() {
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo tiêu đề, mã hoặc tag…"
+              placeholder="Tìm theo tiêu đề hoặc mã…"
               value={search.value}
               onChange={search.onChange}
               className="pl-8 pr-8"
@@ -132,6 +138,31 @@ export default function KbListPage() {
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
                 aria-label="Xóa từ khóa"
+              >
+                <X className="size-3.5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          <div className="relative w-full sm:w-44">
+            <Tag className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Lọc theo tag…"
+              value={tagSearch.value}
+              onChange={tagSearch.onChange}
+              className="pl-8 pr-8"
+            />
+            {tagSearch.value && (
+              <button
+                type="button"
+                onClick={() => {
+                  tagSearch.onChange({
+                    target: { value: "" },
+                  } as React.ChangeEvent<HTMLInputElement>);
+                  setFilter("tag", undefined);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
+                aria-label="Xóa tag"
               >
                 <X className="size-3.5 text-muted-foreground" />
               </button>
@@ -191,7 +222,7 @@ export default function KbListPage() {
           )}
         </div>
 
-        {search.value.length === 1 && (
+        {(search.value.length === 1 || tagSearch.value.length === 1) && (
           <p className="text-[11px] text-muted-foreground -mt-1.5">
             Nhập ít nhất 2 ký tự để tìm
           </p>
@@ -199,18 +230,25 @@ export default function KbListPage() {
       </div>
 
       <Card className="gap-0 py-0 overflow-hidden">
-        <KbArticleTable
-          data={data?.items ?? []}
-          isLoading={isLoading}
-          pageNumber={data?.pageNumber ?? 1}
-          pageSize={data?.pageSize ?? 10}
-          hasFilter={hasActiveFilter}
-          onResetFilter={resetFilters}
-          onPublish={(a) => publish(a.id)}
-          onArchive={(a) => archive(a.id)}
-          onMarkHelpful={(a) => markHelpful(a.id)}
-          onEdit={(a) => setEditArticleId(a.id)}
-        />
+        {isError ? (
+          <ErrorState
+            message="Không thể tải danh sách bài viết."
+            onRetry={() => refetch()}
+          />
+        ) : (
+          <KbArticleTable
+            data={data?.items ?? []}
+            isLoading={isLoading}
+            pageNumber={data?.pageNumber ?? 1}
+            pageSize={data?.pageSize ?? 10}
+            hasFilter={hasActiveFilter}
+            onResetFilter={resetFilters}
+            onPublish={(a) => publish(a.id)}
+            onArchive={(a) => archive(a.id)}
+            onMarkHelpful={(a) => markHelpful(a.id)}
+            onEdit={(a) => setEditArticleId(a.id)}
+          />
+        )}
       </Card>
 
       {data && (
@@ -239,7 +277,7 @@ export default function KbListPage() {
             />
             <motion.div
               key="kb-list-edit-panel"
-              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-[560px]"
+              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
               initial={{ x: "100%", opacity: 0.5 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}

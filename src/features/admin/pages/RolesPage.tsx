@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/shared/components/common/ErrorState";
+import { EmptyState } from "@/shared/components/common/EmptyState";
 import {
   Select,
   SelectContent,
@@ -84,7 +86,10 @@ export default function RolesPage() {
   const [keyword, setKeyword] = useState("");
   const [roleType, setRoleType] = useState<RoleTypeFilter>(RoleTypeFilter.All);
 
-  const { data, isLoading } = useAdminRoleList({ pageNumber: 1, pageSize: 50 });
+  const { data, isLoading, isError, refetch } = useAdminRoleList({
+    pageNumber: 1,
+    pageSize: 50,
+  });
   const { mutate: deleteRole, isPending: isDeleting } = useAdminDeleteRole();
 
   const raw = data as unknown;
@@ -128,7 +133,7 @@ export default function RolesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1440px] mx-auto">
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -203,11 +208,13 @@ export default function RolesPage() {
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState
+            message="Không thể tải danh sách role."
+            onRetry={() => refetch()}
+          />
         ) : filteredRoles.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
-            <Shield className="size-8 opacity-30" />
-            <span className="text-sm">Không tìm thấy role phù hợp.</span>
-          </div>
+          <EmptyState icon={Shield} title="Không tìm thấy role phù hợp." />
         ) : (
           <Table>
             <TableHeader>
@@ -243,7 +250,7 @@ export default function RolesPage() {
                         </span>
                         <div className="min-w-0">
                           <p className="font-medium">{role.name}</p>
-                          <p className="mt-0.5 max-w-[520px] truncate text-xs text-muted-foreground">
+                          <p className="mt-0.5 max-w-130 truncate text-xs text-muted-foreground">
                             {role.description || role.normalizedName}
                           </p>
                         </div>

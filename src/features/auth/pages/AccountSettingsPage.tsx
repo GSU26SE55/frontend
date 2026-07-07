@@ -12,6 +12,7 @@ import {
   KeyRound,
   MonitorSmartphone,
   BellRing,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import TrustedDevicesSection from "@/features/auth/components/TrustedDevicesSect
 import LoginHistoryTable from "@/features/auth/components/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/DangerZone";
 import DeviceTokensSection from "@/shared/components/device-tokens/DeviceTokensSection";
+import NotificationPreferencesSection from "@/shared/components/notification-preferences/NotificationPreferencesSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
@@ -53,6 +55,12 @@ const MENU = [
     label: "Thiết bị thông báo",
     icon: BellRing,
     desc: "Quản lý thiết bị nhận thông báo đẩy (push)",
+  },
+  {
+    key: "notifications",
+    label: "Tùy chọn thông báo",
+    icon: Bell,
+    desc: "Bật/tắt kênh thông báo, khung giờ yên tĩnh và múi giờ",
   },
   {
     key: "history",
@@ -140,7 +148,7 @@ const AccountSettingsPage = () => {
   const current = MENU.find((m) => m.key === active)!;
 
   return (
-    <div className="p-6 space-y-5 max-w-[1100px] mx-auto">
+    <div className="p-6 space-y-5 max-w-275 mx-auto">
       {/* Page header */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -156,7 +164,7 @@ const AccountSettingsPage = () => {
       </div>
 
       {/* Body card — fixed height so content stays inside */}
-      <Card className="min-h-[520px] gap-0 overflow-hidden rounded-xl py-0 md:flex-row">
+      <Card className="min-h-130 gap-0 overflow-hidden rounded-xl py-0 md:flex-row">
         {/* ── Nav ── */}
         <nav className="w-full shrink-0 border-b border-border bg-muted/30 px-2 py-3 md:w-52 md:border-b-0 md:border-r">
           {MENU.map((item) => {
@@ -216,7 +224,7 @@ const AccountSettingsPage = () => {
                 {/* Mật khẩu & Email — chọn action rồi hiện form */}
                 {active === "credentials" &&
                   (credSub === null ? (
-                    <div className="flex flex-col items-center justify-center min-h-[340px] gap-6">
+                    <div className="flex flex-col items-center justify-center min-h-85 gap-6">
                       <p className="text-sm text-muted-foreground">
                         Chọn thao tác bạn muốn thực hiện
                       </p>
@@ -327,7 +335,12 @@ const AccountSettingsPage = () => {
                       icon={Link2}
                       title="Liên kết Google"
                       description="Đăng nhập nhanh bằng tài khoản Google"
-                      action={<GoogleLinkSection isLinked={false} bare />}
+                      action={
+                        <GoogleLinkSection
+                          isLinked={!!account?.isGoogleLinked}
+                          bare
+                        />
+                      }
                     />
 
                     <SecurityRow
@@ -342,6 +355,10 @@ const AccountSettingsPage = () => {
 
                 {/* Thiết bị thông báo (push device tokens) */}
                 {active === "devices" && <DeviceTokensSection />}
+
+                {active === "notifications" && (
+                  <NotificationPreferencesSection />
+                )}
 
                 {/* Lịch sử — fills remaining height, table scrolls, pagination fixed */}
                 {active === "history" && <LoginHistoryTable />}

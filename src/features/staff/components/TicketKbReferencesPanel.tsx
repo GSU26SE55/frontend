@@ -1,26 +1,40 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Plus, Trash2, ExternalLink, X } from "lucide-react";
+import {
+  BookOpen,
+  FilePlus2,
+  Plus,
+  Trash2,
+  ExternalLink,
+  X,
+  Sparkles,
+} from "lucide-react";
 import {
   useTicketKbRefs,
   useAddTicketKbRef,
   useRemoveTicketKbRef,
 } from "../hooks/useTicketKbRefs";
-import { useStaffKbSuggest } from "../hooks/useStaffKb";
+import { staffKbService } from "../services/kb.service";
+import { useStaffKbSuggest, useStaffKbCreate } from "../hooks/useStaffKb";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
   KbArticleStatusEnum,
+  KbCategoryCode,
 } from "@/shared/enums/kb.enum";
-import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
-import { KbArticleSelector } from "@/shared/components/common/kb/KbArticleSelector";
+import {
+  KbArticleSelector,
+  type KbArticleSearchParams,
+} from "@/shared/components/common/kb/KbArticleSelector";
+import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb.enum";
+import type { UpdateKbArticlePayload } from "@/shared/types/kb.types";
 import { cn } from "@/lib/utils";
 
 const REF_TYPE_ORDER: RefType[] = [
@@ -50,37 +64,74 @@ const REF_TYPE_DESC: Record<RefType, string> = {
 interface TicketKbReferencesPanelProps {
   ticketId: string;
   defaultCategory?: TicketCategoryEnum;
+  /** Cho phép gắn bài viết (khớp BE: chặn từ ClosedPendingRate trở đi). */
+  canAdd?: boolean;
+  /** Ticket ở Resolved — chỉ ghi nhận 2 type after-resolve (khớp BE guard H). */
+  afterResolveOnly?: boolean;
 }
 
 export default function TicketKbReferencesPanel({
   ticketId,
   defaultCategory,
+  canAdd = true,
+  afterResolveOnly = false,
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
+  const { data: suggestions } = useStaffKbSuggest(ticketId);
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
-  const { data: suggestItems } = useStaffKbSuggest(ticketId);
-  const selectorOptions: KbArticleSummaryDTO[] = (suggestItems ?? []).map(
-    (item) => ({
-      id: item.id,
-      code: item.code,
-      title: item.title,
-      category: defaultCategory ?? TicketCategoryEnum.Other,
-      status: KbArticleStatusEnum.Published,
-      viewCount: item.viewCount,
-      helpfulCount: item.helpfulCount,
-      reviewRequired: false,
-      createdAt: "",
-    }),
+  const { mutateAsync: createArticle, isPending: creatingArticle } =
+    useStaffKbCreate();
+
+  const suggested = useMemo(() => {
+    const attachedIds = new Set((refs ?? []).map((r) => r.kbArticleId));
+    return (suggestions ?? []).filter((s) => !attachedIds.has(s.id));
+  }, [suggestions, refs]);
+
+  const searchArticles = useCallback(
+    ({ q, category }: KbArticleSearchParams) =>
+      staffKbService
+        .getList({
+          q,
+          category: category ? KbCategoryCode[category] : undefined,
+          status: KbArticleStatusEnum.Published,
+          pageSize: 20,
+        })
+        .then((r) => r.data.data?.items ?? []),
+    [],
+  );
+
+  const getArticleDetail = useCallback(
+    (id: string) => staffKbService.getDetail(id).then((r) => r.data.data!),
+    [],
   );
 
   const [showAdd, setShowAdd] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [refType, setRefType] = useState<RefType>(
-    KbReferenceTypeEnum.ConsultedDuringResolve,
+    afterResolveOnly
+      ? KbReferenceTypeEnum.GeneratedAfterResolve
+      : KbReferenceTypeEnum.ConsultedDuringResolve,
   );
   const [note, setNote] = useState("");
+
+  // H — ở Resolved BE chỉ cho 2 type after-resolve; ẩn ConsultedDuringResolve.
+  const refTypeOptions: RefType[] = afterResolveOnly
+    ? [
+        KbReferenceTypeEnum.ProvidedToCustomer,
+        KbReferenceTypeEnum.GeneratedAfterResolve,
+      ]
+    : REF_TYPE_ORDER;
+
+  // Consulted không hợp lệ ở Resolved (BE 422). Dùng effective refType (derive,
+  // không reset state trong effect) — nếu state còn Consulted khi chuyển sang
+  // Resolved thì add/hiển thị như GeneratedAfterResolve.
+  const effectiveRefType: RefType =
+    afterResolveOnly && refType === KbReferenceTypeEnum.ConsultedDuringResolve
+      ? KbReferenceTypeEnum.GeneratedAfterResolve
+      : refType;
 
   const grouped = useMemo(() => {
     const map = new Map<RefType, NonNullable<typeof refs>>();
@@ -96,13 +147,24 @@ export default function TicketKbReferencesPanel({
     for (const kbArticleId of selectedIds) {
       addRef({
         kbArticleId,
-        referenceType: refType,
+        referenceType: effectiveRefType,
         note: note || undefined,
       });
     }
     setSelectedIds([]);
     setNote("");
     setShowAdd(false);
+  };
+
+  const handleCreateSave = async (payload: UpdateKbArticlePayload) => {
+    const res = await createArticle(payload);
+    if (res?.id) {
+      addRef({
+        kbArticleId: res.id,
+        referenceType: KbReferenceTypeEnum.GeneratedAfterResolve,
+      });
+    }
+    setShowCreate(false);
   };
 
   if (isLoading) {
@@ -128,16 +190,92 @@ export default function TicketKbReferencesPanel({
             </span>
           )}
         </h3>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5"
-          onClick={() => setShowAdd(!showAdd)}
-        >
-          {showAdd ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
-          {showAdd ? "Đóng" : "Gắn bài viết"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={!canAdd}
+            title={
+              !canAdd
+                ? "Ticket đã hoàn thành — không thể tạo bài viết"
+                : undefined
+            }
+            onClick={() => setShowCreate(true)}
+          >
+            <FilePlus2 className="size-3.5" /> Tạo bài viết mới
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={!canAdd}
+            title={
+              !canAdd
+                ? "Ticket đã hoàn thành — không thể gắn thêm bài viết"
+                : undefined
+            }
+            onClick={() => setShowAdd(!showAdd)}
+          >
+            {showAdd ? (
+              <X className="size-3.5" />
+            ) : (
+              <Plus className="size-3.5" />
+            )}
+            {showAdd ? "Đóng" : "Gắn bài viết"}
+          </Button>
+        </div>
       </div>
+
+      {suggested.length > 0 && (
+        <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="size-3.5 text-primary" />
+            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              Gợi ý cho ticket này
+            </h4>
+          </div>
+          <div className="space-y-1.5">
+            {suggested.slice(0, 5).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 rounded-md bg-background px-2.5 py-1.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="mr-1.5 font-mono text-[11px] text-muted-foreground">
+                    {item.code}
+                  </span>
+                  <span className="truncate text-xs">{item.title}</span>
+                  {item.isInternalOnly && (
+                    <span className="ml-1.5 rounded bg-amber-500/15 px-1 py-0.5 text-[9.5px] font-medium text-amber-700 dark:text-amber-300">
+                      Nội bộ
+                    </span>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+                  disabled={!canAdd || adding || afterResolveOnly}
+                  title={
+                    afterResolveOnly
+                      ? "Ticket đã Resolved — chỉ ghi nhận bài sau xử lý"
+                      : undefined
+                  }
+                  onClick={() =>
+                    addRef({
+                      kbArticleId: item.id,
+                      referenceType: KbReferenceTypeEnum.ConsultedDuringResolve,
+                    })
+                  }
+                >
+                  <Plus className="size-3" /> Gắn
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AnimatePresence initial={false}>
         {showAdd && (
@@ -153,8 +291,8 @@ export default function TicketKbReferencesPanel({
                 <KbArticleSelector
                   value={selectedIds}
                   onChange={setSelectedIds}
-                  options={selectorOptions}
-                  defaultCategory={defaultCategory}
+                  searchFn={searchArticles}
+                  getDetailFn={getArticleDetail}
                 />
 
                 <div className="space-y-1.5">
@@ -162,8 +300,8 @@ export default function TicketKbReferencesPanel({
                     Loại tham chiếu
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {REF_TYPE_ORDER.map((t) => {
-                      const active = refType === t;
+                    {refTypeOptions.map((t) => {
+                      const active = effectiveRefType === t;
                       return (
                         <Button
                           key={t}
@@ -180,7 +318,7 @@ export default function TicketKbReferencesPanel({
                     })}
                   </div>
                   <p className="text-[11px] text-muted-foreground italic">
-                    {REF_TYPE_DESC[refType]}
+                    {REF_TYPE_DESC[effectiveRefType]}
                   </p>
                 </div>
 
@@ -212,20 +350,62 @@ export default function TicketKbReferencesPanel({
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showCreate && (
+          <>
+            <motion.div
+              key="kb-create-backdrop"
+              className="fixed inset-0 z-50 bg-black/20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowCreate(false)}
+            />
+            <motion.div
+              key="kb-create-panel"
+              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
+              initial={{ x: "100%", opacity: 0.5 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 340,
+                damping: 32,
+                mass: 0.9,
+              }}
+            >
+              <KbEditorPanel
+                initialCategory={defaultCategory}
+                onClose={() => setShowCreate(false)}
+                isPending={creatingArticle}
+                onSave={handleCreateSave}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {totalRefs === 0 && !showAdd && (
         <div className="rounded-lg border border-dashed py-10 px-4 text-center">
           <BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground mb-3">
             Chưa có bài viết KB nào được gắn vào ticket này.
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={() => setShowAdd(true)}
-          >
-            <Plus className="size-3.5" /> Gán bài hướng dẫn
-          </Button>
+          {canAdd ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setShowAdd(true)}
+            >
+              <Plus className="size-3.5" /> Gán bài hướng dẫn
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Cần bắt đầu xử lý ticket trước khi gắn bài viết hướng dẫn.
+            </p>
+          )}
         </div>
       )}
 

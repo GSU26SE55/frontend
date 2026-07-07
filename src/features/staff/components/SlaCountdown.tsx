@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SlaTimerStatusEnum } from "@/shared/types/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket.types";
+import { isNearBreachPercent } from "@/shared/lib/sla";
 
 interface Props {
   slaTimer: SlaTimerDTO | null;
@@ -86,7 +87,7 @@ export function SlaCountdown({ slaTimer }: Props) {
     );
   }
 
-  const isWarning = remainingPercent <= 25;
+  const isWarning = isNearBreachPercent(remainingPercent);
   const barColor = isWarning ? "bg-destructive" : "bg-primary";
 
   return (

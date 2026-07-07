@@ -259,6 +259,17 @@ export interface TicketActionResponse {
 }
 ```
 
+## Schema (Zod)
+
+Form duy nhất trong scope: dialog **Declare Incident** (input `incidentDescription`).
+
+```ts
+// declare-incident dialog
+incidentDescription: z.string().min(1)  // bắt buộc, không rỗng/whitespace — BE trả 400 nếu thiếu
+```
+
+> Các trang list + detail chỉ có controlled filter inputs / action button (không phải RHF form) → không cần Zod. Chỉ dialog declare-incident cần validate `incidentDescription` trước khi submit.
+
 ## Endpoints
 
 ```ts
@@ -334,7 +345,7 @@ User click "Declare Incident" → Dialog với **input `incidentDescription` (b�
 - 403/404 khi vào detail: redirect hoặc hiện error state
 - Pagination: nếu trang hiện tại > totalPages sau filter → reset về page 1
 
-## Success Criteria
+## Acceptance Criteria
 | Tiêu chí | Cách verify |
 |----------|------------|
 | List hiện đúng data từ API | `GET /api/admin/tickets` trả về data, hiện trong table |

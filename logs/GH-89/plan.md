@@ -96,6 +96,31 @@ deviceInfo: z.string().max(500).optional()
 | `src/router/index.tsx` | modify | Route `/admin/notifications` |
 | `src/shared/components/layout/AppLayout.tsx` | modify | Nav item admin section → Notifications (nav config nằm inline ở đây, KHÔNG phải Sidebar.tsx) |
 
+## Workflow
+
+**Admin create notification flow:**
+```
+/admin/notifications (role ADMIN) → CreateNotificationForm (RHF + Zod)
+Nhập userId + type + channel + title + body (+ bypassQuietHours) → submit → useCreateNotification.mutateAsync(payload)
+  → OK:   201 → toast success → reset form (không invalidate — target user khác)
+  → FAIL: handleErrorApi({ error, setError }) (validation BE map xuống field / 400 thiếu claim UserId → toast)
+```
+
+**Device token — register flow:**
+```
+AccountSettings → tab "Thiết bị" → DeviceTokensSection → useDeviceTokens (GET) render list
+Nhập token/platform/deviceInfo → đăng ký → useRegisterDeviceToken.mutate(payload)
+  → OK:   invalidate QUERY_KEY.deviceTokens.list() → toast success → refetch list
+  → FAIL: handleErrorApi({ error }) (409 thiết bị đã active → toast "Thiết bị đã được đăng ký")
+```
+
+**Device token — unregister flow:**
+```
+DeviceTokensSection → ô "hủy theo token" → paste token → thu hồi → useUnregisterDeviceToken.mutate({ token })
+  → OK:   invalidate QUERY_KEY.deviceTokens.list() → toast success → refetch list
+  → FAIL: handleErrorApi({ error }) (404 token không active → toast lỗi BE)
+```
+
 ## Approach
 - **Enum promote:** chuyển 3 enum sang `shared/enums/notification.enum.ts`, thêm 2 enum mới → cả `features/admin` (create form) và `features/staff` (list) import từ shared. `staff/types/notification.types.ts` re-export từ shared để các file staff khác không phải đổi. *(Đây là theo convention "≥2 feature dùng → shared/enums" trong rules/tech/fe.md — KHÔNG có guard `no-restricted-imports` trong `eslint.config.js`, nên việc tách là quy ước thủ công, không có CI chặn.)*
 - **Device-tokens ở `shared/`** (mọi role đã login dùng): service qua `shared/lib/axios`, DELETE truyền body qua `axiosInstance.delete(url, { data })`. Hook `useDeviceTokens` (query, staleTime 5'), `useRegisterDeviceToken`/`useUnregisterDeviceToken` (mutation) → `invalidateQueries(QUERY_KEY.deviceTokens.list())`.

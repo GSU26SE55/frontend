@@ -26,17 +26,18 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useBatteryAsset } from "@/features/admin/hooks/useBatteryAsset";
+import { useThresholdByType } from "@/features/admin/hooks/useThresholds";
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
 import { useBatteryAssetRealtime } from "@/features/admin/hooks/useBatteryAssetRealtime";
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/TransferOwnerDialog";
 import SensorChart from "@/features/admin/components/SensorChart";
 import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
-import {
-  BatteryStatusEnum,
-  ChargingStateEnum,
-} from "@/features/admin/types/battery-asset.types";
+import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
+import { BatteryStatusEnum } from "@/features/admin/types/battery-asset.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { LiveTelemetryCard } from "@/shared/components/common/LiveTelemetryCard";
+import { useSensorStream } from "@/shared/hooks/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -62,21 +63,10 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const CHARGING_LABELS: Record<ChargingStateEnum, string> = {
-  [ChargingStateEnum.IDLE]: "Nghỉ",
-  [ChargingStateEnum.CHARGING]: "Đang nạp",
-  [ChargingStateEnum.DISCHARGING]: "Đang xả",
-  [ChargingStateEnum.FLOAT]: "Float",
-  [ChargingStateEnum.BYPASS]: "Bypass",
-};
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const fmtDate = (s: string) =>
   format(new Date(s), "dd/MM/yyyy", { locale: vi });
-const fmtNum = (v: number | null | undefined, dec = 1) =>
-  v != null ? v.toFixed(dec) : "—";
-
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -86,30 +76,6 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
       <span className="text-xs font-medium text-right leading-relaxed">
         {value ?? <span className="text-muted-foreground/50">—</span>}
       </span>
-    </div>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  unit,
-  className,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  className?: string;
-}) {
-  return (
-    <div className={cn("rounded-lg p-3 flex flex-col gap-1", className)}>
-      <div className="flex items-baseline gap-1 leading-none">
-        <span className="text-2xl font-bold tabular-nums tracking-tight">
-          {value}
-        </span>
-        {unit && <span className="text-xs font-medium opacity-60">{unit}</span>}
-      </div>
-      <span className="text-[11px] opacity-60">{label}</span>
     </div>
   );
 }
@@ -125,6 +91,12 @@ export default function BatteryAssetDetailPage() {
 
   const { data: asset, isLoading } = useBatteryAsset(id);
   const { data: rt } = useBatteryAssetRealtime(id);
+  const stream = useSensorStream(id ? `asset:${id}` : null);
+  // Ưu tiên live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
+  const live = stream.reading ?? rt ?? null;
+  // Ngưỡng cảnh báo telemetry theo BatteryType (BE ThresholdConfig) — tô màu SOH/SOC/Temp
+  // đúng theo chemistry thay vì hardcode. enabled tự tắt khi chưa có batteryTypeId.
+  const { data: threshold } = useThresholdByType(asset?.batteryTypeId ?? "");
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
   const handleDelete = () => {
@@ -163,34 +135,6 @@ export default function BatteryAssetDetailPage() {
   }
 
   const statusCfg = STATUS_CONFIG[asset.status];
-
-  // Realtime color logic
-  const sohCls =
-    rt?.sohPercent == null
-      ? "bg-muted/60 text-foreground"
-      : rt.sohPercent >= 80
-        ? "bg-emerald-50 text-emerald-800"
-        : rt.sohPercent >= 60
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
-
-  const socCls =
-    rt?.socPercent == null
-      ? "bg-muted/60 text-foreground"
-      : rt.socPercent >= 50
-        ? "bg-blue-50 text-blue-800"
-        : rt.socPercent >= 20
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
-
-  const tempCls =
-    rt?.temperature == null
-      ? "bg-muted/60 text-foreground"
-      : rt.temperature < 40
-        ? "bg-sky-50 text-sky-800"
-        : rt.temperature < 50
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -257,7 +201,7 @@ export default function BatteryAssetDetailPage() {
       <div className="flex-1 min-h-0 px-6 pb-6">
         <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
           {/* Left sidebar */}
-          <div className="w-[260px] shrink-0 border-r border-border flex flex-col overflow-y-auto">
+          <div className="w-65 shrink-0 border-r border-border flex flex-col overflow-y-auto">
             {/* Info */}
             <div className="px-4 pt-4 pb-3">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -266,7 +210,6 @@ export default function BatteryAssetDetailPage() {
               <div className="divide-y divide-border/50">
                 <InfoRow label="Khách hàng" value={asset.customerName} />
                 <InfoRow label="Site" value={asset.siteName} />
-                <InfoRow label="Vị trí" value={asset.location} />
                 <InfoRow
                   label="Ngày lắp đặt"
                   value={asset.installDate ? fmtDate(asset.installDate) : null}
@@ -294,85 +237,20 @@ export default function BatteryAssetDetailPage() {
 
             <Separator />
 
-            {/* Realtime */}
-            <div className="px-4 py-4 flex-1">
-              <div className="flex items-center gap-2 mb-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Realtime
-                </p>
-                {rt && (
-                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                )}
-              </div>
-
-              {!rt ? (
-                <p className="text-xs text-muted-foreground">
-                  Chưa có dữ liệu sensor
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {rt.time && (
-                    <p className="text-[10.5px] text-muted-foreground -mt-1 mb-2">
-                      {new Date(rt.time).toLocaleString("vi-VN")}
-                    </p>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <StatTile
-                      label="Điện áp"
-                      value={fmtNum(rt.voltage)}
-                      unit="V"
-                      className="bg-muted/50 text-foreground"
-                    />
-                    <StatTile
-                      label="Dòng điện"
-                      value={fmtNum(rt.current)}
-                      unit="A"
-                      className="bg-muted/50 text-foreground"
-                    />
-                    <StatTile
-                      label="Nhiệt độ"
-                      value={fmtNum(rt.temperature)}
-                      unit="°C"
-                      className={tempCls}
-                    />
-                    <StatTile
-                      label="SOC"
-                      value={fmtNum(rt.socPercent, 0)}
-                      unit="%"
-                      className={socCls}
-                    />
-                    <StatTile
-                      label="SOH"
-                      value={fmtNum(rt.sohPercent, 0)}
-                      unit="%"
-                      className={sohCls}
-                    />
-                    <StatTile
-                      label="Chu kỳ"
-                      value={
-                        rt.cycleCount != null ? String(rt.cycleCount) : "—"
-                      }
-                      unit=""
-                      className="bg-muted/50 text-foreground"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 mt-1">
-                    <span className="text-[10.5px] text-muted-foreground">
-                      Nạp / Xả
-                    </span>
-                    <span className="text-[10.5px] font-medium">
-                      {rt.chargingState != null
-                        ? (CHARGING_LABELS[
-                            rt.chargingState as ChargingStateEnum
-                          ] ?? `#${rt.chargingState}`)
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Realtime — live SSE (~5s), seed/fallback từ rt (polling 30s) */}
+            <LiveTelemetryCard
+              data={live}
+              status={stream.status}
+              thresholds={
+                threshold
+                  ? {
+                      socWarning: threshold.socWarningThreshold,
+                      socCritical: threshold.socCriticalThreshold,
+                      temperatureMax: threshold.temperatureMax,
+                    }
+                  : undefined
+              }
+            />
           </div>
 
           {/* Right: chart / history tabs */}
@@ -382,19 +260,30 @@ export default function BatteryAssetDetailPage() {
                 <TabsList>
                   <TabsTrigger value="chart">Biểu đồ</TabsTrigger>
                   <TabsTrigger value="history">Lịch sử cảm biến</TabsTrigger>
+                  <TabsTrigger value="cascade">Rủi ro lan truyền</TabsTrigger>
                 </TabsList>
               </div>
               <TabsContent
                 value="chart"
-                className="min-h-0 overflow-hidden m-0"
+                className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
-                <SensorChart assetId={id} fillHeight />
+                <SensorChart
+                  assetId={id}
+                  batteryTypeId={asset?.batteryTypeId}
+                  fillHeight
+                />
               </TabsContent>
               <TabsContent
                 value="history"
-                className="min-h-0 overflow-hidden m-0"
+                className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
                 <SensorHistoryTable assetId={id} fillHeight />
+              </TabsContent>
+              <TabsContent
+                value="cascade"
+                className="min-h-0 overflow-y-auto m-0 p-5"
+              >
+                <CascadeRiskCard assetId={id} />
               </TabsContent>
             </Tabs>
           </div>

@@ -10,6 +10,7 @@ import type {
   TicketActivityDTO,
   TicketCommentDTO,
   TicketActionResponse,
+  StaffMaintenanceLogGroupDTO,
 } from "@/shared/types/ticket.types";
 import type {
   StaffTicketsParams,
@@ -19,6 +20,7 @@ import type {
   EscalateTicketRequest,
   AddCommentRequest,
   AddMaintenanceLogRequest,
+  UpdateMaintenanceLogRequest,
 } from "../types/staff-ticket.types";
 
 export const staffTicketService = {
@@ -30,6 +32,8 @@ export const staffTicketService = {
           Status: params.status,
           PageNumber: params.pageNumber,
           PageSize: params.pageSize,
+          SlaOpen: params.slaOpen,
+          SortBy: params.sortBy,
         },
       },
     ),
@@ -46,7 +50,7 @@ export const staffTicketService = {
 
   getComments: (ticketId: string, page = 1, pageSize = 10) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketCommentDTO>>>(
-      ENDPOINTS.TICKETS.COMMENTS(ticketId),
+      ENDPOINTS.TICKETS.CHATS(ticketId),
       { params: { page, pageSize } },
     ),
 
@@ -81,13 +85,28 @@ export const staffTicketService = {
 
   addComment: (ticketId: string, data: AddCommentRequest) =>
     axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.TICKETS.COMMENTS(ticketId),
+      ENDPOINTS.TICKETS.CHATS(ticketId),
       data,
     ),
 
   addMaintenanceLog: (ticketId: string, data: AddMaintenanceLogRequest) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.TICKETS.MAINTENANCE_LOGS(ticketId),
+      data,
+    ),
+
+  getMyMaintenanceLogs: () =>
+    axiosInstance.get<CommonResponse<StaffMaintenanceLogGroupDTO[]>>(
+      ENDPOINTS.STAFF_TICKETS.MAINTENANCE_LOGS_ME,
+    ),
+
+  updateMaintenanceLog: (
+    ticketId: string,
+    logId: string,
+    data: UpdateMaintenanceLogRequest,
+  ) =>
+    axiosInstance.patch<TicketActionResponse>(
+      ENDPOINTS.TICKETS.MAINTENANCE_LOG_UPDATE(ticketId, logId),
       data,
     ),
 };

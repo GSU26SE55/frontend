@@ -2,15 +2,18 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { slaBarColorClass } from "@/shared/lib/sla";
+import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
 import {
   useStaffTicketDetail,
   useStaffTicketActivities,
+  useStaffTicketComments,
 } from "../hooks/useStaffTicketDetail";
 import {
   useStartTicket,
@@ -21,8 +24,9 @@ import {
   useAddComment,
   useAddMaintenanceLog,
 } from "../hooks/useStaffTicketMutations";
-import { TicketStatusBadge } from "../components/TicketStatusBadge";
-import { TicketPriorityBadge } from "../components/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TypingIndicator from "@/shared/components/common/TypingIndicator";
+import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import { SlaCountdown } from "../components/SlaCountdown";
 import { HoldDialog } from "../components/HoldDialog";
 import { ResolveDialog } from "../components/ResolveDialog";
@@ -30,10 +34,27 @@ import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
 import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
+import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import {
+  TicketCommentThread,
+  type ChatTab,
+} from "@/shared/components/common/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
+import SubIssuePanel from "../components/SubIssuePanel";
+import BatteryAssetInfoPanel from "../components/BatteryAssetInfoPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { checkPermission, P } from "@/shared/lib/authz";
+import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import {
+  useUpdateTicketChat,
+  useDeleteTicketChat,
+  useMarkTicketChatsRead,
+  useTranslateTicketChat,
+} from "@/shared/hooks/useTicketChatActions";
 import type { HoldFormValues } from "../schemas/staff-ticket.schema";
 import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
 import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
@@ -71,11 +92,23 @@ export default function TicketDetailPage() {
   const [resolveOpen, setResolveOpen] = useState(false);
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
+  // Tab chat: bình luận mới gửi theo tab đang mở (public/internal).
+  const [chatTab, setChatTab] = useState<ChatTab>("public");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const ticketId = id ?? "";
+  const user = useSessionStore((s) => s.user);
+  const currentUserId = user?.accountId;
+
+  // Realtime: invalidate tickets.chats khi ChatAdded (cùng key với useStaffTicketComments)
+  // + typing indicator (typingNames render "đang gõ", sendTyping báo khi mình gõ).
+  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
+
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
+  const { data: comments = [] } = useStaffTicketComments(ticketId);
 
   const startMutation = useStartTicket(ticketId);
   const holdMutation = useHoldTicket(ticketId);
@@ -84,6 +117,16 @@ export default function TicketDetailPage() {
   const escalateMutation = useEscalateTicket(ticketId);
   const commentMutation = useAddComment(ticketId);
   const logMutation = useAddMaintenanceLog(ticketId);
+  const { mutate: updateChat, isPending: editChatPending } =
+    useUpdateTicketChat();
+  const { mutate: deleteChat, isPending: deleteChatPending } =
+    useDeleteTicketChat();
+  const { mutate: markChatsRead } = useMarkTicketChatsRead();
+  const handleMarkRead = (chatIds: string[]) =>
+    markChatsRead({ ticketId, payload: { chatIds } });
+  const { mutateAsync: translateChat } = useTranslateTicketChat();
+  const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
+    translateChat({ ticketId, chatId: chat.id, targetLanguage });
 
   if (isError) {
     return (
@@ -115,6 +158,18 @@ export default function TicketDetailPage() {
   );
   const canComment = isInProgress || isWaiting || isAssigned;
   const canAddLog = isInProgress || isWaiting;
+  // Khoá sửa log khi ticket đã Resolved/ClosedPendingRate/Closed (BE enforce).
+  const canEditLog = isInProgress || isWaiting;
+  // Gắn KB reference: khớp BE (AddTicketKbReferenceCommandHandler) — chặn từ
+  // ClosedPendingRate/Closed. Ở Resolved vẫn cho gắn nhưng CHỈ 2 type
+  // after-resolve (GeneratedAfterResolve/ProvidedToCustomer) — guard H.
+  const canAddKb = !(
+    [
+      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Closed,
+    ] as TicketStatusEnum[]
+  ).includes(status);
+  const kbAfterResolveOnly = status === TicketStatusEnum.Resolved;
 
   const handleHoldSubmit = (data: HoldFormValues) => {
     holdMutation.mutate(data, { onSuccess: () => setHoldOpen(false) });
@@ -136,16 +191,9 @@ export default function TicketDetailPage() {
     logMutation.mutate(data, { onSuccess: () => setLogOpen(false) });
   };
 
-  const comments = ticket.comments ?? [];
   const logs = ticket.maintenanceLogs ?? [];
 
-  const slaPct = ticket.slaTimer?.remainingPercent ?? 0;
-  const slaBarCls =
-    slaPct > 50
-      ? "bg-emerald-500"
-      : slaPct > 20
-        ? "bg-amber-500"
-        : "bg-red-500";
+  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -173,7 +221,10 @@ export default function TicketDetailPage() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-base font-semibold truncate leading-tight mt-0.5">
+            <h1
+              className="text-base font-semibold truncate leading-tight mt-0.5"
+              title={ticket.title}
+            >
               {ticket.title}
             </h1>
           </div>
@@ -246,6 +297,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="logs">
                   Nhật ký{logs.length > 0 && ` (${logs.length})`}
                 </TabsTrigger>
+                <TabsTrigger value="sub-issues">Sub Issue</TabsTrigger>
                 <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
               </TabsList>
             </div>
@@ -269,60 +321,43 @@ export default function TicketDetailPage() {
             {/* Comments */}
             <TabsContent
               value="comments"
-              className="min-h-0 overflow-y-auto m-0 p-6 space-y-4"
+              className="min-h-0 m-0 flex flex-col overflow-hidden"
             >
-              {canComment && (
-                <AddCommentForm
-                  onSubmit={handleCommentSubmit}
-                  isPending={commentMutation.isPending}
+              <div className="flex-1 overflow-y-auto p-6">
+                <TicketCommentThread
+                  comments={comments}
+                  currentUserId={currentUserId}
+                  activeTab={chatTab}
+                  onTabChange={setChatTab}
+                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
+                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
+                  ticketClosed={status === TicketStatusEnum.Closed}
+                  ticketId={ticketId}
+                  aiEnabled
+                  onEdit={(chat, body) =>
+                    updateChat({
+                      ticketId,
+                      chatId: chat.id,
+                      payload: { body },
+                    })
+                  }
+                  onDelete={(chat) => deleteChat({ ticketId, chatId: chat.id })}
+                  editPending={editChatPending}
+                  deletePending={deleteChatPending}
+                  onMarkRead={handleMarkRead}
+                  onTranslate={handleTranslate}
                 />
-              )}
-              {comments.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Chưa có bình luận nào.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="p-3 rounded-lg border border-border bg-muted/30"
-                    >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <p className="text-xs font-medium">
-                          {comment.authorDisplayName ?? comment.authorRole}
-                        </p>
-                        {comment.isInternal && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] h-4 px-1.5"
-                          >
-                            Nội bộ
-                          </Badge>
-                        )}
-                        <p className="text-xs text-muted-foreground ml-auto">
-                          {format(
-                            new Date(comment.createdAt),
-                            "dd/MM/yyyy HH:mm",
-                            { locale: vi },
-                          )}
-                        </p>
-                      </div>
-                      <p className="text-sm whitespace-pre-wrap">
-                        {comment.body}
-                      </p>
-                      {comment.attachmentFileIds &&
-                        comment.attachmentFileIds.length > 0 && (
-                          <div className="mt-2">
-                            <TicketAttachments
-                              fileIds={comment.attachmentFileIds}
-                              label={null}
-                              compact
-                            />
-                          </div>
-                        )}
-                    </div>
-                  ))}
+              </div>
+              {canComment && (
+                <div className="shrink-0 border-t border-border p-3">
+                  <TypingIndicator names={typingNames} />
+                  <AddCommentForm
+                    ticketId={ticketId}
+                    onSubmit={handleCommentSubmit}
+                    isPending={commentMutation.isPending}
+                    onTyping={sendTyping}
+                    isInternal={chatTab === "internal"}
+                  />
                 </div>
               )}
             </TabsContent>
@@ -352,13 +387,27 @@ export default function TicketDetailPage() {
                       key={log.id}
                       className="border border-border rounded-lg p-4 space-y-2 text-sm"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Badge variant="outline">{log.logType}</Badge>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(log.startedAt), "dd/MM/yyyy HH:mm", {
-                            locale: vi,
-                          })}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {format(
+                              new Date(log.startedAt),
+                              "dd/MM/yyyy HH:mm",
+                              { locale: vi },
+                            )}
+                          </p>
+                          {canEditLog && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => setEditingLog(log)}
+                            >
+                              Sửa
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       {log.summary && (
                         <p className="font-medium">{log.summary}</p>
@@ -408,111 +457,192 @@ export default function TicketDetailPage() {
               )}
             </TabsContent>
 
+            {/* Sub Issue — staff tự chia nhỏ ticket thành các việc con */}
+            <TabsContent
+              value="sub-issues"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              <SubIssuePanel key={ticketId} ticketId={ticketId} />
+            </TabsContent>
+
             {/* KB */}
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
-              <TicketKbReferencesPanel ticketId={ticketId} />
+              <TicketKbReferencesPanel
+                ticketId={ticketId}
+                canAdd={canAddKb}
+                afterResolveOnly={kbAfterResolveOnly}
+                defaultCategory={ticket.category}
+              />
             </TabsContent>
           </Tabs>
         </div>
 
+        {/* Collapsed rail — nút mở lại sidebar */}
+        {!sidebarOpen && (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            title="Mở bảng thông tin"
+            className="w-8 shrink-0 border-l border-border flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
+          >
+            <PanelRightOpen className="size-4" />
+          </button>
+        )}
+
         {/* Right: Sidebar */}
-        <div className="w-[300px] shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
-          {/* SLA */}
-          <div className="p-4">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              SLA
-            </p>
-            {ticket.slaTimer ? (
+        {sidebarOpen && (
+          <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
+            {/* Header — nút thu gọn */}
+            <div className="flex items-center justify-between px-4 py-2 shrink-0">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Thông tin
+              </p>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                title="Thu gọn bảng thông tin"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <PanelRightClose className="size-4" />
+              </button>
+            </div>
+            {/* SLA */}
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                SLA
+              </p>
+              {ticket.slaTimer ? (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      Trạng thái
+                    </span>
+                    <SlaCountdown slaTimer={ticket.slaTimer} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      Deadline
+                    </span>
+                    <span className="text-xs font-medium tabular-nums">
+                      {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      Còn lại
+                    </span>
+                    <span className="text-xs font-medium">
+                      {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${slaBarCls}`}
+                      style={{
+                        width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Chưa được triage.
+                </p>
+              )}
+            </div>
+
+            {/* Trạng thái + thời gian xử lý */}
+            <div className="p-4">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Trạng thái
+              </p>
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    Trạng thái
+                    Hiện tại
                   </span>
-                  <SlaCountdown slaTimer={ticket.slaTimer} />
+                  <TicketStatusBadge status={ticket.status} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    Deadline
+                    Thời gian xử lý
                   </span>
-                  <span className="text-xs font-medium tabular-nums">
-                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Còn lại</span>
-                  <span className="text-xs font-medium">
-                    {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${slaBarCls}`}
-                    style={{
-                      width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                    }}
+                  <ProcessingDurationTimer
+                    activities={activities}
+                    status={ticket.status}
                   />
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">Chưa được triage.</p>
-            )}
-          </div>
-
-          {/* Description */}
-          {ticket.description && (
-            <div className="p-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Mô tả
-              </p>
-              <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                {ticket.description}
-              </p>
             </div>
-          )}
 
-          {/* Attachments (ảnh khách đính kèm khi tạo ticket) */}
-          {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
+            {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
             <div className="p-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Ảnh đính kèm
-              </p>
-              <TicketAttachments
-                fileIds={ticket.attachmentFileIds}
-                label={null}
-                compact
+              <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
+            </div>
+
+            {/* Description */}
+            {ticket.description && (
+              <div className="p-4">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Mô tả
+                </p>
+                <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                  {ticket.description}
+                </p>
+              </div>
+            )}
+
+            {/* Attachments (ảnh khách đính kèm khi tạo ticket) */}
+            {ticket.attachmentFileIds &&
+              ticket.attachmentFileIds.length > 0 && (
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Ảnh đính kèm
+                  </p>
+                  <TicketAttachments
+                    fileIds={ticket.attachmentFileIds}
+                    label={null}
+                    compact
+                  />
+                </div>
+              )}
+
+            {/* Resolution */}
+            {ticket.resolutionSummary && (
+              <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
+                <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                  Tóm tắt giải quyết
+                </p>
+                <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                  {ticket.resolutionSummary}
+                </p>
+              </div>
+            )}
+
+            {/* Meta */}
+            <div className="px-4 py-1 divide-y divide-border/50">
+              <SideInfoRow label="Danh mục" value={ticket.category} />
+              <SideInfoRow label="Nguồn" value={ticket.origin} />
+              <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
+              <SideInfoRow
+                label="Khẩn cấp"
+                value={ticket.urgencyLevel ?? null}
               />
+              <SideInfoRow
+                label="Ngày tạo"
+                value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+              {ticket.reopenCount > 0 && (
+                <SideInfoRow
+                  label="Mở lại"
+                  value={`${ticket.reopenCount} lần`}
+                />
+              )}
             </div>
-          )}
-
-          {/* Resolution */}
-          {ticket.resolutionSummary && (
-            <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
-              <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                Tóm tắt giải quyết
-              </p>
-              <p className="text-xs leading-relaxed whitespace-pre-wrap">
-                {ticket.resolutionSummary}
-              </p>
-            </div>
-          )}
-
-          {/* Meta */}
-          <div className="px-4 py-1 divide-y divide-border/50">
-            <SideInfoRow label="Danh mục" value={ticket.category} />
-            <SideInfoRow label="Nguồn" value={ticket.origin} />
-            <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
-            <SideInfoRow label="Khẩn cấp" value={ticket.urgencyLevel ?? null} />
-            <SideInfoRow
-              label="Ngày tạo"
-              value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
-                locale: vi,
-              })}
-            />
-            {ticket.reopenCount > 0 && (
-              <SideInfoRow label="Mở lại" value={`${ticket.reopenCount} lần`} />
-            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}
@@ -540,6 +670,14 @@ export default function TicketDetailPage() {
         onSubmit={handleLogSubmit}
         isPending={logMutation.isPending}
       />
+      {editingLog && (
+        <EditMaintenanceLogDialog
+          ticketId={ticketId}
+          log={editingLog}
+          open
+          onClose={() => setEditingLog(null)}
+        />
+      )}
     </div>
   );
 }

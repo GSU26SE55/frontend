@@ -181,14 +181,6 @@
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-variant-numeric: tabular-nums;
 }
-.label-caps {
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
 /* Row hover for tables */
 .row-hover:hover {
   background: var(--surface-2);
@@ -214,6 +206,20 @@
   animation: dot-pulse 1.4s ease-in-out infinite;
 }
 
+/* Typing indicator dot — khớp y hệt mobile (opacity 0.3↔1, chu kỳ 1s) */
+@keyframes typing-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typing-dot 1s ease-in-out infinite;
+}
+
 /* Page fade-in */
 @keyframes fade-up {
   from {
@@ -227,6 +233,34 @@
 }
 .fade-up {
   animation: fade-up 0.28s ease both;
+}
+
+/* Page enter — fade + slide nhẹ khi vào 1 trang (dùng ở wrapper trang) */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.page-enter {
+  animation: page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Fade-in thuần (không dịch chuyển) — cho panel/nội dung phụ */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 0.25s ease both;
 }
 
 /* Shimmer skeleton */
@@ -275,5 +309,18 @@
   }
   .animate-float-card {
     animation: float-card 5s ease-in-out infinite;
+  }
+}
+
+/* Tôn trọng người dùng nhạy chuyển động — tắt mọi animation lặp vô hạn
+   (dot nhấp nháy, shimmer skeleton, spinner, fade-up) + transition. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

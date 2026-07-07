@@ -49,6 +49,14 @@ export const rejectSchema = z.object({
 
 export type RejectFormValues = z.infer<typeof rejectSchema>;
 
+export const triageRejectSchema = z.object({
+  // BE required (TicketTriageRejectCommand) — Open|Escalated → ClosedRejected.
+  // Rỗng → 400 (Field "Reason"). Không reuse rejectSchema (1-1 với 1 BE command).
+  reason: z.string().min(1, "Lý do từ chối không được để trống"),
+});
+
+export type TriageRejectFormValues = z.infer<typeof triageRejectSchema>;
+
 export const escalateSchema = z.object({
   reason: z.nativeEnum(EscalationReasonEnum),
   note: z.string().optional(),
@@ -71,7 +79,8 @@ const commentAttachmentSchema = z.object({
 });
 
 export const addCommentSchema = z.object({
-  body: z.string().min(1, "Nội dung không được để trống"),
+  // Không validate rỗng — UI disable nút gửi khi rỗng thay vì báo lỗi.
+  body: z.string(),
   isInternal: z.boolean(),
   attachments: z.array(commentAttachmentSchema).optional(),
 });
