@@ -22,27 +22,19 @@ import {
   DashboardGauge,
 } from "@/shared/components/common/DashboardPanel";
 import { useSiteList } from "@/features/admin/hooks/useSites";
-import { useAlertList } from "@/shared/hooks/useAlerts";
-import { useAdminTickets } from "@/features/admin/hooks/useAdminTickets";
-import { useBatteryAssets } from "@/features/admin/hooks/useBatteryAssets";
-import { useIncidentList } from "@/shared/hooks/useEnvironmentalIncidents";
 import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
-import { useAdminAccountList } from "@/features/admin/hooks/useAdminAccounts";
-import { SiteStatusEnum } from "@/shared/types/site.types";
-import { AlertSeverityEnum, AlertStatusEnum } from "@/shared/enums/alert.enum";
-import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
-import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/environmental.enum";
+import { useBatteryDashboardStats } from "@/shared/hooks/useBatteryDashboard";
+import {
+  useTicketDashboardStats,
+  useSiteDashboardStats,
+  useAccountStats,
+} from "@/shared/hooks/useDashboardStats";
+import { BatteryDistributionPanels } from "@/shared/components/analytics/BatteryDistributionPanels";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { TicketHealthCard } from "@/features/admin/components/TicketHealthCard";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-  siteHealth,
-  healthColor,
-  summarizeSla,
-  isOpenTicket,
-  groupAlertsByDay,
-} from "@/shared/utils/dashboard.utils";
+import { siteHealth, healthColor } from "@/shared/utils/site.utils";
 
 /**
  * Admin = Trung tâm điều khiển: bao quát TOÀN hệ thống ở mức oversight —
@@ -75,6 +67,35 @@ const ANOMALY_LABEL: Record<number, string> = {
   15: "Sai lệch sensor",
 };
 
+// BE `openAlertsByType` không trả severity per-type → map màu tĩnh theo bản chất
+// loại (nhiệt/quá áp = đỏ; suy giảm/điện = cam; sensor/kết nối = muted) để giữ
+// tín hiệu đỏ/cam như card cũ, không cần severity realtime từ BE.
+const ANOMALY_SEVERITY_COLOR: Record<number, string> = {
+  1: "var(--p1)", // Quá nhiệt
+  2: "var(--p1)", // Quá áp
+  3: "var(--p3)", // Sụt áp
+  4: "var(--p3)", // SOC thấp
+  5: "var(--p3)", // Xả nhanh
+  6: "var(--p3)", // Sạc bất thường
+  7: "var(--muted-foreground)", // Mất kết nối
+  8: "var(--p3)", // Suy giảm SOH
+  9: "var(--p1)", // Nhiệt độ cao
+  10: "var(--p3)", // Độ ẩm cao
+  11: "var(--p1)", // Nhiệt-ẩm cao
+  12: "var(--p3)", // Nội trở cao
+  13: "var(--p3)", // Lệch cell
+  14: "var(--p3)", // Sự cố MT
+  15: "var(--muted-foreground)", // Sai lệch sensor
+};
+
+// Map status int (BE trả `status` + `statusName` EN) → nhãn VN + màu semantic,
+// giữ UX donut cũ (Active=xanh, Inactive=cam, Decommissioned=đỏ).
+const BATTERY_STATUS_META: Record<number, { name: string; fill: string }> = {
+  1: { name: "Hoạt động", fill: "var(--ok)" },
+  2: { name: "Ngưng", fill: "var(--p3)" },
+  3: { name: "Ngừng vận hành", fill: "var(--p1)" },
+};
+
 const ROLE_COLOR: Record<string, string> = {
   Admin: "var(--p1)",
   Manager: "var(--chart-1)",
@@ -98,148 +119,87 @@ export default function AdminDashboardPage() {
     pageNumber: 1,
     pageSize: 100,
   });
-  const { data: alertData, isLoading: alertsLoading } = useAlertList({
-    pageNumber: 1,
-    pageSize: 200,
-  });
-  const { data: ticketData, isLoading: ticketsLoading } = useAdminTickets({
-    pageNumber: 1,
-    pageSize: 200,
-  });
-  const { data: batteryData, isLoading: batteryLoading } = useBatteryAssets({
-    pageNumber: 1,
-    pageSize: 200,
-  });
-  const { data: incidentData } = useIncidentList({
-    pageNumber: 1,
-    pageSize: 200,
-  });
-  const { data: accountData, isLoading: accountsLoading } = useAdminAccountList(
-    {
-      pageNumber: 1,
-      pageSize: 200,
-    },
-  );
+  const { data: stats, isLoading: statsLoading } = useBatteryDashboardStats();
+  const { data: ticketStats, isLoading: ticketsLoading } =
+    useTicketDashboardStats();
+  const { data: siteStats, isLoading: siteStatsLoading } =
+    useSiteDashboardStats();
+  const { data: accountStats, isLoading: accountsLoading } = useAccountStats();
   const { data: auditData, isLoading: auditLoading } = useAdminAuditLogs({
     pageNumber: 1,
     pageSize: 10,
   });
 
-  // ── Sites ──
+  // ── Sites — count từ /sites/dashboard/stats (C); health list từ useSiteList ──
   const sites = siteData?.items ?? [];
-  const totalSites = siteData?.totalItems ?? 0;
-  const activeSites = sites.filter(
-    (s) => s.status === SiteStatusEnum.Active,
-  ).length;
-  const totalBatt = sites.reduce((s, x) => s + x.batteryAssetCount, 0);
-  const activeBatt = sites.reduce((s, x) => s + x.activeBatteryAssetCount, 0);
+  const totalSites = siteStats?.total ?? 0;
+  const activeSites = siteStats?.activeCount ?? 0;
   const sitesH = sites.map((s) => ({ ...s, health: siteHealth(s) }));
+  // Trung bình tính từ per-site (client) để KHỚP các thanh trong danh sách bên
+  // dưới. KHÔNG dùng siteStats.avgHealth — BE tính công thức khác (100−inactive×5
+  // −alert×10) nên lệch với health per-site (active/total) → gây "avg 85% nhưng
+  // mỗi site 100%".
   const avgHealth = sitesH.length
     ? Math.round(sitesH.reduce((a, s) => a + s.health, 0) / sitesH.length)
     : 0;
 
-  // ── Alerts ──
-  const alerts = alertData?.items ?? [];
-  const openAlerts = alerts.filter(
-    (a) => a.status === AlertStatusEnum.Open,
-  ).length;
-  const criticalOpen = alerts.filter(
-    (a) =>
-      a.status === AlertStatusEnum.Open &&
-      a.severity === AlertSeverityEnum.Critical,
-  ).length;
-  const alertSeries = groupAlertsByDay(alerts, 7);
-
-  const anomalyAgg = new Map<number, { count: number; maxSev: number }>();
-  for (const a of alerts) {
-    const cur = anomalyAgg.get(a.anomalyType) ?? { count: 0, maxSev: 0 };
-    cur.count += 1;
-    cur.maxSev = Math.max(cur.maxSev, a.severity);
-    anomalyAgg.set(a.anomalyType, cur);
-  }
-  const anomalyData = [...anomalyAgg.entries()]
-    .map(([type, v]) => ({
-      label: ANOMALY_LABEL[type] ?? `Loại ${type}`,
-      value: v.count,
-      color:
-        v.maxSev >= AlertSeverityEnum.Critical
-          ? "var(--p1)"
-          : v.maxSev === AlertSeverityEnum.Warning
-            ? "var(--p3)"
-            : "var(--muted-foreground)",
+  // ── Battery + Alert + Incident (server aggregate — /battery/dashboard/stats) ──
+  const totalBatt = stats?.totalAssets ?? 0;
+  const activeBatt = stats?.activeAssets ?? 0;
+  const openAlerts = stats?.openAlerts ?? 0;
+  const criticalOpen = stats?.openAlertsCritical ?? 0;
+  const alertSeries = stats?.alertTrend7Days ?? [];
+  const anomalyData = (stats?.openAlertsByType ?? [])
+    .map((a) => ({
+      label: ANOMALY_LABEL[a.anomalyType] ?? `Loại ${a.anomalyType}`,
+      value: a.count,
+      color: ANOMALY_SEVERITY_COLOR[a.anomalyType] ?? "var(--muted-foreground)",
     }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 6);
   const anomalyMax = Math.max(1, ...anomalyData.map((d) => d.value));
 
-  // ── Tickets (oversight: SLA + counts) ──
-  const tickets = ticketData?.items ?? [];
-  const totalTickets = tickets.length;
-  const openTickets = tickets.filter(isOpenTicket).length;
-  const sla = summarizeSla(tickets);
-  const slaText =
-    sla.compliancePercent === null ? "—" : `${sla.compliancePercent}%`;
-  const slaPct = sla.compliancePercent ?? 0;
-  const slaColor =
-    sla.compliancePercent === null
-      ? "var(--muted-foreground)"
-      : slaPct >= 90
-        ? "var(--ok)"
-        : slaPct >= 70
-          ? "var(--p3)"
-          : "var(--p1)";
+  // ── Tickets (oversight: SLA + counts) — server aggregate (A) ──
+  const sla = ticketStats?.sla;
+  const totalTickets = ticketStats?.total ?? 0;
+  const openTickets = ticketStats?.openCount ?? 0;
+  const slaText = sla ? `${sla.compliancePercent}%` : "—";
+  const slaPct = sla?.compliancePercent ?? 0;
+  const slaColor = !sla
+    ? "var(--muted-foreground)"
+    : slaPct >= 90
+      ? "var(--ok)"
+      : slaPct >= 70
+        ? "var(--p3)"
+        : "var(--p1)";
 
-  // ── Batteries ──
-  const batteries = batteryData?.items ?? [];
-  const battByStatus = [
-    {
-      name: "Hoạt động",
-      value: batteries.filter((b) => b.status === BatteryStatusEnum.Active)
-        .length,
-      fill: "var(--ok)",
-    },
-    {
-      name: "Ngưng",
-      value: batteries.filter((b) => b.status === BatteryStatusEnum.Inactive)
-        .length,
-      fill: "var(--p3)",
-    },
-    {
-      name: "Ngừng vận hành",
-      value: batteries.filter(
-        (b) => b.status === BatteryStatusEnum.Decommissioned,
-      ).length,
-      fill: "var(--p1)",
-    },
-  ].filter((d) => d.value > 0);
+  // ── Battery status distribution (server aggregate) ──
+  const battByStatus = (stats?.assetStatusDistribution ?? [])
+    .map((b) => ({
+      name: BATTERY_STATUS_META[b.status]?.name ?? b.statusName,
+      value: b.count,
+      fill: BATTERY_STATUS_META[b.status]?.fill ?? "var(--muted-foreground)",
+    }))
+    .filter((d) => d.value > 0);
 
-  // ── Incidents ──
-  const incidents = incidentData?.items ?? [];
-  const activeIncidents = incidents.filter(
-    (i) =>
-      i.status === EnvironmentalIncidentStatusEnum.Open ||
-      i.status === EnvironmentalIncidentStatusEnum.Acknowledged,
-  ).length;
+  // ── Environmental incidents (server aggregate — Open-only theo BE) ──
+  const activeIncidents = stats?.openEnvironmentalIncidents ?? 0;
 
-  // ── Accounts (users by role) ──
-  const accounts = accountData?.items ?? [];
-  const totalAccounts = accountData?.totalItems ?? accounts.length;
-  const roleCounts = accounts.reduce<Record<string, number>>((acc, a) => {
-    const r = a.role || "Khác";
-    acc[r] = (acc[r] ?? 0) + 1;
-    return acc;
-  }, {});
-  const usersByRole = Object.entries(roleCounts).map(([name, value]) => ({
-    name,
-    value,
-    fill: ROLE_COLOR[name] ?? "var(--muted-foreground)",
-  }));
+  // ── Accounts (users by role) — server aggregate (D) ──
+  const totalAccounts = accountStats?.total ?? 0;
+  const usersByRole = Object.entries(accountStats?.countByRole ?? {}).map(
+    ([name, value]) => ({
+      name,
+      value,
+      fill: ROLE_COLOR[name] ?? "var(--muted-foreground)",
+    }),
+  );
 
   // ── Audit ──
   const audits = auditData?.items ?? [];
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 shrink-0">
         <div className="min-w-0">
@@ -247,7 +207,7 @@ export default function AdminDashboardPage() {
             Admin · Trung tâm điều khiển hệ thống
           </p>
           <h1 className="text-lg font-semibold text-foreground leading-tight truncate">
-            {sitesLoading
+            {siteStatsLoading || statsLoading
               ? "Dashboard"
               : `Hạ tầng · ${totalSites} site · ${totalBatt} pin`}
           </h1>
@@ -255,11 +215,10 @@ export default function AdminDashboardPage() {
         <RefreshButton
           queryKeys={[
             KEY.sites,
-            KEY.alerts,
-            KEY.admin.tickets,
-            KEY.batteryAssets,
-            KEY.environmentalIncidents,
-            KEY.admin.accounts,
+            KEY.siteDashboard,
+            KEY.batteryDashboard,
+            KEY.ticketDashboard,
+            KEY.accountStats,
             KEY.admin.auditLogs,
           ]}
           label="Đồng bộ"
@@ -270,19 +229,19 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
         <DashboardKpi
           label="Sites"
-          value={sitesLoading ? "--" : totalSites}
+          value={siteStatsLoading ? "--" : totalSites}
           hint={`${activeSites} hoạt động`}
           icon={<MapPin className="size-3.5" />}
         />
         <DashboardKpi
           label="Pin hoạt động"
-          value={sitesLoading ? "--" : activeBatt}
+          value={statsLoading ? "--" : activeBatt}
           sub={`/${totalBatt}`}
           icon={<BatteryCharging className="size-3.5" />}
         />
         <DashboardKpi
           label="Cảnh báo mở"
-          value={alertsLoading ? "--" : openAlerts}
+          value={statsLoading ? "--" : openAlerts}
           hint={`${criticalOpen} critical`}
           icon={<BellRing className="size-3.5" />}
           accent={criticalOpen > 0 ? "var(--p1)" : undefined}
@@ -291,13 +250,13 @@ export default function AdminDashboardPage() {
           label="Tickets mở"
           value={ticketsLoading ? "--" : openTickets}
           sub={`/${totalTickets}`}
-          hint={`${sla.breached} breach`}
+          hint={`${sla?.breached ?? 0} breach`}
           icon={<Ticket className="size-3.5" />}
-          accent={sla.breached > 0 ? "var(--p1)" : undefined}
+          accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : undefined}
         />
         <DashboardKpi
           label="Sự cố môi trường"
-          value={activeIncidents}
+          value={statsLoading ? "--" : activeIncidents}
           hint="đang mở"
           icon={<ShieldAlert className="size-3.5" />}
           accent={activeIncidents > 0 ? "var(--p1)" : undefined}
@@ -321,7 +280,7 @@ export default function AdminDashboardPage() {
           desc="Theo mức độ nghiêm trọng"
           className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
-          {alertsLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : (
             <ChartContainer
@@ -334,7 +293,10 @@ export default function AdminDashboardPage() {
               >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
-                  dataKey="day"
+                  dataKey="date"
+                  tickFormatter={(v: string) =>
+                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                  }
                   tickLine={false}
                   axisLine={false}
                   tickMargin={6}
@@ -406,7 +368,7 @@ export default function AdminDashboardPage() {
           desc="Top loại · màu theo mức độ"
           className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
-          {alertsLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : anomalyData.length === 0 ? (
             <div className="h-full grid place-items-center text-sm text-muted-foreground">
@@ -471,13 +433,13 @@ export default function AdminDashboardPage() {
                       className="text-sm font-semibold tabular-nums"
                       style={{ color: "var(--ok)" }}
                     >
-                      {sla.met}
+                      {sla?.met ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">Met</p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p className="text-sm font-semibold tabular-nums">
-                      {sla.running}
+                      {sla?.running ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">
                       Running
@@ -488,7 +450,7 @@ export default function AdminDashboardPage() {
                       className="text-sm font-semibold tabular-nums"
                       style={{ color: "var(--p1)" }}
                     >
-                      {sla.breached}
+                      {sla?.breached ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">Breach</p>
                   </div>
@@ -501,10 +463,10 @@ export default function AdminDashboardPage() {
         {/* Battery status — donut */}
         <DashboardPanel
           title="Pin theo trạng thái"
-          desc={`${batteries.length} pin`}
+          desc={`${totalBatt} pin`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
-          {batteryLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : battByStatus.length === 0 ? (
             <div className="h-full grid place-items-center text-sm text-muted-foreground">
@@ -513,7 +475,7 @@ export default function AdminDashboardPage() {
           ) : (
             <DashboardDonut
               data={battByStatus}
-              centerValue={batteries.length}
+              centerValue={totalBatt}
               centerLabel="pin"
             />
           )}
@@ -534,7 +496,7 @@ export default function AdminDashboardPage() {
           ) : (
             <DashboardDonut
               data={usersByRole}
-              centerValue={accounts.length}
+              centerValue={totalAccounts}
               centerLabel="users"
             />
           )}
@@ -646,6 +608,9 @@ export default function AdminDashboardPage() {
           )}
         </DashboardPanel>
       </div>
+
+      {/* ── Phân bố pin (server aggregate — SOH · hóa học · môi trường) ── */}
+      <BatteryDistributionPanels stats={stats} isLoading={statsLoading} />
     </div>
   );
 }

@@ -13,6 +13,11 @@ import type {
   ChatReaderDto,
   ChatMarkReadPayload,
 } from "@/shared/types/chat.types";
+import type { TicketActionResponse } from "@/shared/types/ticket.types";
+import type {
+  ChatOverrideEditPayload,
+  ChatOverrideDeletePayload,
+} from "@/features/admin/schemas/chat-override.schema";
 
 export const ticketChatService = {
   getList: (ticketId: string, params?: ChatListParams) =>
@@ -110,12 +115,29 @@ export const ticketChatService = {
       { fileId },
     ),
 
-  removeAttachment: (
-    ticketId: string,
-    chatId: string,
-    attachmentId: string,
-  ) =>
+  removeAttachment: (ticketId: string, chatId: string, attachmentId: string) =>
     axiosInstance.delete<CommonResponse<void>>(
       ENDPOINTS.TICKETS.CHAT_ATTACHMENT(ticketId, chatId, attachmentId),
+    ),
+
+  // ── GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed (Admin only) ──
+  overrideEdit: (
+    ticketId: string,
+    chatId: string,
+    payload: ChatOverrideEditPayload,
+  ) =>
+    axiosInstance.put<TicketActionResponse>(
+      ENDPOINTS.ADMIN.CHAT_CLOSED_OVERRIDE_ITEM(ticketId, chatId),
+      payload,
+    ),
+
+  overrideDelete: (
+    ticketId: string,
+    chatId: string,
+    payload: ChatOverrideDeletePayload,
+  ) =>
+    axiosInstance.delete<TicketActionResponse>(
+      ENDPOINTS.ADMIN.CHAT_CLOSED_OVERRIDE_ITEM(ticketId, chatId),
+      { data: payload },
     ),
 };

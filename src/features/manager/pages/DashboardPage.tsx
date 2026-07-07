@@ -12,14 +12,13 @@ import {
   DashboardGauge,
 } from "@/shared/components/common/DashboardPanel";
 import { useSiteList } from "@/features/manager/hooks/useSites";
-import {
-  useAdminTicketList,
-  useAdminTicketQueue,
-} from "@/features/manager/hooks/useManagerTickets";
+import { useAdminTicketQueue } from "@/features/manager/hooks/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/useStaffAssignmentList";
-import { useAlertList } from "@/shared/hooks/useAlerts";
-import { SiteStatusEnum } from "@/shared/types/site.types";
-import { AlertSeverityEnum, AlertStatusEnum } from "@/shared/enums/alert.enum";
+import { useBatteryDashboardStats } from "@/shared/hooks/useBatteryDashboard";
+import {
+  useTicketDashboardStats,
+  useSiteDashboardStats,
+} from "@/shared/hooks/useDashboardStats";
 import {
   Area,
   AreaChart,
@@ -42,14 +41,7 @@ import {
   CheckCircle,
   ArrowRight,
 } from "lucide-react";
-import {
-  siteHealth,
-  healthColor,
-  summarizeSla,
-  isOpenTicket,
-  countTicketsByStatus,
-  groupTicketsByDay,
-} from "@/shared/utils/dashboard.utils";
+import { siteHealth, healthColor } from "@/shared/utils/site.utils";
 
 /**
  * Manager = Điều phối vận hành ticket: pipeline trạng thái, SLA, tải nhân sự,
@@ -74,49 +66,41 @@ export default function ManagerDashboardPage() {
     pageNumber: 1,
     pageSize: 100,
   });
-  const { data: ticketPage, isLoading: ticketsLoading } = useAdminTicketList({
-    pageNumber: 1,
-    pageSize: 200,
-  });
+  const { data: ticketStats, isLoading: ticketsLoading } =
+    useTicketDashboardStats();
+  const { data: siteStats, isLoading: siteStatsLoading } =
+    useSiteDashboardStats();
   const { data: queuePage, isLoading: queueLoading } = useAdminTicketQueue({
     pageNumber: 1,
     pageSize: 50,
   });
   const { data: staffList, isLoading: staffLoading } = useStaffAssignmentList();
-  const { data: alertData, isLoading: alertsLoading } = useAlertList({
-    pageNumber: 1,
-    pageSize: 200,
-  });
+  const { data: stats, isLoading: statsLoading } = useBatteryDashboardStats();
 
-  // ── Sites ──
+  // ── Sites — KPI từ /sites/dashboard/stats (C); at-risk list từ useSiteList ──
   const sites = siteData?.items ?? [];
-  const totalSites = siteData?.totalItems ?? 0;
-  const activeSites = sites.filter(
-    (s) => s.status === SiteStatusEnum.Active,
-  ).length;
+  const totalSites = siteStats?.total ?? 0;
+  const activeSites = siteStats?.activeCount ?? 0;
   const sitesH = sites.map((s) => ({ ...s, health: siteHealth(s) }));
   const atRisk = sitesH.filter((s) => s.health < 80);
 
-  // ── Tickets ──
-  const tickets = ticketPage?.items ?? [];
-  const totalTickets = tickets.length;
-  const openTickets = tickets.filter(isOpenTicket);
+  // ── Tickets — server aggregate (A) ──
+  const sla = ticketStats?.sla;
+  const totalTickets = ticketStats?.total ?? 0;
+  const openCount = ticketStats?.openCount ?? 0;
   const queueCount = queuePage?.totalItems ?? 0;
   const queueItems = queuePage?.items ?? [];
-  const sla = summarizeSla(tickets);
-  const slaText =
-    sla.compliancePercent === null ? "—" : `${sla.compliancePercent}%`;
-  const slaPct = sla.compliancePercent ?? 0;
-  const slaColor =
-    sla.compliancePercent === null
-      ? "var(--muted-foreground)"
-      : slaPct >= 90
-        ? "var(--ok)"
-        : slaPct >= 70
-          ? "var(--p3)"
-          : "var(--p1)";
-  const ticketTrend = groupTicketsByDay(tickets, 7);
-  const statusCounts = countTicketsByStatus(tickets);
+  const slaText = sla ? `${sla.compliancePercent}%` : "—";
+  const slaPct = sla?.compliancePercent ?? 0;
+  const slaColor = !sla
+    ? "var(--muted-foreground)"
+    : slaPct >= 90
+      ? "var(--ok)"
+      : slaPct >= 70
+        ? "var(--p3)"
+        : "var(--p1)";
+  const ticketTrend = ticketStats?.createdTrend7Days ?? [];
+  const statusCounts = ticketStats?.countByStatus ?? {};
 
   const pipeline = [
     {
@@ -148,40 +132,42 @@ export default function ManagerDashboardPage() {
       fill: "var(--p1)",
     },
     {
+      // KHÔNG gộp ClosedRejected (ticket bị từ chối, không phải hoàn tất)
       stage: "Hoàn tất",
       value:
         (statusCounts.Resolved ?? 0) +
         (statusCounts.Approved ?? 0) +
         (statusCounts.ClosedPendingRate ?? 0) +
-        (statusCounts.Closed ?? 0) +
-        (statusCounts.ClosedRejected ?? 0),
+        (statusCounts.Closed ?? 0),
       fill: "var(--ok)",
     },
   ];
 
-  // ── Staff workload (active open tickets / max) ──
+  // Tổng ticket hiển thị trong pipeline (đã loại ClosedRejected) — để desc khớp
+  // với tổng các bar, tránh "N ticket" > tổng bar khi có ticket bị từ chối.
+  const pipelineTotal = pipeline.reduce((a, p) => a + p.value, 0);
+
+  // ── Staff workload — openCountByStaff (A) ──
   const staff = staffList ?? [];
+  const openByStaff = new Map(
+    (ticketStats?.openCountByStaff ?? []).map((o) => [
+      o.staffId,
+      o.activeCount,
+    ]),
+  );
   const workload = staff
     .map((s) => ({
       id: s.accountId,
       name: s.fullName,
       available: s.isAvailable,
-      active: openTickets.filter((t) => t.assignedStaffId === s.accountId)
-        .length,
+      active: openByStaff.get(s.accountId) ?? 0,
       max: s.maxConcurrentTickets || 0,
     }))
     .sort((a, b) => b.active - a.active);
 
-  // ── Alerts ──
-  const alerts = alertData?.items ?? [];
-  const openAlerts = alerts.filter(
-    (a) => a.status === AlertStatusEnum.Open,
-  ).length;
-  const criticalOpen = alerts.filter(
-    (a) =>
-      a.status === AlertStatusEnum.Open &&
-      a.severity === AlertSeverityEnum.Critical,
-  ).length;
+  // ── Alerts (server aggregate — /battery/dashboard/stats) ──
+  const openAlerts = stats?.openAlerts ?? 0;
+  const criticalOpen = stats?.openAlertsCritical ?? 0;
 
   return (
     <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
@@ -196,7 +182,13 @@ export default function ManagerDashboardPage() {
           </h1>
         </div>
         <RefreshButton
-          queryKeys={[KEY.sites, KEY.manager.tickets, KEY.alerts]}
+          queryKeys={[
+            KEY.sites,
+            KEY.siteDashboard,
+            KEY.ticketDashboard,
+            KEY.manager.tickets,
+            KEY.batteryDashboard,
+          ]}
           label="Đồng bộ"
         />
       </div>
@@ -205,7 +197,7 @@ export default function ManagerDashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
         <DashboardKpi
           label="Tickets mở"
-          value={ticketsLoading ? "--" : openTickets.length}
+          value={ticketsLoading ? "--" : openCount}
           sub={`/${totalTickets}`}
           icon={<Ticket className="size-3.5" />}
         />
@@ -218,27 +210,27 @@ export default function ManagerDashboardPage() {
         />
         <DashboardKpi
           label="Quá hạn SLA"
-          value={ticketsLoading ? "--" : sla.breached}
+          value={ticketsLoading ? "--" : (sla?.breached ?? 0)}
           sub="breach"
           icon={<AlertTriangle className="size-3.5" />}
-          accent={sla.breached > 0 ? "var(--p1)" : undefined}
+          accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : undefined}
         />
         <DashboardKpi
           label="SLA"
           value={ticketsLoading ? "--" : slaText}
-          hint={`${sla.met} met`}
+          hint={`${sla?.met ?? 0} met`}
           icon={<ShieldCheck className="size-3.5" />}
-          accent={sla.breached > 0 ? "var(--p1)" : "var(--ok)"}
+          accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
           label="Sites"
-          value={sitesLoading ? "--" : totalSites}
+          value={siteStatsLoading ? "--" : totalSites}
           hint={`${activeSites} hoạt động`}
           icon={<MapPin className="size-3.5" />}
         />
         <DashboardKpi
           label="Cảnh báo mở"
-          value={alertsLoading ? "--" : openAlerts}
+          value={statsLoading ? "--" : openAlerts}
           hint={`${criticalOpen} critical`}
           icon={<BellRing className="size-3.5" />}
           accent={criticalOpen > 0 ? "var(--p1)" : undefined}
@@ -250,7 +242,7 @@ export default function ManagerDashboardPage() {
         {/* Ticket pipeline — horizontal bars */}
         <DashboardPanel
           title="Pipeline xử lý ticket"
-          desc={`${totalTickets} ticket theo giai đoạn`}
+          desc={`${pipelineTotal} ticket theo giai đoạn`}
           className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
           {ticketsLoading ? (
@@ -314,13 +306,13 @@ export default function ManagerDashboardPage() {
                       className="text-sm font-semibold tabular-nums"
                       style={{ color: "var(--ok)" }}
                     >
-                      {sla.met}
+                      {sla?.met ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">Met</p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p className="text-sm font-semibold tabular-nums">
-                      {sla.running}
+                      {sla?.running ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">
                       Running
@@ -331,7 +323,7 @@ export default function ManagerDashboardPage() {
                       className="text-sm font-semibold tabular-nums"
                       style={{ color: "var(--p1)" }}
                     >
-                      {sla.breached}
+                      {sla?.breached ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">Breach</p>
                   </div>
@@ -357,7 +349,10 @@ export default function ManagerDashboardPage() {
               <AreaChart data={ticketTrend}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
-                  dataKey="day"
+                  dataKey="date"
+                  tickFormatter={(v: string) =>
+                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                  }
                   tickLine={false}
                   axisLine={false}
                   tickMargin={6}

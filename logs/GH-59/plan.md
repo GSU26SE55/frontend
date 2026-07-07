@@ -348,7 +348,7 @@ createTicketSchema: z.object({
 - Triage: nếu `manualPriority` !== computed priority → `priorityOverrideReason` bắt buộc (validate ở FE với Zod `superRefine`)
 - Comment `isInternal: true` → chỉ Staff/Manager thấy — hiển thị rõ badge "Nội bộ" trong UI
 
-## Success Criteria
+## Acceptance Criteria
 | Tiêu chí | Cách verify |
 |----------|------------|
 | Ticket list hiện đúng, filter hoạt động | Load page, thay đổi filter, verify response |

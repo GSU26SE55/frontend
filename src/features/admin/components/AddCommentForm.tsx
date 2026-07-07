@@ -48,6 +48,9 @@ export default function AddCommentForm({
 
   const attachments =
     useWatch({ control: form.control, name: "attachments" }) ?? [];
+  const body = useWatch({ control: form.control, name: "body" }) ?? "";
+  // Không còn báo lỗi "để trống" — chỉ disable nút gửi khi rỗng (không text và không ảnh).
+  const isEmpty = !body.trim() && attachments.length === 0;
 
   // resetCount đổi key của Textarea sau submit → remount, tự về chiều cao ban đầu
   // (không đọc/ghi ref trong callback truyền vào handleSubmit — vi phạm rules-of-refs).
@@ -181,7 +184,7 @@ export default function AddCommentForm({
             type="submit"
             size="icon-lg"
             className="shrink-0 rounded-full"
-            disabled={isPending || uploading || isRecording}
+            disabled={isPending || uploading || isRecording || isEmpty}
             aria-label="Gửi bình luận"
           >
             <Send size={16} />

@@ -165,6 +165,42 @@ interface AlertAuditLogParams { action?: string; alertId?: string; from?: string
 electricalTopology: z.number().int().min(1).max(4)   // hoặc z.nativeEnum(ElectricalTopologyEnum)
 ```
 
+## Workflow
+
+**3a Cascade Risk (asset) — Admin set topology:**
+```
+Vào Asset detail (tab "Rủi ro lan truyền") → useCascadeRisk(id) → CascadeRiskCard (score + level badge + topology + updatedAt)
+  → Admin: nút "Set topology" (gate checkRole ADMIN) → SetTopologyDialog (select 1..4)
+    → useSetTopology.mutate → POST /topology { electricalTopology }
+    → onSuccess: invalidate cascadeRisk(id) + toast → card recompute phản ánh ngay
+    → onError: handleErrorApi({ error }) toast
+```
+
+**3a Cascade Summary (site) — Admin + Manager:**
+```
+Vào Site detail → useSiteCascadeSummary(id) → CascadeRiskSummary (heat map count Low/Med/High + maxScore + top high-risk)
+  → site rỗng (maxScore=0, highRiskAssets=[]) → empty state
+```
+
+**3b Audit Logs (Admin only):**
+```
+Vào /admin/battery-audit-logs → 2 tab Battery / Alert (useState tab active + filter state)
+  → AuditLogFilterBar: action (dropdown closed-set, KHÔNG gõ tay) + batteryId/alertId + from/to + page
+    → from > to chặn ở UI trước khi gọi
+  → useBatteryAuditLogs / useAlertAuditLogs (key gồm params) → BatteryAuditLogTable + pagination (pageNumber)
+  → severity/actionCategory render badge màu (display-only, không filter)
+```
+
+**3c Sensor Stream (SSE — DEFER chờ GH-114):**
+```
+Asset detail → useSensorStream('asset:{id}') → openSse EventSource(?scope=&access_token=)
+  → on-mount seed getLatest(assetId) (REST /latest, SensorReadingDto 8-field)
+  → event 'reading' (chỉ primary / sensorSourceCode==null làm headline) → LiveTelemetryCard cập nhật
+  → chỉ 'ping' → state 'open-idle' badge "chưa có dữ liệu"; onerror → 'error' badge "Mất kết nối"
+  → unmount/đổi scope → close()
+Site detail → useSensorStream('site:{id}') → event 'summary' (items) → SiteLiveTelemetryPanel (không seed)
+```
+
 ## Approach
 - **3a**: service → TanStack Query hook (cascade-risk staleTime mặc định; BE refresh 5 phút nên không cần refetchInterval gắt). `useSetTopology` mutation → `onSuccess` invalidate `cascadeRisk(id)` + toast; `onError` → `handleErrorApi({ error })`. `CascadeRiskCard` hiện score + level badge màu (Low/Med/High), nút "Set topology" gate bằng `checkRole(user,'ADMIN')`. Site panel dùng `CascadeRiskSummary` presentational nhận data từ hook mỗi feature.
 - **3b**: 2 query hook độc lập (battery/alert), key gồm params để cache theo filter. `BatteryAuditLogsPage` dùng `useState` cho tab active + filter state; `AuditLogFilterBar` đẩy params lên (filter `action` = dropdown closed-set, KHÔNG free-text). Pagination kiểu pageNumber (BE trả `PaginationResponse`). `severity`/`actionCategory` chỉ render badge có màu trong `BatteryAuditLogTable` (display-only, không filter).

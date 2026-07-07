@@ -237,6 +237,53 @@ changeDescription: z.string().optional()   // chỉ form Update
 
 ---
 
+## Workflow
+
+**List + filter flow:**
+```
+Vào KbList → useKbList(params) map keyword→Q, tags→Tag, status→int
+  → OK:   render bảng (status badge 4 trạng thái, so sánh bằng hằng enum)
+          internal role lọc Status=PendingReview → thấy hàng chờ duyệt
+  → FAIL: handleErrorApi({ error }) → toast
+```
+
+**Authoring flow (create / update):**
+```
+KbEditor (recommendedParts array, isInternalOnly, changeDescription?, copy-template)
+  → submit form (Zod) → useCreateKb / useUpdateKb.mutateAsync (try/catch)
+  → OK:   invalidate KEY.kb (+ kb.detail) → bài về PendingReview (đọc status từ response) → toast
+  → FAIL: handleErrorApi({ error, setError }) → lỗi dưới input / toast
+```
+
+**Review workflow (Manager/Admin, gate checkRole):**
+```
+KbDetail → KbReviewActions (chỉ hiện khi PendingReview + role Mgr/Admin)
+  approve: useApproveReview.mutate(id)          → Published
+  reject:  form { reason } → mutateAsync         → toast
+  publish/archive: mutate(id)
+  → OK:   invalidate KEY.kb + kb.detail(id) → toast
+  → FAIL: handleErrorApi({ error }) / ({ error, setError }) → toast (Staff KHÔNG thấy nút)
+```
+
+**Version history / diff / rollback flow:**
+```
+KbDetail → KbVersionHistory (useKbVersions(id)) → chọn 2 version theo versionId (Guid)
+  → KbDiffViewer (useKbCompare(id, FromVersionId, ToVersionId?)) render 6 DiffSection
+Rollback (Mgr/Admin): form { toVersionId } → useRollback.mutateAsync
+  → OK:   invalidate KEY.kb + kb.detail(id) + kb.versions(id) → toast
+  → FAIL: handleErrorApi({ error }) → toast
+```
+
+**Ticket-KB references flow:**
+```
+TicketKbReferencesPanel → useTicketKbRefs(ticketId) list
+  add:    form { ticketId, kbArticleId, referenceType, note? } → addRef.mutateAsync
+          → 403 nếu ticket Resolved/Closed → toast
+  remove: removeRef.mutate(referenceId)
+  → OK:   invalidate refs list → toast
+  → FAIL: handleErrorApi({ error }) → toast
+```
+
 ## Approach
 - **Path thật + per-role service:** mỗi `kb.service.ts` đổi thân hàm mock → `axiosInstance` gọi `ENDPOINTS.KNOWLEDGE_BASE/KB_INTERNAL/KB_ADMIN`. Giữ tên export cũ để hook không vỡ, thêm method mới. Map `keyword→Q`, `tags→Tag`, status filter gửi **số**.
 - **Review workflow:** Editor lưu (create/update) → BE đưa bài về `PendingReview`. Manager/Admin ở KbList lọc `Status=PendingReview` (BE hỗ trợ — verify #3) để thấy hàng chờ duyệt; ở KbDetail thấy `KbReviewActions` (Approve→Published / Reject+reason). Staff không thấy (gate `checkRole`).

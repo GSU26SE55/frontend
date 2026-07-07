@@ -27,6 +27,106 @@ Bổ sung **toàn bộ ticket endpoint Web còn thiếu** (`logs/missing-ticket-
 - KHÔNG đụng upload ảnh comment/log (đã có issue riêng #85)
 - POST maintenance-log đã có sẵn (`staff` feature) — không làm lại
 
+> **Ghi chú cấu trúc:** plan này tổ chức chi tiết theo **nhóm S1–S7** (mỗi nhóm 1 commit). Các section chuẩn dưới đây (Files/Enums/Types/Schema/Endpoints/Workflow) **tổng hợp** lại từ bảng của từng nhóm S — chi tiết đầy đủ (Action + route + auth + DTO) nằm trong từng section S tương ứng.
+
+## Files
+Mỗi nhóm S liệt kê Layer/Action riêng. Tổng hợp file chính theo nhóm:
+
+| Nhóm | File chính (create/modify) |
+|------|----------------------------|
+| S1 | `ticket.types.ts`, `manager/schemas/ticket.schema.ts`, `manager` ticket service/hook, `TriageRejectDialog.tsx`, `manager/TicketDetailPage.tsx` |
+| S2 | `STAFF_TICKETS`/`TICKETS` endpoints, `ticket.types.ts`, staff+manager+admin ticket service/hook, `EditMaintenanceLogDialog.tsx`, staff maintenance-logs page + route |
+| S3 | `KNOWLEDGE_BASE` endpoint, `kb.types.ts`, `kb.service.ts`, `useAdminKb.ts`, `KbDetailPage.tsx` |
+| S4 | `@microsoft/signalr` (package), `config/env.ts` (`VITE_WS_URL`), `shared/lib/signalr.ts`, `useTicketCommentsRealtime.ts`, `useTicketComments.ts`, comment panel TicketDetailPage |
+| S5 | `ADMIN.SAGAS` endpoints, `admin/types/saga.types.ts`, `admin/services/saga.service.ts`, saga hooks, `SagaDebugPage.tsx` + route |
+| S6 | `TICKET_HEALTH` endpoints, health types, `ticket-health.service.ts`, `useTicketHealth.ts`, Admin `DashboardPage` card |
+| S7 | `NOTIFICATIONS` endpoints, `notification.types.ts`, `notification.service.ts`, `useNotifications.ts`, `NotificationBell.tsx`, `AppLayout.tsx` |
+
+## Enums
+Không tạo enum mới — tái dùng enum có sẵn:
+
+| Enum | File nguồn | Dùng ở |
+|------|-----------|--------|
+| `TicketStatusEnum` | `shared/enums/ticket.enum.ts` | S1 gate (Open/Escalated), S2 khoá edit (Resolved/Closed/ClosedPendingRate) |
+| `MaintenanceLogTypeEnum` | `shared/enums/ticket.enum.ts` | S2 log type |
+| `KbReferenceTypeEnum` | (đã có) | S3 usage-stats byType (1/2/3) |
+| `NotificationTypeEnum` | `staff/enums/notification.enum.ts` | S7 notification list |
+
+## Types
+Types mới theo nhóm (chi tiết shape trong từng section S):
+- **S1:** `TriageRejectPayload { reason: string }`
+- **S2:** `StaffMaintenanceLogGroupDTO`, `MaintenanceLogUpdatePayload` (partial) — `MaintenanceLogDTO` đã có
+- **S3:** `KbUsageStatsDTO`, `KbUsageByTypeDTO`
+- **S4:** payload `CommentAdded` (xác nhận shape lúc implement)
+- **S5:** `AlertTicketSagaDTO`, `AlertTicketSagaFilterParams`
+- **S6:** `TicketHealthDTO`, `SyncLagDTO`, `SagaHealthDTO` (plain — KHÔNG `CommonResponse`)
+- **S7:** `NotificationDto`, `NotificationsParams`
+
+## Schema (Zod)
+- **S1:** `triageRejectSchema` + `TriageRejectFormValues` — `reason` min(1)
+- **S2:** `maintenanceLogUpdateSchema` — mọi field optional, `summary` nếu gửi thì min(1)
+- **S3/S5/S6/S7:** không có form nhập liệu (list/detail/action button) → không cần Zod schema; non-form action dùng `onError` toast.
+
+## Endpoints
+Tổng hợp (chi tiết method/auth/DTO trong từng section S):
+
+| # | Method | Path | Auth |
+|---|--------|------|------|
+| S1 | POST | `/api/admin/tickets/{id}/triage-reject` | Manager, Admin |
+| S2 | GET | `/api/staff/tickets/maintenance-logs/me` | Staff |
+| S2 | GET | `/api/tickets/{ticketId}/maintenance-logs` | Manager, Admin |
+| S2 | PATCH | `/api/tickets/{ticketId}/maintenance-logs/{logId}` | Staff creator |
+| S3 | GET | `/api/knowledge-base/{id}/usage-stats` | Manager, Admin |
+| S4 | HUB | `/hubs/ticket-comments` (JWT qua `access_token`) | `[Authorize]` |
+| S5 | GET/POST | `/api/admin/sagas/alert-ticket` · `/{alertId}` · `/{alertId}/reprocess` | Admin/Manager (reprocess: Admin) |
+| S6 | GET | `/api/ticket/health` · `/sync-lag` · `/saga` (JSON thuần) | public |
+| S7 | PATCH/POST/GET | `/api/notifications/{id}/read` · `/read-all` · `/unread-count` | `[Authorize]` |
+
+## Workflow
+
+**S1 — Triage reject flow:**
+```
+manager TicketDetailPage: nút "Từ chối (Triage)" (enable khi Open||Escalated) → TriageRejectDialog (reason)
+  → useTriageRejectTicket.mutateAsync → OK: invalidate detail+queue+list, toast → status ClosedRejected
+  → FAIL (403 sai state): onError toast
+```
+
+**S2 — Maintenance log edit flow:**
+```
+Staff "Lịch sử bảo trì của tôi" → useStaffMaintenanceLogs (group theo ticket)
+  → Edit (ẩn nếu ticket Resolved/Closed/ClosedPendingRate) → EditMaintenanceLogDialog (partial)
+  → useUpdateMaintenanceLog → invalidate detail + maintenanceLogs → toast
+Manager/Admin TicketDetailPage: section "Nhật ký bảo trì" ← useTicketMaintenanceLogs(ticketId)
+```
+
+**S4 — Realtime comment flow:**
+```
+Mở TicketDetailPage → useTicketCommentsRealtime(id): start hub, JoinTicket
+  → CommentAdded → invalidate/setQueryData comments(id) (bỏ polling)
+  → UserTyping → hiển thị "đang gõ…" · gõ → sendTyping()
+  unmount → LeaveTicket + stop · token đổi → accessTokenFactory đọc lại cookie
+```
+
+**S5 — Saga reprocess flow:**
+```
+SagaDebugPage (gate ticket.saga.view): table + filter → detail drawer
+  → saga Failed → "Reprocess" (gate ticket.saga.reprocess) → header Idempotency-Key: crypto.randomUUID()
+  → 202 toast · 400 thiếu/không-Failed · 409 key trùng → toast
+```
+
+**S6 — Health card flow:**
+```
+Admin DashboardPage → useTicketHealth (3 query gộp, refetchInterval 30s)
+  → 3 badge màu theo status (health / sync-lag / saga) · JSON thuần, không unwrap .data
+```
+
+**S7 — Notification bell flow:**
+```
+Header <NotificationBell /> → useUnreadCount (refetchInterval 30s) → badge (ẩn nếu 0, "99+")
+  → mở dropdown → useNotifications (10 gần nhất) → click item → useMarkNotificationRead + deep-link ticket theo role
+  → "đánh dấu tất cả đã đọc" → useMarkAllRead → invalidate list + unreadCount
+```
+
 ---
 
 ## S1 — Triage Reject  ✅ (đã verify kỹ — phần gốc của #98)

@@ -67,11 +67,14 @@ const REF_TYPE_DESC: Record<RefType, string> = {
 interface TicketKbReferencesPanelProps {
   ticketId: string;
   defaultCategory?: TicketCategoryEnum;
+  /** Ticket ở Resolved — chỉ ghi nhận 2 type after-resolve (khớp BE guard H). */
+  afterResolveOnly?: boolean;
 }
 
 export default function TicketKbReferencesPanel({
   ticketId,
   defaultCategory,
+  afterResolveOnly = false,
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
@@ -108,9 +111,27 @@ export default function TicketKbReferencesPanel({
   const [showCreate, setShowCreate] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [refType, setRefType] = useState<RefType>(
-    KbReferenceTypeEnum.ConsultedDuringResolve,
+    afterResolveOnly
+      ? KbReferenceTypeEnum.GeneratedAfterResolve
+      : KbReferenceTypeEnum.ConsultedDuringResolve,
   );
   const [note, setNote] = useState("");
+
+  // H — ở Resolved BE chỉ cho 2 type after-resolve; ẩn ConsultedDuringResolve.
+  const refTypeOptions: RefType[] = afterResolveOnly
+    ? [
+        KbReferenceTypeEnum.ProvidedToCustomer,
+        KbReferenceTypeEnum.GeneratedAfterResolve,
+      ]
+    : REF_TYPE_ORDER;
+
+  // Consulted không hợp lệ ở Resolved (BE 422). Dùng effective refType (derive,
+  // không reset state trong effect) — nếu state còn Consulted khi chuyển sang
+  // Resolved thì add/hiển thị như GeneratedAfterResolve.
+  const effectiveRefType: RefType =
+    afterResolveOnly && refType === KbReferenceTypeEnum.ConsultedDuringResolve
+      ? KbReferenceTypeEnum.GeneratedAfterResolve
+      : refType;
 
   const grouped = useMemo(() => {
     const map = new Map<RefType, NonNullable<typeof refs>>();
@@ -126,7 +147,7 @@ export default function TicketKbReferencesPanel({
     for (const kbArticleId of selectedIds) {
       addRef({
         kbArticleId,
-        referenceType: refType,
+        referenceType: effectiveRefType,
         note: note || undefined,
       });
     }
@@ -213,12 +234,22 @@ export default function TicketKbReferencesPanel({
                     {item.code}
                   </span>
                   <span className="truncate text-xs">{item.title}</span>
+                  {item.isInternalOnly && (
+                    <span className="ml-1.5 rounded bg-amber-500/15 px-1 py-0.5 text-[9.5px] font-medium text-amber-700 dark:text-amber-300">
+                      Nội bộ
+                    </span>
+                  )}
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-6 shrink-0 gap-1 px-2 text-[11px]"
-                  disabled={adding}
+                  disabled={adding || afterResolveOnly}
+                  title={
+                    afterResolveOnly
+                      ? "Ticket đã Resolved — chỉ ghi nhận bài sau xử lý"
+                      : undefined
+                  }
                   onClick={() =>
                     addRef({
                       kbArticleId: item.id,
@@ -250,7 +281,6 @@ export default function TicketKbReferencesPanel({
                   onChange={setSelectedIds}
                   searchFn={searchArticles}
                   getDetailFn={getArticleDetail}
-                  defaultCategory={defaultCategory}
                 />
 
                 <div className="space-y-1.5">
@@ -258,8 +288,8 @@ export default function TicketKbReferencesPanel({
                     Loại tham chiếu
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {REF_TYPE_ORDER.map((t) => {
-                      const active = refType === t;
+                    {refTypeOptions.map((t) => {
+                      const active = effectiveRefType === t;
                       return (
                         <Button
                           key={t}
@@ -276,7 +306,7 @@ export default function TicketKbReferencesPanel({
                     })}
                   </div>
                   <p className="text-[11px] text-muted-foreground italic">
-                    {REF_TYPE_DESC[refType]}
+                    {REF_TYPE_DESC[effectiveRefType]}
                   </p>
                 </div>
 

@@ -32,6 +32,8 @@ export const staffTicketService = {
           Status: params.status,
           PageNumber: params.pageNumber,
           PageSize: params.pageSize,
+          SlaOpen: params.slaOpen,
+          SortBy: params.sortBy,
         },
       },
     ),

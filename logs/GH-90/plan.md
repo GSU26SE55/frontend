@@ -89,6 +89,30 @@ dailyLimit: z.coerce.number().int().min(1, "Tối thiểu 1").max(10000, "Tối 
 // form defaultValues.dailyLimit = 100 → luôn gửi số hợp lệ (tránh BE 400 do null→int)
 ```
 
+## Workflow
+
+**List devices flow:**
+```
+/admin/sms-gateway (RoleRoute ADMIN) → SmsGatewayPage → useAdminSmsDevices({ includeRevoked:false }) render SmsDeviceTable
+Toggle "Hiện đã thu hồi" → useAdminSmsDevices({ includeRevoked:true }) → hiện cả device revoked (badge "Đã thu hồi" + revokedAt)
+Bấm Refresh → refetch
+```
+
+**Create device + reveal apiKey flow:**
+```
+Toolbar → "Thêm thiết bị" → CreateSmsDeviceDialog (RHF + Zod)
+Nhập deviceName/deviceCode/dailyLimit → submit → useAdminCreateSmsDevice.mutateAsync(payload)
+  → OK:   lưu CreateGatewayDeviceResponseDto vào page state → mở ApiKeyRevealDialog (apiKey 1 lần + copy fallback + cảnh báo) → invalidate KEY.admin.smsGateway
+  → FAIL: handleErrorApi({ error, setError }) (400 validation → setError / 409 DeviceCode trùng → toast)
+```
+
+**Revoke device flow:**
+```
+SmsDeviceTable → "Thu hồi" → confirm dialog → useAdminRevokeSmsDevice.mutate(id)
+  → OK:   invalidate KEY.admin.smsGateway → toast "Đã thu hồi {deviceCode}" → device biến mất khỏi bảng (default active-only)
+  → FAIL: handleErrorApi({ error }) (404 không tồn tại → toast "Device không tồn tại.")
+```
+
 ## Approach
 - **Service** import `axiosInstance` + `ENDPOINTS` (không hardcode URL); `getDevices(params)`, `createDevice(payload)`, `revokeDevice(id)`.
 - **Hooks** (tên export chốt cứng, theo pattern hành động như `useAdminCreateAccount`):

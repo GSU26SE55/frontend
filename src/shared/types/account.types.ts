@@ -43,6 +43,8 @@ export interface AccountDto {
   emailConfirmed: boolean;
   phoneConfirmed: boolean;
   twoFactorEnabled: boolean;
+  /** GH-132 (F) — account đã liên kết Google chưa (BE không expose googleId). */
+  isGoogleLinked?: boolean;
   status: import("@/shared/enums/account.enum").AccountStatusEnum;
   lastLoginAt?: string;
   createdAt: string;

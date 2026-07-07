@@ -229,7 +229,7 @@ Task chỉ setup data layer — không có user flow/UI. Quy ước dùng cho is
 - [x] UI — route `/admin/battery-types` + nav "Loại pin & Ngưỡng"
 - [x] `tsc --noEmit` + `eslint src/features/admin --max-warnings=0` + `npm run build` → PASS
 
-## Success Criteria
+## Acceptance Criteria
 | Tiêu chí | Cách verify |
 |----------|------------|
 | `tsc --noEmit` không lỗi | `npx tsc --noEmit` |

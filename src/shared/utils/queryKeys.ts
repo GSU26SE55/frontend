@@ -21,6 +21,10 @@ export const KEY = {
   staffTickets: "staffTickets",
   ticketHealth: "ticketHealth",
   batteryDashboard: "batteryDashboard",
+  ticketDashboard: "ticketDashboard",
+  staffTicketDashboard: "staffTicketDashboard",
+  siteDashboard: "siteDashboard",
+  accountStats: "accountStats",
   reports: "reports",
   iotDevices: "iotDevices",
   iotCalibrations: "iotCalibrations",
@@ -34,6 +38,8 @@ export const KEY = {
     batteryAuditLogs: ["admin", "batteryAuditLogs"] as const,
     alertAuditLogs: ["admin", "alertAuditLogs"] as const,
     ticketAuditLogs: ["admin", "ticketAuditLogs"] as const,
+    fileAuditLogs: ["admin", "fileAuditLogs"] as const, // GH-133 C5
+
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
@@ -49,6 +55,7 @@ export const KEY = {
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
+  permissionsCatalog: "permissionsCatalog", // GH-133 C1 — catalog full mọi role
 } as const;
 
 export const QUERY_KEY = {
@@ -58,6 +65,10 @@ export const QUERY_KEY = {
   },
   loginHistory: {
     list: (params?: object) => [KEY.loginHistory, "list", params] as const,
+  },
+  permissionsCatalog: {
+    list: (module?: string) =>
+      [KEY.permissionsCatalog, "list", module] as const, // GH-133 C1
   },
   profile: {
     me: () => [KEY.profile, "me"] as const,
@@ -172,6 +183,9 @@ export const QUERY_KEY = {
     ticketAuditLogs: {
       list: (params?: object) => [...KEY.admin.ticketAuditLogs, "list", params],
     },
+    fileAuditLogs: {
+      list: (params?: object) => [...KEY.admin.fileAuditLogs, "list", params],
+    },
     tickets: {
       list: (params?: object) => [...KEY.admin.tickets, "list", params],
     },
@@ -278,6 +292,18 @@ export const QUERY_KEY = {
     stats: (params?: object) =>
       [KEY.batteryDashboard, "stats", params] as const,
   },
+  ticketDashboard: {
+    stats: () => [KEY.ticketDashboard, "stats"] as const,
+  },
+  staffTicketDashboard: {
+    stats: () => [KEY.staffTicketDashboard, "stats"] as const,
+  },
+  siteDashboard: {
+    stats: () => [KEY.siteDashboard, "stats"] as const,
+  },
+  accountStats: {
+    stats: () => [KEY.accountStats, "stats"] as const,
+  },
   reports: {
     batteryHealthByType: () => [KEY.reports, "battery-health-by-type"] as const,
     alertVolume: (params?: object) =>
@@ -334,7 +360,6 @@ export const QUERY_KEY = {
   },
   ticketParticipants: {
     list: (tid: string) => [KEY.ticketParticipants, "list", tid] as const,
-    history: (tid: string) =>
-      [KEY.ticketParticipants, "history", tid] as const,
+    history: (tid: string) => [KEY.ticketParticipants, "history", tid] as const,
   },
 } as const;

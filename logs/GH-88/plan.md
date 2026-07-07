@@ -109,6 +109,66 @@ Trusted Devices · 2FA nâng cao (SMS fallback + cross-device setup) · Reactiva
 | `src/features/admin/components/MergeAccountDialog.tsx` | create | Form RHF+Zod: **secondary account = combobox chọn từ danh sách** (reuse `useAdminAccounts`, loại trừ primary + đã merged) + `reason` textarea; `setError` map lỗi; cảnh báo tombstone không hoàn tác. Chỉ render khi `checkRole(user,'ADMIN')` |
 | `src/features/admin/pages/AccountsPage.tsx` hoặc `AccountDetailDrawer.tsx` | modify | Nút "Gộp tài khoản" mở dialog (Admin only — `checkRole(user,'ADMIN')`) |
 
+## Workflow
+
+**Trusted Devices — revoke flow:**
+```
+Mở AccountSettings → TrustedDevicesSection → useTrustedDevices (GET, X-Device-Id) render list
+Bấm "Thu hồi" 1 device → confirm dialog → useRevokeTrustedDevice.mutate(id)
+  → OK:   invalidate KEY.trustedDevices → toast success → refetch list
+  → FAIL: handleErrorApi({ error })
+Bấm "Thu hồi tất cả" → confirm → useRevokeAllTrustedDevices.mutate()
+  → OK:   invalidate KEY.trustedDevices → toast success
+  → FAIL: handleErrorApi({ error })
+```
+
+**2FA SMS fallback + trust device flow:**
+```
+Login2faPage → bấm "Gửi OTP qua SMS" → useSend2faSms.mutate(challengeToken) (header X-Challenge-Token)
+  → OK:   hiển thị phone masked ******1234
+  → FAIL: handleErrorApi({ error }) (409 chưa verify phone / 429 rate limit → disable + countdown)
+Nhập OTP + tick "Tin tưởng thiết bị này" + nhập label → useVerify2faLogin.mutateAsync({ challengeToken, code, isSmsCode:true, trustDevice, trustDeviceLabel })
+  → OK:   đăng nhập thành công → device vào Trusted Devices list
+  → FAIL: handleErrorApi({ error, setError })
+```
+
+**Cross-device 2FA setup flow:**
+```
+Device A: TwoFactorSetup → chọn "Gửi qua thiết bị khác" → useRequestCrossDevice2fa.mutate()
+  → OK:   render QR (otpAuthUri) + secret + countdown TTL 10' từ expiresInSeconds
+  → FAIL: handleErrorApi({ error }) (409 2FA đã bật → đóng flow, refetch)
+Device B: mở /2fa/cross-device-confirm?token= → nhập TOTP → useConfirmCrossDevice2fa.mutateAsync({ confirmToken, totpCode })
+  → OK:   modal prompt regenerate backup codes
+  → FAIL: handleErrorApi({ error, setError }) (403 anti-stolen / 404 token hết hạn / 422 TOTP sai → retry)
+Device A: bấm "Refresh" → queryClient.invalidateQueries(currentUser) → thấy twoFactorEnabled cập nhật
+```
+
+**Reactivate account flow:**
+```
+/reactivate (public, 2 bước)
+Bước 1: nhập email → useReactivateRequest.mutateAsync({ email })
+  → OK:   message trung lập anti-enumeration → sang bước 2
+  → FAIL: handleErrorApi({ error, setError })
+Bước 2: nhập OTP → useReactivateVerify.mutateAsync({ email, otp })
+  → OK:   toast → navigate('/login') (không cấp token)
+  → FAIL: handleErrorApi({ error, setError }) (401 OTP sai → lỗi dưới input / 404 ngoài window → toast)
+```
+
+**GDPR export flow:**
+```
+DangerZone → bấm "Tải dữ liệu của tôi (GDPR)" → useExportMyData.mutate()
+  → OK:   đọc res.data.data (axios không unwrap) → JSON.stringify → Blob → download account-export-{id}-{yyyymmdd}.json
+  → FAIL: handleErrorApi({ error })
+```
+
+**Admin merge flow:**
+```
+AccountsPage/AccountDetailDrawer (Admin only) → bấm "Gộp tài khoản" → MergeAccountDialog
+Chọn secondary qua combobox (loại trừ primary/đã-merged) + nhập reason → submit → useMergeAccount.mutateAsync({ secondaryAccountId, reason })
+  → OK:   invalidate KEY.admin.accounts → toast success → refetch danh sách
+  → FAIL: handleErrorApi({ error, setError }) (400 validation → setError / 409 đã merge → toast)
+```
+
 ## Approach
 - **Layering chuẩn FE:** component → hook (TanStack Query) → service → axios. Không gọi API trong component.
 - **X-Device-Id:** `getDeviceId()` đọc/tạo UUID trong localStorage (chỉ device id, **không** phải token — không vi phạm rule cookie-only token). Attach ở request interceptor cho mọi request (BE chỉ đọc với trusted-devices).

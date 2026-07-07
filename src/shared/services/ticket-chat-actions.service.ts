@@ -6,6 +6,10 @@ import type {
   ChatMarkReadPayload,
   ChatTranslateDTO,
   ChatVoiceActionDTO,
+  ChatSuggestPayload,
+  ChatSuggestDTO,
+  ChatSentimentCheckDTO,
+  ChatSummarizeDTO,
 } from "@/shared/types/chat.types";
 
 // Edit/Delete/Mark-read/Translate/Voice cho ticket chat — dùng chung staff & manager.
@@ -41,4 +45,41 @@ export const ticketChatActionsService = {
       { headers: { "Content-Type": undefined } },
     );
   },
+
+  // ── GH-133 Nhóm C ──────────────────────────────────────────────────────
+  // C2 (AI) — Staff/Manager/Admin. Gemini 429 → BE trả isSuccess:false (không throw).
+  suggest: (ticketId: string, payload: ChatSuggestPayload) =>
+    axiosInstance.post<CommonResponse<ChatSuggestDTO>>(
+      ENDPOINTS.TICKETS.CHAT_SUGGEST(ticketId),
+      payload,
+    ),
+  sentimentCheck: (ticketId: string) =>
+    axiosInstance.post<CommonResponse<ChatSentimentCheckDTO>>(
+      ENDPOINTS.TICKETS.CHAT_SENTIMENT(ticketId),
+      null,
+    ),
+  summarize: (ticketId: string) =>
+    axiosInstance.post<CommonResponse<ChatSummarizeDTO>>(
+      ENDPOINTS.TICKETS.CHAT_SUMMARIZE(ticketId),
+      null,
+    ),
+  // C2 — export PDF: BE trả application/pdf (blob), không phải CommonResponse.
+  exportPdf: (ticketId: string) =>
+    axiosInstance.get<Blob>(ENDPOINTS.TICKETS.CHAT_EXPORT_PDF(ticketId), {
+      responseType: "blob",
+    }),
+  // C3 — download attachment: 200 (url) · 202 (đang scan) · 451 (nhiễm virus).
+  // Trả nguyên AxiosResponse để hook đọc status; 451 (4xx) axios sẽ throw → hook catch.
+  downloadAttachment: (
+    ticketId: string,
+    chatId: string,
+    attachmentId: string,
+  ) =>
+    axiosInstance.get<CommonResponse<string>>(
+      ENDPOINTS.TICKETS.CHAT_ATTACHMENT_DOWNLOAD(
+        ticketId,
+        chatId,
+        attachmentId,
+      ),
+    ),
 };

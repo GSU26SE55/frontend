@@ -49,6 +49,9 @@ export function AddCommentForm({
 
   const attachments =
     useWatch({ control: form.control, name: "attachments" }) ?? [];
+  const body = useWatch({ control: form.control, name: "body" }) ?? "";
+  // Không còn báo lỗi "để trống" — chỉ disable nút gửi khi rỗng (không text và không ảnh).
+  const isEmpty = !body.trim() && attachments.length === 0;
 
   // Ô nhập tự giãn theo nội dung gõ (giống WhatsApp/Messenger) thay vì cố định 1 dòng.
   // resetCount đổi key của Textarea sau submit → remount, tự về chiều cao ban đầu
@@ -81,14 +84,6 @@ export function AddCommentForm({
   const handleStopRecording = async () => {
     const file = await stop();
     if (!file) return;
-    console.log("[AddCommentForm] sending voice file", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
-    // TEMP DEBUG — phát lại chính file vừa ghi để nghe xem mic có thu được tiếng không
-    const debugUrl = URL.createObjectURL(file);
-    new Audio(debugUrl).play().catch((e) => console.warn("[Debug] playback failed", e));
     await transcribeVoice({ ticketId, audioFile: file }).catch(() => {});
   };
 
@@ -192,7 +187,7 @@ export function AddCommentForm({
             type="submit"
             size="icon-lg"
             className="shrink-0 rounded-full"
-            disabled={isPending || uploading || isRecording}
+            disabled={isPending || uploading || isRecording || isEmpty}
             aria-label="Gửi bình luận"
           >
             <Send size={16} />

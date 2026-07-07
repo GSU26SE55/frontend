@@ -18,6 +18,7 @@ import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
 import BatteryAuditLogsPage from "@/features/admin/pages/BatteryAuditLogsPage";
+import FilesAuditLogsPage from "@/features/admin/pages/FilesAuditLogsPage";
 import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminAnalyticsPage from "@/features/admin/pages/AnalyticsPage";
@@ -166,6 +167,7 @@ const router = createBrowserRouter([
                 path: "battery-audit-logs",
                 element: <BatteryAuditLogsPage />,
               },
+              { path: "files-audit-logs", element: <FilesAuditLogsPage /> },
               { path: "notifications", element: <NotificationAdminPage /> },
               { path: "settings", element: <AccountSettingsPage /> },
             ],

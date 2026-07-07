@@ -273,7 +273,7 @@ function getHealthLabel(score: number): string {
 - Pagination assets: offset-based, default `pageNumber=1, pageSize=10`
 - `/api/sites/me` trả cùng `SiteDto` shape như `/api/sites` — dùng chung type
 
-## Success Criteria
+## Acceptance Criteria
 
 | Tiêu chí | Cách verify |
 |----------|------------|

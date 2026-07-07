@@ -98,6 +98,9 @@ interface AnalyticsFilter { siteId?: string; from?: string; to?: string; granula
 
 > **Lưu ý format ngày khi vẽ chart:** `alertTrend7Days.date` = DateOnly `"yyyy-MM-dd"`; `ambientTrend24Hours.hourUtc` = ISO datetime UTC; report `ReportTimeSeriesPoint.date` / `AmbientTrendPoint.date` = DateTime UTC. Parse bằng `date-fns` theo từng nguồn, KHÔNG dùng chung 1 formatter.
 
+## Schema (Zod)
+Không có form nhập liệu → **không cần Zod schema**. Filter bar (site/from/to/granularity) chỉ là UI state (`useState`), validate `from > to` thủ công ở filter bar; không dùng React Hook Form.
+
 ## Files
 | File | Action | Ghi chú |
 |------|--------|---------|
@@ -119,6 +122,39 @@ interface AnalyticsFilter { siteId?: string; from?: string; to?: string; granula
 | `src/features/manager/pages/AnalyticsPage.tsx` | create | Wrapper mỏng: `useSiteList` (manager) → `<AnalyticsDashboard sites=.. />` |
 | `src/router/index.tsx` | modify | Thêm route `analytics` cho admin + manager |
 | `src/shared/components/layout/AppLayout.tsx` | modify | Thêm nav item "Analytics" cho admin + manager |
+
+## Workflow
+
+**Xem dashboard flow:**
+```
+Vào /admin/analytics (hoặc /manager/analytics) → page wrapper gọi useSiteList (feature riêng)
+  → <AnalyticsDashboard sites=.. />
+  → useBatteryDashboardStats(filter) [staleTime 1 phút]
+  → DashboardStatsSection: KPI cards + donut/bar/line từ dashboard/stats
+```
+
+**Đổi filter flow:**
+```
+AnalyticsFilterBar: chọn site / from-to / granularity → setState filter
+  → mọi hook query nhận params mới → queryKey đổi → refetch
+  → from > to: disable nút áp dụng / reset
+```
+
+**Xem report tab flow:**
+```
+Click 1 tab report → hook report tương ứng enabled → GET /api/reports/{name}
+  → ReportTable (5 report tabular) hoặc ReportTimeSeriesChart (alert-volume / ambient-trend)
+  → data rỗng → EmptyState · field null → "—"
+  → ambient-trend: chưa chọn site → enabled:false, empty state "Chọn 1 site"
+```
+
+**Export flow:**
+```
+ReportExportMenu → chọn CSV / XLSX → useExportReport.mutate({ report, params, format })
+  → service exportReport: axiosInstance.get(url, { params:{...filter, format}, responseType:'blob' })
+  → OK: tạo objectURL + anchor download (report-{name}-{yyyymmdd}.{ext})
+  → FAIL: interceptor parse blob→JSON → handleErrorApi({ error }) → toast
+```
 
 ## Approach
 - **Feature isolation:** toàn bộ logic + UI ở `shared/`. Mỗi feature chỉ 1 page wrapper gọi `useSiteList` của chính nó rồi truyền `sites` (id+name) xuống `<AnalyticsDashboard>` → không cross-import, không cần tạo shared site service.
