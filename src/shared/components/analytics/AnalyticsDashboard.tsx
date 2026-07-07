@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ReportGranularityEnum } from "@/shared/enums/report.enum";
 import type { AnalyticsFilter } from "@/shared/types/analytics.types";
 import { AnalyticsFilterBar, type SiteOption } from "./AnalyticsFilterBar";
-import { DashboardStatsSection } from "./DashboardStatsSection";
 import { ReportTabs } from "./ReportTabs";
 
 // View Analytics dùng chung cho Admin & Manager. `sites` truyền từ page wrapper
@@ -22,8 +21,6 @@ export function AnalyticsDashboard({ sites }: { sites: SiteOption[] }) {
       </div>
 
       <AnalyticsFilterBar sites={sites} filter={filter} onChange={setFilter} />
-
-      <DashboardStatsSection params={{ siteId: filter.siteId }} />
 
       <ReportTabs filter={filter} />
     </div>

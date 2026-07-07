@@ -8,7 +8,8 @@ const commentAttachmentSchema = z.object({
 });
 
 export const addCommentSchema = z.object({
-  body: z.string().min(1, "Nội dung bình luận không được để trống"),
+  // Không validate rỗng — UI disable nút gửi khi rỗng thay vì báo lỗi.
+  body: z.string(),
   isInternal: z.boolean(),
   attachments: z.array(commentAttachmentSchema).optional(),
 });

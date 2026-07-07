@@ -27,6 +27,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import VoiceMessagePlayer from "@/shared/components/common/VoiceMessagePlayer";
+import {
+  isFileId,
+  useAudioAttachment,
+} from "@/features/file-storage/hooks/useAudioAttachment";
 import {
   ActorRoleEnum,
   type TicketCommentDTO,
@@ -61,6 +66,86 @@ function initials(name: string) {
   const first = parts[0]?.[0] ?? "";
   const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
   return (first + last).toUpperCase();
+}
+
+interface CommentBubbleContentProps {
+  comment: TicketCommentDTO;
+  /** Body đã tính (gốc hoặc bản dịch) — dùng làm nội dung bubble/transcript. */
+  displayBody: string;
+  isOwn: boolean;
+  canShowActions: boolean;
+  actionsMenu: React.ReactNode;
+}
+
+/**
+ * Nội dung 1 bình luận (chế độ xem, không phải đang sửa): quyết định render tin nhắn thoại
+ * (kiểu Zalo) hay bubble text + ảnh đính kèm thường.
+ *
+ * Voice message (BE tạo từ /chats/voice): body = transcript + đúng 1 attachment là file audio.
+ * Hook hỏi metadata để chốt contentType audio; đồng thời lọc bỏ fileId không phải GUID
+ * (URL rác/legacy) — nguyên nhân 404 khi ghép /api/files/{fullUrl}/download.
+ */
+function CommentBubbleContent({
+  comment,
+  displayBody,
+  isOwn,
+  canShowActions,
+  actionsMenu,
+}: CommentBubbleContentProps) {
+  const fileIds = (comment.attachmentFileIds ?? []).filter(isFileId);
+  const hasBody = !!comment.body?.trim();
+  const voiceCandidateId =
+    hasBody && fileIds.length === 1 ? fileIds[0] : undefined;
+  const { isAudio } = useAudioAttachment(voiceCandidateId);
+  const isVoice = isAudio === true;
+
+  if (isVoice) {
+    return (
+      <div className="group/bubble flex items-center gap-1">
+        {isOwn && canShowActions && actionsMenu}
+        <div
+          className={cn(
+            "rounded-2xl px-3 py-2",
+            isOwn
+              ? "rounded-br-sm bg-primary text-primary-foreground"
+              : "rounded-bl-sm bg-muted text-foreground",
+          )}
+        >
+          <VoiceMessagePlayer
+            fileId={voiceCandidateId!}
+            transcript={displayBody}
+            isOwn={isOwn}
+          />
+        </div>
+        {!isOwn && canShowActions && actionsMenu}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="group/bubble flex items-center gap-1">
+        {isOwn && canShowActions && actionsMenu}
+        <div
+          className={cn(
+            "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
+            isOwn
+              ? "rounded-br-sm bg-primary text-primary-foreground"
+              : "rounded-bl-sm bg-muted text-foreground",
+          )}
+        >
+          {displayBody}
+        </div>
+        {!isOwn && canShowActions && actionsMenu}
+      </div>
+
+      {fileIds.length > 0 && (
+        <div className="mt-1.5">
+          <TicketAttachments fileIds={fileIds} label={null} compact />
+        </div>
+      )}
+    </>
+  );
 }
 
 export type ChatTab = "public" | "internal";
@@ -354,8 +439,12 @@ export function TicketCommentThread({
                       </div>
                     </div>
                   ) : (
-                    <div className="group/bubble flex items-center gap-1">
-                      {isOwn && canShowActions && (
+                    <CommentBubbleContent
+                      comment={c}
+                      displayBody={displayBody}
+                      isOwn={isOwn}
+                      canShowActions={canShowActions}
+                      actionsMenu={
                         <CommentActionsMenu
                           canEdit={canEditThis}
                           canDelete={canDeleteThis}
@@ -365,29 +454,8 @@ export function TicketCommentThread({
                           onDelete={() => setDeleteTarget(c)}
                           onTranslate={(lang) => handleTranslate(c, lang)}
                         />
-                      )}
-                      <div
-                        className={cn(
-                          "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
-                          isOwn
-                            ? "rounded-br-sm bg-primary text-primary-foreground"
-                            : "rounded-bl-sm bg-muted text-foreground",
-                        )}
-                      >
-                        {displayBody}
-                      </div>
-                      {!isOwn && canShowActions && (
-                        <CommentActionsMenu
-                          canEdit={canEditThis}
-                          canDelete={canDeleteThis}
-                          canTranslate={!!onTranslate}
-                          translating={translatingId === c.id}
-                          onEdit={() => startEdit(c)}
-                          onDelete={() => setDeleteTarget(c)}
-                          onTranslate={(lang) => handleTranslate(c, lang)}
-                        />
-                      )}
-                    </div>
+                      }
+                    />
                   )}
 
                   {translation && (
@@ -400,16 +468,6 @@ export function TicketCommentThread({
                         ? `Xem bản dịch (${LANGUAGE_LABEL[translation.lang] ?? translation.lang})`
                         : "Xem bản gốc"}
                     </button>
-                  )}
-
-                  {c.attachmentFileIds && c.attachmentFileIds.length > 0 && (
-                    <div className="mt-1.5">
-                      <TicketAttachments
-                        fileIds={c.attachmentFileIds}
-                        label={null}
-                        compact
-                      />
-                    </div>
                   )}
                   <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
                     {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {

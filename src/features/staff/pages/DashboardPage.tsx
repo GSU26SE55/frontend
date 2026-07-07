@@ -22,30 +22,13 @@ import {
 } from "@/shared/components/common/DashboardPanel";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import {
-  SlaTimerStatusEnum,
-  TicketStatusEnum,
-} from "@/shared/types/ticket.types";
 import { NotificationStatusEnum } from "@/shared/enums/notification.enum";
 import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";
+import { useStaffTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
 import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotifications";
+import { useUnreadCount } from "@/shared/hooks/useNotifications";
 import { TicketCard } from "@/features/staff/components/TicketCard";
-import type { TicketDTO } from "@/shared/types/ticket.types";
-import {
-  isOpenTicket,
-  summarizeSla,
-  countTicketsByStatus,
-  groupTicketsByDay,
-} from "@/shared/utils/dashboard.utils";
-import { isNearBreachPercent } from "@/shared/lib/sla";
-
-function isNearBreach(ticket: TicketDTO) {
-  const percent = ticket.slaTimer?.remainingPercent;
-  return percent !== undefined && percent > 0 && isNearBreachPercent(percent);
-}
-function isBreached(ticket: TicketDTO) {
-  return ticket.slaTimer?.status === SlaTimerStatusEnum.Breached;
-}
+import { isOpenTicket } from "@/shared/utils/ticket.utils";
 
 const areaConfig = {
   count: { label: "Ticket", color: "var(--chart-1)" },
@@ -68,40 +51,41 @@ export default function StaffDashboardPage() {
     pageNumber: 1,
     pageSize: 12,
   });
+  const { data: unreadCount, isLoading: unreadLoading } = useUnreadCount();
+  const { data: staffStats, isLoading: statsLoading } =
+    useStaffTicketDashboardStats();
 
+  // Feed "ưu tiên xử lý" cần list ticket thật → giữ useStaffTickets.
   const tickets = data?.items ?? [];
-  const totalTickets = tickets.length;
   const openTickets = tickets.filter(isOpenTicket);
-  const breached = openTickets.filter(isBreached);
-  const near = openTickets.filter((t) => isNearBreach(t) && !isBreached(t));
-  const healthyCount = openTickets.length - breached.length - near.length;
-  const resolved = tickets.filter(
-    (t) => t.status === TicketStatusEnum.Resolved,
-  );
-
-  const sla = summarizeSla(tickets);
-  const slaText =
-    sla.compliancePercent === null ? "—" : `${sla.compliancePercent}%`;
-  const slaPct = sla.compliancePercent ?? 0;
-  const slaColor =
-    sla.compliancePercent === null
-      ? "var(--muted-foreground)"
-      : slaPct >= 90
-        ? "var(--ok)"
-        : slaPct >= 70
-          ? "var(--p3)"
-          : "var(--p1)";
-
   const priorityTickets = [...openTickets].sort((a, b) => {
     const aPercent = a.slaTimer?.remainingPercent ?? 101;
     const bPercent = b.slaTimer?.remainingPercent ?? 101;
     return aPercent - bPercent;
   });
 
-  const ticketTrend = groupTicketsByDay(tickets, 7);
+  // ── KPI / gauge / donut / trend — server aggregate (B) ──
+  const openCount = staffStats?.openCount ?? 0;
+  const nearBreach = staffStats?.nearBreachCount ?? 0;
+  const breachedCount = staffStats?.breachedCount ?? 0;
+  const resolvedCount = staffStats?.resolvedCount ?? 0;
+
+  const sla = staffStats?.sla;
+  const slaText = sla ? `${sla.compliancePercent}%` : "—";
+  const slaPct = sla?.compliancePercent ?? 0;
+  const slaColor = !sla
+    ? "var(--muted-foreground)"
+    : slaPct >= 90
+      ? "var(--ok)"
+      : slaPct >= 70
+        ? "var(--p3)"
+        : "var(--p1)";
+
+  const ticketTrend = staffStats?.createdTrend7Days ?? [];
 
   // ── Status donut ──
-  const statusCounts = countTicketsByStatus(tickets);
+  const statusCounts = staffStats?.countByStatus ?? {};
+  const totalTickets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const statusBuckets = [
     {
       name: "Mới/Mở",
@@ -136,18 +120,30 @@ export default function StaffDashboardPage() {
     },
   ].filter((b) => b.value > 0);
 
-  // ── SLA risk donut ──
+  // ── SLA risk donut (B.slaRisk) ──
   const riskData = [
-    { name: "An toàn", value: healthyCount, fill: "var(--ok)" },
-    { name: "Sắp breach", value: near.length, fill: "var(--p3)" },
-    { name: "Đã breach", value: breached.length, fill: "var(--p1)" },
+    {
+      name: "An toàn",
+      value: staffStats?.slaRisk.healthy ?? 0,
+      fill: "var(--ok)",
+    },
+    {
+      name: "Sắp breach",
+      value: staffStats?.slaRisk.near ?? 0,
+      fill: "var(--p3)",
+    },
+    {
+      name: "Đã breach",
+      value: staffStats?.slaRisk.breached ?? 0,
+      fill: "var(--p1)",
+    },
   ].filter((d) => d.value > 0);
 
   // ── Notifications ──
+  // Feed list vẫn từ trang 12 notif; số "chưa đọc" lấy từ server (unread-count)
+  // để không đếm thiếu khi >12 notif (1 nguồn duy nhất cho KPI + panel desc).
   const notifications = notifData?.items ?? [];
-  const unread = notifications.filter(
-    (n) => n.status !== NotificationStatusEnum.Read,
-  ).length;
+  const unread = unreadCount ?? 0;
 
   return (
     <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
@@ -162,7 +158,12 @@ export default function StaffDashboardPage() {
           </h1>
         </div>
         <RefreshButton
-          queryKeys={[KEY.staffTickets, ["staff", "notifications"]]}
+          queryKeys={[
+            KEY.staffTickets,
+            KEY.staffTicketDashboard,
+            KEY.notifications,
+            ["staff", "notifications"],
+          ]}
           label="Làm mới"
         />
       </div>
@@ -171,41 +172,41 @@ export default function StaffDashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
         <DashboardKpi
           label="Đang phụ trách"
-          value={isLoading ? "--" : openTickets.length}
+          value={statsLoading ? "--" : openCount}
           sub="tickets"
           icon={<FileText className="size-3.5" />}
         />
         <DashboardKpi
           label="Sắp breach"
-          value={isLoading ? "--" : near.length}
+          value={statsLoading ? "--" : nearBreach}
           sub="≤ 25%"
           icon={<Clock className="size-3.5" />}
-          accent={near.length > 0 ? "var(--p3)" : undefined}
+          accent={nearBreach > 0 ? "var(--p3)" : undefined}
         />
         <DashboardKpi
           label="Đã quá hạn"
-          value={isLoading ? "--" : breached.length}
+          value={statsLoading ? "--" : breachedCount}
           sub="tickets"
           icon={<AlertTriangle className="size-3.5" />}
-          accent={breached.length > 0 ? "var(--p1)" : undefined}
+          accent={breachedCount > 0 ? "var(--p1)" : undefined}
         />
         <DashboardKpi
           label="Đã xử lý"
-          value={isLoading ? "--" : resolved.length}
+          value={statsLoading ? "--" : resolvedCount}
           sub="tickets"
           icon={<CheckCircle className="size-3.5" />}
           accent="var(--ok)"
         />
         <DashboardKpi
           label="SLA met"
-          value={isLoading ? "--" : slaText}
-          hint={`${sla.breached} breach`}
+          value={statsLoading ? "--" : slaText}
+          hint={`${sla?.breached ?? 0} breach`}
           icon={<ShieldCheck className="size-3.5" />}
-          accent={sla.breached > 0 ? "var(--p1)" : "var(--ok)"}
+          accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
           label="Thông báo mới"
-          value={notifLoading ? "--" : unread}
+          value={unreadLoading ? "--" : unread}
           sub="chưa đọc"
           icon={<Bell className="size-3.5" />}
           accent={unread > 0 ? "var(--p3)" : undefined}
@@ -226,7 +227,7 @@ export default function StaffDashboardPage() {
           desc="met / (met + breach)"
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
-          {isLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : (
             <DashboardGauge
@@ -241,13 +242,13 @@ export default function StaffDashboardPage() {
                       className="text-sm font-semibold tabular-nums"
                       style={{ color: "var(--ok)" }}
                     >
-                      {sla.met}
+                      {sla?.met ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">Met</p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p className="text-sm font-semibold tabular-nums">
-                      {sla.running}
+                      {sla?.running ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">
                       Running
@@ -258,7 +259,7 @@ export default function StaffDashboardPage() {
                       className="text-sm font-semibold tabular-nums"
                       style={{ color: "var(--p1)" }}
                     >
-                      {sla.breached}
+                      {sla?.breached ?? 0}
                     </p>
                     <p className="text-[9.5px] text-muted-foreground">Breach</p>
                   </div>
@@ -274,7 +275,7 @@ export default function StaffDashboardPage() {
           desc="Ticket được giao theo ngày"
           className="lg:col-span-5 min-h-55 lg:min-h-0"
         >
-          {isLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : (
             <ChartContainer
@@ -284,7 +285,10 @@ export default function StaffDashboardPage() {
               <AreaChart data={ticketTrend}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
-                  dataKey="day"
+                  dataKey="date"
+                  tickFormatter={(v: string) =>
+                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                  }
                   tickLine={false}
                   axisLine={false}
                   tickMargin={6}
@@ -335,7 +339,7 @@ export default function StaffDashboardPage() {
           desc={`${totalTickets} ticket của tôi`}
           className="lg:col-span-4 min-h-55 lg:min-h-0"
         >
-          {isLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : statusBuckets.length === 0 ? (
             <div className="h-full grid place-items-center text-sm text-muted-foreground">
@@ -390,7 +394,7 @@ export default function StaffDashboardPage() {
           desc="Trên ticket đang mở"
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
-          {isLoading ? (
+          {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : riskData.length === 0 ? (
             <div className="h-full grid place-items-center text-center">
@@ -404,7 +408,7 @@ export default function StaffDashboardPage() {
           ) : (
             <DashboardDonut
               data={riskData}
-              centerValue={openTickets.length}
+              centerValue={openCount}
               centerLabel="đang mở"
             />
           )}

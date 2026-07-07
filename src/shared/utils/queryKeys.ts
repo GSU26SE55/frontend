@@ -21,6 +21,10 @@ export const KEY = {
   staffTickets: "staffTickets",
   ticketHealth: "ticketHealth",
   batteryDashboard: "batteryDashboard",
+  ticketDashboard: "ticketDashboard",
+  staffTicketDashboard: "staffTicketDashboard",
+  siteDashboard: "siteDashboard",
+  accountStats: "accountStats",
   reports: "reports",
   iotDevices: "iotDevices",
   iotCalibrations: "iotCalibrations",
@@ -278,6 +282,18 @@ export const QUERY_KEY = {
     stats: (params?: object) =>
       [KEY.batteryDashboard, "stats", params] as const,
   },
+  ticketDashboard: {
+    stats: () => [KEY.ticketDashboard, "stats"] as const,
+  },
+  staffTicketDashboard: {
+    stats: () => [KEY.staffTicketDashboard, "stats"] as const,
+  },
+  siteDashboard: {
+    stats: () => [KEY.siteDashboard, "stats"] as const,
+  },
+  accountStats: {
+    stats: () => [KEY.accountStats, "stats"] as const,
+  },
   reports: {
     batteryHealthByType: () => [KEY.reports, "battery-health-by-type"] as const,
     alertVolume: (params?: object) =>
@@ -334,7 +350,6 @@ export const QUERY_KEY = {
   },
   ticketParticipants: {
     list: (tid: string) => [KEY.ticketParticipants, "list", tid] as const,
-    history: (tid: string) =>
-      [KEY.ticketParticipants, "history", tid] as const,
+    history: (tid: string) => [KEY.ticketParticipants, "history", tid] as const,
   },
 } as const;

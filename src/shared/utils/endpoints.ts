@@ -53,19 +53,28 @@ export const ENDPOINTS = {
   // STAFF_TICKETS / ADMIN.TICKETS — KHÔNG có LIST/CREATE/status/close generic (api-ticket.md).
   // BE đổi ticket_comments → ticket_chats (migration 20260622) — path chính xác là /chats.
   TICKETS: {
+    DASHBOARD_STATS: "/api/tickets/dashboard/stats",
     DETAIL: (id: string) => `/api/tickets/${id}`,
     ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
     CHATS: (id: string) => `/api/tickets/${id}/chats`,
-    CHAT_DETAIL: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}`,
-    CHAT_HISTORY: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/history`,
-    CHAT_REPLIES: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/replies`,
-    CHAT_PIN: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/pin`,
-    CHAT_REACTIONS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/reactions`,
+    CHAT_DETAIL: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}`,
+    CHAT_HISTORY: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/history`,
+    CHAT_REPLIES: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/replies`,
+    CHAT_PIN: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/pin`,
+    CHAT_REACTIONS: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/reactions`,
     CHAT_MARK_READ: (tid: string) => `/api/tickets/${tid}/chats/mark-read`,
-    CHAT_READERS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/readers`,
-    CHAT_UNREAD_COUNT: (tid: string) => `/api/tickets/${tid}/chats/unread-count`,
+    CHAT_READERS: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/readers`,
+    CHAT_UNREAD_COUNT: (tid: string) =>
+      `/api/tickets/${tid}/chats/unread-count`,
     CHAT_CURSOR: (tid: string) => `/api/tickets/${tid}/chats/cursor`,
-    CHAT_ATTACHMENTS: (tid: string, cid: string) => `/api/tickets/${tid}/chats/${cid}/attachments`,
+    CHAT_ATTACHMENTS: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/attachments`,
     CHAT_ATTACHMENT: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}`,
     CHAT_TRANSLATE: (tid: string, cid: string) =>
@@ -75,10 +84,13 @@ export const ENDPOINTS = {
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,
     PARTICIPANTS: (tid: string) => `/api/tickets/${tid}/participants`,
-    PARTICIPANT: (tid: string, uid: string) => `/api/tickets/${tid}/participants/${uid}`,
+    PARTICIPANT: (tid: string, uid: string) =>
+      `/api/tickets/${tid}/participants/${uid}`,
     PARTICIPANTS_BULK: (tid: string) => `/api/tickets/${tid}/participants/bulk`,
-    PARTICIPANTS_LEAVE: (tid: string) => `/api/tickets/${tid}/participants/leave`,
-    PARTICIPANTS_HISTORY: (tid: string) => `/api/tickets/${tid}/participants/history`,
+    PARTICIPANTS_LEAVE: (tid: string) =>
+      `/api/tickets/${tid}/participants/leave`,
+    PARTICIPANTS_HISTORY: (tid: string) =>
+      `/api/tickets/${tid}/participants/history`,
   },
 
   CHAT_TEMPLATES: {
@@ -109,6 +121,7 @@ export const ENDPOINTS = {
 
   STAFF_TICKETS: {
     ME: "/api/staff/tickets/me",
+    DASHBOARD_STATS: "/api/staff/tickets/dashboard/stats",
     MAINTENANCE_LOGS_ME: "/api/staff/tickets/maintenance-logs/me",
     START: (id: string) => `/api/staff/tickets/${id}/start`,
     HOLD: (id: string) => `/api/staff/tickets/${id}/hold`,
@@ -178,6 +191,7 @@ export const ENDPOINTS = {
   ADMIN: {
     ACCOUNTS: {
       LIST: "/api/admin/accounts",
+      STATS: "/api/admin/accounts/stats",
       DETAIL: (id: string) => `/api/admin/accounts/${id}`,
       CREATE: "/api/admin/accounts",
       INVITE: "/api/admin/accounts/invite",
@@ -248,8 +262,10 @@ export const ENDPOINTS = {
     // Audit log nội bộ TicketService (Option C, #AUDIT-28) — khác với AuditAggregator
     TICKET_AUDIT_LOGS: "/api/admin/ticket/audit-logs",
     // Admin chat override (ticket đã Closed)
-    CHAT_CLOSED_OVERRIDE: (tid: string) => `/api/admin/tickets/${tid}/chats/closed-override`,
-    CHAT_RESTORE: (tid: string, cid: string) => `/api/admin/tickets/${tid}/chats/${cid}/restore`,
+    CHAT_CLOSED_OVERRIDE: (tid: string) =>
+      `/api/admin/tickets/${tid}/chats/closed-override`,
+    CHAT_RESTORE: (tid: string, cid: string) =>
+      `/api/admin/tickets/${tid}/chats/${cid}/restore`,
   },
 
   // AuditAggregatorService — cross-service audit read-store (Sprint audit #AUDIT-17).
@@ -269,6 +285,7 @@ export const ENDPOINTS = {
   SITES: {
     LIST: "/api/sites",
     ME: "/api/sites/me",
+    DASHBOARD_STATS: "/api/sites/dashboard/stats",
     DETAIL: (id: string) => `/api/sites/${id}`,
     DASHBOARD: (id: string) => `/api/sites/${id}/dashboard`,
     ASSETS: (siteId: string) => `/api/sites/${siteId}/assets`,

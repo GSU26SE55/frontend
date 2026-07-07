@@ -336,10 +336,10 @@ const AccountSettingsPage = () => {
                       title="Liên kết Google"
                       description="Đăng nhập nhanh bằng tài khoản Google"
                       action={
-                        // TODO(BE): AccountDto (GET /api/auth/me) chưa trả trạng
-                        // thái Google-linked (googleId/isGoogleLinked). Khi BE bổ
-                        // sung field, đổi thành isLinked={!!account?.googleId}.
-                        <GoogleLinkSection isLinked={false} bare />
+                        <GoogleLinkSection
+                          isLinked={!!account?.isGoogleLinked}
+                          bare
+                        />
                       }
                     />
 

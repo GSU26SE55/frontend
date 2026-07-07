@@ -27,6 +27,7 @@ import {
 } from "../hooks/useAdminTickets";
 import AddCommentForm from "../components/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
+import TypingIndicator from "@/shared/components/common/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
@@ -241,9 +242,7 @@ export default function AdminTicketDetailPage() {
                       payload: { body },
                     })
                   }
-                  onDelete={(chat) =>
-                    deleteChat({ ticketId, chatId: chat.id })
-                  }
+                  onDelete={(chat) => deleteChat({ ticketId, chatId: chat.id })}
                   editPending={editChatPending}
                   deletePending={deleteChatPending}
                   onMarkRead={handleMarkRead}
@@ -251,11 +250,7 @@ export default function AdminTicketDetailPage() {
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">
-                {typingNames.length > 0 && (
-                  <p className="px-1 pb-2 text-xs text-muted-foreground italic">
-                    {typingNames.join(", ")} đang gõ…
-                  </p>
-                )}
+                <TypingIndicator names={typingNames} />
                 <AddCommentForm
                   ticketId={ticketId}
                   onTyping={sendTyping}
@@ -320,9 +315,7 @@ export default function AdminTicketDetailPage() {
             </p>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  Hiện tại
-                </span>
+                <span className="text-xs text-muted-foreground">Hiện tại</span>
                 <TicketStatusBadge status={ticket.status} />
               </div>
               <div className="flex items-center justify-between">

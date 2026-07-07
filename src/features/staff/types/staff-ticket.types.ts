@@ -9,6 +9,10 @@ export interface StaffTicketsParams {
   status?: TicketStatusEnum;
   pageNumber: number;
   pageSize: number;
+  /** GH-132 (E) — chỉ ticket đang mở còn SLA timer (cho SLA Monitor). */
+  slaOpen?: boolean;
+  /** GH-132 (E) — "slaRemaining" = sort theo hạn SLA còn lại tăng dần. */
+  sortBy?: "slaRemaining";
 }
 
 export interface StartTicketRequest {

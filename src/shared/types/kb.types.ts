@@ -186,6 +186,8 @@ export interface KbSuggestItemDTO {
   symptoms: string;
   helpfulCount: number;
   viewCount: number;
+  /** GH-132 (G) — bài nội bộ: không được gán với referenceType ProvidedToCustomer. */
+  isInternalOnly: boolean;
 }
 
 export interface KbSuggestParams {

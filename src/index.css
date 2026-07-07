@@ -206,6 +206,20 @@
   animation: dot-pulse 1.4s ease-in-out infinite;
 }
 
+/* Typing indicator dot — khớp y hệt mobile (opacity 0.3↔1, chu kỳ 1s) */
+@keyframes typing-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typing-dot 1s ease-in-out infinite;
+}
+
 /* Page fade-in */
 @keyframes fade-up {
   from {
