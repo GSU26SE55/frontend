@@ -9,6 +9,7 @@ import type {
   UpdateChatPayload,
   ChatMarkReadPayload,
 } from "@/shared/types/chat.types";
+import type { ReactionTypeEnum } from "@/shared/enums/reaction.enum";
 
 export const useTicketChats = (ticketId: string, params?: ChatListParams) =>
   useQuery({
@@ -39,9 +40,7 @@ export const useChatReactions = (ticketId: string, chatId: string) =>
   useQuery({
     queryKey: QUERY_KEY.tickets.chatReactions(ticketId, chatId),
     queryFn: () =>
-      ticketChatService
-        .getReactions(ticketId, chatId)
-        .then((r) => r.data.data),
+      ticketChatService.getReactions(ticketId, chatId).then((r) => r.data.data),
     enabled: !!ticketId && !!chatId,
   });
 
@@ -172,16 +171,24 @@ export const useAddReaction = () => {
     mutationFn: ({
       ticketId,
       chatId,
-      emoji,
+      reactionType,
     }: {
       ticketId: string;
       chatId: string;
-      emoji: string;
-    }) => ticketChatService.addReaction(ticketId, chatId, emoji),
-    onSuccess: (_, { ticketId, chatId }) => {
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.tickets.chatReactions(ticketId, chatId),
-      });
+      reactionType: ReactionTypeEnum;
+    }) =>
+      ticketChatService
+        .addReaction(ticketId, chatId, reactionType)
+        .then((r) => r.data.data),
+    // BE trả aggregate mới nhất → ghi thẳng vào cache: người thả thấy đổi tức thì,
+    // không chờ refetch. SignalR ReactionChanged lo phần đồng bộ cho client khác.
+    onSuccess: (data, { ticketId, chatId }) => {
+      if (data) {
+        qc.setQueryData(
+          QUERY_KEY.tickets.chatReactions(ticketId, chatId),
+          data,
+        );
+      }
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -193,16 +200,22 @@ export const useRemoveReaction = () => {
     mutationFn: ({
       ticketId,
       chatId,
-      emoji,
+      reactionType,
     }: {
       ticketId: string;
       chatId: string;
-      emoji: string;
-    }) => ticketChatService.removeReaction(ticketId, chatId, emoji),
-    onSuccess: (_, { ticketId, chatId }) => {
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.tickets.chatReactions(ticketId, chatId),
-      });
+      reactionType: ReactionTypeEnum;
+    }) =>
+      ticketChatService
+        .removeReaction(ticketId, chatId, reactionType)
+        .then((r) => r.data.data),
+    onSuccess: (data, { ticketId, chatId }) => {
+      if (data) {
+        qc.setQueryData(
+          QUERY_KEY.tickets.chatReactions(ticketId, chatId),
+          data,
+        );
+      }
     },
     onError: (error) => handleErrorApi({ error }),
   });

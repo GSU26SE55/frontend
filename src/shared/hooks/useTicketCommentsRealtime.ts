@@ -55,14 +55,20 @@ export function useTicketCommentsRealtime(
     conn.on("ChatEdited", invalidateChatList);
     conn.on("ChatDeleted", invalidateChatList);
 
-    // ReactionChanged payload: { chatId, reactions } → refetch reactions của đúng chat.
-    conn.on("ReactionChanged", (payload: { chatId: string }) => {
-      if (payload?.chatId) {
-        qc.invalidateQueries({
-          queryKey: QUERY_KEY.tickets.chatReactions(ticketId, payload.chatId),
-        });
-      }
-    });
+    // ReactionChanged payload: { chatId, reactions } — BE gửi kèm aggregate đầy đủ.
+    // Ghi thẳng vào cache (không refetch) → client khác cập nhật tức thì, 0 request thừa.
+    conn.on(
+      "ReactionChanged",
+      (payload: { chatId: string; reactions?: unknown }) => {
+        if (!payload?.chatId) return;
+        const key = QUERY_KEY.tickets.chatReactions(ticketId, payload.chatId);
+        if (payload.reactions) {
+          qc.setQueryData(key, payload.reactions);
+        } else {
+          qc.invalidateQueries({ queryKey: key });
+        }
+      },
+    );
 
     conn.on(
       "UserTyping",

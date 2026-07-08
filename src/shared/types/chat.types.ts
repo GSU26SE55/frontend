@@ -1,5 +1,6 @@
 import type { ChatAiIntentEnum } from "@/shared/enums/chat.enum";
 export { ChatAiIntentEnum } from "@/shared/enums/chat.enum";
+import type { ActorRoleEnum } from "@/shared/enums/ticket.enum";
 
 export interface ChatDto {
   id: string;
@@ -34,10 +35,23 @@ export interface UpdateChatPayload {
   editReason?: string;
 }
 
-export interface ChatReactionDto {
-  emoji: string;
+// GET /api/tickets/{id}/chats/{id}/reactions — aggregate group theo 5 loại reaction.
+// Khớp BE TicketChatReactionsAggregateDTO. "reactedByMe" KHÔNG có sẵn — FE tự tính
+// bằng cách so userId trong users[] với current user.
+export interface ChatReactionUserDto {
+  userId: string;
+  role: ActorRoleEnum;
+}
+export interface ChatReactionGroupDto {
   count: number;
-  reactedByMe: boolean;
+  users: ChatReactionUserDto[];
+}
+export interface ChatReactionsAggregateDto {
+  thumbsUp: ChatReactionGroupDto;
+  acknowledged: ChatReactionGroupDto;
+  resolved: ChatReactionGroupDto;
+  needMoreInfo: ChatReactionGroupDto;
+  disagree: ChatReactionGroupDto;
 }
 
 export interface ChatReaderDto {
