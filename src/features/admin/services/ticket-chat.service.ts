@@ -9,10 +9,11 @@ import type {
   ChatListParams,
   CreateChatPayload,
   UpdateChatPayload,
-  ChatReactionDto,
+  ChatReactionsAggregateDto,
   ChatReaderDto,
   ChatMarkReadPayload,
 } from "@/shared/types/chat.types";
+import type { ReactionTypeEnum } from "@/shared/enums/reaction.enum";
 import type { TicketActionResponse } from "@/shared/types/ticket.types";
 import type {
   ChatOverrideEditPayload,
@@ -71,20 +72,31 @@ export const ticketChatService = {
     ),
 
   getReactions: (ticketId: string, chatId: string) =>
-    axiosInstance.get<CommonResponse<ChatReactionDto[]>>(
+    axiosInstance.get<CommonResponse<ChatReactionsAggregateDto>>(
       ENDPOINTS.TICKETS.CHAT_REACTIONS(ticketId, chatId),
     ),
 
-  addReaction: (ticketId: string, chatId: string, emoji: string) =>
-    axiosInstance.post<CommonResponse<void>>(
+  // BE nhận reactionType dạng string name (JsonStringEnumConverter). Idempotent nếu đã reaction cùng loại.
+  // Response Data = aggregate mới nhất → dùng luôn để cập nhật cache tức thì.
+  addReaction: (
+    ticketId: string,
+    chatId: string,
+    reactionType: ReactionTypeEnum,
+  ) =>
+    axiosInstance.post<CommonResponse<ChatReactionsAggregateDto>>(
       ENDPOINTS.TICKETS.CHAT_REACTIONS(ticketId, chatId),
-      { emoji },
+      { reactionType },
     ),
 
-  removeReaction: (ticketId: string, chatId: string, emoji: string) =>
-    axiosInstance.delete<CommonResponse<void>>(
+  // Remove qua query param ?type= (BE [FromQuery] ReactionTypeEnum type), KHÔNG dùng body.
+  removeReaction: (
+    ticketId: string,
+    chatId: string,
+    reactionType: ReactionTypeEnum,
+  ) =>
+    axiosInstance.delete<CommonResponse<ChatReactionsAggregateDto>>(
       ENDPOINTS.TICKETS.CHAT_REACTIONS(ticketId, chatId),
-      { data: { emoji } },
+      { params: { type: reactionType } },
     ),
 
   markRead: (ticketId: string, payload: ChatMarkReadPayload) =>

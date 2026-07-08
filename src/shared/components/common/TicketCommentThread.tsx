@@ -29,6 +29,7 @@ import {
 import TicketAttachments from "@/shared/components/common/TicketAttachments";
 import VoiceMessagePlayer from "@/shared/components/common/VoiceMessagePlayer";
 import ChatAiPanel from "@/shared/components/common/ChatAiPanel";
+import ChatReactionBar from "@/shared/components/common/ChatReactionBar";
 import {
   isFileId,
   useAudioAttachment,
@@ -488,6 +489,15 @@ export function TicketCommentThread({
                           onOverrideDelete={() => onOverrideDelete?.(c)}
                         />
                       }
+                    />
+                  )}
+
+                  {!isEditing && ticketId && (
+                    <ChatReactionBar
+                      ticketId={ticketId}
+                      chatId={c.id}
+                      currentUserId={currentUserId}
+                      align={isOwn ? "end" : "start"}
                     />
                   )}
 
