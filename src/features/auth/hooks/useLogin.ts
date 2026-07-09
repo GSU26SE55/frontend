@@ -40,8 +40,9 @@ export const useLogin = () => {
       const user = decodeToken(accessToken);
 
       if (user.role === UserRole.CUSTOMER) {
-        toast.error("Vui lòng sử dụng Mobile App để đăng nhập.");
+        // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
         clearTokens();
+        window.location.href = "/use-mobile-app";
         return;
       }
 
