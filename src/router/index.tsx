@@ -6,6 +6,7 @@ import { UserRole } from "@/shared/types/session.types";
 import AuthLayout from "@/shared/components/layout/AuthLayout";
 import AppLayout from "@/shared/components/layout/AppLayout";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
+import UseMobileAppPage from "@/features/auth/pages/UseMobileAppPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import Login2faPage from "@/features/auth/pages/Login2faPage";
 import ReactivatePage from "@/features/auth/pages/ReactivatePage";
@@ -91,6 +92,11 @@ const router = createBrowserRouter([
   {
     path: "/auth/google/callback",
     element: <GoogleCallbackPage />,
+  },
+  {
+    // CUSTOMER login trên web → điều hướng về đây (không dùng web, dùng Mobile App)
+    path: "/use-mobile-app",
+    element: <UseMobileAppPage />,
   },
   {
     path: "/unauthorized",

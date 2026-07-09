@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,8 +17,15 @@ const GoogleCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
   const queryClient = useQueryClient();
+  // Authorization code của Google chỉ dùng được 1 lần. StrictMode (dev) chạy effect 2 lần
+  // → lần 2 gọi lại code đã tiêu thụ → BE trả lỗi → rơi vào catch → điều hướng nhầm /login,
+  // ghi đè kết quả đúng của lần 1. Ref guard đảm bảo run() chỉ chạy đúng 1 lần.
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     // GH-295: Google redirect về đây với ?code&state. FE gọi GET /api/auth/google/callback
     // qua axios → BE trả JSON LoginResultDto (data.tokens.*). Google login bypass 2FA.
     const run = async () => {
@@ -37,9 +44,9 @@ const GoogleCallbackPage = () => {
         const user = decodeToken(tokens.accessToken);
 
         if (user.role === UserRole.CUSTOMER) {
+          // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
           clearTokens();
-          toast.error("Vui lòng sử dụng Mobile App để đăng nhập.");
-          navigate("/login", { replace: true });
+          navigate("/use-mobile-app", { replace: true });
           return;
         }
 
