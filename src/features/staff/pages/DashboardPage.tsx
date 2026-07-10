@@ -146,7 +146,7 @@ export default function StaffDashboardPage() {
   const unread = unreadCount ?? 0;
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 shrink-0">
         <div className="min-w-0">
@@ -220,7 +220,7 @@ export default function StaffDashboardPage() {
       )}
 
       {/* ── Bento grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1fr_1.25fr] gap-3 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1fr_1.25fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* SLA gauge */}
         <DashboardPanel
           title="Tuân thủ SLA cá nhân"

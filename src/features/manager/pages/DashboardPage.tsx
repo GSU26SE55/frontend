@@ -170,7 +170,7 @@ export default function ManagerDashboardPage() {
   const criticalOpen = stats?.openAlertsCritical ?? 0;
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-hidden">
+    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 shrink-0">
         <div className="min-w-0">
@@ -238,7 +238,7 @@ export default function ManagerDashboardPage() {
       </div>
 
       {/* ── Bento grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* Ticket pipeline — horizontal bars */}
         <DashboardPanel
           title="Pipeline xử lý ticket"
