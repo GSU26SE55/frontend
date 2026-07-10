@@ -31,12 +31,14 @@ interface Props {
   onTyping?: () => void;
   /** Bình luận gửi ở chế độ nội bộ (theo tab đang mở của thread). */
   isInternal?: boolean;
+  existingFileIds?: string[];
 }
 
 export default function AddCommentForm({
   ticketId,
   onTyping,
   isInternal = false,
+  existingFileIds = [],
 }: Props) {
   const { mutateAsync, isPending } = useAdminAddComment(ticketId);
   const [uploading, setUploading] = useState(false);
@@ -118,6 +120,7 @@ export default function AddCommentForm({
                 value={field.value ?? []}
                 onChange={field.onChange}
                 onUploadingChange={setUploading}
+                existingFileIds={existingFileIds}
               />
             )}
           />

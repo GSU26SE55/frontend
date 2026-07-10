@@ -32,6 +32,7 @@ interface Props {
   onTyping?: () => void;
   /** Bình luận gửi ở chế độ nội bộ (theo tab đang mở của thread). */
   isInternal?: boolean;
+  existingFileIds?: string[];
 }
 
 export function AddCommentForm({
@@ -40,6 +41,7 @@ export function AddCommentForm({
   isPending,
   onTyping,
   isInternal = false,
+  existingFileIds = [],
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const form = useForm<AddCommentFormValues>({
@@ -121,6 +123,7 @@ export function AddCommentForm({
                 value={field.value ?? []}
                 onChange={field.onChange}
                 onUploadingChange={setUploading}
+                existingFileIds={existingFileIds}
               />
             )}
           />

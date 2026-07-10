@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -95,6 +95,24 @@ export default function AdminTicketDetailPage() {
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
+
+  const existingFileIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (ticket?.attachmentFileIds) {
+      ticket.attachmentFileIds.forEach((fileId) => ids.add(fileId));
+    }
+    if (ticket?.maintenanceLogs) {
+      ticket.maintenanceLogs.forEach((log) => {
+        log.attachmentFileIds?.forEach((fileId) => ids.add(fileId));
+        log.beforePhotosFileIds?.forEach((fileId) => ids.add(fileId));
+        log.afterPhotosFileIds?.forEach((fileId) => ids.add(fileId));
+      });
+    }
+    comments.forEach((c) => {
+      c.attachmentFileIds?.forEach((fileId) => ids.add(fileId));
+    });
+    return Array.from(ids);
+  }, [ticket, comments]);
   const { mutate: declareIncident, isPending } = useDeclareIncident();
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
@@ -270,6 +288,7 @@ export default function AdminTicketDetailPage() {
                   ticketId={ticketId}
                   onTyping={sendTyping}
                   isInternal={chatTab === "internal"}
+                  existingFileIds={existingFileIds}
                 />
               </div>
             </TabsContent>
