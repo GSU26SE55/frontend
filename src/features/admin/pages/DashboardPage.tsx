@@ -273,7 +273,7 @@ export default function AdminDashboardPage() {
       <TicketHealthCard />
 
       {/* ── Bento grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* Alerts 7-day — stacked area */}
         <DashboardPanel
           title="Cảnh báo 7 ngày"

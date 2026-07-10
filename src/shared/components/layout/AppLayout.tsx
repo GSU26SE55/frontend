@@ -221,7 +221,7 @@ const ADMIN_NAV: NavSection[] = [
     defaultOpen: false,
     items: [
       { label: "Tài khoản", path: "/admin/accounts", icon: Users },
-      { label: "Roles & Permissions", path: "/admin/roles", icon: Shield },
+      { label: "Vai trò & Quyền hạn", path: "/admin/roles", icon: Shield },
     ],
   },
   {

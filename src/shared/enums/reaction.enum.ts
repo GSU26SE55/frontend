@@ -26,8 +26,8 @@ export const REACTION_META: Record<
   { emoji: string; label: string }
 > = {
   ThumbsUp: { emoji: "👍", label: "Thích" },
-  Acknowledged: { emoji: "✅", label: "Đã tiếp nhận" },
-  Resolved: { emoji: "✔️", label: "Đã giải quyết" },
-  NeedMoreInfo: { emoji: "❓", label: "Cần thêm thông tin" },
-  Disagree: { emoji: "👎", label: "Không đồng ý" },
+  Acknowledged: { emoji: "🫡", label: "Đã tiếp nhận" },
+  Resolved: { emoji: "😀", label: "Đã giải quyết" },
+  NeedMoreInfo: { emoji: "🤔", label: "Cần thêm thông tin" },
+  Disagree: { emoji: "🙄", label: "Không đồng ý" },
 };

@@ -140,17 +140,17 @@ export default function RolesPage() {
             Admin &middot; Người dùng
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Roles & Permissions
+            Vai trò & Quyền hạn
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : total} role &mdash; quản lý phân quyền truy cập
+            {isLoading ? "..." : total} vai trò &mdash; quản lý phân quyền truy cập
             hệ thống.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.admin.roles]} />
           <Button size="sm" onClick={() => setDialog({ type: "create" })}>
-            <Plus className="size-3.5" /> Tạo role
+            <Plus className="size-3.5" /> Tạo vai trò
           </Button>
         </div>
       </div>

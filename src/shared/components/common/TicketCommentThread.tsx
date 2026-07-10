@@ -53,11 +53,7 @@ const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 const LANGUAGE_OPTIONS = [
   { code: "vi", label: "Tiếng Việt" },
-  { code: "en", label: "English" },
-  { code: "fr", label: "Français" },
-  { code: "zh", label: "中文" },
-  { code: "ja", label: "日本語" },
-  { code: "ko", label: "한국어" },
+  { code: "en", label: "English" }
 ] as const;
 const LANGUAGE_LABEL: Record<string, string> = Object.fromEntries(
   LANGUAGE_OPTIONS.map((l) => [l.code, l.label]),
@@ -243,8 +239,46 @@ export function TicketCommentThread({
   );
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isFirstScrollRef = useRef(true);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
+    const el = bottomRef.current;
+    if (!el) return;
+
+    // Tìm tổ tiên có thanh cuộn dọc (overflowY is auto/scroll)
+    let parent = el.parentElement;
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      if (style.overflowY === "auto" || style.overflowY === "scroll") {
+        break;
+      }
+      parent = parent.parentElement;
+    }
+    const container = parent || document.documentElement;
+
+    const isFirst = isFirstScrollRef.current;
+    isFirstScrollRef.current = false;
+    const behavior = isFirst ? "auto" : "smooth";
+
+    const performScroll = () => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior,
+      });
+    };
+
+    // Thực hiện cuộn ngay lập tức
+    performScroll();
+
+    // Thực hiện lại sau các khoảng trễ để chờ layout / ảnh / audio player vẽ xong hoàn toàn
+    const t1 = setTimeout(performScroll, 50);
+    const t2 = setTimeout(performScroll, 150);
+    const t3 = setTimeout(performScroll, 300);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [visible.length, tab]);
 
   const markedRef = useRef<Set<string>>(new Set());
