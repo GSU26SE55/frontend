@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -109,6 +109,24 @@ export default function TicketDetailPage() {
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
   const { data: comments = [] } = useStaffTicketComments(ticketId);
+
+  const existingFileIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (ticket?.attachmentFileIds) {
+      ticket.attachmentFileIds.forEach((id) => ids.add(id));
+    }
+    if (ticket?.maintenanceLogs) {
+      ticket.maintenanceLogs.forEach((log) => {
+        log.attachmentFileIds?.forEach((id) => ids.add(id));
+        log.beforePhotosFileIds?.forEach((id) => ids.add(id));
+        log.afterPhotosFileIds?.forEach((id) => ids.add(id));
+      });
+    }
+    comments.forEach((c) => {
+      c.attachmentFileIds?.forEach((id) => ids.add(id));
+    });
+    return Array.from(ids);
+  }, [ticket, comments]);
 
   const startMutation = useStartTicket(ticketId);
   const holdMutation = useHoldTicket(ticketId);
@@ -357,6 +375,7 @@ export default function TicketDetailPage() {
                     isPending={commentMutation.isPending}
                     onTyping={sendTyping}
                     isInternal={chatTab === "internal"}
+                    existingFileIds={existingFileIds}
                   />
                 </div>
               )}

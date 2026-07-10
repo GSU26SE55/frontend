@@ -1,11 +1,15 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus, Loader2, X, Upload, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AuthImage from "@/shared/components/common/AuthImage";
 import { useUploadFile } from "@/features/file-storage/hooks/useUploadFile";
 import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
 import { HttpError, EntityError } from "@/shared/lib/errors";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { fileStorageService } from "@/features/file-storage/services/file-storage.service";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 export interface UploadedAttachment {
   fileId: string;
@@ -30,6 +34,8 @@ interface FileUploadFieldProps {
   compact?: boolean;
   /** Ẩn thumbnail trong component này — dùng khi consumer tự hiển thị preview ở nơi khác. */
   hideThumbnails?: boolean;
+  /** Danh sách file ID đã tồn tại trong ticket để tái sử dụng */
+  existingFileIds?: string[];
 }
 
 /**
@@ -47,13 +53,18 @@ export default function FileUploadField({
   disabled = false,
   compact = false,
   hideThumbnails = false,
+  existingFileIds = [],
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync } = useUploadFile();
   const [uploadingCount, setUploadingCount] = useState(0);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [fetchingMetadata, setFetchingMetadata] = useState(false);
+  const [dialogAttachments, setDialogAttachments] = useState<UploadedAttachment[]>([]);
 
   const items = value ?? [];
   const remaining = max - items.length;
+  const dialogRemaining = max - dialogAttachments.length;
 
   const bumpUploading = (delta: number) =>
     setUploadingCount((c) => {
@@ -62,33 +73,95 @@ export default function FileUploadField({
       return next;
     });
 
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const files = Array.from(e.dataTransfer.files);
+      const targetRemaining = isLibraryOpen ? dialogRemaining : remaining;
+      const accepted = files.slice(0, Math.max(0, targetRemaining));
+      if (files.length > accepted.length) {
+        toast.error(`Tối đa ${max} ảnh.`);
+      }
+
+      let current = isLibraryOpen ? [...dialogAttachments] : [...items];
+      for (const file of accepted) {
+        bumpUploading(1);
+        try {
+          const res = await mutateAsync({ file, purpose });
+          if (res.isSuccess && res.data) {
+            const newItem = {
+              fileId: res.data.fileId,
+              fileName: res.data.fileName,
+              contentType: res.data.contentType,
+              sizeBytes: res.data.size,
+            };
+            current = [...current, newItem];
+            if (isLibraryOpen) {
+              setDialogAttachments(current);
+            } else {
+              onChange(current);
+            }
+          } else {
+            toast.error(res.message || `Tải "${file.name}" thất bại.`);
+          }
+        } catch (err) {
+          if (err instanceof EntityError) {
+            toast.error(err.errors[0]?.detail ?? `"${file.name}" không hợp lệ.`);
+          } else if (err instanceof HttpError) {
+            toast.error(err.message);
+          } else {
+            toast.error(`Tải "${file.name}" thất bại.`);
+          }
+        } finally {
+          bumpUploading(-1);
+        }
+      }
+    }
+  };
+
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     e.target.value = ""; // reset để chọn lại cùng 1 file vẫn trigger change
     if (files.length === 0) return;
 
-    const accepted = files.slice(0, Math.max(0, remaining));
+    const targetRemaining = isLibraryOpen ? dialogRemaining : remaining;
+    const accepted = files.slice(0, Math.max(0, targetRemaining));
     if (files.length > accepted.length) {
       toast.error(`Tối đa ${max} ảnh.`);
     }
 
-    // Tích lũy cục bộ — tránh đọc `value` cũ qua mỗi await khi upload tuần tự.
-    let current = [...items];
+    let current = isLibraryOpen ? [...dialogAttachments] : [...items];
     for (const file of accepted) {
       bumpUploading(1);
       try {
         const res = await mutateAsync({ file, purpose });
         if (res.isSuccess && res.data) {
-          current = [
-            ...current,
-            {
-              fileId: res.data.fileId,
-              fileName: res.data.fileName,
-              contentType: res.data.contentType,
-              sizeBytes: res.data.size,
-            },
-          ];
-          onChange(current);
+          const newItem = {
+            fileId: res.data.fileId,
+            fileName: res.data.fileName,
+            contentType: res.data.contentType,
+            sizeBytes: res.data.size,
+          };
+          current = [...current, newItem];
+          if (isLibraryOpen) {
+            setDialogAttachments(current);
+          } else {
+            onChange(current);
+          }
         } else {
           toast.error(res.message || `Tải "${file.name}" thất bại.`);
         }
@@ -108,6 +181,57 @@ export default function FileUploadField({
 
   const handleRemove = (fileId: string) =>
     onChange(items.filter((a) => a.fileId !== fileId));
+
+
+  const handleSelectExisting = async (fileId: string) => {
+    const isSelected = dialogAttachments.some((i) => i.fileId === fileId);
+    if (isSelected) {
+      setDialogAttachments((prev) => prev.filter((i) => i.fileId !== fileId));
+      return;
+    }
+
+    if (dialogRemaining <= 0) {
+      toast.error(`Đã đạt giới hạn tối đa ${max} ảnh.`);
+      return;
+    }
+
+    setFetchingMetadata(true);
+    try {
+      const res = await fileStorageService.getFileMetadata(fileId);
+      if (res.data.isSuccess && res.data.data) {
+        const metadata = res.data.data;
+        setDialogAttachments((prev) => [
+          ...prev,
+          {
+            fileId: metadata.fileId,
+            fileName: metadata.fileName,
+            contentType: metadata.contentType,
+            sizeBytes: metadata.size,
+          },
+        ]);
+      } else {
+        toast.error(res.data.message || "Không thể lấy thông tin tệp tin.");
+      }
+    } catch (err) {
+      toast.error("Lỗi khi tải thông tin tệp tin.");
+    } finally {
+      setFetchingMetadata(false);
+    }
+  };
+
+  const handleAddClick = () => {
+    if (existingFileIds.length > 0) {
+      setDialogAttachments([...items]);
+      setIsLibraryOpen(true);
+    } else {
+      inputRef.current?.click();
+    }
+  };
+
+  const handleConfirmDialog = () => {
+    onChange(dialogAttachments);
+    setIsLibraryOpen(false);
+  };
 
   const uploading = uploadingCount > 0;
   const canAdd = !disabled && remaining > 0;
@@ -151,7 +275,7 @@ export default function FileUploadField({
         {canAdd && compact && (
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={handleAddClick}
             disabled={uploading}
             aria-label="Thêm ảnh"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
@@ -167,7 +291,7 @@ export default function FileUploadField({
         {canAdd && !compact && (
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={handleAddClick}
             disabled={uploading}
             className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-md border border-dashed text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
           >
@@ -191,6 +315,110 @@ export default function FileUploadField({
         className="hidden"
         onChange={handlePick}
       />
+
+      <Dialog open={isLibraryOpen} onOpenChange={(open) => !open && !fetchingMetadata && setIsLibraryOpen(false)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-6">
+          <DialogTitle className="text-lg font-semibold text-foreground">Thêm tệp tin đính kèm</DialogTitle>
+          <div className="flex-1 min-h-0 mt-2 flex flex-col">
+            <Tabs defaultValue="reuse" className="flex-1 flex flex-col min-h-0">
+              <TabsList className="grid w-full grid-cols-2 mb-4 shrink-0">
+                <TabsTrigger value="reuse" className="text-sm font-medium">Thư viện</TabsTrigger>
+                <TabsTrigger value="upload" className="text-sm font-medium">Tải lên</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="reuse" className="flex-1 overflow-y-auto min-h-[220px] relative outline-none pr-1">
+                {fetchingMetadata && (
+                  <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="text-sm font-medium mt-2 text-muted-foreground">Đang tải thông tin tệp...</span>
+                  </div>
+                )}
+                <div className="grid grid-cols-4 gap-3">
+                  {existingFileIds.map((fileId) => {
+                    const isSelected = dialogAttachments.some((i) => i.fileId === fileId);
+                    return (
+                      <button
+                        key={fileId}
+                        type="button"
+                        disabled={fetchingMetadata}
+                        onClick={() => handleSelectExisting(fileId)}
+                        className={cn(
+                          "group relative aspect-square overflow-hidden rounded-md border-2 bg-muted transition-all duration-200 outline-none",
+                          isSelected 
+                            ? "border-primary ring-2 ring-primary/20 shadow-sm" 
+                            : "border-border hover:border-muted-foreground/60"
+                        )}
+                      >
+                        <AuthImage
+                          fileId={fileId}
+                          alt="Ảnh đính kèm"
+                          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5 bg-primary text-primary-foreground rounded-full p-0.5 shadow-sm scale-100 transition-transform">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="upload" className="flex-1 flex flex-col justify-center outline-none">
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => inputRef.current?.click()}
+                  className={cn(
+                    "flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer transition-colors text-center min-h-[220px]",
+                    dragActive ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                  )}
+                >
+                  <div className="rounded-full bg-muted p-3 mb-3 text-muted-foreground">
+                    {uploading ? (
+                      <Loader2 size={24} className="animate-spin text-primary" />
+                    ) : (
+                      <Upload size={24} />
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    Kéo thả tệp tin vào đây hoặc click để duyệt thiết bị
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Chấp nhận hình ảnh (.png, .jpg, .jpeg) tối đa {max} tệp
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+          </div>
+
+          {/* Footer controls */}
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-border mt-4 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={fetchingMetadata || uploading}
+              onClick={() => setIsLibraryOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              disabled={fetchingMetadata || uploading}
+              onClick={handleConfirmDialog}
+            >
+              {fetchingMetadata || uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+              ) : null}
+              Xác nhận ({dialogAttachments.length})
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
