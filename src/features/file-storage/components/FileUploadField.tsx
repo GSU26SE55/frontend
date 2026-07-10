@@ -365,7 +365,36 @@ export default function FileUploadField({
                 </div>
               </TabsContent>
 
-              <TabsContent value="upload" className="flex-1 flex flex-col justify-center outline-none">
+              <TabsContent value="upload" className="flex-1 flex flex-col justify-start outline-none overflow-y-auto pr-1">
+                {/* Uploaded files in the current dialog session */}
+                {dialogAttachments.some(att => !existingFileIds.includes(att.fileId)) && (
+                  <div className="mb-4 pb-4 border-b border-border/60">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                      Ảnh đã tải lên ({dialogAttachments.filter(att => !existingFileIds.includes(att.fileId)).length})
+                    </p>
+                    <div className="grid grid-cols-4 gap-3">
+                      {dialogAttachments
+                        .filter(att => !existingFileIds.includes(att.fileId))
+                        .map((att) => (
+                          <div key={att.fileId} className="relative aspect-square rounded-md border border-border overflow-hidden group/newthumb">
+                            <AuthImage
+                              fileId={att.fileId}
+                              alt={att.fileName ?? "Ảnh mới"}
+                              className="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setDialogAttachments(prev => prev.filter(x => x.fileId !== att.fileId))}
+                              className="absolute inset-0 bg-black/60 opacity-0 group-hover/newthumb:opacity-100 flex items-center justify-center text-white transition-opacity duration-200"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 <div
                   onDragEnter={handleDrag}
                   onDragOver={handleDrag}
@@ -373,18 +402,18 @@ export default function FileUploadField({
                   onDrop={handleDrop}
                   onClick={() => inputRef.current?.click()}
                   className={cn(
-                    "flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-8 cursor-pointer transition-colors text-center min-h-[220px]",
+                    "flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors text-center min-h-[120px] shrink-0",
                     dragActive ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                   )}
                 >
-                  <div className="rounded-full bg-muted p-3 mb-3 text-muted-foreground">
+                  <div className="rounded-full bg-muted p-2.5 mb-2 text-muted-foreground">
                     {uploading ? (
-                      <Loader2 size={24} className="animate-spin text-primary" />
+                      <Loader2 size={20} className="animate-spin text-primary" />
                     ) : (
-                      <Upload size={24} />
+                      <Upload size={20} />
                     )}
                   </div>
-                  <p className="text-sm font-medium text-foreground mb-1">
+                  <p className="text-sm font-medium text-foreground mb-0.5">
                     Kéo thả tệp tin vào đây hoặc click để duyệt thiết bị
                   </p>
                   <p className="text-xs text-muted-foreground">
