@@ -96,6 +96,10 @@ export default function TicketDetailPage() {
   // Tab chat: bình luận mới gửi theo tab đang mở (public/internal).
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [composerPrefill, setComposerPrefill] = useState({
+    text: "",
+    version: 0,
+  });
 
   const ticketId = id ?? "";
   const user = useSessionStore((s) => s.user);
@@ -352,6 +356,13 @@ export default function TicketDetailPage() {
                   ticketClosed={status === TicketStatusEnum.Closed}
                   ticketId={ticketId}
                   aiEnabled
+                  onSelectSuggestion={(text) => {
+                    if (!canComment) return;
+                    setComposerPrefill((prev) => ({
+                      text,
+                      version: prev.version + 1,
+                    }));
+                  }}
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId,
@@ -376,6 +387,8 @@ export default function TicketDetailPage() {
                     onTyping={sendTyping}
                     isInternal={chatTab === "internal"}
                     existingFileIds={existingFileIds}
+                    prefillText={composerPrefill.text}
+                    prefillVersion={composerPrefill.version}
                   />
                 </div>
               )}

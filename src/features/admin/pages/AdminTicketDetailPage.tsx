@@ -85,6 +85,10 @@ export default function AdminTicketDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  const [composerPrefill, setComposerPrefill] = useState({
+    text: "",
+    version: 0,
+  });
   // GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed.
   const [overrideTarget, setOverrideTarget] = useState<{
     chat: TicketCommentDTO;
@@ -262,6 +266,12 @@ export default function AdminTicketDetailPage() {
                   ticketClosed={ticket.status === TicketStatusEnum.Closed}
                   ticketId={ticketId}
                   aiEnabled
+                  onSelectSuggestion={(text) =>
+                    setComposerPrefill((prev) => ({
+                      text,
+                      version: prev.version + 1,
+                    }))
+                  }
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId,
@@ -289,6 +299,8 @@ export default function AdminTicketDetailPage() {
                   onTyping={sendTyping}
                   isInternal={chatTab === "internal"}
                   existingFileIds={existingFileIds}
+                  prefillText={composerPrefill.text}
+                  prefillVersion={composerPrefill.version}
                 />
               </div>
             </TabsContent>

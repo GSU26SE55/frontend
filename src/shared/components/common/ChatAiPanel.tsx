@@ -46,14 +46,15 @@ const INTENT_LABEL: Record<ChatAiIntentEnum, string> = {
 
 interface Props {
   ticketId: string;
+  onSelectSuggestion?: (text: string) => void | Promise<void>;
 }
 
 /**
  * GH-133 C2 — thanh công cụ AI cho chat thread (Staff/Manager/Admin).
  * Gợi ý (suggest) · Tóm tắt (summarize) · Xuất PDF (export-pdf).
- * Gợi ý được sao chép vào clipboard để dán vào ô soạn (composer là form riêng theo role).
+ * Nếu page truyền callback, chọn gợi ý có thể xử lý ngay (ví dụ gửi thẳng vào thread).
  */
-export default function ChatAiPanel({ ticketId }: Props) {
+export default function ChatAiPanel({ ticketId, onSelectSuggestion }: Props) {
   const suggestM = useSuggestChat();
   const summarizeM = useSummarizeChat();
   const sentimentM = useSentimentCheck();
@@ -69,6 +70,9 @@ export default function ChatAiPanel({ ticketId }: Props) {
     isAlertSent: boolean;
   } | null>(null);
   const [sentimentOpen, setSentimentOpen] = useState(false);
+  const [selectingSuggestionIndex, setSelectingSuggestionIndex] = useState<
+    number | null
+  >(null);
 
   const handleSuggest = async (intent: ChatAiIntentEnum) => {
     try {
@@ -115,8 +119,25 @@ export default function ChatAiPanel({ ticketId }: Props) {
   const copySuggestion = (text: string) => {
     void navigator.clipboard
       .writeText(text)
-      .then(() => toast.success("Đã sao chép gợi ý — dán vào ô soạn tin."))
+      .then(() => toast.success("Đã sao chép gợi ý."))
       .catch(() => toast.error("Không sao chép được."));
+  };
+
+  const selectSuggestion = async (text: string, index: number) => {
+    if (!onSelectSuggestion) {
+      copySuggestion(text);
+      return;
+    }
+    setSelectingSuggestionIndex(index);
+    try {
+      await onSelectSuggestion(text);
+      setSuggestOpen(false);
+      toast.success("Đã chọn gợi ý. Bạn có thể gửi tin nhắn ngay.");
+    } catch {
+      /* mutation hook đã toast */
+    } finally {
+      setSelectingSuggestionIndex(null);
+    }
   };
 
   return (
@@ -205,16 +226,33 @@ export default function ChatAiPanel({ ticketId }: Props) {
             {suggestions.map((s, i) => (
               <div
                 key={i}
-                className="flex items-start gap-2 rounded-lg border border-border p-2.5 text-sm"
+                role="button"
+                tabIndex={0}
+                aria-disabled={selectingSuggestionIndex !== null}
+                className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-2.5 text-left text-sm transition-colors hover:bg-muted/40 aria-disabled:pointer-events-none aria-disabled:opacity-60"
+                onClick={() => void selectSuggestion(s, i)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    void selectSuggestion(s, i);
+                  }
+                }}
               >
                 <p className="flex-1 whitespace-pre-wrap break-words">{s}</p>
+                {selectingSuggestionIndex === i && (
+                  <Loader2 className="mt-1 size-3.5 shrink-0 animate-spin text-muted-foreground" />
+                )}
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   className="size-7 shrink-0"
                   aria-label="Sao chép gợi ý"
-                  onClick={() => copySuggestion(s)}
+                  disabled={selectingSuggestionIndex !== null}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copySuggestion(s);
+                  }}
                 >
                   <Copy className="size-3.5" />
                 </Button>

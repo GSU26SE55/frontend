@@ -116,6 +116,10 @@ export default function TicketDetailPage() {
   const [dialog, setDialog] = useState<DialogType>(null);
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [composerPrefill, setComposerPrefill] = useState({
+    text: "",
+    version: 0,
+  });
 
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
@@ -379,6 +383,12 @@ export default function TicketDetailPage() {
                   ticketClosed={status === TicketStatusEnum.Closed}
                   ticketId={id}
                   aiEnabled
+                  onSelectSuggestion={(text) =>
+                    setComposerPrefill((prev) => ({
+                      text,
+                      version: prev.version + 1,
+                    }))
+                  }
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId: id,
@@ -402,6 +412,8 @@ export default function TicketDetailPage() {
                   onTyping={sendTyping}
                   isInternal={chatTab === "internal"}
                   existingFileIds={existingFileIds}
+                  prefillText={composerPrefill.text}
+                  prefillVersion={composerPrefill.version}
                 />
               </div>
             </TabsContent>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -23,16 +23,17 @@ import {
   type AddCommentFormValues,
 } from "../schemas/staff-ticket.schema";
 
-const MAX_TEXTAREA_HEIGHT = 120; // ~5 dòng trước khi cuộn nội bộ
+const MAX_TEXTAREA_HEIGHT = 120;
 
 interface Props {
   ticketId: string;
   onSubmit: (data: AddCommentFormValues) => void;
   isPending: boolean;
   onTyping?: () => void;
-  /** Bình luận gửi ở chế độ nội bộ (theo tab đang mở của thread). */
   isInternal?: boolean;
   existingFileIds?: string[];
+  prefillText?: string;
+  prefillVersion?: number;
 }
 
 export function AddCommentForm({
@@ -42,8 +43,12 @@ export function AddCommentForm({
   onTyping,
   isInternal = false,
   existingFileIds = [],
+  prefillText,
+  prefillVersion = 0,
 }: Props) {
   const [uploading, setUploading] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
   const form = useForm<AddCommentFormValues>({
     resolver: zodResolver(addCommentSchema),
     defaultValues: { body: "", isInternal },
@@ -52,17 +57,30 @@ export function AddCommentForm({
   const attachments =
     useWatch({ control: form.control, name: "attachments" }) ?? [];
   const body = useWatch({ control: form.control, name: "body" }) ?? "";
-  // Không còn báo lỗi "để trống" — chỉ disable nút gửi khi rỗng (không text và không ảnh).
   const isEmpty = !body.trim() && attachments.length === 0;
 
-  // Ô nhập tự giãn theo nội dung gõ (giống WhatsApp/Messenger) thay vì cố định 1 dòng.
-  // resetCount đổi key của Textarea sau submit → remount, tự về chiều cao ban đầu
-  // (không đọc/ghi ref trong callback truyền vào handleSubmit — vi phạm rules-of-refs).
   const [resetCount, setResetCount] = useState(0);
   const autoResize = (el: HTMLTextAreaElement) => {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT)}px`;
   };
+
+  useEffect(() => {
+    if (!prefillText?.trim()) return;
+    form.setValue("body", prefillText, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      autoResize(el);
+      el.focus();
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    });
+  }, [form, prefillText, prefillVersion]);
 
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit({ ...data, isInternal });
@@ -70,7 +88,6 @@ export function AddCommentForm({
     setResetCount((c) => c + 1);
   });
 
-  // Ghi âm — BE luôn tạo chat với IsInternal=false, nên khoá khi đang ở sub-tab Nội bộ.
   const { isRecording, elapsedSeconds, waveform, start, stop, cancel } =
     useVoiceRecorder();
   const { mutateAsync: transcribeVoice, isPending: transcribing } =
@@ -80,9 +97,10 @@ export function AddCommentForm({
     try {
       await start();
     } catch {
-      toast.error("Không thể truy cập micro. Vui lòng cấp quyền và thử lại.");
+      toast.error("Khong the truy cap micro. Vui long cap quyen va thu lai.");
     }
   };
+
   const handleStopRecording = async () => {
     const file = await stop();
     if (!file) return;
@@ -140,40 +158,45 @@ export function AddCommentForm({
               <FormField
                 control={form.control}
                 name="body"
-                render={({ field }) => (
-                  <FormItem className="flex-1 space-y-0">
-                    <FormControl>
-                      <Textarea
-                        key={resetCount}
-                        placeholder={
-                          isInternal
-                            ? "Ghi chú nội bộ (khách không thấy)..."
-                            : "Thêm bình luận..."
-                        }
-                        rows={1}
-                        className="flex min-h-9 resize-none items-center overflow-y-auto rounded-xl border-0 bg-transparent py-1.75 leading-4.5 shadow-none focus-visible:ring-0"
-                        style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          onTyping?.();
-                        }}
-                        onInput={(e) => autoResize(e.currentTarget)}
-                      />
-                    </FormControl>
-                    <FormMessage className="px-2" />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const { ref: fieldRef, ...fieldProps } = field;
+                  return (
+                    <FormItem className="flex-1 space-y-0">
+                      <FormControl>
+                        <Textarea
+                          key={resetCount}
+                          ref={(el) => {
+                            fieldRef(el);
+                            textareaRef.current = el;
+                          }}
+                          placeholder={
+                            isInternal
+                              ? "Ghi chu noi bo (khach khong thay)..."
+                              : "Them binh luan..."
+                          }
+                          rows={1}
+                          className="flex min-h-9 resize-none items-center overflow-y-auto rounded-xl border-0 bg-transparent py-1.75 leading-4.5 shadow-none focus-visible:ring-0"
+                          style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
+                          {...fieldProps}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            onTyping?.();
+                          }}
+                          onInput={(e) => autoResize(e.currentTarget)}
+                        />
+                      </FormControl>
+                      <FormMessage className="px-2" />
+                    </FormItem>
+                  );
+                }}
               />
               <button
                 type="button"
                 disabled={isInternal || uploading || transcribing}
                 title={
-                  isInternal
-                    ? "Ghi âm luôn được gửi công khai"
-                    : "Ghi âm tin nhắn"
+                  isInternal ? "Ghi am luon duoc gui cong khai" : "Ghi am tin nhan"
                 }
-                aria-label="Ghi âm tin nhắn"
+                aria-label="Ghi am tin nhan"
                 onClick={handleStartRecording}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
               >
@@ -191,7 +214,7 @@ export function AddCommentForm({
             size="icon-lg"
             className="shrink-0 rounded-full"
             disabled={isPending || uploading || isRecording || isEmpty}
-            aria-label="Gửi bình luận"
+            aria-label="Gui binh luan"
           >
             <Send size={16} />
           </Button>
