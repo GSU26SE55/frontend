@@ -92,7 +92,7 @@ export default function TicketListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
-            dõi và điều phối ticket
+            dõi và điều phối ticket.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />

@@ -106,7 +106,7 @@ export default function AdminTicketListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
-            dõi toàn bộ ticket hệ thống
+            dõi toàn bộ ticket hệ thống.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.tickets]} />

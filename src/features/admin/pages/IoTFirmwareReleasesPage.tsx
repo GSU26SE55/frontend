@@ -49,7 +49,7 @@ export default function IoTFirmwareReleasesPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : totalItems} release &mdash; quản lý OTA
-            firmware
+            firmware.
           </p>
         </div>
         <div className="flex gap-2">

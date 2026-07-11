@@ -5,6 +5,10 @@ import SmartHome from "./SmartHome";
 import { UserRole } from "@/shared/types/session.types";
 import AuthLayout from "@/shared/components/layout/AuthLayout";
 import AppLayout from "@/shared/components/layout/AppLayout";
+import RoleAwareAppLayout from "./RoleAwareAppLayout";
+import { ADMIN_NAV } from "@/features/admin/config/adminNav";
+import { MANAGER_NAV } from "@/features/manager/config/managerNav";
+import { STAFF_NAV } from "@/features/staff/config/staffNav";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
 import UseMobileAppPage from "@/features/auth/pages/UseMobileAppPage";
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -116,7 +120,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/settings",
-        element: <AppLayout />,
+        element: <RoleAwareAppLayout />,
         children: [{ index: true, element: <AccountSettingsPage /> }],
       },
       {
@@ -129,7 +133,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/admin",
-            element: <AppLayout />,
+            element: <AppLayout sections={ADMIN_NAV} />,
             children: [
               { index: true, element: <AdminDashboardPage /> },
               { path: "dashboard", element: <AdminDashboardPage /> },
@@ -185,7 +189,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/manager",
-            element: <AppLayout />,
+            element: <AppLayout sections={MANAGER_NAV} />,
             children: [
               { index: true, element: <ManagerDashboardPage /> },
               { path: "dashboard", element: <ManagerDashboardPage /> },
@@ -220,7 +224,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/staff",
-            element: <AppLayout />,
+            element: <AppLayout sections={STAFF_NAV} />,
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               { path: "dashboard", element: <StaffDashboardPage /> },

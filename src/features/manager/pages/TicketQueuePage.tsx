@@ -66,7 +66,7 @@ export default function TicketQueuePage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; trạng
-            thái Open, P1 ưu tiên trước
+            thái Open, P1 ưu tiên trước.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />

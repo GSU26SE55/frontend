@@ -91,7 +91,8 @@ export default function BatteryTypesPage() {
             Loại pin &amp; Ngưỡng cảnh báo
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} loại pin.
+            {isLoading ? "..." : totalItems} loại pin &mdash; quản lý loại pin
+            và ngưỡng cảnh báo.
           </p>
         </div>
         <div className="flex gap-2">

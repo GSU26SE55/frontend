@@ -357,7 +357,7 @@ export default function AccountsPage() {
                         >
                           <EllipsisVertical className="size-4" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuContent align="end" className="w-36">
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "edit", account: acc })

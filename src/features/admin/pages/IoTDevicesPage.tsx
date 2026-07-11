@@ -68,7 +68,7 @@ export default function IoTDevicesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">IoT Devices</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : totalItems} thiết bị &mdash; quản lý edge
-            device
+            device.
           </p>
         </div>
         <div className="flex gap-2">

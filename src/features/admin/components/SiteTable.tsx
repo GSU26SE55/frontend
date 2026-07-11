@@ -105,7 +105,7 @@ export default function SiteTable({
           >
             <EllipsisVertical className="size-4" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-36">
             {site.status !== SiteStatusEnum.Decommissioned ? (
               <>
                 <DropdownMenuItem onClick={() => onEdit(site)}>
