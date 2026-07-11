@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
 import { useStaffTickets } from "../hooks/useStaffTickets";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { TicketCard } from "../components/TicketCard";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [

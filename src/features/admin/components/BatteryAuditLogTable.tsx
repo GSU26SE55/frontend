@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BatteryAuditLogDto } from "@/features/admin/types/battery-audit.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 import { toneClass } from "@/shared/theme/statusColors";
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,9 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
-import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
-import CascadeRiskSummary from "@/shared/components/common/CascadeRiskSummary";
+import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
+import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
+import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import { useSiteCascadeSummary } from "@/features/manager/hooks/useSiteCascadeSummary";
 import {
   useSiteDetail,

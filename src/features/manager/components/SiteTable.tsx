@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SiteStatusEnum, type SiteDto } from "@/shared/types/site.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {

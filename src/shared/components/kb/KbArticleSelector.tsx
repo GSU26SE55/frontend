@@ -12,7 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Eye, FileText, Search, ThumbsUp, X } from "lucide-react";
-import type { KbArticleDTO, KbArticleSummaryDTO } from "@/shared/types/kb.types";
+import type {
+  KbArticleDTO,
+  KbArticleSummaryDTO,
+} from "@/shared/types/kb.types";
 import {
   KbArticleStatusEnum,
   KbCategoryLabel,

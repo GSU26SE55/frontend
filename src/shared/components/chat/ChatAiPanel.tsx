@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  Copy,
   FileDown,
   Loader2,
   Smile,
@@ -46,22 +45,22 @@ const INTENT_LABEL: Record<ChatAiIntentEnum, string> = {
 
 interface Props {
   ticketId: string;
-  onSelectSuggestion?: (text: string) => void | Promise<void>;
+  /** GH-133 — gợi ý sau khi lấy được đổ ra bong bóng cuối luồng chat (parent render). */
+  onSuggestions?: (suggestions: string[]) => void;
 }
 
 /**
  * GH-133 C2 — thanh công cụ AI cho chat thread (Staff/Manager/Admin).
  * Gợi ý (suggest) · Tóm tắt (summarize) · Xuất PDF (export-pdf).
- * Nếu page truyền callback, chọn gợi ý có thể xử lý ngay (ví dụ gửi thẳng vào thread).
+ * Gợi ý trả về được đẩy lên parent (onSuggestions) để hiển thị dạng bong bóng
+ * cuối luồng chat — bấm chọn sẽ đổ vào ô nhập rồi user tự gửi.
  */
-export default function ChatAiPanel({ ticketId, onSelectSuggestion }: Props) {
+export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
   const suggestM = useSuggestChat();
   const summarizeM = useSummarizeChat();
   const sentimentM = useSentimentCheck();
   const exportM = useExportChatPdf();
 
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [suggestOpen, setSuggestOpen] = useState(false);
   const [summary, setSummary] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sentiment, setSentiment] = useState<{
@@ -70,9 +69,6 @@ export default function ChatAiPanel({ ticketId, onSelectSuggestion }: Props) {
     isAlertSent: boolean;
   } | null>(null);
   const [sentimentOpen, setSentimentOpen] = useState(false);
-  const [selectingSuggestionIndex, setSelectingSuggestionIndex] = useState<
-    number | null
-  >(null);
 
   const handleSuggest = async (intent: ChatAiIntentEnum) => {
     try {
@@ -81,8 +77,7 @@ export default function ChatAiPanel({ ticketId, onSelectSuggestion }: Props) {
         toast.error(res.message ?? "AI không tạo được gợi ý.");
         return;
       }
-      setSuggestions(res.data.suggestions);
-      setSuggestOpen(true);
+      onSuggestions?.(res.data.suggestions);
     } catch {
       /* hook onError đã toast */
     }
@@ -113,30 +108,6 @@ export default function ChatAiPanel({ ticketId, onSelectSuggestion }: Props) {
       setSentimentOpen(true);
     } catch {
       /* hook onError đã toast */
-    }
-  };
-
-  const copySuggestion = (text: string) => {
-    void navigator.clipboard
-      .writeText(text)
-      .then(() => toast.success("Đã sao chép gợi ý."))
-      .catch(() => toast.error("Không sao chép được."));
-  };
-
-  const selectSuggestion = async (text: string, index: number) => {
-    if (!onSelectSuggestion) {
-      copySuggestion(text);
-      return;
-    }
-    setSelectingSuggestionIndex(index);
-    try {
-      await onSelectSuggestion(text);
-      setSuggestOpen(false);
-      toast.success("Đã chọn gợi ý. Bạn có thể gửi tin nhắn ngay.");
-    } catch {
-      /* mutation hook đã toast */
-    } finally {
-      setSelectingSuggestionIndex(null);
     }
   };
 
@@ -215,52 +186,6 @@ export default function ChatAiPanel({ ticketId, onSelectSuggestion }: Props) {
         )}
         Xuất PDF
       </Button>
-
-      {/* Dialog gợi ý */}
-      <Dialog open={suggestOpen} onOpenChange={setSuggestOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Gợi ý trả lời (AI)</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            {suggestions.map((s, i) => (
-              <div
-                key={i}
-                role="button"
-                tabIndex={0}
-                aria-disabled={selectingSuggestionIndex !== null}
-                className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-2.5 text-left text-sm transition-colors hover:bg-muted/40 aria-disabled:pointer-events-none aria-disabled:opacity-60"
-                onClick={() => void selectSuggestion(s, i)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    void selectSuggestion(s, i);
-                  }
-                }}
-              >
-                <p className="flex-1 whitespace-pre-wrap break-words">{s}</p>
-                {selectingSuggestionIndex === i && (
-                  <Loader2 className="mt-1 size-3.5 shrink-0 animate-spin text-muted-foreground" />
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 shrink-0"
-                  aria-label="Sao chép gợi ý"
-                  disabled={selectingSuggestionIndex !== null}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copySuggestion(s);
-                  }}
-                >
-                  <Copy className="size-3.5" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog tóm tắt */}
       <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>

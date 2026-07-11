@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 interface Props {

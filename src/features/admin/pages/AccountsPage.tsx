@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,9 +61,9 @@ import EditStaffProfileDialog from "@/features/admin/components/EditStaffProfile
 import MergeAccountDialog from "@/features/admin/components/MergeAccountDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {

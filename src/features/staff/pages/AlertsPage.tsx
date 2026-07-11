@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { KpiCard } from "@/shared/components/common/KpiCard";
+import { KpiCard } from "@/shared/components/dashboard/KpiCard";
 import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotifications";
 import {
   toneClass,

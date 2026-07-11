@@ -14,10 +14,10 @@ import {
 import { useIotDevices } from "@/features/admin/hooks/useIotDevices";
 import { useSiteList } from "@/features/admin/hooks/useSites";
 import IoTDeviceTable from "@/features/admin/components/IoTDeviceTable";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
 

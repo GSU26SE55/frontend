@@ -10,7 +10,7 @@ import {
   DashboardKpi,
   DashboardPanel,
   DashboardGauge,
-} from "@/shared/components/common/DashboardPanel";
+} from "@/shared/components/dashboard/DashboardPanel";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import { useAdminTicketQueue } from "@/features/manager/hooks/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/useStaffAssignmentList";
@@ -29,7 +29,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import {
   Ticket,

@@ -19,8 +19,8 @@ import {
   DashboardPanel,
   DashboardDonut,
   DashboardGauge,
-} from "@/shared/components/common/DashboardPanel";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+} from "@/shared/components/dashboard/DashboardPanel";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { NotificationStatusEnum } from "@/shared/enums/notification.enum";
 import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";

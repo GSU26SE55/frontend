@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ImagePlus, Loader2, X, Upload, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import AuthImage from "@/shared/components/common/AuthImage";
+import AuthImage from "@/shared/components/media/AuthImage";
 import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
 import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { HttpError, EntityError } from "@/shared/lib/errors";
@@ -32,6 +32,8 @@ interface FileUploadFieldProps {
   disabled?: boolean;
   /** Trigger icon-only tròn (cho thanh chat) thay vì khung dashed có chữ "Thêm". */
   compact?: boolean;
+  /** Khung upload lớn, chiếm hết chiều rộng cột (cho form Ảnh trước / Ảnh sau). */
+  large?: boolean;
   /** Ẩn thumbnail trong component này — dùng khi consumer tự hiển thị preview ở nơi khác. */
   hideThumbnails?: boolean;
   /** Danh sách file ID đã tồn tại trong ticket để tái sử dụng */
@@ -52,6 +54,7 @@ export default function FileUploadField({
   label,
   disabled = false,
   compact = false,
+  large = false,
   hideThumbnails = false,
   existingFileIds = [],
 }: FileUploadFieldProps) {
@@ -247,6 +250,7 @@ export default function FileUploadField({
         className={cn(
           "flex items-center gap-2",
           compact ? "shrink-0" : "flex-wrap",
+          large && "gap-3",
         )}
       >
         {!hideThumbnails &&
@@ -255,7 +259,9 @@ export default function FileUploadField({
               key={att.fileId}
               className={cn(
                 "relative overflow-hidden rounded-md border",
-                compact ? "h-9 w-9" : "h-16 w-16",
+                compact && "h-9 w-9",
+                !compact && !large && "h-16 w-16",
+                large && "aspect-square w-24",
               )}
             >
               <AuthImage
@@ -296,14 +302,19 @@ export default function FileUploadField({
             type="button"
             onClick={handleAddClick}
             disabled={uploading}
-            className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-md border border-dashed text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-md border border-dashed text-muted-foreground hover:bg-muted/50 disabled:opacity-50",
+              large ? "aspect-square w-24" : "h-16 w-16",
+            )}
           >
             {uploading ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={large ? 24 : 18} className="animate-spin" />
             ) : (
               <>
-                <ImagePlus size={18} />
-                <span className="text-[10px]">Thêm</span>
+                <ImagePlus size={large ? 24 : 18} />
+                <span className={cn(large ? "text-xs" : "text-[10px]")}>
+                  Thêm
+                </span>
               </>
             )}
           </button>

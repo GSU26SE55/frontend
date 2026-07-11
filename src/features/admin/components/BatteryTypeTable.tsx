@@ -20,7 +20,7 @@ import {
   BatteryChemistryEnum,
   type BatteryTypeDto,
 } from "@/features/admin/types/battery-type.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const CHEMISTRY_LABEL: Record<BatteryChemistryEnum, string> = {

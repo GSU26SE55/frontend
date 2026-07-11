@@ -23,7 +23,7 @@ import ConfirmActionDialog from "@/features/admin/components/ConfirmActionDialog
 import { useDeleteIotDevice } from "@/features/admin/hooks/useIotDeviceMutations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceDto } from "@/shared/types/iot.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 interface Props {

@@ -12,11 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { KpiCard } from "@/shared/components/common/KpiCard";
+import { KpiCard } from "@/shared/components/dashboard/KpiCard";
 import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";
 import { useStaffTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/SlaCountdown";
 
 export default function SlaMonitorPage() {

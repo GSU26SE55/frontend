@@ -22,7 +22,11 @@ export function SortableTableHead({
   className,
 }: SortableTableHeadProps) {
   const active = activeSortKey === sortKey;
-  const Icon = active ? (direction === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+  const Icon = active
+    ? direction === "asc"
+      ? ArrowUp
+      : ArrowDown
+    : ArrowUpDown;
 
   return (
     <TableHead className={className}>

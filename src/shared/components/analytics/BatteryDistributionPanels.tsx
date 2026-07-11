@@ -3,7 +3,7 @@ import {
   DashboardPanel,
   DashboardDonut,
   type DonutDatum,
-} from "@/shared/components/common/DashboardPanel";
+} from "@/shared/components/dashboard/DashboardPanel";
 import { ReportTimeSeriesChart } from "./ReportTimeSeriesChart";
 import type { BatteryDashboardStatsDto } from "@/shared/types/analytics.types";
 

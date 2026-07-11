@@ -25,7 +25,7 @@ import {
 import { handleErrorApi } from "@/shared/lib/errors";
 import { IotFirmwareChannelEnum } from "@/shared/enums/iot.enum";
 import type { IotFirmwareReleaseDto } from "@/shared/types/iot.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 function formatBytes(bytes: number): string {

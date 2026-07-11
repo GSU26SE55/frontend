@@ -33,7 +33,7 @@ import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/session.types";
 import { cn } from "@/lib/utils";
-import ThemeToggle from "@/shared/components/common/ThemeToggle";
+import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 import NotificationBell from "./NotificationBell";
 
 // ── Topbar ──────────────────────────────────────────────────────────────────

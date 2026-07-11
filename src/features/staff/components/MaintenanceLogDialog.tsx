@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import {
   KbArticleSelector,
   type KbArticleSearchParams,
-} from "@/shared/components/common/kb/KbArticleSelector";
+} from "@/shared/components/kb/KbArticleSelector";
 import FileUploadField from "@/shared/components/file/FileUploadField";
 import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { MaintenanceLogTypeEnum } from "@/shared/types/ticket.types";
@@ -282,6 +282,7 @@ export function MaintenanceLogDialog({
                     onChange={field.onChange}
                     onUploadingChange={setUploadingBefore}
                     label="Ảnh trước"
+                    large
                   />
                 )}
               />
@@ -295,6 +296,7 @@ export function MaintenanceLogDialog({
                     onChange={field.onChange}
                     onUploadingChange={setUploadingAfter}
                     label="Ảnh sau"
+                    large
                   />
                 )}
               />

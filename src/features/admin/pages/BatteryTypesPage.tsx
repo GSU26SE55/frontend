@@ -26,8 +26,8 @@ import ThresholdConfigDialog from "@/features/admin/components/ThresholdConfigDi
 import type { BatteryTypeDto } from "@/features/admin/types/battery-type.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const DEFAULTS = {

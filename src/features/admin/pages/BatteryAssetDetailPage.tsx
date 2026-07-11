@@ -35,8 +35,8 @@ import SensorChart from "@/features/admin/components/SensorChart";
 import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
 import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
 import { BatteryStatusEnum } from "@/features/admin/types/battery-asset.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
-import { LiveTelemetryCard } from "@/shared/components/common/LiveTelemetryCard";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
 

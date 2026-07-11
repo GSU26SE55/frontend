@@ -16,11 +16,11 @@ import {
   TicketPriorityEnum,
   TicketCategoryEnum,
 } from "@/shared/types/ticket.types";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_LABELS: Record<string, string> = {

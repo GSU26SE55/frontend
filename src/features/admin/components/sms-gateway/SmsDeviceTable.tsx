@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { GatewayDeviceDto } from "@/features/admin/types/sms-gateway.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const ONLINE_THRESHOLD_MS = 10 * 60 * 1000; // 10 phút — theo controller remark BE

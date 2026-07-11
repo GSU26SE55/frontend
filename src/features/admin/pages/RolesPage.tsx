@@ -13,8 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import {
   Select,
   SelectContent,
@@ -61,7 +61,7 @@ import ChangeRoleStatusDialog from "@/features/admin/components/ChangeRoleStatus
 import PermissionsDialog from "@/features/admin/components/PermissionsDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/admin.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_VARIANT: Record<
@@ -143,8 +143,8 @@ export default function RolesPage() {
             Vai trò & Quyền hạn
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : total} vai trò &mdash; quản lý phân quyền truy cập
-            hệ thống.
+            {isLoading ? "..." : total} vai trò &mdash; quản lý phân quyền truy
+            cập hệ thống.
           </p>
         </div>
         <div className="flex gap-2">

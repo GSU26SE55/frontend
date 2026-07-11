@@ -25,7 +25,7 @@ import {
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
 import { useRestoreBatteryAsset } from "@/features/admin/hooks/useRestoreBatteryAsset";
 import { toast } from "sonner";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {

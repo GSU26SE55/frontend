@@ -9,7 +9,6 @@ import {
   WarrantyStatusEnum,
 } from "@/features/manager/types/battery-asset.types";
 import BatteryUsageHistoryPanel from "@/features/manager/components/BatteryUsageHistoryPanel";
-import BatteryTicketHistoryPanel from "@/features/manager/components/BatteryTicketHistoryPanel";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -23,13 +22,7 @@ const WARRANTY_LABEL: Record<WarrantyStatusEnum, string> = {
   [WarrantyStatusEnum.VOID]: "Vô hiệu",
 };
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5">
       <span className="text-xs text-muted-foreground shrink-0">{label}</span>
@@ -42,13 +35,9 @@ function InfoRow({
 
 interface Props {
   batteryAssetId?: string | null;
-  currentTicketId: string;
 }
 
-export default function BatteryAssetInfoPanel({
-  batteryAssetId,
-  currentTicketId,
-}: Props) {
+export default function BatteryAssetInfoPanel({ batteryAssetId }: Props) {
   const {
     data: asset,
     isLoading,
@@ -109,12 +98,8 @@ export default function BatteryAssetInfoPanel({
         />
       </div>
 
-      <div className="mt-5 space-y-5">
+      <div className="mt-5">
         <BatteryUsageHistoryPanel batteryAssetId={batteryAssetId} />
-        <BatteryTicketHistoryPanel
-          batteryAssetId={batteryAssetId}
-          currentTicketId={currentTicketId}
-        />
       </div>
     </div>
   );

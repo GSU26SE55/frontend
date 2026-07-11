@@ -12,10 +12,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import type { PaginationResponse } from "@/shared/types/api.types";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const CATEGORY_LABELS: Record<string, string> = {

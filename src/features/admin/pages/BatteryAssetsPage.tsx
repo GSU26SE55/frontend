@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import {
   Select,
   SelectContent,
@@ -22,10 +22,10 @@ import BatteryAssetTable from "@/features/admin/components/BatteryAssetTable";
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types";
 import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {

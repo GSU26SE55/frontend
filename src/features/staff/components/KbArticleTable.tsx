@@ -8,11 +8,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
+import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
 import { Eye, ThumbsUp, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbCategoryLabel } from "@/shared/enums/kb.enum";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 interface KbArticleTableProps {

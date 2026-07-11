@@ -38,11 +38,11 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import type { AuditLogDto } from "@/features/admin/types/admin.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { toneClass } from "@/shared/theme/statusColors";
 

@@ -26,10 +26,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import TicketAttachments from "@/shared/components/common/TicketAttachments";
-import VoiceMessagePlayer from "@/shared/components/common/VoiceMessagePlayer";
-import ChatAiPanel from "@/shared/components/common/ChatAiPanel";
-import ChatReactionBar from "@/shared/components/common/ChatReactionBar";
+import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import VoiceMessagePlayer from "@/shared/components/media/VoiceMessagePlayer";
+import ChatAiPanel from "@/shared/components/chat/ChatAiPanel";
+import ChatReactionBar from "@/shared/components/chat/ChatReactionBar";
 import {
   isFileId,
   useAudioAttachment,

@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import AuthImage from "@/shared/components/common/AuthImage";
+import AuthImage from "@/shared/components/media/AuthImage";
 
 interface AttachmentPreviewItem {
   fileId: string;

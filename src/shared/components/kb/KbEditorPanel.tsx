@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
-import { TagInput } from "@/shared/components/common/TagInput";
+import { TagInput } from "@/shared/components/ui/TagInput";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
 import type {
   KbArticleDTO,

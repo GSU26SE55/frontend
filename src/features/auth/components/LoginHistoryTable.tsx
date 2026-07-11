@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import { useLoginHistory } from "@/features/auth/hooks/useLoginHistory";
 import { LoginAttemptResult } from "@/features/auth/types/account.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 
 const RESULT_LABEL: Record<LoginAttemptResult, string> = {
@@ -39,8 +39,9 @@ const LoginHistoryTable = () => {
 
   const items = data?.items ?? [];
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
-  const { sorted, sortKey, sortDirection, toggleSort } =
-    useSortableData(items, (item, key) => {
+  const { sorted, sortKey, sortDirection, toggleSort } = useSortableData(
+    items,
+    (item, key) => {
       switch (key) {
         case "createdAt":
           return new Date(item.createdAt);
@@ -53,7 +54,8 @@ const LoginHistoryTable = () => {
         default:
           return null;
       }
-    });
+    },
+  );
 
   return (
     <div className="flex flex-col gap-3">

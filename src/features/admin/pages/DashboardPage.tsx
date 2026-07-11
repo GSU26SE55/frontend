@@ -20,7 +20,7 @@ import {
   DashboardPanel,
   DashboardDonut,
   DashboardGauge,
-} from "@/shared/components/common/DashboardPanel";
+} from "@/shared/components/dashboard/DashboardPanel";
 import { useSiteList } from "@/features/admin/hooks/useSites";
 import { useAdminAuditLogs } from "@/features/admin/hooks/useAdminAuditLogs";
 import { useBatteryDashboardStats } from "@/shared/hooks/useBatteryDashboard";
@@ -30,7 +30,7 @@ import {
   useAccountStats,
 } from "@/shared/hooks/useDashboardStats";
 import { BatteryDistributionPanels } from "@/shared/components/analytics/BatteryDistributionPanels";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { TicketHealthCard } from "@/features/admin/components/TicketHealthCard";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";

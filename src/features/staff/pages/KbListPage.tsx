@@ -10,14 +10,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Tag, X } from "lucide-react";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { useStaffKbList, useMarkStaffKbHelpful } from "../hooks/useStaffKb";
 import KbArticleTable from "../components/KbArticleTable";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { ErrorState } from "@/shared/components/common/ErrorState";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 

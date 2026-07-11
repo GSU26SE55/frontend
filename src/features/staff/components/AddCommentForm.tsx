@@ -14,8 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import FileUploadField from "@/shared/components/file/FileUploadField";
 import { FilePurposeEnum } from "@/shared/types/file-storage.types";
-import { AttachmentPreviewStrip } from "@/shared/components/common/AttachmentPreviewStrip";
-import { VoiceRecordingBar } from "@/shared/components/common/VoiceRecordingBar";
+import { AttachmentPreviewStrip } from "@/shared/components/chat/AttachmentPreviewStrip";
+import { VoiceRecordingBar } from "@/shared/components/chat/VoiceRecordingBar";
 import { useVoiceRecorder } from "@/shared/hooks/useVoiceRecorder";
 import { useTranscribeVoiceChat } from "@/shared/hooks/useTicketChatActions";
 import {

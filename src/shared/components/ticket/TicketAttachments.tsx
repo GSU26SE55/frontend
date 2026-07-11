@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import AuthImage from "@/shared/components/common/AuthImage";
+import AuthImage from "@/shared/components/media/AuthImage";
 import { useDownloadChatAttachment } from "@/shared/hooks/useTicketChatActions";
 
 interface TicketAttachmentsProps {

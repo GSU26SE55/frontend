@@ -31,8 +31,8 @@ import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import {
   KbArticleSelector,
   type KbArticleSearchParams,
-} from "@/shared/components/common/kb/KbArticleSelector";
-import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
+} from "@/shared/components/kb/KbArticleSelector";
+import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb.enum";
 import type { UpdateKbArticlePayload } from "@/shared/types/kb.types";
 import { cn } from "@/lib/utils";
