@@ -29,6 +29,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
+import { SIDEBAR_SECTIONS } from "@/shared/utils/sidebarSections";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/session.types";
@@ -184,7 +185,7 @@ const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Hạ tầng pin",
+    title: SIDEBAR_SECTIONS.admin.infrastructure,
     collapsible: true,
     defaultOpen: true,
     items: [
@@ -207,7 +208,7 @@ const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Hỗ trợ",
+    title: SIDEBAR_SECTIONS.admin.support,
     collapsible: true,
     defaultOpen: true,
     items: [
@@ -216,7 +217,7 @@ const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Người dùng",
+    title: SIDEBAR_SECTIONS.admin.users,
     collapsible: true,
     defaultOpen: false,
     items: [
@@ -225,7 +226,7 @@ const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Hệ thống",
+    title: SIDEBAR_SECTIONS.admin.system,
     collapsible: true,
     defaultOpen: false,
     items: [
@@ -256,7 +257,7 @@ const MANAGER_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Quản lý",
+    title: SIDEBAR_SECTIONS.manager.management,
     collapsible: true,
     defaultOpen: true,
     items: [
@@ -279,7 +280,7 @@ const MANAGER_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Hệ thống",
+    title: SIDEBAR_SECTIONS.manager.system,
     collapsible: true,
     defaultOpen: false,
     items: [{ label: "Cài đặt", path: "/manager/settings", icon: Settings }],
@@ -306,7 +307,7 @@ const STAFF_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Báo cáo",
+    title: SIDEBAR_SECTIONS.staff.reports,
     collapsible: true,
     defaultOpen: true,
     items: [
@@ -320,7 +321,7 @@ const STAFF_NAV: NavSection[] = [
     ],
   },
   {
-    title: "Hệ thống",
+    title: SIDEBAR_SECTIONS.staff.system,
     collapsible: true,
     defaultOpen: false,
     items: [{ label: "Cài đặt", path: "/staff/settings", icon: Settings }],

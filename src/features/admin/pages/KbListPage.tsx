@@ -37,6 +37,7 @@ import {
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
 import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
+import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
 
@@ -232,7 +233,7 @@ export default function KbListPage() {
       <Card className="gap-0 py-0 overflow-hidden">
         {isError ? (
           <ErrorState
-            message="Không thể tải danh sách bài viết."
+            message={loadFailed("bài viết")}
             onRetry={() => refetch()}
           />
         ) : (

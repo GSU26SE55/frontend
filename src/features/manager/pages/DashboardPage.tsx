@@ -42,7 +42,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
-import { DASHBOARD_SECTIONS } from "@/shared/utils/dashboardSections";
+import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
 
 /**
  * Manager = Điều phối vận hành ticket: pipeline trạng thái, SLA, tải nhân sự,
@@ -242,7 +242,7 @@ export default function ManagerDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* Ticket pipeline — horizontal bars */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.manager.ticketPipeline}
+          title={OVERVIEW_PANELS.manager.ticketPipeline}
           desc={`${pipelineTotal} ticket theo giai đoạn`}
           className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
@@ -288,7 +288,7 @@ export default function ManagerDashboardPage() {
 
         {/* SLA gauge */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.manager.sla}
+          title={OVERVIEW_PANELS.manager.sla}
           desc="met / (met + breach)"
           className="lg:col-span-3 min-h-60 lg:min-h-0"
         >
@@ -336,7 +336,7 @@ export default function ManagerDashboardPage() {
 
         {/* Tickets 7-day — area */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.manager.newTickets7d}
+          title={OVERVIEW_PANELS.manager.newTickets7d}
           desc="Số ticket tạo theo ngày"
           className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
@@ -400,7 +400,7 @@ export default function ManagerDashboardPage() {
 
         {/* Staff workload */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.manager.staffLoad}
+          title={OVERVIEW_PANELS.manager.staffLoad}
           desc={`${workload.length} staff · ticket đang xử lý / tối đa`}
           className="lg:col-span-5 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -457,7 +457,7 @@ export default function ManagerDashboardPage() {
 
         {/* Triage queue */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.manager.triageQueue}
+          title={OVERVIEW_PANELS.manager.triageQueue}
           desc={`${queueCount} ticket chờ phân loại`}
           className="lg:col-span-4 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -501,7 +501,7 @@ export default function ManagerDashboardPage() {
 
         {/* At-risk sites */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.manager.sitesNeedAttention}
+          title={OVERVIEW_PANELS.manager.sitesNeedAttention}
           desc={`Sức khỏe < 80% · ${atRisk.length} site`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"

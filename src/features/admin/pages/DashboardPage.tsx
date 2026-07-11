@@ -35,7 +35,7 @@ import { TicketHealthCard } from "@/features/admin/components/TicketHealthCard";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
-import { DASHBOARD_SECTIONS } from "@/shared/utils/dashboardSections";
+import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
 
 /**
  * Admin = Trung tâm điều khiển: bao quát TOÀN hệ thống ở mức oversight —
@@ -277,7 +277,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* Alerts 7-day — stacked area */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.alerts7d}
+          title={OVERVIEW_PANELS.admin.alerts7d}
           desc="Theo mức độ nghiêm trọng"
           className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
@@ -365,7 +365,7 @@ export default function AdminDashboardPage() {
 
         {/* Anomaly type — ranked list (màu theo severity) */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.alertsByType}
+          title={OVERVIEW_PANELS.admin.alertsByType}
           desc="Top loại · màu theo mức độ"
           className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
@@ -415,7 +415,7 @@ export default function AdminDashboardPage() {
 
         {/* System SLA — gauge (oversight) */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.slaSystem}
+          title={OVERVIEW_PANELS.admin.slaSystem}
           desc={`${openTickets}/${totalTickets} ticket mở`}
           className="lg:col-span-3 min-h-60 lg:min-h-0"
         >
@@ -463,7 +463,7 @@ export default function AdminDashboardPage() {
 
         {/* Battery status — donut */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.batteryByStatus}
+          title={OVERVIEW_PANELS.admin.batteryByStatus}
           desc={`${totalBatt} pin`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
@@ -484,7 +484,7 @@ export default function AdminDashboardPage() {
 
         {/* Users by role — donut */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.usersByRole}
+          title={OVERVIEW_PANELS.admin.usersByRole}
           desc={`${totalAccounts} tài khoản`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
@@ -505,7 +505,7 @@ export default function AdminDashboardPage() {
 
         {/* Site health list */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.siteHealth}
+          title={OVERVIEW_PANELS.admin.siteHealth}
           desc={`Trung bình ${avgHealth}%`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -551,7 +551,7 @@ export default function AdminDashboardPage() {
 
         {/* Audit log feed (security) */}
         <DashboardPanel
-          title={DASHBOARD_SECTIONS.admin.systemLog}
+          title={OVERVIEW_PANELS.admin.systemLog}
           desc="Audit log gần đây"
           className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"

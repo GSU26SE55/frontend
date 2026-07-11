@@ -20,6 +20,7 @@ import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
 
@@ -168,7 +169,7 @@ export default function KbListPage() {
       <Card className="gap-0 py-0 overflow-hidden">
         {isError ? (
           <ErrorState
-            message="Không thể tải danh sách bài viết."
+            message={loadFailed("bài viết")}
             onRetry={() => refetch()}
           />
         ) : (

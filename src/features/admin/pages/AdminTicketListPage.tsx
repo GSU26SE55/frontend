@@ -26,6 +26,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
+import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
 
@@ -201,7 +202,7 @@ export default function AdminTicketListPage() {
       {isError ? (
         <Card className="gap-0 py-0 overflow-hidden">
           <ErrorState
-            message="Không thể tải danh sách ticket."
+            message={loadFailed("ticket")}
             onRetry={() => refetch()}
           />
         </Card>

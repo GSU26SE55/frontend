@@ -66,6 +66,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -238,11 +239,11 @@ export default function AccountsPage() {
           </div>
         ) : isError ? (
           <ErrorState
-            message="Không thể tải danh sách tài khoản."
+            message={loadFailed("tài khoản")}
             onRetry={() => refetch()}
           />
         ) : accounts.length === 0 ? (
-          <EmptyState icon={Users} title="Chưa có tài khoản nào" />
+          <EmptyState icon={Users} title={noData("tài khoản")} />
         ) : (
           <Table>
             <TableHeader>

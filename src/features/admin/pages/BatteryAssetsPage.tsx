@@ -27,6 +27,7 @@ import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -238,11 +239,11 @@ export default function BatteryAssetsPage() {
           </div>
         ) : isError ? (
           <ErrorState
-            message="Không thể tải danh sách battery asset."
+            message={loadFailed("battery asset")}
             onRetry={() => refetch()}
           />
         ) : items.length === 0 ? (
-          <EmptyState icon={Battery} title="Chưa có battery asset nào." />
+          <EmptyState icon={Battery} title={noData("battery asset")} />
         ) : (
           <BatteryAssetTable
             items={items}

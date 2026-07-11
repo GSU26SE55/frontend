@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { noData } from "@/shared/constants/emptyStates";
 
 interface SubIssueItem {
   id: string;
@@ -79,9 +80,13 @@ export default function SubIssuePanel({ ticketId }: Props) {
         <p className="text-sm text-muted-foreground">
           {items.length > 0
             ? `${doneCount}/${items.length} hoàn thành`
-            : "Chưa có sub issue nào"}
+            : noData("sub issue")}
         </p>
-        <Button size="sm" variant="outline" onClick={() => setCreating((c) => !c)}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setCreating((c) => !c)}
+        >
           <Plus size={13} /> Thêm sub issue
         </Button>
       </div>
@@ -102,7 +107,11 @@ export default function SubIssuePanel({ ticketId }: Props) {
             onChange={(e) => setDescription(e.target.value)}
           />
           <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setCreating(false)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setCreating(false)}
+            >
               Hủy
             </Button>
             <Button size="sm" disabled={!title.trim()} onClick={addItem}>

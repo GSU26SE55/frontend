@@ -6,6 +6,7 @@ import { Eye, ThumbsUp, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbCategoryLabel } from "@/shared/enums/kb.enum";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
+import { noData } from "@/shared/constants/emptyStates";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
@@ -41,9 +42,7 @@ export default function KbArticleTable({
       <div className="py-16 text-center flex flex-col items-center gap-3">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">
-          {hasFilter
-            ? "Không khớp với bộ lọc hiện tại"
-            : "Chưa có bài viết nào"}
+          {hasFilter ? "Không khớp với bộ lọc hiện tại" : noData("bài viết")}
         </p>
         {hasFilter && onResetFilter && (
           <Button size="sm" variant="outline" onClick={onResetFilter}>

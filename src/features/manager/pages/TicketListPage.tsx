@@ -22,6 +22,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KEY } from "@/shared/utils/queryKeys";
+import { loadFailed } from "@/shared/constants/emptyStates";
 
 const STATUS_LABELS: Record<string, string> = {
   New: "Mới",
@@ -190,7 +191,7 @@ export default function TicketListPage() {
       <Card className="gap-0 py-0 overflow-hidden">
         {isError ? (
           <ErrorState
-            message="Không thể tải danh sách ticket."
+            message={loadFailed("ticket")}
             onRetry={() => refetch()}
           />
         ) : (

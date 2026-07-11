@@ -1,8 +1,10 @@
-// Tên các section (title của <DashboardPanel>) cho 3 dashboard theo role.
-// Gom về 1 nguồn để đổi tên section chỉ sửa 1 chỗ, tránh hardcode rải rác 3 page.
-// Dùng: title={DASHBOARD_SECTIONS.admin.alerts7d}
+// Tên các panel (title của <DashboardPanel>) trong trang TỔNG QUAN (Overview) của 3 role.
+// Đây là các panel bên trong trang mặc định theo role (/admin, /manager, /staff) —
+// KHÔNG phải "section" của sidebar (Hạ tầng pin / Hỗ trợ / Người dùng).
+// Gom về 1 nguồn để đổi tên panel chỉ sửa 1 chỗ, tránh hardcode rải rác 3 page.
+// Dùng: title={OVERVIEW_PANELS.admin.alerts7d}
 
-export const DASHBOARD_SECTIONS = {
+export const OVERVIEW_PANELS = {
   admin: {
     alerts7d: "Cảnh báo 7 ngày",
     alertsByType: "Cảnh báo theo loại",

@@ -64,6 +64,7 @@ import type { RoleDto } from "@/features/admin/types/admin.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { loadFailed, notFound } from "@/shared/constants/emptyStates";
 
 const STATUS_VARIANT: Record<
   number,
@@ -210,12 +211,9 @@ export default function RolesPage() {
             ))}
           </div>
         ) : isError ? (
-          <ErrorState
-            message="Không thể tải danh sách role."
-            onRetry={() => refetch()}
-          />
+          <ErrorState message={loadFailed("role")} onRetry={() => refetch()} />
         ) : filteredRoles.length === 0 ? (
-          <EmptyState icon={Shield} title="Không tìm thấy role phù hợp." />
+          <EmptyState icon={Shield} title={notFound("role")} />
         ) : (
           <Table>
             <TableHeader>
