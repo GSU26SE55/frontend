@@ -8,6 +8,7 @@ import {
   CHALLENGE_TOKEN_KEY,
   type LoginPayload,
 } from "@/features/auth/types/auth.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useLogin = () => {
   return useMutation({
@@ -31,7 +32,7 @@ export const useLogin = () => {
       }
 
       if (!res.data.tokens) {
-        toast.error("Đăng nhập thất bại");
+        toast.error(AUTH_MESSAGES.login.failed);
         return;
       }
 

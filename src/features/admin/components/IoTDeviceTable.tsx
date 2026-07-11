@@ -25,6 +25,7 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceDto } from "@/shared/types/iot.types";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   items: IotDeviceDto[];
@@ -199,7 +200,8 @@ export default function IoTDeviceTable({ items, pageNumber, pageSize }: Props) {
         onConfirm={() => {
           if (!confirmId) return;
           deleteDevice(confirmId, {
-            onSuccess: () => toast.success("Đã decommission thiết bị"),
+            onSuccess: () =>
+              toast.success(ADMIN_MESSAGES.iot.deviceDecommissioned),
             onError: (error) => handleErrorApi({ error }),
           });
           setConfirmId(null);

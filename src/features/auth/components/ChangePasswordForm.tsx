@@ -13,6 +13,7 @@ import {
 } from "@/features/auth/schemas/change-password.schema";
 import { useChangePassword } from "@/features/auth/hooks/useChangePassword";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 interface ChangePasswordFormProps {
   bare?: boolean;
@@ -72,7 +73,7 @@ const ChangePasswordForm = ({ bare }: ChangePasswordFormProps = {}) => {
   const onSubmit = async (data: ChangePasswordFormValues) => {
     try {
       await mutateAsync(data);
-      toast.success("Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
+      toast.success(AUTH_MESSAGES.password.changed);
       reset();
     } catch (error) {
       handleErrorApi({ error, setError });

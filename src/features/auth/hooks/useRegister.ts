@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
 import type { RegisterFormValues } from "@/features/auth/types/auth.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useRegister = (onOtpSent: (email: string) => void) => {
   return useMutation({
@@ -16,7 +17,7 @@ export const useRegister = (onOtpSent: (email: string) => void) => {
         toast.error(res.message ?? "Đăng ký thất bại");
         return;
       }
-      toast.success("Đăng ký thành công! Vui lòng xác thực OTP.");
+      toast.success(AUTH_MESSAGES.register.success);
       onOtpSent(variables.email);
     },
   });

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLinkGoogle } from "@/features/auth/hooks/useLinkGoogle";
 import { useUnlinkGoogle } from "@/features/auth/hooks/useUnlinkGoogle";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 interface GoogleLinkSectionProps {
   isLinked: boolean;
@@ -18,7 +19,7 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
 
   const handleUnlink = () => {
     unlinkGoogle(undefined, {
-      onSuccess: () => toast.success("Hủy liên kết Google thành công"),
+      onSuccess: () => toast.success(AUTH_MESSAGES.google.unlinked),
       onError: (error) => handleErrorApi({ error }),
     });
   };
@@ -32,14 +33,14 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
               linkGoogle(
                 { idToken: credentialResponse.credential },
                 {
-                  onSuccess: () => toast.success("Liên kết Google thành công"),
+                  onSuccess: () => toast.success(AUTH_MESSAGES.google.linked),
                   onError: (error) => handleErrorApi({ error }),
                 },
               );
             }
           }}
           onError={() => {
-            toast.error("Đăng nhập Google thất bại");
+            toast.error(AUTH_MESSAGES.google.loginFailed);
           }}
           text="signin"
           shape="rectangular"

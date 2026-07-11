@@ -27,6 +27,7 @@ import {
 } from "@/features/admin/schemas/topology.schema";
 import { ElectricalTopologyEnum } from "@/shared/enums/cascade.enum";
 import type { ElectricalTopologyName } from "@/shared/types/cascade.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const TOPOLOGY_OPTIONS: { value: string; label: string }[] = [
   {
@@ -87,7 +88,7 @@ export default function SetTopologyDialog({
       await setTopology({
         electricalTopology: Number(data.electricalTopology),
       });
-      toast.success("Đã cập nhật topology — cascade risk được tính lại");
+      toast.success(ADMIN_MESSAGES.site.topologyUpdated);
       onOpenChange(false);
     } catch (error) {
       handleErrorApi({ error, setError });

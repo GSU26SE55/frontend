@@ -34,6 +34,7 @@ import type {
   IotDeviceDto,
   IotDeviceCreatedDto,
 } from "@/shared/types/iot.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_OPTIONS: { value: IotDeviceStatusEnum; label: string }[] = [
   { value: IotDeviceStatusEnum.Pending, label: "Chờ provision" },
@@ -108,7 +109,7 @@ export default function IoTDeviceForm({
           targetFirmwareReleaseId: data.targetFirmwareReleaseId || undefined,
           notes: data.notes || undefined,
         });
-        toast.success("Cập nhật thiết bị thành công");
+        toast.success(ADMIN_MESSAGES.iot.deviceUpdated);
         onUpdated();
       } catch (error) {
         handleErrorApi({ error, setError });
@@ -306,7 +307,7 @@ export default function IoTDeviceForm({
         notes: data.notes || undefined,
       });
       if (res.data) {
-        toast.success("Tạo thiết bị thành công");
+        toast.success(ADMIN_MESSAGES.iot.deviceCreated);
         onCreated(res.data);
       }
     } catch (error) {

@@ -21,6 +21,7 @@ import { useIotCalibrations } from "@/shared/hooks/useIotCalibrations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
 import type { IotDeviceCreatedDto } from "@/shared/types/iot.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -234,7 +235,7 @@ export default function IoTDeviceDetailPage() {
           rotateKey(undefined, {
             onSuccess: (res) => {
               if (res.data) setRevealed(res.data);
-              toast.success("Đã rotate key");
+              toast.success(ADMIN_MESSAGES.iot.keyRotated);
             },
             onError: (error) => handleErrorApi({ error }),
           });
@@ -250,7 +251,7 @@ export default function IoTDeviceDetailPage() {
         onConfirm={() => {
           setConfirm(null);
           revokeKey(undefined, {
-            onSuccess: () => toast.success("Đã revoke key"),
+            onSuccess: () => toast.success(ADMIN_MESSAGES.iot.keyRevoked),
             onError: (error) => handleErrorApi({ error }),
           });
         }}

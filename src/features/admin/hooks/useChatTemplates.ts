@@ -8,12 +8,12 @@ import type {
   UpdateChatTemplatePayload,
   ChatTemplateListParams,
 } from "@/shared/types/chat-template.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useChatTemplates = (params?: ChatTemplateListParams) =>
   useQuery({
     queryKey: QUERY_KEY.chatTemplates.list(params),
-    queryFn: () =>
-      chatTemplateService.getList(params).then((r) => r.data.data),
+    queryFn: () => chatTemplateService.getList(params).then((r) => r.data.data),
     staleTime: 5 * 60_000,
   });
 
@@ -30,7 +30,7 @@ export const useCreateChatTemplate = () => {
     mutationFn: (payload: CreateChatTemplatePayload) =>
       chatTemplateService.create(payload),
     onSuccess: () => {
-      toast.success("Đã tạo template");
+      toast.success(ADMIN_MESSAGES.notification.templateCreated);
       qc.invalidateQueries({ queryKey: [KEY.chatTemplates] });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -48,7 +48,7 @@ export const useUpdateChatTemplate = () => {
       payload: UpdateChatTemplatePayload;
     }) => chatTemplateService.update(id, payload),
     onSuccess: () => {
-      toast.success("Đã cập nhật template");
+      toast.success(ADMIN_MESSAGES.notification.templateUpdated);
       qc.invalidateQueries({ queryKey: [KEY.chatTemplates] });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -60,7 +60,7 @@ export const useDeleteChatTemplate = () => {
   return useMutation({
     mutationFn: (id: string) => chatTemplateService.remove(id),
     onSuccess: () => {
-      toast.success("Đã xóa template");
+      toast.success(ADMIN_MESSAGES.notification.templateDeleted);
       qc.invalidateQueries({ queryKey: [KEY.chatTemplates] });
     },
     onError: (error) => handleErrorApi({ error }),

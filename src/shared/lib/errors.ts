@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import type { UseFormSetError } from "react-hook-form";
 import type { ErrorEntity } from "@/shared/types/api.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 export class HttpError extends Error {
   readonly statusCode: number;
@@ -40,5 +41,5 @@ export const handleErrorApi = ({ error, setError }: HandleErrorParams) => {
     toast.error(error.message);
     return;
   }
-  toast.error("Có lỗi không xác định xảy ra");
+  toast.error(MESSAGES.unknownError);
 };

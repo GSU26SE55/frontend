@@ -25,6 +25,7 @@ import {
   useRegisterDeviceToken,
   useUnregisterDeviceToken,
 } from "@/shared/hooks/useDeviceTokens";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Map int → nhãn (repo không có util chung — khai báo inline theo pattern hiện hữu)
 const PLATFORM_LABEL: Record<DevicePlatformEnum, string> = {
@@ -74,7 +75,7 @@ export default function DeviceTokensSection() {
         platform: data.platform,
         deviceInfo: data.deviceInfo || undefined,
       });
-      toast.success("Đăng ký thiết bị thành công");
+      toast.success(MESSAGES.device.registered);
       reset({
         platform: DevicePlatformEnum.Web,
         deviceInfo:
@@ -92,7 +93,7 @@ export default function DeviceTokensSection() {
       { token: revokeToken.trim() },
       {
         onSuccess: () => {
-          toast.success("Đã hủy đăng ký thiết bị");
+          toast.success(MESSAGES.device.unregistered);
           setRevokeToken("");
         },
         onError: (error) => handleErrorApi({ error }),

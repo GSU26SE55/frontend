@@ -17,6 +17,7 @@ import { useDeactivateAccount } from "@/features/auth/hooks/useDeactivateAccount
 import { useDeleteAccount } from "@/features/auth/hooks/useDeleteAccount";
 import { useExportMyData } from "@/features/auth/hooks/useExportMyData";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 const DangerZone = () => {
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
@@ -41,7 +42,7 @@ const DangerZone = () => {
 
   const handleExport = () => {
     exportData(undefined, {
-      onSuccess: () => toast.success("Đã tải dữ liệu tài khoản (JSON)"),
+      onSuccess: () => toast.success(AUTH_MESSAGES.account.dataExported),
       onError: (error) => handleErrorApi({ error }),
     });
   };

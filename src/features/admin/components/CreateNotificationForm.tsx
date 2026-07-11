@@ -28,6 +28,7 @@ import { useAdminAccountList } from "@/features/admin/hooks/useAdminAccounts";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // Map int → nhãn (inline theo pattern repo — không có util chung)
 const TYPE_OPTIONS: { value: NotificationTypeEnum; label: string }[] = [
@@ -116,7 +117,7 @@ export default function CreateNotificationForm() {
         entityType: data.entityType || undefined,
         bypassQuietHours: data.bypassQuietHours,
       });
-      toast.success("Tạo notification thành công");
+      toast.success(ADMIN_MESSAGES.notification.created);
       reset({
         channel: NotificationChannelEnum.InApp,
         bypassQuietHours: false,

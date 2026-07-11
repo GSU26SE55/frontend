@@ -39,6 +39,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -102,7 +103,7 @@ export default function BatteryAssetDetailPage() {
   const handleDelete = () => {
     deleteAsset(id, {
       onSuccess: () => {
-        toast.success("Đã xóa battery asset");
+        toast.success(ADMIN_MESSAGES.battery.deleted);
         navigate("/admin/battery-assets");
       },
     });

@@ -33,6 +33,7 @@ import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
 import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { AccountStatusEnum } from "@/shared/enums/account.enum";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 // ── Maps ─────────────────────────────────────────────────────────────────────
 const ROLE_LABEL: Record<string, string> = {
@@ -121,7 +122,7 @@ const ProfilePage = () => {
         birthDate: data.birthDate || undefined,
         timeZone: data.timeZone || undefined,
       });
-      toast.success("Cập nhật hồ sơ thành công");
+      toast.success(AUTH_MESSAGES.profile.updated);
     } catch (error) {
       handleErrorApi({ error, setError });
     }
@@ -135,14 +136,14 @@ const ProfilePage = () => {
       {
         onSuccess: (res) => {
           if (!res.isSuccess || !res.data) {
-            toast.error("Tải ảnh thất bại");
+            toast.error(AUTH_MESSAGES.profile.avatarUploadFailed);
             return;
           }
           updateAvatar(
             { avatarFileId: res.data.fileId },
             {
               onSuccess: () =>
-                toast.success("Cập nhật ảnh đại diện thành công"),
+                toast.success(AUTH_MESSAGES.profile.avatarUpdated),
               onError: (err) => handleErrorApi({ error: err }),
             },
           );

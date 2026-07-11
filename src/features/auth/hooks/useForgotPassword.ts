@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { ForgotPasswordPayload } from "@/features/auth/types/auth.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useForgotPassword = (onSuccess?: () => void) =>
   useMutation({
@@ -14,7 +15,7 @@ export const useForgotPassword = (onSuccess?: () => void) =>
         toast.error(res.message ?? "Gửi yêu cầu thất bại");
         return;
       }
-      toast.success("OTP đã được gửi đến email của bạn");
+      toast.success(AUTH_MESSAGES.otp.sentToEmail);
       onSuccess?.();
     },
     onError: (error) => handleErrorApi({ error }),

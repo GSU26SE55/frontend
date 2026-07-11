@@ -19,6 +19,7 @@ import {
 import { useAdminUpdateAccount } from "@/features/admin/hooks/useAdminAccounts";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -61,7 +62,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
           address: data.address || undefined,
         },
       });
-      toast.success("Cập nhật tài khoản thành công");
+      toast.success(ADMIN_MESSAGES.account.updated);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

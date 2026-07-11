@@ -24,6 +24,7 @@ import { useDeleteCalibration } from "@/shared/hooks/useIotCalibrationMutations"
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
 import { ACTIONS } from "@/shared/constants/actions";
+import { MESSAGES } from "@/shared/constants/messages";
 
 interface Props {
   deviceId: string;
@@ -111,7 +112,7 @@ export default function CalibrationTable({
               onClick={() => {
                 if (!confirmId) return;
                 deleteCalibration(confirmId, {
-                  onSuccess: () => toast.success("Đã xóa calibration"),
+                  onSuccess: () => toast.success(MESSAGES.calibration.deleted),
                   onError: (error) => handleErrorApi({ error }),
                 });
                 setConfirmId(null);

@@ -35,6 +35,7 @@ import {
   type CreateBatteryTypePayload,
   type UpdateBatteryTypePayload,
 } from "@/features/admin/types/battery-type.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface BatteryTypeFormDialogProps {
   open: boolean;
@@ -110,10 +111,10 @@ export default function BatteryTypeFormDialog({
     try {
       if (isEdit && editData) {
         await updateType(payload as UpdateBatteryTypePayload);
-        toast.success("Cập nhật loại pin thành công");
+        toast.success(ADMIN_MESSAGES.battery.typeUpdated);
       } else {
         await createType(payload);
-        toast.success("Tạo loại pin thành công");
+        toast.success(ADMIN_MESSAGES.battery.typeCreated);
       }
       onOpenChange(false);
     } catch (error) {

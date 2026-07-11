@@ -24,6 +24,7 @@ import { useUpdateBatteryAsset } from "@/features/admin/hooks/useUpdateBatteryAs
 import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types";
 import { WarrantyStatusEnum } from "@/features/admin/enums/battery-asset.enum";
 import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -121,10 +122,10 @@ export default function BatteryAssetForm({
           warrantyStatus: data.warrantyStatus,
           status: data.status,
         });
-        toast.success("Cập nhật battery asset thành công");
+        toast.success(ADMIN_MESSAGES.battery.updated);
       } else {
         await createAsset(payload);
-        toast.success("Tạo battery asset thành công");
+        toast.success(ADMIN_MESSAGES.battery.created);
       }
       onOpenChange(false);
     } catch (error) {

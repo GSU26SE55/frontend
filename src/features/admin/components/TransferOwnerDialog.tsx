@@ -18,6 +18,7 @@ import {
 } from "@/features/admin/schemas/battery-asset.schema";
 import { useCustomers } from "@/features/admin/hooks/useCustomers";
 import { useTransferOwner } from "@/features/admin/hooks/useTransferOwner";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface TransferOwnerDialogProps {
   open: boolean;
@@ -51,7 +52,7 @@ export default function TransferOwnerDialog({
     }
     try {
       await transferOwner(data);
-      toast.success("Chuyển chủ sở hữu thành công");
+      toast.success(ADMIN_MESSAGES.common.ownerTransferred);
       onOpenChange(false);
     } catch (error) {
       handleErrorApi({ error, setError });

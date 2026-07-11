@@ -9,6 +9,7 @@ import type {
   UpdateParticipantPayload,
   RemoveParticipantPayload,
 } from "@/shared/types/ticket-participant.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useTicketParticipants = (ticketId: string) =>
   useQuery({
@@ -37,7 +38,7 @@ export const useAddParticipant = () => {
       payload: AddParticipantPayload;
     }) => ticketParticipantService.add(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã thêm thành viên");
+      toast.success(ADMIN_MESSAGES.staffProfile.memberAdded);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketParticipants.list(ticketId),
       });
@@ -57,7 +58,7 @@ export const useBulkAddParticipants = () => {
       payload: BulkAddParticipantsPayload;
     }) => ticketParticipantService.bulkAdd(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã thêm thành viên");
+      toast.success(ADMIN_MESSAGES.staffProfile.memberAdded);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketParticipants.list(ticketId),
       });
@@ -79,7 +80,7 @@ export const useUpdateParticipant = () => {
       payload: UpdateParticipantPayload;
     }) => ticketParticipantService.update(ticketId, userId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã cập nhật quyền thành viên");
+      toast.success(ADMIN_MESSAGES.staffProfile.memberPermissionsUpdated);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketParticipants.list(ticketId),
       });
@@ -101,7 +102,7 @@ export const useRemoveParticipant = () => {
       payload?: RemoveParticipantPayload;
     }) => ticketParticipantService.remove(ticketId, userId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã xóa thành viên");
+      toast.success(ADMIN_MESSAGES.staffProfile.memberDeleted);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketParticipants.list(ticketId),
       });
@@ -113,10 +114,9 @@ export const useRemoveParticipant = () => {
 export const useLeaveTicket = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (ticketId: string) =>
-      ticketParticipantService.leave(ticketId),
+    mutationFn: (ticketId: string) => ticketParticipantService.leave(ticketId),
     onSuccess: (_, ticketId) => {
-      toast.success("Đã rời ticket");
+      toast.success(ADMIN_MESSAGES.ticket.left);
       qc.invalidateQueries({ queryKey: [KEY.ticketParticipants] });
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },

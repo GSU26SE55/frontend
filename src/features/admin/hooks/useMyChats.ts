@@ -4,6 +4,7 @@ import { myChatService } from "@/features/admin/services/my-chat.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { ChatListParams } from "@/shared/types/chat.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useMyChats = (params?: ChatListParams) =>
   useQuery({
@@ -17,7 +18,7 @@ export const useEraseMyChats = () => {
   return useMutation({
     mutationFn: () => myChatService.eraseMyData(),
     onSuccess: () => {
-      toast.success("Đã xóa dữ liệu chat cá nhân");
+      toast.success(ADMIN_MESSAGES.account.chatDataDeleted);
       qc.invalidateQueries({ queryKey: [KEY.myChats] });
     },
     onError: (error) => handleErrorApi({ error }),

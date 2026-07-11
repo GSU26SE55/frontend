@@ -23,6 +23,7 @@ import {
   type SiteDto,
   type SiteCreatePayload,
 } from "@/shared/types/site.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface SiteFormDialogProps {
   open: boolean;
@@ -93,10 +94,10 @@ export default function SiteFormDialog({
     try {
       if (isEdit && editData) {
         await updateSite({ id: editData.id, payload });
-        toast.success("Cập nhật site thành công");
+        toast.success(ADMIN_MESSAGES.site.updated);
       } else {
         await createSite(payload);
-        toast.success("Tạo site thành công");
+        toast.success(ADMIN_MESSAGES.site.created);
       }
       onOpenChange(false);
     } catch (error) {

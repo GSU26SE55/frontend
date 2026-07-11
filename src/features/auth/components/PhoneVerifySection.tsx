@@ -14,6 +14,7 @@ import {
 import { useSendPhoneOtp } from "@/features/auth/hooks/useSendPhoneOtp";
 import { useVerifyPhoneOtp } from "@/features/auth/hooks/useVerifyPhoneOtp";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 const COOLDOWN_SECONDS = 60;
 
@@ -47,7 +48,7 @@ const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
   const handleSendOtp = () => {
     sendOtp(undefined, {
       onSuccess: () => {
-        toast.success("Đã gửi OTP đến số điện thoại");
+        toast.success(AUTH_MESSAGES.phone.otpSent);
         setOtpSent(true);
         setCooldown(COOLDOWN_SECONDS);
       },
@@ -58,7 +59,7 @@ const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
   const onSubmit = async (data: ConfirmOtpFormValues) => {
     try {
       await verifyOtp(data);
-      toast.success("Xác thực số điện thoại thành công");
+      toast.success(AUTH_MESSAGES.phone.verified);
     } catch (error) {
       handleErrorApi({ error, setError });
     }

@@ -27,6 +27,7 @@ import { useRestoreBatteryAsset } from "@/features/admin/hooks/useRestoreBattery
 import { toast } from "sonner";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -172,7 +173,8 @@ export default function BatteryAssetTable({
                     <DropdownMenuItem
                       onClick={() =>
                         restoreAsset(item.id, {
-                          onSuccess: () => toast.success("Đã khôi phục"),
+                          onSuccess: () =>
+                            toast.success(ADMIN_MESSAGES.common.restored),
                         })
                       }
                     >
@@ -188,7 +190,8 @@ export default function BatteryAssetTable({
                         className="text-destructive"
                         onClick={() =>
                           deleteAsset(item.id, {
-                            onSuccess: () => toast.success("Đã xóa"),
+                            onSuccess: () =>
+                              toast.success(ADMIN_MESSAGES.common.deleted),
                           })
                         }
                       >

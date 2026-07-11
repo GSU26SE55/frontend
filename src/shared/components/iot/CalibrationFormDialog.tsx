@@ -19,6 +19,7 @@ import {
   type CreateCalibrationForm,
 } from "@/shared/schemas/iot-calibration.schema";
 import { useCreateCalibration } from "@/shared/hooks/useIotCalibrationMutations";
+import { MESSAGES } from "@/shared/constants/messages";
 
 interface Props {
   open: boolean;
@@ -60,7 +61,7 @@ export default function CalibrationFormDialog({
         expiresAt: data.expiresAt || undefined,
         notes: data.notes || undefined,
       });
-      toast.success("Thêm calibration thành công");
+      toast.success(MESSAGES.calibration.added);
       onOpenChange(false);
     } catch (error) {
       handleErrorApi({ error, setError });

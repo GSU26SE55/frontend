@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fileStorageService } from "@/shared/services/file-storage.service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { MESSAGES } from "@/shared/constants/messages";
 
 export interface UploadedAttachment {
   fileId: string;
@@ -219,7 +220,7 @@ export default function FileUploadField({
         toast.error(res.data.message || "Không thể lấy thông tin tệp tin.");
       }
     } catch {
-      toast.error("Lỗi khi tải thông tin tệp tin.");
+      toast.error(MESSAGES.file.loadInfoFailed);
     } finally {
       setFetchingMetadata(false);
     }

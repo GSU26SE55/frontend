@@ -22,6 +22,7 @@ import {
   addCommentSchema,
   type AddCommentFormValues,
 } from "../schemas/staff-ticket.schema";
+import { MESSAGES } from "@/shared/constants/messages";
 
 const MAX_TEXTAREA_HEIGHT = 120;
 
@@ -97,7 +98,7 @@ export function AddCommentForm({
     try {
       await start();
     } catch {
-      toast.error("Không thể truy cập micro. Vui lòng cấp quyền và thử lại.");
+      toast.error(MESSAGES.micPermission);
     }
   };
 

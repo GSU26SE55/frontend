@@ -33,6 +33,7 @@ import type {
   SessionDto,
   LoginAttemptDto,
 } from "@/features/admin/types/admin.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -80,7 +81,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
       { id: account.id, payload: { reason: "Admin force logout" } },
       {
         onSuccess: () => {
-          toast.success("Đã thu hồi tất cả session");
+          toast.success(ADMIN_MESSAGES.account.allSessionsRevoked);
           setConfirmRevokeAll(false);
         },
         onError: (err) => {

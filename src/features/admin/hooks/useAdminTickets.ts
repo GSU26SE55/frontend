@@ -7,6 +7,7 @@ import {
 import { QUERY_KEY, KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AddCommentPayload } from "@/shared/types/ticket.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export function useAdminTickets(params?: GetAdminTicketsParams) {
   return useQuery({
@@ -64,7 +65,7 @@ export function useAdminAddComment(ticketId: string) {
     mutationFn: (payload: AddCommentPayload) =>
       adminTicketService.addComment(ticketId, payload),
     onSuccess: () => {
-      toast.success("Đã thêm bình luận");
+      toast.success(ADMIN_MESSAGES.ticket.commentAdded);
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -83,7 +84,7 @@ export function useDeclareIncident() {
       incidentDescription: string;
     }) => adminTicketService.declareIncident(id, incidentDescription),
     onSuccess: (_, { id }) => {
-      toast.success("Đã đánh dấu là Incident");
+      toast.success(ADMIN_MESSAGES.ticket.markedIncident);
       queryClient.invalidateQueries({ queryKey: QUERY_KEY.tickets.detail(id) });
       queryClient.invalidateQueries({ queryKey: KEY.admin.tickets });
     },

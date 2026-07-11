@@ -23,6 +23,7 @@ import {
   type AddCommentFormValues,
 } from "@/features/manager/schemas/ticket.schema";
 import { useAddComment } from "@/features/manager/hooks/useManagerTickets";
+import { MESSAGES } from "@/shared/constants/messages";
 
 const MAX_TEXTAREA_HEIGHT = 120;
 
@@ -95,7 +96,7 @@ export default function AddCommentForm({
     try {
       await start();
     } catch {
-      toast.error("Không thể truy cập micro. Vui lòng cấp quyền và thử lại.");
+      toast.error(MESSAGES.micPermission);
     }
   };
 

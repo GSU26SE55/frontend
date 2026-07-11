@@ -11,6 +11,7 @@ import type {
   RejectReviewPayload,
   RollbackPayload,
 } from "@/shared/types/kb.types";
+import { MANAGER_MESSAGES } from "@/features/manager/constants/messages";
 
 export function useManagerKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -79,7 +80,7 @@ export function useManagerCreateKbArticle() {
     mutationFn: (payload: CreateKbArticlePayload) =>
       managerKbService.create(payload).then((r) => r.data.data),
     onSuccess: () => {
-      toast.success("Đã tạo bài viết KB");
+      toast.success(MANAGER_MESSAGES.kb.created);
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
   });
@@ -96,7 +97,7 @@ export function useManagerUpdateKbArticle() {
       payload: UpdateKbArticlePayload;
     }) => managerKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (_, { id }) => {
-      toast.success("Đã cập nhật bài viết");
+      toast.success(MANAGER_MESSAGES.kb.updated);
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
@@ -133,7 +134,7 @@ export function useMarkManagerKbHelpful() {
       );
     },
     onSuccess: (_, id) => {
-      toast.success("Đã đánh dấu hữu ích");
+      toast.success(MANAGER_MESSAGES.kb.markedHelpful);
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
