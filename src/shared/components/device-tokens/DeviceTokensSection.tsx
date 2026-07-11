@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { DevicePlatformEnum } from "@/shared/enums/notification.enum";
+import { toneClass } from "@/shared/theme/statusColors";
 import {
   registerDeviceTokenSchema,
   type RegisterDeviceTokenFormValues,
@@ -24,6 +25,7 @@ import {
   useRegisterDeviceToken,
   useUnregisterDeviceToken,
 } from "@/shared/hooks/useDeviceTokens";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Map int → nhãn (repo không có util chung — khai báo inline theo pattern hiện hữu)
 const PLATFORM_LABEL: Record<DevicePlatformEnum, string> = {
@@ -73,7 +75,7 @@ export default function DeviceTokensSection() {
         platform: data.platform,
         deviceInfo: data.deviceInfo || undefined,
       });
-      toast.success("Đăng ký thiết bị thành công");
+      toast.success(MESSAGES.device.registered);
       reset({
         platform: DevicePlatformEnum.Web,
         deviceInfo:
@@ -91,7 +93,7 @@ export default function DeviceTokensSection() {
       { token: revokeToken.trim() },
       {
         onSuccess: () => {
-          toast.success("Đã hủy đăng ký thiết bị");
+          toast.success(MESSAGES.device.unregistered);
           setRevokeToken("");
         },
         onError: (error) => handleErrorApi({ error }),
@@ -129,7 +131,9 @@ export default function DeviceTokensSection() {
                       {PLATFORM_LABEL[d.platform] ?? "Khác"}
                     </p>
                     {d.isActive ? (
-                      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${toneClass("ok")}`}
+                      >
                         Đang hoạt động
                       </span>
                     ) : (

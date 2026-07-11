@@ -61,11 +61,11 @@ export function SlaCountdown({ slaTimer }: Props) {
   if (status === SlaTimerStatusEnum.Met) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-green-600">
+        <span className="text-sm font-medium text-ok">
           Đã giải quyết đúng hạn
         </span>
-        <div className="h-1.5 w-full rounded-full bg-green-100">
-          <div className="h-1.5 rounded-full bg-green-500 w-full" />
+        <div className="h-1.5 w-full rounded-full bg-ok-soft">
+          <div className="h-1.5 rounded-full bg-ok w-full" />
         </div>
       </div>
     );

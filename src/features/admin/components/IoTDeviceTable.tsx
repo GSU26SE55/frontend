@@ -23,8 +23,10 @@ import ConfirmActionDialog from "@/features/admin/components/ConfirmActionDialog
 import { useDeleteIotDevice } from "@/features/admin/hooks/useIotDeviceMutations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceDto } from "@/shared/types/iot.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {
   items: IotDeviceDto[];
@@ -61,7 +63,9 @@ export default function IoTDeviceTable({ items, pageNumber, pageSize }: Props) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12 text-center">STT</TableHead>
+            <TableHead className="w-12 text-center">
+              {TABLE_COLUMNS.index}
+            </TableHead>
             <SortableTableHead
               sortKey="deviceCode"
               activeSortKey={sortKey}
@@ -110,7 +114,9 @@ export default function IoTDeviceTable({ items, pageNumber, pageSize }: Props) {
             >
               Heartbeat gần nhất
             </SortableTableHead>
-            <TableHead className="text-right">Thao tác</TableHead>
+            <TableHead className="text-right">
+              {TABLE_COLUMNS.actions}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -199,7 +205,8 @@ export default function IoTDeviceTable({ items, pageNumber, pageSize }: Props) {
         onConfirm={() => {
           if (!confirmId) return;
           deleteDevice(confirmId, {
-            onSuccess: () => toast.success("Đã decommission thiết bị"),
+            onSuccess: () =>
+              toast.success(ADMIN_MESSAGES.iot.deviceDecommissioned),
             onError: (error) => handleErrorApi({ error }),
           });
           setConfirmId(null);

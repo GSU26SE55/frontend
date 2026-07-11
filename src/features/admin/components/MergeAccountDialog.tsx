@@ -27,6 +27,7 @@ import { useAdminAccountList } from "@/features/admin/hooks/useAdminAccounts";
 import { useMergeAccount } from "@/features/admin/hooks/useMergeAccount";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -63,7 +64,7 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
   const onSubmit = async (data: MergeAccountFormValues) => {
     try {
       await mutateAsync({ primaryId: account.id, payload: data });
-      toast.success("Đã gộp tài khoản");
+      toast.success(ADMIN_MESSAGES.account.merged);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

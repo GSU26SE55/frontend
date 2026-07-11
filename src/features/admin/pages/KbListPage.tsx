@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Tag, X } from "lucide-react";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
@@ -25,9 +25,9 @@ import {
   useUpdateKbArticle,
 } from "../hooks/useAdminKb";
 import KbArticleTable from "../components/KbArticleTable";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import {
   KbArticleStatusEnum,
   KbArticleStatusLabel,
@@ -35,17 +35,19 @@ import {
   KB_CATEGORY_OPTIONS,
 } from "@/shared/enums/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
+import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
 
 const STATUS_OPTIONS = Object.values(KbArticleStatusEnum);
 
 const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
-  [KbArticleStatusEnum.Draft]: "bg-slate-400",
-  [KbArticleStatusEnum.PendingReview]: "bg-amber-500",
-  [KbArticleStatusEnum.Published]: "bg-emerald-500",
-  [KbArticleStatusEnum.Archived]: "bg-zinc-500",
+  [KbArticleStatusEnum.Draft]: toneDot(KB_STATUS_TONE.Draft),
+  [KbArticleStatusEnum.PendingReview]: toneDot(KB_STATUS_TONE.PendingReview),
+  [KbArticleStatusEnum.Published]: toneDot(KB_STATUS_TONE.Published),
+  [KbArticleStatusEnum.Archived]: toneDot(KB_STATUS_TONE.Archived),
 };
 
 const DEFAULTS = {
@@ -231,7 +233,7 @@ export default function KbListPage() {
       <Card className="gap-0 py-0 overflow-hidden">
         {isError ? (
           <ErrorState
-            message="Không thể tải danh sách bài viết."
+            message={loadFailed("bài viết")}
             onRetry={() => refetch()}
           />
         ) : (

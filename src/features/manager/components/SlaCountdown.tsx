@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { SlaTimerStatusEnum } from "@/shared/types/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket.types";
 import { isNearBreachPercent } from "@/shared/lib/sla";
+import { toneClass } from "@/shared/theme/statusColors";
 
 function formatDuration(ms: number): string {
   if (ms <= 0) return "00:00:00";
@@ -39,7 +40,9 @@ export default function SlaCountdown({ slaTimer }: Props) {
 
   if (slaTimer.status === SlaTimerStatusEnum.Met) {
     return (
-      <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700">
+      <span
+        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("ok")}`}
+      >
         Đúng hạn
       </span>
     );
@@ -47,7 +50,9 @@ export default function SlaCountdown({ slaTimer }: Props) {
 
   if (slaTimer.status === SlaTimerStatusEnum.Breached) {
     return (
-      <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700">
+      <span
+        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
+      >
         Vi phạm SLA
       </span>
     );
@@ -55,7 +60,9 @@ export default function SlaCountdown({ slaTimer }: Props) {
 
   if (slaTimer.status === SlaTimerStatusEnum.Paused) {
     return (
-      <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700">
+      <span
+        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p3")}`}
+      >
         Tạm dừng
       </span>
     );
@@ -68,7 +75,7 @@ export default function SlaCountdown({ slaTimer }: Props) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${
-        isWarning ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700"
+        isWarning ? toneClass("p1") : toneClass("muted")
       }`}
     >
       {formatDuration(remaining)}

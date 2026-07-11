@@ -26,19 +26,19 @@ import {
   useDeclareIncident,
 } from "../hooks/useAdminTickets";
 import AddCommentForm from "../components/AddCommentForm";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TypingIndicator from "@/shared/components/common/TypingIndicator";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TypingIndicator from "@/shared/components/chat/TypingIndicator";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import AdminClosedOverrideDialog from "../components/AdminClosedOverrideDialog";
-import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import type { TicketCommentDTO } from "@/shared/types/ticket.types";
 import {
   TicketCommentThread,
   type ChatTab,
-} from "@/shared/components/common/TicketCommentThread";
-import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+} from "@/shared/components/ticket/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";

@@ -4,6 +4,7 @@ import { alertService } from "@/features/admin/services/alert.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AlertListParams } from "@/shared/types/alert.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 export const useAdminAlerts = (params?: AlertListParams) =>
   useQuery({
@@ -24,7 +25,7 @@ export const useAcknowledgeAlert = () => {
   return useMutation({
     mutationFn: (id: string) => alertService.acknowledge(id),
     onSuccess: () => {
-      toast.success("Đã acknowledge alert");
+      toast.success(MESSAGES.alert.acknowledged);
       qc.invalidateQueries({ queryKey: [KEY.alerts] });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -36,7 +37,7 @@ export const useResolveAlert = () => {
   return useMutation({
     mutationFn: (id: string) => alertService.resolve(id),
     onSuccess: () => {
-      toast.success("Đã resolve alert");
+      toast.success(MESSAGES.alert.resolved);
       qc.invalidateQueries({ queryKey: [KEY.alerts] });
     },
     onError: (error) => handleErrorApi({ error }),

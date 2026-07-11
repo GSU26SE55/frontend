@@ -13,8 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import {
   Select,
   SelectContent,
@@ -61,8 +61,10 @@ import ChangeRoleStatusDialog from "@/features/admin/components/ChangeRoleStatus
 import PermissionsDialog from "@/features/admin/components/PermissionsDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/admin.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { loadFailed, notFound } from "@/shared/constants/emptyStates";
 
 const STATUS_VARIANT: Record<
   number,
@@ -143,8 +145,8 @@ export default function RolesPage() {
             Vai trò & Quyền hạn
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : total} vai trò &mdash; quản lý phân quyền truy cập
-            hệ thống.
+            {isLoading ? "..." : total} vai trò &mdash; quản lý phân quyền truy
+            cập hệ thống.
           </p>
         </div>
         <div className="flex gap-2">
@@ -209,22 +211,23 @@ export default function RolesPage() {
             ))}
           </div>
         ) : isError ? (
-          <ErrorState
-            message="Không thể tải danh sách role."
-            onRetry={() => refetch()}
-          />
+          <ErrorState message={loadFailed("role")} onRetry={() => refetch()} />
         ) : filteredRoles.length === 0 ? (
-          <EmptyState icon={Shield} title="Không tìm thấy role phù hợp." />
+          <EmptyState icon={Shield} title={notFound("role")} />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Nguồn</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>{TABLE_COLUMNS.source}</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
                 <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead className="text-right">
+                  {TABLE_COLUMNS.actions}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

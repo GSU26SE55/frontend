@@ -13,13 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { KpiCard } from "@/shared/components/common/KpiCard";
+import { KpiCard } from "@/shared/components/dashboard/KpiCard";
 import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotifications";
+import {
+  toneClass,
+  NOTIFICATION_STATUS_TONE,
+} from "@/shared/theme/statusColors";
 import {
   NotificationStatusEnum,
   NotificationTypeEnum,
 } from "@/features/staff/types/notification.types";
 import type { NotificationDto } from "@/features/staff/types/notification.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const PAGE_SIZE = 10;
 
@@ -41,10 +46,8 @@ const TYPE_LABEL: Record<number, string> = {
   [NotificationTypeEnum.System]: "Hệ thống",
 };
 
-function getStatusVariant(status: number) {
-  if (status === NotificationStatusEnum.Read) return "outline" as const;
-  if (status === NotificationStatusEnum.Failed) return "destructive" as const;
-  return "default" as const;
+function getStatusClass(status: number) {
+  return toneClass(NOTIFICATION_STATUS_TONE[status] ?? "muted");
 }
 
 function getStatusLabel(status: number) {
@@ -172,11 +175,13 @@ export default function AlertsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Nội dung</TableHead>
                 <TableHead>Loại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Thời gian</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
+                <TableHead>{TABLE_COLUMNS.time}</TableHead>
                 <TableHead className="text-right">Liên kết</TableHead>
               </TableRow>
             </TableHeader>
@@ -200,7 +205,10 @@ export default function AlertsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(item.status)}>
+                    <Badge
+                      variant="outline"
+                      className={getStatusClass(item.status)}
+                    >
                       {getStatusLabel(item.status)}
                     </Badge>
                   </TableCell>

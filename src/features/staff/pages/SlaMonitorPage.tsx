@@ -12,12 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { KpiCard } from "@/shared/components/common/KpiCard";
+import { KpiCard } from "@/shared/components/dashboard/KpiCard";
 import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";
 import { useStaffTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/SlaCountdown";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 export default function SlaMonitorPage() {
   const navigate = useNavigate();
@@ -124,11 +125,13 @@ export default function SlaMonitorPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
-                <TableHead>Ticket</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
+                <TableHead>{TABLE_COLUMNS.ticket}</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
                 <TableHead>Ưu tiên</TableHead>
-                <TableHead>SLA</TableHead>
+                <TableHead>{TABLE_COLUMNS.sla}</TableHead>
                 <TableHead>Hạn xử lý</TableHead>
                 <TableHead className="text-right">Chi tiết</TableHead>
               </TableRow>

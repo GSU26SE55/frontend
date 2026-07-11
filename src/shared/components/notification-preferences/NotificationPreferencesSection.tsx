@@ -24,6 +24,7 @@ import {
   useUpdateNotificationPreferences,
 } from "@/shared/hooks/useNotificationPreferences";
 import type { NotificationPreferenceDto } from "@/shared/types/notification-preference.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Default khớp BE GetNotificationPreferenceQueryHandler (chưa cấu hình)
 const DEFAULT_PREF: NotificationPreferenceFormValues = {
@@ -112,7 +113,7 @@ export default function NotificationPreferencesSection() {
       : { ...values, quietHoursStart: null, quietHoursEnd: null };
     try {
       await update.mutateAsync(payload);
-      toast.success("Đã lưu cài đặt thông báo");
+      toast.success(MESSAGES.notificationPrefs.saved);
     } catch (error) {
       handleErrorApi({ error, setError });
     }

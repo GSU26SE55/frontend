@@ -11,6 +11,7 @@ import type {
   RejectReviewPayload,
   RollbackPayload,
 } from "@/shared/types/kb.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export function useAdminKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -82,7 +83,7 @@ export function useCreateKbArticle() {
     mutationFn: (payload: CreateKbArticlePayload) =>
       adminKbService.create(payload).then((r) => r.data.data),
     onSuccess: () => {
-      toast.success("Đã tạo bài viết KB");
+      toast.success(ADMIN_MESSAGES.kb.created);
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
   });
@@ -99,7 +100,7 @@ export function useUpdateKbArticle() {
       payload: UpdateKbArticlePayload;
     }) => adminKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (_, { id }) => {
-      toast.success("Đã cập nhật bài viết");
+      toast.success(ADMIN_MESSAGES.kb.updated);
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
@@ -136,7 +137,7 @@ export function useMarkKbHelpful() {
       );
     },
     onSuccess: (_, id) => {
-      toast.success("Đã đánh dấu hữu ích");
+      toast.success(ADMIN_MESSAGES.kb.markedHelpful);
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
@@ -149,7 +150,7 @@ export function useDeleteKbArticle() {
   return useMutation({
     mutationFn: (id: string) => adminKbService.delete(id),
     onSuccess: () => {
-      toast.success("Đã xóa bài viết");
+      toast.success(ADMIN_MESSAGES.kb.deleted);
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
     onError: (error) => handleErrorApi({ error }),

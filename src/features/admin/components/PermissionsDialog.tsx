@@ -21,6 +21,7 @@ import type {
   RoleDto,
   PermissionDto,
 } from "@/features/admin/types/admin.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -109,7 +110,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
       { roleId: role.id, payload: { permissionIds: Array.from(checkedIds) } },
       {
         onSuccess: () => {
-          toast.success("Đã cập nhật quyền");
+          toast.success(ADMIN_MESSAGES.role.permissionsUpdated);
           onClose();
         },
         onError: (err) => handleErrorApi({ error: err }),

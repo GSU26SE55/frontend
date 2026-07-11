@@ -26,6 +26,7 @@ import { useAdminChangeRoleStatus } from "@/features/admin/hooks/useAdminRoles";
 import { RoleStatusEnum } from "@/features/admin/types/admin.types";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/admin.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_OPTIONS = [
   { value: RoleStatusEnum.Active, label: "Hoạt động" },
@@ -61,7 +62,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
   const onSubmit = async (data: ChangeRoleStatusFormValues) => {
     try {
       await mutateAsync({ id: role.id, payload: { status: data.status } });
-      toast.success("Đã cập nhật trạng thái role");
+      toast.success(ADMIN_MESSAGES.role.statusUpdated);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

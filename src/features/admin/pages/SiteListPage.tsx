@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -27,9 +27,10 @@ import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
 import type { SiteDto } from "@/shared/types/site.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const DEFAULTS = {
   keyword: "",
@@ -144,12 +145,9 @@ export default function SiteListPage() {
             ))}
           </div>
         ) : isError ? (
-          <ErrorState
-            message="Không thể tải danh sách site."
-            onRetry={() => refetch()}
-          />
+          <ErrorState message={loadFailed("site")} onRetry={() => refetch()} />
         ) : items.length === 0 ? (
-          <EmptyState icon={MapPin} title="Chưa có site nào." />
+          <EmptyState icon={MapPin} title={noData("site")} />
         ) : (
           <SiteTable
             data={items}

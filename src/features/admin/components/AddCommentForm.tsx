@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import FileUploadField from "@/features/file-storage/components/FileUploadField";
-import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
-import { AttachmentPreviewStrip } from "@/shared/components/common/AttachmentPreviewStrip";
-import { VoiceRecordingBar } from "@/shared/components/common/VoiceRecordingBar";
+import FileUploadField from "@/shared/components/file/FileUploadField";
+import { FilePurposeEnum } from "@/shared/types/file-storage.types";
+import { AttachmentPreviewStrip } from "@/shared/components/chat/AttachmentPreviewStrip";
+import { VoiceRecordingBar } from "@/shared/components/chat/VoiceRecordingBar";
 import { useVoiceRecorder } from "@/shared/hooks/useVoiceRecorder";
 import { useTranscribeVoiceChat } from "@/shared/hooks/useTicketChatActions";
 import {
@@ -23,6 +23,7 @@ import {
   type AddCommentFormValues,
 } from "../schemas/ticket-comment.schema";
 import { useAdminAddComment } from "../hooks/useAdminTickets";
+import { MESSAGES } from "@/shared/constants/messages";
 
 const MAX_TEXTAREA_HEIGHT = 120;
 
@@ -95,7 +96,7 @@ export default function AddCommentForm({
     try {
       await start();
     } catch {
-      toast.error("Khong the truy cap micro. Vui long cap quyen va thu lai.");
+      toast.error(MESSAGES.micPermission);
     }
   };
 
@@ -192,7 +193,9 @@ export default function AddCommentForm({
                 type="button"
                 disabled={isInternal || uploading || transcribing}
                 title={
-                  isInternal ? "Ghi am luon duoc gui cong khai" : "Ghi am tin nhan"
+                  isInternal
+                    ? "Ghi am luon duoc gui cong khai"
+                    : "Ghi am tin nhan"
                 }
                 aria-label="Ghi am tin nhan"
                 onClick={handleStartRecording}

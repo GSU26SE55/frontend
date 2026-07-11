@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { OtpVerifyPayload } from "@/features/auth/types/auth.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useVerifyOtp = (onSuccess: () => void) => {
   return useMutation({
@@ -13,7 +14,7 @@ export const useVerifyOtp = (onSuccess: () => void) => {
         toast.error(res.message ?? "OTP không hợp lệ");
         return;
       }
-      toast.success("Xác thực thành công!");
+      toast.success(AUTH_MESSAGES.otp.verified);
       onSuccess();
     },
     onError: (error) => handleErrorApi({ error }),

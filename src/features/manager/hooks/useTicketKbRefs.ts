@@ -6,6 +6,7 @@ import {
 } from "../services/ticket-kb.service";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { MESSAGES } from "@/shared/constants/messages";
 
 export function useTicketKbRefs(ticketId: string) {
   return useQuery({
@@ -22,7 +23,7 @@ export function useAddTicketKbRef(ticketId: string) {
     mutationFn: (payload: AddTicketKbRefInput) =>
       ticketKbService.add(ticketId, payload),
     onSuccess: () => {
-      toast.success("Đã gắn bài viết KB");
+      toast.success(MESSAGES.kb.refAttached);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketKbRefs.list(ticketId),
       });
@@ -36,7 +37,7 @@ export function useRemoveTicketKbRef(ticketId: string) {
   return useMutation({
     mutationFn: (refId: string) => ticketKbService.remove(ticketId, refId),
     onSuccess: () => {
-      toast.success("Đã gỡ bài viết KB");
+      toast.success(MESSAGES.kb.refDetached);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketKbRefs.list(ticketId),
       });

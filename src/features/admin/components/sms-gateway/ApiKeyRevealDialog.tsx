@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CreateGatewayDeviceResponseDto } from "@/features/admin/types/sms-gateway.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface ApiKeyRevealDialogProps {
   device: CreateGatewayDeviceResponseDto | null;
@@ -48,7 +49,7 @@ export default function ApiKeyRevealDialog({
 
   const markCopied = () => {
     setCopied(true);
-    toast.success("Đã copy API key");
+    toast.success(ADMIN_MESSAGES.iot.apiKeyCopied);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -64,7 +65,7 @@ export default function ApiKeyRevealDialog({
       if (fallbackCopy(key)) {
         markCopied();
       } else {
-        toast.error("Không copy tự động được — hãy bôi đen và copy thủ công");
+        toast.error(ADMIN_MESSAGES.iot.copyManual);
       }
     }
   };

@@ -27,6 +27,7 @@ import {
 import { useAdminCreateAccount } from "@/features/admin/hooks/useAdminAccounts";
 import { useAdminRoleList } from "@/features/admin/hooks/useAdminRoles";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -76,7 +77,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
         address: data.address || undefined,
         roleId: data.roleId,
       });
-      toast.success("Tạo tài khoản thành công");
+      toast.success(ADMIN_MESSAGES.account.created);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

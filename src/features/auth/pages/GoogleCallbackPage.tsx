@@ -11,6 +11,7 @@ import {
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { authService } from "@/features/auth/services/auth.service";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 const GoogleCallbackPage = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const GoogleCallbackPage = () => {
         navigate(redirectByRole(user.role), { replace: true });
       } catch (err) {
         console.error("[GoogleCallback]", err);
-        toast.error("Đăng nhập Google thất bại");
+        toast.error(AUTH_MESSAGES.google.loginFailed);
         navigate("/login", { replace: true });
       }
     };

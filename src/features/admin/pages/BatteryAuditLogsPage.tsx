@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useBatteryAuditLogs } from "@/features/admin/hooks/useBatteryAuditLogs";
 import { useAlertAuditLogs } from "@/features/admin/hooks/useAlertAuditLogs";

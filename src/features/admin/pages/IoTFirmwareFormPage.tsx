@@ -23,6 +23,7 @@ import {
 } from "@/features/admin/schemas/iot-firmware.schema";
 import { useCreateFirmwareRelease } from "@/features/admin/hooks/useIotFirmwareMutations";
 import { IotFirmwareChannelEnum } from "@/shared/enums/iot.enum";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export default function IoTFirmwareFormPage() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export default function IoTFirmwareFormPage() {
         deviceModel: data.deviceModel,
         publishImmediately: data.publishImmediately,
       });
-      toast.success("Tạo firmware release thành công");
+      toast.success(ADMIN_MESSAGES.iot.firmwareCreated);
       navigate("/admin/iot-firmware");
     } catch (error) {
       handleErrorApi({ error, setError });
@@ -213,7 +214,7 @@ export default function IoTFirmwareFormPage() {
               variant="outline"
               onClick={() => navigate("/admin/iot-firmware")}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Tạo release

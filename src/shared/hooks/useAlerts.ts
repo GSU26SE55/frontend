@@ -4,6 +4,7 @@ import { alertService } from "@/shared/services/alert.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AlertListParams } from "@/shared/types/alert.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Alert queue — gần realtime: staleTime 30s + poll 30s (theo bảng cache fe.md)
 export const useAlertList = (params?: AlertListParams) =>
@@ -27,7 +28,7 @@ export const useAcknowledgeAlert = () => {
     mutationFn: (id: string) => alertService.acknowledge(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.alerts] });
-      toast.success("Đã xác nhận cảnh báo");
+      toast.success(MESSAGES.alert.acknowledged);
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -39,7 +40,7 @@ export const useResolveAlert = () => {
     mutationFn: (id: string) => alertService.resolve(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.alerts] });
-      toast.success("Đã xử lý cảnh báo");
+      toast.success(MESSAGES.alert.resolved);
     },
     onError: (error) => handleErrorApi({ error }),
   });

@@ -10,6 +10,7 @@ import {
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toneClass, BATTERY_STATUS_TONE } from "@/shared/theme/statusColors";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,22 +25,15 @@ import {
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
 import { useRestoreBatteryAsset } from "@/features/admin/hooks/useRestoreBatteryAsset";
 import { toast } from "sonner";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
   [BatteryStatusEnum.Inactive]: "Không hoạt động",
   [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
-};
-
-const statusVariant: Record<
-  BatteryStatusEnum,
-  "default" | "secondary" | "destructive"
-> = {
-  [BatteryStatusEnum.Active]: "default",
-  [BatteryStatusEnum.Inactive]: "secondary",
-  [BatteryStatusEnum.Decommissioned]: "destructive",
 };
 
 interface BatteryAssetTableProps {
@@ -84,7 +78,9 @@ export default function BatteryAssetTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12 text-center">STT</TableHead>
+          <TableHead className="w-12 text-center">
+            {TABLE_COLUMNS.index}
+          </TableHead>
           <SortableTableHead
             sortKey="serialNumber"
             activeSortKey={sortKey}
@@ -133,7 +129,7 @@ export default function BatteryAssetTable({
           >
             Ngày lắp
           </SortableTableHead>
-          <TableHead className="text-right">Thao tác</TableHead>
+          <TableHead className="text-right">{TABLE_COLUMNS.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -153,7 +149,12 @@ export default function BatteryAssetTable({
             <TableCell>{item.customerName}</TableCell>
             <TableCell>{item.siteName ?? "—"}</TableCell>
             <TableCell>
-              <Badge variant={statusVariant[item.status]}>
+              <Badge
+                variant="outline"
+                className={toneClass(
+                  BATTERY_STATUS_TONE[item.status] ?? "muted",
+                )}
+              >
                 {statusLabel[item.status]}
               </Badge>
             </TableCell>
@@ -175,7 +176,8 @@ export default function BatteryAssetTable({
                     <DropdownMenuItem
                       onClick={() =>
                         restoreAsset(item.id, {
-                          onSuccess: () => toast.success("Đã khôi phục"),
+                          onSuccess: () =>
+                            toast.success(ADMIN_MESSAGES.common.restored),
                         })
                       }
                     >
@@ -191,7 +193,8 @@ export default function BatteryAssetTable({
                         className="text-destructive"
                         onClick={() =>
                           deleteAsset(item.id, {
-                            onSuccess: () => toast.success("Đã xóa"),
+                            onSuccess: () =>
+                              toast.success(ADMIN_MESSAGES.common.deleted),
                           })
                         }
                       >

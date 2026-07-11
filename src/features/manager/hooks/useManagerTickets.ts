@@ -14,6 +14,7 @@ import type {
   EscalatePayload,
   AddCommentPayload,
 } from "@/shared/types/ticket.types";
+import { MANAGER_MESSAGES } from "@/features/manager/constants/messages";
 
 export const useAdminTicketList = (params?: AdminTicketListParams) =>
   useQuery({
@@ -79,7 +80,7 @@ export const useTriageTicket = (id: string) => {
     mutationFn: (payload: TriagePayload) =>
       managerTicketService.triage(id, payload),
     onSuccess: () => {
-      toast.success("Triage ticket thành công");
+      toast.success(MANAGER_MESSAGES.ticket.triaged);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
@@ -94,7 +95,7 @@ export const useTriageRejectTicket = (id: string) => {
     mutationFn: (payload: TriageRejectPayload) =>
       managerTicketService.triageReject(id, payload),
     onSuccess: () => {
-      toast.success("Đã từ chối ticket ở bước Triage");
+      toast.success(MANAGER_MESSAGES.ticket.rejectedAtTriage);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
@@ -109,7 +110,7 @@ export const useAssignTicket = (id: string) => {
     mutationFn: (payload: AssignPayload) =>
       managerTicketService.assign(id, payload),
     onSuccess: () => {
-      toast.success("Gán Staff thành công");
+      toast.success(MANAGER_MESSAGES.ticket.staffAssigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -123,7 +124,7 @@ export const useReassignTicket = (id: string) => {
     mutationFn: (payload: ReassignPayload) =>
       managerTicketService.reassign(id, payload),
     onSuccess: () => {
-      toast.success("Điều chuyển Staff thành công");
+      toast.success(MANAGER_MESSAGES.ticket.staffReassigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -136,7 +137,7 @@ export const useApproveTicket = (id: string) => {
   return useMutation({
     mutationFn: (comment?: string) => managerTicketService.approve(id, comment),
     onSuccess: () => {
-      toast.success("Phê duyệt kết quả thành công");
+      toast.success(MANAGER_MESSAGES.ticket.resultApproved);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -150,7 +151,7 @@ export const useRejectTicket = (id: string) => {
     mutationFn: (payload: RejectPayload) =>
       managerTicketService.reject(id, payload),
     onSuccess: () => {
-      toast.success("Từ chối kết quả — ticket quay về In Progress");
+      toast.success(MANAGER_MESSAGES.ticket.resultRejected);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -164,7 +165,7 @@ export const useEscalateTicket = (id: string) => {
     mutationFn: (payload: EscalatePayload) =>
       managerTicketService.escalate(id, payload),
     onSuccess: () => {
-      toast.success("Ticket đã được chuyển cấp");
+      toast.success(MANAGER_MESSAGES.ticket.escalated);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -178,7 +179,7 @@ export const useDeclareIncident = (id: string) => {
     mutationFn: (incidentDescription: string) =>
       managerTicketService.declareIncident(id, incidentDescription),
     onSuccess: () => {
-      toast.success("Ticket đã được đánh dấu là Incident");
+      toast.success(MANAGER_MESSAGES.ticket.markedIncident);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -197,7 +198,7 @@ export const useAddComment = () => {
       payload: AddCommentPayload;
     }) => managerTicketService.addComment(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã thêm bình luận");
+      toast.success(MANAGER_MESSAGES.ticket.commentAdded);
       qc.invalidateQueries({
         queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
       });

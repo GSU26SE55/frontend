@@ -26,6 +26,7 @@ import { useAdminChangeAccountRole } from "@/features/admin/hooks/useAdminAccoun
 import { useAdminRoleList } from "@/features/admin/hooks/useAdminRoles";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -63,7 +64,7 @@ export default function ChangeRoleDialog({ open, onClose, account }: Props) {
   const onSubmit = async (data: ChangeAccountRoleFormValues) => {
     try {
       await mutateAsync({ id: account.id, payload: { roleId: data.roleId } });
-      toast.success("Đã thay đổi role");
+      toast.success(ADMIN_MESSAGES.account.roleChanged);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

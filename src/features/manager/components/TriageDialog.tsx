@@ -187,7 +187,7 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Đang xử lý..." : "Xác nhận Triage"}

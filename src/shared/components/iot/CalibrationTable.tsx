@@ -23,6 +23,9 @@ import {
 import { useDeleteCalibration } from "@/shared/hooks/useIotCalibrationMutations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
+import { ACTIONS } from "@/shared/constants/actions";
+import { MESSAGES } from "@/shared/constants/messages";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {
   deviceId: string;
@@ -43,12 +46,12 @@ export default function CalibrationTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Channel</TableHead>
+            <TableHead>{TABLE_COLUMNS.channel}</TableHead>
             <TableHead>Scale</TableHead>
             <TableHead>Offset</TableHead>
-            <TableHead>Đơn vị</TableHead>
-            <TableHead>Calibrated</TableHead>
-            <TableHead>Hết hạn</TableHead>
+            <TableHead>{TABLE_COLUMNS.unit}</TableHead>
+            <TableHead>{TABLE_COLUMNS.calibrated}</TableHead>
+            <TableHead>{TABLE_COLUMNS.expiresAt}</TableHead>
             {canDelete && <TableHead className="text-right">Xóa</TableHead>}
           </TableRow>
         </TableHeader>
@@ -104,13 +107,13 @@ export default function CalibrationTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {
                 if (!confirmId) return;
                 deleteCalibration(confirmId, {
-                  onSuccess: () => toast.success("Đã xóa calibration"),
+                  onSuccess: () => toast.success(MESSAGES.calibration.deleted),
                   onError: (error) => handleErrorApi({ error }),
                 });
                 setConfirmId(null);

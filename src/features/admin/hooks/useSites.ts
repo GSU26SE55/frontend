@@ -9,6 +9,7 @@ import type {
   SiteCreatePayload,
   SiteUpdatePayload,
 } from "@/shared/types/site.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useSiteList = (params?: SiteFilterParams) =>
   useQuery({
@@ -71,7 +72,7 @@ export const useDeleteSite = () => {
     mutationFn: (id: string) => adminSiteService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.sites] });
-      toast.success("Đã xoá site");
+      toast.success(ADMIN_MESSAGES.site.deleted);
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -83,7 +84,7 @@ export const useRestoreSite = () => {
     mutationFn: (id: string) => adminSiteService.restore(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.sites] });
-      toast.success("Đã khôi phục site");
+      toast.success(ADMIN_MESSAGES.site.restored);
     },
     onError: (error) => handleErrorApi({ error }),
   });

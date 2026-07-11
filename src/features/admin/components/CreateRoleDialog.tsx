@@ -18,6 +18,7 @@ import {
 } from "@/features/admin/schemas/role.schema";
 import { useAdminCreateRole } from "@/features/admin/hooks/useAdminRoles";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -48,7 +49,7 @@ export default function CreateRoleDialog({ open, onClose }: Props) {
         name: data.name,
         description: data.description || undefined,
       });
-      toast.success("Đã tạo role");
+      toast.success(ADMIN_MESSAGES.role.created);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

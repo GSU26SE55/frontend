@@ -77,7 +77,7 @@ export default function DeclareIncidentDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
                 {isPending ? "Đang xử lý..." : "Khai báo Incident"}

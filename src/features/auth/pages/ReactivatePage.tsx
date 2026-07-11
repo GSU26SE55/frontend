@@ -16,6 +16,7 @@ import {
 import { useReactivateRequest } from "@/features/auth/hooks/useReactivateRequest";
 import { useReactivateVerify } from "@/features/auth/hooks/useReactivateVerify";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 const ReactivatePage = () => {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const ReactivatePage = () => {
   const onVerify = async (data: ReactivateVerifyFormValues) => {
     try {
       await verifyOtp(data);
-      toast.success("Khôi phục tài khoản thành công. Vui lòng đăng nhập lại.");
+      toast.success(AUTH_MESSAGES.account.reactivated);
       navigate("/login", { replace: true });
     } catch (error) {
       handleErrorApi({ error, setError: verifyForm.setError });

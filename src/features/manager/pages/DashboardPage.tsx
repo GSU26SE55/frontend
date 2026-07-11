@@ -10,7 +10,7 @@ import {
   DashboardKpi,
   DashboardPanel,
   DashboardGauge,
-} from "@/shared/components/common/DashboardPanel";
+} from "@/shared/components/dashboard/DashboardPanel";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import { useAdminTicketQueue } from "@/features/manager/hooks/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/useStaffAssignmentList";
@@ -29,7 +29,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import {
   Ticket,
@@ -42,6 +42,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
+import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
 
 /**
  * Manager = Điều phối vận hành ticket: pipeline trạng thái, SLA, tải nhân sự,
@@ -241,7 +242,7 @@ export default function ManagerDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* Ticket pipeline — horizontal bars */}
         <DashboardPanel
-          title="Pipeline xử lý ticket"
+          title={OVERVIEW_PANELS.manager.ticketPipeline}
           desc={`${pipelineTotal} ticket theo giai đoạn`}
           className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
@@ -287,7 +288,7 @@ export default function ManagerDashboardPage() {
 
         {/* SLA gauge */}
         <DashboardPanel
-          title="Tuân thủ SLA"
+          title={OVERVIEW_PANELS.manager.sla}
           desc="met / (met + breach)"
           className="lg:col-span-3 min-h-60 lg:min-h-0"
         >
@@ -335,7 +336,7 @@ export default function ManagerDashboardPage() {
 
         {/* Tickets 7-day — area */}
         <DashboardPanel
-          title="Ticket mới · 7 ngày"
+          title={OVERVIEW_PANELS.manager.newTickets7d}
           desc="Số ticket tạo theo ngày"
           className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
@@ -399,7 +400,7 @@ export default function ManagerDashboardPage() {
 
         {/* Staff workload */}
         <DashboardPanel
-          title="Tải nhân sự"
+          title={OVERVIEW_PANELS.manager.staffLoad}
           desc={`${workload.length} staff · ticket đang xử lý / tối đa`}
           className="lg:col-span-5 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -456,7 +457,7 @@ export default function ManagerDashboardPage() {
 
         {/* Triage queue */}
         <DashboardPanel
-          title="Hàng chờ triage"
+          title={OVERVIEW_PANELS.manager.triageQueue}
           desc={`${queueCount} ticket chờ phân loại`}
           className="lg:col-span-4 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -500,7 +501,7 @@ export default function ManagerDashboardPage() {
 
         {/* At-risk sites */}
         <DashboardPanel
-          title="Sites cần chú ý"
+          title={OVERVIEW_PANELS.manager.sitesNeedAttention}
           desc={`Sức khỏe < 80% · ${atRisk.length} site`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"

@@ -12,12 +12,7 @@ import type {
   CascadeRiskLevelName,
   ElectricalTopologyName,
 } from "@/shared/types/cascade.types";
-
-const LEVEL_STYLE: Record<CascadeRiskLevelName, string> = {
-  Low: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Medium: "bg-amber-50 text-amber-700 border-amber-200",
-  High: "bg-red-50 text-red-600 border-red-200",
-};
+import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
 
 const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
   Low: "Thấp",
@@ -35,7 +30,7 @@ const TOPOLOGY_LABEL: Record<ElectricalTopologyName, string> = {
 // Fallback an toàn: nếu BE trả giá trị ngoài enum (vd số thay vì string name)
 // thì hiển thị chính giá trị thô thay vì render trống im lặng.
 const levelStyle = (lvl: CascadeRiskLevelName) =>
-  LEVEL_STYLE[lvl] ?? "bg-muted text-muted-foreground border-border";
+  toneClass(CASCADE_RISK_TONE[lvl] ?? "muted");
 const levelLabel = (lvl: CascadeRiskLevelName) =>
   LEVEL_LABEL[lvl] ?? String(lvl);
 const topologyLabel = (t: ElectricalTopologyName) =>

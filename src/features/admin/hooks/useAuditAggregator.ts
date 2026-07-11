@@ -8,6 +8,7 @@ import type {
   AuditReplayParams,
   AuditRedactParams,
 } from "@/shared/types/audit-aggregate.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useAuditSearch = (params?: AuditSearchParams, enabled = true) =>
   useQuery({
@@ -21,8 +22,7 @@ export const useAuditSearch = (params?: AuditSearchParams, enabled = true) =>
 export const useAuditDetail = (id: string) =>
   useQuery({
     queryKey: QUERY_KEY.auditAggregate.detail(id),
-    queryFn: () =>
-      auditAggregatorService.getById(id).then((r) => r.data.data),
+    queryFn: () => auditAggregatorService.getById(id).then((r) => r.data.data),
     enabled: !!id,
   });
 
@@ -70,7 +70,7 @@ export const useReplayAudit = () =>
     mutationFn: (payload: AuditReplayParams) =>
       auditAggregatorService.replay(payload),
     onSuccess: () => {
-      toast.success("Đã gửi yêu cầu replay event");
+      toast.success(ADMIN_MESSAGES.saga.replayRequested);
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -80,7 +80,7 @@ export const useRedactAudit = () =>
     mutationFn: (payload: AuditRedactParams) =>
       auditAggregatorService.redact(payload),
     onSuccess: () => {
-      toast.success("Đã xóa dữ liệu cá nhân");
+      toast.success(ADMIN_MESSAGES.account.personalDataDeleted);
     },
     onError: (error) => handleErrorApi({ error }),
   });

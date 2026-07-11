@@ -16,9 +16,9 @@ import {
   TicketCategoryEnum,
 } from "@/shared/types/ticket.types";
 import type { TicketDTO } from "@/shared/types/ticket.types";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const CATEGORY_LABELS: Record<string, string> = {

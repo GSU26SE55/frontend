@@ -14,9 +14,9 @@ import {
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
-} from "@/shared/components/common/kb/KbArticleDetail";
-import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
-import { KbVersionDialog } from "@/shared/components/common/kb/KbVersionDialog";
+} from "@/shared/components/kb/KbArticleDetail";
+import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
+import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
 import type { KbCompareParams } from "@/shared/types/kb.types";
 
 export default function KbDetailPage() {

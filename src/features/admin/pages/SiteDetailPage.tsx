@@ -22,9 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import SiteDashboardCard from "@/shared/components/common/SiteDashboardCard";
-import SiteAssetsTable from "@/shared/components/common/SiteAssetsTable";
-import CascadeRiskSummary from "@/shared/components/common/CascadeRiskSummary";
+import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
+import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
+import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
 import { useSiteCascadeSummary } from "@/features/admin/hooks/useSiteCascadeSummary";
 import {
@@ -37,7 +37,7 @@ import {
 import { SiteStatusEnum } from "@/shared/types/site.types";
 import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
 import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const ASSET_STATUS_ALL = "all";

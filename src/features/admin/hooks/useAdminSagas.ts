@@ -4,6 +4,7 @@ import { QUERY_KEY, KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { adminSagaService } from "../services/saga.service";
 import type { AlertTicketSagaFilterParams } from "../types/saga.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export function useAlertTicketSagas(params?: AlertTicketSagaFilterParams) {
   return useQuery({
@@ -28,7 +29,7 @@ export function useReprocessSaga() {
     mutationFn: (alertId: string) =>
       adminSagaService.reprocess(alertId, crypto.randomUUID()),
     onSuccess: () => {
-      toast.success("Đã gửi yêu cầu xử lý lại saga");
+      toast.success(ADMIN_MESSAGES.saga.reprocessRequested);
       qc.invalidateQueries({ queryKey: KEY.admin.sagas });
     },
     onError: (error) => handleErrorApi({ error }),

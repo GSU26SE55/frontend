@@ -119,7 +119,7 @@ export default function ReassignDialog({ ticketId, open, onClose }: Props) {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" disabled={isPending || loadingStaff}>
                 {isPending ? "Đang xử lý..." : "Điều chuyển"}
