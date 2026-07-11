@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {
   items: IotDeviceCalibrationDto[];
@@ -25,10 +26,10 @@ export default function CalibrationsExpiringTable({ items }: Props) {
       <TableHeader>
         <TableRow>
           <TableHead>Device ID</TableHead>
-          <TableHead>Channel</TableHead>
-          <TableHead>Đơn vị</TableHead>
-          <TableHead>Calibrated</TableHead>
-          <TableHead>Hết hạn</TableHead>
+          <TableHead>{TABLE_COLUMNS.channel}</TableHead>
+          <TableHead>{TABLE_COLUMNS.unit}</TableHead>
+          <TableHead>{TABLE_COLUMNS.calibrated}</TableHead>
+          <TableHead>{TABLE_COLUMNS.expiresAt}</TableHead>
           <TableHead>Còn lại</TableHead>
         </TableRow>
       </TableHeader>

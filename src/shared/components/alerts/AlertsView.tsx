@@ -41,6 +41,7 @@ import {
 } from "@/shared/enums/alert.enum";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const DEFAULTS = {
   severity: "",
@@ -201,13 +202,15 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Serial pin</TableHead>
                 <TableHead>Loại bất thường</TableHead>
-                <TableHead>Mức độ</TableHead>
+                <TableHead>{TABLE_COLUMNS.severity}</TableHead>
                 <TableHead>Giá trị</TableHead>
-                <TableHead>Phát hiện lúc</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

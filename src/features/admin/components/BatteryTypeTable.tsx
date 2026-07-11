@@ -2,14 +2,6 @@ import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,8 +12,9 @@ import {
   BatteryChemistryEnum,
   type BatteryTypeDto,
 } from "@/features/admin/types/battery-type.types";
-import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
-import { useSortableData } from "@/shared/hooks/useSortableData";
+import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { ACTIONS } from "@/shared/constants/actions";
 
 const CHEMISTRY_LABEL: Record<BatteryChemistryEnum, string> = {
   [BatteryChemistryEnum.LI_FE_PO4]: "LiFePO4",
@@ -52,144 +45,106 @@ export default function BatteryTypeTable({
   onRestore,
   onConfigThreshold,
 }: BatteryTypeTableProps) {
-  const { sorted, sortKey, sortDirection, toggleSort } =
-    useSortableData<BatteryTypeDto>(data, (type, key) => {
-      switch (key) {
-        case "name":
-          return type.name;
-        case "manufacturer":
-          return type.manufacturer ?? "";
-        case "chemistry":
-          return CHEMISTRY_LABEL[type.chemistry] ?? "";
-        case "nominalCapacityAh":
-          return type.nominalCapacityAh;
-        case "nominalVoltage":
-          return type.nominalVoltage;
-        case "maxCycleCount":
-          return type.maxCycleCount;
-        default:
-          return null;
-      }
-    });
+  const columns: ColumnDef<BatteryTypeDto>[] = [
+    {
+      id: "name",
+      header: "Tên model",
+      sortKey: "name",
+      sortValue: (t) => t.name,
+      cellClassName: "font-medium",
+      cell: (t) => t.name,
+    },
+    {
+      id: "manufacturer",
+      header: "Nhà sản xuất",
+      sortKey: "manufacturer",
+      sortValue: (t) => t.manufacturer ?? "",
+      cell: (t) => t.manufacturer ?? "—",
+    },
+    {
+      id: "chemistry",
+      header: "Hóa học",
+      sortKey: "chemistry",
+      sortValue: (t) => CHEMISTRY_LABEL[t.chemistry] ?? "",
+      cell: (t) => (
+        <Badge variant="secondary">{CHEMISTRY_LABEL[t.chemistry] ?? "—"}</Badge>
+      ),
+    },
+    {
+      id: "nominalCapacityAh",
+      header: "Dung lượng (Ah)",
+      sortKey: "nominalCapacityAh",
+      sortValue: (t) => t.nominalCapacityAh,
+      headClassName: "justify-end text-right",
+      cellClassName: "text-right tabular-nums",
+      cell: (t) => t.nominalCapacityAh,
+    },
+    {
+      id: "nominalVoltage",
+      header: "Điện áp (V)",
+      sortKey: "nominalVoltage",
+      sortValue: (t) => t.nominalVoltage,
+      headClassName: "justify-end text-right",
+      cellClassName: "text-right tabular-nums",
+      cell: (t) => t.nominalVoltage,
+    },
+    {
+      id: "maxCycleCount",
+      header: "Chu kỳ",
+      sortKey: "maxCycleCount",
+      sortValue: (t) => t.maxCycleCount,
+      headClassName: "justify-end text-right",
+      cellClassName: "text-right tabular-nums",
+      cell: (t) => t.maxCycleCount,
+    },
+    {
+      id: "actions",
+      header: TABLE_COLUMNS.actions,
+      headClassName: "text-right",
+      cellClassName: "text-right",
+      cell: (type) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button variant="ghost" size="icon" className="size-7" />}
+          >
+            <EllipsisVertical className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {showRestore ? (
+              <DropdownMenuItem onClick={() => onRestore(type)}>
+                Khôi phục
+              </DropdownMenuItem>
+            ) : (
+              <>
+                <DropdownMenuItem onClick={() => onConfigThreshold(type)}>
+                  Cấu hình ngưỡng
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(type)}>
+                  {ACTIONS.EDIT}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onDelete(type)}
+                >
+                  {ACTIONS.DELETE}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-12 text-center">STT</TableHead>
-          <SortableTableHead
-            sortKey="name"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-          >
-            Tên model
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="manufacturer"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-          >
-            Nhà sản xuất
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="chemistry"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-          >
-            Hóa học
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="nominalCapacityAh"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="justify-end text-right"
-          >
-            Dung lượng (Ah)
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="nominalVoltage"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="justify-end text-right"
-          >
-            Điện áp (V)
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="maxCycleCount"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="justify-end text-right"
-          >
-            Chu kỳ
-          </SortableTableHead>
-          <TableHead className="text-right">Thao tác</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sorted.map((type, index) => (
-          <TableRow key={type.id}>
-            <TableCell className="text-center text-muted-foreground tabular-nums">
-              {(pageNumber - 1) * pageSize + index + 1}
-            </TableCell>
-            <TableCell className="font-medium">{type.name}</TableCell>
-            <TableCell>{type.manufacturer ?? "—"}</TableCell>
-            <TableCell>
-              <Badge variant="secondary">
-                {CHEMISTRY_LABEL[type.chemistry] ?? "—"}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right tabular-nums">
-              {type.nominalCapacityAh}
-            </TableCell>
-            <TableCell className="text-right tabular-nums">
-              {type.nominalVoltage}
-            </TableCell>
-            <TableCell className="text-right tabular-nums">
-              {type.maxCycleCount}
-            </TableCell>
-            <TableCell className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button variant="ghost" size="icon" className="size-7" />
-                  }
-                >
-                  <EllipsisVertical className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {showRestore ? (
-                    <DropdownMenuItem onClick={() => onRestore(type)}>
-                      Khôi phục
-                    </DropdownMenuItem>
-                  ) : (
-                    <>
-                      <DropdownMenuItem onClick={() => onConfigThreshold(type)}>
-                        Cấu hình ngưỡng
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEdit(type)}>
-                        Chỉnh sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => onDelete(type)}
-                      >
-                        Xóa
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <DataTable
+      data={data}
+      columns={columns}
+      rowKey={(t) => t.id}
+      showIndex
+      pageNumber={pageNumber}
+      pageSize={pageSize}
+    />
   );
 }

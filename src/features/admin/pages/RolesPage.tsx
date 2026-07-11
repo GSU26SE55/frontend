@@ -63,6 +63,7 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/admin.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_VARIANT: Record<
   number,
@@ -219,12 +220,16 @@ export default function RolesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Nguồn</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>{TABLE_COLUMNS.source}</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
                 <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead className="text-right">
+                  {TABLE_COLUMNS.actions}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -14,6 +14,7 @@ import {
 import type { GatewayDeviceDto } from "@/features/admin/types/sms-gateway.types";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const ONLINE_THRESHOLD_MS = 10 * 60 * 1000; // 10 phút — theo controller remark BE
 
@@ -79,7 +80,9 @@ export default function SmsDeviceTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12 text-center">STT</TableHead>
+          <TableHead className="w-12 text-center">
+            {TABLE_COLUMNS.index}
+          </TableHead>
           <SortableTableHead
             sortKey="deviceName"
             activeSortKey={sortKey}
@@ -120,7 +123,7 @@ export default function SmsDeviceTable({
           >
             Tạo lúc
           </SortableTableHead>
-          <TableHead className="text-right">Thao tác</TableHead>
+          <TableHead className="text-right">{TABLE_COLUMNS.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

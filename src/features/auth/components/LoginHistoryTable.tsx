@@ -16,6 +16,7 @@ import { useLoginHistory } from "@/features/auth/hooks/useLoginHistory";
 import { LoginAttemptResult } from "@/features/auth/types/account.types";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.Success]: "Thành công",
@@ -65,7 +66,7 @@ const LoginHistoryTable = () => {
           <TableHeader>
             <TableRow className="hover:bg-transparent bg-muted/60">
               <TableHead className="w-12 text-center text-xs font-semibold">
-                STT
+                {TABLE_COLUMNS.index}
               </TableHead>
               <SortableTableHead
                 sortKey="createdAt"

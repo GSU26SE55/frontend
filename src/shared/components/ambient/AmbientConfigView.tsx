@@ -45,6 +45,7 @@ import {
 import { AmbientReadingSourceEnum } from "@/shared/enums/ambient.enum";
 import type { AmbientThresholdUpsertPayload } from "@/shared/types/ambient.types";
 import type { SiteOption } from "@/shared/types/site.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
   [AmbientReadingSourceEnum.IotSensor]: "Cảm biến IoT",
@@ -488,12 +489,14 @@ function HistoryTable({ siteId }: { siteId: string }) {
             </colgroup>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Thời điểm</TableHead>
                 <TableHead>Nhiệt độ</TableHead>
                 <TableHead>Độ ẩm</TableHead>
                 <TableHead>Bức xạ</TableHead>
-                <TableHead>Nguồn</TableHead>
+                <TableHead>{TABLE_COLUMNS.source}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -11,6 +11,7 @@ import {
 import { useReadingHistory } from "@/features/admin/hooks/useReadingHistory";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const num = (v: number | null, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
@@ -71,7 +72,9 @@ export default function SensorHistoryTable({
         </colgroup>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12 text-center">STT</TableHead>
+            <TableHead className="w-12 text-center">
+              {TABLE_COLUMNS.index}
+            </TableHead>
             <SortableTableHead
               sortKey="time"
               activeSortKey={sortKey}

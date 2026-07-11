@@ -12,6 +12,7 @@ import {
 import { SiteStatusEnum, type SiteDto } from "@/shared/types/site.types";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
   [SiteStatusEnum.Active]: "Hoạt động",
@@ -62,7 +63,9 @@ export default function SiteTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12 text-center">STT</TableHead>
+          <TableHead className="w-12 text-center">
+            {TABLE_COLUMNS.index}
+          </TableHead>
           <SortableTableHead
             sortKey="name"
             activeSortKey={sortKey}

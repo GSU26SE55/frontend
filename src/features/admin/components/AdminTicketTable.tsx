@@ -17,6 +17,7 @@ import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge"
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Bảo trì",
@@ -95,7 +96,9 @@ export default function AdminTicketTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 text-center">STT</TableHead>
+              <TableHead className="w-12 text-center">
+                {TABLE_COLUMNS.index}
+              </TableHead>
               <SortableTableHead
                 sortKey="code"
                 activeSortKey={sortKey}

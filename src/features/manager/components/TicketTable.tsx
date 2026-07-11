@@ -15,6 +15,7 @@ import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {
   tickets: TicketDTO[];
@@ -86,7 +87,9 @@ export default function TicketTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12 text-center">STT</TableHead>
+            <TableHead className="w-12 text-center">
+              {TABLE_COLUMNS.index}
+            </TableHead>
             <SortableTableHead
               sortKey="code"
               activeSortKey={sortKey}
@@ -127,7 +130,7 @@ export default function TicketTable({
             >
               Loại
             </SortableTableHead>
-            <TableHead>SLA</TableHead>
+            <TableHead>{TABLE_COLUMNS.sla}</TableHead>
             <SortableTableHead
               sortKey="createdAt"
               activeSortKey={sortKey}

@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -77,7 +78,9 @@ export default function BatteryAssetTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12 text-center">STT</TableHead>
+          <TableHead className="w-12 text-center">
+            {TABLE_COLUMNS.index}
+          </TableHead>
           <SortableTableHead
             sortKey="serialNumber"
             activeSortKey={sortKey}
@@ -126,7 +129,7 @@ export default function BatteryAssetTable({
           >
             Ngày lắp
           </SortableTableHead>
-          <TableHead className="text-right">Thao tác</TableHead>
+          <TableHead className="text-right">{TABLE_COLUMNS.actions}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

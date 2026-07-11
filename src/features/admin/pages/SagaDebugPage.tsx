@@ -28,6 +28,7 @@ import {
   useReprocessSaga,
 } from "@/features/admin/hooks/useAdminSagas";
 import type { AlertTicketSagaDTO } from "@/features/admin/types/saga.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 function fmt(d?: string | null) {
   return d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: vi }) : "—";
@@ -118,12 +119,14 @@ export default function SagaDebugPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Alert</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ticket</TableHead>
+                  <TableHead>{TABLE_COLUMNS.status}</TableHead>
+                  <TableHead>{TABLE_COLUMNS.ticket}</TableHead>
                   <TableHead>Retry</TableHead>
                   <TableHead>Bắt đầu</TableHead>
                   <TableHead>Lỗi tại</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  <TableHead className="text-right">
+                    {TABLE_COLUMNS.actions}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

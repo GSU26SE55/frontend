@@ -61,6 +61,7 @@ import type { SiteOption } from "@/shared/types/site.types";
 import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
 import { incidentTypeLabel } from "./incidentLabels";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const DEFAULTS = {
   status: "",
@@ -249,12 +250,14 @@ export default function EnvironmentalIncidentsView({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Site</TableHead>
                 <TableHead>Loại sự cố</TableHead>
-                <TableHead>Mức độ</TableHead>
-                <TableHead>Phát hiện lúc</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>{TABLE_COLUMNS.severity}</TableHead>
+                <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

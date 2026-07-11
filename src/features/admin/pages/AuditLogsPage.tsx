@@ -45,6 +45,7 @@ import type { AuditLogDto } from "@/features/admin/types/admin.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { toneClass } from "@/shared/theme/statusColors";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -525,8 +526,10 @@ export default function AuditLogsPage() {
           <Table className="table-fixed">
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-12 text-center">STT</TableHead>
-                <TableHead className="w-1/5">Thời gian</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
+                <TableHead className="w-1/5">{TABLE_COLUMNS.time}</TableHead>
                 <TableHead className="w-1/5">Hành động</TableHead>
                 <TableHead className="w-1/5">Kết quả</TableHead>
                 <TableHead className="w-1/5">Tài khoản</TableHead>

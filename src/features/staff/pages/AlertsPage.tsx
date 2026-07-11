@@ -24,6 +24,7 @@ import {
   NotificationTypeEnum,
 } from "@/features/staff/types/notification.types";
 import type { NotificationDto } from "@/features/staff/types/notification.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const PAGE_SIZE = 10;
 
@@ -174,11 +175,13 @@ export default function AlertsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Nội dung</TableHead>
                 <TableHead>Loại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Thời gian</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
+                <TableHead>{TABLE_COLUMNS.time}</TableHead>
                 <TableHead className="text-right">Liên kết</TableHead>
               </TableRow>
             </TableHeader>

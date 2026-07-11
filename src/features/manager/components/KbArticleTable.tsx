@@ -22,6 +22,7 @@ import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbArticleStatusEnum, KbCategoryLabel } from "@/shared/enums/kb.enum";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
@@ -104,7 +105,7 @@ export default function KbArticleTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-12 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            STT
+            {TABLE_COLUMNS.index}
           </TableHead>
           <SortableTableHead
             sortKey="code"
@@ -161,7 +162,7 @@ export default function KbArticleTable({
             Hữu ích
           </SortableTableHead>
           <TableHead className="w-20 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Thao tác
+            {TABLE_COLUMNS.actions}
           </TableHead>
         </TableRow>
       </TableHeader>

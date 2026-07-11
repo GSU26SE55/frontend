@@ -65,6 +65,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -246,7 +247,9 @@ export default function AccountsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <SortableTableHead
                   sortKey="fullName"
                   activeSortKey={sortKey}
@@ -279,7 +282,9 @@ export default function AccountsPage() {
                 >
                   Ngày tạo
                 </SortableTableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead className="text-right">
+                  {TABLE_COLUMNS.actions}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

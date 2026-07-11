@@ -15,6 +15,7 @@ import type { BatteryAuditLogDto } from "@/features/admin/types/battery-audit.ty
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 import { toneClass } from "@/shared/theme/statusColors";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 // severity → màu badge (display-only; KHÔNG phải filter). Token semantic.
 const SEVERITY_STYLE: Record<string, string> = {
@@ -93,7 +94,9 @@ export default function BatteryAuditLogTable({
     <Table className="table-fixed">
       <TableHeader>
         <TableRow className="bg-muted/40">
-          <TableHead className="w-12 text-center">STT</TableHead>
+          <TableHead className="w-12 text-center">
+            {TABLE_COLUMNS.index}
+          </TableHead>
           <SortableTableHead
             sortKey="occurredAt"
             activeSortKey={sortKey}

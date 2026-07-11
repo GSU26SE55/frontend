@@ -14,6 +14,7 @@ import {
   BatteryStatusEnum,
   type BatteryAssetDto,
 } from "@/shared/types/battery.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -72,10 +73,12 @@ export default function SiteAssetsTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12 text-center">STT</TableHead>
+            <TableHead className="w-12 text-center">
+              {TABLE_COLUMNS.index}
+            </TableHead>
             <TableHead>Số seri</TableHead>
             <TableHead>Loại pin</TableHead>
-            <TableHead>Trạng thái</TableHead>
+            <TableHead>{TABLE_COLUMNS.status}</TableHead>
             <TableHead>Ngày lắp</TableHead>
             <TableHead>Đọc cuối</TableHead>
           </TableRow>
