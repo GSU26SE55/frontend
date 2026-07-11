@@ -70,7 +70,7 @@ export default function KbListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} bài viết &mdash; tra
-            cứu hướng dẫn xử lý
+            cứu hướng dẫn xử lý.
           </p>
         </div>
         <div className="flex gap-2">

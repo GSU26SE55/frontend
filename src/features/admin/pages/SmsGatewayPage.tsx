@@ -57,7 +57,8 @@ export default function SmsGatewayPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">SMS Gateway</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : devices.length} thiết bị gửi SMS.
+            {isLoading ? "..." : devices.length} thiết bị &mdash; quản lý
+            gateway gửi SMS.
           </p>
         </div>
         <div className="flex gap-2">

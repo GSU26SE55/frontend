@@ -98,7 +98,8 @@ export default function SiteListPage() {
             Quản lý Site
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} site.
+            {isLoading ? "..." : totalItems} site &mdash; quản lý site khách
+            hàng.
           </p>
         </div>
         <div className="flex gap-2">

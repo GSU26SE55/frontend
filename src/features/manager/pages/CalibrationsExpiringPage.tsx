@@ -33,7 +33,7 @@ export default function CalibrationsExpiringPage() {
             Calibration sắp hết hạn
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : items.length} calibration cần recalibrate
+            {isLoading ? "..." : items.length} calibration cần recalibrate.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.iotCalibrations]} />

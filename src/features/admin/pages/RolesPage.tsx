@@ -285,7 +285,7 @@ export default function RolesPage() {
                         >
                           <EllipsisVertical className="size-4" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-36">
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "edit", role })}
                           >

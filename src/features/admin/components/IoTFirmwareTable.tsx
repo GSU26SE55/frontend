@@ -190,7 +190,7 @@ export default function IoTFirmwareTable({ items }: Props) {
                   >
                     <EllipsisVertical className="size-4" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuContent align="end" className="w-36">
                     {!item.isPublished && !item.isArchived && (
                       <DropdownMenuItem
                         onClick={() =>

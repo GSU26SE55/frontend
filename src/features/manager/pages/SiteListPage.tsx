@@ -47,7 +47,7 @@ export default function ManagerSiteListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : totalItems} site &mdash; quản lý site khách
-            hàng
+            hàng.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.sites]} />
