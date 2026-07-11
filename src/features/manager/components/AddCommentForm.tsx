@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import FileUploadField from "@/features/file-storage/components/FileUploadField";
-import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
+import FileUploadField from "@/shared/components/file/FileUploadField";
+import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { AttachmentPreviewStrip } from "@/shared/components/common/AttachmentPreviewStrip";
 import { VoiceRecordingBar } from "@/shared/components/common/VoiceRecordingBar";
 import { useVoiceRecorder } from "@/shared/hooks/useVoiceRecorder";
@@ -192,7 +192,9 @@ export default function AddCommentForm({
                 type="button"
                 disabled={isInternal || uploading || transcribing}
                 title={
-                  isInternal ? "Ghi am luon duoc gui cong khai" : "Ghi am tin nhan"
+                  isInternal
+                    ? "Ghi am luon duoc gui cong khai"
+                    : "Ghi am tin nhan"
                 }
                 aria-label="Ghi am tin nhan"
                 onClick={handleStartRecording}

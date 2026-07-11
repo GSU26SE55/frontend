@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KEY } from "@/shared/utils/queryKeys";
-import { fileStorageService } from "@/features/file-storage/services/file-storage.service";
+import { fileStorageService } from "@/shared/services/file-storage.service";
 
 export function useDeleteFile() {
   const qc = useQueryClient();

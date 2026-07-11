@@ -30,8 +30,8 @@ import {
   KbArticleSelector,
   type KbArticleSearchParams,
 } from "@/shared/components/common/kb/KbArticleSelector";
-import FileUploadField from "@/features/file-storage/components/FileUploadField";
-import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
+import FileUploadField from "@/shared/components/file/FileUploadField";
+import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { MaintenanceLogTypeEnum } from "@/shared/types/ticket.types";
 import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb.enum";
 import { staffKbService } from "../services/kb.service";

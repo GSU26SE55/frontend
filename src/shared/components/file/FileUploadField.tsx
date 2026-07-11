@@ -3,11 +3,11 @@ import { toast } from "sonner";
 import { ImagePlus, Loader2, X, Upload, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AuthImage from "@/shared/components/common/AuthImage";
-import { useUploadFile } from "@/features/file-storage/hooks/useUploadFile";
-import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
+import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
+import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { HttpError, EntityError } from "@/shared/lib/errors";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { fileStorageService } from "@/features/file-storage/services/file-storage.service";
+import { fileStorageService } from "@/shared/services/file-storage.service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
@@ -60,7 +60,9 @@ export default function FileUploadField({
   const [uploadingCount, setUploadingCount] = useState(0);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [fetchingMetadata, setFetchingMetadata] = useState(false);
-  const [dialogAttachments, setDialogAttachments] = useState<UploadedAttachment[]>([]);
+  const [dialogAttachments, setDialogAttachments] = useState<
+    UploadedAttachment[]
+  >([]);
 
   const items = value ?? [];
   const remaining = max - items.length;
@@ -120,7 +122,9 @@ export default function FileUploadField({
           }
         } catch (err) {
           if (err instanceof EntityError) {
-            toast.error(err.errors[0]?.detail ?? `"${file.name}" không hợp lệ.`);
+            toast.error(
+              err.errors[0]?.detail ?? `"${file.name}" không hợp lệ.`,
+            );
           } else if (err instanceof HttpError) {
             toast.error(err.message);
           } else {
@@ -182,7 +186,6 @@ export default function FileUploadField({
   const handleRemove = (fileId: string) =>
     onChange(items.filter((a) => a.fileId !== fileId));
 
-
   const handleSelectExisting = async (fileId: string) => {
     const isSelected = dialogAttachments.some((i) => i.fileId === fileId);
     if (isSelected) {
@@ -212,7 +215,7 @@ export default function FileUploadField({
       } else {
         toast.error(res.data.message || "Không thể lấy thông tin tệp tin.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Lỗi khi tải thông tin tệp tin.");
     } finally {
       setFetchingMetadata(false);
@@ -316,26 +319,44 @@ export default function FileUploadField({
         onChange={handlePick}
       />
 
-      <Dialog open={isLibraryOpen} onOpenChange={(open) => !open && !fetchingMetadata && setIsLibraryOpen(false)}>
+      <Dialog
+        open={isLibraryOpen}
+        onOpenChange={(open) =>
+          !open && !fetchingMetadata && setIsLibraryOpen(false)
+        }
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-6">
-          <DialogTitle className="text-lg font-semibold text-foreground">Thêm tệp tin đính kèm</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-foreground">
+            Thêm tệp tin đính kèm
+          </DialogTitle>
           <div className="flex-1 min-h-0 mt-2 flex flex-col">
             <Tabs defaultValue="reuse" className="flex-1 flex flex-col min-h-0">
               <TabsList className="grid w-full grid-cols-2 mb-4 shrink-0">
-                <TabsTrigger value="reuse" className="text-sm font-medium">Thư viện</TabsTrigger>
-                <TabsTrigger value="upload" className="text-sm font-medium">Tải lên</TabsTrigger>
+                <TabsTrigger value="reuse" className="text-sm font-medium">
+                  Thư viện
+                </TabsTrigger>
+                <TabsTrigger value="upload" className="text-sm font-medium">
+                  Tải lên
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="reuse" className="flex-1 overflow-y-auto min-h-[220px] relative outline-none pr-1">
+              <TabsContent
+                value="reuse"
+                className="flex-1 overflow-y-auto min-h-[220px] relative outline-none pr-1"
+              >
                 {fetchingMetadata && (
                   <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <span className="text-sm font-medium mt-2 text-muted-foreground">Đang tải thông tin tệp...</span>
+                    <span className="text-sm font-medium mt-2 text-muted-foreground">
+                      Đang tải thông tin tệp...
+                    </span>
                   </div>
                 )}
                 <div className="grid grid-cols-4 gap-3">
                   {existingFileIds.map((fileId) => {
-                    const isSelected = dialogAttachments.some((i) => i.fileId === fileId);
+                    const isSelected = dialogAttachments.some(
+                      (i) => i.fileId === fileId,
+                    );
                     return (
                       <button
                         key={fileId}
@@ -344,9 +365,9 @@ export default function FileUploadField({
                         onClick={() => handleSelectExisting(fileId)}
                         className={cn(
                           "group relative aspect-square overflow-hidden rounded-md border-2 bg-muted transition-all duration-200 outline-none",
-                          isSelected 
-                            ? "border-primary ring-2 ring-primary/20 shadow-sm" 
-                            : "border-border hover:border-muted-foreground/60"
+                          isSelected
+                            ? "border-primary ring-2 ring-primary/20 shadow-sm"
+                            : "border-border hover:border-muted-foreground/60",
                         )}
                       >
                         <AuthImage
@@ -365,18 +386,32 @@ export default function FileUploadField({
                 </div>
               </TabsContent>
 
-              <TabsContent value="upload" className="flex-1 flex flex-col justify-start outline-none overflow-y-auto pr-1">
+              <TabsContent
+                value="upload"
+                className="flex-1 flex flex-col justify-start outline-none overflow-y-auto pr-1"
+              >
                 {/* Uploaded files in the current dialog session */}
-                {dialogAttachments.some(att => !existingFileIds.includes(att.fileId)) && (
+                {dialogAttachments.some(
+                  (att) => !existingFileIds.includes(att.fileId),
+                ) && (
                   <div className="mb-4 pb-4 border-b border-border/60">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                      Ảnh đã tải lên ({dialogAttachments.filter(att => !existingFileIds.includes(att.fileId)).length})
+                      Ảnh đã tải lên (
+                      {
+                        dialogAttachments.filter(
+                          (att) => !existingFileIds.includes(att.fileId),
+                        ).length
+                      }
+                      )
                     </p>
                     <div className="grid grid-cols-4 gap-3">
                       {dialogAttachments
-                        .filter(att => !existingFileIds.includes(att.fileId))
+                        .filter((att) => !existingFileIds.includes(att.fileId))
                         .map((att) => (
-                          <div key={att.fileId} className="relative aspect-square rounded-md border border-border overflow-hidden group/newthumb">
+                          <div
+                            key={att.fileId}
+                            className="relative aspect-square rounded-md border border-border overflow-hidden group/newthumb"
+                          >
                             <AuthImage
                               fileId={att.fileId}
                               alt={att.fileName ?? "Ảnh mới"}
@@ -384,7 +419,11 @@ export default function FileUploadField({
                             />
                             <button
                               type="button"
-                              onClick={() => setDialogAttachments(prev => prev.filter(x => x.fileId !== att.fileId))}
+                              onClick={() =>
+                                setDialogAttachments((prev) =>
+                                  prev.filter((x) => x.fileId !== att.fileId),
+                                )
+                              }
                               className="absolute inset-0 bg-black/60 opacity-0 group-hover/newthumb:opacity-100 flex items-center justify-center text-white transition-opacity duration-200"
                             >
                               <X size={16} />
@@ -403,12 +442,17 @@ export default function FileUploadField({
                   onClick={() => inputRef.current?.click()}
                   className={cn(
                     "flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors text-center min-h-[120px] shrink-0",
-                    dragActive ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    dragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-muted/50",
                   )}
                 >
                   <div className="rounded-full bg-muted p-2.5 mb-2 text-muted-foreground">
                     {uploading ? (
-                      <Loader2 size={20} className="animate-spin text-primary" />
+                      <Loader2
+                        size={20}
+                        className="animate-spin text-primary"
+                      />
                     ) : (
                       <Upload size={20} />
                     )}
@@ -422,7 +466,6 @@ export default function FileUploadField({
                 </div>
               </TabsContent>
             </Tabs>
-
           </div>
 
           {/* Footer controls */}

@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFileBlobUrl } from "@/features/file-storage/hooks/useFileBlobUrl";
+import { useFileBlobUrl } from "@/shared/hooks/file/useFileBlobUrl";
 import {
   profileSchema,
   type ProfileFormValues,
@@ -29,8 +29,8 @@ import {
 import { useProfile } from "@/features/auth/hooks/useProfile";
 import { useUpdateProfile } from "@/features/auth/hooks/useUpdateProfile";
 import { useUpdateAvatar } from "@/features/auth/hooks/useUpdateAvatar";
-import { useUploadFile } from "@/features/file-storage/hooks/useUploadFile";
-import { FilePurposeEnum } from "@/features/file-storage/types/file-storage.types";
+import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
+import { FilePurposeEnum } from "@/shared/types/file-storage.types";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { AccountStatusEnum } from "@/shared/enums/account.enum";
 

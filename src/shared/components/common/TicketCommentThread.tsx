@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { EllipsisVertical, Globe, Lock } from "lucide-react";
+import { EllipsisVertical, Globe, Lock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -33,7 +33,7 @@ import ChatReactionBar from "@/shared/components/common/ChatReactionBar";
 import {
   isFileId,
   useAudioAttachment,
-} from "@/features/file-storage/hooks/useAudioAttachment";
+} from "@/shared/hooks/file/useAudioAttachment";
 import {
   ActorRoleEnum,
   type TicketCommentDTO,
@@ -53,7 +53,7 @@ const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 const LANGUAGE_OPTIONS = [
   { code: "vi", label: "Tiếng Việt" },
-  { code: "en", label: "English" }
+  { code: "en", label: "English" },
 ] as const;
 const LANGUAGE_LABEL: Record<string, string> = Object.fromEntries(
   LANGUAGE_OPTIONS.map((l) => [l.code, l.label]),
@@ -219,6 +219,14 @@ export function TicketCommentThread({
     onTabChange?.(t);
   };
 
+  // GH-133 — gợi ý AI hiển thị dạng bong bóng cuối luồng chat (phía người chat).
+  // Bấm chọn → đổ vào ô nhập nhưng KHÔNG xóa (user có thể đổi option khác);
+  // chỉ xóa khi user đã gửi tin nhắn thành công (số tin của chính mình tăng).
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const pickSuggestion = (text: string) => {
+    onSelectSuggestion?.(text);
+  };
+
   // Cũ lên trên, mới nhất ở dưới cùng — chuẩn giao diện chat.
   const sorted = useMemo(
     () =>
@@ -282,7 +290,7 @@ export function TicketCommentThread({
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [visible.length, tab]);
+  }, [visible.length, tab, aiSuggestions.length]);
 
   const markedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -312,6 +320,23 @@ export function TicketCommentThread({
 
   const isOwnComment = (c: TicketCommentDTO) =>
     !!currentUserId && c.authorUserId === currentUserId;
+
+  // Xóa gợi ý AI khi user đã gửi tin (số tin của chính mình tăng lên).
+  const ownCount = useMemo(
+    () =>
+      currentUserId
+        ? comments.filter((c) => c.authorUserId === currentUserId).length
+        : 0,
+    [comments, currentUserId],
+  );
+  const prevOwnCountRef = useRef(ownCount);
+  useEffect(() => {
+    if (ownCount > prevOwnCountRef.current && aiSuggestions.length > 0) {
+      setAiSuggestions([]);
+    }
+    prevOwnCountRef.current = ownCount;
+  }, [ownCount, aiSuggestions.length]);
+
   const withinEditWindow = (c: TicketCommentDTO) =>
     now - new Date(c.createdAt).getTime() <= EDIT_WINDOW_MS;
 
@@ -413,10 +438,7 @@ export function TicketCommentThread({
         </button>
         {aiEnabled && ticketId && (
           <div className="ml-auto">
-            <ChatAiPanel
-              ticketId={ticketId}
-              onSelectSuggestion={onSelectSuggestion}
-            />
+            <ChatAiPanel ticketId={ticketId} onSuggestions={setAiSuggestions} />
           </div>
         )}
       </div>
@@ -428,7 +450,7 @@ export function TicketCommentThread({
           : "Bình luận nội bộ — chỉ nhân viên xử lý ticket xem được."}
       </p>
 
-      {visible.length === 0 ? (
+      {visible.length === 0 && aiSuggestions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
           {tab === "public"
             ? "Chưa có bình luận công khai."
@@ -562,6 +584,35 @@ export function TicketCommentThread({
               </div>
             );
           })}
+
+          {aiSuggestions.length > 0 && (
+            <div className="flex items-end gap-2 justify-end">
+              <div className="flex max-w-[85%] flex-col items-end gap-1.5">
+                <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground px-1">
+                  <Sparkles className="size-3" />
+                  Gợi ý trả lời (AI) — bấm để chèn vào ô nhập
+                </span>
+                {aiSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => pickSuggestion(s)}
+                    className="w-full rounded-2xl rounded-br-md border border-primary/30 bg-primary/5 px-3 py-2 text-right text-sm whitespace-pre-wrap break-words transition-colors hover:bg-primary/10 hover:border-primary/50"
+                  >
+                    {s}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setAiSuggestions([])}
+                  className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1"
+                >
+                  Bỏ qua gợi ý
+                </button>
+              </div>
+            </div>
+          )}
+
           <div ref={bottomRef} />
         </div>
       )}

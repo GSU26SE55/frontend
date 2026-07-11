@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Play, Pause, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useFileBlobUrl } from "@/features/file-storage/hooks/useFileBlobUrl";
+import { useFileBlobUrl } from "@/shared/hooks/file/useFileBlobUrl";
 
 const BAR_COUNT = 32;
 

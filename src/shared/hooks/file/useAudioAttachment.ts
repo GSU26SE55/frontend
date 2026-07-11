@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fileStorageService } from "@/features/file-storage/services/file-storage.service";
+import { fileStorageService } from "@/shared/services/file-storage.service";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 
 const GUID_RE =

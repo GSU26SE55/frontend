@@ -6,7 +6,7 @@ import type {
   FileMetadataResponse,
   UploadFilePayload,
   PresignedUrlOptions,
-} from "@/features/file-storage/types/file-storage.types";
+} from "@/shared/types/file-storage.types";
 
 export const fileStorageService = {
   uploadFile: (payload: UploadFilePayload) => {
