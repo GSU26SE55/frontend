@@ -173,6 +173,8 @@ interface TicketCommentThreadProps {
   ticketId?: string;
   /** GH-133 C2 — hiện thanh AI (suggest/summarize/sentiment/export). Page tự gate role. */
   aiEnabled?: boolean;
+  /** Khi chọn 1 gợi ý AI, page có thể đổ nội dung xuống composer riêng theo role. */
+  onSelectSuggestion?: (text: string) => void;
   onEdit?: (chat: TicketCommentDTO, body: string) => void;
   onDelete?: (chat: TicketCommentDTO) => void;
   editPending?: boolean;
@@ -200,6 +202,7 @@ export function TicketCommentThread({
   ticketClosed = false,
   ticketId,
   aiEnabled = false,
+  onSelectSuggestion,
   onEdit,
   onDelete,
   editPending = false,
@@ -410,7 +413,10 @@ export function TicketCommentThread({
         </button>
         {aiEnabled && ticketId && (
           <div className="ml-auto">
-            <ChatAiPanel ticketId={ticketId} />
+            <ChatAiPanel
+              ticketId={ticketId}
+              onSelectSuggestion={onSelectSuggestion}
+            />
           </div>
         )}
       </div>
