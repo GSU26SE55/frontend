@@ -10,6 +10,7 @@ import {
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
 
 /**
@@ -27,6 +28,20 @@ export interface ColumnDef<T> {
   sortValue?: (row: T) => string | number | null;
   headClassName?: string;
   cellClassName?: string;
+  /**
+   * Ô này chứa nút/menu tương tác → chặn click lan lên hàng (tránh onRowClick).
+   * Đặt true cho cột "Thao tác" khi bảng có onRowClick.
+   */
+  stopRowClick?: boolean;
+  /**
+   * Hành vi khi click vào ô này (tùy chọn — bỏ = ô không click được).
+   * Cho phép mỗi cột chọn kiểu tương tác riêng, độc lập với onRowClick của hàng:
+   *   - Link detail:  onCellClick: (r) => navigate(`/x/${r.id}`)
+   *   - Mở modal:     onCellClick: (r) => setEditing(r)
+   *   - Không gì:     bỏ trống
+   * Tự thêm cursor-pointer + chặn lan click lên hàng.
+   */
+  onCellClick?: (row: T) => void;
 }
 
 interface DataTableProps<T> {
@@ -40,6 +55,8 @@ interface DataTableProps<T> {
   pageSize?: number;
   /** Nội dung khi rỗng. Bỏ → EmptyState mặc định. */
   empty?: ReactNode;
+  /** Click vào 1 hàng (vd navigate sang trang detail). Bỏ → hàng không click được. */
+  onRowClick?: (row: T) => void;
 }
 
 export function DataTable<T>({
@@ -50,6 +67,7 @@ export function DataTable<T>({
   pageNumber = 1,
   pageSize = 0,
   empty,
+  onRowClick,
 }: DataTableProps<T>) {
   // Map sortKey → sortValue để useSortableData tra cứu.
   const sortAccessors = new Map(
@@ -101,17 +119,40 @@ export function DataTable<T>({
           </TableRow>
         ) : (
           sorted.map((row, index) => (
-            <TableRow key={rowKey(row)}>
+            <TableRow
+              key={rowKey(row)}
+              className={
+                onRowClick ? "cursor-pointer hover:bg-muted/50" : undefined
+              }
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+            >
               {showIndex && (
                 <TableCell className="text-center text-muted-foreground tabular-nums">
                   {indexBase + index + 1}
                 </TableCell>
               )}
-              {columns.map((col) => (
-                <TableCell key={col.id} className={col.cellClassName}>
-                  {col.cell(row, index)}
-                </TableCell>
-              ))}
+              {columns.map((col) => {
+                // Cell click riêng (link/modal) HOẶC chỉ chặn lan (cột action).
+                const handleCellClick =
+                  col.onCellClick || col.stopRowClick
+                    ? (e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        col.onCellClick?.(row);
+                      }
+                    : undefined;
+                return (
+                  <TableCell
+                    key={col.id}
+                    className={cn(
+                      col.cellClassName,
+                      col.onCellClick && "cursor-pointer",
+                    )}
+                    onClick={handleCellClick}
+                  >
+                    {col.cell(row, index)}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))
         )}
