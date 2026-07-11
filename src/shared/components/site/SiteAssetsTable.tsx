@@ -2,14 +2,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import {
   BatteryStatusEnum,
   type BatteryAssetDto,
@@ -68,51 +61,52 @@ export default function SiteAssetsTable({
     );
   }
 
+  const columns: ColumnDef<BatteryAssetDto>[] = [
+    {
+      id: "serialNumber",
+      header: "Số seri",
+      cell: (asset) => asset.serialNumber,
+      cellClassName: "font-mono text-sm",
+    },
+    {
+      id: "batteryTypeName",
+      header: "Loại pin",
+      cell: (asset) => asset.batteryTypeName,
+    },
+    {
+      id: "status",
+      header: TABLE_COLUMNS.status,
+      cell: (asset) => (
+        <Badge variant={STATUS_VARIANT[asset.status]}>
+          {STATUS_LABEL[asset.status]}
+        </Badge>
+      ),
+    },
+    {
+      id: "installDate",
+      header: "Ngày lắp",
+      cell: (asset) => format(new Date(asset.installDate), "dd/MM/yyyy"),
+    },
+    {
+      id: "lastSensorReadingAt",
+      header: "Đọc cuối",
+      cell: (asset) =>
+        asset.lastSensorReadingAt
+          ? format(new Date(asset.lastSensorReadingAt), "dd/MM/yyyy HH:mm")
+          : "—",
+    },
+  ];
+
   return (
     <div className="space-y-2">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12 text-center">
-              {TABLE_COLUMNS.index}
-            </TableHead>
-            <TableHead>Số seri</TableHead>
-            <TableHead>Loại pin</TableHead>
-            <TableHead>{TABLE_COLUMNS.status}</TableHead>
-            <TableHead>Ngày lắp</TableHead>
-            <TableHead>Đọc cuối</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((asset, index) => (
-            <TableRow key={asset.id}>
-              <TableCell className="text-center text-muted-foreground tabular-nums">
-                {(pageNumber - 1) * pageSize + index + 1}
-              </TableCell>
-              <TableCell className="font-mono text-sm">
-                {asset.serialNumber}
-              </TableCell>
-              <TableCell>{asset.batteryTypeName}</TableCell>
-              <TableCell>
-                <Badge variant={STATUS_VARIANT[asset.status]}>
-                  {STATUS_LABEL[asset.status]}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {format(new Date(asset.installDate), "dd/MM/yyyy")}
-              </TableCell>
-              <TableCell>
-                {asset.lastSensorReadingAt
-                  ? format(
-                      new Date(asset.lastSensorReadingAt),
-                      "dd/MM/yyyy HH:mm",
-                    )
-                  : "—"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DataTable
+        data={data}
+        columns={columns}
+        rowKey={(asset) => asset.id}
+        showIndex
+        pageNumber={pageNumber}
+        pageSize={pageSize}
+      />
 
       {totalPages > 1 && (
         <div className="flex items-center justify-end gap-2">
