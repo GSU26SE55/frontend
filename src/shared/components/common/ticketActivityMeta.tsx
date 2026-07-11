@@ -47,28 +47,12 @@ const TONE_STYLE: Record<
   ActivityTone,
   { dot: string; iconColor: string; bg: string }
 > = {
-  ok: {
-    dot: "var(--ok)",
-    iconColor: "text-emerald-600 dark:text-emerald-300",
-    bg: "bg-emerald-500/10",
-  },
-  p1: {
-    dot: "var(--p1)",
-    iconColor: "text-red-600 dark:text-red-300",
-    bg: "bg-red-500/10",
-  },
-  p2: {
-    dot: "var(--p2)",
-    iconColor: "text-orange-600 dark:text-orange-300",
-    bg: "bg-orange-500/10",
-  },
-  info: {
-    dot: "var(--info)",
-    iconColor: "text-blue-600 dark:text-blue-300",
-    bg: "bg-blue-500/10",
-  },
+  ok: { dot: "var(--ok)", iconColor: "text-ok", bg: "bg-ok/10" },
+  p1: { dot: "var(--p1)", iconColor: "text-p1", bg: "bg-p1/10" },
+  p2: { dot: "var(--p2)", iconColor: "text-p2", bg: "bg-p2/10" },
+  info: { dot: "var(--info)", iconColor: "text-info", bg: "bg-info/10" },
   muted: {
-    dot: "var(--muted-foreground)",
+    dot: "var(--muted-status)",
     iconColor: "text-muted-foreground",
     bg: "bg-muted",
   },

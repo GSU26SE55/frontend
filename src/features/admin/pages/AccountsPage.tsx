@@ -49,6 +49,7 @@ import {
   useAdminReset2fa,
 } from "@/features/admin/hooks/useAdminAccounts";
 import { AccountStatusEnum } from "@/shared/types/account.types";
+import { toneClass, ACCOUNT_STATUS_TONE } from "@/shared/theme/statusColors";
 import { UserRole } from "@/shared/types/session.types";
 import InviteAccountDialog from "@/features/admin/components/InviteAccountDialog";
 import CreateAccountDialog from "@/features/admin/components/CreateAccountDialog";
@@ -68,27 +69,27 @@ import { useSortableData } from "@/shared/hooks/useSortableData";
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
     label: "Chờ xác thực",
-    cls: "bg-amber-100 text-amber-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.PendingVerification]),
   },
   [AccountStatusEnum.Active]: {
     label: "Hoạt động",
-    cls: "bg-emerald-100 text-emerald-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Active]),
   },
   [AccountStatusEnum.Locked]: {
     label: "Đã khóa",
-    cls: "bg-red-100 text-red-600",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Locked]),
   },
   [AccountStatusEnum.Inactive]: {
     label: "Không hoạt động",
-    cls: "bg-gray-100 text-gray-500",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Inactive]),
   },
   [AccountStatusEnum.Suspended]: {
     label: "Tạm khóa",
-    cls: "bg-orange-100 text-orange-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Suspended]),
   },
   [AccountStatusEnum.Banned]: {
     label: "Bị cấm",
-    cls: "bg-red-200 text-red-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Banned]),
   },
 };
 

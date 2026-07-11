@@ -14,13 +14,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { BatteryAuditLogDto } from "@/features/admin/types/battery-audit.types";
 import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { toneClass } from "@/shared/theme/statusColors";
 
-// severity → màu badge (display-only; KHÔNG phải filter).
+// severity → màu badge (display-only; KHÔNG phải filter). Token semantic.
 const SEVERITY_STYLE: Record<string, string> = {
-  Info: "bg-blue-50 text-blue-700 border-blue-200",
-  Warning: "bg-amber-50 text-amber-700 border-amber-200",
-  Critical: "bg-red-50 text-red-600 border-red-200",
-  Security: "bg-orange-50 text-orange-700 border-orange-200",
+  Info: toneClass("info"),
+  Warning: toneClass("p2"),
+  Critical: toneClass("p1"),
+  Security: toneClass("p2"),
 };
 
 interface BatteryAuditLogTableProps {
@@ -190,10 +191,8 @@ export default function BatteryAuditLogTable({
             </TableCell>
             <TableCell className="text-center">
               <span
-                className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                  log.isSuccess
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-red-50 text-red-600 border-red-200"
+                className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${
+                  log.isSuccess ? toneClass("ok") : toneClass("p1")
                 }`}
               >
                 {log.isSuccess ? (

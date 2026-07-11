@@ -3,16 +3,8 @@ import {
   KbArticleStatusEnum,
   KbArticleStatusLabel,
 } from "@/shared/enums/kb.enum";
-
-const variantMap: Record<
-  KbArticleStatusEnum,
-  "secondary" | "default" | "outline"
-> = {
-  [KbArticleStatusEnum.Draft]: "secondary",
-  [KbArticleStatusEnum.PendingReview]: "outline",
-  [KbArticleStatusEnum.Published]: "default",
-  [KbArticleStatusEnum.Archived]: "outline",
-};
+import { cn } from "@/lib/utils";
+import { toneClass, KB_STATUS_TONE } from "@/shared/theme/statusColors";
 
 interface KbStatusBadgeProps {
   status: KbArticleStatusEnum;
@@ -21,7 +13,10 @@ interface KbStatusBadgeProps {
 
 export function KbStatusBadge({ status, className }: KbStatusBadgeProps) {
   return (
-    <Badge variant={variantMap[status]} className={className}>
+    <Badge
+      variant="outline"
+      className={cn(toneClass(KB_STATUS_TONE[status] ?? "muted"), className)}
+    >
       {KbArticleStatusLabel[status]}
     </Badge>
   );

@@ -10,6 +10,7 @@ import {
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toneClass, BATTERY_STATUS_TONE } from "@/shared/theme/statusColors";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,15 +32,6 @@ const statusLabel: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
   [BatteryStatusEnum.Inactive]: "Không hoạt động",
   [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
-};
-
-const statusVariant: Record<
-  BatteryStatusEnum,
-  "default" | "secondary" | "destructive"
-> = {
-  [BatteryStatusEnum.Active]: "default",
-  [BatteryStatusEnum.Inactive]: "secondary",
-  [BatteryStatusEnum.Decommissioned]: "destructive",
 };
 
 interface BatteryAssetTableProps {
@@ -153,7 +145,12 @@ export default function BatteryAssetTable({
             <TableCell>{item.customerName}</TableCell>
             <TableCell>{item.siteName ?? "—"}</TableCell>
             <TableCell>
-              <Badge variant={statusVariant[item.status]}>
+              <Badge
+                variant="outline"
+                className={toneClass(
+                  BATTERY_STATUS_TONE[item.status] ?? "muted",
+                )}
+              >
                 {statusLabel[item.status]}
               </Badge>
             </TableCell>

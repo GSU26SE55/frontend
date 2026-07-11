@@ -41,14 +41,14 @@ interface Props {
 }
 
 const SESSION_STATUS_MAP: Record<number, { label: string; cls: string }> = {
-  [RefreshTokenStatus.Active]: {
-    label: "Đang hoạt động",
-    cls: "text-emerald-600",
+  [RefreshTokenStatus.Active]: { label: "Đang hoạt động", cls: "text-ok" },
+  [RefreshTokenStatus.Used]: { label: "Đã dùng", cls: "text-muted-foreground" },
+  [RefreshTokenStatus.Revoked]: { label: "Đã thu hồi", cls: "text-p1" },
+  [RefreshTokenStatus.Expired]: {
+    label: "Hết hạn",
+    cls: "text-muted-foreground",
   },
-  [RefreshTokenStatus.Used]: { label: "Đã dùng", cls: "text-gray-500" },
-  [RefreshTokenStatus.Revoked]: { label: "Đã thu hồi", cls: "text-red-500" },
-  [RefreshTokenStatus.Expired]: { label: "Hết hạn", cls: "text-gray-400" },
-  [RefreshTokenStatus.Compromised]: { label: "Xâm phạm", cls: "text-red-700" },
+  [RefreshTokenStatus.Compromised]: { label: "Xâm phạm", cls: "text-p1" },
 };
 
 const LOGIN_RESULT_OK = [LoginAttemptResult.Success];

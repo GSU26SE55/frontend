@@ -53,6 +53,19 @@
   --p3-soft: #fef9c3; /* yellow-100 */
   --info: #2563eb; /* blue-600 */
   --info-soft: #dbeafe; /* blue-100 */
+  --muted-status: #64748b; /* slate-500 — status trung tính (draft/inactive) */
+  --muted-status-soft: #f1f5f9; /* slate-100 */
+
+  /* SLA state — map lại token semantic (không đẻ màu mới) */
+  --sla-ok: var(--ok);
+  --sla-caution: var(--p3);
+  --sla-warning: var(--p1);
+
+  /* Diff (GitHub-style) — hệ màu riêng cho code/text diff */
+  --diff-add: #116329;
+  --diff-add-soft: #e6ffec;
+  --diff-del: #cf222e;
+  --diff-del-soft: #ffebe9;
 
   /* Surface helpers */
   --surface-2: oklch(0.968 0.007 247);
@@ -108,6 +121,19 @@
   --p3-soft: rgb(234 179 8 / 0.16);
   --info: #60a5fa;
   --info-soft: rgb(59 130 246 / 0.16);
+  --muted-status: #94a3b8; /* slate-400 */
+  --muted-status-soft: rgb(100 116 139 / 0.16);
+
+  /* SLA — kế thừa token semantic (đã có bản dark ở trên) */
+  --sla-ok: var(--ok);
+  --sla-caution: var(--p3);
+  --sla-warning: var(--p1);
+
+  /* Diff dark */
+  --diff-add: #4ade80;
+  --diff-add-soft: rgb(34 197 94 / 0.16);
+  --diff-del: #f87171;
+  --diff-del-soft: rgb(239 68 68 / 0.16);
 
   --surface-2: oklch(0.25 0.018 255);
   --border-2: oklch(1 0 0 / 9%);
@@ -120,6 +146,28 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;
+
+  /* Semantic status colors → Tailwind utilities (bg-ok-soft, text-p1, border-p2...) */
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-p1: var(--p1);
+  --color-p1-soft: var(--p1-soft);
+  --color-p2: var(--p2);
+  --color-p2-soft: var(--p2-soft);
+  --color-p3: var(--p3);
+  --color-p3-soft: var(--p3-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-muted-status: var(--muted-status);
+  --color-muted-status-soft: var(--muted-status-soft);
+  --color-sla-ok: var(--sla-ok);
+  --color-sla-caution: var(--sla-caution);
+  --color-sla-warning: var(--sla-warning);
+  --color-diff-add: var(--diff-add);
+  --color-diff-add-soft: var(--diff-add-soft);
+  --color-diff-del: var(--diff-del);
+  --color-diff-del-soft: var(--diff-del-soft);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

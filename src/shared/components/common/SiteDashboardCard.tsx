@@ -1,10 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SiteDashboardDto } from "@/shared/types/site.types";
+import { toneText, healthScoreTone } from "@/shared/theme/statusColors";
 
 function getHealthColor(score: number): string {
-  if (score >= 80) return "text-green-600";
-  if (score >= 50) return "text-yellow-500";
-  return "text-red-600";
+  return toneText(healthScoreTone(score));
 }
 
 function getHealthLabel(score: number): string {
@@ -43,14 +42,12 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Đang hoạt động</p>
-          <p className="text-2xl font-bold text-green-600">
-            {data.activeAssets}
-          </p>
+          <p className="text-2xl font-bold text-ok">{data.activeAssets}</p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Cảnh báo đang mở</p>
           <p
-            className={`text-2xl font-bold ${data.assetsWithActiveAlerts > 0 ? "text-red-600" : ""}`}
+            className={`text-2xl font-bold ${data.assetsWithActiveAlerts > 0 ? "text-p1" : ""}`}
           >
             {data.assetsWithActiveAlerts}
           </p>

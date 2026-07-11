@@ -6,15 +6,10 @@ import type {
   SiteCascadeRiskSummaryDto,
   CascadeRiskLevelName,
 } from "@/shared/types/cascade.types";
+import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
 
 // Heat map cascade risk theo site (presentational — data từ hook của từng feature).
 // Docs: docs/api-battery.md §Nhóm 12 (cascade-risk-summary).
-
-const LEVEL_STYLE: Record<CascadeRiskLevelName, string> = {
-  Low: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Medium: "bg-amber-50 text-amber-700 border-amber-200",
-  High: "bg-red-50 text-red-600 border-red-200",
-};
 
 const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
   Low: "Thấp",
@@ -24,7 +19,7 @@ const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
 
 // Fallback an toàn nếu BE trả level ngoài enum (tránh badge trống im lặng).
 const levelStyle = (lvl: CascadeRiskLevelName) =>
-  LEVEL_STYLE[lvl] ?? "bg-muted text-muted-foreground border-border";
+  toneClass(CASCADE_RISK_TONE[lvl] ?? "muted");
 const levelLabel = (lvl: CascadeRiskLevelName) =>
   LEVEL_LABEL[lvl] ?? String(lvl);
 

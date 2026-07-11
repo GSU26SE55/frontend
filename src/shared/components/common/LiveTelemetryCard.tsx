@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { SensorStreamState } from "@/shared/types/sensor-stream.types";
+import { toneDot, toneFill } from "@/shared/theme/statusColors";
 
 // Display contract — nhận diện các metric hiển thị, KHÔNG ràng buộc DTO cụ thể.
 // `LiveReadingDto` (SSE) và `BatteryAssetRealtimeDto` (REST snapshot) đều structurally
@@ -30,10 +31,10 @@ const fmtNum = (v: number | null | undefined, dec = 1) =>
 
 // Chấm trạng thái kết nối SSE.
 const DOT_CLS: Record<SensorStreamState["status"], string> = {
-  live: "bg-emerald-500 animate-pulse",
-  connecting: "bg-amber-500 animate-pulse",
+  live: `${toneDot("ok")} animate-pulse`,
+  connecting: `${toneDot("p3")} animate-pulse`,
   "open-idle": "bg-muted-foreground/40",
-  error: "bg-red-500",
+  error: toneDot("p1"),
   closed: "bg-muted-foreground/40",
 };
 
@@ -104,19 +105,19 @@ export function LiveTelemetryCard({
     data?.socPercent == null
       ? "bg-muted/60 text-foreground"
       : data.socPercent >= socWarn
-        ? "bg-blue-50 text-blue-800"
+        ? toneFill("info")
         : data.socPercent >= socCrit
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
+          ? toneFill("p3")
+          : toneFill("p1");
 
   const tempCls =
     data?.temperature == null
       ? "bg-muted/60 text-foreground"
       : data.temperature < tempWarn
-        ? "bg-sky-50 text-sky-800"
+        ? toneFill("info")
         : data.temperature < tempMax
-          ? "bg-amber-50 text-amber-800"
-          : "bg-red-50 text-red-700";
+          ? toneFill("p3")
+          : toneFill("p1");
 
   // status undefined → mặc định emerald khi có data (dùng cho nơi không track status).
   const dotCls = status ? DOT_CLS[status] : data ? DOT_CLS.live : null;

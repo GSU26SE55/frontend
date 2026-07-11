@@ -16,6 +16,10 @@ import {
 import { KpiCard } from "@/shared/components/common/KpiCard";
 import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotifications";
 import {
+  toneClass,
+  NOTIFICATION_STATUS_TONE,
+} from "@/shared/theme/statusColors";
+import {
   NotificationStatusEnum,
   NotificationTypeEnum,
 } from "@/features/staff/types/notification.types";
@@ -41,10 +45,8 @@ const TYPE_LABEL: Record<number, string> = {
   [NotificationTypeEnum.System]: "Hệ thống",
 };
 
-function getStatusVariant(status: number) {
-  if (status === NotificationStatusEnum.Read) return "outline" as const;
-  if (status === NotificationStatusEnum.Failed) return "destructive" as const;
-  return "default" as const;
+function getStatusClass(status: number) {
+  return toneClass(NOTIFICATION_STATUS_TONE[status] ?? "muted");
 }
 
 function getStatusLabel(status: number) {
@@ -200,7 +202,10 @@ export default function AlertsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(item.status)}>
+                    <Badge
+                      variant="outline"
+                      className={getStatusClass(item.status)}
+                    >
                       {getStatusLabel(item.status)}
                     </Badge>
                   </TableCell>

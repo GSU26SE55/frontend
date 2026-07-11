@@ -23,6 +23,15 @@ const FIELDS: { key: keyof KbArticleDiffDTO; label: string }[] = [
   { key: "tagsDiff", label: "Thẻ" },
 ];
 
+// Nền cho từng loại dòng diff — del/add dùng token --diff-*, context/empty dùng
+// token hệ thống → tự đúng light/dark.
+function rowBg(type: "eq" | "del" | "add" | "empty"): string | undefined {
+  if (type === "del") return "var(--diff-del-soft)";
+  if (type === "add") return "var(--diff-add-soft)";
+  if (type === "empty") return "var(--surface-2)";
+  return undefined; // eq — nền mặc định (bg-background qua class)
+}
+
 // ── Gutter cell (line number) ────────────────────────────────────────────────
 function Gutter({
   no,
@@ -35,15 +44,18 @@ function Gutter({
     <td
       className={cn(
         "select-none text-right align-top tabular-nums",
-        "w-12 px-3 py-1 text-xs font-mono border-r",
-        type === "del"
-          ? "bg-[#ffebe9] border-[#ffc0bc] text-[#82071e]/60"
-          : type === "add"
-            ? "bg-[#e6ffec] border-[#abf2bc] text-[#116329]/60"
-            : type === "empty"
-              ? "bg-[#eaeef2] border-[#d0d7de]"
-              : "bg-[#f6f8fa] border-[#d0d7de] text-[#57606a]",
+        "w-12 px-3 py-1 text-xs font-mono border-r border-border text-muted-foreground",
+        type === "eq" && "bg-muted/40",
       )}
+      style={{
+        backgroundColor: rowBg(type),
+        color:
+          type === "del"
+            ? "color-mix(in srgb, var(--diff-del) 65%, transparent)"
+            : type === "add"
+              ? "color-mix(in srgb, var(--diff-add) 65%, transparent)"
+              : undefined,
+      }}
     >
       {no ?? ""}
     </td>
@@ -56,14 +68,17 @@ function Sign({ type }: { type: "eq" | "del" | "add" | "empty" }) {
     <td
       className={cn(
         "select-none w-6 px-1 py-1 text-center align-top font-mono text-[13px] font-bold",
-        type === "del"
-          ? "bg-[#ffebe9] text-[#cf222e]"
-          : type === "add"
-            ? "bg-[#e6ffec] text-[#116329]"
-            : type === "empty"
-              ? "bg-[#eaeef2]"
-              : "bg-[#f6f8fa] text-transparent",
+        type === "eq" && "bg-muted/40 text-transparent",
       )}
+      style={{
+        backgroundColor: rowBg(type),
+        color:
+          type === "del"
+            ? "var(--diff-del)"
+            : type === "add"
+              ? "var(--diff-add)"
+              : undefined,
+      }}
     >
       {type === "del"
         ? "-"
@@ -88,14 +103,9 @@ function CodeCell({
     <td
       className={cn(
         "px-3 py-1 align-top whitespace-pre-wrap break-words text-[13px] font-mono leading-5",
-        type === "del"
-          ? "bg-[#ffebe9]"
-          : type === "add"
-            ? "bg-[#e6ffec]"
-            : type === "empty"
-              ? "bg-[#eaeef2]"
-              : "bg-white dark:bg-background",
+        type === "eq" && "bg-background",
       )}
+      style={{ backgroundColor: rowBg(type) }}
     >
       {text || " "}
     </td>
@@ -141,7 +151,7 @@ function SplitView({ rows }: { rows: SplitRow[] }) {
         <col className="w-12" />
         <col className="w-6" />
         <col />
-        <col className="w-px bg-[#d0d7de]" />
+        <col className="w-px bg-border" />
         <col className="w-12" />
         <col className="w-6" />
         <col />
@@ -150,7 +160,7 @@ function SplitView({ rows }: { rows: SplitRow[] }) {
         {rows.map((r, i) => (
           <tr key={i}>
             <SplitSide side={r.left} />
-            <td className="w-px bg-[#d0d7de] p-0" />
+            <td className="w-px bg-border p-0" />
             <SplitSide side={r.right} />
           </tr>
         ))}
@@ -183,61 +193,58 @@ function SectionBlock({
   const isEmpty = !diff.oldValue && !diff.newValue;
 
   return (
-    <div className="border border-[#d0d7de] rounded-md overflow-hidden">
+    <div className="border border-border rounded-md overflow-hidden">
       {/* File-header bar — GitHub style */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "w-full flex items-center gap-2 px-3 py-2 text-left",
-          "bg-[#f6f8fa] dark:bg-muted/50 hover:bg-[#eaeef2] dark:hover:bg-muted/70 transition-colors",
-          "border-b border-[#d0d7de]",
+          "bg-muted/50 hover:bg-muted/70 transition-colors",
+          "border-b border-border",
           !open && "border-b-0",
         )}
       >
         {open ? (
-          <ChevronDown className="size-4 text-[#57606a] shrink-0" />
+          <ChevronDown className="size-4 text-muted-foreground shrink-0" />
         ) : (
-          <ChevronRight className="size-4 text-[#57606a] shrink-0" />
+          <ChevronRight className="size-4 text-muted-foreground shrink-0" />
         )}
-        <FileText className="size-4 text-[#57606a] shrink-0" />
-        <span className="text-[13px] font-semibold text-[#24292f] dark:text-foreground flex-1">
+        <FileText className="size-4 text-muted-foreground shrink-0" />
+        <span className="text-[13px] font-semibold text-foreground flex-1">
           {label}
         </span>
         {diff.isChanged ? (
           <div className="flex items-center gap-2 text-xs font-mono font-semibold">
             {added > 0 && (
-              <span className="text-[#116329] dark:text-emerald-400">
-                +{added}
-              </span>
+              <span style={{ color: "var(--diff-add)" }}>+{added}</span>
             )}
             {removed > 0 && (
-              <span className="text-[#cf222e] dark:text-red-400">
-                −{removed}
-              </span>
+              <span style={{ color: "var(--diff-del)" }}>−{removed}</span>
             )}
             <div className="flex gap-0.5">
               {Array.from({ length: Math.min(5, added + removed) }).map(
                 (_, i) => (
                   <span
                     key={i}
-                    className={cn(
-                      "inline-block w-2.5 h-3 rounded-sm",
-                      i <
+                    className="inline-block w-2.5 h-3 rounded-sm"
+                    style={{
+                      backgroundColor:
+                        i <
                         Math.round(
                           (added / (added + removed || 1)) *
                             Math.min(5, added + removed),
                         )
-                        ? "bg-[#2da44e]"
-                        : "bg-[#cf222e]",
-                    )}
+                          ? "var(--diff-add)"
+                          : "var(--diff-del)",
+                    }}
                   />
                 ),
               )}
             </div>
           </div>
         ) : (
-          <span className="text-[11px] text-[#57606a] font-medium">
+          <span className="text-[11px] text-muted-foreground font-medium">
             Không thay đổi
           </span>
         )}
@@ -246,7 +253,7 @@ function SectionBlock({
       {open && (
         <div className="overflow-x-auto">
           {isEmpty ? (
-            <p className="px-4 py-6 text-sm text-[#57606a] text-center italic">
+            <p className="px-4 py-6 text-sm text-muted-foreground text-center italic">
               (trống)
             </p>
           ) : view === "unified" ? (
@@ -279,27 +286,23 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
   return (
     <div className="space-y-3">
       {/* Toolbar — GitHub-style comparison header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap rounded-md border border-[#d0d7de] bg-[#f6f8fa] dark:bg-muted/30 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/30 px-4 py-2.5">
         <div className="flex items-center gap-2 text-[13px]">
-          <span className="text-[#57606a]">So sánh</span>
-          <code className="rounded border border-[#d0d7de] bg-white dark:bg-background px-2 py-0.5 font-mono text-xs font-semibold">
+          <span className="text-muted-foreground">So sánh</span>
+          <code className="rounded border border-border bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.fromVersion}
           </code>
-          <span className="text-[#57606a]">→</span>
-          <code className="rounded border border-[#d0d7de] bg-white dark:bg-background px-2 py-0.5 font-mono text-xs font-semibold">
+          <span className="text-muted-foreground">→</span>
+          <code className="rounded border border-border bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.toVersion}
           </code>
           <span className="ml-3 flex items-center gap-1.5 font-mono font-semibold text-[13px]">
-            <span className="text-[#116329] dark:text-emerald-400">
-              +{total.added}
-            </span>
-            <span className="text-[#cf222e] dark:text-red-400">
-              −{total.removed}
-            </span>
+            <span style={{ color: "var(--diff-add)" }}>+{total.added}</span>
+            <span style={{ color: "var(--diff-del)" }}>−{total.removed}</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-1 rounded-md border border-[#d0d7de] bg-white dark:bg-background p-0.5">
+        <div className="flex items-center gap-1 rounded-md border border-border bg-background p-0.5">
           <Button
             size="sm"
             variant={view === "unified" ? "default" : "ghost"}

@@ -39,6 +39,7 @@ import { KbEditorPanel } from "@/shared/components/common/kb/KbEditorPanel";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb.enum";
 import type { UpdateKbArticlePayload } from "@/shared/types/kb.types";
 import { cn } from "@/lib/utils";
+import { toneFill } from "@/shared/theme/statusColors";
 
 const REF_TYPE_ORDER: RefType[] = [
   KbReferenceTypeEnum.ConsultedDuringResolve,
@@ -235,7 +236,9 @@ export default function TicketKbReferencesPanel({
                   </span>
                   <span className="truncate text-xs">{item.title}</span>
                   {item.isInternalOnly && (
-                    <span className="ml-1.5 rounded bg-amber-500/15 px-1 py-0.5 text-[9.5px] font-medium text-amber-700 dark:text-amber-300">
+                    <span
+                      className={`ml-1.5 rounded px-1 py-0.5 text-[9.5px] font-medium ${toneFill("muted")}`}
+                    >
                       Nội bộ
                     </span>
                   )}

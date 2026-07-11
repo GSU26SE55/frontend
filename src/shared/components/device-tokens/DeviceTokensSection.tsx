@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { DevicePlatformEnum } from "@/shared/enums/notification.enum";
+import { toneClass } from "@/shared/theme/statusColors";
 import {
   registerDeviceTokenSchema,
   type RegisterDeviceTokenFormValues,
@@ -129,7 +130,9 @@ export default function DeviceTokensSection() {
                       {PLATFORM_LABEL[d.platform] ?? "Khác"}
                     </p>
                     {d.isActive ? (
-                      <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${toneClass("ok")}`}
+                      >
                         Đang hoạt động
                       </span>
                     ) : (

@@ -2,6 +2,7 @@ import { Ban } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toneClass } from "@/shared/theme/statusColors";
 import {
   Table,
   TableBody,
@@ -30,14 +31,20 @@ interface SmsDeviceTableProps {
 
 function StatusBadge({ device }: { device: GatewayDeviceDto }) {
   if (!device.isActive) {
-    return <Badge variant="destructive">Đã thu hồi</Badge>;
+    return (
+      <Badge variant="outline" className={toneClass("p1")}>
+        Đã thu hồi
+      </Badge>
+    );
   }
   return isOnline(device.lastSeenAt) ? (
-    <Badge className="border-transparent bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+    <Badge variant="outline" className={toneClass("ok")}>
       Online
     </Badge>
   ) : (
-    <Badge variant="secondary">Offline</Badge>
+    <Badge variant="outline" className={toneClass("muted")}>
+      Offline
+    </Badge>
   );
 }
 

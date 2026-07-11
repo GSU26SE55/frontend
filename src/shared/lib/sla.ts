@@ -13,10 +13,10 @@ export function isNearBreachPercent(remainingPercent?: number | null): boolean {
   return (remainingPercent ?? 100) <= SLA_WARNING_PERCENT;
 }
 
-/** Class Tailwind cho progress bar SLA theo % còn lại. */
+/** Class Tailwind cho progress bar SLA theo % còn lại (token semantic — đúng dark mode). */
 export function slaBarColorClass(remainingPercent?: number | null): string {
   const pct = remainingPercent ?? 0;
-  if (pct > SLA_CAUTION_PERCENT) return "bg-emerald-500";
-  if (pct > SLA_WARNING_PERCENT) return "bg-amber-500";
-  return "bg-red-500";
+  if (pct > SLA_CAUTION_PERCENT) return "bg-sla-ok";
+  if (pct > SLA_WARNING_PERCENT) return "bg-sla-caution";
+  return "bg-sla-warning";
 }

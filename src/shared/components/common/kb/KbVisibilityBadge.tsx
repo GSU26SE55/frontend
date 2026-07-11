@@ -1,6 +1,7 @@
 import { Lock, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toneClass } from "@/shared/theme/statusColors";
 
 interface KbVisibilityBadgeProps {
   isInternalOnly: boolean;
@@ -17,10 +18,7 @@ export function KbVisibilityBadge({
     return (
       <Badge
         variant="outline"
-        className={cn(
-          "gap-1 border-slate-600/40 bg-slate-700/10 text-slate-700 dark:text-slate-300",
-          className,
-        )}
+        className={cn("gap-1", toneClass("muted"), className)}
       >
         <Lock size={12} />
         {!compact && "Nội bộ"}
@@ -30,10 +28,7 @@ export function KbVisibilityBadge({
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "gap-1 border-emerald-600/40 bg-emerald-600/10 text-emerald-700 dark:text-emerald-300",
-        className,
-      )}
+      className={cn("gap-1", toneClass("ok"), className)}
     >
       <Globe size={12} />
       {!compact && "Công khai"}

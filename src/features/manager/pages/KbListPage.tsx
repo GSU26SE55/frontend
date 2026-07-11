@@ -35,6 +35,7 @@ import {
   KB_CATEGORY_OPTIONS,
 } from "@/shared/enums/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
@@ -42,10 +43,10 @@ const PAGE_SIZE = 10;
 const STATUS_OPTIONS = Object.values(KbArticleStatusEnum);
 
 const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
-  [KbArticleStatusEnum.Draft]: "bg-slate-400",
-  [KbArticleStatusEnum.PendingReview]: "bg-amber-500",
-  [KbArticleStatusEnum.Published]: "bg-emerald-500",
-  [KbArticleStatusEnum.Archived]: "bg-zinc-500",
+  [KbArticleStatusEnum.Draft]: toneDot(KB_STATUS_TONE.Draft),
+  [KbArticleStatusEnum.PendingReview]: toneDot(KB_STATUS_TONE.PendingReview),
+  [KbArticleStatusEnum.Published]: toneDot(KB_STATUS_TONE.Published),
+  [KbArticleStatusEnum.Archived]: toneDot(KB_STATUS_TONE.Archived),
 };
 
 const DEFAULTS = {

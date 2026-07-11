@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { TrendDir } from "@/shared/enums/common.enum";
+import { toneFill } from "@/shared/theme/statusColors";
 
 export interface KpiTrend {
   dir: TrendDir;
@@ -60,17 +61,23 @@ export function KpiCard({
         {trend && (
           <div className="mt-2 flex items-center gap-1 text-xs">
             {trend.dir === TrendDir.Up ? (
-              <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-emerald-700 font-medium">
+              <span
+                className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium ${toneFill("ok")}`}
+              >
                 <TrendingUp className="size-3" />
                 {trend.value}
               </span>
             ) : trend.dir === TrendDir.Down ? (
-              <span className="inline-flex items-center gap-0.5 rounded-md bg-red-50 px-1.5 py-0.5 text-red-700 font-medium">
+              <span
+                className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium ${toneFill("p1")}`}
+              >
                 <TrendingDown className="size-3" />
                 {trend.value}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-0.5 rounded-md bg-muted px-1.5 py-0.5 text-muted-foreground font-medium">
+              <span
+                className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium ${toneFill("muted")}`}
+              >
                 <Minus className="size-3" />
                 {trend.value}
               </span>

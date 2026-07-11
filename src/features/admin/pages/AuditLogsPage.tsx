@@ -44,6 +44,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import type { AuditLogDto } from "@/features/admin/types/admin.types";
 import { RefreshButton } from "@/shared/components/common/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { toneClass } from "@/shared/theme/statusColors";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -270,10 +271,8 @@ function AuditLogDetail({
               </p>
             </div>
             <span
-              className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
-                log.isSuccess
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-red-50 text-red-600 border-red-200"
+              className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                log.isSuccess ? toneClass("ok") : toneClass("p1")
               }`}
             >
               {log.isSuccess ? (
@@ -564,10 +563,8 @@ export default function AuditLogsPage() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                          log.isSuccess
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-red-50 text-red-600 border-red-200"
+                        className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${
+                          log.isSuccess ? toneClass("ok") : toneClass("p1")
                         }`}
                       >
                         {log.isSuccess ? (
