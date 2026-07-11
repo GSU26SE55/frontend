@@ -18,6 +18,7 @@ import {
   KbVersionStatusLabel,
 } from "@/shared/enums/kb.enum";
 import type { KbArticleVersionDTO } from "@/shared/types/kb.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 interface KbVersionHistoryProps {
   versions: KbArticleVersionDTO[];
@@ -144,7 +145,7 @@ export function KbVersionHistory({
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                      <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
                       <AlertDialogCancel
                         variant="default"
                         onClick={() => onRollback(v.id)}

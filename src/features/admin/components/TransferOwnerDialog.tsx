@@ -108,7 +108,7 @@ export default function TransferOwnerDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Chuyển

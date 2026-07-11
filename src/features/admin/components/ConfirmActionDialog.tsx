@@ -8,6 +8,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { ACTIONS } from "@/shared/constants/actions";
 
 interface Props {
   open: boolean;
@@ -39,7 +40,7 @@ export default function ConfirmActionDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Huỷ</AlertDialogCancel>
+          <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
           <AlertDialogAction
             className={
               destructive

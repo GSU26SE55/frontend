@@ -213,7 +213,7 @@ export default function IoTFirmwareFormPage() {
               variant="outline"
               onClick={() => navigate("/admin/iot-firmware")}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Tạo release

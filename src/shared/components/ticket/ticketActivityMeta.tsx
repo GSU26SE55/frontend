@@ -72,7 +72,7 @@ const ACTIVITY_META: Record<string, ActivityMeta> = {
   Commented: { label: "Bình luận", tone: "info", icon: MessageSquare },
   Chatted: { label: "Bình luận", tone: "info", icon: MessageSquare },
   ChatEdited: { label: "Sửa bình luận", tone: "info", icon: MessageSquare },
-  ChatDeleted: { label: "Xoá bình luận", tone: "muted", icon: MessageSquare },
+  ChatDeleted: { label: "Xóa bình luận", tone: "muted", icon: MessageSquare },
   ChatFlagged: {
     label: "Bình luận bị gắn cờ",
     tone: "p1",

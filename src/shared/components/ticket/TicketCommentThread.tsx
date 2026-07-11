@@ -38,6 +38,7 @@ import {
   ActorRoleEnum,
   type TicketCommentDTO,
 } from "@/shared/types/ticket.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
   Admin: "Admin",
@@ -631,7 +632,7 @@ export function TicketCommentThread({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               disabled={deletePending}
@@ -684,7 +685,9 @@ function CommentActionsMenu({
         <EllipsisVertical className="size-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {canEdit && <DropdownMenuItem onClick={onEdit}>Sửa</DropdownMenuItem>}
+        {canEdit && (
+          <DropdownMenuItem onClick={onEdit}>{ACTIONS.EDIT}</DropdownMenuItem>
+        )}
         {canTranslate && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>

@@ -45,6 +45,7 @@ import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbReviewActions } from "@/shared/components/kb/KbReviewActions";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
 import type { KbCompareParams } from "@/shared/types/kb.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -179,7 +180,7 @@ export default function KbDetailPage() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() =>

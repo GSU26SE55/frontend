@@ -180,7 +180,7 @@ export default function BatteryTypeTable({
                         className="text-destructive"
                         onClick={() => onDelete(type)}
                       >
-                        Xoá
+                        Xóa
                       </DropdownMenuItem>
                     </>
                   )}

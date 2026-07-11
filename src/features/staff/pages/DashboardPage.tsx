@@ -29,6 +29,7 @@ import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotificati
 import { useUnreadCount } from "@/shared/hooks/useNotifications";
 import { TicketCard } from "@/features/staff/components/TicketCard";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
+import { DASHBOARD_SECTIONS } from "@/shared/utils/dashboardSections";
 
 const areaConfig = {
   count: { label: "Ticket", color: "var(--chart-1)" },
@@ -223,7 +224,7 @@ export default function StaffDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1fr_1.25fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* SLA gauge */}
         <DashboardPanel
-          title="Tuân thủ SLA cá nhân"
+          title={DASHBOARD_SECTIONS.staff.personalSla}
           desc="met / (met + breach)"
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
@@ -271,7 +272,7 @@ export default function StaffDashboardPage() {
 
         {/* Ticket 7-day area */}
         <DashboardPanel
-          title="Ticket · 7 ngày"
+          title={DASHBOARD_SECTIONS.staff.tickets7d}
           desc="Ticket được giao theo ngày"
           className="lg:col-span-5 min-h-55 lg:min-h-0"
         >
@@ -335,7 +336,7 @@ export default function StaffDashboardPage() {
 
         {/* Status donut */}
         <DashboardPanel
-          title="Trạng thái ticket"
+          title={DASHBOARD_SECTIONS.staff.ticketStatus}
           desc={`${totalTickets} ticket của tôi`}
           className="lg:col-span-4 min-h-55 lg:min-h-0"
         >
@@ -356,7 +357,7 @@ export default function StaffDashboardPage() {
 
         {/* Priority tickets list */}
         <DashboardPanel
-          title="Ưu tiên xử lý"
+          title={DASHBOARD_SECTIONS.staff.priority}
           desc="Sắp theo % SLA còn lại"
           className="lg:col-span-6 min-h-65 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -390,7 +391,7 @@ export default function StaffDashboardPage() {
 
         {/* SLA risk donut */}
         <DashboardPanel
-          title="Rủi ro SLA"
+          title={DASHBOARD_SECTIONS.staff.slaRisk}
           desc="Trên ticket đang mở"
           className="lg:col-span-3 min-h-55 lg:min-h-0"
         >
@@ -416,7 +417,7 @@ export default function StaffDashboardPage() {
 
         {/* Notifications feed */}
         <DashboardPanel
-          title="Thông báo gần đây"
+          title={DASHBOARD_SECTIONS.staff.recentNotifications}
           desc={`${unread} chưa đọc`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"

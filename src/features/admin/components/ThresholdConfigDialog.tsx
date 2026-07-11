@@ -158,7 +158,7 @@ export default function ThresholdConfigDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 Lưu ngưỡng

@@ -95,7 +95,7 @@ export default function AddCommentForm({
     try {
       await start();
     } catch {
-      toast.error("Khong the truy cap micro. Vui long cap quyen va thu lai.");
+      toast.error("Không thể truy cập micro. Vui lòng cấp quyền và thử lại.");
     }
   };
 

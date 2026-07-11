@@ -275,7 +275,7 @@ export default function IoTDeviceForm({
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Huỷ
+            Hủy
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             Lưu thay đổi
@@ -413,7 +413,7 @@ export default function IoTDeviceForm({
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Huỷ
+          Hủy
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           Tạo thiết bị

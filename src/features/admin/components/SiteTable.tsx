@@ -186,7 +186,7 @@ export default function SiteTable({
                         className="text-destructive"
                         onClick={() => onDelete(site)}
                       >
-                        Xoá
+                        Xóa
                       </DropdownMenuItem>
                     </>
                   ) : (

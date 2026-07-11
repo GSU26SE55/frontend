@@ -64,7 +64,7 @@ export function useAdminAddComment(ticketId: string) {
     mutationFn: (payload: AddCommentPayload) =>
       adminTicketService.addComment(ticketId, payload),
     onSuccess: () => {
-      toast.success("ÄÃ£ thÃªm bÃ¬nh luáº­n");
+      toast.success("Đã thêm bình luận");
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),

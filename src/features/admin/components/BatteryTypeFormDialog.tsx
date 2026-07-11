@@ -245,7 +245,7 @@ export default function BatteryTypeFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isEdit ? "Lưu thay đổi" : "Tạo loại pin"}

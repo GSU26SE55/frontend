@@ -27,6 +27,7 @@ import type {
   GatewayDeviceDto,
   CreateGatewayDeviceResponseDto,
 } from "@/features/admin/types/sms-gateway.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 export default function SmsGatewayPage() {
   const [includeRevoked, setIncludeRevoked] = useState(false);
@@ -124,7 +125,7 @@ export default function SmsGatewayPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmRevoke}
               disabled={revoking}

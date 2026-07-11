@@ -482,7 +482,7 @@ function ResolveForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
-          Huỷ
+          Hủy
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           Đánh dấu đã xử lý
@@ -537,7 +537,7 @@ function FalseAlarmForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
-          Huỷ
+          Hủy
         </Button>
         <Button type="submit" variant="destructive" disabled={isSubmitting}>
           Xác nhận báo động giả

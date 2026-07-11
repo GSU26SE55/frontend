@@ -139,7 +139,7 @@ export default function SetTopologyDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Lưu

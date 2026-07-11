@@ -70,7 +70,7 @@ export default function TriageRejectDialog({ ticketId, open, onClose }: Props) {
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
                 {isPending ? "Đang xử lý..." : "Từ chối"}

@@ -23,6 +23,7 @@ import {
 import { useDeleteCalibration } from "@/shared/hooks/useIotCalibrationMutations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 interface Props {
   deviceId: string;
@@ -104,7 +105,7 @@ export default function CalibrationTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={() => {

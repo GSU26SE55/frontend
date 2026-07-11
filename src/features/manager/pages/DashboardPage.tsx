@@ -42,6 +42,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
+import { DASHBOARD_SECTIONS } from "@/shared/utils/dashboardSections";
 
 /**
  * Manager = Điều phối vận hành ticket: pipeline trạng thái, SLA, tải nhân sự,
@@ -241,7 +242,7 @@ export default function ManagerDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
         {/* Ticket pipeline — horizontal bars */}
         <DashboardPanel
-          title="Pipeline xử lý ticket"
+          title={DASHBOARD_SECTIONS.manager.ticketPipeline}
           desc={`${pipelineTotal} ticket theo giai đoạn`}
           className="lg:col-span-5 min-h-60 lg:min-h-0"
         >
@@ -287,7 +288,7 @@ export default function ManagerDashboardPage() {
 
         {/* SLA gauge */}
         <DashboardPanel
-          title="Tuân thủ SLA"
+          title={DASHBOARD_SECTIONS.manager.sla}
           desc="met / (met + breach)"
           className="lg:col-span-3 min-h-60 lg:min-h-0"
         >
@@ -335,7 +336,7 @@ export default function ManagerDashboardPage() {
 
         {/* Tickets 7-day — area */}
         <DashboardPanel
-          title="Ticket mới · 7 ngày"
+          title={DASHBOARD_SECTIONS.manager.newTickets7d}
           desc="Số ticket tạo theo ngày"
           className="lg:col-span-4 min-h-60 lg:min-h-0"
         >
@@ -399,7 +400,7 @@ export default function ManagerDashboardPage() {
 
         {/* Staff workload */}
         <DashboardPanel
-          title="Tải nhân sự"
+          title={DASHBOARD_SECTIONS.manager.staffLoad}
           desc={`${workload.length} staff · ticket đang xử lý / tối đa`}
           className="lg:col-span-5 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -456,7 +457,7 @@ export default function ManagerDashboardPage() {
 
         {/* Triage queue */}
         <DashboardPanel
-          title="Hàng chờ triage"
+          title={DASHBOARD_SECTIONS.manager.triageQueue}
           desc={`${queueCount} ticket chờ phân loại`}
           className="lg:col-span-4 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
@@ -500,7 +501,7 @@ export default function ManagerDashboardPage() {
 
         {/* At-risk sites */}
         <DashboardPanel
-          title="Sites cần chú ý"
+          title={DASHBOARD_SECTIONS.manager.sitesNeedAttention}
           desc={`Sức khỏe < 80% · ${atRisk.length} site`}
           className="lg:col-span-3 min-h-55 lg:min-h-0"
           bodyClassName="overflow-y-auto"
