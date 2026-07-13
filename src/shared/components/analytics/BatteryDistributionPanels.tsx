@@ -55,50 +55,64 @@ export function BatteryDistributionPanels({
     );
   }
 
+  const sohData = sohDonut(stats.sohDistribution);
   const chemistryDonut = toDonut(
     stats.chemistryDistribution.map((b) => ({
       name: b.chemistryName,
       count: b.assetCount,
     })),
   );
+  const hasAmbient = stats.ambientTrend24Hours.some(
+    (p) => p.avgTemperature != null || p.avgHumidity != null,
+  );
+
+  // Ẩn panel không có dữ liệu → reflow, không để ô trống. Cả 3 rỗng → không render gì.
+  if (sohData.length === 0 && chemistryDonut.length === 0 && !hasAmbient)
+    return null;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      <DashboardPanel title="Phân bố SOH" className="h-50">
-        <DashboardDonut
-          data={sohDonut(stats.sohDistribution)}
-          centerValue={stats.totalAssets}
-          centerLabel="pin"
-        />
-      </DashboardPanel>
-      <DashboardPanel title="Hóa học pin" className="h-50">
-        <DashboardDonut
-          data={chemistryDonut}
-          centerValue={stats.totalAssets}
-          centerLabel="pin"
-        />
-      </DashboardPanel>
-      <DashboardPanel title="Môi trường (24 giờ)" className="h-50">
-        <ReportTimeSeriesChart
-          data={stats.ambientTrend24Hours}
-          xKey="hourUtc"
-          xFormat="HH:mm"
-          series={[
-            {
-              key: "avgTemperature",
-              label: "Nhiệt độ (°C)",
-              color: "var(--chart-2)",
-              connectNulls: true,
-            },
-            {
-              key: "avgHumidity",
-              label: "Độ ẩm (%)",
-              color: "var(--chart-3)",
-              connectNulls: true,
-            },
-          ]}
-        />
-      </DashboardPanel>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      {sohData.length > 0 && (
+        <DashboardPanel title="Phân bố SOH" className="h-50">
+          <DashboardDonut
+            data={sohData}
+            centerValue={stats.totalAssets}
+            centerLabel="pin"
+          />
+        </DashboardPanel>
+      )}
+      {chemistryDonut.length > 0 && (
+        <DashboardPanel title="Hóa học pin" className="h-50">
+          <DashboardDonut
+            data={chemistryDonut}
+            centerValue={stats.totalAssets}
+            centerLabel="pin"
+          />
+        </DashboardPanel>
+      )}
+      {hasAmbient && (
+        <DashboardPanel title="Môi trường (24 giờ)" className="h-50">
+          <ReportTimeSeriesChart
+            data={stats.ambientTrend24Hours}
+            xKey="hourUtc"
+            xFormat="HH:mm"
+            series={[
+              {
+                key: "avgTemperature",
+                label: "Nhiệt độ (°C)",
+                color: "var(--chart-2)",
+                connectNulls: true,
+              },
+              {
+                key: "avgHumidity",
+                label: "Độ ẩm (%)",
+                color: "var(--chart-3)",
+                connectNulls: true,
+              },
+            ]}
+          />
+        </DashboardPanel>
+      )}
     </div>
   );
 }
