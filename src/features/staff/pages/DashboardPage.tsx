@@ -31,6 +31,14 @@ import { TicketCard } from "@/features/staff/components/TicketCard";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
 
+/**
+ * Staff = Bảng làm việc cá nhân: ticket được giao + rủi ro SLA.
+ *
+ * UX: hàng hero (danh sách ưu tiên xử lý + SLA cá nhân) luôn hiển thị — đây là
+ * bề mặt làm việc chính, "không có ticket mở" là tín hiệu có nghĩa nên vẫn hiện.
+ * Vùng tile bên dưới REFLOW — panel nào không có dữ liệu thì ẩn hẳn.
+ */
+
 const areaConfig = {
   count: { label: "Ticket", color: "var(--chart-1)" },
 } satisfies ChartConfig;
@@ -56,7 +64,6 @@ export default function StaffDashboardPage() {
   const { data: staffStats, isLoading: statsLoading } =
     useStaffTicketDashboardStats();
 
-  // Feed "ưu tiên xử lý" cần list ticket thật → giữ useStaffTickets.
   const tickets = data?.items ?? [];
   const openTickets = tickets.filter(isOpenTicket);
   const priorityTickets = [...openTickets].sort((a, b) => {
@@ -83,6 +90,7 @@ export default function StaffDashboardPage() {
         : "var(--p1)";
 
   const ticketTrend = staffStats?.createdTrend7Days ?? [];
+  const hasTrend = ticketTrend.some((p) => p.count > 0);
 
   // ── Status donut ──
   const statusCounts = staffStats?.countByStatus ?? {};
@@ -106,11 +114,7 @@ export default function StaffDashboardPage() {
         (statusCounts.WaitingOnsiteSchedule ?? 0),
       fill: "var(--p3)",
     },
-    {
-      name: "Nâng cấp",
-      value: statusCounts.Escalated ?? 0,
-      fill: "var(--p1)",
-    },
+    { name: "Nâng cấp", value: statusCounts.Escalated ?? 0, fill: "var(--p1)" },
     {
       name: "Hoàn tất",
       value:
@@ -123,16 +127,8 @@ export default function StaffDashboardPage() {
 
   // ── SLA risk donut (B.slaRisk) ──
   const riskData = [
-    {
-      name: "An toàn",
-      value: staffStats?.slaRisk.healthy ?? 0,
-      fill: "var(--ok)",
-    },
-    {
-      name: "Sắp breach",
-      value: staffStats?.slaRisk.near ?? 0,
-      fill: "var(--p3)",
-    },
+    { name: "An toàn", value: staffStats?.slaRisk.healthy ?? 0, fill: "var(--ok)" },
+    { name: "Sắp breach", value: staffStats?.slaRisk.near ?? 0, fill: "var(--p3)" },
     {
       name: "Đã breach",
       value: staffStats?.slaRisk.breached ?? 0,
@@ -141,10 +137,14 @@ export default function StaffDashboardPage() {
   ].filter((d) => d.value > 0);
 
   // ── Notifications ──
-  // Feed list vẫn từ trang 12 notif; số "chưa đọc" lấy từ server (unread-count)
-  // để không đếm thiếu khi >12 notif (1 nguồn duy nhất cho KPI + panel desc).
   const notifications = notifData?.items ?? [];
   const unread = unreadCount ?? 0;
+
+  // ── Visibility ──
+  const showTrend = statsLoading || hasTrend;
+  const showStatus = statsLoading || statusBuckets.length > 0;
+  const showRisk = statsLoading || riskData.length > 0;
+  const showNotifs = notifLoading || notifications.length > 0;
 
   return (
     <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
@@ -220,13 +220,43 @@ export default function StaffDashboardPage() {
         </div>
       )}
 
-      {/* ── Bento grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1fr_1.25fr] gap-3 lg:flex-1 lg:min-h-[600px]">
-        {/* SLA gauge */}
+      {/* ── Hero row (danh sách ưu tiên + SLA — luôn hiển thị) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <DashboardPanel
+          title={OVERVIEW_PANELS.staff.priority}
+          desc="Sắp theo % SLA còn lại"
+          className="lg:col-span-2 min-h-72"
+          bodyClassName="overflow-y-auto"
+        >
+          {isLoading ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-md" />
+              ))}
+            </div>
+          ) : priorityTickets.length === 0 ? (
+            <div className="h-full grid place-items-center text-center">
+              <div>
+                <CheckCircle className="mx-auto size-8 text-primary" />
+                <p className="mt-3 text-sm font-medium">Không có ticket đang mở</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Các ticket được giao sẽ xuất hiện tại đây.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {priorityTickets.map((ticket) => (
+                <TicketCard key={ticket.id} ticket={ticket} />
+              ))}
+            </div>
+          )}
+        </DashboardPanel>
+
         <DashboardPanel
           title={OVERVIEW_PANELS.staff.personalSla}
           desc="met / (met + breach)"
-          className="lg:col-span-3 min-h-55 lg:min-h-0"
+          className="min-h-72"
         >
           {statsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -251,9 +281,7 @@ export default function StaffDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla?.running ?? 0}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">
-                      Running
-                    </p>
+                    <p className="text-[9.5px] text-muted-foreground">Running</p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -269,206 +297,158 @@ export default function StaffDashboardPage() {
             />
           )}
         </DashboardPanel>
+      </div>
 
-        {/* Ticket 7-day area */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.staff.tickets7d}
-          desc="Ticket được giao theo ngày"
-          className="lg:col-span-5 min-h-55 lg:min-h-0"
-        >
-          {statsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : (
-            <ChartContainer
-              config={areaConfig}
-              className="h-full w-full aspect-auto min-h-0"
-            >
-              <AreaChart data={ticketTrend}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(v: string) =>
-                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
-                  }
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={6}
-                />
-                <YAxis
-                  width={24}
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={6}
-                  allowDecimals={false}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <defs>
-                  <linearGradient
-                    id="fillStaffTickets"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-count)"
-                      stopOpacity={0.35}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-count)"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <Area
-                  dataKey="count"
-                  type="monotone"
-                  fill="url(#fillStaffTickets)"
-                  stroke="var(--color-count)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ChartContainer>
-          )}
-        </DashboardPanel>
+      {/* ── Vùng tile REFLOW (ẩn panel rỗng) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {showStatus && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.staff.ticketStatus}
+            desc={`${totalTickets} ticket của tôi`}
+            className="min-h-56"
+          >
+            {statsLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <DashboardDonut
+                data={statusBuckets}
+                centerValue={totalTickets}
+                centerLabel="tickets"
+              />
+            )}
+          </DashboardPanel>
+        )}
 
-        {/* Status donut */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.staff.ticketStatus}
-          desc={`${totalTickets} ticket của tôi`}
-          className="lg:col-span-4 min-h-55 lg:min-h-0"
-        >
-          {statsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : statusBuckets.length === 0 ? (
-            <div className="h-full grid place-items-center text-sm text-muted-foreground">
-              Chưa có ticket nào.
-            </div>
-          ) : (
-            <DashboardDonut
-              data={statusBuckets}
-              centerValue={totalTickets}
-              centerLabel="tickets"
-            />
-          )}
-        </DashboardPanel>
+        {showRisk && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.staff.slaRisk}
+            desc="Trên ticket đang mở"
+            className="min-h-56"
+          >
+            {statsLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <DashboardDonut
+                data={riskData}
+                centerValue={openCount}
+                centerLabel="đang mở"
+              />
+            )}
+          </DashboardPanel>
+        )}
 
-        {/* Priority tickets list */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.staff.priority}
-          desc="Sắp theo % SLA còn lại"
-          className="lg:col-span-6 min-h-65 lg:min-h-0"
-          bodyClassName="overflow-y-auto"
-        >
-          {isLoading ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 rounded-md" />
-              ))}
-            </div>
-          ) : priorityTickets.length === 0 ? (
-            <div className="h-full grid place-items-center text-center">
-              <div>
-                <CheckCircle className="mx-auto size-8 text-primary" />
-                <p className="mt-3 text-sm font-medium">
-                  Không có ticket đang mở
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Các ticket được giao sẽ xuất hiện tại đây.
-                </p>
+        {showTrend && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.staff.tickets7d}
+            desc="Ticket được giao theo ngày"
+            className="min-h-56"
+          >
+            {statsLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <ChartContainer
+                config={areaConfig}
+                className="h-full w-full aspect-auto min-h-0"
+              >
+                <AreaChart data={ticketTrend}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(v: string) =>
+                      `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                    }
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={6}
+                  />
+                  <YAxis
+                    width={24}
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={6}
+                    allowDecimals={false}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <defs>
+                    <linearGradient id="fillStaffTickets" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-count)"
+                        stopOpacity={0.35}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-count)"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    dataKey="count"
+                    type="monotone"
+                    fill="url(#fillStaffTickets)"
+                    stroke="var(--color-count)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ChartContainer>
+            )}
+          </DashboardPanel>
+        )}
+
+        {showNotifs && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.staff.recentNotifications}
+            desc={`${unread} chưa đọc`}
+            className="min-h-56 md:col-span-2 xl:col-span-3"
+            bodyClassName="overflow-y-auto"
+          >
+            {notifLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-full rounded-md" />
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {priorityTickets.map((ticket) => (
-                <TicketCard key={ticket.id} ticket={ticket} />
-              ))}
-            </div>
-          )}
-        </DashboardPanel>
-
-        {/* SLA risk donut */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.staff.slaRisk}
-          desc="Trên ticket đang mở"
-          className="lg:col-span-3 min-h-55 lg:min-h-0"
-        >
-          {statsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : riskData.length === 0 ? (
-            <div className="h-full grid place-items-center text-center">
-              <div className="flex flex-col items-center gap-2">
-                <CheckCircle className="size-7 text-emerald-500" />
-                <p className="text-sm text-muted-foreground">
-                  Không có ticket mở
-                </p>
-              </div>
-            </div>
-          ) : (
-            <DashboardDonut
-              data={riskData}
-              centerValue={openCount}
-              centerLabel="đang mở"
-            />
-          )}
-        </DashboardPanel>
-
-        {/* Notifications feed */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.staff.recentNotifications}
-          desc={`${unread} chưa đọc`}
-          className="lg:col-span-3 min-h-55 lg:min-h-0"
-          bodyClassName="overflow-y-auto"
-        >
-          {notifLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-9 w-full rounded-md" />
-              ))}
-            </div>
-          ) : notifications.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Chưa có thông báo.</p>
-          ) : (
-            <ol className="space-y-2">
-              {notifications.map((n) => {
-                const isUnread = n.status !== NotificationStatusEnum.Read;
-                return (
-                  <li key={n.id} className="flex gap-2 items-start">
-                    <span
-                      className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{
-                        background: isUnread
-                          ? "var(--p3)"
-                          : "var(--muted-foreground)",
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span
-                          className={`text-xs truncate ${
-                            isUnread ? "font-semibold" : "font-medium"
-                          }`}
-                        >
-                          {n.title}
-                        </span>
-                        <span className="font-mono-num text-[10px] text-muted-foreground shrink-0">
-                          {fmtDateTime(n.createdAt)}
-                        </span>
+            ) : (
+              <ol className="space-y-2">
+                {notifications.map((n) => {
+                  const isUnread = n.status !== NotificationStatusEnum.Read;
+                  return (
+                    <li key={n.id} className="flex gap-2 items-start">
+                      <span
+                        className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{
+                          background: isUnread
+                            ? "var(--p3)"
+                            : "var(--muted-foreground)",
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span
+                            className={`text-xs truncate ${
+                              isUnread ? "font-semibold" : "font-medium"
+                            }`}
+                          >
+                            {n.title}
+                          </span>
+                          <span className="font-mono-num text-[10px] text-muted-foreground shrink-0">
+                            {fmtDateTime(n.createdAt)}
+                          </span>
+                        </div>
+                        {n.body && (
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {n.body}
+                          </p>
+                        )}
                       </div>
-                      {n.body && (
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {n.body}
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </DashboardPanel>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </DashboardPanel>
+        )}
       </div>
     </div>
   );

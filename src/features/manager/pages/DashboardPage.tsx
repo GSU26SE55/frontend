@@ -9,16 +9,14 @@ import {
 import {
   DashboardKpi,
   DashboardPanel,
+  DashboardDonut,
   DashboardGauge,
 } from "@/shared/components/dashboard/DashboardPanel";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import { useAdminTicketQueue } from "@/features/manager/hooks/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/useStaffAssignmentList";
 import { useBatteryDashboardStats } from "@/shared/hooks/useBatteryDashboard";
-import {
-  useTicketDashboardStats,
-  useSiteDashboardStats,
-} from "@/shared/hooks/useDashboardStats";
+import { useTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
 import {
   Area,
   AreaChart,
@@ -36,17 +34,20 @@ import {
   Inbox,
   ShieldCheck,
   AlertTriangle,
-  MapPin,
+  WifiOff,
   BellRing,
-  CheckCircle,
   ArrowRight,
 } from "lucide-react";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
 import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
 
 /**
- * Manager = Điều phối vận hành ticket: pipeline trạng thái, SLA, tải nhân sự,
- * hàng chờ triage, site cần chú ý. Tập trung vận hành — không quản trị hệ thống.
+ * Manager = Điều phối vận hành ticket: pipeline, SLA, phân bố ưu tiên, tải nhân sự,
+ * hàng chờ triage, site & pin cần chú ý.
+ *
+ * UX: hàng hero (pipeline + SLA) luôn hiển thị. Vùng tile bên dưới REFLOW — panel
+ * nào không có dữ liệu (không staff / hết triage / không site rủi ro / không pin
+ * cảnh báo) thì ẩn hẳn, không để ô trống.
  */
 
 const pipelineConfig = { value: { label: "Ticket" } } satisfies ChartConfig;
@@ -69,8 +70,6 @@ export default function ManagerDashboardPage() {
   });
   const { data: ticketStats, isLoading: ticketsLoading } =
     useTicketDashboardStats();
-  const { data: siteStats, isLoading: siteStatsLoading } =
-    useSiteDashboardStats();
   const { data: queuePage, isLoading: queueLoading } = useAdminTicketQueue({
     pageNumber: 1,
     pageSize: 50,
@@ -78,14 +77,12 @@ export default function ManagerDashboardPage() {
   const { data: staffList, isLoading: staffLoading } = useStaffAssignmentList();
   const { data: stats, isLoading: statsLoading } = useBatteryDashboardStats();
 
-  // ── Sites — KPI từ /sites/dashboard/stats (C); at-risk list từ useSiteList ──
+  // ── Sites at-risk ──
   const sites = siteData?.items ?? [];
-  const totalSites = siteStats?.total ?? 0;
-  const activeSites = siteStats?.activeCount ?? 0;
   const sitesH = sites.map((s) => ({ ...s, health: siteHealth(s) }));
   const atRisk = sitesH.filter((s) => s.health < 80);
 
-  // ── Tickets — server aggregate (A) ──
+  // ── Tickets ──
   const sla = ticketStats?.sla;
   const totalTickets = ticketStats?.total ?? 0;
   const openCount = ticketStats?.openCount ?? 0;
@@ -101,6 +98,7 @@ export default function ManagerDashboardPage() {
         ? "var(--p3)"
         : "var(--p1)";
   const ticketTrend = ticketStats?.createdTrend7Days ?? [];
+  const hasTrend = ticketTrend.some((p) => p.count > 0);
   const statusCounts = ticketStats?.countByStatus ?? {};
 
   const pipeline = [
@@ -109,11 +107,7 @@ export default function ManagerDashboardPage() {
       value: (statusCounts.New ?? 0) + (statusCounts.Open ?? 0),
       fill: "var(--muted-foreground)",
     },
-    {
-      stage: "Đã gán",
-      value: statusCounts.Assigned ?? 0,
-      fill: "var(--chart-1)",
-    },
+    { stage: "Đã gán", value: statusCounts.Assigned ?? 0, fill: "var(--chart-1)" },
     {
       stage: "Đang xử lý",
       value: statusCounts.InProgress ?? 0,
@@ -133,7 +127,6 @@ export default function ManagerDashboardPage() {
       fill: "var(--p1)",
     },
     {
-      // KHÔNG gộp ClosedRejected (ticket bị từ chối, không phải hoàn tất)
       stage: "Hoàn tất",
       value:
         (statusCounts.Resolved ?? 0) +
@@ -143,18 +136,21 @@ export default function ManagerDashboardPage() {
       fill: "var(--ok)",
     },
   ];
-
-  // Tổng ticket hiển thị trong pipeline (đã loại ClosedRejected) — để desc khớp
-  // với tổng các bar, tránh "N ticket" > tổng bar khi có ticket bị từ chối.
   const pipelineTotal = pipeline.reduce((a, p) => a + p.value, 0);
 
-  // ── Staff workload — openCountByStaff (A) ──
+  // ── Phân bố ưu tiên — countByPriority ──
+  const priorityCounts = ticketStats?.countByPriority ?? {};
+  const priorityData = [
+    { name: "P1 · Khẩn", value: priorityCounts.P1Critical ?? 0, fill: "var(--p1)" },
+    { name: "P2 · Cao", value: priorityCounts.P2High ?? 0, fill: "var(--p2)" },
+    { name: "P3 · Thường", value: priorityCounts.P3Normal ?? 0, fill: "var(--p3)" },
+  ].filter((d) => d.value > 0);
+  const priorityTotal = priorityData.reduce((a, d) => a + d.value, 0);
+
+  // ── Staff workload ──
   const staff = staffList ?? [];
   const openByStaff = new Map(
-    (ticketStats?.openCountByStaff ?? []).map((o) => [
-      o.staffId,
-      o.activeCount,
-    ]),
+    (ticketStats?.openCountByStaff ?? []).map((o) => [o.staffId, o.activeCount]),
   );
   const workload = staff
     .map((s) => ({
@@ -166,9 +162,19 @@ export default function ManagerDashboardPage() {
     }))
     .sort((a, b) => b.active - a.active);
 
-  // ── Alerts (server aggregate — /battery/dashboard/stats) ──
+  // ── Alerts + pin ──
   const openAlerts = stats?.openAlerts ?? 0;
   const criticalOpen = stats?.openAlertsCritical ?? 0;
+  const offlineBatt = stats?.offlineAssets ?? 0;
+  const topAlerting = stats?.topAlertingAssets ?? [];
+
+  // ── Visibility ──
+  const showPriority = ticketsLoading || priorityData.length > 0;
+  const showWorkload = staffLoading || workload.length > 0;
+  const showTriage = queueLoading || queueItems.length > 0;
+  const showAtRisk = sitesLoading || atRisk.length > 0;
+  const showTopAlerting = statsLoading || topAlerting.length > 0;
+  const showTrend = ticketsLoading || hasTrend;
 
   return (
     <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
@@ -185,7 +191,6 @@ export default function ManagerDashboardPage() {
         <RefreshButton
           queryKeys={[
             KEY.sites,
-            KEY.siteDashboard,
             KEY.ticketDashboard,
             KEY.manager.tickets,
             KEY.batteryDashboard,
@@ -194,7 +199,7 @@ export default function ManagerDashboardPage() {
         />
       </div>
 
-      {/* ── KPI strip (ticket ops) ── */}
+      {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
         <DashboardKpi
           label="Tickets mở"
@@ -224,27 +229,27 @@ export default function ManagerDashboardPage() {
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
-          label="Sites"
-          value={siteStatsLoading ? "--" : totalSites}
-          hint={`${activeSites} hoạt động`}
-          icon={<MapPin className="size-3.5" />}
-        />
-        <DashboardKpi
           label="Cảnh báo mở"
           value={statsLoading ? "--" : openAlerts}
           hint={`${criticalOpen} critical`}
           icon={<BellRing className="size-3.5" />}
           accent={criticalOpen > 0 ? "var(--p1)" : undefined}
         />
+        <DashboardKpi
+          label="Pin offline"
+          value={statsLoading ? "--" : offlineBatt}
+          hint="mất kết nối"
+          icon={<WifiOff className="size-3.5" />}
+          accent={offlineBatt > 0 ? "var(--p3)" : undefined}
+        />
       </div>
 
-      {/* ── Bento grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[1.1fr_1fr] gap-3 lg:flex-1 lg:min-h-[600px]">
-        {/* Ticket pipeline — horizontal bars */}
+      {/* ── Hero row (luôn hiển thị) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <DashboardPanel
           title={OVERVIEW_PANELS.manager.ticketPipeline}
           desc={`${pipelineTotal} ticket theo giai đoạn`}
-          className="lg:col-span-5 min-h-60 lg:min-h-0"
+          className="lg:col-span-2 min-h-64"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -286,11 +291,10 @@ export default function ManagerDashboardPage() {
           )}
         </DashboardPanel>
 
-        {/* SLA gauge */}
         <DashboardPanel
           title={OVERVIEW_PANELS.manager.sla}
           desc="met / (met + breach)"
-          className="lg:col-span-3 min-h-60 lg:min-h-0"
+          className="min-h-64"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -315,9 +319,7 @@ export default function ManagerDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla?.running ?? 0}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">
-                      Running
-                    </p>
+                    <p className="text-[9.5px] text-muted-foreground">Running</p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -333,230 +335,278 @@ export default function ManagerDashboardPage() {
             />
           )}
         </DashboardPanel>
+      </div>
 
-        {/* Tickets 7-day — area */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.manager.newTickets7d}
-          desc="Số ticket tạo theo ngày"
-          className="lg:col-span-4 min-h-60 lg:min-h-0"
-        >
-          {ticketsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : (
-            <ChartContainer
-              config={areaConfig}
-              className="h-full w-full aspect-auto min-h-0"
-            >
-              <AreaChart data={ticketTrend}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tickFormatter={(v: string) =>
-                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
-                  }
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={6}
-                />
-                <YAxis
-                  width={24}
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={6}
-                  allowDecimals={false}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <defs>
-                  <linearGradient
-                    id="fillMgrTickets"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
+      {/* ── Vùng tile REFLOW (ẩn panel rỗng) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {showPriority && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.manager.priority}
+            desc={`${priorityTotal} ticket phân theo mức`}
+            className="min-h-56"
+          >
+            {ticketsLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <DashboardDonut
+                data={priorityData}
+                centerValue={priorityTotal}
+                centerLabel="ticket"
+              />
+            )}
+          </DashboardPanel>
+        )}
+
+        {showWorkload && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.manager.staffLoad}
+            desc={`${workload.length} staff · đang xử lý / tối đa`}
+            className="min-h-56"
+            bodyClassName="overflow-y-auto"
+          >
+            {staffLoading ? (
+              <div className="space-y-2.5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {workload.map((w) => {
+                  const pct =
+                    w.max > 0
+                      ? Math.min(100, (w.active / w.max) * 100)
+                      : w.active > 0
+                        ? 100
+                        : 0;
+                  return (
+                    <div key={w.id} className="flex items-center gap-2.5">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{
+                          background: w.available
+                            ? "var(--ok)"
+                            : "var(--muted-foreground)",
+                        }}
+                        title={w.available ? "Sẵn sàng" : "Bận"}
+                      />
+                      <span className="text-xs font-medium truncate flex-1 min-w-0">
+                        {w.name}
+                      </span>
+                      <div className="w-24 h-1.5 rounded-full bg-border shrink-0">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${pct}%`,
+                            background: loadColor(w.active, w.max),
+                          }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-semibold font-mono-num w-9 text-right shrink-0">
+                        {w.active}/{w.max || "–"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </DashboardPanel>
+        )}
+
+        {showTriage && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.manager.triageQueue}
+            desc={`${queueCount} ticket chờ phân loại`}
+            className="min-h-56"
+            bodyClassName="overflow-y-auto"
+          >
+            {queueLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full rounded-md" />
+                ))}
+              </div>
+            ) : (
+              <ol className="space-y-1.5">
+                {queueItems.map((t) => (
+                  <li key={t.id}>
+                    <button
+                      className="flex items-center gap-2 w-full text-left rounded-md border border-border/70 bg-muted/20 px-2.5 py-1.5 group hover:border-primary/40 transition-colors"
+                      onClick={() => navigate(`/manager/tickets/${t.id}`)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10.5px] font-mono-num text-muted-foreground">
+                          {t.code}
+                        </p>
+                        <p className="text-xs font-medium truncate">{t.title}</p>
+                      </div>
+                      <ArrowRight className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </DashboardPanel>
+        )}
+
+        {showAtRisk && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.manager.sitesNeedAttention}
+            desc={`Sức khỏe < 80% · ${atRisk.length} site`}
+            className="min-h-56"
+            bodyClassName="overflow-y-auto"
+          >
+            {sitesLoading ? (
+              <div className="space-y-2.5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-5 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {atRisk.map((s) => (
+                  <button
+                    key={s.id}
+                    className="flex items-center gap-2.5 w-full text-left group"
+                    onClick={() => navigate(`/manager/sites/${s.id}`)}
                   >
-                    <stop
-                      offset="5%"
-                      stopColor="var(--color-count)"
-                      stopOpacity={0.35}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="var(--color-count)"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <Area
-                  dataKey="count"
-                  type="monotone"
-                  fill="url(#fillMgrTickets)"
-                  stroke="var(--color-count)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ChartContainer>
-          )}
-        </DashboardPanel>
-
-        {/* Staff workload */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.manager.staffLoad}
-          desc={`${workload.length} staff · ticket đang xử lý / tối đa`}
-          className="lg:col-span-5 min-h-55 lg:min-h-0"
-          bodyClassName="overflow-y-auto"
-        >
-          {staffLoading ? (
-            <div className="space-y-2.5">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-6 w-full" />
-              ))}
-            </div>
-          ) : workload.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Chưa có nhân sự.</p>
-          ) : (
-            <div className="space-y-2.5">
-              {workload.map((w) => {
-                const pct =
-                  w.max > 0
-                    ? Math.min(100, (w.active / w.max) * 100)
-                    : w.active > 0
-                      ? 100
-                      : 0;
-                return (
-                  <div key={w.id} className="flex items-center gap-2.5">
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{
-                        background: w.available
-                          ? "var(--ok)"
-                          : "var(--muted-foreground)",
-                      }}
-                      title={w.available ? "Sẵn sàng" : "Bận"}
-                    />
-                    <span className="text-xs font-medium truncate flex-1 min-w-0">
-                      {w.name}
-                    </span>
-                    <div className="w-24 h-1.5 rounded-full bg-border shrink-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">
+                        {s.name}
+                      </p>
+                      <p className="text-[10.5px] text-muted-foreground truncate">
+                        {s.customerName}
+                      </p>
+                    </div>
+                    <div className="w-14 h-1.5 rounded-full bg-border shrink-0">
                       <div
                         className="h-full rounded-full"
                         style={{
-                          width: `${pct}%`,
-                          background: loadColor(w.active, w.max),
+                          width: `${s.health}%`,
+                          background: healthColor(s.health),
                         }}
                       />
                     </div>
-                    <span className="text-[11px] font-semibold font-mono-num w-9 text-right shrink-0">
-                      {w.active}/{w.max || "–"}
+                    <span
+                      className="text-[11px] font-semibold font-mono-num w-8 text-right shrink-0"
+                      style={{ color: healthColor(s.health) }}
+                    >
+                      {s.health}%
                     </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </DashboardPanel>
-
-        {/* Triage queue */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.manager.triageQueue}
-          desc={`${queueCount} ticket chờ phân loại`}
-          className="lg:col-span-4 min-h-55 lg:min-h-0"
-          bodyClassName="overflow-y-auto"
-        >
-          {queueLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full rounded-md" />
-              ))}
-            </div>
-          ) : queueItems.length === 0 ? (
-            <div className="h-full grid place-items-center text-center">
-              <div className="flex flex-col items-center gap-2">
-                <CheckCircle className="size-7 text-emerald-500" />
-                <p className="text-sm text-muted-foreground">
-                  Không có ticket chờ triage
-                </p>
-              </div>
-            </div>
-          ) : (
-            <ol className="space-y-1.5">
-              {queueItems.map((t) => (
-                <li key={t.id}>
-                  <button
-                    className="flex items-center gap-2 w-full text-left rounded-md border border-border/70 bg-muted/20 px-2.5 py-1.5 group hover:border-primary/40 transition-colors"
-                    onClick={() => navigate(`/manager/tickets/${t.id}`)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10.5px] font-mono-num text-muted-foreground">
-                        {t.code}
-                      </p>
-                      <p className="text-xs font-medium truncate">{t.title}</p>
-                    </div>
-                    <ArrowRight className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
                   </button>
-                </li>
-              ))}
-            </ol>
-          )}
-        </DashboardPanel>
-
-        {/* At-risk sites */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.manager.sitesNeedAttention}
-          desc={`Sức khỏe < 80% · ${atRisk.length} site`}
-          className="lg:col-span-3 min-h-55 lg:min-h-0"
-          bodyClassName="overflow-y-auto"
-        >
-          {sitesLoading ? (
-            <div className="space-y-2.5">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-5 w-full" />
-              ))}
-            </div>
-          ) : atRisk.length === 0 ? (
-            <div className="h-full grid place-items-center text-center">
-              <div className="flex flex-col items-center gap-2">
-                <CheckCircle className="size-7 text-emerald-500" />
-                <p className="text-sm text-muted-foreground">
-                  Tất cả sites khỏe mạnh
-                </p>
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {atRisk.map((s) => (
-                <button
-                  key={s.id}
-                  className="flex items-center gap-2.5 w-full text-left group"
-                  onClick={() => navigate(`/manager/sites/${s.id}`)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">
-                      {s.name}
-                    </p>
-                    <p className="text-[10.5px] text-muted-foreground truncate">
-                      {s.customerName}
-                    </p>
-                  </div>
-                  <div className="w-14 h-1.5 rounded-full bg-border shrink-0">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${s.health}%`,
-                        background: healthColor(s.health),
-                      }}
-                    />
-                  </div>
-                  <span
-                    className="text-[11px] font-semibold font-mono-num w-8 text-right shrink-0"
-                    style={{ color: healthColor(s.health) }}
-                  >
-                    {s.health}%
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </DashboardPanel>
+            )}
+          </DashboardPanel>
+        )}
+
+        {showTopAlerting && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.manager.topAlerting}
+            desc="Nhiều cảnh báo mở nhất"
+            className="min-h-56"
+            bodyClassName="overflow-y-auto"
+          >
+            {statsLoading ? (
+              <div className="space-y-2.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-full" />
+                ))}
+              </div>
+            ) : (
+              <ol className="space-y-1">
+                {topAlerting.map((a, i) => (
+                  <li key={a.batteryAssetId}>
+                    <button
+                      className="flex items-center gap-2.5 w-full text-left rounded-md px-1.5 py-1.5 group hover:bg-muted/40 transition-colors"
+                      onClick={() => navigate("/manager/alerts")}
+                    >
+                      <span className="w-3.5 shrink-0 text-right text-[10px] font-semibold font-mono-num text-muted-foreground/60">
+                        {i + 1}
+                      </span>
+                      <span className="flex-1 min-w-0 text-xs font-medium truncate group-hover:text-primary transition-colors">
+                        {a.serialNumber}
+                      </span>
+                      {a.criticalCount > 0 && (
+                        <span
+                          className="rounded px-1.5 py-0.5 text-[9.5px] font-semibold shrink-0"
+                          style={{
+                            background: "var(--p1-soft)",
+                            color: "var(--p1)",
+                          }}
+                        >
+                          {a.criticalCount} critical
+                        </span>
+                      )}
+                      <span className="text-[11px] font-semibold font-mono-num tabular-nums w-5 text-right shrink-0">
+                        {a.alertCount}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </DashboardPanel>
+        )}
+
+        {showTrend && (
+          <DashboardPanel
+            title={OVERVIEW_PANELS.manager.newTickets7d}
+            desc="Số ticket tạo theo ngày"
+            className="min-h-56"
+          >
+            {ticketsLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <ChartContainer
+                config={areaConfig}
+                className="h-full w-full aspect-auto min-h-0"
+              >
+                <AreaChart data={ticketTrend}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(v: string) =>
+                      `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                    }
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={6}
+                  />
+                  <YAxis
+                    width={24}
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={6}
+                    allowDecimals={false}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <defs>
+                    <linearGradient id="fillMgrTickets" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-count)"
+                        stopOpacity={0.35}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-count)"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    dataKey="count"
+                    type="monotone"
+                    fill="url(#fillMgrTickets)"
+                    stroke="var(--color-count)"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ChartContainer>
+            )}
+          </DashboardPanel>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, CheckCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -74,26 +74,35 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
     }, {});
   }, [allPerms, search]);
 
+  // ID đang hiển thị (theo bộ lọc) — dùng cho "Chọn tất cả / Bỏ chọn".
+  const visibleIds = useMemo(
+    () => Object.values(grouped).flatMap((perms) => perms.map((p) => p.id)),
+    [grouped],
+  );
+
   const toggle = (id: string) => {
     const next = new Set(checkedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     setSelected(next);
   };
 
   const toggleModule = (perms: PermissionDto[]) => {
     const allChecked = perms.every((p) => checkedIds.has(p.id));
     const next = new Set(checkedIds);
-    perms.forEach((p) => {
-      if (allChecked) {
-        next.delete(p.id);
-      } else {
-        next.add(p.id);
-      }
-    });
+    perms.forEach((p) => (allChecked ? next.delete(p.id) : next.add(p.id)));
+    setSelected(next);
+  };
+
+  const selectAllVisible = () => {
+    const next = new Set(checkedIds);
+    visibleIds.forEach((id) => next.add(id));
+    setSelected(next);
+  };
+
+  const clearAllVisible = () => {
+    const next = new Set(checkedIds);
+    visibleIds.forEach((id) => next.delete(id));
     setSelected(next);
   };
 
@@ -119,6 +128,9 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
   };
 
   const isLoading = loadingAll || loadingRole;
+  const modules = Object.entries(grouped).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
 
   return (
     <>
@@ -126,124 +138,169 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
         open={open && !confirmEmpty}
         onOpenChange={(v: boolean) => !v && onClose()}
       >
-        <DialogContent className="sm:max-w-lg flex flex-col max-h-[85vh]">
+        <DialogContent className="sm:max-w-5xl w-[95vw] flex flex-col max-h-[88vh] gap-3">
           <DialogHeader>
-            <DialogTitle>Permissions — {role.name}</DialogTitle>
+            <DialogTitle>Phân quyền — {role.name}</DialogTitle>
           </DialogHeader>
 
-          {/* Search */}
-          <div className="relative shrink-0">
-            <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm permission..."
-              className="pl-8"
-            />
+          {/* Toolbar: search + chọn tất cả / bỏ chọn */}
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm permission (code / mô tả)..."
+                className="pl-9 h-10"
+              />
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-10"
+                onClick={selectAllVisible}
+                disabled={isLoading || visibleIds.length === 0}
+              >
+                <CheckCheck className="mr-1.5 size-4" />
+                Chọn tất cả
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-10"
+                onClick={clearAllVisible}
+                disabled={isLoading || visibleIds.length === 0}
+              >
+                <X className="mr-1.5 size-4" />
+                Bỏ chọn
+              </Button>
+            </div>
           </div>
 
-          {/* Permission list */}
-          <div className="flex-1 overflow-y-auto space-y-4 py-1 pr-1">
+          {/* Permission list — module cards trải ngang nhiều cột */}
+          <div className="flex-1 overflow-y-auto -mr-1 pr-1">
             {isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10" />
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-40" />
                 ))}
               </div>
-            ) : Object.keys(grouped).length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
+            ) : modules.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">
                 Không tìm thấy permission nào.
               </p>
             ) : (
-              Object.entries(grouped)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([module, perms]) => {
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
+                {modules.map(([module, perms]) => {
                   const allChecked = perms.every((p) => checkedIds.has(p.id));
                   const someChecked =
                     !allChecked && perms.some((p) => checkedIds.has(p.id));
+                  const checkedInModule = perms.filter((p) =>
+                    checkedIds.has(p.id),
+                  ).length;
                   return (
-                    <div key={module}>
+                    <div
+                      key={module}
+                      className="break-inside-avoid mb-3 rounded-lg border border-border bg-card/40 overflow-hidden"
+                    >
+                      {/* Module header — toggle cả nhóm */}
                       <button
                         type="button"
                         onClick={() => toggleModule(perms)}
-                        className="flex items-center gap-2 w-full text-left mb-1.5 group"
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 bg-muted/40 hover:bg-muted/60 transition-colors"
                       >
                         <span
-                          className={`w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
+                          className={`size-5 rounded-md border flex items-center justify-center text-sm shrink-0 transition-colors ${
                             allChecked
                               ? "bg-primary border-primary text-primary-foreground"
                               : someChecked
                                 ? "bg-primary/10 border-primary/50 text-primary"
-                                : "border-border"
+                                : "border-border bg-background"
                           }`}
                         >
                           {allChecked ? "✓" : someChecked ? "−" : ""}
                         </span>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                          {module} ({perms.length})
+                        <span className="text-xs font-bold uppercase tracking-wider flex-1 min-w-0 truncate">
+                          {module}
+                        </span>
+                        <span className="text-[11px] font-semibold tabular-nums text-muted-foreground shrink-0">
+                          {checkedInModule}/{perms.length}
                         </span>
                       </button>
-                      <div className="pl-6 space-y-1">
-                        {perms.map((p) => (
-                          <label
-                            key={p.id}
-                            className="flex items-start gap-2.5 cursor-pointer py-1 rounded hover:bg-muted/40 px-2 -mx-2"
-                          >
-                            <span
-                              className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center text-xs shrink-0 transition-colors ${
-                                checkedIds.has(p.id)
-                                  ? "bg-primary border-primary text-primary-foreground"
-                                  : "border-border"
+
+                      {/* Permissions — hàng to, dễ bấm */}
+                      <div className="p-1.5 space-y-0.5">
+                        {perms.map((p) => {
+                          const on = checkedIds.has(p.id);
+                          return (
+                            <label
+                              key={p.id}
+                              className={`flex items-start gap-2.5 cursor-pointer py-1.5 px-2 rounded-md transition-colors ${
+                                on ? "bg-primary/5" : "hover:bg-muted/50"
                               }`}
                             >
-                              {checkedIds.has(p.id) ? "✓" : ""}
-                            </span>
-                            <input
-                              type="checkbox"
-                              className="sr-only"
-                              checked={checkedIds.has(p.id)}
-                              onChange={() => toggle(p.id)}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-mono leading-none truncate">
-                                {p.code}
-                              </div>
-                              {p.description && (
-                                <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                                  {p.description}
+                              <span
+                                className={`mt-0.5 size-5 rounded-md border flex items-center justify-center text-sm shrink-0 transition-colors ${
+                                  on
+                                    ? "bg-primary border-primary text-primary-foreground"
+                                    : "border-border bg-background"
+                                }`}
+                              >
+                                {on ? "✓" : ""}
+                              </span>
+                              <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={on}
+                                onChange={() => toggle(p.id)}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[13px] font-mono leading-tight break-all">
+                                  {p.code}
                                 </div>
-                              )}
-                            </div>
-                          </label>
-                        ))}
+                                {p.description && (
+                                  <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                                    {p.description}
+                                  </div>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   );
-                })
+                })}
+              </div>
             )}
           </div>
 
-          <div className="text-xs text-muted-foreground shrink-0 pt-1">
-            Đã chọn {checkedIds.size} / {allPerms.length} permissions
-          </div>
-
-          <DialogFooter className="shrink-0">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Hủy
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Lưu quyền
-            </Button>
+          <DialogFooter className="shrink-0 items-center sm:justify-between gap-2">
+            <span className="text-xs text-muted-foreground">
+              Đã chọn{" "}
+              <strong className="text-foreground tabular-nums">
+                {checkedIds.size}
+              </strong>{" "}
+              / {allPerms.length} quyền
+            </span>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Hủy
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Lưu quyền
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Confirm empty permissions */}
-      <Dialog
-        open={confirmEmpty}
-        onOpenChange={(v: boolean) => setConfirmEmpty(v)}
-      >
+      <Dialog open={confirmEmpty} onOpenChange={(v: boolean) => setConfirmEmpty(v)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Xóa hết quyền?</DialogTitle>

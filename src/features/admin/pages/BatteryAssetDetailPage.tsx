@@ -278,7 +278,11 @@ export default function BatteryAssetDetailPage() {
                 value="history"
                 className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
-                <SensorHistoryTable assetId={id} fillHeight />
+                <SensorHistoryTable
+                  assetId={id}
+                  batteryTypeId={asset?.batteryTypeId}
+                  fillHeight
+                />
               </TabsContent>
               <TabsContent
                 value="cascade"
