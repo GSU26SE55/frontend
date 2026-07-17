@@ -13,7 +13,8 @@ export const NotificationTypeEnum = {
   AccountActivated: 12,
   AdminInvite: 13,
   IncidentDeclared: 14,
-  // 15 bị skip ở BE (NotificationTypeEnum không liên tục)
+  // Cascade risk ≥ 0.7 trên 1 pin (BatteryCascadeRiskHighEvent) → notify Manager/Admin.
+  CascadeRiskHigh: 15,
   BatteryAlertEscalationPending: 16,
   AlertTicketSagaFailed: 17,
   IotDeviceWentOffline: 18,

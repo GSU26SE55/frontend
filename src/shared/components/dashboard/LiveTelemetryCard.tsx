@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils";
-import type { SensorStreamState } from "@/shared/types/sensor-stream.types";
+import type {
+  SensorStreamState,
+  LiveStatsDto,
+} from "@/shared/types/sensor-stream.types";
 import { toneDot, toneFill } from "@/shared/theme/statusColors";
 
 // Display contract — nhận diện các metric hiển thị, KHÔNG ràng buộc DTO cụ thể.
@@ -13,18 +16,7 @@ export interface TelemetryDisplay {
   socPercent?: number | null;
   sohPercent?: number | null;
   cycleCount?: number | null;
-  chargingState?: number | null;
 }
-
-// Charging state labels (display-only, value 1..5) — định nghĩa nội bộ để shared
-// component KHÔNG import enum từ features/admin (giữ đúng chiều phụ thuộc).
-const CHARGING_LABELS: Record<number, string> = {
-  1: "Nghỉ",
-  2: "Đang nạp",
-  3: "Đang xả",
-  4: "Float",
-  5: "Bypass",
-};
 
 const fmtNum = (v: number | null | undefined, dec = 1) =>
   v != null ? v.toFixed(dec) : "—";
@@ -84,6 +76,11 @@ interface LiveTelemetryCardProps {
   status?: SensorStreamState["status"];
   /** Ngưỡng từ ThresholdConfig BE (theo BatteryType). Bỏ trống → dùng ngưỡng mặc định. */
   thresholds?: TelemetryThresholds;
+  /**
+   * Rolling min/max nạp/xả của 1 window (SSE event `stats`). Bỏ trống → ẩn section.
+   * Không có event `stats` → trống, KHÔNG phải lỗi.
+   */
+  stats?: LiveStatsDto | null;
 }
 
 /**
@@ -94,6 +91,7 @@ export function LiveTelemetryCard({
   data,
   status,
   thresholds,
+  stats,
 }: LiveTelemetryCardProps) {
   const socWarn = thresholds?.socWarning ?? DEFAULT_SOC_WARN;
   const socCrit = thresholds?.socCritical ?? DEFAULT_SOC_CRIT;
@@ -176,17 +174,34 @@ export function LiveTelemetryCard({
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 mt-1">
-            <span className="text-[10.5px] text-muted-foreground">
-              Nạp / Xả
-            </span>
-            <span className="text-[10.5px] font-medium">
-              {data.chargingState != null
-                ? (CHARGING_LABELS[data.chargingState] ??
-                  `#${data.chargingState}`)
-                : "—"}
-            </span>
-          </div>
+          {/* Min/max nạp-xả trong window (SSE `stats`). Giá trị LUÔN dương cả 2
+              chiều — chiều nằm trong tên field. null = window chưa có mẫu chiều đó. */}
+          {stats && (
+            <div className="rounded-lg bg-muted/50 px-3 py-2 mt-1 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Đỉnh {stats.window === "1h" ? "1 giờ" : "hôm nay"}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {stats.chargeSampleCount + stats.dischargeSampleCount} mẫu
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] text-muted-foreground">Nạp</span>
+                <span className="text-[10.5px] font-medium font-mono-num">
+                  {fmtNum(stats.minChargeCurrent, 2)} –{" "}
+                  {fmtNum(stats.maxChargeCurrent, 2)} A
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10.5px] text-muted-foreground">Xả</span>
+                <span className="text-[10.5px] font-medium font-mono-num">
+                  {fmtNum(stats.minDischargeCurrent, 2)} –{" "}
+                  {fmtNum(stats.maxDischargeCurrent, 2)} A
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

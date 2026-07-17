@@ -6,6 +6,7 @@ import type {
 } from "@/shared/types/api.types";
 import type {
   IotDeviceDto,
+  IotDeviceDetailDto,
   IotDeviceCreatedDto,
   IotDeviceListParams,
   CreateIotDevicePayload,
@@ -20,8 +21,9 @@ export const iotDeviceService = {
       ENDPOINTS.IOT_DEVICES.LIST,
       { params },
     ),
+  // Trả IotDeviceDetailDto — kèm full plaintext apiKey (xem lại được nhiều lần).
   getById: (id: string) =>
-    axiosInstance.get<CommonResponse<IotDeviceDto>>(
+    axiosInstance.get<CommonResponse<IotDeviceDetailDto>>(
       ENDPOINTS.IOT_DEVICES.DETAIL(id),
     ),
   // Trả IotDeviceCreatedDto — secrets (rawApiKey, QR, MQTT) chỉ có 1 lần.

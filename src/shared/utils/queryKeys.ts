@@ -119,6 +119,8 @@ export const QUERY_KEY = {
       [KEY.sensorReadings, "history", assetId, params] as const,
     aggregate: (assetId: string, params?: object) =>
       [KEY.sensorReadings, "aggregate", assetId, params] as const,
+    aggregateHourly: (assetId: string, params?: object) =>
+      [KEY.sensorReadings, "aggregate-hourly", assetId, params] as const,
   },
   thresholds: {
     list: (params?: object) => [KEY.thresholds, "list", params] as const,

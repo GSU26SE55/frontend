@@ -12,8 +12,12 @@ export {
 
 export interface AlertDto {
   id: string;
+  // Chuỗi rỗng "" (KHÔNG phải null) cho alert cấp SITE — ambient (HighAmbientTemp/
+  // HighHumidity/HighTempHumidityCombo) hoặc EnvironmentalIncident. Khi đó dùng `siteId`.
   batteryAssetId: string;
   batterySerialNumber: string;
+  // Non-null cho alert cấp site; null với alert gắn 1 pin cụ thể.
+  siteId: string | null;
   anomalyType: AnomalyTypeEnum;
   severity: AlertSeverityEnum;
   thresholdValue: number | null;

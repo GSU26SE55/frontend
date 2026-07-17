@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { openSse, parseReading } from "@/shared/lib/sse";
+import { openSse, parseReading, parseStats } from "@/shared/lib/sse";
 import { SensorSourceCodeEnum } from "@/shared/enums/telemetry.enum";
 import type { SensorStreamState } from "@/shared/types/sensor-stream.types";
 
@@ -56,6 +56,17 @@ export function useSensorStream(scope: string | null): SensorStreamState {
                 reading.sensorSourceCode === SensorSourceCodeEnum.PRIMARY)
             ) {
               setState((s) => ({ ...s, status: "live", reading }));
+            }
+          } else if (event === "stats") {
+            // `stats` độc lập với `reading` — không đổi status (stats có thể tới
+            // trước reading đầu tiên). BE chưa deploy → không có event này, card trống.
+            // Key theo `window`: BE đẩy cả "1h" lẫn "today" qua cùng event.
+            const stats = parseStats(data);
+            if (stats) {
+              setState((s) => ({
+                ...s,
+                stats: { ...s.stats, [stats.window]: stats },
+              }));
             }
           } else if (event === "ping") {
             setState((s) => ({

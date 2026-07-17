@@ -179,6 +179,8 @@ export const ENDPOINTS = {
   ENVIRONMENTAL_INCIDENTS: {
     // Note: POST /api/environmental-incidents là IoT ingest (API Key) — FE không gọi.
     LIST: "/api/environmental-incidents",
+    // Report thủ công bằng JWT (Staff/Manager/Admin) — reuse handler với POST / (IoT).
+    MANUAL: "/api/environmental-incidents/manual",
     DETAIL: (id: string) => `/api/environmental-incidents/${id}`,
     ACKNOWLEDGE: (id: string) =>
       `/api/environmental-incidents/${id}/acknowledge`,
@@ -192,6 +194,11 @@ export const ENDPOINTS = {
   SLA: {
     LIST: "/api/sla-rules",
     UPDATE: (id: string) => `/api/sla-rules/${id}`,
+  },
+
+  // AI classification feedback — BE hiện chỉ có POST feedback, chưa có GET list/detail.
+  ANOMALY_CLASSIFICATIONS: {
+    FEEDBACK: (id: string) => `/api/v1/anomaly-classifications/${id}/feedback`,
   },
 
   // Audit logs thật nằm ở ADMIN.AUDIT_LOGS (/api/admin/audit-logs).
@@ -336,6 +343,9 @@ export const ENDPOINTS = {
     LATEST: (assetId: string) => `/api/sensor-readings/${assetId}/latest`,
     HISTORY: (assetId: string) => `/api/sensor-readings/${assetId}/history`,
     AGGREGATE: (assetId: string) => `/api/sensor-readings/${assetId}/aggregate`,
+    // Bucket 1h cố định (continuous aggregate) — cho range dài; /aggregate cho ≤ 7 ngày.
+    AGGREGATE_HOURLY: (assetId: string) =>
+      `/api/sensor-readings/${assetId}/aggregate/hourly`,
     // SSE live telemetry — text/event-stream. Token qua ?access_token= (EventSource
     // không set được header). Chỉ trả PATH; wrapper sse.ts ghép ?scope=&access_token=.
     STREAM: "/api/sensor-readings/stream",

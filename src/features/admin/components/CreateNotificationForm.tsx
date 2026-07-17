@@ -59,6 +59,10 @@ const TYPE_OPTIONS: { value: NotificationTypeEnum; label: string }[] = [
   { value: NotificationTypeEnum.AdminInvite, label: "Admin Invite" },
   { value: NotificationTypeEnum.IncidentDeclared, label: "Incident Declared" },
   {
+    value: NotificationTypeEnum.CascadeRiskHigh,
+    label: "Cascade Risk High",
+  },
+  {
     value: NotificationTypeEnum.BatteryAlertEscalationPending,
     label: "Battery Alert Escalation Pending",
   },

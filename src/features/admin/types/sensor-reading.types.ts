@@ -34,6 +34,16 @@ export interface SensorReadingAggregateParams {
   interval?: SensorReadingInterval; // default "1h"
 }
 
+// Bucket 1h cố định (TimescaleDB continuous aggregate) — dùng cho range dài (tháng/năm).
+// Range ngắn (≤ 7 ngày) + interval linh hoạt → dùng SensorReadingAggregateParams.
+export interface SensorReadingAggregateHourlyParams {
+  from?: string; // UTC
+  to?: string; // UTC
+}
+
+// Dùng chung cho /aggregate và /aggregate/hourly — cùng shape.
+// Quy ước min/max nạp/xả: LUÔN trả giá trị DƯƠNG cho cả 2 chiều (chiều nằm trong tên
+// field) → FE không xử lý dấu. null = bucket chưa có mẫu chiều đó.
 export interface SensorReadingAggregateDto {
   time: string; // điểm bắt đầu bucket (UTC) — field "time", không phải "bucket"
   avgVoltage: number;
@@ -41,4 +51,16 @@ export interface SensorReadingAggregateDto {
   avgTemperature: number;
   avgSocPercent: number;
   avgSohPercent: number | null; // null nếu bucket không có reading nào có SOH
+  minVoltage: number | null;
+  maxVoltage: number | null;
+  minTemperature: number | null;
+  maxTemperature: number | null;
+  maxChargeCurrent: number | null;
+  minChargeCurrent: number | null;
+  avgChargeCurrent: number | null;
+  maxDischargeCurrent: number | null;
+  minDischargeCurrent: number | null;
+  avgDischargeCurrent: number | null;
+  chargeSampleCount: number;
+  dischargeSampleCount: number;
 }
