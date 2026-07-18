@@ -5,6 +5,7 @@ import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   IncidentListParams,
+  ManualIncidentPayload,
   ResolveIncidentPayload,
   FalseAlarmIncidentPayload,
 } from "@/shared/types/environmental.types";
@@ -37,6 +38,25 @@ export const useActiveIncidentsBySite = (siteId: string) =>
     staleTime: 0,
     refetchInterval: 30_000,
   });
+
+// Report thủ công — form mutation: component xử lý error qua try-catch +
+// handleErrorApi({error,setError}). BE phân biệt bằng HTTP status:
+// 201 = tạo mới · 200 = dedup, trả incident cũ đang active (không phát event lại).
+export const useReportManualIncident = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ManualIncidentPayload) =>
+      environmentalService.reportManual(payload),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
+      toast.success(
+        res.status === 201
+          ? MESSAGES.incident.reported
+          : MESSAGES.incident.alreadyActive,
+      );
+    },
+  });
+};
 
 // Acknowledge — non-form action: toast lỗi trực tiếp qua onError.
 export const useAcknowledgeIncident = () => {

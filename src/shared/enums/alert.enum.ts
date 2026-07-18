@@ -31,6 +31,8 @@ export const AnomalyTypeEnum = {
   CellImbalance: 13,
   EnvironmentalIncident: 14,
   SensorMismatch: 15,
+  // Temperature < ThresholdConfig.TemperatureMin. Dưới TemperatureMin − 5°C → Critical.
+  Undertemp: 16,
 } as const;
 export type AnomalyTypeEnum =
   (typeof AnomalyTypeEnum)[keyof typeof AnomalyTypeEnum];

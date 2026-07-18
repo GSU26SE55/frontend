@@ -35,6 +35,17 @@ export interface IncidentListParams {
   to?: string;
 }
 
+// POST /api/environmental-incidents/manual — người (Staff/Manager/Admin) report thủ công
+// bằng JWT khi thấy cháy/khói/ngập mà không có sensor tự động. reportedBy lấy từ token.
+export interface ManualIncidentPayload {
+  siteId: string;
+  incidentType: EnvironmentalIncidentTypeEnum;
+  severity: AlertSeverityEnum;
+  // Khớp BE `ReportEnvironmentalIncidentCommand.Notes` (số nhiều) — sai tên field
+  // thì BE bind null và bỏ qua im lặng, không báo lỗi.
+  notes?: string;
+}
+
 export interface ResolveIncidentPayload {
   resolutionNote: string;
 }

@@ -32,6 +32,7 @@ import { useBatteryAssetRealtime } from "@/features/admin/hooks/useBatteryAssetR
 import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/TransferOwnerDialog";
 import SensorChart from "@/features/admin/components/SensorChart";
+import ChargeDischargePeakChart from "@/features/admin/components/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
 import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
 import { BatteryStatusEnum } from "@/features/admin/types/battery-asset.types";
@@ -242,6 +243,8 @@ export default function BatteryAssetDetailPage() {
             <LiveTelemetryCard
               data={live}
               status={stream.status}
+              // Window "1h" hợp với card live; "today" dành cho view tổng hợp.
+              stats={stream.stats?.["1h"]}
               thresholds={
                 threshold
                   ? {
@@ -260,6 +263,7 @@ export default function BatteryAssetDetailPage() {
               <div className="px-5 py-3 border-b border-border shrink-0">
                 <TabsList>
                   <TabsTrigger value="chart">Biểu đồ</TabsTrigger>
+                  <TabsTrigger value="peak">Nạp/Xả đỉnh</TabsTrigger>
                   <TabsTrigger value="history">Lịch sử cảm biến</TabsTrigger>
                   <TabsTrigger value="cascade">Rủi ro lan truyền</TabsTrigger>
                 </TabsList>
@@ -272,6 +276,15 @@ export default function BatteryAssetDetailPage() {
                   assetId={id}
                   batteryTypeId={asset?.batteryTypeId}
                   fillHeight
+                />
+              </TabsContent>
+              <TabsContent
+                value="peak"
+                className="min-h-0 overflow-y-auto m-0 p-5"
+              >
+                <ChargeDischargePeakChart
+                  assetId={id}
+                  batteryTypeId={asset?.batteryTypeId}
                 />
               </TabsContent>
               <TabsContent

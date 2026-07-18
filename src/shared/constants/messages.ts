@@ -29,9 +29,15 @@ export const MESSAGES = {
     acknowledged: "Đã xác nhận sự cố",
     resolved: "Đã xử lý sự cố",
     falseAlarm: "Đã đánh dấu báo động giả",
+    reported: "Đã ghi nhận sự cố",
+    // Dedup: BE trả 200 + incident cũ khi site đã có incident active cùng loại.
+    alreadyActive: "Site này đã có sự cố cùng loại đang mở — hiển thị sự cố đó",
   },
   ambient: {
     thresholdSaved: "Đã lưu cấu hình ngưỡng môi trường",
+  },
+  classification: {
+    feedbackSubmitted: "Đã ghi nhận đánh giá",
   },
 
   // Thiết bị / calibration / notification (shared/components)

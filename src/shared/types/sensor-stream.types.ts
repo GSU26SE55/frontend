@@ -34,9 +34,37 @@ export interface LiveReadingDto {
   sensorSourceCode?: string | null; // known: SensorSourceCodeEnum (primary|redundant|external-temp)
 }
 
-// Trạng thái kết nối SSE cho 1 scope (issue này chỉ nhánh `reading` của scope asset:{id}).
+// Payload event `stats` — rolling min/max dòng nạp/xả theo window, đẩy trên mọi scope.
+// Nguồn: docs/battery-realtime-description.md §5.3bis.
+// ⚠️ Chỉ tính trên reading `primary`; sample current == 0 (idle) bị bỏ qua.
+// ⚠️ Field null bị LƯỢC khỏi JSON (như §5.3) → khai optional, field vắng = null.
+export type StatsWindow = "1h" | "today";
+
+export interface LiveStatsDto {
+  // non-null (luôn có mặt)
+  batteryAssetId: string; // GUID
+  customerId: string; // GUID
+  window: StatsWindow; // bucket giờ hiện tại (UTC) | từ 00:00 UTC
+  windowStart: string; // ISO 8601 UTC
+  chargeSampleCount: number; // số mẫu chiều nạp tích lũy trong window
+  dischargeSampleCount: number;
+  updatedAt: string; // ISO 8601 UTC
+  // nullable → bị lược khi null (window chưa có mẫu chiều đó)
+  siteId?: string | null; // null nếu pin không thuộc site
+  maxChargeCurrent?: number | null; // A — LUÔN dương
+  minChargeCurrent?: number | null; // A — dương
+  maxDischargeCurrent?: number | null; // A — LUÔN dương: MAX(ABS(current)) với current < 0
+  minDischargeCurrent?: number | null; // A — dương
+}
+
+// Trạng thái kết nối SSE cho 1 scope (nhánh `reading` của scope asset:{id}).
+// `stats` độc lập với `reading` — không thay thế nhau.
+// ⚠️ BE đẩy CẢ 2 window ("1h" và "today") qua cùng event `stats`, chỉ khác field
+// `window` (RedisTelemetryStatsService: foreach window in StatsWindows.All) → phải
+// key theo window, không lưu 1 slot chung (nếu không 2 window ghi đè lẫn nhau).
 export interface SensorStreamState {
   status: "connecting" | "open-idle" | "live" | "error" | "closed";
   reading?: LiveReadingDto;
+  stats?: Partial<Record<StatsWindow, LiveStatsDto>>;
   lastPingAt?: number; // epoch ms của event ping gần nhất
 }

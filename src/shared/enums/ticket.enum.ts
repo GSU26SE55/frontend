@@ -40,6 +40,9 @@ export const TicketOriginEnum = {
   ManualByCustomer: "ManualByCustomer",
   AutoFromAlert: "AutoFromAlert",
   CreatedByStaff: "CreatedByStaff",
+  // Hệ thống tự tạo, không từ 1 alert cụ thể (cascade risk High, sự cố môi trường Critical).
+  // Ticket loại này có batteryAssetId = "" khi ở cấp site.
+  System: "System",
 } as const;
 export type TicketOriginEnum =
   (typeof TicketOriginEnum)[keyof typeof TicketOriginEnum];

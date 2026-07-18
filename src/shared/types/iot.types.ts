@@ -36,6 +36,15 @@ export interface IotDeviceDto {
   createdAt: string;
 }
 
+// Trả bởi GET /api/admin/iot-devices/{id} — endpoint DUY NHẤT trả full key ngoài
+// lúc create/rotate (xem lại được nhiều lần, khác `rawApiKey` chỉ trả 1 lần).
+// List KHÔNG có field này — chỉ có apiKeyLastFour.
+export interface IotDeviceDetailDto extends IotDeviceDto {
+  // null với device tạo TRƯỚC khi bật lưu plaintext (DB cũ chỉ giữ hash SHA-256,
+  // không backfill được) → rotate-key để sinh key mới + lưu plaintext.
+  apiKey: string | null;
+}
+
 // Trả khi create + rotate-key — secrets chỉ trả 1 lần.
 export interface IotDeviceCreatedDto extends IotDeviceDto {
   rawApiKey: string;

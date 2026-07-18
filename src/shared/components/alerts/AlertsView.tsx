@@ -39,6 +39,7 @@ import {
   AlertStatusEnum,
   AnomalyTypeEnum,
 } from "@/shared/enums/alert.enum";
+import type { AlertDto } from "@/shared/types/alert.types";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -66,6 +67,7 @@ const ANOMALY_LABELS: Record<AnomalyTypeEnum, string> = {
   [AnomalyTypeEnum.CellImbalance]: "Mất cân bằng cell",
   [AnomalyTypeEnum.EnvironmentalIncident]: "Sự cố môi trường",
   [AnomalyTypeEnum.SensorMismatch]: "Lệch cảm biến",
+  [AnomalyTypeEnum.Undertemp]: "Nhiệt độ thấp",
 };
 
 const SEVERITY_OPTIONS = [
@@ -93,6 +95,14 @@ const STATUS_LABELS: Record<AlertStatusEnum, string> = {
 };
 
 const anomalyLabel = (t: AnomalyTypeEnum) => ANOMALY_LABELS[t] ?? `#${t}`;
+
+// Alert cấp site (ambient / environmental incident) có batteryAssetId = "" (chuỗi rỗng,
+// KHÔNG null) và siteId non-null → không có serial pin để hiện. Dùng `=== ""` chứ không
+// falsy-check: "" và null mang nghĩa khác nhau trong contract này.
+const isSiteLevel = (alert: AlertDto) => alert.batteryAssetId === "";
+
+const alertSubject = (alert: AlertDto) =>
+  isSiteLevel(alert) ? "Cấp site" : alert.batterySerialNumber;
 
 const formatDateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN") : "—";
@@ -224,7 +234,7 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
                     {(filters.pageNumber - 1) * filters.pageSize + index + 1}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {alert.batterySerialNumber}
+                    {alertSubject(alert)}
                   </TableCell>
                   <TableCell>{anomalyLabel(alert.anomalyType)}</TableCell>
                   <TableCell>
@@ -295,7 +305,7 @@ function AlertDetailDialog({
           <DialogTitle>Chi tiết cảnh báo</DialogTitle>
           <DialogDescription>
             {alert
-              ? `${alert.batterySerialNumber} · ${anomalyLabel(alert.anomalyType)}`
+              ? `${alertSubject(alert)} · ${anomalyLabel(alert.anomalyType)}`
               : "Đang tải..."}
           </DialogDescription>
         </DialogHeader>
@@ -322,6 +332,13 @@ function AlertDetailDialog({
             <DetailRow label="Ngưỡng">
               <span className="font-mono-num">
                 {formatMeasure(alert.thresholdValue, alert.unit)}
+              </span>
+            </DetailRow>
+            <DetailRow label={isSiteLevel(alert) ? "Site" : "Pin"}>
+              <span className="font-mono text-xs">
+                {isSiteLevel(alert)
+                  ? (alert.siteId ?? "—")
+                  : alert.batterySerialNumber}
               </span>
             </DetailRow>
             <DetailRow label="Phát hiện lúc">
