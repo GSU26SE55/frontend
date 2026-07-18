@@ -8,6 +8,7 @@ import {
   CHALLENGE_TOKEN_KEY,
   type LoginPayload,
 } from "@/features/auth/types/auth.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useLogin = () => {
   return useMutation({
@@ -31,7 +32,7 @@ export const useLogin = () => {
       }
 
       if (!res.data.tokens) {
-        toast.error("Đăng nhập thất bại");
+        toast.error(AUTH_MESSAGES.login.failed);
         return;
       }
 
@@ -40,8 +41,9 @@ export const useLogin = () => {
       const user = decodeToken(accessToken);
 
       if (user.role === UserRole.CUSTOMER) {
-        toast.error("Vui lòng sử dụng Mobile App để đăng nhập.");
+        // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
         clearTokens();
+        window.location.href = "/use-mobile-app";
         return;
       }
 

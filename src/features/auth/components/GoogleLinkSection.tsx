@@ -1,11 +1,12 @@
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useGoogleLogin } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLinkGoogle } from "@/features/auth/hooks/useLinkGoogle";
 import { useUnlinkGoogle } from "@/features/auth/hooks/useUnlinkGoogle";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 interface GoogleLinkSectionProps {
   isLinked: boolean;
@@ -13,25 +14,12 @@ interface GoogleLinkSectionProps {
 }
 
 const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
-  const { mutate: linkGoogle, isPending: isLinking } = useLinkGoogle();
+  const { mutate: linkGoogle } = useLinkGoogle();
   const { mutate: unlinkGoogle, isPending: isUnlinking } = useUnlinkGoogle();
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: (response: { access_token: string }) => {
-      linkGoogle(
-        { idToken: response.access_token },
-        {
-          onSuccess: () => toast.success("Liên kết Google thành công"),
-          onError: (error) => handleErrorApi({ error }),
-        },
-      );
-    },
-    onError: () => toast.error("Đăng nhập Google thất bại"),
-  });
 
   const handleUnlink = () => {
     unlinkGoogle(undefined, {
-      onSuccess: () => toast.success("Hủy liên kết Google thành công"),
+      onSuccess: () => toast.success(AUTH_MESSAGES.google.unlinked),
       onError: (error) => handleErrorApi({ error }),
     });
   };
@@ -39,15 +27,26 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
   const inner = (
     <div className="flex items-center gap-2">
       {!isLinked ? (
-        <Button
-          onClick={() => googleLogin()}
-          disabled={isLinking}
-          variant="outline"
-          size="sm"
-        >
-          {isLinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Liên kết
-        </Button>
+        <GoogleLogin
+          onSuccess={(credentialResponse) => {
+            if (credentialResponse.credential) {
+              linkGoogle(
+                { idToken: credentialResponse.credential },
+                {
+                  onSuccess: () => toast.success(AUTH_MESSAGES.google.linked),
+                  onError: (error) => handleErrorApi({ error }),
+                },
+              );
+            }
+          }}
+          onError={() => {
+            toast.error(AUTH_MESSAGES.google.loginFailed);
+          }}
+          text="signin"
+          shape="rectangular"
+          theme="outline"
+          size="medium"
+        />
       ) : (
         <Button
           variant="destructive"

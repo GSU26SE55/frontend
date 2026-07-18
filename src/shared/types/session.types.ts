@@ -39,6 +39,6 @@ export const redirectByRole = (role: UserRole): string =>
       ADMIN: "/admin",
       MANAGER: "/manager",
       STAFF: "/staff",
-      CUSTOMER: "/unauthorized",
+      CUSTOMER: "/use-mobile-app",
     }) as Record<UserRole, string>
   )[role] ?? "/unauthorized";

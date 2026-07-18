@@ -11,6 +11,7 @@ import type {
   AddMaintenanceLogRequest,
   UpdateMaintenanceLogRequest,
 } from "../types/staff-ticket.types";
+import { STAFF_MESSAGES } from "@/features/staff/constants/messages";
 
 function useTicketMutation<TData>(
   mutationFn: (data: TData) => Promise<unknown>,
@@ -78,7 +79,7 @@ export function useAddComment(ticketId: string) {
     mutationFn: (data: AddCommentRequest) =>
       staffTicketService.addComment(ticketId, data),
     onSuccess: () => {
-      toast.success("Đã thêm bình luận");
+      toast.success(STAFF_MESSAGES.ticket.commentAdded);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chats(ticketId),
       });
@@ -93,7 +94,7 @@ export function useAddMaintenanceLog(ticketId: string) {
     mutationFn: (data: AddMaintenanceLogRequest) =>
       staffTicketService.addMaintenanceLog(ticketId, data),
     onSuccess: () => {
-      toast.success("Đã thêm nhật ký bảo trì");
+      toast.success(STAFF_MESSAGES.ticket.maintenanceLogAdded);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.staffTickets.detail(ticketId),
       });
@@ -113,7 +114,7 @@ export function useUpdateMaintenanceLog(ticketId: string) {
       data: UpdateMaintenanceLogRequest;
     }) => staffTicketService.updateMaintenanceLog(ticketId, logId, data),
     onSuccess: () => {
-      toast.success("Đã cập nhật nhật ký bảo trì");
+      toast.success(STAFF_MESSAGES.ticket.maintenanceLogUpdated);
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.staffTickets.detail(ticketId),
       });

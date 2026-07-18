@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,9 +25,9 @@ import {
   useAddComment,
   useAddMaintenanceLog,
 } from "../hooks/useStaffTicketMutations";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TypingIndicator from "@/shared/components/common/TypingIndicator";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TypingIndicator from "@/shared/components/chat/TypingIndicator";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "../components/SlaCountdown";
 import { HoldDialog } from "../components/HoldDialog";
 import { ResolveDialog } from "../components/ResolveDialog";
@@ -35,16 +36,16 @@ import { TicketTimeline } from "../components/TicketTimeline";
 import { AddCommentForm } from "../components/AddCommentForm";
 import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
-import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import {
   TicketCommentThread,
   type ChatTab,
-} from "@/shared/components/common/TicketCommentThread";
-import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
+} from "@/shared/components/ticket/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
 import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
 import SubIssuePanel from "../components/SubIssuePanel";
 import BatteryAssetInfoPanel from "../components/BatteryAssetInfoPanel";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
@@ -96,6 +97,10 @@ export default function TicketDetailPage() {
   // Tab chat: bình luận mới gửi theo tab đang mở (public/internal).
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [composerPrefill, setComposerPrefill] = useState({
+    text: "",
+    version: 0,
+  });
 
   const ticketId = id ?? "";
   const user = useSessionStore((s) => s.user);
@@ -109,6 +114,24 @@ export default function TicketDetailPage() {
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
   const { data: comments = [] } = useStaffTicketComments(ticketId);
+
+  const existingFileIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (ticket?.attachmentFileIds) {
+      ticket.attachmentFileIds.forEach((id) => ids.add(id));
+    }
+    if (ticket?.maintenanceLogs) {
+      ticket.maintenanceLogs.forEach((log) => {
+        log.attachmentFileIds?.forEach((id) => ids.add(id));
+        log.beforePhotosFileIds?.forEach((id) => ids.add(id));
+        log.afterPhotosFileIds?.forEach((id) => ids.add(id));
+      });
+    }
+    comments.forEach((c) => {
+      c.attachmentFileIds?.forEach((id) => ids.add(id));
+    });
+    return Array.from(ids);
+  }, [ticket, comments]);
 
   const startMutation = useStartTicket(ticketId);
   const holdMutation = useHoldTicket(ticketId);
@@ -334,6 +357,13 @@ export default function TicketDetailPage() {
                   ticketClosed={status === TicketStatusEnum.Closed}
                   ticketId={ticketId}
                   aiEnabled
+                  onSelectSuggestion={(text) => {
+                    if (!canComment) return;
+                    setComposerPrefill((prev) => ({
+                      text,
+                      version: prev.version + 1,
+                    }));
+                  }}
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId,
@@ -357,6 +387,9 @@ export default function TicketDetailPage() {
                     isPending={commentMutation.isPending}
                     onTyping={sendTyping}
                     isInternal={chatTab === "internal"}
+                    existingFileIds={existingFileIds}
+                    prefillText={composerPrefill.text}
+                    prefillVersion={composerPrefill.version}
                   />
                 </div>
               )}
@@ -368,13 +401,15 @@ export default function TicketDetailPage() {
               className="min-h-0 overflow-y-auto m-0 p-6 space-y-4"
             >
               {canAddLog && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setLogOpen(true)}
-                >
-                  + Thêm nhật ký
-                </Button>
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLogOpen(true)}
+                  >
+                    + Thêm nhật ký
+                  </Button>
+                </div>
               )}
               {logs.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
@@ -477,172 +512,187 @@ export default function TicketDetailPage() {
           </Tabs>
         </div>
 
-        {/* Collapsed rail — nút mở lại sidebar */}
-        {!sidebarOpen && (
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            title="Mở bảng thông tin"
-            className="w-8 shrink-0 border-l border-border flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
-          >
-            <PanelRightOpen className="size-4" />
-          </button>
-        )}
+        {/* Right: Sidebar — luôn mount, animate width (đồng bộ sidebar trái) */}
+        <aside
+          className={cn(
+            "shrink-0 border-l border-border overflow-hidden transition-all duration-200",
+            sidebarOpen ? "w-75" : "w-8",
+          )}
+        >
+          {/* Collapsed rail — nút mở lại bảng thông tin */}
+          {!sidebarOpen && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              title="Mở bảng thông tin"
+              className="w-8 h-full flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              <PanelRightOpen className="size-4" />
+            </button>
+          )}
 
-        {/* Right: Sidebar */}
-        {sidebarOpen && (
-          <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
-            {/* Header — nút thu gọn */}
-            <div className="flex items-center justify-between px-4 py-2 shrink-0">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Thông tin
-              </p>
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(false)}
-                title="Thu gọn bảng thông tin"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <PanelRightClose className="size-4" />
-              </button>
-            </div>
-            {/* SLA */}
-            <div className="p-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                SLA
-              </p>
-              {ticket.slaTimer ? (
+          {/* Nội dung bảng — chỉ hiện khi mở, width cố định w-75 để không reflow lúc trượt */}
+          {sidebarOpen && (
+            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
+              {/* Header — nút thu gọn */}
+              <div className="flex items-center justify-between px-4 py-2 shrink-0">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Thông tin
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  title="Thu gọn bảng thông tin"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <PanelRightClose className="size-4" />
+                </button>
+              </div>
+              {/* SLA */}
+              <div className="p-4">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  SLA
+                </p>
+                {ticket.slaTimer ? (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Trạng thái
+                      </span>
+                      <SlaCountdown slaTimer={ticket.slaTimer} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Deadline
+                      </span>
+                      <span className="text-xs font-medium tabular-nums">
+                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Còn lại
+                      </span>
+                      <span className="text-xs font-medium">
+                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${slaBarCls}`}
+                        style={{
+                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Chưa được triage.
+                  </p>
+                )}
+              </div>
+
+              {/* Trạng thái + thời gian xử lý */}
+              <div className="p-4">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Trạng thái
+                </p>
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      Trạng thái
+                      Hiện tại
                     </span>
-                    <SlaCountdown slaTimer={ticket.slaTimer} />
+                    <TicketStatusBadge status={ticket.status} />
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      Deadline
+                      Thời gian xử lý
                     </span>
-                    <span className="text-xs font-medium tabular-nums">
-                      {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      Còn lại
-                    </span>
-                    <span className="text-xs font-medium">
-                      {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${slaBarCls}`}
-                      style={{
-                        width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                      }}
+                    <ProcessingDurationTimer
+                      activities={activities}
+                      status={ticket.status}
                     />
                   </div>
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Chưa được triage.
-                </p>
-              )}
-            </div>
-
-            {/* Trạng thái + thời gian xử lý */}
-            <div className="p-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Trạng thái
-              </p>
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Hiện tại
-                  </span>
-                  <TicketStatusBadge status={ticket.status} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Thời gian xử lý
-                  </span>
-                  <ProcessingDurationTimer
-                    activities={activities}
-                    status={ticket.status}
-                  />
-                </div>
               </div>
-            </div>
 
-            {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
-            <div className="p-4">
-              <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
-            </div>
-
-            {/* Description */}
-            {ticket.description && (
+              {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
               <div className="p-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Mô tả
-                </p>
-                <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                  {ticket.description}
-                </p>
+                <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
               </div>
-            )}
 
-            {/* Attachments (ảnh khách đính kèm khi tạo ticket) */}
-            {ticket.attachmentFileIds &&
-              ticket.attachmentFileIds.length > 0 && (
+              {/* Description */}
+              {ticket.description && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Ảnh đính kèm
+                    Mô tả
                   </p>
-                  <TicketAttachments
-                    fileIds={ticket.attachmentFileIds}
-                    label={null}
-                    compact
-                  />
+                  <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                    {ticket.description}
+                  </p>
                 </div>
               )}
 
-            {/* Resolution */}
-            {ticket.resolutionSummary && (
-              <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
-                <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                  Tóm tắt giải quyết
-                </p>
-                <p className="text-xs leading-relaxed whitespace-pre-wrap">
-                  {ticket.resolutionSummary}
-                </p>
-              </div>
-            )}
+              {/* Attachments (ảnh khách đính kèm khi tạo ticket) */}
+              {ticket.attachmentFileIds &&
+                ticket.attachmentFileIds.length > 0 && (
+                  <div className="p-4">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                      Ảnh đính kèm
+                    </p>
+                    <TicketAttachments
+                      fileIds={ticket.attachmentFileIds}
+                      label={null}
+                      compact
+                    />
+                  </div>
+                )}
 
-            {/* Meta */}
-            <div className="px-4 py-1 divide-y divide-border/50">
-              <SideInfoRow label="Danh mục" value={ticket.category} />
-              <SideInfoRow label="Nguồn" value={ticket.origin} />
-              <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
-              <SideInfoRow
-                label="Khẩn cấp"
-                value={ticket.urgencyLevel ?? null}
-              />
-              <SideInfoRow
-                label="Ngày tạo"
-                value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
-                  locale: vi,
-                })}
-              />
-              {ticket.reopenCount > 0 && (
-                <SideInfoRow
-                  label="Mở lại"
-                  value={`${ticket.reopenCount} lần`}
-                />
+              {/* Resolution */}
+              {ticket.resolutionSummary && (
+                <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
+                  <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                    Tóm tắt giải quyết
+                  </p>
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                    {ticket.resolutionSummary}
+                  </p>
+                </div>
               )}
+
+              {/* Meta */}
+              <div className="px-4 py-1 divide-y divide-border/50">
+                <SideInfoRow label="Danh mục" value={ticket.category} />
+                <SideInfoRow label="Nguồn" value={ticket.origin} />
+                <SideInfoRow
+                  label="Phạm vi"
+                  value={ticket.impactScope ?? null}
+                />
+                <SideInfoRow
+                  label="Khẩn cấp"
+                  value={ticket.urgencyLevel ?? null}
+                />
+                <SideInfoRow
+                  label="Ngày tạo"
+                  value={format(
+                    new Date(ticket.createdAt),
+                    "dd/MM/yyyy HH:mm",
+                    {
+                      locale: vi,
+                    },
+                  )}
+                />
+                {ticket.reopenCount > 0 && (
+                  <SideInfoRow
+                    label="Mở lại"
+                    value={`${ticket.reopenCount} lần`}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </aside>
       </div>
 
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}

@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import AlertSeverityBadge from "@/shared/components/alerts/AlertSeverityBadge";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -61,6 +61,7 @@ import type { SiteOption } from "@/shared/types/site.types";
 import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
 import { incidentTypeLabel } from "./incidentLabels";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const DEFAULTS = {
   status: "",
@@ -249,12 +250,14 @@ export default function EnvironmentalIncidentsView({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Site</TableHead>
                 <TableHead>Loại sự cố</TableHead>
-                <TableHead>Mức độ</TableHead>
-                <TableHead>Phát hiện lúc</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>{TABLE_COLUMNS.severity}</TableHead>
+                <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -482,7 +485,7 @@ function ResolveForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
-          Huỷ
+          Hủy
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           Đánh dấu đã xử lý
@@ -537,7 +540,7 @@ function FalseAlarmForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
-          Huỷ
+          Hủy
         </Button>
         <Button type="submit" variant="destructive" disabled={isSubmitting}>
           Xác nhận báo động giả

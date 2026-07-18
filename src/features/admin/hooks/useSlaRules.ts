@@ -4,6 +4,7 @@ import { slaService } from "@/features/admin/services/sla.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { UpdateSlaRulePayload } from "@/shared/types/sla.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useSlaRules = () =>
   useQuery({
@@ -15,10 +16,15 @@ export const useSlaRules = () =>
 export const useUpdateSlaRule = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateSlaRulePayload }) =>
-      slaService.update(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateSlaRulePayload;
+    }) => slaService.update(id, payload),
     onSuccess: () => {
-      toast.success("Đã cập nhật SLA rule");
+      toast.success(ADMIN_MESSAGES.sla.ruleUpdated);
       qc.invalidateQueries({ queryKey: [KEY.slaRules] });
     },
     onError: (error) => handleErrorApi({ error }),

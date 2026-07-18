@@ -11,7 +11,7 @@ import {
 import CalibrationsExpiringTable from "@/shared/components/iot/CalibrationsExpiringTable";
 import { useExpiringCalibrations } from "@/shared/hooks/useIotCalibrations";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const WITHIN_OPTIONS = [7, 30, 60, 90, 180];
@@ -33,7 +33,7 @@ export default function CalibrationsExpiringPage() {
             Calibration sắp hết hạn
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : items.length} calibration cần recalibrate
+            {isLoading ? "..." : items.length} calibration cần recalibrate.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.iotCalibrations]} />

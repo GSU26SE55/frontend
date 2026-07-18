@@ -8,6 +8,7 @@ import type {
   ResolveIncidentPayload,
   FalseAlarmIncidentPayload,
 } from "@/shared/types/environmental.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Incident list — an toàn site, gần realtime: staleTime 30s + poll 30s.
 export const useIncidentList = (params?: IncidentListParams) =>
@@ -44,7 +45,7 @@ export const useAcknowledgeIncident = () => {
     mutationFn: (id: string) => environmentalService.acknowledge(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
-      toast.success("Đã xác nhận sự cố");
+      toast.success(MESSAGES.incident.acknowledged);
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -63,7 +64,7 @@ export const useResolveIncident = () => {
     }) => environmentalService.resolve(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
-      toast.success("Đã xử lý sự cố");
+      toast.success(MESSAGES.incident.resolved);
     },
   });
 };
@@ -81,7 +82,7 @@ export const useFalseAlarmIncident = () => {
     }) => environmentalService.falseAlarm(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
-      toast.success("Đã đánh dấu báo động giả");
+      toast.success(MESSAGES.incident.falseAlarm);
     },
   });
 };

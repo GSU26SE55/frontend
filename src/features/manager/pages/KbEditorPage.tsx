@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save } from "lucide-react";
-import { TagInput } from "@/shared/components/common/TagInput";
+import { TagInput } from "@/shared/components/ui/TagInput";
 import {
   kbArticleSchema,
   type KbArticleFormInput,

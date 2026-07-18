@@ -9,6 +9,7 @@ import type {
   ChatMarkReadPayload,
   ChatSuggestPayload,
 } from "@/shared/types/chat.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Edit/Delete/Mark-read cho ticket chat — dùng chung staff & manager.
 // Invalidate tickets.chats song song với realtime (useTicketCommentsRealtime đã
@@ -46,7 +47,7 @@ export function useDeleteTicketChat() {
       reason?: string;
     }) => ticketChatActionsService.remove(ticketId, chatId, reason),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã xóa bình luận");
+      toast.success(MESSAGES.chat.commentDeleted);
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -177,7 +178,7 @@ export function useDownloadChatAttachment() {
       ),
     onSuccess: (res) => {
       if (res.status === 202) {
-        toast.info("File đang được quét virus, vui lòng thử lại sau ít giây.");
+        toast.info(MESSAGES.chat.fileScanning);
         return;
       }
       const url = res.data?.data;
@@ -185,7 +186,7 @@ export function useDownloadChatAttachment() {
     },
     onError: (error) => {
       if (error instanceof AxiosError && error.response?.status === 451) {
-        toast.error("File bị nhiễm virus — không thể tải xuống.");
+        toast.error(MESSAGES.chat.fileInfected);
         return;
       }
       handleErrorApi({ error });

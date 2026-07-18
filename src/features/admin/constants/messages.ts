@@ -1,0 +1,87 @@
+// Toast message riêng của feature admin. Toast dùng chung → shared/constants/messages.
+
+export const ADMIN_MESSAGES = {
+  account: {
+    created: "Tạo tài khoản thành công",
+    updated: "Cập nhật tài khoản thành công",
+    invited: "Đã gửi lời mời",
+    merged: "Đã gộp tài khoản",
+    roleChanged: "Đã thay đổi role",
+    allSessionsRevoked: "Đã thu hồi tất cả session",
+    chatDataDeleted: "Đã xóa dữ liệu chat cá nhân",
+    personalDataDeleted: "Đã xóa dữ liệu cá nhân",
+  },
+  role: {
+    created: "Đã tạo role",
+    updated: "Đã cập nhật role",
+    statusUpdated: "Đã cập nhật trạng thái role",
+    permissionsUpdated: "Đã cập nhật quyền",
+  },
+  site: {
+    created: "Tạo site thành công",
+    updated: "Cập nhật site thành công",
+    deleted: "Đã xóa site",
+    restored: "Đã khôi phục site",
+    topologyUpdated: "Đã cập nhật topology — cascade risk được tính lại",
+  },
+  battery: {
+    created: "Tạo battery asset thành công",
+    updated: "Cập nhật battery asset thành công",
+    deleted: "Đã xóa battery asset",
+    typeCreated: "Tạo loại pin thành công",
+    typeUpdated: "Cập nhật loại pin thành công",
+    thresholdSaved: "Lưu ngưỡng cảnh báo thành công",
+  },
+  iot: {
+    deviceCreated: "Tạo thiết bị thành công",
+    deviceUpdated: "Cập nhật thiết bị thành công",
+    deviceDecommissioned: "Đã decommission thiết bị",
+    firmwareCreated: "Tạo firmware release thành công",
+    apiKeyCopied: "Đã copy API key",
+    keyRevoked: "Đã revoke key",
+    keyRotated: "Đã rotate key",
+    copyManual: "Không copy tự động được — hãy bôi đen và copy thủ công",
+  },
+  kb: {
+    created: "Đã tạo bài viết KB",
+    updated: "Đã cập nhật bài viết",
+    deleted: "Đã xóa bài viết",
+    markedHelpful: "Đã đánh dấu hữu ích",
+  },
+  ticket: {
+    commentAdded: "Đã thêm bình luận",
+    commentEdited: "Đã sửa bình luận (override)",
+    commentDeleted: "Đã xóa bình luận (override)",
+    messageDeleted: "Đã xóa tin nhắn",
+    left: "Đã rời ticket",
+    markedIncident: "Đã đánh dấu là Incident",
+    mentionRead: "Đã đánh dấu đã đọc mention",
+  },
+  staffProfile: {
+    updated: "Đã cập nhật hồ sơ Staff",
+    skillAdded: "Đã thêm kỹ năng",
+    skillDeleted: "Đã xóa kỹ năng",
+    memberAdded: "Đã thêm thành viên",
+    memberDeleted: "Đã xóa thành viên",
+    memberPermissionsUpdated: "Đã cập nhật quyền thành viên",
+  },
+  sla: {
+    ruleUpdated: "Đã cập nhật SLA rule",
+  },
+  notification: {
+    created: "Tạo notification thành công",
+    templateCreated: "Đã tạo template",
+    templateUpdated: "Đã cập nhật template",
+    templateDeleted: "Đã xóa template",
+  },
+  common: {
+    statusUpdated: "Đã cập nhật trạng thái",
+    restored: "Đã khôi phục",
+    deleted: "Đã xóa",
+    ownerTransferred: "Chuyển chủ sở hữu thành công",
+  },
+  saga: {
+    replayRequested: "Đã gửi yêu cầu replay event",
+    reprocessRequested: "Đã gửi yêu cầu xử lý lại saga",
+  },
+} as const;

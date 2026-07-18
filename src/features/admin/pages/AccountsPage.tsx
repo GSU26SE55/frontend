@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,7 @@ import {
   useAdminReset2fa,
 } from "@/features/admin/hooks/useAdminAccounts";
 import { AccountStatusEnum } from "@/shared/types/account.types";
+import { toneClass, ACCOUNT_STATUS_TONE } from "@/shared/theme/statusColors";
 import { UserRole } from "@/shared/types/session.types";
 import InviteAccountDialog from "@/features/admin/components/InviteAccountDialog";
 import CreateAccountDialog from "@/features/admin/components/CreateAccountDialog";
@@ -60,35 +61,37 @@ import EditStaffProfileDialog from "@/features/admin/components/EditStaffProfile
 import MergeAccountDialog from "@/features/admin/components/MergeAccountDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
     label: "Chờ xác thực",
-    cls: "bg-amber-100 text-amber-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.PendingVerification]),
   },
   [AccountStatusEnum.Active]: {
     label: "Hoạt động",
-    cls: "bg-emerald-100 text-emerald-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Active]),
   },
   [AccountStatusEnum.Locked]: {
     label: "Đã khóa",
-    cls: "bg-red-100 text-red-600",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Locked]),
   },
   [AccountStatusEnum.Inactive]: {
     label: "Không hoạt động",
-    cls: "bg-gray-100 text-gray-500",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Inactive]),
   },
   [AccountStatusEnum.Suspended]: {
     label: "Tạm khóa",
-    cls: "bg-orange-100 text-orange-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Suspended]),
   },
   [AccountStatusEnum.Banned]: {
     label: "Bị cấm",
-    cls: "bg-red-200 text-red-700",
+    cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Banned]),
   },
 };
 
@@ -236,16 +239,18 @@ export default function AccountsPage() {
           </div>
         ) : isError ? (
           <ErrorState
-            message="Không thể tải danh sách tài khoản."
+            message={loadFailed("tài khoản")}
             onRetry={() => refetch()}
           />
         ) : accounts.length === 0 ? (
-          <EmptyState icon={Users} title="Chưa có tài khoản nào" />
+          <EmptyState icon={Users} title={noData("tài khoản")} />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-center">STT</TableHead>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <SortableTableHead
                   sortKey="fullName"
                   activeSortKey={sortKey}
@@ -278,7 +283,9 @@ export default function AccountsPage() {
                 >
                   Ngày tạo
                 </SortableTableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead className="text-right">
+                  {TABLE_COLUMNS.actions}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -350,7 +357,7 @@ export default function AccountsPage() {
                         >
                           <EllipsisVertical className="size-4" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuContent align="end" className="w-36">
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "edit", account: acc })

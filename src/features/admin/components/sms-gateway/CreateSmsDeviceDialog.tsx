@@ -129,7 +129,7 @@ export default function CreateSmsDeviceDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Tạo thiết bị

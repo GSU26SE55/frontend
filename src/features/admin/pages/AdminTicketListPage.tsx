@@ -22,10 +22,11 @@ import { useAdminTickets } from "../hooks/useAdminTickets";
 import AdminTicketTable from "../components/AdminTicketTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
+import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
 
@@ -105,7 +106,7 @@ export default function AdminTicketListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
-            dõi toàn bộ ticket hệ thống
+            dõi toàn bộ ticket hệ thống.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.tickets]} />
@@ -201,7 +202,7 @@ export default function AdminTicketListPage() {
       {isError ? (
         <Card className="gap-0 py-0 overflow-hidden">
           <ErrorState
-            message="Không thể tải danh sách ticket."
+            message={loadFailed("ticket")}
             onRetry={() => refetch()}
           />
         </Card>

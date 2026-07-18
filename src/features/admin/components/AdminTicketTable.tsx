@@ -1,22 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket.types";
 import type { PaginationResponse } from "@/shared/types/api.types";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
-import DataPagination from "@/shared/components/common/DataPagination";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
-import { useSortableData } from "@/shared/hooks/useSortableData";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
+import DataPagination from "@/shared/components/ui/DataPagination";
+import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Bảo trì",
@@ -51,25 +42,67 @@ export default function AdminTicketTable({
 }: Props) {
   const navigate = useNavigate();
   const tickets = data?.items ?? [];
-  const { sorted, sortKey, sortDirection, toggleSort } =
-    useSortableData<TicketDTO>(tickets, (t, key) => {
-      switch (key) {
-        case "code":
-          return t.code;
-        case "title":
-          return t.title;
-        case "category":
-          return CATEGORY_LABELS[t.category] ?? t.category;
-        case "status":
-          return t.status;
-        case "priority":
-          return t.priority ?? "";
-        case "createdAt":
-          return new Date(t.createdAt);
-        default:
-          return null;
-      }
-    });
+
+  const columns: ColumnDef<TicketDTO>[] = [
+    {
+      id: "code",
+      header: "Mã",
+      sortKey: "code",
+      sortValue: (t) => t.code,
+      headClassName: "w-32",
+      cellClassName: "font-mono text-sm",
+      cell: (t) => (
+        <div className="flex items-center gap-1">
+          {t.isIncident && (
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+          )}
+          {t.code}
+        </div>
+      ),
+    },
+    {
+      id: "title",
+      header: "Tiêu đề",
+      sortKey: "title",
+      sortValue: (t) => t.title,
+      cellClassName: "max-w-xs truncate",
+      cell: (t) => <span title={t.title}>{t.title}</span>,
+    },
+    {
+      id: "category",
+      header: "Loại",
+      sortKey: "category",
+      sortValue: (t) => CATEGORY_LABELS[t.category] ?? t.category,
+      headClassName: "w-32",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (t) => CATEGORY_LABELS[t.category] ?? t.category,
+    },
+    {
+      id: "status",
+      header: "Trạng thái",
+      sortKey: "status",
+      sortValue: (t) => t.status,
+      headClassName: "w-36",
+      cell: (t) => <TicketStatusBadge status={t.status} />,
+    },
+    {
+      id: "priority",
+      header: "Priority",
+      sortKey: "priority",
+      sortValue: (t) => t.priority ?? "",
+      headClassName: "w-32",
+      cell: (t) => <TicketPriorityBadge priority={t.priority} />,
+    },
+    {
+      id: "createdAt",
+      header: "Ngày tạo",
+      sortKey: "createdAt",
+      sortValue: (t) => new Date(t.createdAt).getTime(),
+      headClassName: "w-36",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (t) => format(new Date(t.createdAt), "dd/MM/yyyy HH:mm"),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -92,102 +125,15 @@ export default function AdminTicketTable({
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12 text-center">STT</TableHead>
-              <SortableTableHead
-                sortKey="code"
-                activeSortKey={sortKey}
-                direction={sortDirection}
-                onSort={toggleSort}
-                className="w-32"
-              >
-                Mã
-              </SortableTableHead>
-              <SortableTableHead
-                sortKey="title"
-                activeSortKey={sortKey}
-                direction={sortDirection}
-                onSort={toggleSort}
-              >
-                Tiêu đề
-              </SortableTableHead>
-              <SortableTableHead
-                sortKey="category"
-                activeSortKey={sortKey}
-                direction={sortDirection}
-                onSort={toggleSort}
-                className="w-32"
-              >
-                Loại
-              </SortableTableHead>
-              <SortableTableHead
-                sortKey="status"
-                activeSortKey={sortKey}
-                direction={sortDirection}
-                onSort={toggleSort}
-                className="w-36"
-              >
-                Trạng thái
-              </SortableTableHead>
-              <SortableTableHead
-                sortKey="priority"
-                activeSortKey={sortKey}
-                direction={sortDirection}
-                onSort={toggleSort}
-                className="w-32"
-              >
-                Priority
-              </SortableTableHead>
-              <SortableTableHead
-                sortKey="createdAt"
-                activeSortKey={sortKey}
-                direction={sortDirection}
-                onSort={toggleSort}
-                className="w-36"
-              >
-                Ngày tạo
-              </SortableTableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sorted.map((ticket, index) => (
-              <TableRow
-                key={ticket.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => navigate(`/admin/tickets/${ticket.id}`)}
-              >
-                <TableCell className="text-center text-muted-foreground tabular-nums">
-                  {(pageNumber - 1) * pageSize + index + 1}
-                </TableCell>
-                <TableCell className="font-mono text-sm">
-                  <div className="flex items-center gap-1">
-                    {ticket.isIncident && (
-                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-                    )}
-                    {ticket.code}
-                  </div>
-                </TableCell>
-                <TableCell className="max-w-xs truncate" title={ticket.title}>
-                  {ticket.title}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {CATEGORY_LABELS[ticket.category] ?? ticket.category}
-                </TableCell>
-                <TableCell>
-                  <TicketStatusBadge status={ticket.status} />
-                </TableCell>
-                <TableCell>
-                  <TicketPriorityBadge priority={ticket.priority} />
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm")}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          data={tickets}
+          columns={columns}
+          rowKey={(t) => t.id}
+          showIndex
+          pageNumber={pageNumber}
+          pageSize={pageSize}
+          onRowClick={(t) => navigate(`/admin/tickets/${t.id}`)}
+        />
       </div>
 
       <DataPagination

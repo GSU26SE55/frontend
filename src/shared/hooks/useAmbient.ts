@@ -7,6 +7,7 @@ import type {
   AmbientThresholdListParams,
   AmbientThresholdUpsertPayload,
 } from "@/shared/types/ambient.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 // Ambient history — chart/timeline, tần suất theo giờ: staleTime 5 phút.
 export const useAmbientHistory = (params: AmbientHistoryParams) =>
@@ -59,7 +60,7 @@ export const useUpsertAmbientThreshold = () => {
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ambient.thresholdBySite(variables.siteId),
       });
-      toast.success("Đã lưu cấu hình ngưỡng môi trường");
+      toast.success(MESSAGES.ambient.thresholdSaved);
     },
   });
 };

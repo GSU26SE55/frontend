@@ -9,6 +9,7 @@ import type {
   CreateKbArticlePayload,
   UpdateKbArticlePayload,
 } from "@/shared/types/kb.types";
+import { STAFF_MESSAGES } from "@/features/staff/constants/messages";
 
 export function useStaffKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -70,7 +71,7 @@ export function useStaffKbCreate() {
     mutationFn: (payload: CreateKbArticlePayload) =>
       staffKbService.create(payload).then((r) => r.data.data),
     onSuccess: () => {
-      toast.success("Đã tạo bài viết KB (chờ duyệt)");
+      toast.success(STAFF_MESSAGES.kb.created);
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
   });
@@ -87,7 +88,7 @@ export function useStaffKbUpdate() {
       payload: UpdateKbArticlePayload;
     }) => staffKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (_, { id }) => {
-      toast.success("Đã cập nhật bài viết (chờ duyệt)");
+      toast.success(STAFF_MESSAGES.kb.updated);
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
@@ -124,7 +125,7 @@ export function useMarkStaffKbHelpful() {
       );
     },
     onSuccess: (_, id) => {
-      toast.success("Đã đánh dấu hữu ích");
+      toast.success(STAFF_MESSAGES.kb.markedHelpful);
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },

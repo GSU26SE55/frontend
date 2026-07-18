@@ -16,12 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { KbStatusBadge } from "@/shared/components/common/kb/KbStatusBadge";
+import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
 import { Eye, ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb.types";
 import { KbArticleStatusEnum, KbCategoryLabel } from "@/shared/enums/kb.enum";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { noData } from "@/shared/constants/emptyStates";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
@@ -88,9 +90,7 @@ export default function KbArticleTable({
       <div className="py-16 text-center flex flex-col items-center gap-3">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">
-          {hasFilter
-            ? "Không khớp với bộ lọc hiện tại"
-            : "Chưa có bài viết nào"}
+          {hasFilter ? "Không khớp với bộ lọc hiện tại" : noData("bài viết")}
         </p>
         {hasFilter && onResetFilter && (
           <Button size="sm" variant="outline" onClick={onResetFilter}>
@@ -106,7 +106,7 @@ export default function KbArticleTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-12 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            STT
+            {TABLE_COLUMNS.index}
           </TableHead>
           <SortableTableHead
             sortKey="code"
@@ -163,7 +163,7 @@ export default function KbArticleTable({
             Hữu ích
           </SortableTableHead>
           <TableHead className="w-20 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Thao tác
+            {TABLE_COLUMNS.actions}
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -228,7 +228,7 @@ export default function KbArticleTable({
                 >
                   <EllipsisVertical className="size-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-36">
                   <DropdownMenuItem
                     onClick={() =>
                       onEdit

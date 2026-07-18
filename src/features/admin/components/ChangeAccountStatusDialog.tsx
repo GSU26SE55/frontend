@@ -27,6 +27,7 @@ import { useAdminChangeAccountStatus } from "@/features/admin/hooks/useAdminAcco
 import { AccountStatusEnum } from "@/shared/types/account.types";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_OPTIONS = [
   { value: AccountStatusEnum.Active, label: "Hoạt động" },
@@ -71,7 +72,7 @@ export default function ChangeAccountStatusDialog({
         id: account.id,
         payload: { status: data.status, reason: data.reason || undefined },
       });
-      toast.success("Đã cập nhật trạng thái");
+      toast.success(ADMIN_MESSAGES.common.statusUpdated);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

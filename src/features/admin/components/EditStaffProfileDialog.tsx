@@ -28,6 +28,7 @@ import {
 import { useAdminAccountDetail } from "@/features/admin/hooks/useAdminAccounts";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto, StaffSkillDto } from "@/shared/types/account.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -83,7 +84,7 @@ export default function EditStaffProfileDialog({
           notes: data.notes || undefined,
         },
       });
-      toast.success("Đã cập nhật hồ sơ Staff");
+      toast.success(ADMIN_MESSAGES.staffProfile.updated);
     } catch (error) {
       handleErrorApi({ error, setError: profileForm.setError });
     }
@@ -99,7 +100,7 @@ export default function EditStaffProfileDialog({
           certifiedUntil: data.certifiedUntil || undefined,
         },
       });
-      toast.success("Đã thêm kỹ năng");
+      toast.success(ADMIN_MESSAGES.staffProfile.skillAdded);
       skillForm.reset();
     } catch (error) {
       handleErrorApi({ error, setError: skillForm.setError });
@@ -111,7 +112,7 @@ export default function EditStaffProfileDialog({
       { id: account.id, skillCode: code },
       {
         onSuccess: () => {
-          toast.success("Đã xóa kỹ năng");
+          toast.success(ADMIN_MESSAGES.staffProfile.skillDeleted);
           setSkillToDelete(null);
         },
         onError: (err) => {

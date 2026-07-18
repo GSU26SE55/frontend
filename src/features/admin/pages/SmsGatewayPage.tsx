@@ -14,7 +14,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import {
   useAdminSmsDevices,
@@ -27,6 +27,7 @@ import type {
   GatewayDeviceDto,
   CreateGatewayDeviceResponseDto,
 } from "@/features/admin/types/sms-gateway.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 export default function SmsGatewayPage() {
   const [includeRevoked, setIncludeRevoked] = useState(false);
@@ -56,7 +57,8 @@ export default function SmsGatewayPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">SMS Gateway</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : devices.length} thiết bị gửi SMS.
+            {isLoading ? "..." : devices.length} thiết bị &mdash; quản lý
+            gateway gửi SMS.
           </p>
         </div>
         <div className="flex gap-2">
@@ -124,7 +126,7 @@ export default function SmsGatewayPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmRevoke}
               disabled={revoking}

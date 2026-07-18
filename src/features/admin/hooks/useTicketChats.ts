@@ -10,6 +10,7 @@ import type {
   ChatMarkReadPayload,
 } from "@/shared/types/chat.types";
 import type { ReactionTypeEnum } from "@/shared/enums/reaction.enum";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export const useTicketChats = (ticketId: string, params?: ChatListParams) =>
   useQuery({
@@ -113,7 +114,7 @@ export const useDeleteChat = () => {
       reason?: string;
     }) => ticketChatService.remove(ticketId, chatId, reason),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã xóa tin nhắn");
+      toast.success(ADMIN_MESSAGES.ticket.messageDeleted);
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),

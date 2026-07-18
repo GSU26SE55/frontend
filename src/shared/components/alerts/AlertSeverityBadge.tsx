@@ -1,12 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { AlertSeverityEnum } from "@/shared/enums/alert.enum";
+import { toneClass, ALERT_SEVERITY_TONE } from "@/shared/theme/statusColors";
 
-type Variant = "default" | "secondary" | "destructive" | "outline";
-
-const CONFIG: Record<AlertSeverityEnum, { label: string; variant: Variant }> = {
-  [AlertSeverityEnum.Info]: { label: "Thông tin", variant: "secondary" },
-  [AlertSeverityEnum.Warning]: { label: "Cảnh báo", variant: "default" },
-  [AlertSeverityEnum.Critical]: { label: "Nguy hiểm", variant: "destructive" },
+const LABEL: Record<AlertSeverityEnum, string> = {
+  [AlertSeverityEnum.Info]: "Thông tin",
+  [AlertSeverityEnum.Warning]: "Cảnh báo",
+  [AlertSeverityEnum.Critical]: "Nguy hiểm",
 };
 
 export default function AlertSeverityBadge({
@@ -14,7 +13,14 @@ export default function AlertSeverityBadge({
 }: {
   severity: AlertSeverityEnum;
 }) {
-  const cfg = CONFIG[severity];
-  if (!cfg) return <Badge variant="outline">—</Badge>;
-  return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+  const label = LABEL[severity];
+  if (!label) return <Badge variant="outline">—</Badge>;
+  return (
+    <Badge
+      variant="outline"
+      className={toneClass(ALERT_SEVERITY_TONE[severity])}
+    >
+      {label}
+    </Badge>
+  );
 }

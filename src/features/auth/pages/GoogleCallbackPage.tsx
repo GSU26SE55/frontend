@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,14 +11,22 @@ import {
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { authService } from "@/features/auth/services/auth.service";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 const GoogleCallbackPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
   const queryClient = useQueryClient();
+  // Authorization code của Google chỉ dùng được 1 lần. StrictMode (dev) chạy effect 2 lần
+  // → lần 2 gọi lại code đã tiêu thụ → BE trả lỗi → rơi vào catch → điều hướng nhầm /login,
+  // ghi đè kết quả đúng của lần 1. Ref guard đảm bảo run() chỉ chạy đúng 1 lần.
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     // GH-295: Google redirect về đây với ?code&state. FE gọi GET /api/auth/google/callback
     // qua axios → BE trả JSON LoginResultDto (data.tokens.*). Google login bypass 2FA.
     const run = async () => {
@@ -37,9 +45,9 @@ const GoogleCallbackPage = () => {
         const user = decodeToken(tokens.accessToken);
 
         if (user.role === UserRole.CUSTOMER) {
+          // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
           clearTokens();
-          toast.error("Vui lòng sử dụng Mobile App để đăng nhập.");
-          navigate("/login", { replace: true });
+          navigate("/use-mobile-app", { replace: true });
           return;
         }
 
@@ -48,7 +56,7 @@ const GoogleCallbackPage = () => {
         navigate(redirectByRole(user.role), { replace: true });
       } catch (err) {
         console.error("[GoogleCallback]", err);
-        toast.error("Đăng nhập Google thất bại");
+        toast.error(AUTH_MESSAGES.google.loginFailed);
         navigate("/login", { replace: true });
       }
     };

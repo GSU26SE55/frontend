@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -26,19 +26,19 @@ import {
   useDeclareIncident,
 } from "../hooks/useAdminTickets";
 import AddCommentForm from "../components/AddCommentForm";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TypingIndicator from "@/shared/components/common/TypingIndicator";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TypingIndicator from "@/shared/components/chat/TypingIndicator";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import TicketActivityTimeline from "../components/TicketActivityTimeline";
 import AdminClosedOverrideDialog from "../components/AdminClosedOverrideDialog";
-import TicketAttachments from "@/shared/components/common/TicketAttachments";
+import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import type { TicketCommentDTO } from "@/shared/types/ticket.types";
 import {
   TicketCommentThread,
   type ChatTab,
-} from "@/shared/components/common/TicketCommentThread";
-import { ProcessingDurationTimer } from "@/shared/components/common/ProcessingDurationTimer";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+} from "@/shared/components/ticket/TicketCommentThread";
+import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
@@ -85,6 +85,10 @@ export default function AdminTicketDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  const [composerPrefill, setComposerPrefill] = useState({
+    text: "",
+    version: 0,
+  });
   // GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed.
   const [overrideTarget, setOverrideTarget] = useState<{
     chat: TicketCommentDTO;
@@ -95,6 +99,24 @@ export default function AdminTicketDetailPage() {
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
+
+  const existingFileIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (ticket?.attachmentFileIds) {
+      ticket.attachmentFileIds.forEach((fileId) => ids.add(fileId));
+    }
+    if (ticket?.maintenanceLogs) {
+      ticket.maintenanceLogs.forEach((log) => {
+        log.attachmentFileIds?.forEach((fileId) => ids.add(fileId));
+        log.beforePhotosFileIds?.forEach((fileId) => ids.add(fileId));
+        log.afterPhotosFileIds?.forEach((fileId) => ids.add(fileId));
+      });
+    }
+    comments.forEach((c) => {
+      c.attachmentFileIds?.forEach((fileId) => ids.add(fileId));
+    });
+    return Array.from(ids);
+  }, [ticket, comments]);
   const { mutate: declareIncident, isPending } = useDeclareIncident();
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
@@ -244,6 +266,12 @@ export default function AdminTicketDetailPage() {
                   ticketClosed={ticket.status === TicketStatusEnum.Closed}
                   ticketId={ticketId}
                   aiEnabled
+                  onSelectSuggestion={(text) =>
+                    setComposerPrefill((prev) => ({
+                      text,
+                      version: prev.version + 1,
+                    }))
+                  }
                   onEdit={(chat, body) =>
                     updateChat({
                       ticketId,
@@ -270,6 +298,9 @@ export default function AdminTicketDetailPage() {
                   ticketId={ticketId}
                   onTyping={sendTyping}
                   isInternal={chatTab === "internal"}
+                  existingFileIds={existingFileIds}
+                  prefillText={composerPrefill.text}
+                  prefillVersion={composerPrefill.version}
                 />
               </div>
             </TabsContent>

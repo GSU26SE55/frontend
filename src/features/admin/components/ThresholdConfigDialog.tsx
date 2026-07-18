@@ -23,6 +23,7 @@ import { useThresholdByType } from "@/features/admin/hooks/useThresholds";
 import { useUpsertThreshold } from "@/features/admin/hooks/useThresholdsMutation";
 import type { BatteryTypeDto } from "@/features/admin/types/battery-type.types";
 import type { UpsertThresholdPayload } from "@/features/admin/types/threshold.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface ThresholdConfigDialogProps {
   open: boolean;
@@ -95,7 +96,7 @@ export default function ThresholdConfigDialog({
 
     try {
       await upsert(payload);
-      toast.success("Lưu ngưỡng cảnh báo thành công");
+      toast.success(ADMIN_MESSAGES.battery.thresholdSaved);
       onOpenChange(false);
     } catch (error) {
       handleErrorApi({ error, setError });
@@ -158,7 +159,7 @@ export default function ThresholdConfigDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 Lưu ngưỡng

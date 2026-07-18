@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { TicketDTO } from "@/shared/types/ticket.types";
-import TicketStatusBadge from "@/shared/components/common/TicketStatusBadge";
-import TicketPriorityBadge from "@/shared/components/common/TicketPriorityBadge";
+import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "./SlaCountdown";
 
 interface Props {

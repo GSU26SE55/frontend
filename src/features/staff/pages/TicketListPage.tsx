@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketStatusEnum } from "@/shared/types/ticket.types";
 import { useStaffTickets } from "../hooks/useStaffTickets";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { TicketCard } from "../components/TicketCard";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
@@ -53,7 +53,7 @@ export default function TicketListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; ticket
-            được giao cho bạn
+            được giao cho bạn.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.staffTickets]} size="icon" />

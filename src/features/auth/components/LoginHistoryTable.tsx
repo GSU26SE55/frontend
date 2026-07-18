@@ -14,8 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
 import { useLoginHistory } from "@/features/auth/hooks/useLoginHistory";
 import { LoginAttemptResult } from "@/features/auth/types/account.types";
-import { SortableTableHead } from "@/shared/components/common/SortableTableHead";
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.Success]: "Thành công",
@@ -39,8 +40,9 @@ const LoginHistoryTable = () => {
 
   const items = data?.items ?? [];
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
-  const { sorted, sortKey, sortDirection, toggleSort } =
-    useSortableData(items, (item, key) => {
+  const { sorted, sortKey, sortDirection, toggleSort } = useSortableData(
+    items,
+    (item, key) => {
       switch (key) {
         case "createdAt":
           return new Date(item.createdAt);
@@ -53,7 +55,8 @@ const LoginHistoryTable = () => {
         default:
           return null;
       }
-    });
+    },
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -63,7 +66,7 @@ const LoginHistoryTable = () => {
           <TableHeader>
             <TableRow className="hover:bg-transparent bg-muted/60">
               <TableHead className="w-12 text-center text-xs font-semibold">
-                STT
+                {TABLE_COLUMNS.index}
               </TableHead>
               <SortableTableHead
                 sortKey="createdAt"

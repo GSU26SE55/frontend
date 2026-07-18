@@ -14,6 +14,7 @@ import {
 } from "@/features/auth/schemas/cross-device-confirm.schema";
 import { useConfirmCrossDevice2fa } from "@/features/auth/hooks/useConfirmCrossDevice2fa";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 // #AUTH-51: Device B — confirm setup 2FA bằng token từ email + TOTP.
 const CrossDeviceConfirmPage = () => {
@@ -38,7 +39,7 @@ const CrossDeviceConfirmPage = () => {
     try {
       await mutateAsync(data);
       setDone(true);
-      toast.success("Đã bật 2FA thành công.");
+      toast.success(AUTH_MESSAGES.twoFactor.enabledSimple);
     } catch (error) {
       handleErrorApi({ error, setError });
     }

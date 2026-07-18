@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { ResendOtpPayload } from "@/features/auth/types/auth.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useResendOtp = () =>
   useMutation({
@@ -13,7 +14,7 @@ export const useResendOtp = () =>
         toast.error(res.message ?? "Gửi lại OTP thất bại");
         return;
       }
-      toast.success("OTP đã được gửi lại");
+      toast.success(AUTH_MESSAGES.otp.resent);
     },
     onError: (error) => handleErrorApi({ error }),
   });

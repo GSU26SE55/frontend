@@ -24,6 +24,7 @@ import type {
   Init2faResponseData,
   CrossDeviceRequestResponseData,
 } from "@/features/auth/types/account.types";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
@@ -95,7 +96,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
   const handleRefreshStatus = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
     queryClient.invalidateQueries({ queryKey: [KEY.currentUser] });
-    toast.info("Đang làm mới trạng thái 2FA...");
+    toast.info(AUTH_MESSAGES.twoFactor.refreshing);
   };
 
   const resetEnroll = () => {
@@ -123,7 +124,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           if (data?.enabled) {
             resetEnroll();
             setBackupCodes(data.backupCodes);
-            toast.success("Đã bật 2FA. Lưu lại backup codes ngay.");
+            toast.success(AUTH_MESSAGES.twoFactor.enabled);
             queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
           } else {
             toast.error(res.data.message ?? "Mã không đúng");
@@ -139,7 +140,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
       { password: disablePassword, totpCode: disableTotp },
       {
         onSuccess: () => {
-          toast.success("Đã tắt xác thực 2 lớp");
+          toast.success(AUTH_MESSAGES.twoFactor.disabled);
           setShowDisable(false);
           setDisablePassword("");
           setDisableTotp("");
@@ -160,7 +161,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
             setShowRegen(false);
             setRegenTotp("");
             setBackupCodes(data.backupCodes);
-            toast.success("Đã sinh backup codes mới. Codes cũ vô hiệu hóa.");
+            toast.success(AUTH_MESSAGES.twoFactor.backupRegenerated);
           } else {
             toast.error(res.data.message ?? "Mã không đúng");
           }

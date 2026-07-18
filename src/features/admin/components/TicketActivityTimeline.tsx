@@ -4,7 +4,7 @@ import type { TicketActivityDTO } from "@/shared/types/ticket.types";
 import {
   getActivityMeta,
   activityToneStyle,
-} from "@/shared/components/common/ticketActivityMeta";
+} from "@/shared/components/ticket/ticketActivityMeta";
 
 interface Props {
   activities?: TicketActivityDTO[];

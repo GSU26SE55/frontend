@@ -97,7 +97,7 @@ export const authService = {
   googleCallback: (code: string, state: string) =>
     axiosInstance.get<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.GOOGLE_CALLBACK,
-      { params: { code, state } },
+      { params: { code, state }, withCredentials: true },
     ),
 
   getMe: () => axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.AUTH.ME),

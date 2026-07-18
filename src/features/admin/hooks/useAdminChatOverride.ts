@@ -6,6 +6,7 @@ import type {
   ChatOverrideEditPayload,
   ChatOverrideDeletePayload,
 } from "@/features/admin/schemas/chat-override.schema";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // GH-133 C4 — Admin sửa/xóa chat trên ticket đã Closed. Dùng trong form dialog:
 // KHÔNG đặt onError ở đây — dialog tự try/catch + handleErrorApi({error, setError})
@@ -23,7 +24,7 @@ export function useOverrideEditChat() {
       payload: ChatOverrideEditPayload;
     }) => ticketChatService.overrideEdit(ticketId, chatId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã sửa bình luận (override)");
+      toast.success(ADMIN_MESSAGES.ticket.commentEdited);
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
   });
@@ -42,7 +43,7 @@ export function useOverrideDeleteChat() {
       payload: ChatOverrideDeletePayload;
     }) => ticketChatService.overrideDelete(ticketId, chatId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success("Đã xóa bình luận (override)");
+      toast.success(ADMIN_MESSAGES.ticket.commentDeleted);
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
   });

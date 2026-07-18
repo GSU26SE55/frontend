@@ -131,7 +131,7 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Huỷ
+                Hủy
               </Button>
               <Button
                 type="submit"

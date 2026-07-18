@@ -32,8 +32,9 @@ export const useAcceptInvite = () => {
       const user = decodeToken(accessToken);
 
       if (user.role === UserRole.CUSTOMER) {
+        // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
         clearTokens();
-        toast.error("Vui lòng sử dụng Mobile App để đăng nhập.");
+        navigate("/use-mobile-app", { replace: true });
         return;
       }
 

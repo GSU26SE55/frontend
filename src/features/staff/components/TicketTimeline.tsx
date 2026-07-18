@@ -5,7 +5,7 @@ import { ActorRoleEnum } from "@/shared/types/ticket.types";
 import {
   getActivityMeta,
   activityToneStyle,
-} from "@/shared/components/common/ticketActivityMeta";
+} from "@/shared/components/ticket/ticketActivityMeta";
 
 const ROLE_LABELS: Record<string, string> = {
   [ActorRoleEnum.Admin]: "Admin",

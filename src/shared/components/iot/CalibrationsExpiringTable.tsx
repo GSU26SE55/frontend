@@ -1,13 +1,8 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {
   items: IotDeviceCalibrationDto[];
@@ -20,55 +15,56 @@ function daysUntil(dateStr: string): number {
 
 // Manager view — flat list calibration sắp hết hạn (cross-device, sort expiresAt ASC từ BE).
 export default function CalibrationsExpiringTable({ items }: Props) {
+  const columns: ColumnDef<IotDeviceCalibrationDto>[] = [
+    {
+      id: "iotDeviceId",
+      header: "Device ID",
+      cell: (item) => item.iotDeviceId,
+      cellClassName: "font-mono text-xs",
+    },
+    {
+      id: "channel",
+      header: TABLE_COLUMNS.channel,
+      cell: (item) => item.channel,
+      cellClassName: "font-medium",
+    },
+    {
+      id: "unit",
+      header: TABLE_COLUMNS.unit,
+      cell: (item) => item.unit,
+    },
+    {
+      id: "calibratedAt",
+      header: TABLE_COLUMNS.calibrated,
+      cell: (item) => item.calibratedAt.slice(0, 10),
+      cellClassName: "text-sm",
+    },
+    {
+      id: "expiresAt",
+      header: TABLE_COLUMNS.expiresAt,
+      cell: (item) => (item.expiresAt ? item.expiresAt.slice(0, 10) : "—"),
+      cellClassName: "text-sm",
+    },
+    {
+      id: "daysRemaining",
+      header: "Còn lại",
+      cell: (item) => {
+        const days = item.expiresAt ? daysUntil(item.expiresAt) : null;
+        return days !== null ? (
+          <Badge variant={days <= 7 ? "destructive" : "secondary"}>
+            {days} ngày
+          </Badge>
+        ) : null;
+      },
+    },
+  ];
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Device ID</TableHead>
-          <TableHead>Channel</TableHead>
-          <TableHead>Đơn vị</TableHead>
-          <TableHead>Calibrated</TableHead>
-          <TableHead>Hết hạn</TableHead>
-          <TableHead>Còn lại</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {items.map((item) => {
-          const days = item.expiresAt ? daysUntil(item.expiresAt) : null;
-          return (
-            <TableRow key={item.id}>
-              <TableCell className="font-mono text-xs">
-                {item.iotDeviceId}
-              </TableCell>
-              <TableCell className="font-medium">{item.channel}</TableCell>
-              <TableCell>{item.unit}</TableCell>
-              <TableCell className="text-sm">
-                {item.calibratedAt.slice(0, 10)}
-              </TableCell>
-              <TableCell className="text-sm">
-                {item.expiresAt ? item.expiresAt.slice(0, 10) : "—"}
-              </TableCell>
-              <TableCell>
-                {days !== null && (
-                  <Badge variant={days <= 7 ? "destructive" : "secondary"}>
-                    {days} ngày
-                  </Badge>
-                )}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-        {items.length === 0 && (
-          <TableRow>
-            <TableCell
-              colSpan={6}
-              className="text-center text-muted-foreground py-8"
-            >
-              Không có calibration sắp hết hạn
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+    <DataTable
+      data={items}
+      columns={columns}
+      rowKey={(item) => item.id}
+      empty={<EmptyState title="Không có calibration sắp hết hạn" />}
+    />
   );
 }

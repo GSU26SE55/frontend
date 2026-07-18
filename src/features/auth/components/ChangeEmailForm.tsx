@@ -18,6 +18,7 @@ import {
 import { useChangeEmail } from "@/features/auth/hooks/useChangeEmail";
 import { useConfirmEmailChange } from "@/features/auth/hooks/useConfirmEmailChange";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 interface ChangeEmailFormProps {
   bare?: boolean;
@@ -41,7 +42,7 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
   const onEmailSubmit = async (data: ChangeEmailFormValues) => {
     try {
       await changeEmail(data);
-      toast.success("Đã gửi OTP đến email mới");
+      toast.success(AUTH_MESSAGES.email.otpSent);
       setStep(2);
     } catch (error) {
       handleErrorApi({ error, setError: emailForm.setError });
@@ -51,7 +52,7 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
   const onOtpSubmit = async (data: ConfirmOtpFormValues) => {
     try {
       await confirmChange(data);
-      toast.success("Đổi email thành công. Vui lòng đăng nhập lại.");
+      toast.success(AUTH_MESSAGES.email.changed);
     } catch (error) {
       handleErrorApi({ error, setError: otpForm.setError });
     }

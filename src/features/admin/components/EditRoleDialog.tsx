@@ -19,6 +19,7 @@ import {
 import { useAdminUpdateRole } from "@/features/admin/hooks/useAdminRoles";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/admin.types";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface Props {
   open: boolean;
@@ -54,7 +55,7 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
           description: data.description || undefined,
         },
       });
-      toast.success("Đã cập nhật role");
+      toast.success(ADMIN_MESSAGES.role.updated);
       handleClose();
     } catch (error) {
       handleErrorApi({ error, setError });

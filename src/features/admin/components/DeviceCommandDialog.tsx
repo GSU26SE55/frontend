@@ -174,7 +174,7 @@ export default function DeviceCommandDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Gửi

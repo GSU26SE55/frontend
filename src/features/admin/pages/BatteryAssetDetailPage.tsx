@@ -35,10 +35,11 @@ import SensorChart from "@/features/admin/components/SensorChart";
 import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
 import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
 import { BatteryStatusEnum } from "@/features/admin/types/battery-asset.types";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
-import { LiveTelemetryCard } from "@/shared/components/common/LiveTelemetryCard";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -102,7 +103,7 @@ export default function BatteryAssetDetailPage() {
   const handleDelete = () => {
     deleteAsset(id, {
       onSuccess: () => {
-        toast.success("Đã xóa battery asset");
+        toast.success(ADMIN_MESSAGES.battery.deleted);
         navigate("/admin/battery-assets");
       },
     });
@@ -277,7 +278,11 @@ export default function BatteryAssetDetailPage() {
                 value="history"
                 className="flex-1 min-h-0 overflow-hidden m-0 h-full"
               >
-                <SensorHistoryTable assetId={id} fillHeight />
+                <SensorHistoryTable
+                  assetId={id}
+                  batteryTypeId={asset?.batteryTypeId}
+                  fillHeight
+                />
               </TabsContent>
               <TabsContent
                 value="cascade"

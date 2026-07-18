@@ -117,7 +117,7 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Huỷ
+                Hủy
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Đang xử lý..." : "Chuyển cấp"}

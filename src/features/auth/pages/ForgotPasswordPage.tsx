@@ -6,6 +6,7 @@ import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
 import ResetOtpVerifyForm from "@/features/auth/components/ResetOtpVerifyForm";
 import ResetPasswordForm from "@/features/auth/components/ResetPasswordForm";
 import { cn } from "@/lib/utils";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 // Fallback nếu BE không trả expiresInSeconds (api-auth.md: resetToken TTL 900s = 15 phút)
 const RESET_TOKEN_TTL_FALLBACK_S = 900;
@@ -92,7 +93,7 @@ const ForgotPasswordPage = () => {
         Math.ceil((tokenExpiry - Date.now()) / 1000),
       );
       if (remaining === 0) {
-        toast.error("Mã xác thực đã hết hạn, vui lòng thử lại.");
+        toast.error(AUTH_MESSAGES.otp.expired);
         dispatch({ type: "RESET_FLOW" });
         return true;
       }

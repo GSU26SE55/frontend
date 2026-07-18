@@ -1,17 +1,18 @@
 import { MapPin, Search } from "lucide-react";
-import { RefreshButton } from "@/shared/components/common/RefreshButton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/shared/components/common/ErrorState";
-import { EmptyState } from "@/shared/components/common/EmptyState";
+import { ErrorState } from "@/shared/components/ui/ErrorState";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { useSiteList } from "@/features/manager/hooks/useSites";
 import SiteTable from "@/features/manager/components/SiteTable";
-import DataPagination from "@/shared/components/common/DataPagination";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
+import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const DEFAULTS = {
   keyword: "",
@@ -46,7 +47,7 @@ export default function ManagerSiteListPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : totalItems} site &mdash; quản lý site khách
-            hàng
+            hàng.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.sites]} />
@@ -77,12 +78,9 @@ export default function ManagerSiteListPage() {
             ))}
           </div>
         ) : isError ? (
-          <ErrorState
-            message="Không thể tải danh sách site."
-            onRetry={() => refetch()}
-          />
+          <ErrorState message={loadFailed("site")} onRetry={() => refetch()} />
         ) : items.length === 0 ? (
-          <EmptyState icon={MapPin} title="Chưa có site nào." />
+          <EmptyState icon={MapPin} title={noData("site")} />
         ) : (
           <SiteTable
             data={items}
