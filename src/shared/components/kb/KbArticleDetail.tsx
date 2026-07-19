@@ -26,9 +26,12 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
+import { KbTemplateBadge } from "./KbTemplateBadge";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
 import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
+import { isHtmlContent } from "@/shared/lib/isHtmlContent";
+import { RichContentView } from "@/shared/components/editor/RichContentView";
 
 // ── Sections ─────────────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -68,6 +71,12 @@ function parseLines(text: string): string[] {
 
 // ── Section content renderer ─────────────────────────────────────────────────
 export function SectionContent({ text }: { text: string }) {
+  // Bài soạn bằng rich text (Tiptap) → render HTML đã sanitize.
+  // Bài cũ vẫn là text thuần → giữ nguyên cách hiển thị cũ bên dưới.
+  if (isHtmlContent(text)) {
+    return <RichContentView html={text} className="text-foreground/80" />;
+  }
+
   if (isNumberedList(text)) {
     return (
       <ol className="space-y-3">
@@ -189,6 +198,7 @@ export function KbArticleDetail({
           <div className="flex items-center gap-2 shrink-0 pt-0.5">
             <KbStatusBadge status={article.status} />
             <KbVisibilityBadge isInternalOnly={article.isInternalOnly} />
+            <KbTemplateBadge isTemplate={article.isTemplate} />
             {actions}
             {renderEditor && (
               <Button

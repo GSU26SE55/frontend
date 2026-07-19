@@ -36,7 +36,7 @@ const DEFAULTS = {
   status: "",
   sortBy: "",
   sortDir: "",
-  page: 1,
+  pageNumber: 1,
   pageSize: 10,
 };
 
@@ -51,7 +51,7 @@ export default function IoTDevicesPage() {
   const { data: sitesData } = useSiteList({ pageNumber: 1, pageSize: 100 });
 
   const { data, isLoading } = useIotDevices({
-    page: filters.page,
+    pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
     siteId: filters.siteId || undefined,
@@ -152,7 +152,7 @@ export default function IoTDevicesPage() {
         ) : (
           <IoTDeviceTable
             items={items}
-            pageNumber={filters.page}
+            pageNumber={filters.pageNumber}
             pageSize={filters.pageSize}
             sort={sort}
           />
@@ -164,9 +164,9 @@ export default function IoTDevicesPage() {
         totalPages={data?.totalPages ?? 1}
         hasNextPage={data?.hasNextPage ?? false}
         hasPreviousPage={data?.hasPreviousPage ?? false}
-        pageNumber={filters.page}
+        pageNumber={filters.pageNumber}
         pageSize={filters.pageSize}
-        onPageChange={(p) => setFilter("page", p)}
+        onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
     </div>

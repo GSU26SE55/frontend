@@ -19,7 +19,7 @@ const DEFAULTS = {
   publishedOnly: false,
   sortBy: "",
   sortDir: "",
-  page: 1,
+  pageNumber: 1,
   pageSize: 10,
 };
 
@@ -33,7 +33,7 @@ export default function IoTFirmwareReleasesPage() {
   const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
 
   const { data, isLoading } = useIotFirmware({
-    page: filters.page,
+    pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     hardwareRevision: filters.hardwareRevision || undefined,
     publishedOnly: filters.publishedOnly || undefined,
@@ -114,9 +114,9 @@ export default function IoTFirmwareReleasesPage() {
         totalPages={data?.totalPages ?? 1}
         hasNextPage={data?.hasNextPage ?? false}
         hasPreviousPage={data?.hasPreviousPage ?? false}
-        pageNumber={filters.page}
+        pageNumber={filters.pageNumber}
         pageSize={filters.pageSize}
-        onPageChange={(p) => setFilter("page", p)}
+        onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
     </div>

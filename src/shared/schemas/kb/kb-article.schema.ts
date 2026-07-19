@@ -1,5 +1,14 @@
 import { z } from "zod";
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
+import { htmlToPlainText } from "@/shared/lib/sanitizeHtml";
+
+// 3 field nội dung soạn bằng rich text (Tiptap) → luôn có ít nhất "<p></p>" khi
+// rỗng, nên .min(1) vô dụng: phải kiểm tra text thuần sau khi bỏ thẻ.
+const richTextField = (max: number, emptyMsg: string) =>
+  z
+    .string()
+    .refine((v) => htmlToPlainText(v).length > 0, emptyMsg)
+    .refine((v) => v.length <= max, `Tối đa ${max} ký tự`);
 
 // KB Article — dùng chung admin/manager/staff (BE ValidateAsync giống nhau).
 // Giới hạn lấy đúng từ ValidateAsync của BE.
@@ -9,18 +18,9 @@ export const kbArticleSchema = z.object({
     .string()
     .min(1, "Tiêu đề không được trống")
     .max(200, "Tối đa 200 ký tự"),
-  symptoms: z
-    .string()
-    .min(1, "Mô tả triệu chứng không được trống")
-    .max(2000, "Tối đa 2000 ký tự"),
-  diagnosisSteps: z
-    .string()
-    .min(1, "Bước chẩn đoán không được trống")
-    .max(4000, "Tối đa 4000 ký tự"),
-  solutionSteps: z
-    .string()
-    .min(1, "Hướng giải quyết không được trống")
-    .max(4000, "Tối đa 4000 ký tự"),
+  symptoms: richTextField(10000, "Mô tả triệu chứng không được trống"),
+  diagnosisSteps: richTextField(20000, "Bước chẩn đoán không được trống"),
+  solutionSteps: richTextField(20000, "Hướng giải quyết không được trống"),
   recommendedParts: z.array(z.string()).optional().default([]),
   tags: z
     .array(z.string().max(50, "Mỗi thẻ tối đa 50 ký tự"))
@@ -28,6 +28,7 @@ export const kbArticleSchema = z.object({
     .optional()
     .default([]),
   isInternalOnly: z.boolean().default(false),
+  isTemplate: z.boolean().default(false),
   changeDescription: z.string().optional(),
 });
 

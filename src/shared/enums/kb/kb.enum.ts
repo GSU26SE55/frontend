@@ -25,12 +25,12 @@ export const KbArticleStatusCode: Record<KbArticleStatusEnum, number> = {
   [KbArticleStatusEnum.Archived]: 4,
 };
 
-// Version status — BE để field kiểu int raw → response trả SỐ
+// Version status — BE serialize dạng STRING (JsonStringEnumConverter, từ 2026-06-22)
 export const KbVersionStatusEnum = {
-  Pending: 1,
-  Approved: 2,
-  Rejected: 3,
-  Archived: 4,
+  Pending: "Pending",
+  Approved: "Approved",
+  Rejected: "Rejected",
+  Archived: "Archived",
 } as const;
 export type KbVersionStatusEnum =
   (typeof KbVersionStatusEnum)[keyof typeof KbVersionStatusEnum];

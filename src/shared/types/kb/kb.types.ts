@@ -11,6 +11,7 @@ export {
 import type {
   KbArticleStatusEnum,
   KbReferenceTypeEnum,
+  KbVersionStatusEnum,
 } from "@/shared/enums/kb/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 
@@ -28,6 +29,8 @@ export interface KbArticleDTO {
   tags: string[];
   status: KbArticleStatusEnum;
   isInternalOnly: boolean;
+  /** Bài viết mẫu — dùng làm khung cho bài mới qua copy-template. */
+  isTemplate: boolean;
   version: number;
   viewCount: number;
   helpfulCount: number;
@@ -46,19 +49,21 @@ export interface KbArticleSummaryDTO {
   title: string;
   category: TicketCategoryEnum;
   status: KbArticleStatusEnum;
+  /** Bài viết mẫu — dùng để hiện badge trong list. */
+  isTemplate: boolean;
   viewCount: number;
   helpfulCount: number;
   reviewRequired: boolean;
   createdAt: string;
 }
 
-// Version (status là SỐ — BE để raw int)
+// Version (status dạng STRING — BE bật JsonStringEnumConverter)
 export interface KbArticleVersionDTO {
   id: string;
   articleId: string;
   majorVersion: number;
   minorVersion: number;
-  status: number;
+  status: KbVersionStatusEnum;
   title: string;
   symptoms: string;
   diagnosisSteps: string;
@@ -87,9 +92,9 @@ export interface KbArticleDiffDTO {
   tagsDiff: DiffSection;
 }
 
-// copy-template (category là SỐ raw int)
+// copy-template (category dạng STRING — BE trả TicketCategoryEnum)
 export interface KbArticleTemplateDTO {
-  category: number;
+  category: TicketCategoryEnum;
   symptoms: string;
   diagnosisSteps: string;
   solutionSteps: string;
@@ -141,6 +146,8 @@ export interface CreateKbArticlePayload {
   recommendedParts?: string[];
   tags?: string[];
   isInternalOnly: boolean;
+  /** Đánh dấu bài là mẫu để Staff dùng copy-template. BE mặc định false. */
+  isTemplate?: boolean;
 }
 
 export interface UpdateKbArticlePayload extends CreateKbArticlePayload {

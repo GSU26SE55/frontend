@@ -76,6 +76,8 @@ export const ENDPOINTS = {
     CHAT_CURSOR: (tid: string) => `/api/tickets/${tid}/chats/cursor`,
     CHAT_ATTACHMENTS: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments`,
+    // Tổng hợp mọi file đã gửi qua chat trong 1 ticket (dùng cho picker ảnh khi soạn KB)
+    CHAT_FILES: (tid: string) => `/api/tickets/${tid}/chats/files`,
     CHAT_ATTACHMENT: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}`,
     CHAT_TRANSLATE: (tid: string, cid: string) =>
@@ -464,6 +466,10 @@ export const ENDPOINTS = {
     COMPARE: (id: string) => `/api/internal/knowledge-base/${id}/compare`,
     COPY_TEMPLATE: (id: string) =>
       `/api/internal/knowledge-base/${id}/copy-template`,
+    // List bài mẫu — server ép IsTemplate=true + Status=Published
+    TEMPLATES: "/api/internal/knowledge-base/templates",
+    TEMPLATE_DETAIL: (id: string) =>
+      `/api/internal/knowledge-base/templates/${id}`,
   },
 
   // KB workflow — duyệt/xuất bản (Manager/Admin)
@@ -484,5 +490,40 @@ export const ENDPOINTS = {
     ADD: "/api/knowledge-base/references", // POST
     REMOVE: (referenceId: string) =>
       `/api/knowledge-base/references/${referenceId}`,
+  },
+
+  // Blog public — mọi role đã đăng nhập, CHỈ bài Published
+  BLOG: {
+    LIST: "/api/blog",
+    DETAIL: (id: string) => `/api/blog/${id}`,
+  },
+
+  // Blog nội bộ — authoring (Staff/Manager/Admin), đọc được mọi trạng thái
+  BLOG_INTERNAL: {
+    LIST: "/api/internal/blog",
+    // Dùng để POLL trạng thái Generating — KHÔNG dùng BLOG.DETAIL (404 khi chưa publish)
+    DETAIL: (id: string) => `/api/internal/blog/${id}`,
+    CREATE: "/api/internal/blog",
+    UPDATE: (id: string) => `/api/internal/blog/${id}`,
+    VERSIONS: (id: string) => `/api/internal/blog/${id}/versions`,
+    COMPARE: (id: string) => `/api/internal/blog/${id}/compare`,
+    TEMPLATES: "/api/internal/blog/templates",
+    TEMPLATE_DETAIL: (id: string) => `/api/internal/blog/templates/${id}`,
+  },
+
+  // Blog workflow — publish/archive/xóa/sinh bằng AI (Manager/Admin)
+  BLOG_ADMIN: {
+    GENERATE_FROM_KB: (kbId: string) =>
+      `/api/admin/blog/generate-from-kb/${kbId}`,
+    PUBLISH: (id: string) => `/api/admin/blog/${id}/publish`,
+    ARCHIVE: (id: string) => `/api/admin/blog/${id}/archive`,
+    DELETE: (id: string) => `/api/admin/blog/${id}`,
+  },
+
+  // Blog template — GHI chỉ Admin (đọc dùng BLOG_INTERNAL.TEMPLATES)
+  BLOG_TEMPLATES_ADMIN: {
+    CREATE: "/api/admin/blog/templates",
+    UPDATE: (id: string) => `/api/admin/blog/templates/${id}`,
+    DELETE: (id: string) => `/api/admin/blog/templates/${id}`,
   },
 } as const;

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
+import { KbTemplateBadge } from "@/shared/components/kb/KbTemplateBadge";
 import { Eye, ThumbsUp, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
@@ -103,7 +104,12 @@ export default function KbArticleTable({
       headClassName:
         "w-30 text-[11px] font-medium uppercase tracking-wide text-muted-foreground",
       cellClassName: "py-2",
-      cell: (article) => <KbStatusBadge status={article.status} />,
+      cell: (article) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <KbStatusBadge status={article.status} />
+          <KbTemplateBadge isTemplate={article.isTemplate} compact />
+        </div>
+      ),
     },
     {
       id: "viewCount",

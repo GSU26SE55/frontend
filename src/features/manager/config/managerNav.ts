@@ -3,6 +3,7 @@
 // Label/title đặc thù chỉ manager dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
   LayoutDashboard,
   MapPin,
   Settings,
@@ -48,6 +49,11 @@ export const MANAGER_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/manager/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/manager/blog",
+        icon: Newspaper,
       },
       {
         label: SIDEBAR_LABELS.batteryAlerts,

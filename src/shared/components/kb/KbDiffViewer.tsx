@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 import { diffLines, toSplitRows } from "@/shared/lib/lineDiff";
 import type { DiffLine, SplitRow } from "@/shared/lib/lineDiff";
 import type { KbArticleDiffDTO, DiffSection } from "@/shared/types/kb/kb.types";
+import { isHtmlContent } from "@/shared/lib/isHtmlContent";
+import { htmlToPlainText } from "@/shared/lib/sanitizeHtml";
+import { RichContentView } from "@/shared/components/editor/RichContentView";
 
 type ViewMode = "unified" | "split";
 
@@ -183,11 +186,22 @@ function SectionBlock({
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
+  // Bài soạn bằng rich text: diff trên markup sẽ ra rác (<p>, <img>...).
+  // Diff trên text thuần để thống kê +/- vẫn có nghĩa, còn nội dung hiển thị
+  // side-by-side ở dưới.
+  const isHtml = isHtmlContent(diff.oldValue) || isHtmlContent(diff.newValue);
+
   const computed = useMemo(() => {
-    const result = diffLines(diff.oldValue ?? "", diff.newValue ?? "");
+    const oldText = isHtml
+      ? htmlToPlainText(diff.oldValue ?? "")
+      : (diff.oldValue ?? "");
+    const newText = isHtml
+      ? htmlToPlainText(diff.newValue ?? "")
+      : (diff.newValue ?? "");
+    const result = diffLines(oldText, newText);
     const split = view === "split" ? toSplitRows(result.lines) : [];
     return { ...result, split };
-  }, [diff.oldValue, diff.newValue, view]);
+  }, [diff.oldValue, diff.newValue, view, isHtml]);
 
   const { added, removed } = computed.stats;
   const isEmpty = !diff.oldValue && !diff.newValue;
@@ -256,6 +270,25 @@ function SectionBlock({
             <p className="px-4 py-6 text-sm text-muted-foreground text-center italic">
               (trống)
             </p>
+          ) : isHtml ? (
+            <div className="grid gap-3 p-3 md:grid-cols-2">
+              <section className="min-w-0">
+                <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-[11px] font-medium">
+                  Bản cũ
+                </header>
+                <div className="max-h-[50vh] overflow-auto rounded-b-md border border-t-0 p-3">
+                  <RichContentView html={diff.oldValue} />
+                </div>
+              </section>
+              <section className="min-w-0">
+                <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-[11px] font-medium">
+                  Bản mới
+                </header>
+                <div className="max-h-[50vh] overflow-auto rounded-b-md border border-t-0 p-3">
+                  <RichContentView html={diff.newValue} />
+                </div>
+              </section>
+            </div>
           ) : view === "unified" ? (
             <UnifiedView lines={computed.lines} />
           ) : (
@@ -276,7 +309,11 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
       removed = 0;
     for (const f of FIELDS) {
       const sec = diff[f.key] as DiffSection;
-      const { stats } = diffLines(sec.oldValue ?? "", sec.newValue ?? "");
+      const html = isHtmlContent(sec.oldValue) || isHtmlContent(sec.newValue);
+      const { stats } = diffLines(
+        html ? htmlToPlainText(sec.oldValue ?? "") : (sec.oldValue ?? ""),
+        html ? htmlToPlainText(sec.newValue ?? "") : (sec.newValue ?? ""),
+      );
       added += stats.added;
       removed += stats.removed;
     }

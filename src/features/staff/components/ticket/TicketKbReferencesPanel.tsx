@@ -383,6 +383,7 @@ export default function TicketKbReferencesPanel({
             >
               <KbEditorPanel
                 initialCategory={defaultCategory}
+                ticketId={ticketId}
                 onClose={() => setShowCreate(false)}
                 isPending={creatingArticle}
                 onSave={handleCreateSave}

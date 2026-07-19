@@ -3,6 +3,7 @@
 // Label/title đặc thù chỉ staff dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
   LayoutDashboard,
   Settings,
   BellRing,
@@ -38,6 +39,11 @@ export const STAFF_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/staff/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/staff/blog",
+        icon: Newspaper,
       },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
       {

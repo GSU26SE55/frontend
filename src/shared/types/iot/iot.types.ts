@@ -82,7 +82,7 @@ export interface IotDeviceListParams {
   keyword?: string;
   sortBy?: string;
   sortDir?: string;
-  page?: number;
+  pageNumber?: number;
   pageSize?: number;
   isDescending?: boolean;
 }
@@ -188,6 +188,6 @@ export interface FirmwareReleaseListParams {
   publishedOnly?: boolean;
   sortBy?: string;
   sortDir?: string;
-  page?: number;
+  pageNumber?: number;
   pageSize?: number;
 }

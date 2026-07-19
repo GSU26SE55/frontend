@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
+import { KbTemplateBadge } from "@/shared/components/kb/KbTemplateBadge";
 import { Eye, ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import {
@@ -182,7 +183,10 @@ export default function KbArticleTable({
               </span>
             </TableCell>
             <TableCell className="py-2">
-              <KbStatusBadge status={article.status} />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <KbStatusBadge status={article.status} />
+                <KbTemplateBadge isTemplate={article.isTemplate} compact />
+              </div>
             </TableCell>
             <TableCell className="py-2 text-center">
               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">

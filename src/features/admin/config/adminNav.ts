@@ -3,6 +3,8 @@
 // Label/title đặc thù chỉ admin dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
+  LayoutTemplate,
   LayoutDashboard,
   MapPin,
   Battery,
@@ -87,6 +89,16 @@ export const ADMIN_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/admin/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/admin/blog",
+        icon: Newspaper,
+      },
+      {
+        label: SIDEBAR_LABELS.blogTemplates,
+        path: "/admin/blog/templates",
+        icon: LayoutTemplate,
       },
     ],
   },
