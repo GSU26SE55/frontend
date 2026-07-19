@@ -15,16 +15,17 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useBatteryTypes } from "@/features/admin/hooks/useBatteryTypes";
+import { useBatteryTypes } from "@/features/admin/hooks/battery/useBatteryTypes";
 import {
   useDeleteBatteryType,
   useRestoreBatteryType,
-} from "@/features/admin/hooks/useBatteryTypesMutation";
-import BatteryTypeTable from "@/features/admin/components/BatteryTypeTable";
-import BatteryTypeFormDialog from "@/features/admin/components/BatteryTypeFormDialog";
-import ThresholdConfigDialog from "@/features/admin/components/ThresholdConfigDialog";
-import type { BatteryTypeDto } from "@/features/admin/types/battery-type.types";
+} from "@/features/admin/hooks/battery/useBatteryTypesMutation";
+import BatteryTypeTable from "@/features/admin/components/battery/BatteryTypeTable";
+import BatteryTypeFormDialog from "@/features/admin/components/battery/BatteryTypeFormDialog";
+import ThresholdConfigDialog from "@/features/admin/components/battery/ThresholdConfigDialog";
+import type { BatteryTypeDto } from "@/features/admin/types/battery/battery-type.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
@@ -33,6 +34,8 @@ import { KEY } from "@/shared/utils/queryKeys";
 const DEFAULTS = {
   keyword: "",
   includeDeleted: false,
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: 10,
 };
@@ -48,6 +51,7 @@ export default function BatteryTypesPage() {
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState<BatteryTypeDto | null>(null);
   const [thresholdTarget, setThresholdTarget] = useState<BatteryTypeDto | null>(
@@ -62,6 +66,8 @@ export default function BatteryTypesPage() {
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
     includeDeleted: filters.includeDeleted || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const { mutate: deleteType } = useDeleteBatteryType();
   const { mutate: restoreType } = useRestoreBatteryType();
@@ -153,6 +159,7 @@ export default function BatteryTypesPage() {
             onDelete={(item) => setConfirmState({ type: "delete", item })}
             onRestore={(item) => setConfirmState({ type: "restore", item })}
             onConfigThreshold={setThresholdTarget}
+            sort={sort}
           />
         )}
       </Card>

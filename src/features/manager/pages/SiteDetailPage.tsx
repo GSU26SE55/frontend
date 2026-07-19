@@ -16,14 +16,14 @@ import {
 import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
-import { useSiteCascadeSummary } from "@/features/manager/hooks/useSiteCascadeSummary";
+import { useSiteCascadeSummary } from "@/features/manager/hooks/battery/useSiteCascadeSummary";
 import {
   useSiteDetail,
   useSiteDashboard,
   useSiteAssets,
-} from "@/features/manager/hooks/useSites";
-import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
-import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+} from "@/features/manager/hooks/site/useSites";
+import type { SiteAssetsFilterParams } from "@/shared/types/site/site.types";
+import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {

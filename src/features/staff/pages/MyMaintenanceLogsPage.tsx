@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import { useStaffMaintenanceLogs } from "@/features/staff/hooks/useStaffMaintenanceLogs";
+import { useStaffMaintenanceLogs } from "@/features/staff/hooks/ticket/useStaffMaintenanceLogs";
 
 export default function MyMaintenanceLogsPage() {
   const navigate = useNavigate();

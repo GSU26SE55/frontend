@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
 import SmartHome from "./SmartHome";
-import { UserRole } from "@/shared/types/session.types";
+import { UserRole } from "@/shared/types/account/session.types";
 import AuthLayout from "@/shared/components/layout/AuthLayout";
 import AppLayout from "@/shared/components/layout/AppLayout";
 import RoleAwareAppLayout from "./RoleAwareAppLayout";

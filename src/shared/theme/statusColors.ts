@@ -10,15 +10,18 @@
 import {
   TicketStatusEnum,
   TicketPriorityEnum,
-} from "@/shared/enums/ticket.enum";
-import { SlaTimerStatusEnum } from "@/shared/enums/ticket.enum";
-import { AlertSeverityEnum, AlertStatusEnum } from "@/shared/enums/alert.enum";
-import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/environmental.enum";
-import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
-import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
-import { AccountStatusEnum } from "@/shared/enums/account.enum";
-import { NotificationStatusEnum } from "@/shared/enums/notification.enum";
+} from "@/shared/enums/ticket/ticket.enum";
+import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+import {
+  AlertSeverityEnum,
+  AlertStatusEnum,
+} from "@/shared/enums/alerts/alert.enum";
+import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
+import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
+import { AccountStatusEnum } from "@/shared/enums/account/account.enum";
+import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
 
 // 6 tông màu semantic — khớp token trong index.css.
 export type StatusTone = "ok" | "info" | "p3" | "p2" | "p1" | "muted";

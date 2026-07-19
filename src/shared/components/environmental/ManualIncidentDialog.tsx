@@ -18,16 +18,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useReportManualIncident } from "@/shared/hooks/useEnvironmentalIncidents";
+import { useReportManualIncident } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   manualIncidentSchema,
   type ManualIncidentFormValues,
-} from "@/shared/schemas/environmental.schema";
-import { EnvironmentalIncidentTypeEnum } from "@/shared/enums/environmental.enum";
-import { AlertSeverityEnum } from "@/shared/enums/alert.enum";
-import type { SiteOption } from "@/shared/types/site.types";
-import { incidentTypeLabel } from "./incidentLabels";
+} from "@/shared/schemas/alerts/environmental.schema";
+import { EnvironmentalIncidentTypeEnum } from "@/shared/enums/alerts/environmental.enum";
+import { AlertSeverityEnum } from "@/shared/enums/alerts/alert.enum";
+import type { SiteOption } from "@/shared/types/site/site.types";
+import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 
 const TYPE_OPTIONS = [
   EnvironmentalIncidentTypeEnum.Smoke,

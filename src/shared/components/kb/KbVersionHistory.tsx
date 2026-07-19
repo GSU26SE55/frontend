@@ -16,8 +16,8 @@ import {
 import {
   KbVersionStatusEnum,
   KbVersionStatusLabel,
-} from "@/shared/enums/kb.enum";
-import type { KbArticleVersionDTO } from "@/shared/types/kb.types";
+} from "@/shared/enums/kb/kb.enum";
+import type { KbArticleVersionDTO } from "@/shared/types/kb/kb.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
 interface KbVersionHistoryProps {

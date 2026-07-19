@@ -1,5 +1,5 @@
 import { AnalyticsDashboard } from "@/shared/components/analytics/AnalyticsDashboard";
-import { useSiteList } from "@/features/manager/hooks/useSites";
+import { useSiteList } from "@/features/manager/hooks/site/useSites";
 
 // Wrapper mỏng: lấy danh sách site (manager) → truyền vào view dùng chung.
 export default function ManagerAnalyticsPage() {

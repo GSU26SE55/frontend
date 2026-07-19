@@ -23,19 +23,19 @@ import {
   DashboardDonut,
   DashboardGauge,
 } from "@/shared/components/dashboard/DashboardPanel";
-import { useSiteList } from "@/features/admin/hooks/useSites";
-import { useBatteryDashboardStats } from "@/shared/hooks/useBatteryDashboard";
+import { useSiteList } from "@/features/admin/hooks/site/useSites";
+import { useBatteryDashboardStats } from "@/shared/hooks/dashboard/useBatteryDashboard";
 import {
   useTicketDashboardStats,
   useSiteDashboardStats,
-} from "@/shared/hooks/useDashboardStats";
+} from "@/shared/hooks/dashboard/useDashboardStats";
 import { BatteryDistributionPanels } from "@/shared/components/analytics/BatteryDistributionPanels";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { TicketHealthCard } from "@/features/admin/components/TicketHealthCard";
+import { TicketHealthCard } from "@/features/admin/components/ticket/TicketHealthCard";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
-import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
+import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
  * Admin = Trung tâm điều khiển: bao quát TOÀN hệ thống ở mức oversight —
@@ -258,7 +258,10 @@ export default function AdminDashboardPage() {
               config={alertChartConfig}
               className="h-full w-full aspect-auto min-h-0"
             >
-              <AreaChart data={alertSeries} margin={{ left: 0, right: 6, top: 4 }}>
+              <AreaChart
+                data={alertSeries}
+                margin={{ left: 0, right: 6, top: 4 }}
+              >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="date"
@@ -358,7 +361,9 @@ export default function AdminDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla?.running ?? 0}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Running</p>
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Running
+                    </p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -555,13 +560,25 @@ export default function AdminDashboardPage() {
             ) : (
               <div className="grid grid-cols-2 gap-2 h-full content-center">
                 {[
-                  { label: "Điện áp", value: fmtMetric(telem!.avgVoltage, "V", 2) },
-                  { label: "Dòng", value: fmtMetric(telem!.avgCurrent, "A", 2) },
-                  { label: "Nhiệt độ", value: fmtMetric(telem!.avgTemperature, "°C") },
+                  {
+                    label: "Điện áp",
+                    value: fmtMetric(telem!.avgVoltage, "V", 2),
+                  },
+                  {
+                    label: "Dòng",
+                    value: fmtMetric(telem!.avgCurrent, "A", 2),
+                  },
+                  {
+                    label: "Nhiệt độ",
+                    value: fmtMetric(telem!.avgTemperature, "°C"),
+                  },
                   { label: "SOC", value: fmtMetric(telem!.avgSoc, "%") },
                   { label: "SOH", value: fmtMetric(telem!.avgSoh, "%") },
                 ].map((m) => (
-                  <div key={m.label} className="rounded-md bg-muted/40 px-2.5 py-2">
+                  <div
+                    key={m.label}
+                    className="rounded-md bg-muted/40 px-2.5 py-2"
+                  >
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
                       {m.label}
                     </p>

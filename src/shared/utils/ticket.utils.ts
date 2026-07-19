@@ -1,5 +1,5 @@
-import type { TicketDTO } from "@/shared/types/ticket.types";
-import { TicketStatusEnum } from "@/shared/enums/ticket.enum";
+import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 
 const TERMINAL_STATUSES = new Set<string>([
   TicketStatusEnum.Resolved,

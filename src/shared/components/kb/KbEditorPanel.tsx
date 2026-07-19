@@ -9,14 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
-import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
-import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
+import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
+import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
 import { TagInput } from "@/shared/components/ui/TagInput";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
 import type {
   KbArticleDTO,
   UpdateKbArticlePayload,
-} from "@/shared/types/kb.types";
+} from "@/shared/types/kb/kb.types";
 
 // ── Schema (recommendedParts dạng text, mỗi dòng 1 linh kiện → array khi submit) ──
 const schema = z.object({

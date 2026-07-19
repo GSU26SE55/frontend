@@ -19,14 +19,14 @@ import { KEY } from "@/shared/utils/queryKeys";
 import {
   useAdminSmsDevices,
   useAdminRevokeSmsDevice,
-} from "@/features/admin/hooks/useAdminSmsGateway";
+} from "@/features/admin/hooks/notification/useAdminSmsGateway";
 import SmsDeviceTable from "@/features/admin/components/sms-gateway/SmsDeviceTable";
 import CreateSmsDeviceDialog from "@/features/admin/components/sms-gateway/CreateSmsDeviceDialog";
 import ApiKeyRevealDialog from "@/features/admin/components/sms-gateway/ApiKeyRevealDialog";
 import type {
   GatewayDeviceDto,
   CreateGatewayDeviceResponseDto,
-} from "@/features/admin/types/sms-gateway.types";
+} from "@/features/admin/types/ticket/sms-gateway.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
 export default function SmsGatewayPage() {

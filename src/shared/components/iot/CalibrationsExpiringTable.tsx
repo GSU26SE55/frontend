@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
-import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
+import type { IotDeviceCalibrationDto } from "@/shared/types/iot/iot.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {

@@ -10,14 +10,14 @@ import {
   useStaffKbVersionDetail,
   useMarkStaffKbHelpful,
   useStaffKbCopyTemplate,
-} from "../hooks/useStaffKb";
+} from "@/features/staff/hooks/kb/useStaffKb";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
 } from "@/shared/components/kb/KbArticleDetail";
 import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
-import type { KbCompareParams } from "@/shared/types/kb.types";
+import type { KbCompareParams } from "@/shared/types/kb/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();

@@ -8,14 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
-import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
+import type { MaintenanceLogDTO } from "@/shared/types/ticket/ticket.types";
 import {
   useStaffTicketDetail,
   useStaffTicketActivities,
   useStaffTicketComments,
-} from "../hooks/useStaffTicketDetail";
+} from "@/features/staff/hooks/ticket/useStaffTicketDetail";
 import {
   useStartTicket,
   useHoldTicket,
@@ -24,43 +24,43 @@ import {
   useEscalateTicket,
   useAddComment,
   useAddMaintenanceLog,
-} from "../hooks/useStaffTicketMutations";
+} from "@/features/staff/hooks/ticket/useStaffTicketMutations";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import { SlaCountdown } from "../components/SlaCountdown";
-import { HoldDialog } from "../components/HoldDialog";
-import { ResolveDialog } from "../components/ResolveDialog";
-import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
-import { TicketTimeline } from "../components/TicketTimeline";
-import { AddCommentForm } from "../components/AddCommentForm";
-import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
-import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
+import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
+import { HoldDialog } from "@/features/staff/components/ticket/HoldDialog";
+import { ResolveDialog } from "@/features/staff/components/ticket/ResolveDialog";
+import { EscalateRequestDialog } from "@/features/staff/components/ticket/EscalateRequestDialog";
+import { TicketTimeline } from "@/features/staff/components/ticket/TicketTimeline";
+import { AddCommentForm } from "@/features/staff/components/ticket/AddCommentForm";
+import { MaintenanceLogDialog } from "@/features/staff/components/ticket/MaintenanceLogDialog";
+import { EditMaintenanceLogDialog } from "@/features/staff/components/ticket/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import {
   TicketCommentThread,
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
-import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
-import SubIssuePanel from "../components/SubIssuePanel";
-import BatteryAssetInfoPanel from "../components/BatteryAssetInfoPanel";
+import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKbReferencesPanel";
+import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
+import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
-import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
   useMarkTicketChatsRead,
   useTranslateTicketChat,
-} from "@/shared/hooks/useTicketChatActions";
-import type { HoldFormValues } from "../schemas/staff-ticket.schema";
-import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
-import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
-import type { AddCommentFormValues } from "../schemas/staff-ticket.schema";
-import type { MaintenanceLogFormValues } from "../schemas/staff-ticket.schema";
+} from "@/shared/hooks/ticket/useTicketChatActions";
+import type { HoldFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { ResolveFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { EscalateRequestFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { AddCommentFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { MaintenanceLogFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
 const WAITING_STATUSES = [
   TicketStatusEnum.WaitingCustomer,

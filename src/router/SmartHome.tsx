@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuthContext } from "@/shared/context/authContext";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { redirectByRole } from "@/shared/types/session.types";
+import { redirectByRole } from "@/shared/types/account/session.types";
 import LandingPage from "@/features/landing/pages/LandingPage";
 
 const PageLoader = () => (

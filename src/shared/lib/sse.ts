@@ -13,7 +13,7 @@ import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type {
   LiveReadingDto,
   LiveStatsDto,
-} from "@/shared/types/sensor-stream.types";
+} from "@/shared/types/battery/sensor-stream.types";
 
 // Zod cho payload `reading` (cả mỗi item của `summary` — cùng shape §5.3).
 // non-null = required; nullable (bị lược khi null) = .nullish(); sourceType để z.number()

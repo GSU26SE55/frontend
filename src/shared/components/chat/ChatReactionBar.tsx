@@ -12,16 +12,16 @@ import {
   useAddReaction,
   useChatReactions,
   useRemoveReaction,
-} from "@/features/admin/hooks/useTicketChats";
+} from "@/features/admin/hooks/ticket/useTicketChats";
 import {
   REACTION_META,
   REACTION_ORDER,
   ReactionTypeEnum,
-} from "@/shared/enums/reaction.enum";
+} from "@/shared/enums/ticket/reaction.enum";
 import type {
   ChatReactionGroupDto,
   ChatReactionsAggregateDto,
-} from "@/shared/types/chat.types";
+} from "@/shared/types/chat/chat.types";
 
 // Map từ enum → key camelCase của aggregate DTO (BE trả camelCase).
 const GROUP_KEY: Record<ReactionTypeEnum, keyof ChatReactionsAggregateDto> = {

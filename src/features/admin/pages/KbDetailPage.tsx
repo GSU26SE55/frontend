@@ -20,7 +20,7 @@ import {
   Copy,
   BarChart3,
 } from "lucide-react";
-import { KbUsageStatsDialog } from "../components/KbUsageStatsDialog";
+import { KbUsageStatsDialog } from "@/features/admin/components/kb/KbUsageStatsDialog";
 import {
   useAdminKbDetail,
   usePublishKbArticle,
@@ -35,8 +35,8 @@ import {
   useMarkKbHelpful,
   useDeleteKbArticle,
   useCopyKbTemplate,
-} from "../hooks/useAdminKb";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
+} from "@/features/admin/hooks/kb/useAdminKb";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
@@ -44,7 +44,7 @@ import {
 import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbReviewActions } from "@/shared/components/kb/KbReviewActions";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
-import type { KbCompareParams } from "@/shared/types/kb.types";
+import type { KbCompareParams } from "@/shared/types/kb/kb.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
 export default function KbDetailPage() {

@@ -25,20 +25,20 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useBatteryAsset } from "@/features/admin/hooks/useBatteryAsset";
-import { useThresholdByType } from "@/features/admin/hooks/useThresholds";
-import { useDeleteBatteryAsset } from "@/features/admin/hooks/useDeleteBatteryAsset";
-import { useBatteryAssetRealtime } from "@/features/admin/hooks/useBatteryAssetRealtime";
-import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
-import TransferOwnerDialog from "@/features/admin/components/TransferOwnerDialog";
-import SensorChart from "@/features/admin/components/SensorChart";
-import ChargeDischargePeakChart from "@/features/admin/components/ChargeDischargePeakChart";
-import SensorHistoryTable from "@/features/admin/components/SensorHistoryTable";
-import CascadeRiskCard from "@/features/admin/components/CascadeRiskCard";
-import { BatteryStatusEnum } from "@/features/admin/types/battery-asset.types";
+import { useBatteryAsset } from "@/features/admin/hooks/battery/useBatteryAsset";
+import { useThresholdByType } from "@/features/admin/hooks/battery/useThresholds";
+import { useDeleteBatteryAsset } from "@/features/admin/hooks/battery/useDeleteBatteryAsset";
+import { useBatteryAssetRealtime } from "@/features/admin/hooks/battery/useBatteryAssetRealtime";
+import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
+import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
+import SensorChart from "@/features/admin/components/battery/SensorChart";
+import ChargeDischargePeakChart from "@/features/admin/components/battery/ChargeDischargePeakChart";
+import SensorHistoryTable from "@/features/admin/components/battery/SensorHistoryTable";
+import CascadeRiskCard from "@/features/admin/components/battery/CascadeRiskCard";
+import { BatteryStatusEnum } from "@/features/admin/types/battery/battery-asset.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
-import { useSensorStream } from "@/shared/hooks/useSensorStream";
+import { useSensorStream } from "@/shared/hooks/ticket/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 

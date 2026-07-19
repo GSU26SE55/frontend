@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import type { UserRole } from "@/shared/types/session.types";
+import type { UserRole } from "@/shared/types/account/session.types";
 
 interface RoleRouteProps {
   allowedRoles: UserRole[];

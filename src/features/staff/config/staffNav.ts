@@ -1,5 +1,5 @@
 // Nav config sidebar cho role STAFF.
-// Label/title chung (≥2 role) → import từ shared/utils/sidebarLabels.
+// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
 // Label/title đặc thù chỉ staff dùng → giữ inline ở đây.
 
 import {
@@ -18,7 +18,7 @@ import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
-} from "@/shared/utils/sidebarLabels";
+} from "@/shared/constants/sidebarLabels";
 
 export const STAFF_NAV: NavSection[] = [
   {

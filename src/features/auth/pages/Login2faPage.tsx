@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useVerify2faLogin } from "@/features/auth/hooks/useVerify2faLogin";
-import { useSend2faSms } from "@/features/auth/hooks/useSend2faSms";
+import { useVerify2faLogin } from "@/features/auth/hooks/2fa/useVerify2faLogin";
+import { useSend2faSms } from "@/features/auth/hooks/2fa/useSend2faSms";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { CHALLENGE_TOKEN_KEY } from "@/features/auth/types/auth.types";
 

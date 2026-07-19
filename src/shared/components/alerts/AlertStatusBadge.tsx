@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { AlertStatusEnum } from "@/shared/enums/alert.enum";
+import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
 import { toneClass, ALERT_STATUS_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<AlertStatusEnum, string> = {

@@ -26,8 +26,8 @@ import { checkPermission, P } from "@/shared/lib/authz";
 import {
   useAlertTicketSagas,
   useReprocessSaga,
-} from "@/features/admin/hooks/useAdminSagas";
-import type { AlertTicketSagaDTO } from "@/features/admin/types/saga.types";
+} from "@/features/admin/hooks/ticket/useAdminSagas";
+import type { AlertTicketSagaDTO } from "@/features/admin/types/ticket/saga.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 function fmt(d?: string | null) {

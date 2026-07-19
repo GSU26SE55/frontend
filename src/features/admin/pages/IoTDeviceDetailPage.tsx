@@ -7,20 +7,20 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
-import DeviceKeyRevealDialog from "@/features/admin/components/DeviceKeyRevealDialog";
-import DeviceCommandDialog from "@/features/admin/components/DeviceCommandDialog";
-import ConfirmActionDialog from "@/features/admin/components/ConfirmActionDialog";
+import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
+import DeviceCommandDialog from "@/features/admin/components/iot/DeviceCommandDialog";
+import ConfirmActionDialog from "@/features/admin/components/common/ConfirmActionDialog";
 import CalibrationTable from "@/shared/components/iot/CalibrationTable";
 import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog";
-import { useIotDevice } from "@/features/admin/hooks/useIotDevice";
+import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
 import {
   useRotateIotDeviceKey,
   useRevokeIotDeviceKey,
-} from "@/features/admin/hooks/useIotDeviceMutations";
-import { useIotCalibrations } from "@/shared/hooks/useIotCalibrations";
+} from "@/features/admin/hooks/iot/useIotDeviceMutations";
+import { useIotCalibrations } from "@/shared/hooks/iot/useIotCalibrations";
 import { handleErrorApi } from "@/shared/lib/errors";
-import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
-import type { IotDeviceCreatedDto } from "@/shared/types/iot.types";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+import type { IotDeviceCreatedDto } from "@/shared/types/iot/iot.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { EnvironmentalIncidentTypeEnum } from "@/shared/enums/environmental.enum";
-import { incidentTypeLabel } from "./incidentLabels";
+import { EnvironmentalIncidentTypeEnum } from "@/shared/enums/alerts/environmental.enum";
+import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 
 export default function IncidentTypeBadge({
   incidentType,

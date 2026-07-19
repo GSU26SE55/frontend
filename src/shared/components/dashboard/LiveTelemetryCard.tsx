@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import type {
   SensorStreamState,
   LiveStatsDto,
-} from "@/shared/types/sensor-stream.types";
+} from "@/shared/types/battery/sensor-stream.types";
 import { toneDot, toneFill } from "@/shared/theme/statusColors";
 
 // Display contract — nhận diện các metric hiển thị, KHÔNG ràng buộc DTO cụ thể.

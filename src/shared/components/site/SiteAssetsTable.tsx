@@ -6,7 +6,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import {
   BatteryStatusEnum,
   type BatteryAssetDto,
-} from "@/shared/types/battery.types";
+} from "@/shared/types/battery/battery.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {

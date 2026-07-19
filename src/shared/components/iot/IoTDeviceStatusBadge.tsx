@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { toneClass, IOT_DEVICE_STATUS_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<IotDeviceStatusEnum, string> = {

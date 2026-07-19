@@ -26,8 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
-import { KbCategoryLabel } from "@/shared/enums/kb.enum";
-import type { KbArticleDTO } from "@/shared/types/kb.types";
+import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
+import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
 
 // ── Sections ─────────────────────────────────────────────────────────────────

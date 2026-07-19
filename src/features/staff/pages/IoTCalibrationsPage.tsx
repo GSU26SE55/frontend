@@ -10,7 +10,7 @@ import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog
 import {
   useDeviceByCode,
   useIotCalibrations,
-} from "@/shared/hooks/useIotCalibrations";
+} from "@/shared/hooks/iot/useIotCalibrations";
 
 export default function IoTCalibrationsPage() {
   const [input, setInput] = useState("");

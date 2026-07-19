@@ -1,5 +1,5 @@
 import AmbientConfigView from "@/shared/components/ambient/AmbientConfigView";
-import { useSiteList } from "@/features/admin/hooks/useSites";
+import { useSiteList } from "@/features/admin/hooks/site/useSites";
 
 export default function AmbientConfigPage() {
   const { data } = useSiteList({ pageSize: 100 });

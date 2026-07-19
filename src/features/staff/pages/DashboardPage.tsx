@@ -22,14 +22,14 @@ import {
 } from "@/shared/components/dashboard/DashboardPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { NotificationStatusEnum } from "@/shared/enums/notification.enum";
-import { useStaffTickets } from "@/features/staff/hooks/useStaffTickets";
-import { useStaffTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
-import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotifications";
-import { useUnreadCount } from "@/shared/hooks/useNotifications";
-import { TicketCard } from "@/features/staff/components/TicketCard";
+import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
+import { useStaffTickets } from "@/features/staff/hooks/ticket/useStaffTickets";
+import { useStaffTicketDashboardStats } from "@/shared/hooks/dashboard/useDashboardStats";
+import { useStaffNotifications } from "@/features/staff/hooks/notification/useStaffNotifications";
+import { useUnreadCount } from "@/shared/hooks/notifications/useNotifications";
+import { TicketCard } from "@/features/staff/components/ticket/TicketCard";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
-import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
+import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
  * Staff = Bảng làm việc cá nhân: ticket được giao + rủi ro SLA.
@@ -127,8 +127,16 @@ export default function StaffDashboardPage() {
 
   // ── SLA risk donut (B.slaRisk) ──
   const riskData = [
-    { name: "An toàn", value: staffStats?.slaRisk.healthy ?? 0, fill: "var(--ok)" },
-    { name: "Sắp breach", value: staffStats?.slaRisk.near ?? 0, fill: "var(--p3)" },
+    {
+      name: "An toàn",
+      value: staffStats?.slaRisk.healthy ?? 0,
+      fill: "var(--ok)",
+    },
+    {
+      name: "Sắp breach",
+      value: staffStats?.slaRisk.near ?? 0,
+      fill: "var(--p3)",
+    },
     {
       name: "Đã breach",
       value: staffStats?.slaRisk.breached ?? 0,
@@ -238,7 +246,9 @@ export default function StaffDashboardPage() {
             <div className="h-full grid place-items-center text-center">
               <div>
                 <CheckCircle className="mx-auto size-8 text-primary" />
-                <p className="mt-3 text-sm font-medium">Không có ticket đang mở</p>
+                <p className="mt-3 text-sm font-medium">
+                  Không có ticket đang mở
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Các ticket được giao sẽ xuất hiện tại đây.
                 </p>
@@ -281,7 +291,9 @@ export default function StaffDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla?.running ?? 0}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Running</p>
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Running
+                    </p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -370,7 +382,13 @@ export default function StaffDashboardPage() {
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <defs>
-                    <linearGradient id="fillStaffTickets" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="fillStaffTickets"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="5%"
                         stopColor="var(--color-count)"

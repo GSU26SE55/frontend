@@ -37,31 +37,31 @@ import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkRole } from "@/shared/lib/authz";
-import { UserRole } from "@/shared/types/session.types";
+import { UserRole } from "@/shared/types/account/session.types";
 import {
   useIncidentList,
   useIncidentDetail,
   useAcknowledgeIncident,
   useResolveIncident,
   useFalseAlarmIncident,
-} from "@/shared/hooks/useEnvironmentalIncidents";
+} from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import {
   EnvironmentalIncidentStatusEnum,
   EnvironmentalIncidentTypeEnum,
-} from "@/shared/enums/environmental.enum";
+} from "@/shared/enums/alerts/environmental.enum";
 import {
   resolveIncidentSchema,
   type ResolveIncidentFormValues,
-} from "@/shared/schemas/environmental.schema";
+} from "@/shared/schemas/alerts/environmental.schema";
 import {
   falseAlarmSchema,
   type FalseAlarmFormValues,
-} from "@/shared/schemas/environmental.schema";
-import type { SiteOption } from "@/shared/types/site.types";
+} from "@/shared/schemas/alerts/environmental.schema";
+import type { SiteOption } from "@/shared/types/site/site.types";
 import ManualIncidentDialog from "./ManualIncidentDialog";
 import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
-import { incidentTypeLabel } from "./incidentLabels";
+import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const DEFAULTS = {

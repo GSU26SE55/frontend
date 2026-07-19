@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { TicketStatusEnum } from "@/shared/enums/ticket.enum";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import { toneClass, TICKET_STATUS_TONE } from "@/shared/theme/statusColors";
 
 // Badge trạng thái ticket DÙNG CHUNG cho admin/manager/staff — trước đây có 3 bản

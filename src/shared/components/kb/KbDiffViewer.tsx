@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { diffLines, toSplitRows } from "@/shared/lib/lineDiff";
 import type { DiffLine, SplitRow } from "@/shared/lib/lineDiff";
-import type { KbArticleDiffDTO, DiffSection } from "@/shared/types/kb.types";
+import type { KbArticleDiffDTO, DiffSection } from "@/shared/types/kb/kb.types";
 
 type ViewMode = "unified" | "split";
 

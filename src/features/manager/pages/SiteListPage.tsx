@@ -7,15 +7,18 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
-import { useSiteList } from "@/features/manager/hooks/useSites";
-import SiteTable from "@/features/manager/components/SiteTable";
+import { useSiteList } from "@/features/manager/hooks/site/useSites";
+import SiteTable from "@/features/manager/components/site/SiteTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const DEFAULTS = {
   keyword: "",
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: 10,
 };
@@ -26,11 +29,14 @@ export default function ManagerSiteListPage() {
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
 
   const { data, isLoading, isError, refetch } = useSiteList({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const items = data?.items ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -86,6 +92,7 @@ export default function ManagerSiteListPage() {
             data={items}
             pageNumber={filters.pageNumber}
             pageSize={filters.pageSize}
+            sort={sort}
           />
         )}
       </Card>

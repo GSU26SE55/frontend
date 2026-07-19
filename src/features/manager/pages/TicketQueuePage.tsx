@@ -8,14 +8,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import TicketTable from "@/features/manager/components/TicketTable";
-import TriageDialog from "@/features/manager/components/TriageDialog";
-import { useAdminTicketQueue } from "@/features/manager/hooks/useManagerTickets";
+import TicketTable from "@/features/manager/components/ticket/TicketTable";
+import TriageDialog from "@/features/manager/components/ticket/TriageDialog";
+import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import {
   TicketPriorityEnum,
   TicketCategoryEnum,
-} from "@/shared/types/ticket.types";
-import type { TicketDTO } from "@/shared/types/ticket.types";
+} from "@/shared/types/ticket/ticket.types";
+import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";

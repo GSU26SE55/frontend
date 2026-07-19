@@ -14,16 +14,16 @@ import {
   kbArticleSchema,
   type KbArticleFormInput,
   type KbArticleFormValues,
-} from "../schemas/kb-article.schema";
+} from "@/features/admin/schemas/kb/kb-article.schema";
 import {
   useAdminKbDetail,
   useCreateKbArticle,
   useUpdateKbArticle,
-} from "../hooks/useAdminKb";
-import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
-import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+} from "@/features/admin/hooks/kb/useAdminKb";
+import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
+import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
-import type { KbArticleTemplateDTO } from "@/shared/types/kb.types";
+import type { KbArticleTemplateDTO } from "@/shared/types/kb/kb.types";
 
 export default function KbEditorPage() {
   const { id } = useParams<{ id: string }>();

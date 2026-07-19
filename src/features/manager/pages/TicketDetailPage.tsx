@@ -11,36 +11,36 @@ import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import SlaCountdown from "@/features/manager/components/SlaCountdown";
-import TriageDialog from "@/features/manager/components/TriageDialog";
-import AssignDialog from "@/features/manager/components/AssignDialog";
-import ReassignDialog from "@/features/manager/components/ReassignDialog";
-import RejectDialog from "@/features/manager/components/RejectDialog";
-import TriageRejectDialog from "@/features/manager/components/TriageRejectDialog";
-import EscalateDialog from "@/features/manager/components/EscalateDialog";
-import DeclareIncidentDialog from "@/features/manager/components/DeclareIncidentDialog";
-import TicketActivityTimeline from "@/features/manager/components/TicketActivityTimeline";
-import AddCommentForm from "@/features/manager/components/AddCommentForm";
+import SlaCountdown from "@/features/manager/components/ticket/SlaCountdown";
+import TriageDialog from "@/features/manager/components/ticket/TriageDialog";
+import AssignDialog from "@/features/manager/components/ticket/AssignDialog";
+import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog";
+import RejectDialog from "@/features/manager/components/ticket/RejectDialog";
+import TriageRejectDialog from "@/features/manager/components/ticket/TriageRejectDialog";
+import EscalateDialog from "@/features/manager/components/ticket/EscalateDialog";
+import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareIncidentDialog";
+import TicketActivityTimeline from "@/features/manager/components/ticket/TicketActivityTimeline";
+import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import {
   TicketCommentThread,
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
-import BatteryAssetInfoPanel from "@/features/manager/components/BatteryAssetInfoPanel";
+import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
 import {
   useManagerTicketDetail,
   useTicketActivities,
   useApproveTicket,
   useTicketComments,
-} from "@/features/manager/hooks/useManagerTickets";
-import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+} from "@/features/manager/hooks/ticket/useManagerTickets";
+import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
   useMarkTicketChatsRead,
   useTranslateTicketChat,
-} from "@/shared/hooks/useTicketChatActions";
+} from "@/shared/hooks/ticket/useTicketChatActions";
 import { checkPermission, P } from "@/shared/lib/authz";
 import {
   TicketStatusEnum,
@@ -48,8 +48,8 @@ import {
   UrgencyLevelEnum,
   TicketCategoryEnum,
   EscalationReasonEnum,
-} from "@/shared/types/ticket.types";
-import TicketKbReferencesPanel from "@/features/manager/components/TicketKbReferencesPanel";
+} from "@/shared/types/ticket/ticket.types";
+import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { slaBarColorClass } from "@/shared/lib/sla";
 import { KEY } from "@/shared/utils/queryKeys";

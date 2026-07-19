@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SiteDashboardDto } from "@/shared/types/site.types";
+import type { SiteDashboardDto } from "@/shared/types/site/site.types";
 import { toneText, healthScoreTone } from "@/shared/theme/statusColors";
 
 function getHealthColor(score: number): string {

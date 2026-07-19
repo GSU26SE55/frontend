@@ -5,7 +5,7 @@ import {
   type DonutDatum,
 } from "@/shared/components/dashboard/DashboardPanel";
 import { ReportTimeSeriesChart } from "./ReportTimeSeriesChart";
-import type { BatteryDashboardStatsDto } from "@/shared/types/analytics.types";
+import type { BatteryDashboardStatsDto } from "@/shared/types/dashboard/analytics.types";
 
 const PALETTE = [
   "var(--chart-1)",

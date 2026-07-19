@@ -17,8 +17,8 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import {
   createCalibrationSchema,
   type CreateCalibrationForm,
-} from "@/shared/schemas/iot-calibration.schema";
-import { useCreateCalibration } from "@/shared/hooks/useIotCalibrationMutations";
+} from "@/shared/schemas/iot/iot-calibration.schema";
+import { useCreateCalibration } from "@/shared/hooks/iot/useIotCalibrationMutations";
 import { MESSAGES } from "@/shared/constants/messages";
 
 interface Props {

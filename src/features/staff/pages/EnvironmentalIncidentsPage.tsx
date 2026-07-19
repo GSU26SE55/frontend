@@ -1,5 +1,5 @@
 import EnvironmentalIncidentsView from "@/shared/components/environmental/EnvironmentalIncidentsView";
-import { useSiteList } from "@/features/staff/hooks/useSites";
+import { useSiteList } from "@/features/staff/hooks/site/useSites";
 
 export default function EnvironmentalIncidentsPage() {
   // Site list để Staff chọn SiteId khi report thủ công. Cần BE mở GET /api/sites

@@ -20,9 +20,9 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useDeleteCalibration } from "@/shared/hooks/useIotCalibrationMutations";
+import { useDeleteCalibration } from "@/shared/hooks/iot/useIotCalibrationMutations";
 import { handleErrorApi } from "@/shared/lib/errors";
-import type { IotDeviceCalibrationDto } from "@/shared/types/iot.types";
+import type { IotDeviceCalibrationDto } from "@/shared/types/iot/iot.types";
 import { ACTIONS } from "@/shared/constants/actions";
 import { MESSAGES } from "@/shared/constants/messages";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";

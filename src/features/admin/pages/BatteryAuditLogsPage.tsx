@@ -4,18 +4,20 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { useBatteryAuditLogs } from "@/features/admin/hooks/useBatteryAuditLogs";
-import { useAlertAuditLogs } from "@/features/admin/hooks/useAlertAuditLogs";
-import BatteryAuditLogTable from "@/features/admin/components/BatteryAuditLogTable";
+import { useBatteryAuditLogs } from "@/features/admin/hooks/battery/useBatteryAuditLogs";
+import { useAlertAuditLogs } from "@/features/admin/hooks/ticket/useAlertAuditLogs";
+import BatteryAuditLogTable from "@/features/admin/components/battery/BatteryAuditLogTable";
 import AuditLogFilterBar, {
   type AuditLogFilterValues,
-} from "@/features/admin/components/AuditLogFilterBar";
+} from "@/features/admin/components/account/AuditLogFilterBar";
 import {
   BatteryAuditActionCode,
   AlertAuditActionCode,
 } from "@/features/admin/enums/battery-audit.enum";
-import type { BatteryAuditLogDto } from "@/features/admin/types/battery-audit.types";
+import type { BatteryAuditLogDto } from "@/features/admin/types/battery/battery-audit.types";
 import type { PaginationResponse } from "@/shared/types/api.types";
+import type { ServerSortState } from "@/shared/hooks/useServerSort";
+import type { SortDirection } from "@/shared/hooks/useSortableData";
 
 // YYYY-MM-DD → UTC range (BE filter từ/đến).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
@@ -33,6 +35,7 @@ interface AuditPanelProps {
   onReset: () => void;
   actionOptions: string[];
   targetLabel: string;
+  sort: ServerSortState;
   pageNumber: number;
   pageSize: number;
   onPageChange: (p: number) => void;
@@ -48,6 +51,7 @@ function AuditPanel({
   onReset,
   actionOptions,
   targetLabel,
+  sort,
   pageNumber,
   pageSize,
   onPageChange,
@@ -69,6 +73,7 @@ function AuditPanel({
           isError={isError}
           pageNumber={pageNumber}
           pageSize={pageSize}
+          sort={sort}
         />
       </Card>
       <DataPagination
@@ -89,6 +94,8 @@ function useAuditTabState() {
   const [filters, setFilters] = useState<AuditLogFilterValues>({});
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [sortBy, setSortBy] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDirection>("asc");
 
   const onFilterChange = <K extends keyof AuditLogFilterValues>(
     key: K,
@@ -102,10 +109,28 @@ function useAuditTabState() {
     setPageNumber(1);
   };
 
+  // Server-side sort: toggle asc → desc → clear, reset về trang 1 khi đổi sort.
+  const toggleSort = (key: string) => {
+    if (sortBy !== key) {
+      setSortBy(key);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortBy(null);
+      setSortDir("asc");
+    }
+    setPageNumber(1);
+  };
+  const sort: ServerSortState = { sortBy, sortDir, toggleSort };
+
   return {
     filters,
     onFilterChange,
     onReset,
+    sort,
+    sortBy,
+    sortDir,
     pageNumber,
     pageSize,
     setPageNumber,
@@ -125,6 +150,8 @@ function BatteryAuditTab() {
       batteryId: s.filters.target,
       from: toUtcStart(s.filters.dateFrom),
       to: toUtcEnd(s.filters.dateTo),
+      sortBy: s.sortBy || undefined,
+      sortDir: s.sortBy ? s.sortDir : undefined,
       pageNumber: s.pageNumber,
       pageSize: s.pageSize,
     },
@@ -141,6 +168,7 @@ function BatteryAuditTab() {
       onReset={s.onReset}
       actionOptions={Object.values(BatteryAuditActionCode)}
       targetLabel="Battery ID"
+      sort={s.sort}
       pageNumber={s.pageNumber}
       pageSize={s.pageSize}
       onPageChange={s.setPageNumber}
@@ -157,6 +185,8 @@ function AlertAuditTab() {
       alertId: s.filters.target,
       from: toUtcStart(s.filters.dateFrom),
       to: toUtcEnd(s.filters.dateTo),
+      sortBy: s.sortBy || undefined,
+      sortDir: s.sortBy ? s.sortDir : undefined,
       pageNumber: s.pageNumber,
       pageSize: s.pageSize,
     },
@@ -173,6 +203,7 @@ function AlertAuditTab() {
       onReset={s.onReset}
       actionOptions={Object.values(AlertAuditActionCode)}
       targetLabel="Alert ID"
+      sort={s.sort}
       pageNumber={s.pageNumber}
       pageSize={s.pageSize}
       onPageChange={s.setPageNumber}

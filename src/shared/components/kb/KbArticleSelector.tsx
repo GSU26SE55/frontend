@@ -15,13 +15,13 @@ import { BookOpen, Eye, FileText, Search, ThumbsUp, X } from "lucide-react";
 import type {
   KbArticleDTO,
   KbArticleSummaryDTO,
-} from "@/shared/types/kb.types";
+} from "@/shared/types/kb/kb.types";
 import {
   KbArticleStatusEnum,
   KbCategoryLabel,
   KB_CATEGORY_OPTIONS,
-} from "@/shared/enums/kb.enum";
-import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+} from "@/shared/enums/kb/kb.enum";
+import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import { SectionContent } from "./KbArticleDetail";

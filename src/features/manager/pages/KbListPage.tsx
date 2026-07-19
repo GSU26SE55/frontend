@@ -15,6 +15,7 @@ import { Plus, Search, Tag, X } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import {
   useManagerKbList,
@@ -23,8 +24,8 @@ import {
   useManagerArchiveKbArticle,
   useMarkManagerKbHelpful,
   useManagerUpdateKbArticle,
-} from "../hooks/useManagerKb";
-import KbArticleTable from "../components/KbArticleTable";
+} from "@/features/manager/hooks/kb/useManagerKb";
+import KbArticleTable from "@/features/manager/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
@@ -33,8 +34,8 @@ import {
   KbArticleStatusLabel,
   KbCategoryCode,
   KB_CATEGORY_OPTIONS,
-} from "@/shared/enums/kb.enum";
-import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+} from "@/shared/enums/kb/kb.enum";
+import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
 import { loadFailed } from "@/shared/constants/emptyStates";
@@ -55,6 +56,8 @@ const DEFAULTS = {
   tag: "",
   status: "",
   category: "",
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: PAGE_SIZE,
 };
@@ -69,6 +72,7 @@ export default function KbListPage() {
   const tagSearch = useDebouncedSearch(filters.tag ?? "", (t) =>
     setFilter("tag", t),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
 
   const categoryValue = filters.category
     ? (filters.category as TicketCategoryEnum)
@@ -82,6 +86,8 @@ export default function KbListPage() {
     tag: filters.tag || undefined,
     status: statusValue,
     category: categoryValue ? KbCategoryCode[categoryValue] : undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
@@ -249,6 +255,7 @@ export default function KbListPage() {
             onArchive={(a) => archive(a.id)}
             onMarkHelpful={(a) => markHelpful(a.id)}
             onEdit={(a) => setEditArticleId(a.id)}
+            sort={sort}
           />
         )}
       </Card>
