@@ -126,12 +126,12 @@ const DEFAULTS = {
 
 export default function AccountsPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
-  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const { data, isLoading, isError, refetch } = useAdminAccountList({
     pageNumber: filters.pageNumber,

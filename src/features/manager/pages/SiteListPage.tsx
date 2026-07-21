@@ -24,12 +24,12 @@ const DEFAULTS = {
 };
 
 export default function ManagerSiteListPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
-  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const { data, isLoading, isError, refetch } = useSiteList({
     pageNumber: filters.pageNumber,
