@@ -10,7 +10,7 @@ interface RichContentViewProps {
 }
 
 /**
- * Render nội dung HTML (Blog `contentHtml`, KB `symptoms`/`diagnosisSteps`/`solutionSteps`).
+ * Render nội dung HTML (Blog `contentHtml`, KB `content`).
  *
  * - LUÔN đi qua `sanitizeHtml` — nội dung có thể do AI sinh, không tin được.
  * - Ảnh lưu dạng `<img data-file-id="...">` (xem `AuthImageNode`): file cần Bearer

@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
-import { KbTemplateBadge } from "@/shared/components/kb/KbTemplateBadge";
 import { Eye, ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import {
@@ -41,6 +40,8 @@ interface KbArticleTableProps {
   onDelete?: (article: KbArticleSummaryDTO) => void;
   onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
   onEdit?: (article: KbArticleSummaryDTO) => void;
+  /** Sao chép row này → tạo bài mới tương tự (mở trang create điền sẵn). */
+  onCopy?: (article: KbArticleSummaryDTO) => void;
   basePath?: string;
   /** Sort server-side — state từ useUrlSort. */
   sort: ServerSortState;
@@ -58,6 +59,7 @@ export default function KbArticleTable({
   onDelete,
   onMarkHelpful,
   onEdit,
+  onCopy,
   basePath = "/admin/kb",
   sort,
 }: KbArticleTableProps) {
@@ -185,7 +187,6 @@ export default function KbArticleTable({
             <TableCell className="py-2">
               <div className="flex flex-wrap items-center gap-1.5">
                 <KbStatusBadge status={article.status} />
-                <KbTemplateBadge isTemplate={article.isTemplate} compact />
               </div>
             </TableCell>
             <TableCell className="py-2 text-center">
@@ -233,6 +234,11 @@ export default function KbArticleTable({
                   >
                     Chỉnh sửa
                   </DropdownMenuItem>
+                  {onCopy && (
+                    <DropdownMenuItem onClick={() => onCopy(article)}>
+                      Sao chép
+                    </DropdownMenuItem>
+                  )}
                   {article.status === KbArticleStatusEnum.Draft &&
                     onPublish && (
                       <DropdownMenuItem onClick={() => onPublish(article)}>

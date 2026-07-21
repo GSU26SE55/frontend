@@ -19,10 +19,7 @@ type ViewMode = "unified" | "split";
 
 const FIELDS: { key: keyof KbArticleDiffDTO; label: string }[] = [
   { key: "titleDiff", label: "Tiêu đề" },
-  { key: "symptomsDiff", label: "Triệu chứng" },
-  { key: "diagnosisStepsDiff", label: "Bước chẩn đoán" },
-  { key: "solutionStepsDiff", label: "Hướng giải quyết" },
-  { key: "recommendedPartsDiff", label: "Linh kiện khuyến nghị" },
+  { key: "contentDiff", label: "Nội dung" },
   { key: "tagsDiff", label: "Thẻ" },
 ];
 

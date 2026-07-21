@@ -1,6 +1,26 @@
 import type { ChatAiIntentEnum } from "@/shared/enums/ticket/chat.enum";
 export { ChatAiIntentEnum } from "@/shared/enums/ticket/chat.enum";
 import type { ActorRoleEnum } from "@/shared/enums/ticket/ticket.enum";
+import type { AddCommentPayload } from "@/shared/types/ticket/ticket.types";
+
+// ── Chat outbox (gửi comment offline-first) ──────────────────────────────
+// Tin nhắn đang chờ gửi lên BE, lưu bền ở localStorage per-ticket. Worker gửi
+// tuần tự FIFO + backoff retry; hết deadline → status "failed" (chờ user bấm
+// thử lại). KHÔNG phải token nên không vi phạm rule "cookie only" của dự án.
+export type OutboxStatus = "queued" | "sending" | "failed";
+
+export interface OutboxMessage {
+  /** id tạm phía FE — "temp-{ticketId}-{seq}", seq lấy từ counter bền trong store. */
+  tempId: string;
+  ticketId: string;
+  payload: AddCommentPayload;
+  status: OutboxStatus;
+  /** số lần đã thử gửi (dùng tính backoff delay). */
+  attempt: number;
+  createdAt: number;
+  /** createdAt + tổng timeout — quá mốc này mà chưa gửi được → "failed". */
+  deadline: number;
+}
 
 export interface ChatDto {
   id: string;

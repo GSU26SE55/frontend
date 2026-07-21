@@ -18,11 +18,11 @@ import { AttachmentPreviewStrip } from "@/shared/components/chat/AttachmentPrevi
 import { VoiceRecordingBar } from "@/shared/components/chat/VoiceRecordingBar";
 import { useVoiceRecorder } from "@/shared/hooks/ticket/useVoiceRecorder";
 import { useTranscribeVoiceChat } from "@/shared/hooks/ticket/useTicketChatActions";
+import { useChatOutbox } from "@/shared/hooks/ticket/useChatOutbox";
 import {
   addCommentSchema,
   type AddCommentFormValues,
 } from "@/features/manager/schemas/ticket/ticket.schema";
-import { useAddComment } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { MESSAGES } from "@/shared/constants/messages";
 
 const MAX_TEXTAREA_HEIGHT = 120;
@@ -44,7 +44,7 @@ export default function AddCommentForm({
   prefillText,
   prefillVersion = 0,
 }: Props) {
-  const { mutateAsync, isPending } = useAddComment();
+  const { enqueue } = useChatOutbox(ticketId);
   const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -81,8 +81,10 @@ export default function AddCommentForm({
     });
   }, [form, prefillText, prefillVersion]);
 
-  const onSubmit = async (values: AddCommentFormValues) => {
-    await mutateAsync({ ticketId, payload: { ...values, isInternal } });
+  // Đưa vào hàng đợi (outbox) rồi clear ô nhập ngay — không chờ round-trip BE.
+  // Worker gửi tuần tự + retry; trạng thái gửi/lỗi hiển thị dưới bubble.
+  const onSubmit = (values: AddCommentFormValues) => {
+    enqueue({ ...values, isInternal });
     form.reset();
     setResetCount((c) => c + 1);
   };
@@ -214,7 +216,7 @@ export default function AddCommentForm({
             type="submit"
             size="icon-lg"
             className="shrink-0 rounded-full"
-            disabled={isPending || uploading || isRecording || isEmpty}
+            disabled={uploading || isRecording || isEmpty}
             aria-label="Gui binh luan"
           >
             <Send size={16} />

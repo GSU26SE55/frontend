@@ -38,6 +38,7 @@ import {
   ActorRoleEnum,
   type TicketCommentDTO,
 } from "@/shared/types/ticket/ticket.types";
+import type { OutboxMessage } from "@/shared/types/chat/chat.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
@@ -190,6 +191,12 @@ interface TicketCommentThreadProps {
   /** GH-133 C4 — Admin override sửa/xóa chat khi ticket đã Closed (chỉ Admin truyền cả 2). */
   onOverrideEdit?: (chat: TicketCommentDTO) => void;
   onOverrideDelete?: (chat: TicketCommentDTO) => void;
+  /** Tin đang chờ gửi (outbox) — render bubble optimistic ở cuối luồng, lọc theo tab. */
+  pendingMessages?: OutboxMessage[];
+  /** Bấm dòng "Thử lại" đỏ dưới tin lỗi → gửi lại đúng tin đó. */
+  onRetryPending?: (tempId: string) => void;
+  /** Bỏ hẳn 1 tin lỗi khỏi hàng đợi. */
+  onDiscardPending?: (tempId: string) => void;
 }
 
 /** Khung chat dạng bong bóng — TÁCH 2 tab: Công khai (khách thấy) & Nội bộ (chỉ nhân viên). */
@@ -212,6 +219,9 @@ export function TicketCommentThread({
   onTranslate,
   onOverrideEdit,
   onOverrideDelete,
+  pendingMessages = [],
+  onRetryPending,
+  onDiscardPending,
 }: TicketCommentThreadProps) {
   const [internalTab, setInternalTab] = useState<ChatTab>("public");
   const tab = activeTab ?? internalTab;
@@ -248,6 +258,15 @@ export function TicketCommentThread({
     () =>
       sorted.filter((c) => (tab === "internal" ? c.isInternal : !c.isInternal)),
     [sorted, tab],
+  );
+
+  // Tin đang chờ gửi (outbox) thuộc tab hiện tại — bubble optimistic cuối luồng.
+  const pendingForTab = useMemo(
+    () =>
+      pendingMessages.filter((m) =>
+        tab === "internal" ? m.payload.isInternal : !m.payload.isInternal,
+      ),
+    [pendingMessages, tab],
   );
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -291,7 +310,7 @@ export function TicketCommentThread({
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [visible.length, tab, aiSuggestions.length]);
+  }, [visible.length, tab, aiSuggestions.length, pendingForTab.length]);
 
   const markedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
@@ -451,7 +470,9 @@ export function TicketCommentThread({
           : "Bình luận nội bộ — chỉ nhân viên xử lý ticket xem được."}
       </p>
 
-      {visible.length === 0 && aiSuggestions.length === 0 ? (
+      {visible.length === 0 &&
+      aiSuggestions.length === 0 &&
+      pendingForTab.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
           {tab === "public"
             ? "Chưa có bình luận công khai."
@@ -585,6 +606,15 @@ export function TicketCommentThread({
               </div>
             );
           })}
+
+          {pendingForTab.map((m) => (
+            <PendingBubble
+              key={m.tempId}
+              message={m}
+              onRetry={onRetryPending}
+              onDiscard={onDiscardPending}
+            />
+          ))}
 
           {aiSuggestions.length > 0 && (
             <div className="flex items-end gap-2 justify-end">
@@ -723,5 +753,60 @@ function CommentActionsMenu({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * Bubble tin nhắn đang chờ gửi (outbox) — TRÔNG Y HỆT bubble của chính mình
+ * (xanh, bên phải). Chỉ khác dòng dưới cùng: thay timestamp bằng trạng thái.
+ *  - queued/sending: "Đang gửi…" (xám) — vẫn hiển thị vậy trong lúc retry ngầm.
+ *  - failed (hết timeout): "⚠ Gửi lỗi · Nhấn để thử lại" (đỏ) — bấm gửi lại tin đó.
+ */
+function PendingBubble({
+  message,
+  onRetry,
+  onDiscard,
+}: {
+  message: OutboxMessage;
+  onRetry?: (tempId: string) => void;
+  onDiscard?: (tempId: string) => void;
+}) {
+  const failed = message.status === "failed";
+  const attachCount = message.payload.attachments?.length ?? 0;
+  return (
+    <div className="flex items-end gap-2 justify-end">
+      <div className="flex max-w-[75%] flex-col items-end">
+        <div className="rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-primary-foreground">
+          {message.payload.body}
+        </div>
+        {attachCount > 0 && (
+          <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
+            {attachCount} tệp đính kèm
+          </span>
+        )}
+        {failed ? (
+          <span className="flex items-center gap-1.5 px-1 mt-0.5">
+            <button
+              type="button"
+              onClick={() => onRetry?.(message.tempId)}
+              className="text-[10px] text-destructive hover:underline"
+            >
+              ⚠ Gửi lỗi · Nhấn để thử lại
+            </button>
+            <button
+              type="button"
+              onClick={() => onDiscard?.(message.tempId)}
+              className="text-[10px] text-muted-foreground hover:underline"
+            >
+              Bỏ
+            </button>
+          </span>
+        ) : (
+          <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
+            Đang gửi…
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ export const STAFF_MESSAGES = {
   kb: {
     created: "Đã tạo bài viết KB (chờ duyệt)",
     updated: "Đã cập nhật bài viết (chờ duyệt)",
+    duplicated: "Đã sao chép bài viết — mở bản mới để chỉnh sửa",
     markedHelpful: "Đã đánh dấu hữu ích",
   },
   ticket: {

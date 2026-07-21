@@ -18,6 +18,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import {
   useStaffKbList,
   useMarkStaffKbHelpful,
+  useStaffDuplicateKbArticle,
 } from "@/features/staff/hooks/kb/useStaffKb";
 import KbArticleTable from "@/features/staff/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
@@ -66,6 +67,12 @@ export default function KbListPage() {
 
   const { data, isLoading, isError, refetch } = useStaffKbList(params);
   const { mutate: markHelpful } = useMarkStaffKbHelpful();
+  const { mutateAsync: duplicate } = useStaffDuplicateKbArticle();
+
+  const handleCopy = async (id: string) => {
+    const created = await duplicate(id);
+    if (created?.id) navigate(`/staff/kb/${created.id}/edit`);
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
@@ -190,6 +197,7 @@ export default function KbListPage() {
             hasFilter={hasActiveFilter}
             onResetFilter={resetFilters}
             onMarkHelpful={(a) => markHelpful(a.id)}
+            onCopy={(a) => handleCopy(a.id)}
             sort={sort}
           />
         )}

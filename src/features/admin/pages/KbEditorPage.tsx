@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save } from "lucide-react";
 import { TagInput } from "@/shared/components/ui/TagInput";
+import { KbTemplatePicker } from "@/shared/components/kb/KbTemplatePicker";
 import {
   kbArticleSchema,
   type KbArticleFormInput,
@@ -18,9 +17,11 @@ import {
 } from "@/features/admin/schemas/kb/kb-article.schema";
 import {
   useAdminKbDetail,
+  useAdminKbTemplates,
   useCreateKbArticle,
   useUpdateKbArticle,
 } from "@/features/admin/hooks/kb/useAdminKb";
+import { adminKbService } from "@/features/admin/services/kb/kb.service";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -38,29 +39,25 @@ export default function KbEditorPage() {
   const ticketId = location.state?.ticketId as string | undefined;
 
   const { data: existing, isLoading } = useAdminKbDetail(id ?? "");
+  const { data: templates, isLoading: templatesLoading } =
+    useAdminKbTemplates(!isEdit);
   const { mutateAsync: create, isPending: creating } = useCreateKbArticle();
   const { mutateAsync: update, isPending: updating } = useUpdateKbArticle();
-
-  const [partsText, setPartsText] = useState("");
 
   const {
     register,
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<KbArticleFormInput, unknown, KbArticleFormValues>({
     resolver: zodResolver(kbArticleSchema),
     defaultValues: {
       category: TicketCategoryEnum.Charging,
       title: "",
-      symptoms: "",
-      diagnosisSteps: "",
-      solutionSteps: "",
-      recommendedParts: [],
+      content: "",
       tags: [],
-      isInternalOnly: false,
-      isTemplate: false,
       changeDescription: "",
     },
   });
@@ -70,44 +67,37 @@ export default function KbEditorPage() {
       reset({
         category: existing.category,
         title: existing.title,
-        symptoms: existing.symptoms,
-        diagnosisSteps: existing.diagnosisSteps,
-        solutionSteps: existing.solutionSteps,
-        recommendedParts: existing.recommendedParts ?? [],
+        content: existing.content,
         tags: existing.tags,
-        isInternalOnly: existing.isInternalOnly,
-        isTemplate: existing.isTemplate,
         changeDescription: "",
       });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPartsText((existing.recommendedParts ?? []).join("\n"));
     } else if (template) {
       reset({
         // BE trả category dạng chuỗi enum — dùng thẳng, không map qua code số nữa
         category: template.category ?? TicketCategoryEnum.Charging,
         title: "",
-        symptoms: template.symptoms,
-        diagnosisSteps: template.diagnosisSteps,
-        solutionSteps: template.solutionSteps,
-        recommendedParts: template.recommendedParts ?? [],
+        content: template.content,
         tags: template.tags,
-        isInternalOnly: false,
-        isTemplate: false,
         changeDescription: "",
       });
-      setPartsText((template.recommendedParts ?? []).join("\n"));
     }
   }, [existing, template, reset]);
 
+  // Chọn bài mẫu ở trang tạo mới → đổ content HTML vào editor, giữ title trống.
+  const handlePickTemplate = async (templateId: string) => {
+    const tpl = await adminKbService
+      .getTemplateDetail(templateId)
+      .then((r) => r.data.data);
+    if (!tpl) return;
+    setValue("category", tpl.category);
+    setValue("content", tpl.content, { shouldValidate: true });
+    setValue("tags", tpl.tags ?? []);
+  };
+
   const onSubmit = async (values: KbArticleFormValues) => {
     try {
-      const payload = {
-        ...values,
-        recommendedParts: partsText
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      };
+      // KB luôn nội bộ (Customer xem qua Blog, không xem KB) → isInternalOnly=true.
+      const payload = { ...values, isInternalOnly: true, isTemplate: false };
       if (isEdit) {
         await update({ id, payload });
         navigate(`/admin/kb/${id}`);
@@ -190,33 +180,14 @@ export default function KbEditorPage() {
                 </select>
               </div>
 
-              <Controller
-                control={control}
-                name="isInternalOnly"
-                render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                    />
-                    Chỉ nội bộ (ẩn với khách hàng)
-                  </label>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="isTemplate"
-                render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                    />
-                    Dùng làm bài mẫu (Staff copy cấu trúc)
-                  </label>
-                )}
-              />
+              {!isEdit && (
+                <KbTemplatePicker
+                  templates={templates?.items}
+                  isLoading={templatesLoading}
+                  onPick={handlePickTemplate}
+                  disabled={creating}
+                />
+              )}
 
               <Controller
                 control={control}
@@ -281,11 +252,11 @@ export default function KbEditorPage() {
             <CardContent className="grid gap-3">
               <div className="grid gap-1.5">
                 <label className="text-sm font-medium">
-                  Triệu chứng <span className="text-destructive">*</span>
+                  Nội dung <span className="text-destructive">*</span>
                 </label>
                 <Controller
                   control={control}
-                  name="symptoms"
+                  name="content"
                   render={({ field }) => (
                     <RichTextEditor
                       value={field.value ?? ""}
@@ -294,71 +265,11 @@ export default function KbEditorPage() {
                     />
                   )}
                 />
-                {errors.symptoms && (
+                {errors.content && (
                   <p className="text-xs text-destructive">
-                    {errors.symptoms.message}
+                    {errors.content.message}
                   </p>
                 )}
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">
-                  Bước chẩn đoán <span className="text-destructive">*</span>
-                </label>
-                <Controller
-                  control={control}
-                  name="diagnosisSteps"
-                  render={({ field }) => (
-                    <RichTextEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      ticketId={ticketId}
-                    />
-                  )}
-                />
-                {errors.diagnosisSteps && (
-                  <p className="text-xs text-destructive">
-                    {errors.diagnosisSteps.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">
-                  Hướng giải quyết <span className="text-destructive">*</span>
-                </label>
-                <Controller
-                  control={control}
-                  name="solutionSteps"
-                  render={({ field }) => (
-                    <RichTextEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      ticketId={ticketId}
-                    />
-                  )}
-                />
-                {errors.solutionSteps && (
-                  <p className="text-xs text-destructive">
-                    {errors.solutionSteps.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">
-                  Linh kiện khuyến nghị{" "}
-                  <span className="text-muted-foreground font-normal">
-                    (mỗi dòng 1 linh kiện)
-                  </span>
-                </label>
-                <Textarea
-                  rows={2}
-                  placeholder={"Cáp sạc OEM\nCảm biến nhiệt"}
-                  value={partsText}
-                  onChange={(e) => setPartsText(e.target.value)}
-                  className="text-sm resize-y"
-                />
               </div>
             </CardContent>
           </Card>
