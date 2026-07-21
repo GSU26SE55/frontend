@@ -42,12 +42,12 @@ const DEFAULTS = {
 
 export default function IoTDevicesPage() {
   const navigate = useNavigate();
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
-  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
   const { data: sitesData } = useSiteList({ pageNumber: 1, pageSize: 100 });
 
   const { data, isLoading } = useIotDevices({

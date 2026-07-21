@@ -46,12 +46,12 @@ type ConfirmState =
   | { type: "restore"; item: BatteryTypeDto };
 
 export default function BatteryTypesPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
-  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState<BatteryTypeDto | null>(null);
   const [thresholdTarget, setThresholdTarget] = useState<BatteryTypeDto | null>(

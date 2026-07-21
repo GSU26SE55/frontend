@@ -9,29 +9,34 @@ import type { ServerSortState } from "@/shared/hooks/useServerSort";
  * pageNumber tự reset về 1 (do useUrlFilters). BE sort toàn dataset trước phân trang.
  *
  * Usage:
- *   const { filters, setFilter } = useUrlFilters(DEFAULTS); // DEFAULTS có sortBy:"", sortDir:""
- *   const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
+ *   const { filters, setFilters } = useUrlFilters(DEFAULTS); // DEFAULTS có sortBy:"", sortDir:""
+ *   const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
  *   ...
  *   <DataTable serverSort={sort} ... />
  *   // gửi API: sortBy: filters.sortBy || undefined, sortDir: filters.sortDir || undefined
+ *
+ * ⚠️ PHẢI dùng `setFilters` (số nhiều) — toggle ghi CẢ sortBy + sortDir trong 1 lần
+ * cập nhật URL. Nếu gọi 2 lần setFilter riêng, lần sau đọc prev cũ → ghi đè lần trước
+ * (mất sortBy) → sort không đổi & icon không active.
  */
 export function useUrlSort(
   sortByRaw: string | undefined,
   sortDirRaw: string | undefined,
-  setFilter: (key: "sortBy" | "sortDir", value: string | undefined) => void,
+  setFilters: (updates: {
+    sortBy?: string | undefined;
+    sortDir?: string | undefined;
+  }) => void,
 ): ServerSortState {
   const sortBy = sortByRaw || null;
   const sortDir: SortDirection = sortDirRaw === "desc" ? "desc" : "asc";
 
   const toggleSort = (key: string) => {
     if (sortBy !== key) {
-      setFilter("sortBy", key);
-      setFilter("sortDir", "asc");
+      setFilters({ sortBy: key, sortDir: "asc" });
     } else if (sortDir === "asc") {
-      setFilter("sortDir", "desc");
+      setFilters({ sortDir: "desc" });
     } else {
-      setFilter("sortBy", undefined);
-      setFilter("sortDir", undefined);
+      setFilters({ sortBy: undefined, sortDir: undefined });
     }
   };
 

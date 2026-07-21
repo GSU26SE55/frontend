@@ -57,6 +57,32 @@ export function useUrlFilters<T extends FilterRecord>(defaults: T) {
     [setSearchParams],
   );
 
+  // Set nhiều key trong MỘT lần cập nhật URL — tránh race khi gọi setFilter
+  // liên tiếp (mỗi setFilter là 1 setSearchParams riêng, lần sau đọc prev cũ
+  // nên ghi đè lần trước). Dùng cho toggle sort (sortBy + sortDir cùng lúc).
+  const setFilters = useCallback(
+    (updates: Partial<Record<keyof T, T[keyof T] | undefined>>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          let touchedNonPage = false;
+          for (const [key, value] of Object.entries(updates)) {
+            if (value === undefined || value === null || value === "") {
+              next.delete(key);
+            } else {
+              next.set(key, String(value));
+            }
+            if (key !== "pageNumber") touchedNonPage = true;
+          }
+          if (touchedNonPage) next.set("pageNumber", "1");
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const resetFilters = useCallback(() => {
     setSearchParams(new URLSearchParams(), { replace: true });
   }, [setSearchParams]);
@@ -72,5 +98,5 @@ export function useUrlFilters<T extends FilterRecord>(defaults: T) {
     });
   }, [filters, defaults]);
 
-  return { filters, setFilter, resetFilters, hasActiveFilter };
+  return { filters, setFilter, setFilters, resetFilters, hasActiveFilter };
 }

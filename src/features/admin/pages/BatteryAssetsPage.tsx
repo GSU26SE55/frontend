@@ -50,12 +50,12 @@ const DEFAULTS = {
 };
 
 export default function BatteryAssetsPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
-  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<BatteryAssetDto | null>(null);
 
