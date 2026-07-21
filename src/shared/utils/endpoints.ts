@@ -466,6 +466,8 @@ export const ENDPOINTS = {
     COMPARE: (id: string) => `/api/internal/knowledge-base/${id}/compare`,
     COPY_TEMPLATE: (id: string) =>
       `/api/internal/knowledge-base/${id}/copy-template`,
+    // Sao chép bài KB có sẵn → tạo bản mới (title "_copy", Draft), trả Id.
+    DUPLICATE: (id: string) => `/api/internal/knowledge-base/${id}/duplicate`,
     // List bài mẫu — server ép IsTemplate=true + Status=Published
     TEMPLATES: "/api/internal/knowledge-base/templates",
     TEMPLATE_DETAIL: (id: string) =>

@@ -2,8 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
-import { KbTemplateBadge } from "@/shared/components/kb/KbTemplateBadge";
-import { Eye, ThumbsUp, BookOpen } from "lucide-react";
+import { Eye, ThumbsUp, BookOpen, Copy } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
@@ -18,6 +17,8 @@ interface KbArticleTableProps {
   hasFilter?: boolean;
   onResetFilter?: () => void;
   onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
+  /** Sao chép row này → tạo bài mới tương tự (mở trang create điền sẵn). */
+  onCopy?: (article: KbArticleSummaryDTO) => void;
   /** Sort server-side — state từ useUrlSort. */
   sort: ServerSortState;
 }
@@ -28,6 +29,7 @@ export default function KbArticleTable({
   hasFilter,
   onResetFilter,
   onMarkHelpful,
+  onCopy,
   sort,
 }: KbArticleTableProps) {
   const navigate = useNavigate();
@@ -107,7 +109,6 @@ export default function KbArticleTable({
       cell: (article) => (
         <div className="flex flex-wrap items-center gap-1.5">
           <KbStatusBadge status={article.status} />
-          <KbTemplateBadge isTemplate={article.isTemplate} compact />
         </div>
       ),
     },
@@ -149,6 +150,28 @@ export default function KbArticleTable({
           </span>
         ),
     },
+    ...(onCopy
+      ? [
+          {
+            id: "actions",
+            header: "",
+            headClassName: "w-16",
+            cellClassName: "py-2 text-right",
+            stopRowClick: true,
+            cell: (article: KbArticleSummaryDTO) => (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                title="Sao chép"
+                onClick={() => onCopy(article)}
+              >
+                <Copy className="size-3.5" />
+              </Button>
+            ),
+          } as ColumnDef<KbArticleSummaryDTO>,
+        ]
+      : []),
   ];
 
   return (

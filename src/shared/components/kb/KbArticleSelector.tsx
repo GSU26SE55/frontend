@@ -272,7 +272,7 @@ export function KbArticleSelector({
           </div>
 
           {/* Two-column body: list + preview */}
-          <div className="grid gap-4 h-[58vh] min-h-90 max-h-130 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="grid gap-4 h-[58vh] min-h-90 max-h-130 md:grid-cols-[minmax(0,4fr)_minmax(0,6fr)]">
             {/* Left: list */}
             <div className="overflow-y-auto space-y-1 pr-1">
               {articles.map((article) => {

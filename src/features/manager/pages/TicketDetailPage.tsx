@@ -41,6 +41,8 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
+import { useChatSender } from "@/shared/hooks/ticket/useChatSender";
+import { managerTicketService } from "@/features/manager/services/ticket/ticket.service";
 import { checkPermission, P } from "@/shared/lib/authz";
 import {
   TicketStatusEnum,
@@ -158,6 +160,13 @@ export default function TicketDetailPage() {
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId: id, chatId: chat.id, targetLanguage });
+
+  // Outbox chat: worker gửi tuần tự + retry; composer enqueue; thread render pending.
+  const {
+    pending: pendingChats,
+    retry: retryChat,
+    discard: discardChat,
+  } = useChatSender(id, managerTicketService.addComment);
 
   if (isError) {
     return (
@@ -401,6 +410,9 @@ export default function TicketDetailPage() {
                   deletePending={deleteChatPending}
                   onMarkRead={handleMarkRead}
                   onTranslate={handleTranslate}
+                  pendingMessages={pendingChats}
+                  onRetryPending={retryChat}
+                  onDiscardPending={discardChat}
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">

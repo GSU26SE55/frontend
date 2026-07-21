@@ -5,11 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save } from "lucide-react";
 import { TagInput } from "@/shared/components/ui/TagInput";
+import { KbTemplatePicker } from "@/shared/components/kb/KbTemplatePicker";
 import {
   kbArticleSchema,
   type KbArticleFormInput,
@@ -17,9 +17,11 @@ import {
 } from "@/features/admin/schemas/kb/kb-article.schema";
 import {
   useAdminKbDetail,
+  useAdminKbTemplates,
   useCreateKbArticle,
   useUpdateKbArticle,
 } from "@/features/admin/hooks/kb/useAdminKb";
+import { adminKbService } from "@/features/admin/services/kb/kb.service";
 import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -37,6 +39,8 @@ export default function KbEditorPage() {
   const ticketId = location.state?.ticketId as string | undefined;
 
   const { data: existing, isLoading } = useAdminKbDetail(id ?? "");
+  const { data: templates, isLoading: templatesLoading } =
+    useAdminKbTemplates(!isEdit);
   const { mutateAsync: create, isPending: creating } = useCreateKbArticle();
   const { mutateAsync: update, isPending: updating } = useUpdateKbArticle();
 
@@ -45,6 +49,7 @@ export default function KbEditorPage() {
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<KbArticleFormInput, unknown, KbArticleFormValues>({
     resolver: zodResolver(kbArticleSchema),
@@ -53,8 +58,6 @@ export default function KbEditorPage() {
       title: "",
       content: "",
       tags: [],
-      isInternalOnly: false,
-      isTemplate: false,
       changeDescription: "",
     },
   });
@@ -66,8 +69,6 @@ export default function KbEditorPage() {
         title: existing.title,
         content: existing.content,
         tags: existing.tags,
-        isInternalOnly: existing.isInternalOnly,
-        isTemplate: existing.isTemplate,
         changeDescription: "",
       });
     } else if (template) {
@@ -77,20 +78,31 @@ export default function KbEditorPage() {
         title: "",
         content: template.content,
         tags: template.tags,
-        isInternalOnly: false,
-        isTemplate: false,
         changeDescription: "",
       });
     }
   }, [existing, template, reset]);
 
+  // Chọn bài mẫu ở trang tạo mới → đổ content HTML vào editor, giữ title trống.
+  const handlePickTemplate = async (templateId: string) => {
+    const tpl = await adminKbService
+      .getTemplateDetail(templateId)
+      .then((r) => r.data.data);
+    if (!tpl) return;
+    setValue("category", tpl.category);
+    setValue("content", tpl.content, { shouldValidate: true });
+    setValue("tags", tpl.tags ?? []);
+  };
+
   const onSubmit = async (values: KbArticleFormValues) => {
     try {
+      // KB luôn nội bộ (Customer xem qua Blog, không xem KB) → isInternalOnly=true.
+      const payload = { ...values, isInternalOnly: true, isTemplate: false };
       if (isEdit) {
-        await update({ id, payload: values });
+        await update({ id, payload });
         navigate(`/admin/kb/${id}`);
       } else {
-        const res = await create(values);
+        const res = await create(payload);
         if (res?.id) navigate(`/admin/kb/${res.id}`);
         else navigate("/admin/kb");
       }
@@ -168,33 +180,14 @@ export default function KbEditorPage() {
                 </select>
               </div>
 
-              <Controller
-                control={control}
-                name="isInternalOnly"
-                render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                    />
-                    Chỉ nội bộ (ẩn với khách hàng)
-                  </label>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="isTemplate"
-                render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                    />
-                    Dùng làm bài mẫu (Staff copy cấu trúc)
-                  </label>
-                )}
-              />
+              {!isEdit && (
+                <KbTemplatePicker
+                  templates={templates?.items}
+                  isLoading={templatesLoading}
+                  onPick={handlePickTemplate}
+                  disabled={creating}
+                />
+              )}
 
               <Controller
                 control={control}

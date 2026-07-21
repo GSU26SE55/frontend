@@ -46,6 +46,7 @@ export const ADMIN_MESSAGES = {
     created: "Đã tạo bài viết KB",
     updated: "Đã cập nhật bài viết",
     deleted: "Đã xóa bài viết",
+    duplicated: "Đã sao chép bài viết — mở bản mới để chỉnh sửa",
     markedHelpful: "Đã đánh dấu hữu ích",
   },
   ticket: {

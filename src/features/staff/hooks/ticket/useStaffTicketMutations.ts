@@ -79,7 +79,7 @@ export function useAddComment(ticketId: string) {
     mutationFn: (data: AddCommentRequest) =>
       staffTicketService.addComment(ticketId, data),
     onSuccess: () => {
-      toast.success(STAFF_MESSAGES.ticket.commentAdded);
+      // Không toast success — gửi qua chat outbox, trạng thái hiển thị dưới bubble.
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chats(ticketId),
       });

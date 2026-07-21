@@ -24,8 +24,6 @@ export const kbArticleSchema = z.object({
     .max(10, "Tối đa 10 thẻ")
     .optional()
     .default([]),
-  isInternalOnly: z.boolean().default(false),
-  isTemplate: z.boolean().default(false),
   changeDescription: z.string().optional(),
 });
 

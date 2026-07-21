@@ -198,7 +198,7 @@ export const useAddComment = () => {
       payload: AddCommentPayload;
     }) => managerTicketService.addComment(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      toast.success(MANAGER_MESSAGES.ticket.commentAdded);
+      // Không toast success — gửi qua chat outbox, trạng thái hiển thị dưới bubble.
       qc.invalidateQueries({
         queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
       });

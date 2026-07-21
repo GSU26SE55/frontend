@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,16 +17,14 @@ import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import {
   useManagerKbList,
-  useManagerKbDetail,
   useManagerPublishKbArticle,
   useManagerArchiveKbArticle,
   useMarkManagerKbHelpful,
-  useManagerUpdateKbArticle,
+  useManagerDuplicateKbArticle,
 } from "@/features/manager/hooks/kb/useManagerKb";
 import KbArticleTable from "@/features/manager/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
-import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import {
   KbArticleStatusEnum,
   KbArticleStatusLabel,
@@ -96,11 +92,12 @@ export default function KbListPage() {
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: markHelpful } = useMarkManagerKbHelpful();
-  const { mutateAsync: update, isPending: updating } =
-    useManagerUpdateKbArticle();
+  const { mutateAsync: duplicate } = useManagerDuplicateKbArticle();
 
-  const [editArticleId, setEditArticleId] = useState<string | null>(null);
-  const { data: editArticle } = useManagerKbDetail(editArticleId ?? "");
+  const handleCopy = async (id: string) => {
+    const created = await duplicate(id);
+    if (created?.id) navigate(`/manager/kb/${created.id}/edit`);
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
@@ -254,7 +251,8 @@ export default function KbListPage() {
             onPublish={(a) => publish(a.id)}
             onArchive={(a) => archive(a.id)}
             onMarkHelpful={(a) => markHelpful(a.id)}
-            onEdit={(a) => setEditArticleId(a.id)}
+            onEdit={(a) => navigate(`/manager/kb/${a.id}/edit`)}
+            onCopy={(a) => handleCopy(a.id)}
             sort={sort}
           />
         )}
@@ -271,45 +269,6 @@ export default function KbListPage() {
           onPageChange={(p) => setFilter("pageNumber", p)}
         />
       )}
-
-      <AnimatePresence>
-        {editArticleId && editArticle && (
-          <>
-            <motion.div
-              key="kb-list-edit-backdrop"
-              className="fixed inset-0 z-50 bg-black/20"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setEditArticleId(null)}
-            />
-            <motion.div
-              key="kb-list-edit-panel"
-              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
-              initial={{ x: "100%", opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 340,
-                damping: 32,
-                mass: 0.9,
-              }}
-            >
-              <KbEditorPanel
-                article={editArticle}
-                onClose={() => setEditArticleId(null)}
-                isPending={updating}
-                onSave={async (payload) => {
-                  await update({ id: editArticle.id, payload });
-                  setEditArticleId(null);
-                }}
-              />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

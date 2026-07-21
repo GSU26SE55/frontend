@@ -28,6 +28,15 @@ export function useManagerKbDetail(id: string) {
   });
 }
 
+// List bài mẫu (chọn khi tạo bài mới).
+export function useManagerKbTemplates(enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEY.kb.templates(),
+    queryFn: () => managerKbService.getTemplates().then((r) => r.data.data),
+    enabled,
+  });
+}
+
 export function useManagerKbVersions(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.versions(id),
@@ -108,6 +117,20 @@ export function useManagerCopyKbTemplate() {
   return useMutation({
     mutationFn: (id: string) =>
       managerKbService.copyTemplate(id).then((r) => r.data.data),
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+export function useManagerDuplicateKbArticle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      managerKbService.duplicate(id).then((r) => r.data.data),
+    onSuccess: () => {
+      toast.success(MANAGER_MESSAGES.kb.duplicated);
+      qc.invalidateQueries({ queryKey: [KEY.kb] });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

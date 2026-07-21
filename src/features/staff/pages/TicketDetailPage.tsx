@@ -22,9 +22,10 @@ import {
   useResumeTicket,
   useResolveTicket,
   useEscalateTicket,
-  useAddComment,
   useAddMaintenanceLog,
 } from "@/features/staff/hooks/ticket/useStaffTicketMutations";
+import { staffTicketService } from "@/features/staff/services/ticket/ticket.service";
+import { useChatSender } from "@/shared/hooks/ticket/useChatSender";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
@@ -138,7 +139,13 @@ export default function TicketDetailPage() {
   const resumeMutation = useResumeTicket(ticketId);
   const resolveMutation = useResolveTicket(ticketId);
   const escalateMutation = useEscalateTicket(ticketId);
-  const commentMutation = useAddComment(ticketId);
+  // Outbox chat: worker gửi tuần tự + retry; composer chỉ enqueue.
+  const {
+    pending: pendingChats,
+    enqueue: enqueueChat,
+    retry: retryChat,
+    discard: discardChat,
+  } = useChatSender(ticketId, staffTicketService.addComment);
   const logMutation = useAddMaintenanceLog(ticketId);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
@@ -207,7 +214,7 @@ export default function TicketDetailPage() {
   };
 
   const handleCommentSubmit = (data: AddCommentFormValues) => {
-    commentMutation.mutate(data);
+    enqueueChat(data);
   };
 
   const handleLogSubmit = (data: MaintenanceLogFormValues) => {
@@ -376,6 +383,9 @@ export default function TicketDetailPage() {
                   deletePending={deleteChatPending}
                   onMarkRead={handleMarkRead}
                   onTranslate={handleTranslate}
+                  pendingMessages={pendingChats}
+                  onRetryPending={retryChat}
+                  onDiscardPending={discardChat}
                 />
               </div>
               {canComment && (
@@ -384,7 +394,7 @@ export default function TicketDetailPage() {
                   <AddCommentForm
                     ticketId={ticketId}
                     onSubmit={handleCommentSubmit}
-                    isPending={commentMutation.isPending}
+                    isPending={false}
                     onTyping={sendTyping}
                     isInternal={chatTab === "internal"}
                     existingFileIds={existingFileIds}

@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -19,16 +28,16 @@ import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import {
   useAdminKbList,
-  useAdminKbDetail,
   usePublishKbArticle,
   useArchiveKbArticle,
   useMarkKbHelpful,
-  useUpdateKbArticle,
+  useDuplicateKbArticle,
+  useDeleteKbArticle,
 } from "@/features/admin/hooks/kb/useAdminKb";
+import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import KbArticleTable from "@/features/admin/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
-import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import {
   KbArticleStatusEnum,
   KbArticleStatusLabel,
@@ -96,10 +105,14 @@ export default function KbListPage() {
   const { mutate: publish } = usePublishKbArticle();
   const { mutate: archive } = useArchiveKbArticle();
   const { mutate: markHelpful } = useMarkKbHelpful();
-  const { mutateAsync: update, isPending: updating } = useUpdateKbArticle();
+  const { mutateAsync: duplicate } = useDuplicateKbArticle();
+  const { mutate: deleteKb } = useDeleteKbArticle();
+  const [toDelete, setToDelete] = useState<KbArticleSummaryDTO | null>(null);
 
-  const [editArticleId, setEditArticleId] = useState<string | null>(null);
-  const { data: editArticle } = useAdminKbDetail(editArticleId ?? "");
+  const handleCopy = async (id: string) => {
+    const created = await duplicate(id);
+    if (created?.id) navigate(`/admin/kb/${created.id}/edit`);
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
@@ -253,7 +266,9 @@ export default function KbListPage() {
             onPublish={(a) => publish(a.id)}
             onArchive={(a) => archive(a.id)}
             onMarkHelpful={(a) => markHelpful(a.id)}
-            onEdit={(a) => setEditArticleId(a.id)}
+            onEdit={(a) => navigate(`/admin/kb/${a.id}/edit`)}
+            onCopy={(a) => handleCopy(a.id)}
+            onDelete={(a) => setToDelete(a)}
             sort={sort}
           />
         )}
@@ -271,44 +286,37 @@ export default function KbListPage() {
         />
       )}
 
-      <AnimatePresence>
-        {editArticleId && editArticle && (
-          <>
-            <motion.div
-              key="kb-list-edit-backdrop"
-              className="fixed inset-0 z-50 bg-black/20"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setEditArticleId(null)}
-            />
-            <motion.div
-              key="kb-list-edit-panel"
-              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
-              initial={{ x: "100%", opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 340,
-                damping: 32,
-                mass: 0.9,
+      <AlertDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa bài viết?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && (
+                <>
+                  Bạn có chắc muốn xóa bài viết{" "}
+                  <strong>{toDelete.title}</strong>? Hành động này không thể
+                  hoàn tác.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToDelete(null)} />
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (toDelete) deleteKb(toDelete.id);
+                setToDelete(null);
               }}
             >
-              <KbEditorPanel
-                article={editArticle}
-                onClose={() => setEditArticleId(null)}
-                isPending={updating}
-                onSave={async (payload) => {
-                  await update({ id: editArticle.id, payload });
-                  setEditArticleId(null);
-                }}
-              />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

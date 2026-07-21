@@ -20,10 +20,7 @@ import {
   useRemoveTicketKbRef,
 } from "@/features/staff/hooks/ticket/useTicketKbRefs";
 import { staffKbService } from "@/features/staff/services/kb/kb.service";
-import {
-  useStaffKbSuggest,
-  useStaffKbCreate,
-} from "@/features/staff/hooks/kb/useStaffKb";
+import { useStaffKbSuggest } from "@/features/staff/hooks/kb/useStaffKb";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
@@ -35,9 +32,7 @@ import {
   KbArticleSelector,
   type KbArticleSearchParams,
 } from "@/shared/components/kb/KbArticleSelector";
-import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb/kb.enum";
-import type { UpdateKbArticlePayload } from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
 import { toneFill } from "@/shared/theme/statusColors";
 
@@ -85,8 +80,6 @@ export default function TicketKbReferencesPanel({
   const { data: suggestions } = useStaffKbSuggest(ticketId);
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
-  const { mutateAsync: createArticle, isPending: creatingArticle } =
-    useStaffKbCreate();
 
   const suggested = useMemo(() => {
     const attachedIds = new Set((refs ?? []).map((r) => r.kbArticleId));
@@ -112,7 +105,6 @@ export default function TicketKbReferencesPanel({
   );
 
   const [showAdd, setShowAdd] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [refType, setRefType] = useState<RefType>(
     afterResolveOnly
@@ -160,17 +152,6 @@ export default function TicketKbReferencesPanel({
     setShowAdd(false);
   };
 
-  const handleCreateSave = async (payload: UpdateKbArticlePayload) => {
-    const res = await createArticle(payload);
-    if (res?.id) {
-      addRef({
-        kbArticleId: res.id,
-        referenceType: KbReferenceTypeEnum.GeneratedAfterResolve,
-      });
-    }
-    setShowCreate(false);
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-3 p-4">
@@ -205,7 +186,11 @@ export default function TicketKbReferencesPanel({
                 ? "Ticket đã hoàn thành — không thể tạo bài viết"
                 : undefined
             }
-            onClick={() => setShowCreate(true)}
+            onClick={() =>
+              navigate("/staff/kb/new", {
+                state: { ticketId, category: defaultCategory },
+              })
+            }
           >
             <FilePlus2 className="size-3.5" /> Tạo bài viết mới
           </Button>
@@ -353,43 +338,6 @@ export default function TicketKbReferencesPanel({
               </CardContent>
             </Card>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showCreate && (
-          <>
-            <motion.div
-              key="kb-create-backdrop"
-              className="fixed inset-0 z-50 bg-black/20"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setShowCreate(false)}
-            />
-            <motion.div
-              key="kb-create-panel"
-              className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
-              initial={{ x: "100%", opacity: 0.5 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 340,
-                damping: 32,
-                mass: 0.9,
-              }}
-            >
-              <KbEditorPanel
-                initialCategory={defaultCategory}
-                ticketId={ticketId}
-                onClose={() => setShowCreate(false)}
-                isPending={creatingArticle}
-                onSave={handleCreateSave}
-              />
-            </motion.div>
-          </>
         )}
       </AnimatePresence>
 
