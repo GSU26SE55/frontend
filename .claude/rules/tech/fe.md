@@ -22,89 +22,51 @@
 
 ---
 
-## Cấu trúc `src/` — Feature-based + Shared
+## Cấu trúc `src/` — Feature-based + Shared, **nhóm theo DOMAIN trong mỗi layer**
+
+> **Quy tắc tổ chức (2026-07):** Trong mỗi layer (`types/`, `services/`, `schemas/`, `hooks/`, `components/`, `enums/`) — cả ở `shared/` lẫn `features/*` — thêm **1 lớp folder con theo domain/tính năng** để gom file cùng chức năng. File **generic (không thuộc domain cụ thể) để root** của layer đó (hoặc `common/`).
+>
+> Domain chuẩn (dùng thống nhất giữa các layer): `account`, `ticket`, `battery`, `alerts`, `ambient`, `iot`, `kb`, `notification`, `dashboard`, `file`, `site`, `chat`.
 
 ```
 src/
-├── main.tsx
-├── App.tsx                         ← providers: QueryClient, AuthProvider, ThemeProvider, Router, Toaster
-├── config/
-│   └── env.ts                      ← Zod-validate import.meta.env khi boot
-├── router/
-│   ├── index.tsx                   ← createBrowserRouter — toàn bộ route tree
-│   ├── ProtectedRoute.tsx          ← check isHydrating → loader | !auth → /login
-│   └── RoleRoute.tsx               ← allowedRoles: UserRole[] | sai role → /unauthorized
-├── features/                       ← mỗi feature = 1 domain nghiệp vụ độc lập
-│   ├── auth/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   ├── hooks/                  ← useMutation (useLogin, useLogout, ...)
-│   │   ├── services/               ← auth.service.ts
-│   │   ├── schemas/                ← Zod schemas
-│   │   └── types/
-│   ├── admin/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   └── types/
-│   ├── manager/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   ├── services/
-│   │   └── types/
-│   └── staff/
-│       ├── pages/
-│       ├── components/
-│       ├── hooks/
-│       ├── services/
-│       └── types/
-└── shared/
+├── main.tsx · App.tsx · config/env.ts · router/
+├── lib/utils.ts                    ← shadcn cn() (vị trí mặc định shadcn — KHÔNG phải shared/lib)
+├── features/                       ← mỗi feature = 1 nhóm role (auth/admin/manager/staff)
+│   └── {feature}/
+│       ├── pages/                  ← {Name}Page.tsx (thường để phẳng)
+│       ├── components/{domain}/    ← PascalCase, nhóm theo domain (account/battery/ticket/...)
+│       ├── hooks/{domain}/         ← use{Name}.ts nhóm theo domain
+│       ├── services/{domain}/      ← {name}.service.ts nhóm theo domain
+│       ├── schemas/{domain}/       ← {name}.schema.ts nhóm theo domain (auth nhóm theo sub-tính năng: password/2fa/profile/otp/account)
+│       ├── types/{domain}/         ← {name}.types.ts nhóm theo domain
+│       └── enums/                  ← enum riêng feature (nếu chỉ 1 feature dùng)
+└── shared/                         ← nơi DUY NHẤT chứa code reuse cross-feature
     ├── components/
-    │   ├── ui/                     ← shadcn components (generated — không edit tay)
+    │   ├── ui/                     ← shadcn generated (không edit tay) + composite app-level
     │   ├── layout/                 ← AppLayout, AuthLayout, Sidebar, Header
-    │   └── common/                 ← LoadingSpinner, ErrorBoundary, EmptyState
+    │   └── {domain}/               ← alerts/ ambient/ analytics/ chat/ dashboard/ file/ iot/ kb/ media/ site/ ticket/
     ├── hooks/
-    │   └── useDebounce.ts
-    ├── lib/
-    │   ├── axios.ts                ← Axios instance + interceptors (token attach + refresh queue)
-    │   ├── authz.ts                ← RBAC: P constants, checkPermission(), checkRole()
-    │   ├── errors.ts               ← HttpError, EntityError, handleErrorApi
-    │   └── utils.ts                ← shadcn cn() utility
-    ├── stores/
-    │   └── sessionStore.ts         ← Zustand: user, setSession, clearSession
-    ├── context/
-    │   └── authContext.tsx         ← AuthProvider: isHydrating + 3-case boot logic
-    ├── utils/
-    │   ├── queryKeys.ts            ← KEY (root) + QUERY_KEY (factories)
-    │   └── endpoints.ts            ← ENDPOINTS — single source of truth cho API paths
-    ├── enums/                      ← `as const` object + type alias — KHÔNG dùng TypeScript enum
-    │   ├── session.enum.ts         ← UserRole
-    │   ├── account.enum.ts         ← AccountStatusEnum, AvatarSourceEnum, RefreshTokenStatus
-    │   ├── ticket.enum.ts          ← TicketStatusEnum, TicketPriorityEnum, ImpactScopeEnum, UrgencyLevelEnum, PauseReasonEnum, EscalationReasonEnum, SlaTimerStatusEnum, MaintenanceLogTypeEnum, ActivityActionEnum, ActorRoleEnum, TicketCategoryEnum, TicketOriginEnum
-    │   ├── battery.enum.ts         ← BatteryStatusEnum
-    │   ├── site.enum.ts            ← SiteStatusEnum
-    │   └── common.enum.ts          ← TrendDir
-    └── types/
-        ├── api.types.ts            ← CommonResponse<T>, PaginationResponse<T>, ErrorEntity
-        ├── session.types.ts        ← SessionUser, JwtPayload, UserRole, decodeToken, redirectByRole
-        ├── ticket.types.ts         ← TicketDTO, TicketDetailDTO, SlaTimerDTO, action payloads, filter params (re-export từ shared/enums/ticket.enum)
-        ├── battery.types.ts        ← BatteryDTO (re-export BatteryStatusEnum)
-        ├── site.types.ts           ← SiteDTO (re-export SiteStatusEnum)
-        ├── account.types.ts        ← AccountDTO (re-export AccountStatusEnum, AvatarSourceEnum)
-        └── common.types.ts         ← BaseFilterPagination, shared query types
-```
-
-**Feature enums** (chỉ dùng trong 1 feature — không đặt ở shared):
-```
-src/features/admin/enums/
-├── role.enum.ts          ← RoleStatusEnum, RoleTypeFilter
-├── audit.enum.ts         ← LoginAttemptResult, AuditActionEnum
-└── battery-asset.enum.ts ← WarrantyStatusEnum, ChargingStateEnum, BatteryChemistryEnum
-
-src/features/staff/enums/
-└── notification.enum.ts  ← NotificationTypeEnum, NotificationChannelEnum, NotificationStatusEnum
+    │   ├── {domain}/               ← alerts/ ambient/ dashboard/ iot/ notifications/ ticket/ file/
+    │   └── useDebounce.ts · useSortableData.ts · useUrlFilters.ts · useUrlSort.ts · useServerSort.ts · useDebouncedSearch.ts   ← generic (root)
+    ├── services/{domain}/          ← alerts/ ambient/ dashboard/ notification/ file/ iot/ ticket/
+    ├── schemas/
+    │   ├── {domain}/               ← alerts/ ambient/ notification/ iot/ kb/ ticket/
+    │   └── common.schema.ts        ← emailField, passwordField, passwordFieldBounded, phoneField, otpField, coordField (root)
+    ├── enums/
+    │   ├── account/                ← account.enum, session.enum (UserRole), audit.enum (LoginAttemptResult, AuditSeverity...)
+    │   ├── battery/                ← battery.enum (BatteryStatusEnum, WarrantyStatusEnum), cascade.enum, telemetry.enum
+    │   ├── ticket/                 ← ticket.enum, chat.enum, reaction.enum
+    │   ├── alerts/ ambient/ iot/ kb/ notification/ dashboard/ file/ site/
+    │   └── common.enum.ts          ← TrendDir (root)
+    ├── types/
+    │   ├── account/                ← account.types, session.types, permission.types, login-attempt.types
+    │   ├── battery/                ← battery.types, cascade.types, sensor-*.types, battery-asset.types (BatteryAssetDetailDto)
+    │   ├── ticket/ alerts/ ambient/ iot/ kb/ notification/ dashboard/ file/ site/ chat/
+    │   └── api.types.ts            ← CommonResponse<T>, PaginationResponse<T>, ErrorEntity (root — generic)
+    ├── lib/                        ← axios, authz, errors, signalr, sse, sla, deviceId, lineDiff (infra — KHÔNG nhóm domain)
+    ├── stores/sessionStore.ts · context/authContext.tsx
+    └── utils/queryKeys.ts · endpoints.ts · constants/
 ```
 
 ---
@@ -131,15 +93,16 @@ enum TicketStatus { New = "New", Open = "Open" }
 
 | Scope | Nơi đặt | Ví dụ |
 |-------|---------|-------|
-| Dùng ≥ 2 feature | `src/shared/enums/{domain}.enum.ts` | `ticket.enum.ts`, `account.enum.ts` |
-| Chỉ 1 feature dùng | `src/features/{feature}/enums/{domain}.enum.ts` | `admin/enums/audit.enum.ts` |
+| Dùng ≥ 2 feature | `src/shared/enums/{domain}/{name}.enum.ts` | `shared/enums/ticket/ticket.enum.ts`, `shared/enums/account/account.enum.ts` |
+| Chỉ 1 feature dùng | `src/features/{feature}/enums/{name}.enum.ts` | `admin/enums/role.enum.ts` |
+| Generic (không domain) | `src/shared/enums/{name}.enum.ts` (root) | `common.enum.ts` |
 
 **Types re-export enum** — `types/*.ts` **không định nghĩa enum inline**, chỉ import từ `enums/` và re-export:
 
 ```ts
-// shared/types/ticket.types.ts
-import type { TicketStatusEnum } from "@/shared/enums/ticket.enum";
-export { TicketStatusEnum } from "@/shared/enums/ticket.enum";
+// shared/types/ticket/ticket.types.ts
+import type { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+export { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 
 export interface TicketDTO {
   status: TicketStatusEnum;  // dùng enum type ở đây
@@ -149,7 +112,7 @@ export interface TicketDTO {
 **Trong Zod schema** — dùng `z.nativeEnum()` với `as const` object:
 
 ```ts
-import { ImpactScopeEnum } from "@/shared/enums/ticket.enum";
+import { ImpactScopeEnum } from "@/shared/enums/ticket/ticket.enum";
 z.nativeEnum(ImpactScopeEnum)  // ✅ hoạt động với as const object
 ```
 
@@ -363,8 +326,15 @@ const { mutate } = useMutation({
 
 ## Feature Isolation
 
-`no-restricted-imports` trong `eslint.config.js` — block cross-feature import tự động.
-CI fail nếu `features/admin` import từ `features/manager` hoặc `features/staff` (và ngược lại).
+`no-restricted-imports` trong `eslint.config.js` — block cross-feature import tự động (ĐÃ enforce).
+CI fail (`eslint --max-warnings=0`) nếu 1 feature import từ feature khác — áp dụng cho **cả 4**: `admin`, `manager`, `staff`, `auth` (mọi cặp).
+
+```
+❌ features/admin/... import "@/features/staff/..."   → lỗi eslint
+✅ Code dùng chung cross-feature → đưa ra src/shared/ rồi cả 2 feature import từ shared
+```
+
+Ví dụ vi phạm thường gặp đã xử: enum/DTO dùng chung 2 feature (vd `LoginAttemptResult`, `BatteryAssetDetailDto`) phải nằm ở `shared/`, không để 1 feature import từ feature kia.
 
 ---
 
@@ -398,8 +368,8 @@ Plan cho ticket FE **bắt buộc** có đủ các section sau. Thiếu bất k�
 ```
 | Enum | File nguồn |
 |------|-----------|
-| TicketStatusEnum | shared/enums/ticket.enum.ts |
-| AccountStatusEnum | shared/enums/account.enum.ts |
+| TicketStatusEnum | shared/enums/ticket/ticket.enum.ts |
+| AccountStatusEnum | shared/enums/account/account.enum.ts |
 ```
 
 ## Types

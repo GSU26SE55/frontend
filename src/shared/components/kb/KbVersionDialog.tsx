@@ -15,11 +15,11 @@ import { KbDiffViewer } from "./KbDiffViewer";
 import {
   KbVersionStatusEnum,
   KbVersionStatusLabel,
-} from "@/shared/enums/kb.enum";
+} from "@/shared/enums/kb/kb.enum";
 import type {
   KbArticleVersionDTO,
   KbArticleDiffDTO,
-} from "@/shared/types/kb.types";
+} from "@/shared/types/kb/kb.types";
 
 interface KbVersionDialogProps {
   open: boolean;

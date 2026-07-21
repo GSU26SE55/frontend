@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,16 +15,16 @@ import {
   kbArticleSchema,
   type KbArticleFormInput,
   type KbArticleFormValues,
-} from "../schemas/kb-article.schema";
+} from "@/features/staff/schemas/kb/kb-article.schema";
 import {
   useStaffKbDetail,
   useStaffKbCreate,
   useStaffKbUpdate,
-} from "../hooks/useStaffKb";
-import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
-import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+} from "@/features/staff/hooks/kb/useStaffKb";
+import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
+import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
-import type { KbArticleTemplateDTO } from "@/shared/types/kb.types";
+import type { KbArticleTemplateDTO } from "@/shared/types/kb/kb.types";
 
 export default function KbEditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,8 @@ export default function KbEditorPage() {
   const template = !isEdit
     ? (location.state?.template as KbArticleTemplateDTO | undefined)
     : undefined;
+  // Soạn bài từ 1 ticket → picker ảnh bật thêm tab "Ảnh từ chat" của ticket đó
+  const ticketId = location.state?.ticketId as string | undefined;
 
   const { data: existing, isLoading } = useStaffKbDetail(id ?? "");
   const { mutateAsync: create, isPending: creating } = useStaffKbCreate();
@@ -57,6 +60,7 @@ export default function KbEditorPage() {
       recommendedParts: [],
       tags: [],
       isInternalOnly: false,
+      isTemplate: false,
       changeDescription: "",
     },
   });
@@ -72,16 +76,15 @@ export default function KbEditorPage() {
         recommendedParts: existing.recommendedParts ?? [],
         tags: existing.tags,
         isInternalOnly: existing.isInternalOnly,
+        isTemplate: existing.isTemplate,
         changeDescription: "",
       });
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPartsText((existing.recommendedParts ?? []).join("\n"));
     } else if (template) {
-      const catOption = KB_CATEGORY_OPTIONS.find(
-        (c) => c.code === template.category,
-      );
       reset({
-        category: catOption?.value ?? TicketCategoryEnum.Charging,
+        // BE trả category dạng chuỗi enum — dùng thẳng, không map qua code số nữa
+        category: template.category ?? TicketCategoryEnum.Charging,
         title: "",
         symptoms: template.symptoms,
         diagnosisSteps: template.diagnosisSteps,
@@ -89,6 +92,7 @@ export default function KbEditorPage() {
         recommendedParts: template.recommendedParts ?? [],
         tags: template.tags,
         isInternalOnly: false,
+        isTemplate: false,
         changeDescription: "",
       });
       setPartsText((template.recommendedParts ?? []).join("\n"));
@@ -202,6 +206,20 @@ export default function KbEditorPage() {
 
               <Controller
                 control={control}
+                name="isTemplate"
+                render={({ field }) => (
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(v) => field.onChange(v === true)}
+                    />
+                    Dùng làm bài mẫu (Staff copy cấu trúc)
+                  </label>
+                )}
+              />
+
+              <Controller
+                control={control}
                 name="tags"
                 render={({ field }) => (
                   <div className="grid gap-1.5">
@@ -265,11 +283,16 @@ export default function KbEditorPage() {
                 <label className="text-sm font-medium">
                   Triệu chứng <span className="text-destructive">*</span>
                 </label>
-                <Textarea
-                  {...register("symptoms")}
-                  rows={3}
-                  placeholder="Mô tả các triệu chứng..."
-                  className="text-sm resize-y"
+                <Controller
+                  control={control}
+                  name="symptoms"
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      ticketId={ticketId}
+                    />
+                  )}
                 />
                 {errors.symptoms && (
                   <p className="text-xs text-destructive">
@@ -282,11 +305,16 @@ export default function KbEditorPage() {
                 <label className="text-sm font-medium">
                   Bước chẩn đoán <span className="text-destructive">*</span>
                 </label>
-                <Textarea
-                  {...register("diagnosisSteps")}
-                  rows={4}
-                  placeholder="1. Kiểm tra..."
-                  className="text-sm resize-y"
+                <Controller
+                  control={control}
+                  name="diagnosisSteps"
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      ticketId={ticketId}
+                    />
+                  )}
                 />
                 {errors.diagnosisSteps && (
                   <p className="text-xs text-destructive">
@@ -299,11 +327,16 @@ export default function KbEditorPage() {
                 <label className="text-sm font-medium">
                   Hướng giải quyết <span className="text-destructive">*</span>
                 </label>
-                <Textarea
-                  {...register("solutionSteps")}
-                  rows={4}
-                  placeholder="1. Thực hiện..."
-                  className="text-sm resize-y"
+                <Controller
+                  control={control}
+                  name="solutionSteps"
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      ticketId={ticketId}
+                    />
+                  )}
                 />
                 {errors.solutionSteps && (
                   <p className="text-xs text-destructive">

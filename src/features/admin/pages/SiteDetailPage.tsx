@@ -25,18 +25,18 @@ import {
 import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
-import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
-import { useSiteCascadeSummary } from "@/features/admin/hooks/useSiteCascadeSummary";
+import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
+import { useSiteCascadeSummary } from "@/features/admin/hooks/battery/useSiteCascadeSummary";
 import {
   useSiteDetail,
   useSiteDashboard,
   useSiteAssets,
   useDeleteSite,
   useRestoreSite,
-} from "@/features/admin/hooks/useSites";
-import { SiteStatusEnum } from "@/shared/types/site.types";
-import type { SiteAssetsFilterParams } from "@/shared/types/site.types";
-import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+} from "@/features/admin/hooks/site/useSites";
+import { SiteStatusEnum } from "@/shared/types/site/site.types";
+import type { SiteAssetsFilterParams } from "@/shared/types/site/site.types";
+import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 

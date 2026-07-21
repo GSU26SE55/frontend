@@ -13,8 +13,8 @@ import {
   type ReactivateRequestFormValues,
   type ReactivateVerifyFormValues,
 } from "@/features/auth/schemas/reactivate.schema";
-import { useReactivateRequest } from "@/features/auth/hooks/useReactivateRequest";
-import { useReactivateVerify } from "@/features/auth/hooks/useReactivateVerify";
+import { useReactivateRequest } from "@/features/auth/hooks/account/useReactivateRequest";
+import { useReactivateVerify } from "@/features/auth/hooks/account/useReactivateVerify";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 

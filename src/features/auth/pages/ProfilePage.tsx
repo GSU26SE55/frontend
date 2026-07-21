@@ -25,14 +25,14 @@ import { useFileBlobUrl } from "@/shared/hooks/file/useFileBlobUrl";
 import {
   profileSchema,
   type ProfileFormValues,
-} from "@/features/auth/schemas/profile.schema";
-import { useProfile } from "@/features/auth/hooks/useProfile";
-import { useUpdateProfile } from "@/features/auth/hooks/useUpdateProfile";
-import { useUpdateAvatar } from "@/features/auth/hooks/useUpdateAvatar";
+} from "@/features/auth/schemas/profile/profile.schema";
+import { useProfile } from "@/features/auth/hooks/profile/useProfile";
+import { useUpdateProfile } from "@/features/auth/hooks/profile/useUpdateProfile";
+import { useUpdateAvatar } from "@/features/auth/hooks/profile/useUpdateAvatar";
 import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
-import { FilePurposeEnum } from "@/shared/types/file-storage.types";
+import { FilePurposeEnum } from "@/shared/types/file/file-storage.types";
 import { handleErrorApi } from "@/shared/lib/errors";
-import { AccountStatusEnum } from "@/shared/enums/account.enum";
+import { AccountStatusEnum } from "@/shared/enums/account/account.enum";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 // ── Maps ─────────────────────────────────────────────────────────────────────

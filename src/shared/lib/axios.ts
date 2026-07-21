@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
-import { decodeToken } from "@/shared/types/session.types";
+import { decodeToken } from "@/shared/types/account/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { getDeviceId } from "@/shared/lib/deviceId";
 import { EntityError, HttpError } from "@/shared/lib/errors";

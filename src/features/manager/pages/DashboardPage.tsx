@@ -12,11 +12,11 @@ import {
   DashboardDonut,
   DashboardGauge,
 } from "@/shared/components/dashboard/DashboardPanel";
-import { useSiteList } from "@/features/manager/hooks/useSites";
-import { useAdminTicketQueue } from "@/features/manager/hooks/useManagerTickets";
-import { useStaffAssignmentList } from "@/features/manager/hooks/useStaffAssignmentList";
-import { useBatteryDashboardStats } from "@/shared/hooks/useBatteryDashboard";
-import { useTicketDashboardStats } from "@/shared/hooks/useDashboardStats";
+import { useSiteList } from "@/features/manager/hooks/site/useSites";
+import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
+import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
+import { useBatteryDashboardStats } from "@/shared/hooks/dashboard/useBatteryDashboard";
+import { useTicketDashboardStats } from "@/shared/hooks/dashboard/useDashboardStats";
 import {
   Area,
   AreaChart,
@@ -39,7 +39,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { siteHealth, healthColor } from "@/shared/utils/site.utils";
-import { OVERVIEW_PANELS } from "@/shared/utils/overviewPanels";
+import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
  * Manager = Điều phối vận hành ticket: pipeline, SLA, phân bố ưu tiên, tải nhân sự,
@@ -107,7 +107,11 @@ export default function ManagerDashboardPage() {
       value: (statusCounts.New ?? 0) + (statusCounts.Open ?? 0),
       fill: "var(--muted-foreground)",
     },
-    { stage: "Đã gán", value: statusCounts.Assigned ?? 0, fill: "var(--chart-1)" },
+    {
+      stage: "Đã gán",
+      value: statusCounts.Assigned ?? 0,
+      fill: "var(--chart-1)",
+    },
     {
       stage: "Đang xử lý",
       value: statusCounts.InProgress ?? 0,
@@ -141,16 +145,27 @@ export default function ManagerDashboardPage() {
   // ── Phân bố ưu tiên — countByPriority ──
   const priorityCounts = ticketStats?.countByPriority ?? {};
   const priorityData = [
-    { name: "P1 · Khẩn", value: priorityCounts.P1Critical ?? 0, fill: "var(--p1)" },
+    {
+      name: "P1 · Khẩn",
+      value: priorityCounts.P1Critical ?? 0,
+      fill: "var(--p1)",
+    },
     { name: "P2 · Cao", value: priorityCounts.P2High ?? 0, fill: "var(--p2)" },
-    { name: "P3 · Thường", value: priorityCounts.P3Normal ?? 0, fill: "var(--p3)" },
+    {
+      name: "P3 · Thường",
+      value: priorityCounts.P3Normal ?? 0,
+      fill: "var(--p3)",
+    },
   ].filter((d) => d.value > 0);
   const priorityTotal = priorityData.reduce((a, d) => a + d.value, 0);
 
   // ── Staff workload ──
   const staff = staffList ?? [];
   const openByStaff = new Map(
-    (ticketStats?.openCountByStaff ?? []).map((o) => [o.staffId, o.activeCount]),
+    (ticketStats?.openCountByStaff ?? []).map((o) => [
+      o.staffId,
+      o.activeCount,
+    ]),
   );
   const workload = staff
     .map((s) => ({
@@ -319,7 +334,9 @@ export default function ManagerDashboardPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {sla?.running ?? 0}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Running</p>
+                    <p className="text-[9.5px] text-muted-foreground">
+                      Running
+                    </p>
                   </div>
                   <div className="rounded-md bg-muted/40 py-1.5">
                     <p
@@ -438,7 +455,9 @@ export default function ManagerDashboardPage() {
                         <p className="text-[10.5px] font-mono-num text-muted-foreground">
                           {t.code}
                         </p>
-                        <p className="text-xs font-medium truncate">{t.title}</p>
+                        <p className="text-xs font-medium truncate">
+                          {t.title}
+                        </p>
                       </div>
                       <ArrowRight className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
                     </button>
@@ -582,7 +601,13 @@ export default function ManagerDashboardPage() {
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <defs>
-                    <linearGradient id="fillMgrTickets" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="fillMgrTickets"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="5%"
                         stopColor="var(--color-count)"

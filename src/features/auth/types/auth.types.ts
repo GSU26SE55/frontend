@@ -1,5 +1,4 @@
-import type { RefreshTokenStatus } from "@/shared/enums/account.enum";
-export { RefreshTokenStatus } from "@/shared/enums/account.enum";
+export { RefreshTokenStatus } from "@/shared/enums/account/account.enum";
 export interface LoginPayload {
   email: string;
   password: string;
@@ -100,18 +99,8 @@ export interface VerifyResetOtpResponseData {
   expiresInSeconds: number; // TTL resetToken (api-auth.md: 900s) — dùng động, không hardcode
 }
 
-export interface SessionDto {
-  id: string;
-  issuedAt: string;
-  expiredAt: string;
-  status: RefreshTokenStatus;
-  ipAddress?: string;
-  userAgent?: string;
-  deviceId?: string;
-  revokedAt?: string;
-  revokedReason?: string;
-  isCurrent: boolean;
-}
+// SessionDto dùng chung — nguồn thật ở shared.
+export type { SessionDto } from "@/shared/types/account/session.types";
 
 export interface UpdateProfilePayload {
   fullName: string;

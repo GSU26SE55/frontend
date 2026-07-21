@@ -7,7 +7,7 @@ import {
   UserRole,
   decodeToken,
   redirectByRole,
-} from "@/shared/types/session.types";
+} from "@/shared/types/account/session.types";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { authService } from "@/features/auth/services/auth.service";

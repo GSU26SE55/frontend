@@ -1,6 +1,7 @@
-import type { LoginAttemptResult } from "@/features/admin/enums/audit.enum";
-export { LoginAttemptResult } from "@/features/admin/enums/audit.enum";
-export { AccountStatusEnum } from "@/shared/enums/account.enum";
+import type { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
+import type { PaginationResponse } from "@/shared/types/api.types";
+export { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
+export { AccountStatusEnum } from "@/shared/enums/account/account.enum";
 
 export interface ChangePasswordPayload {
   currentPassword: string;
@@ -156,28 +157,13 @@ export interface LoginHistoryParams {
   onlyFailed?: boolean;
   fromUtc?: string;
   toUtc?: string;
+  sortBy?: string;
+  sortDir?: string;
 }
 
-export interface LoginAttemptDto {
-  id: string;
-  accountId: string | null;
-  attemptedEmail: string;
-  result: LoginAttemptResult;
-  resultName: string;
-  method: string;
-  ipAddress: string | null;
-  userAgent: string | null;
-  deviceId: string | null;
-  note: string | null;
-  createdAt: string;
-}
+// LoginAttemptDto dùng chung — nguồn thật ở shared.
+import type { LoginAttemptDto } from "@/shared/types/ticket/login-attempt.types";
+export type { LoginAttemptDto } from "@/shared/types/ticket/login-attempt.types";
 
-export interface LoginHistoryResponseData {
-  items: LoginAttemptDto[];
-  totalItems: number;
-  pageNumber: number;
-  pageSize: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
+// = PaginationResponse<LoginAttemptDto> — dùng generic thay vì viết tay.
+export type LoginHistoryResponseData = PaginationResponse<LoginAttemptDto>;

@@ -33,13 +33,13 @@ import {
   useAlertDetail,
   useAcknowledgeAlert,
   useResolveAlert,
-} from "@/shared/hooks/useAlerts";
+} from "@/shared/hooks/alerts/useAlerts";
 import {
   AlertSeverityEnum,
   AlertStatusEnum,
   AnomalyTypeEnum,
-} from "@/shared/enums/alert.enum";
-import type { AlertDto } from "@/shared/types/alert.types";
+} from "@/shared/enums/alerts/alert.enum";
+import type { AlertDto } from "@/shared/types/alerts/alert.types";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";

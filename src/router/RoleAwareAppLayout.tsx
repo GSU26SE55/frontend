@@ -6,7 +6,7 @@
 
 import AppLayout from "@/shared/components/layout/AppLayout";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { UserRole } from "@/shared/types/session.types";
+import { UserRole } from "@/shared/types/account/session.types";
 import { ADMIN_NAV } from "@/features/admin/config/adminNav";
 import { MANAGER_NAV } from "@/features/manager/config/managerNav";
 import { STAFF_NAV } from "@/features/staff/config/staffNav";

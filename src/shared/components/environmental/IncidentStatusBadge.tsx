@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/environmental.enum";
+import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
 import { toneClass, INCIDENT_STATUS_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<EnvironmentalIncidentStatusEnum, string> = {

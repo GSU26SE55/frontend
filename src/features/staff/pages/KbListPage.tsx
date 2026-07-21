@@ -13,13 +13,17 @@ import { Plus, Search, Tag, X } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { useStaffKbList, useMarkStaffKbHelpful } from "../hooks/useStaffKb";
-import KbArticleTable from "../components/KbArticleTable";
+import {
+  useStaffKbList,
+  useMarkStaffKbHelpful,
+} from "@/features/staff/hooks/kb/useStaffKb";
+import KbArticleTable from "@/features/staff/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
-import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
-import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
+import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
@@ -28,6 +32,8 @@ const DEFAULTS = {
   keyword: "",
   tag: "",
   category: "",
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: PAGE_SIZE,
 };
@@ -42,6 +48,7 @@ export default function KbListPage() {
   const tagSearch = useDebouncedSearch(filters.tag ?? "", (t) =>
     setFilter("tag", t),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
 
   const categoryValue = filters.category
     ? (filters.category as TicketCategoryEnum)
@@ -51,6 +58,8 @@ export default function KbListPage() {
     q: filters.keyword || undefined,
     tag: filters.tag || undefined,
     category: categoryValue ? KbCategoryCode[categoryValue] : undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
@@ -181,6 +190,7 @@ export default function KbListPage() {
             hasFilter={hasActiveFilter}
             onResetFilter={resetFilters}
             onMarkHelpful={(a) => markHelpful(a.id)}
+            sort={sort}
           />
         )}
       </Card>

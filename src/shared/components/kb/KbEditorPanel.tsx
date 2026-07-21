@@ -6,37 +6,39 @@ import { X, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
+import { htmlToPlainText } from "@/shared/lib/sanitizeHtml";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { handleErrorApi } from "@/shared/lib/errors";
-import { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
-import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
+import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
+import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
 import { TagInput } from "@/shared/components/ui/TagInput";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
+import { KbTemplateBadge } from "./KbTemplateBadge";
 import type {
   KbArticleDTO,
   UpdateKbArticlePayload,
-} from "@/shared/types/kb.types";
+} from "@/shared/types/kb/kb.types";
 
 // ── Schema (recommendedParts dạng text, mỗi dòng 1 linh kiện → array khi submit) ──
+const richTextField = (max: number) =>
+  z
+    .string()
+    .refine((v) => htmlToPlainText(v).length > 0, "Không được trống")
+    .refine((v) => v.length <= max, `Tối đa ${max} ký tự`);
+
 const schema = z.object({
   category: z.nativeEnum(TicketCategoryEnum),
   title: z
     .string()
     .min(1, "Tiêu đề không được trống")
     .max(200, "Tối đa 200 ký tự"),
-  symptoms: z
-    .string()
-    .min(1, "Không được trống")
-    .max(2000, "Tối đa 2000 ký tự"),
-  diagnosisSteps: z
-    .string()
-    .min(1, "Không được trống")
-    .max(4000, "Tối đa 4000 ký tự"),
-  solutionSteps: z
-    .string()
-    .min(1, "Không được trống")
-    .max(4000, "Tối đa 4000 ký tự"),
+  // Rich text: Tiptap luôn trả "<p></p>" khi rỗng → phải kiểm tra text thuần.
+  // Giới hạn khớp BE (10000/20000/20000), không phải 2000/4000 như trước.
+  symptoms: richTextField(10000),
+  diagnosisSteps: richTextField(20000),
+  solutionSteps: richTextField(20000),
   recommendedPartsText: z.string().optional(),
   tags: z
     .array(z.string().max(50, "Mỗi thẻ tối đa 50 ký tự"))
@@ -44,6 +46,7 @@ const schema = z.object({
     .optional()
     .default([]),
   isInternalOnly: z.boolean(),
+  isTemplate: z.boolean(),
   changeDescription: z.string().optional(),
 });
 
@@ -89,6 +92,8 @@ interface KbEditorPanelProps {
   article?: KbArticleDTO;
   /** Danh mục mặc định khi tạo mới (vd: category của ticket đang mở) */
   initialCategory?: TicketCategoryEnum;
+  /** Ticket đang soạn bài từ đó → picker ảnh bật tab "Ảnh từ chat". */
+  ticketId?: string;
   onClose: () => void;
   onSave: (payload: UpdateKbArticlePayload) => Promise<void>;
   isPending?: boolean;
@@ -97,6 +102,7 @@ interface KbEditorPanelProps {
 export function KbEditorPanel({
   article,
   initialCategory,
+  ticketId,
   onClose,
   onSave,
   isPending,
@@ -112,6 +118,7 @@ export function KbEditorPanel({
     recommendedPartsText: (a?.recommendedParts ?? []).join("\n"),
     tags: a?.tags ?? [],
     isInternalOnly: a?.isInternalOnly ?? false,
+    isTemplate: a?.isTemplate ?? false,
     changeDescription: "",
   });
 
@@ -142,6 +149,7 @@ export function KbEditorPanel({
         recommendedParts: toList(values.recommendedPartsText),
         tags: values.tags,
         isInternalOnly: values.isInternalOnly,
+        isTemplate: values.isTemplate,
         ...(isCreate
           ? {}
           : { changeDescription: values.changeDescription || undefined }),
@@ -223,6 +231,23 @@ export function KbEditorPanel({
               </div>
             )}
           />
+
+          <Controller
+            control={control}
+            name="isTemplate"
+            render={({ field }) => (
+              <div className="flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                  />
+                  Dùng làm bài mẫu (Staff copy cấu trúc)
+                </label>
+                <KbTemplateBadge isTemplate={field.value} />
+              </div>
+            )}
+          />
         </div>
 
         <Separator />
@@ -233,11 +258,16 @@ export function KbEditorPanel({
           </p>
 
           <Field label="Triệu chứng" required error={errors.symptoms?.message}>
-            <Textarea
-              {...register("symptoms")}
-              rows={4}
-              placeholder="Mô tả các triệu chứng..."
-              className="text-sm resize-y"
+            <Controller
+              control={control}
+              name="symptoms"
+              render={({ field }) => (
+                <RichTextEditor
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ticketId={ticketId}
+                />
+              )}
             />
           </Field>
 
@@ -246,11 +276,16 @@ export function KbEditorPanel({
             required
             error={errors.diagnosisSteps?.message}
           >
-            <Textarea
-              {...register("diagnosisSteps")}
-              rows={5}
-              placeholder="1. Kiểm tra..."
-              className="text-sm resize-y"
+            <Controller
+              control={control}
+              name="diagnosisSteps"
+              render={({ field }) => (
+                <RichTextEditor
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ticketId={ticketId}
+                />
+              )}
             />
           </Field>
 
@@ -259,11 +294,16 @@ export function KbEditorPanel({
             required
             error={errors.solutionSteps?.message}
           >
-            <Textarea
-              {...register("solutionSteps")}
-              rows={5}
-              placeholder="1. Thực hiện..."
-              className="text-sm resize-y"
+            <Controller
+              control={control}
+              name="solutionSteps"
+              render={({ field }) => (
+                <RichTextEditor
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  ticketId={ticketId}
+                />
+              )}
             />
           </Field>
 

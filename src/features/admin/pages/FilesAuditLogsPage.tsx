@@ -3,11 +3,11 @@ import { Card } from "@/components/ui/card";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { useFileAuditLogs } from "@/features/admin/hooks/useFileAuditLogs";
-import BatteryAuditLogTable from "@/features/admin/components/BatteryAuditLogTable";
+import { useFileAuditLogs } from "@/features/admin/hooks/file/useFileAuditLogs";
+import BatteryAuditLogTable from "@/features/admin/components/battery/BatteryAuditLogTable";
 import AuditLogFilterBar, {
   type AuditLogFilterValues,
-} from "@/features/admin/components/AuditLogFilterBar";
+} from "@/features/admin/components/account/AuditLogFilterBar";
 import { FileAuditActionCode } from "@/features/admin/enums/file-audit.enum";
 
 // YYYY-MM-DD → UTC range (BE filter từ/đến).

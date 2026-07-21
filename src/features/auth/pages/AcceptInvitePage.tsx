@@ -6,8 +6,8 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { acceptInviteSchema } from "@/features/auth/schemas/accept-invite.schema";
-import { useAcceptInvite } from "@/features/auth/hooks/useAcceptInvite";
+import { acceptInviteSchema } from "@/features/auth/schemas/account/accept-invite.schema";
+import { useAcceptInvite } from "@/features/auth/hooks/account/useAcceptInvite";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AcceptInviteFormValues } from "@/features/auth/types/auth.types";
 

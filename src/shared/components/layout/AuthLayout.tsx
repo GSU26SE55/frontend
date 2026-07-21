@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import logoImg from "@/assets/logo.png";
 import { useAuthContext } from "@/shared/context/authContext";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { redirectByRole } from "@/shared/types/session.types";
+import { redirectByRole } from "@/shared/types/account/session.types";
 
 const AuthLayout = () => {
   const { isHydrating } = useAuthContext();

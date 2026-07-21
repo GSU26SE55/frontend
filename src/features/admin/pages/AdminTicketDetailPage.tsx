@@ -24,15 +24,15 @@ import {
   useAdminTicketActivities,
   useAdminTicketComments,
   useDeclareIncident,
-} from "../hooks/useAdminTickets";
-import AddCommentForm from "../components/AddCommentForm";
+} from "@/features/admin/hooks/ticket/useAdminTickets";
+import AddCommentForm from "@/features/admin/components/ticket/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import TicketActivityTimeline from "../components/TicketActivityTimeline";
-import AdminClosedOverrideDialog from "../components/AdminClosedOverrideDialog";
+import TicketActivityTimeline from "@/features/admin/components/ticket/TicketActivityTimeline";
+import AdminClosedOverrideDialog from "@/features/admin/components/ticket/AdminClosedOverrideDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
-import type { TicketCommentDTO } from "@/shared/types/ticket.types";
+import type { TicketCommentDTO } from "@/shared/types/ticket/ticket.types";
 import {
   TicketCommentThread,
   type ChatTab,
@@ -42,14 +42,14 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
-import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
   useMarkTicketChatsRead,
   useTranslateTicketChat,
-} from "@/shared/hooks/useTicketChatActions";
-import { TicketStatusEnum } from "@/shared/types/ticket.types";
+} from "@/shared/hooks/ticket/useTicketChatActions";
+import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
 
 const CATEGORY_LABELS: Record<string, string> = {

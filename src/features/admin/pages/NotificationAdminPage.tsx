@@ -1,6 +1,6 @@
 import { BellRing } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import CreateNotificationForm from "@/features/admin/components/CreateNotificationForm";
+import CreateNotificationForm from "@/features/admin/components/notification/CreateNotificationForm";
 
 export default function NotificationAdminPage() {
   return (

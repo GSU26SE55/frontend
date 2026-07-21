@@ -17,16 +17,16 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import ChangePasswordForm from "@/features/auth/components/ChangePasswordForm";
-import ChangeEmailForm from "@/features/auth/components/ChangeEmailForm";
-import PhoneVerifySection from "@/features/auth/components/PhoneVerifySection";
-import TwoFactorSetup from "@/features/auth/components/TwoFactorSetup";
-import GoogleLinkSection from "@/features/auth/components/GoogleLinkSection";
-import TrustedDevicesSection from "@/features/auth/components/TrustedDevicesSection";
-import LoginHistoryTable from "@/features/auth/components/LoginHistoryTable";
-import DangerZone from "@/features/auth/components/DangerZone";
-import DeviceTokensSection from "@/shared/components/device-tokens/DeviceTokensSection";
-import NotificationPreferencesSection from "@/shared/components/notification-preferences/NotificationPreferencesSection";
+import ChangePasswordForm from "@/features/auth/components/password/ChangePasswordForm";
+import ChangeEmailForm from "@/features/auth/components/profile/ChangeEmailForm";
+import PhoneVerifySection from "@/features/auth/components/profile/PhoneVerifySection";
+import TwoFactorSetup from "@/features/auth/components/2fa/TwoFactorSetup";
+import GoogleLinkSection from "@/features/auth/components/profile/GoogleLinkSection";
+import TrustedDevicesSection from "@/features/auth/components/trusted-device/TrustedDevicesSection";
+import LoginHistoryTable from "@/features/auth/components/account/LoginHistoryTable";
+import DangerZone from "@/features/auth/components/profile/DangerZone";
+import DeviceTokensSection from "@/features/auth/components/profile/DeviceTokensSection";
+import NotificationPreferencesSection from "@/features/auth/components/profile/NotificationPreferencesSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 

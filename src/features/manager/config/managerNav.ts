@@ -1,8 +1,9 @@
 // Nav config sidebar cho role MANAGER.
-// Label/title chung (≥2 role) → import từ shared/utils/sidebarLabels.
+// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
 // Label/title đặc thù chỉ manager dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
   LayoutDashboard,
   MapPin,
   Settings,
@@ -19,7 +20,7 @@ import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
-} from "@/shared/utils/sidebarLabels";
+} from "@/shared/constants/sidebarLabels";
 
 export const MANAGER_NAV: NavSection[] = [
   {
@@ -48,6 +49,11 @@ export const MANAGER_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/manager/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/manager/blog",
+        icon: Newspaper,
       },
       {
         label: SIDEBAR_LABELS.batteryAlerts,

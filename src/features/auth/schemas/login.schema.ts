@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { emailField } from "@/shared/schemas/common.schema";
 
 export const loginSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
+  email: emailField,
   password: z.string().min(1, "Vui lòng nhập mật khẩu"),
 });
 

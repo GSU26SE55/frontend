@@ -11,15 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useIotDevices } from "@/features/admin/hooks/useIotDevices";
-import { useSiteList } from "@/features/admin/hooks/useSites";
-import IoTDeviceTable from "@/features/admin/components/IoTDeviceTable";
+import { useIotDevices } from "@/features/admin/hooks/iot/useIotDevices";
+import { useSiteList } from "@/features/admin/hooks/site/useSites";
+import IoTDeviceTable from "@/features/admin/components/iot/IoTDeviceTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 
 const STATUS_LABELS: Record<IotDeviceStatusEnum, string> = {
   [IotDeviceStatusEnum.Pending]: "Chờ provision",
@@ -33,7 +34,9 @@ const DEFAULTS = {
   keyword: "",
   siteId: "",
   status: "",
-  page: 1,
+  sortBy: "",
+  sortDir: "",
+  pageNumber: 1,
   pageSize: 10,
 };
 
@@ -44,16 +47,19 @@ export default function IoTDevicesPage() {
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilter);
   const { data: sitesData } = useSiteList({ pageNumber: 1, pageSize: 100 });
 
   const { data, isLoading } = useIotDevices({
-    page: filters.page,
+    pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
     siteId: filters.siteId || undefined,
     status: filters.status
       ? (Number(filters.status) as IotDeviceStatusEnum)
       : undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const items = data?.items ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -146,8 +152,9 @@ export default function IoTDevicesPage() {
         ) : (
           <IoTDeviceTable
             items={items}
-            pageNumber={filters.page}
+            pageNumber={filters.pageNumber}
             pageSize={filters.pageSize}
+            sort={sort}
           />
         )}
       </Card>
@@ -157,9 +164,9 @@ export default function IoTDevicesPage() {
         totalPages={data?.totalPages ?? 1}
         hasNextPage={data?.hasNextPage ?? false}
         hasPreviousPage={data?.hasPreviousPage ?? false}
-        pageNumber={filters.page}
+        pageNumber={filters.pageNumber}
         pageSize={filters.pageSize}
-        onPageChange={(p) => setFilter("page", p)}
+        onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
     </div>

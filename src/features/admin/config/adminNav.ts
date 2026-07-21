@@ -1,8 +1,10 @@
 // Nav config sidebar cho role ADMIN.
-// Label/title chung (≥2 role) → import từ shared/utils/sidebarLabels.
+// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
 // Label/title đặc thù chỉ admin dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
+  LayoutTemplate,
   LayoutDashboard,
   MapPin,
   Battery,
@@ -28,7 +30,7 @@ import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
-} from "@/shared/utils/sidebarLabels";
+} from "@/shared/constants/sidebarLabels";
 
 export const ADMIN_NAV: NavSection[] = [
   {
@@ -87,6 +89,16 @@ export const ADMIN_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/admin/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/admin/blog",
+        icon: Newspaper,
+      },
+      {
+        label: SIDEBAR_LABELS.blogTemplates,
+        path: "/admin/blog/templates",
+        icon: LayoutTemplate,
       },
     ],
   },

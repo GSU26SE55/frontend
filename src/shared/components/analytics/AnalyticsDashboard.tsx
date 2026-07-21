@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ReportGranularityEnum } from "@/shared/enums/report.enum";
-import type { AnalyticsFilter } from "@/shared/types/analytics.types";
+import { ReportGranularityEnum } from "@/shared/enums/dashboard/report.enum";
+import type { AnalyticsFilter } from "@/shared/types/dashboard/analytics.types";
 import { AnalyticsFilterBar, type SiteOption } from "./AnalyticsFilterBar";
 import { ReportTabs } from "./ReportTabs";
 

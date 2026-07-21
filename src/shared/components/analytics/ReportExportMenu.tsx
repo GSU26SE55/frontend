@@ -6,8 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useExportReport } from "@/shared/hooks/useReports";
-import { ReportFormat } from "@/shared/enums/report.enum";
+import { useExportReport } from "@/shared/hooks/dashboard/useReports";
+import { ReportFormat } from "@/shared/enums/dashboard/report.enum";
 
 interface ReportExportMenuProps {
   endpoint: string;

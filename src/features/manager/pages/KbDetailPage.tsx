@@ -15,8 +15,8 @@ import {
   useManagerKbVersionDetail,
   useMarkManagerKbHelpful,
   useManagerCopyKbTemplate,
-} from "../hooks/useManagerKb";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
+} from "@/features/manager/hooks/kb/useManagerKb";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
@@ -24,7 +24,7 @@ import {
 import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbReviewActions } from "@/shared/components/kb/KbReviewActions";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
-import type { KbCompareParams } from "@/shared/types/kb.types";
+import type { KbCompareParams } from "@/shared/types/kb/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();

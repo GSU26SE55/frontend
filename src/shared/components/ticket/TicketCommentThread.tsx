@@ -37,7 +37,7 @@ import {
 import {
   ActorRoleEnum,
   type TicketCommentDTO,
-} from "@/shared/types/ticket.types";
+} from "@/shared/types/ticket/ticket.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {

@@ -10,15 +10,22 @@
 import {
   TicketStatusEnum,
   TicketPriorityEnum,
-} from "@/shared/enums/ticket.enum";
-import { SlaTimerStatusEnum } from "@/shared/enums/ticket.enum";
-import { AlertSeverityEnum, AlertStatusEnum } from "@/shared/enums/alert.enum";
-import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/environmental.enum";
-import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
-import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
-import { AccountStatusEnum } from "@/shared/enums/account.enum";
-import { NotificationStatusEnum } from "@/shared/enums/notification.enum";
+} from "@/shared/enums/ticket/ticket.enum";
+import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+import {
+  AlertSeverityEnum,
+  AlertStatusEnum,
+} from "@/shared/enums/alerts/alert.enum";
+import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
+import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
+import { AccountStatusEnum } from "@/shared/enums/account/account.enum";
+import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
+import {
+  BlogPostStatusEnum,
+  BlogPostOriginEnum,
+} from "@/shared/enums/blog/blog.enum";
 
 // 6 tông màu semantic — khớp token trong index.css.
 export type StatusTone = "ok" | "info" | "p3" | "p2" | "p1" | "muted";
@@ -178,6 +185,19 @@ export const KB_STATUS_TONE: Record<KbArticleStatusEnum, StatusTone> = {
   [KbArticleStatusEnum.PendingReview]: "p3",
   [KbArticleStatusEnum.Published]: "ok",
   [KbArticleStatusEnum.Archived]: "muted",
+};
+
+export const BLOG_STATUS_TONE: Record<BlogPostStatusEnum, StatusTone> = {
+  [BlogPostStatusEnum.Generating]: "info",
+  [BlogPostStatusEnum.GenerationFailed]: "p1",
+  [BlogPostStatusEnum.Draft]: "muted",
+  [BlogPostStatusEnum.Published]: "ok",
+  [BlogPostStatusEnum.Archived]: "muted",
+};
+
+export const BLOG_ORIGIN_TONE: Record<BlogPostOriginEnum, StatusTone> = {
+  [BlogPostOriginEnum.Manual]: "muted",
+  [BlogPostOriginEnum.AiGeneratedFromKb]: "info",
 };
 
 export const BATTERY_STATUS_TONE: Record<BatteryStatusEnum, StatusTone> = {

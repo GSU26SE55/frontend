@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type {
   SiteCascadeRiskSummaryDto,
   CascadeRiskLevelName,
-} from "@/shared/types/cascade.types";
+} from "@/shared/types/battery/cascade.types";
 import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
 
 // Heat map cascade risk theo site (presentational — data từ hook của từng feature).

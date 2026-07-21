@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { CreateGatewayDeviceResponseDto } from "@/features/admin/types/sms-gateway.types";
+import type { CreateGatewayDeviceResponseDto } from "@/features/admin/types/ticket/sms-gateway.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface ApiKeyRevealDialogProps {

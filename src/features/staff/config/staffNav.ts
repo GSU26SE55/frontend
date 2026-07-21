@@ -1,8 +1,9 @@
 // Nav config sidebar cho role STAFF.
-// Label/title chung (≥2 role) → import từ shared/utils/sidebarLabels.
+// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
 // Label/title đặc thù chỉ staff dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
   LayoutDashboard,
   Settings,
   BellRing,
@@ -18,7 +19,7 @@ import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
-} from "@/shared/utils/sidebarLabels";
+} from "@/shared/constants/sidebarLabels";
 
 export const STAFF_NAV: NavSection[] = [
   {
@@ -38,6 +39,11 @@ export const STAFF_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/staff/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/staff/blog",
+        icon: Newspaper,
       },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
       {
