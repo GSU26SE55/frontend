@@ -5,7 +5,6 @@ import { z } from "zod";
 import { X, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
 import { htmlToPlainText } from "@/shared/lib/sanitizeHtml";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +20,7 @@ import type {
   UpdateKbArticlePayload,
 } from "@/shared/types/kb/kb.types";
 
-// ── Schema (recommendedParts dạng text, mỗi dòng 1 linh kiện → array khi submit) ──
+// ── Schema (nội dung gộp về 1 field `content` — BE #692) ──
 const richTextField = (max: number) =>
   z
     .string()
@@ -35,11 +34,7 @@ const schema = z.object({
     .min(1, "Tiêu đề không được trống")
     .max(200, "Tối đa 200 ký tự"),
   // Rich text: Tiptap luôn trả "<p></p>" khi rỗng → phải kiểm tra text thuần.
-  // Giới hạn khớp BE (10000/20000/20000), không phải 2000/4000 như trước.
-  symptoms: richTextField(10000),
-  diagnosisSteps: richTextField(20000),
-  solutionSteps: richTextField(20000),
-  recommendedPartsText: z.string().optional(),
+  content: richTextField(50000),
   tags: z
     .array(z.string().max(50, "Mỗi thẻ tối đa 50 ký tự"))
     .max(10, "Tối đa 10 thẻ")
@@ -52,15 +47,6 @@ const schema = z.object({
 
 type FormInput = z.input<typeof schema>;
 type FormValues = z.output<typeof schema>;
-
-// text (mỗi dòng / phẩy) → array
-function toList(text?: string): string[] {
-  if (!text) return [];
-  return text
-    .split(/[\n,]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
 
 // ── Field wrapper ─────────────────────────────────────────────────────────────
 function Field({
@@ -112,10 +98,7 @@ export function KbEditorPanel({
   const defaults = (a?: KbArticleDTO) => ({
     category: a?.category ?? initialCategory ?? TicketCategoryEnum.Charging,
     title: a?.title ?? "",
-    symptoms: a?.symptoms ?? "",
-    diagnosisSteps: a?.diagnosisSteps ?? "",
-    solutionSteps: a?.solutionSteps ?? "",
-    recommendedPartsText: (a?.recommendedParts ?? []).join("\n"),
+    content: a?.content ?? "",
     tags: a?.tags ?? [],
     isInternalOnly: a?.isInternalOnly ?? false,
     isTemplate: a?.isTemplate ?? false,
@@ -143,10 +126,7 @@ export function KbEditorPanel({
       await onSave({
         category: values.category,
         title: values.title,
-        symptoms: values.symptoms,
-        diagnosisSteps: values.diagnosisSteps,
-        solutionSteps: values.solutionSteps,
-        recommendedParts: toList(values.recommendedPartsText),
+        content: values.content,
         tags: values.tags,
         isInternalOnly: values.isInternalOnly,
         isTemplate: values.isTemplate,
@@ -257,10 +237,10 @@ export function KbEditorPanel({
             Nội dung
           </p>
 
-          <Field label="Triệu chứng" required error={errors.symptoms?.message}>
+          <Field label="Nội dung" required error={errors.content?.message}>
             <Controller
               control={control}
-              name="symptoms"
+              name="content"
               render={({ field }) => (
                 <RichTextEditor
                   value={field.value ?? ""}
@@ -268,51 +248,6 @@ export function KbEditorPanel({
                   ticketId={ticketId}
                 />
               )}
-            />
-          </Field>
-
-          <Field
-            label="Bước chẩn đoán"
-            required
-            error={errors.diagnosisSteps?.message}
-          >
-            <Controller
-              control={control}
-              name="diagnosisSteps"
-              render={({ field }) => (
-                <RichTextEditor
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  ticketId={ticketId}
-                />
-              )}
-            />
-          </Field>
-
-          <Field
-            label="Hướng giải quyết"
-            required
-            error={errors.solutionSteps?.message}
-          >
-            <Controller
-              control={control}
-              name="solutionSteps"
-              render={({ field }) => (
-                <RichTextEditor
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  ticketId={ticketId}
-                />
-              )}
-            />
-          </Field>
-
-          <Field label="Linh kiện khuyến nghị (mỗi dòng 1 linh kiện)">
-            <Textarea
-              {...register("recommendedPartsText")}
-              rows={3}
-              placeholder={"Cáp sạc OEM\nCảm biến nhiệt"}
-              className="text-sm resize-y"
             />
           </Field>
 

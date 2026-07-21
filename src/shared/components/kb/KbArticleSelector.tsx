@@ -360,25 +360,9 @@ export function KbArticleSelector({
                         <div className="space-y-3 pt-1">
                           <div>
                             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                              Triệu chứng
+                              Nội dung
                             </p>
-                            <SectionContent text={previewDetail.symptoms} />
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                              Bước chẩn đoán
-                            </p>
-                            <SectionContent
-                              text={previewDetail.diagnosisSteps}
-                            />
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                              Hướng giải quyết
-                            </p>
-                            <SectionContent
-                              text={previewDetail.solutionSteps}
-                            />
+                            <SectionContent text={previewDetail.content} />
                           </div>
                           {previewDetail.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">

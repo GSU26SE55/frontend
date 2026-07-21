@@ -4,10 +4,7 @@ import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle,
-  Stethoscope,
-  CheckCircle2,
-  Wrench,
+  BookOpen,
   Eye,
   ThumbsUp,
   CalendarDays,
@@ -22,7 +19,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
 import { KbVisibilityBadge } from "./KbVisibilityBadge";
@@ -32,26 +28,6 @@ import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
 import { isHtmlContent } from "@/shared/lib/isHtmlContent";
 import { RichContentView } from "@/shared/components/editor/RichContentView";
-
-// ── Sections ─────────────────────────────────────────────────────────────────
-const SECTIONS = [
-  { key: "symptoms" as const, label: "Triệu chứng", icon: AlertTriangle },
-  {
-    key: "diagnosisSteps" as const,
-    label: "Bước chẩn đoán",
-    icon: Stethoscope,
-  },
-  {
-    key: "solutionSteps" as const,
-    label: "Hướng giải quyết",
-    icon: CheckCircle2,
-  },
-  {
-    key: "recommendedParts" as const,
-    label: "Linh kiện khuyến nghị",
-    icon: Wrench,
-  },
-] as const;
 
 // ── Numbered list detection ───────────────────────────────────────────────────
 function isNumberedList(text: string): boolean {
@@ -167,12 +143,6 @@ export function KbArticleDetail({
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
 
-  const visibleSections = SECTIONS.filter((s) => {
-    if (s.key === "recommendedParts")
-      return (article.recommendedParts?.length ?? 0) > 0;
-    return !!(article[s.key] as string | null)?.trim();
-  });
-
   return (
     <>
       <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -217,32 +187,19 @@ export function KbArticleDetail({
         <div className="grid lg:grid-cols-[1fr_272px] gap-5 items-start">
           {/* Left — article content */}
           <div className="border border-border rounded-xl overflow-hidden bg-card">
-            {visibleSections.map((sec, idx) => {
-              const Icon = sec.icon;
-              const text =
-                sec.key === "recommendedParts"
-                  ? (article.recommendedParts ?? []).join("\n")
-                  : (article[sec.key] as string);
-
-              return (
-                <div key={sec.key}>
-                  {idx > 0 && <Separator />}
-                  <div className="px-6 py-5">
-                    {/* Section header */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        <Icon size={14} className="text-muted-foreground" />
-                      </div>
-                      <h2 className="text-base font-semibold text-foreground">
-                        {sec.label}
-                      </h2>
-                    </div>
-                    {/* Content */}
-                    <SectionContent text={text} />
-                  </div>
+            <div className="px-6 py-5">
+              {/* Section header */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                  <BookOpen size={14} className="text-muted-foreground" />
                 </div>
-              );
-            })}
+                <h2 className="text-base font-semibold text-foreground">
+                  Nội dung
+                </h2>
+              </div>
+              {/* Content */}
+              <SectionContent text={article.content} />
+            </div>
           </div>
 
           {/* Right — sidebar metadata */}

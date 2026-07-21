@@ -22,10 +22,7 @@ export interface KbArticleDTO {
   code: string;
   category: TicketCategoryEnum;
   title: string;
-  symptoms: string;
-  diagnosisSteps: string;
-  solutionSteps: string;
-  recommendedParts?: string[] | null;
+  content: string;
   tags: string[];
   status: KbArticleStatusEnum;
   isInternalOnly: boolean;
@@ -42,7 +39,7 @@ export interface KbArticleDTO {
   updatedAt?: string | null;
 }
 
-// List item (GET /api/knowledge-base) — KHÔNG có tags/symptoms
+// List item (GET /api/knowledge-base) — KHÔNG có tags/content
 export interface KbArticleSummaryDTO {
   id: string;
   code: string;
@@ -65,10 +62,7 @@ export interface KbArticleVersionDTO {
   minorVersion: number;
   status: KbVersionStatusEnum;
   title: string;
-  symptoms: string;
-  diagnosisSteps: string;
-  solutionSteps: string;
-  recommendedParts?: string[] | null;
+  content: string;
   tags: string[];
   changeDescription: string;
   changedBy: string;
@@ -85,20 +79,14 @@ export interface KbArticleDiffDTO {
   fromVersion: string;
   toVersion: string;
   titleDiff: DiffSection;
-  symptomsDiff: DiffSection;
-  diagnosisStepsDiff: DiffSection;
-  solutionStepsDiff: DiffSection;
-  recommendedPartsDiff: DiffSection;
+  contentDiff: DiffSection;
   tagsDiff: DiffSection;
 }
 
 // copy-template (category dạng STRING — BE trả TicketCategoryEnum)
 export interface KbArticleTemplateDTO {
   category: TicketCategoryEnum;
-  symptoms: string;
-  diagnosisSteps: string;
-  solutionSteps: string;
-  recommendedParts?: string[] | null;
+  content: string;
   tags: string[];
 }
 
@@ -140,10 +128,7 @@ export interface KbUsageStatsDTO {
 export interface CreateKbArticlePayload {
   category: TicketCategoryEnum;
   title: string;
-  symptoms: string;
-  diagnosisSteps: string;
-  solutionSteps: string;
-  recommendedParts?: string[];
+  content: string;
   tags?: string[];
   isInternalOnly: boolean;
   /** Đánh dấu bài là mẫu để Staff dùng copy-template. BE mặc định false. */
@@ -192,7 +177,7 @@ export interface KbSuggestItemDTO {
   id: string;
   code: string;
   title: string;
-  symptoms: string;
+  content: string;
   helpfulCount: number;
   viewCount: number;
   /** GH-132 (G) — bài nội bộ: không được gán với referenceType ProvidedToCustomer. */

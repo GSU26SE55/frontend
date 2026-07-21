@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,8 +40,6 @@ export default function KbEditorPage() {
   const { mutateAsync: create, isPending: creating } = useStaffKbCreate();
   const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
 
-  const [partsText, setPartsText] = useState("");
-
   const {
     register,
     handleSubmit,
@@ -54,10 +51,7 @@ export default function KbEditorPage() {
     defaultValues: {
       category: TicketCategoryEnum.Charging,
       title: "",
-      symptoms: "",
-      diagnosisSteps: "",
-      solutionSteps: "",
-      recommendedParts: [],
+      content: "",
       tags: [],
       isInternalOnly: false,
       isTemplate: false,
@@ -70,44 +64,29 @@ export default function KbEditorPage() {
       reset({
         category: existing.category,
         title: existing.title,
-        symptoms: existing.symptoms,
-        diagnosisSteps: existing.diagnosisSteps,
-        solutionSteps: existing.solutionSteps,
-        recommendedParts: existing.recommendedParts ?? [],
+        content: existing.content,
         tags: existing.tags,
         isInternalOnly: existing.isInternalOnly,
         isTemplate: existing.isTemplate,
         changeDescription: "",
       });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPartsText((existing.recommendedParts ?? []).join("\n"));
     } else if (template) {
       reset({
         // BE trả category dạng chuỗi enum — dùng thẳng, không map qua code số nữa
         category: template.category ?? TicketCategoryEnum.Charging,
         title: "",
-        symptoms: template.symptoms,
-        diagnosisSteps: template.diagnosisSteps,
-        solutionSteps: template.solutionSteps,
-        recommendedParts: template.recommendedParts ?? [],
+        content: template.content,
         tags: template.tags,
         isInternalOnly: false,
         isTemplate: false,
         changeDescription: "",
       });
-      setPartsText((template.recommendedParts ?? []).join("\n"));
     }
   }, [existing, template, reset]);
 
   const onSubmit = async (values: KbArticleFormValues) => {
     try {
-      const payload = {
-        ...values,
-        recommendedParts: partsText
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      };
+      const payload = values;
       if (isEdit) {
         await update({ id, payload });
         navigate(`/staff/kb/${id}`);
@@ -281,11 +260,11 @@ export default function KbEditorPage() {
             <CardContent className="grid gap-3">
               <div className="grid gap-1.5">
                 <label className="text-sm font-medium">
-                  Triệu chứng <span className="text-destructive">*</span>
+                  Nội dung <span className="text-destructive">*</span>
                 </label>
                 <Controller
                   control={control}
-                  name="symptoms"
+                  name="content"
                   render={({ field }) => (
                     <RichTextEditor
                       value={field.value ?? ""}
@@ -294,71 +273,11 @@ export default function KbEditorPage() {
                     />
                   )}
                 />
-                {errors.symptoms && (
+                {errors.content && (
                   <p className="text-xs text-destructive">
-                    {errors.symptoms.message}
+                    {errors.content.message}
                   </p>
                 )}
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">
-                  Bước chẩn đoán <span className="text-destructive">*</span>
-                </label>
-                <Controller
-                  control={control}
-                  name="diagnosisSteps"
-                  render={({ field }) => (
-                    <RichTextEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      ticketId={ticketId}
-                    />
-                  )}
-                />
-                {errors.diagnosisSteps && (
-                  <p className="text-xs text-destructive">
-                    {errors.diagnosisSteps.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">
-                  Hướng giải quyết <span className="text-destructive">*</span>
-                </label>
-                <Controller
-                  control={control}
-                  name="solutionSteps"
-                  render={({ field }) => (
-                    <RichTextEditor
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      ticketId={ticketId}
-                    />
-                  )}
-                />
-                {errors.solutionSteps && (
-                  <p className="text-xs text-destructive">
-                    {errors.solutionSteps.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">
-                  Linh kiện khuyến nghị{" "}
-                  <span className="text-muted-foreground font-normal">
-                    (mỗi dòng 1 linh kiện)
-                  </span>
-                </label>
-                <Textarea
-                  rows={2}
-                  placeholder={"Cáp sạc OEM\nCảm biến nhiệt"}
-                  value={partsText}
-                  onChange={(e) => setPartsText(e.target.value)}
-                  className="text-sm resize-y"
-                />
               </div>
             </CardContent>
           </Card>

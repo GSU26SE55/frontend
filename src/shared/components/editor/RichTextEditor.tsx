@@ -222,7 +222,7 @@ function Toolbar({
 
 /**
  * Editor WYSIWYG dùng chung cho Blog (`contentHtml`) và Knowledge Base
- * (`symptoms` / `diagnosisSteps` / `solutionSteps`).
+ * (`content`).
  * Bind vào React Hook Form qua `Controller` — nhận `value`, gọi `onChange(html)`.
  *
  * `@tiptap/extension-link` đã nằm sẵn trong StarterKit v3, không cần cài riêng.
