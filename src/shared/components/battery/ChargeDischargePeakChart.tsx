@@ -21,13 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useReadingAggregate } from "@/features/admin/hooks/battery/useReadingAggregate";
-import { useReadingAggregateHourly } from "@/features/admin/hooks/battery/useReadingAggregateHourly";
-import { useThresholdByType } from "@/features/admin/hooks/battery/useThresholds";
+import { useReadingAggregate } from "@/shared/hooks/battery/useReadingAggregate";
+import { useReadingAggregateHourly } from "@/shared/hooks/battery/useReadingAggregateHourly";
+import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import type {
   SensorReadingInterval,
   SensorReadingAggregateDto,
-} from "@/features/admin/types/battery/sensor-reading.types";
+} from "@/shared/types/battery/sensor-reading-history.types";
 
 const CHARGE_COLOR = "var(--chart-1)";
 const DISCHARGE_COLOR = "var(--destructive)";

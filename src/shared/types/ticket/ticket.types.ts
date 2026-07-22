@@ -10,6 +10,7 @@ import type {
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
+  TicketVerifyStatusEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 export {
   TicketStatusEnum,
@@ -24,6 +25,7 @@ export {
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
+  TicketVerifyStatusEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 // --- DTOs ---
 
@@ -43,7 +45,10 @@ export interface SlaTimerDTO {
 export interface TicketDTO {
   id: string;
   code: string;
+  /** Pin chính (legacy — pin đầu tiên). Dùng batteryAssetIds cho danh sách đầy đủ. */
   batteryAssetId?: string | null;
+  /** Danh sách ID pin gắn ticket (ticket có thể gắn nhiều pin). BE trả từ TicketBatteryAssets. */
+  batteryAssetIds?: string[];
   customerId: string;
   assignedStaffId?: string | null;
   title: string;
@@ -60,6 +65,29 @@ export interface TicketDTO {
   createdAt: string;
   updatedAt?: string | null;
   slaTimer: SlaTimerDTO | null;
+
+  // ── Ticket thủ công: giờ phát hiện + serial pin (snapshot) + AI verify + merge ──
+  /** Thời điểm Customer phát hiện pin bất thường (điền từ Mobile). Khác createdAt. */
+  detectedAt?: string | null;
+  /** Serial pin (snapshot lúc tạo) — hiển thị không cần gọi thêm API. */
+  batterySerialNumber?: string | null;
+  /** Trạng thái AI verify thật/rác (human-in-the-loop). */
+  aiVerifyStatus?: TicketVerifyStatusEnum | null;
+  /** Điểm hợp lệ [0..1] từ AI. */
+  aiVerifyScore?: number | null;
+  /** Lý do AI đưa ra verdict (cho Manager đọc). */
+  aiVerifyReason?: string | null;
+  /** Ticket bị nghi trùng với ticket này (cùng pin/chủ, còn mở). */
+  suspectedDuplicateOfTicketId?: string | null;
+  /** Lý do nghi trùng. */
+  duplicateReason?: string | null;
+  /** Set khi Manager đã gộp ticket này vào ticket khác (ẩn khỏi queue). */
+  mergedIntoTicketId?: string | null;
+}
+
+/** Payload gộp ticket (Manager) — gộp ticket hiện tại vào ticket đích. */
+export interface MergeTicketPayload {
+  targetTicketId: string;
 }
 
 export interface TicketActivityDTO {

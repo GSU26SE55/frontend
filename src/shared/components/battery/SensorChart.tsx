@@ -21,10 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useReadingAggregate } from "@/features/admin/hooks/battery/useReadingAggregate";
-import { useThresholdByType } from "@/features/admin/hooks/battery/useThresholds";
-import type { SensorReadingInterval } from "@/features/admin/types/battery/sensor-reading.types";
-import type { ThresholdConfigDto } from "@/features/admin/types/battery/threshold.types";
+import { useReadingAggregate } from "@/shared/hooks/battery/useReadingAggregate";
+import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
+import type { SensorReadingInterval } from "@/shared/types/battery/sensor-reading-history.types";
+import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
 
 // Mỗi metric 1 mini chart riêng — đơn vị (V/A/°C/%) khác nhau quá xa nếu
 // gộp chung 1 trục Y sẽ làm đường Điện áp gần như phẳng đáy, Dòng điện bị nén.

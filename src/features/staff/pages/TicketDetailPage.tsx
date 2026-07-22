@@ -627,9 +627,34 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
-              {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
-              <div className="p-4">
-                <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
+              {/* Thiết bị pin — ticket có thể gắn nhiều pin, lặp từng cái. */}
+              <div className="p-4 space-y-4">
+                {(() => {
+                  const ids =
+                    ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
+                      ? ticket.batteryAssetIds
+                      : ticket.batteryAssetId
+                        ? [ticket.batteryAssetId]
+                        : [];
+                  if (ids.length === 0)
+                    return <BatteryAssetInfoPanel batteryAssetId={null} />;
+                  return (
+                    <>
+                      {ids.length > 1 && (
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          {ids.length} thiết bị pin liên quan
+                        </p>
+                      )}
+                      {ids.map((bid) => (
+                        <BatteryAssetInfoPanel
+                          key={bid}
+                          batteryAssetId={bid}
+                          detectedAt={ticket.detectedAt}
+                        />
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Description */}

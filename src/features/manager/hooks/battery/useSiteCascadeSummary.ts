@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import { cascadeService } from "@/features/manager/services/battery/cascade.service";
+import { cascadeService } from "@/shared/services/battery/cascade.service";
 
 export function useSiteCascadeSummary(siteId: string) {
   return useQuery({

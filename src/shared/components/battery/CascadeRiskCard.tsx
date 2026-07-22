@@ -1,13 +1,11 @@
-import { useState } from "react";
-import { ShieldAlert, Settings2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCascadeRisk } from "@/features/admin/hooks/battery/useCascadeRisk";
-import SetTopologyDialog from "@/features/admin/components/iot/SetTopologyDialog";
+import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import type {
   CascadeRiskLevelName,
   ElectricalTopologyName,
@@ -36,8 +34,20 @@ const levelLabel = (lvl: CascadeRiskLevelName) =>
 const topologyLabel = (t: ElectricalTopologyName) =>
   TOPOLOGY_LABEL[t] ?? String(t);
 
-export default function CascadeRiskCard({ assetId }: { assetId: string }) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+interface CascadeRiskCardProps {
+  assetId: string;
+  // Admin bơm SetTopologyDialog + nút mở qua đây. Manager/Staff không có quyền →
+  // không truyền → không hiện nút "Set topology". BE chặn POST /topology cho non-admin.
+  topologyAction?: (ctx: {
+    currentTopology?: ElectricalTopologyName;
+    isLoading: boolean;
+  }) => ReactNode;
+}
+
+export default function CascadeRiskCard({
+  assetId,
+  topologyAction,
+}: CascadeRiskCardProps) {
   const { data, isLoading } = useCascadeRisk(assetId);
 
   return (
@@ -49,15 +59,10 @@ export default function CascadeRiskCard({ assetId }: { assetId: string }) {
             Rủi ro lan truyền
           </h3>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setDialogOpen(true)}
-          disabled={isLoading}
-        >
-          <Settings2 size={14} />
-          Set topology
-        </Button>
+        {topologyAction?.({
+          currentTopology: data?.electricalTopology,
+          isLoading,
+        })}
       </div>
 
       {isLoading ? (
@@ -102,13 +107,6 @@ export default function CascadeRiskCard({ assetId }: { assetId: string }) {
           </dl>
         </div>
       )}
-
-      <SetTopologyDialog
-        assetId={assetId}
-        currentTopology={data?.electricalTopology}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
     </Card>
   );
 }

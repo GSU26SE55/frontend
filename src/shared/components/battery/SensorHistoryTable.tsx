@@ -3,16 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useReadingHistory } from "@/features/admin/hooks/battery/useReadingHistory";
-import { useThresholdByType } from "@/features/admin/hooks/battery/useThresholds";
+import { useReadingHistory } from "@/shared/hooks/battery/useReadingHistory";
+import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import { useServerSort } from "@/shared/hooks/useServerSort";
 import { toneText, type StatusTone } from "@/shared/theme/statusColors";
 import type {
   SensorReadingDto,
   SensorReadingSortKey,
-} from "@/features/admin/types/battery/sensor-reading.types";
-import type { ThresholdConfigDto } from "@/features/admin/types/battery/threshold.types";
+} from "@/shared/types/battery/sensor-reading-history.types";
+import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
 
 // datetime-local (giờ địa phương, không timezone) → ISO UTC cho API. "" → undefined.
 const toUtc = (local: string): string | undefined =>

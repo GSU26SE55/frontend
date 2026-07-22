@@ -15,6 +15,8 @@ export const KEY = {
   sensorReadings: "sensorReadings",
   thresholds: "thresholds",
   alerts: "alerts",
+  sohPredictions: "sohPredictions",
+  anomalyClassifications: "anomalyClassifications",
   ambient: "ambient",
   environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
@@ -129,6 +131,14 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.thresholds, "list", params] as const,
     byType: (batteryTypeId: string, params?: object) =>
       [KEY.thresholds, "by-type", batteryTypeId, params] as const,
+  },
+  sohPredictions: {
+    list: (assetId: string, params?: object) =>
+      [KEY.sohPredictions, "list", assetId, params] as const,
+  },
+  anomalyClassifications: {
+    list: (assetId: string, params?: object) =>
+      [KEY.anomalyClassifications, "list", assetId, params] as const,
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,

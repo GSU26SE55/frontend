@@ -198,8 +198,12 @@ export const ENDPOINTS = {
     UPDATE: (id: string) => `/api/sla-rules/${id}`,
   },
 
-  // AI classification feedback — BE hiện chỉ có POST feedback, chưa có GET list/detail.
+  // AI — SOH prediction + anomaly classification (BE-AI: SohPredictionBackgroundService populate).
+  SOH_PREDICTIONS: {
+    LIST: "/api/v1/soh-predictions", // ?batteryAssetId=&from=&to=&pageNumber=&pageSize=
+  },
   ANOMALY_CLASSIFICATIONS: {
+    LIST: "/api/v1/anomaly-classifications", // ?batteryAssetId=&classification=&from=&to=
     FEEDBACK: (id: string) => `/api/v1/anomaly-classifications/${id}/feedback`,
   },
 
@@ -262,6 +266,10 @@ export const ENDPOINTS = {
       ESCALATE: (id: string) => `/api/admin/tickets/${id}/escalate`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
+      // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).
+      MERGE: (id: string) => `/api/admin/tickets/${id}/merge`,
+      // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
+      RE_VERIFY: (id: string) => `/api/admin/tickets/${id}/re-verify`,
     },
     SMS_GATEWAY: {
       DEVICES: "/api/admin/sms-gateway/devices",

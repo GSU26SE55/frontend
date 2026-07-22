@@ -187,6 +187,35 @@ export const useDeclareIncident = (id: string) => {
   });
 };
 
+/** Manager gộp ticket nghi trùng (id) vào ticket đích. */
+export const useMergeTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (targetTicketId: string) =>
+      managerTicketService.merge(id, { targetTicketId }),
+    onSuccess: () => {
+      toast.success("Đã gộp ticket");
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+};
+
+/** Manager kích hoạt AI kiểm tra lại (ticket Skipped/Pending). */
+export const useReVerifyTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => managerTicketService.reVerify(id),
+    onSuccess: () => {
+      toast.success("Đã yêu cầu AI kiểm tra lại — chờ vài giây rồi làm mới.");
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+};
+
 export const useAddComment = () => {
   const qc = useQueryClient();
   return useMutation({

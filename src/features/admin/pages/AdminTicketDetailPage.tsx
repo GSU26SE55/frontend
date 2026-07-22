@@ -27,6 +27,8 @@ import {
 } from "@/features/admin/hooks/ticket/useAdminTickets";
 import AddCommentForm from "@/features/admin/components/ticket/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
+import MergeTicketDialog from "@/features/admin/components/ticket/MergeTicketDialog";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import TicketActivityTimeline from "@/features/admin/components/ticket/TicketActivityTimeline";
@@ -83,6 +85,7 @@ export default function AdminTicketDetailPage() {
   const navigate = useNavigate();
   const ticketId = id ?? "";
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [composerPrefill, setComposerPrefill] = useState({
@@ -432,11 +435,23 @@ export default function AdminTicketDetailPage() {
             <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
             <SideInfoRow label="Khẩn cấp" value={ticket.urgencyLevel ?? null} />
             <SideInfoRow
+              label="Serial pin"
+              value={ticket.batterySerialNumber ?? null}
+            />
+            <SideInfoRow
               label="Ngày tạo"
               value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
                 locale: vi,
               })}
             />
+            {ticket.detectedAt && (
+              <SideInfoRow
+                label="Phát hiện lúc"
+                value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
+              />
+            )}
             {ticket.updatedAt && (
               <SideInfoRow
                 label="Cập nhật"
@@ -446,8 +461,63 @@ export default function AdminTicketDetailPage() {
               />
             )}
           </div>
+
+          {/* ── AI verify + nghi trùng (chỉ ticket Customer tạo thủ công) ── */}
+          {ticket.origin === "ManualByCustomer" &&
+            (ticket.aiVerifyStatus || ticket.suspectedDuplicateOfTicketId) && (
+              <div className="px-4 py-3 space-y-2">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Kiểm tra AI
+                </p>
+                {ticket.aiVerifyStatus && (
+                  <div className="flex items-center gap-2">
+                    <TicketVerifyBadge
+                      status={ticket.aiVerifyStatus}
+                      origin={ticket.origin}
+                    />
+                    {ticket.aiVerifyScore != null && (
+                      <span className="text-xs text-muted-foreground">
+                        {(ticket.aiVerifyScore * 100).toFixed(0)}% hợp lệ
+                      </span>
+                    )}
+                  </div>
+                )}
+                {ticket.aiVerifyReason && (
+                  <p className="text-xs text-muted-foreground">
+                    {ticket.aiVerifyReason}
+                  </p>
+                )}
+                {ticket.suspectedDuplicateOfTicketId && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                    <p className="font-medium">⚠ Nghi trùng ticket khác</p>
+                    {ticket.duplicateReason && (
+                      <p className="mt-0.5">{ticket.duplicateReason}</p>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-2 h-7"
+                      onClick={() => setMergeOpen(true)}
+                    >
+                      Gộp ticket
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </div>
+
+      {/* ── Merge Dialog ─────────────────────────────────────────────────── */}
+      {mergeOpen && (
+        <MergeTicketDialog
+          open
+          onOpenChange={setMergeOpen}
+          ticketId={ticket.id}
+          ticketCode={ticket.code}
+          suggestedTargetId={ticket.suspectedDuplicateOfTicketId}
+        />
+      )}
 
       {/* ── Declare Incident Dialog ──────────────────────────────────────── */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

@@ -15,6 +15,7 @@ import type {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
+  MergeTicketPayload,
 } from "@/shared/types/ticket/ticket.types";
 
 export interface GetAdminTicketsParams {
@@ -91,5 +92,11 @@ export const adminTicketService = {
   addComment: (id: string, payload: AddCommentPayload) =>
     axiosInstance
       .post<TicketActionResponse>(ENDPOINTS.TICKETS.CHATS(id), payload)
+      .then((r) => r.data),
+
+  // Manager gộp ticket nghi trùng (id) vào ticket đích (targetTicketId).
+  merge: (id: string, payload: MergeTicketPayload) =>
+    axiosInstance
+      .post<TicketActionResponse>(ENDPOINTS.ADMIN.TICKETS.MERGE(id), payload)
       .then((r) => r.data),
 };

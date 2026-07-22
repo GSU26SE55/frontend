@@ -15,6 +15,7 @@ import {
   Thermometer,
   BarChart3,
   SlidersHorizontal,
+  Battery,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
@@ -43,6 +44,11 @@ export const MANAGER_NAV: NavSection[] = [
     defaultOpen: true,
     items: [
       { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
+      {
+        label: "Battery Assets",
+        path: "/manager/battery-assets",
+        icon: Battery,
+      },
       { label: SIDEBAR_LABELS.tickets, path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
       {
