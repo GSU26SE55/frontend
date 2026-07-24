@@ -9,7 +9,7 @@ export const APP_NAME = "Solar Battery Management";
 export const SIDEBAR_LABELS = {
   overview: "Tổng quan",
   analytics: "Analytics",
-  sites: "Sites",
+  sites: "Battery & Site",
   tickets: "Tickets",
   knowledgeBase: "Knowledge Base",
   blog: "Blog",

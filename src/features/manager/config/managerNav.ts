@@ -12,10 +12,8 @@ import {
   Clock,
   BookOpen,
   ShieldAlert,
-  Thermometer,
   BarChart3,
   SlidersHorizontal,
-  Battery,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
@@ -43,12 +41,9 @@ export const MANAGER_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
+      // Pin truy cập qua Site (Sites → site detail → chi tiết pin).
+      // Route /manager/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
       { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
-      {
-        label: "Battery Assets",
-        path: "/manager/battery-assets",
-        icon: Battery,
-      },
       { label: SIDEBAR_LABELS.tickets, path: "/manager/tickets", icon: Ticket },
       { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
       {
@@ -70,11 +65,6 @@ export const MANAGER_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.envIncidents,
         path: "/manager/environmental-incidents",
         icon: ShieldAlert,
-      },
-      {
-        label: SIDEBAR_LABELS.ambient,
-        path: "/manager/ambient",
-        icon: Thermometer,
       },
       {
         label: "Calibration sắp hết hạn",
