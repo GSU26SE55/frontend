@@ -1,11 +1,2 @@
-import { useQuery } from "@tanstack/react-query";
-import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import { batteryAssetService } from "@/features/admin/services/battery/battery-asset.service";
-
-export function useBatteryAsset(id: string) {
-  return useQuery({
-    queryKey: QUERY_KEY.batteryAssets.detail(id),
-    queryFn: () => batteryAssetService.getById(id).then((r) => r.data.data),
-    enabled: !!id,
-  });
-}
+// Re-export từ shared — nguồn thật ở shared/hooks/battery/useBatteryAsset.ts.
+export { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";

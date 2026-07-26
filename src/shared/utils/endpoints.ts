@@ -104,10 +104,8 @@ export const ENDPOINTS = {
       `/api/tickets/${tid}/participants/history`,
   },
 
-  CHAT_TEMPLATES: {
-    LIST: "/api/chat-templates",
-    DETAIL: (id: string) => `/api/chat-templates/${id}`,
-  },
+  // #696 — CHAT_TEMPLATES đã bị xóa khỏi BE (/api/chat-templates,
+  // /api/tickets/{id}/chats/from-template/{templateId}). Không khôi phục.
 
   CHAT_MENTIONS: {
     ME: "/api/chats/mentions/me",
@@ -198,8 +196,12 @@ export const ENDPOINTS = {
     UPDATE: (id: string) => `/api/sla-rules/${id}`,
   },
 
-  // AI classification feedback — BE hiện chỉ có POST feedback, chưa có GET list/detail.
+  // AI — SOH prediction + anomaly classification (BE-AI: SohPredictionBackgroundService populate).
+  SOH_PREDICTIONS: {
+    LIST: "/api/v1/soh-predictions", // ?batteryAssetId=&from=&to=&pageNumber=&pageSize=
+  },
   ANOMALY_CLASSIFICATIONS: {
+    LIST: "/api/v1/anomaly-classifications", // ?batteryAssetId=&classification=&from=&to=
     FEEDBACK: (id: string) => `/api/v1/anomaly-classifications/${id}/feedback`,
   },
 
@@ -253,6 +255,9 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
+      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
+      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
+      QUEUE_COUNT: "/api/admin/tickets/queue/count",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
@@ -262,6 +267,10 @@ export const ENDPOINTS = {
       ESCALATE: (id: string) => `/api/admin/tickets/${id}/escalate`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
+      // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).
+      MERGE: (id: string) => `/api/admin/tickets/${id}/merge`,
+      // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
+      RE_VERIFY: (id: string) => `/api/admin/tickets/${id}/re-verify`,
     },
     SMS_GATEWAY: {
       DEVICES: "/api/admin/sms-gateway/devices",

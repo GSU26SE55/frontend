@@ -3,6 +3,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
+import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
+import { Badge } from "@/components/ui/badge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
@@ -75,11 +77,30 @@ export default function TicketTable({
       header: "Tiêu đề",
       sortKey: "title",
       sortValue: (t) => t.title,
-      cellClassName: "max-w-xs truncate font-medium",
+      cellClassName: "max-w-xs font-medium",
       cell: (t) => (
-        <span title={t.title} className="block max-w-xs truncate">
-          {t.title}
-        </span>
+        <div className="max-w-xs">
+          <span title={t.title} className="block truncate">
+            {t.title}
+          </span>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+            {/* AI verify — chỉ ticket manual, ẩn khi hợp lệ (hideWhenOk). */}
+            <TicketVerifyBadge
+              status={t.aiVerifyStatus}
+              origin={t.origin}
+              hideWhenOk
+            />
+            {/* Nghi trùng với ticket đang mở. */}
+            {t.suspectedDuplicateOfTicketId && (
+              <Badge
+                variant="outline"
+                className="border-amber-200 bg-amber-50 text-amber-700"
+              >
+                Nghi trùng
+              </Badge>
+            )}
+          </div>
+        </div>
       ),
     },
     {

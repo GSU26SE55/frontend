@@ -7,7 +7,6 @@ import {
   LayoutTemplate,
   LayoutDashboard,
   MapPin,
-  Battery,
   BatteryCharging,
   Users,
   Shield,
@@ -19,7 +18,6 @@ import {
   FileClock,
   BookOpen,
   ShieldAlert,
-  Thermometer,
   MessageSquare,
   Workflow,
   BarChart3,
@@ -53,8 +51,9 @@ export const ADMIN_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
+      // Pin truy cập qua Site (Battery & Site → site detail → chi tiết pin).
+      // Route /admin/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
       { label: SIDEBAR_LABELS.sites, path: "/admin/sites", icon: MapPin },
-      { label: "Battery Assets", path: "/admin/battery-assets", icon: Battery },
       {
         label: "Loại pin & Ngưỡng",
         path: "/admin/battery-types",
@@ -69,11 +68,6 @@ export const ADMIN_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.envIncidents,
         path: "/admin/environmental-incidents",
         icon: ShieldAlert,
-      },
-      {
-        label: SIDEBAR_LABELS.ambient,
-        path: "/admin/ambient",
-        icon: Thermometer,
       },
       { label: "IoT Devices", path: "/admin/iot-devices", icon: Cpu },
       { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },

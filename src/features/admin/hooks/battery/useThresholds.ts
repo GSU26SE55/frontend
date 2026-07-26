@@ -1,28 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import { thresholdService } from "@/features/admin/services/battery/threshold.service";
-import type {
-  ThresholdListParams,
-  ThresholdByTypeParams,
-} from "@/features/admin/types/battery/threshold.types";
-
-export function useThresholds(params?: ThresholdListParams) {
-  return useQuery({
-    queryKey: QUERY_KEY.thresholds.list(params),
-    queryFn: () => thresholdService.getList(params).then((r) => r.data.data),
-  });
-}
-
-export function useThresholdByType(
-  batteryTypeId: string,
-  params?: ThresholdByTypeParams,
-) {
-  return useQuery({
-    queryKey: QUERY_KEY.thresholds.byType(batteryTypeId, params),
-    queryFn: () =>
-      thresholdService
-        .getByType(batteryTypeId, params)
-        .then((r) => r.data.data),
-    enabled: !!batteryTypeId,
-  });
-}
+// Re-export từ shared — nguồn thật ở shared/hooks/battery/useThresholds.ts.
+export {
+  useThresholds,
+  useThresholdByType,
+} from "@/shared/hooks/battery/useThresholds";

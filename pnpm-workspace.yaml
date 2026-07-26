@@ -1,2 +1,25 @@
 allowBuilds:
   msw: false
+
+# Supply-chain hardening
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+
+# Audited exceptions to trustPolicy (2026-07-26).
+# All three have valid npm registry signatures but no provenance attestation,
+# while an EARLIER-published version of the same package had one — which is what
+# no-downgrade flags. Each was checked against the registry and is a maintainer
+# release-process change, not a takeover. Re-audit before widening this list.
+trustPolicyExclude:
+  # semver 6.3.1 (2023-07-10) vs 7.5.4 (2023-07-07, provenance). Cross-major
+  # backport to the v6 line; no 6.x release has ever carried provenance.
+  # Pinned by @babel/core (^6.3.1) — not upgradable.
+  - semver@6.3.1
+  # reselect 5.1.1 (2024-06-01) vs 5.1.0 (2024-01-05, provenance).
+  # recharts pins reselect exactly at "5.1.1" — not upgradable.
+  - reselect@5.1.1
+  # react-redux 9.2.0 (2024-12-10) vs 9.1.0 (2024-01-12, provenance).
+  # 9.3.0 has provenance and satisfies recharts' "8.x.x || 9.x.x" — this entry
+  # can be dropped once the lockfile is refreshed to pick it up.
+  - react-redux@9.2.0

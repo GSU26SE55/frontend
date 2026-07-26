@@ -1,0 +1,85 @@
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DashboardPanel,
+  DashboardGauge,
+} from "@/shared/components/dashboard/DashboardPanel";
+import { slaComplianceColor } from "@/shared/lib/sla";
+
+/**
+ * Gauge tuân thủ SLA + 3 ô Met / Running / Breach.
+ *
+ * Trước đây khối này được copy nguyên văn ở CẢ BA dashboard (admin/manager/staff)
+ * — kể cả thang màu — nên sửa ngưỡng ở 1 chỗ là lệch 2 chỗ còn lại. Gom về đây.
+ */
+
+export interface SlaSummary {
+  compliancePercent: number;
+  met: number;
+  running: number;
+  breached: number;
+}
+
+function FooterCell({
+  value,
+  label,
+  color,
+}: {
+  value: number;
+  label: string;
+  color?: string;
+}) {
+  return (
+    <div className="rounded-md bg-muted/40 py-1.5">
+      <p className="text-sm font-semibold tabular-nums" style={{ color }}>
+        {value}
+      </p>
+      <p className="text-[9.5px] text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+export function SlaGaugePanel({
+  title,
+  desc,
+  sla,
+  isLoading,
+  className = "min-h-64",
+}: {
+  title: string;
+  desc: string;
+  sla: SlaSummary | null | undefined;
+  isLoading: boolean;
+  className?: string;
+}) {
+  const percent = sla?.compliancePercent ?? 0;
+
+  return (
+    <DashboardPanel title={title} desc={desc} className={className}>
+      {isLoading ? (
+        <Skeleton className="h-full w-full" />
+      ) : (
+        <DashboardGauge
+          percent={percent}
+          valueText={sla ? `${percent}%` : "—"}
+          caption="SLA met"
+          color={slaComplianceColor(sla?.compliancePercent)}
+          footer={
+            <div className="grid grid-cols-3 gap-1.5 text-center">
+              <FooterCell
+                value={sla?.met ?? 0}
+                label="Met"
+                color="var(--ok)"
+              />
+              <FooterCell value={sla?.running ?? 0} label="Running" />
+              <FooterCell
+                value={sla?.breached ?? 0}
+                label="Breach"
+                color="var(--p1)"
+              />
+            </div>
+          }
+        />
+      )}
+    </DashboardPanel>
+  );
+}

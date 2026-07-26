@@ -12,6 +12,7 @@ import type {
 } from "@/shared/types/site/site.types";
 import type { BatteryAssetDto } from "@/shared/types/battery/battery.types";
 import type { StaffAssignmentProfileDto } from "@/shared/types/account/account.types";
+import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
 
 export const managerSiteService = {
   getList: (params?: SiteFilterParams) =>
@@ -34,8 +35,12 @@ export const managerSiteService = {
       { params },
     ),
 
-  getStaffList: () =>
+  // GH-693 — theo BE: truyền ticketPriority để AuthService trả sẵn Staff Active +
+  // available + đủ tier cho Primary Handler. Không truyền → trả toàn bộ (dùng cho Supporter).
+  getStaffList: (ticketPriority?: TicketPriorityEnum) =>
     axiosInstance
-      .get<CommonResponse<StaffAssignmentProfileDto[]>>(ENDPOINTS.STAFF.LIST)
+      .get<CommonResponse<StaffAssignmentProfileDto[]>>(ENDPOINTS.STAFF.LIST, {
+        params: ticketPriority ? { ticketPriority } : undefined,
+      })
       .then((r) => r.data.data ?? []),
 };

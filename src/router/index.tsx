@@ -7,7 +7,7 @@ import AuthLayout from "@/shared/components/layout/AuthLayout";
 import AppLayout from "@/shared/components/layout/AppLayout";
 import RoleAwareAppLayout from "./RoleAwareAppLayout";
 import { ADMIN_NAV } from "@/features/admin/config/adminNav";
-import { MANAGER_NAV } from "@/features/manager/config/managerNav";
+import ManagerAppLayout from "@/features/manager/components/layout/ManagerAppLayout";
 import { STAFF_NAV } from "@/features/staff/config/staffNav";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
 import UseMobileAppPage from "@/features/auth/pages/UseMobileAppPage";
@@ -52,9 +52,12 @@ import ManagerDashboardPage from "@/features/manager/pages/DashboardPage";
 import ManagerAnalyticsPage from "@/features/manager/pages/AnalyticsPage";
 import ManagerSiteListPage from "@/features/manager/pages/SiteListPage";
 import ManagerSiteDetailPage from "@/features/manager/pages/SiteDetailPage";
+import ManagerBatteryAssetsPage from "@/features/manager/pages/BatteryAssetsPage";
+import ManagerBatteryAssetDetailPage from "@/features/manager/pages/BatteryAssetDetailPage";
 import ManagerTicketListPage from "@/features/manager/pages/TicketListPage";
 import ManagerTicketQueuePage from "@/features/manager/pages/TicketQueuePage";
 import ManagerTicketDetailPage from "@/features/manager/pages/TicketDetailPage";
+import ManagerMergeComparePage from "@/features/manager/pages/MergeComparePage";
 import ManagerAlertsPage from "@/features/manager/pages/AlertsPage";
 import ManagerEnvironmentalIncidentsPage from "@/features/manager/pages/EnvironmentalIncidentsPage";
 import ManagerAmbientConfigPage from "@/features/manager/pages/AmbientConfigPage";
@@ -84,6 +87,7 @@ import StaffBlogListPage from "@/features/staff/pages/BlogListPage";
 import StaffBlogDetailPage from "@/features/staff/pages/BlogDetailPage";
 import StaffBlogEditorPage from "@/features/staff/pages/BlogEditorPage";
 import StaffBatteryAlertsPage from "@/features/staff/pages/BatteryAlertsPage";
+import StaffBatteryAssetDetailPage from "@/features/staff/pages/BatteryAssetDetailPage";
 import StaffEnvironmentalIncidentsPage from "@/features/staff/pages/EnvironmentalIncidentsPage";
 
 const router = createBrowserRouter([
@@ -204,16 +208,28 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/manager",
-            element: <AppLayout sections={MANAGER_NAV} />,
+            element: <ManagerAppLayout />,
             children: [
               { index: true, element: <ManagerDashboardPage /> },
               { path: "dashboard", element: <ManagerDashboardPage /> },
               { path: "analytics", element: <ManagerAnalyticsPage /> },
               { path: "sites", element: <ManagerSiteListPage /> },
               { path: "sites/:id", element: <ManagerSiteDetailPage /> },
+              {
+                path: "battery-assets",
+                element: <ManagerBatteryAssetsPage />,
+              },
+              {
+                path: "battery-assets/:id",
+                element: <ManagerBatteryAssetDetailPage />,
+              },
               { path: "tickets", element: <ManagerTicketListPage /> },
               { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
               { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
+              {
+                path: "tickets/:id/merge",
+                element: <ManagerMergeComparePage />,
+              },
               { path: "kb", element: <ManagerKbListPage /> },
               { path: "kb/new", element: <ManagerKbEditorPage /> },
               { path: "kb/:id", element: <ManagerKbDetailPage /> },
@@ -268,6 +284,10 @@ const router = createBrowserRouter([
               },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },
+              {
+                path: "battery-assets/:id",
+                element: <StaffBatteryAssetDetailPage />,
+              },
               {
                 path: "environmental-incidents",
                 element: <StaffEnvironmentalIncidentsPage />,

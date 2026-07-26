@@ -10,6 +10,8 @@ import type {
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
+  TicketVerifyStatusEnum,
+  TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 export {
   TicketStatusEnum,
@@ -24,8 +26,19 @@ export {
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
+  TicketVerifyStatusEnum,
+  TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 // --- DTOs ---
+
+/**
+ * #697 — 1 dòng phân công Staff trên ticket. BE đã lọc bản ghi soft-deleted.
+ * Đúng 1 phần tử role=PrimaryHandler, 0..N phần tử role=Supporter.
+ */
+export interface TicketAssignmentDTO {
+  staffId: string;
+  role: TicketAssignmentRoleEnum;
+}
 
 export interface SlaTimerDTO {
   id: string;
@@ -43,9 +56,17 @@ export interface SlaTimerDTO {
 export interface TicketDTO {
   id: string;
   code: string;
+  /** Pin chính (legacy — pin đầu tiên). Dùng batteryAssetIds cho danh sách đầy đủ. */
   batteryAssetId?: string | null;
+  /** Danh sách ID pin gắn ticket (ticket có thể gắn nhiều pin). BE trả từ TicketBatteryAssets. */
+  batteryAssetIds?: string[];
   customerId: string;
-  assignedStaffId?: string | null;
+  /**
+   * #697 — thay cho `assignedStaffId` (đã bỏ ở BE). Dùng
+   * `getPrimaryHandler()` / `getSupporters()` (shared/utils/ticket/assignments)
+   * thay vì tự lọc ở từng chỗ.
+   */
+  assignments: TicketAssignmentDTO[];
   title: string;
   category: TicketCategoryEnum;
   // BE trả null khi ticket chưa triage (state New/Open) — priority/impact/urgency
@@ -60,6 +81,29 @@ export interface TicketDTO {
   createdAt: string;
   updatedAt?: string | null;
   slaTimer: SlaTimerDTO | null;
+
+  // ── Ticket thủ công: giờ phát hiện + serial pin (snapshot) + AI verify + merge ──
+  /** Thời điểm Customer phát hiện pin bất thường (điền từ Mobile). Khác createdAt. */
+  detectedAt?: string | null;
+  /** Serial pin (snapshot lúc tạo) — hiển thị không cần gọi thêm API. */
+  batterySerialNumber?: string | null;
+  /** Trạng thái AI verify thật/rác (human-in-the-loop). */
+  aiVerifyStatus?: TicketVerifyStatusEnum | null;
+  /** Điểm hợp lệ [0..1] từ AI. */
+  aiVerifyScore?: number | null;
+  /** Lý do AI đưa ra verdict (cho Manager đọc). */
+  aiVerifyReason?: string | null;
+  /** Ticket bị nghi trùng với ticket này (cùng pin/chủ, còn mở). */
+  suspectedDuplicateOfTicketId?: string | null;
+  /** Lý do nghi trùng. */
+  duplicateReason?: string | null;
+  /** Set khi Manager đã gộp ticket này vào ticket khác (ẩn khỏi queue). */
+  mergedIntoTicketId?: string | null;
+}
+
+/** Payload gộp ticket (Manager) — gộp ticket hiện tại vào ticket đích. */
+export interface MergeTicketPayload {
+  targetTicketId: string;
 }
 
 export interface TicketActivityDTO {
@@ -118,6 +162,12 @@ export interface StaffMaintenanceLogGroupDTO {
 }
 
 export interface TicketDetailDTO extends TicketDTO {
+  /**
+   * #698 — khoảng thời gian Customer phát hiện sự cố (ISO-8601 UTC).
+   * Ticket sinh tự động từ Alert có thể trả `incidentDetectedTo = null`.
+   */
+  incidentDetectedFrom?: string | null;
+  incidentDetectedTo?: string | null;
   description?: string | null;
   resolutionSummary?: string | null;
   resolvedAt?: string | null;
@@ -193,13 +243,24 @@ export interface TriagePayload {
   managerComment?: string;
 }
 
+/**
+ * #697 — POST /api/admin/tickets/{id}/assign.
+ * Primary phải active + available + đủ skill tier theo priority (không đạt → 403).
+ * Supporter KHÔNG bị check tier, nhưng không được trùng Primary và không trùng nhau.
+ */
 export interface AssignPayload {
-  staffId: string;
+  primaryHandlerStaffId: string;
+  supporterStaffIds: string[];
   notes?: string;
 }
 
+/**
+ * #697 — POST /api/admin/tickets/{id}/reassign.
+ * Primary hiện tại tự động hạ thành Supporter; KHÔNG gửi lại danh sách supporter.
+ * SLA timer không reset.
+ */
 export interface ReassignPayload {
-  newStaffId: string;
+  newPrimaryHandlerStaffId: string;
   reason: string;
 }
 

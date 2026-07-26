@@ -1,32 +1,17 @@
 import axiosInstance from "@/shared/lib/axios";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
-import type {
-  CommonResponse,
-  PaginationResponse,
-} from "@/shared/types/api.types";
+import type { CommonResponse } from "@/shared/types/api.types";
 import type {
   BatteryAssetDto,
-  BatteryAssetRealtimeDto,
-  BatteryAssetListParams,
   CreateBatteryAssetPayload,
   UpdateBatteryAssetPayload,
   TransferOwnerPayload,
 } from "@/features/admin/types/battery/battery-asset.types";
+import { batteryAssetService as sharedBatteryAssetService } from "@/shared/services/battery/battery-asset.service";
 
+// Read (getList/getById/getRealtime) dùng chung ở shared; admin bổ sung CRUD (Admin-only).
 export const batteryAssetService = {
-  getList: (params?: BatteryAssetListParams) =>
-    axiosInstance.get<CommonResponse<PaginationResponse<BatteryAssetDto>>>(
-      ENDPOINTS.BATTERY_ASSETS.LIST,
-      { params },
-    ),
-  getById: (id: string) =>
-    axiosInstance.get<CommonResponse<BatteryAssetDto>>(
-      ENDPOINTS.BATTERY_ASSETS.DETAIL(id),
-    ),
-  getRealtime: (id: string) =>
-    axiosInstance.get<CommonResponse<BatteryAssetRealtimeDto>>(
-      ENDPOINTS.BATTERY_ASSETS.REALTIME(id),
-    ),
+  ...sharedBatteryAssetService,
   create: (payload: CreateBatteryAssetPayload) =>
     axiosInstance.post<CommonResponse<BatteryAssetDto>>(
       ENDPOINTS.BATTERY_ASSETS.CREATE,

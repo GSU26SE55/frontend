@@ -91,3 +91,29 @@ export function useDeclareIncident() {
     onError: (error) => handleErrorApi({ error }),
   });
 }
+
+/** Manager gộp ticket nghi trùng (id) vào ticket đích (targetTicketId). */
+export function useMergeTicket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      targetTicketId,
+    }: {
+      id: string;
+      targetTicketId: string;
+    }) => adminTicketService.merge(id, { targetTicketId }),
+    onSuccess: (_, { id, targetTicketId }) => {
+      toast.success("Đã gộp ticket");
+      // Ticket bị gộp + ticket đích + list/queue đều đổi trạng thái.
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY.tickets.detail(id) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEY.tickets.detail(targetTicketId),
+      });
+      queryClient.invalidateQueries({ queryKey: KEY.admin.tickets });
+      queryClient.invalidateQueries({ queryKey: KEY.manager.tickets });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+}

@@ -97,6 +97,34 @@ function SiteSelect({
   );
 }
 
+// ── Site-scoped panel ─────────────────────────────────────────────────────────
+// Dùng khi siteId đã xác định (nhúng trong Site detail) → không cần site selector.
+// AmbientConfigView (trang standalone) tái sử dụng đúng panel này sau khi chọn site.
+
+export function AmbientSitePanel({ siteId }: { siteId: string }) {
+  const [configOpen, setConfigOpen] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <LatestStrip siteId={siteId} />
+        <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
+          <Settings2 size={14} />
+          Cấu hình ngưỡng
+        </Button>
+      </div>
+
+      <HistoryTable siteId={siteId} />
+
+      <ThresholdPanel
+        siteId={siteId}
+        open={configOpen}
+        onClose={() => setConfigOpen(false)}
+      />
+    </div>
+  );
+}
+
 // ── Main view ──────────────────────────────────────────────────────────────────
 
 export default function AmbientConfigView({

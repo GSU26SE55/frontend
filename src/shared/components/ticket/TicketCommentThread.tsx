@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -248,12 +254,6 @@ export function TicketCommentThread({
     [comments],
   );
 
-  const publicCount = useMemo(
-    () => sorted.filter((c) => !c.isInternal).length,
-    [sorted],
-  );
-  const internalCount = sorted.length - publicCount;
-
   const visible = useMemo(
     () =>
       sorted.filter((c) => (tab === "internal" ? c.isInternal : !c.isInternal)),
@@ -424,38 +424,18 @@ export function TicketCommentThread({
     <div className="flex flex-col">
       {/* Tab tách Công khai / Nội bộ — dính đầu khi cuộn, nền che kín tin nhắn phía sau */}
       <div className="sticky -top-6 z-20 -mx-6 -mt-6 bg-background px-6 pt-6 flex items-center gap-1 border-b border-border pb-2 shrink-0">
-        <button
-          type="button"
-          onClick={() => setTab("public")}
-          className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors",
-            tab === "public"
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-muted",
-          )}
-        >
-          <Globe className="size-3.5" />
-          Công khai
-          <span className="text-[11px] tabular-nums opacity-70">
-            ({publicCount})
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("internal")}
-          className={cn(
-            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors",
-            tab === "internal"
-              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-              : "text-muted-foreground hover:bg-muted",
-          )}
-        >
-          <Lock className="size-3.5" />
-          Nội bộ
-          <span className="text-[11px] tabular-nums opacity-70">
-            ({internalCount})
-          </span>
-        </button>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as ChatTab)}>
+          <TabsList>
+            <TabsTrigger value="public">
+              <Globe className="size-3.5" />
+              Công khai
+            </TabsTrigger>
+            <TabsTrigger value="internal">
+              <Lock className="size-3.5" />
+              Nội bộ
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         {aiEnabled && ticketId && (
           <div className="ml-auto">
             <ChatAiPanel ticketId={ticketId} onSuggestions={setAiSuggestions} />
@@ -596,12 +576,25 @@ export function TicketCommentThread({
                         : "Xem bản gốc"}
                     </button>
                   )}
-                  <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
-                    {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
-                      locale: vi,
-                    })}
-                    {!!c.editCount && c.editCount > 0 && " · đã chỉnh sửa"}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <span className="text-[10px] text-muted-foreground px-1 mt-0.5 cursor-default" />
+                      }
+                    >
+                      {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
+                        locale: vi,
+                      })}
+                      {!!c.editCount && c.editCount > 0 && " · đã chỉnh sửa"}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {format(
+                        new Date(c.createdAt),
+                        "EEEE, dd/MM/yyyy HH:mm:ss",
+                        { locale: vi },
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             );

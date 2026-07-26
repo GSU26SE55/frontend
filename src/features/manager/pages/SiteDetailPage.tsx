@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Battery, Thermometer } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
+import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import { useSiteCascadeSummary } from "@/features/manager/hooks/battery/useSiteCascadeSummary";
 import {
@@ -102,66 +104,85 @@ export default function ManagerSiteDetailPage() {
         </div>
       </div>
 
-      {/* Dashboard summary */}
-      {dashboard && <SiteDashboardCard data={dashboard} />}
-
-      {/* Cascade risk summary */}
-      <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
-
-      {/* Assets table */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Danh sách pin</h2>
-          <Select
-            value={
-              assetsParams.status != null
-                ? String(assetsParams.status)
-                : ASSET_STATUS_ALL
-            }
-            items={[
-              { value: ASSET_STATUS_ALL, label: "Mọi trạng thái" },
-              ...Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => ({
-                value,
-                label,
-              })),
-            ]}
-            onValueChange={(v) =>
-              setAssetsParams((p) => ({
-                ...p,
-                pageNumber: 1,
-                status:
-                  v === ASSET_STATUS_ALL
-                    ? undefined
-                    : (Number(v) as BatteryStatusEnum),
-              }))
-            }
-          >
-            <SelectTrigger size="sm" className="w-40">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ASSET_STATUS_ALL}>Mọi trạng thái</SelectItem>
-              {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Card>
-          <SiteAssetsTable
-            data={assetsPage?.items ?? []}
-            totalCount={assetsPage?.totalItems ?? 0}
-            pageNumber={assetsParams.pageNumber ?? 1}
-            pageSize={assetsParams.pageSize ?? 10}
-            isLoading={loadingAssets}
-            onPageChange={(page) =>
-              setAssetsParams((p) => ({ ...p, pageNumber: page }))
-            }
-          />
-        </Card>
+      {/* Top Summary Grid (Side by side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {dashboard && <SiteDashboardCard data={dashboard} />}
+        <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
       </div>
+
+      {/* Pin + Môi trường */}
+      <Tabs defaultValue="assets">
+        <TabsList>
+          <TabsTrigger value="assets">
+            <Battery className="size-3.5" /> Danh sách pin
+          </TabsTrigger>
+          <TabsTrigger value="ambient">
+            <Thermometer className="size-3.5" /> Môi trường
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="assets" className="mt-4 space-y-3">
+          <div className="flex items-center justify-end">
+            <Select
+              value={
+                assetsParams.status != null
+                  ? String(assetsParams.status)
+                  : ASSET_STATUS_ALL
+              }
+              items={[
+                { value: ASSET_STATUS_ALL, label: "Mọi trạng thái" },
+                ...Object.entries(ASSET_STATUS_LABELS).map(
+                  ([value, label]) => ({
+                    value,
+                    label,
+                  }),
+                ),
+              ]}
+              onValueChange={(v) =>
+                setAssetsParams((p) => ({
+                  ...p,
+                  pageNumber: 1,
+                  status:
+                    v === ASSET_STATUS_ALL
+                      ? undefined
+                      : (Number(v) as BatteryStatusEnum),
+                }))
+              }
+            >
+              <SelectTrigger size="sm" className="w-40">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ASSET_STATUS_ALL}>Mọi trạng thái</SelectItem>
+                {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Card>
+            <SiteAssetsTable
+              data={assetsPage?.items ?? []}
+              totalCount={assetsPage?.totalItems ?? 0}
+              pageNumber={assetsParams.pageNumber ?? 1}
+              pageSize={assetsParams.pageSize ?? 10}
+              isLoading={loadingAssets}
+              onPageChange={(page) =>
+                setAssetsParams((p) => ({ ...p, pageNumber: page }))
+              }
+              onAssetClick={(asset) =>
+                navigate(`/manager/battery-assets/${asset.id}`)
+              }
+            />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ambient" className="mt-4">
+          <AmbientSitePanel siteId={id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

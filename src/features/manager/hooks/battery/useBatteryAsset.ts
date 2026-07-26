@@ -1,13 +1,2 @@
-import { useQuery } from "@tanstack/react-query";
-import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import { batteryAssetService } from "@/features/manager/services/battery/battery-asset.service";
-
-// Cùng cache key với admin (QUERY_KEY.batteryAssets.detail) — cùng resource
-// chỉ-đọc, chia sẻ cache là đúng đắn.
-export function useManagerBatteryAsset(id: string | null | undefined) {
-  return useQuery({
-    queryKey: QUERY_KEY.batteryAssets.detail(id ?? ""),
-    queryFn: () => batteryAssetService.getById(id!).then((r) => r.data.data),
-    enabled: !!id,
-  });
-}
+// Wrapper giữ tên cũ — nguồn thật ở shared/hooks/battery/useBatteryAsset.ts.
+export { useBatteryAsset as useManagerBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";

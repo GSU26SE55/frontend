@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { ticketChatActionsService } from "@/shared/services/ticket/ticket-chat-actions.service";
@@ -54,7 +54,26 @@ export function useDeleteTicketChat() {
   });
 }
 
+/**
+ * Số chat chưa đọc của chính user trong 1 ticket — badge tab "Bình luận".
+ *
+ * staleTime 0 + realtime: `useTicketCommentsRealtime` invalidate key này khi có
+ * ChatAdded/Deleted nên badge tăng/giảm ngay, không cần polling.
+ */
+export function useTicketChatUnreadCount(ticketId: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
+    queryFn: () =>
+      ticketChatActionsService
+        .getUnreadCount(ticketId)
+        .then((r) => r.data.data ?? 0),
+    enabled: !!ticketId,
+    staleTime: 0,
+  });
+}
+
 export function useMarkTicketChatsRead() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
       ticketId,
@@ -63,6 +82,12 @@ export function useMarkTicketChatsRead() {
       ticketId: string;
       payload: ChatMarkReadPayload;
     }) => ticketChatActionsService.markRead(ticketId, payload),
+    // Đọc xong → badge phải tụt ngay, nếu không user mở tab mà số vẫn treo.
+    onSuccess: (_, { ticketId }) => {
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
+      });
+    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

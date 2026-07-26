@@ -47,6 +47,40 @@ export const TicketOriginEnum = {
 export type TicketOriginEnum =
   (typeof TicketOriginEnum)[keyof typeof TicketOriginEnum];
 
+// AI verify ticket thủ công (thật/rác) — human-in-the-loop, AI chỉ gắn nhãn.
+// BE serialize enum ra STRING (JsonStringEnumConverter) → dùng string value.
+export const TicketVerifyStatusEnum = {
+  Pending: "Pending", // chưa verify (consumer async chưa xử lý)
+  Legitimate: "Legitimate", // AI đánh giá hợp lệ
+  Suspicious: "Suspicious", // AI nghi rác — Manager xem trước
+  Skipped: "Skipped", // không verify được (AI down) — vẫn hợp lệ
+} as const;
+export type TicketVerifyStatusEnum =
+  (typeof TicketVerifyStatusEnum)[keyof typeof TicketVerifyStatusEnum];
+
+export const TicketVerifyStatusLabel: Record<TicketVerifyStatusEnum, string> = {
+  [TicketVerifyStatusEnum.Pending]: "Đang kiểm tra",
+  [TicketVerifyStatusEnum.Legitimate]: "Hợp lệ",
+  [TicketVerifyStatusEnum.Suspicious]: "Nghi ngờ",
+  [TicketVerifyStatusEnum.Skipped]: "Bỏ qua kiểm tra",
+};
+
+// #697 — 1 ticket có 1 PrimaryHandler + N Supporter (thay cho assignedStaffId cũ).
+export const TicketAssignmentRoleEnum = {
+  PrimaryHandler: "PrimaryHandler", // người chịu trách nhiệm chính, tính vào My Tickets/KPI
+  Supporter: "Supporter", // hỗ trợ, chỉ được vào chat nội bộ — KHÔNG tính workload
+} as const;
+export type TicketAssignmentRoleEnum =
+  (typeof TicketAssignmentRoleEnum)[keyof typeof TicketAssignmentRoleEnum];
+
+export const TicketAssignmentRoleLabel: Record<
+  TicketAssignmentRoleEnum,
+  string
+> = {
+  [TicketAssignmentRoleEnum.PrimaryHandler]: "Phụ trách chính",
+  [TicketAssignmentRoleEnum.Supporter]: "Hỗ trợ",
+};
+
 export const ImpactScopeEnum = {
   SingleAsset: "SingleAsset",
   Site: "Site",

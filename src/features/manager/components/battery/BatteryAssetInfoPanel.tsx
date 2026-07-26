@@ -1,14 +1,18 @@
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { BatteryFull } from "lucide-react";
+import { BatteryFull, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useManagerBatteryAsset } from "@/features/manager/hooks/battery/useBatteryAsset";
 import {
   BatteryStatusEnum,
   WarrantyStatusEnum,
 } from "@/features/manager/types/battery/battery-asset.types";
 import BatteryUsageHistoryPanel from "@/features/manager/components/battery/BatteryUsageHistoryPanel";
+import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -35,9 +39,14 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 interface Props {
   batteryAssetId?: string | null;
+  /** Thời điểm phát hiện sự cố (ticket.detectedAt) — để hiện log bằng chứng warning. */
+  detectedAt?: string | null;
 }
 
-export default function BatteryAssetInfoPanel({ batteryAssetId }: Props) {
+export default function BatteryAssetInfoPanel({
+  batteryAssetId,
+  detectedAt,
+}: Props) {
   const {
     data: asset,
     isLoading,
@@ -75,6 +84,19 @@ export default function BatteryAssetInfoPanel({ batteryAssetId }: Props) {
           {STATUS_LABEL[asset.status] ?? asset.status}
         </Badge>
       </div>
+
+      {/* Mở trang chi tiết real-time (live telemetry + chart + AI) cho đúng pin gắn ticket. */}
+      <Link
+        to={`/manager/battery-assets/${batteryAssetId}`}
+        className={cn(
+          buttonVariants({ variant: "outline", size: "sm" }),
+          "w-full mb-3",
+        )}
+      >
+        <Activity className="size-3.5" />
+        Xem chi tiết real-time
+      </Link>
+
       <div className="divide-y divide-border/50">
         <InfoRow label="Số seri" value={asset.serialNumber} />
         <InfoRow label="Loại pin" value={asset.batteryTypeName} />
@@ -95,6 +117,13 @@ export default function BatteryAssetInfoPanel({ batteryAssetId }: Props) {
                 ` (đến ${format(new Date(asset.warrantyEndDate), "dd/MM/yyyy")})`}
             </>
           }
+        />
+      </div>
+
+      <div className="mt-5">
+        <BatteryWarningEvidencePanel
+          batteryAssetId={batteryAssetId}
+          detectedAt={detectedAt}
         />
       </div>
 

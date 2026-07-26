@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import SlaCountdown from "@/features/manager/components/ticket/SlaCountdown";
@@ -22,6 +23,7 @@ import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareI
 import TicketActivityTimeline from "@/features/manager/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
   type ChatTab,
@@ -33,7 +35,9 @@ import {
   useTicketActivities,
   useApproveTicket,
   useTicketComments,
+  useReVerifyTicket,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
+import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import {
   useUpdateTicketChat,
@@ -51,6 +55,10 @@ import {
   TicketCategoryEnum,
   EscalationReasonEnum,
 } from "@/shared/types/ticket/ticket.types";
+import {
+  getPrimaryHandler,
+  getSupporters,
+} from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { slaBarColorClass } from "@/shared/lib/sla";
@@ -128,6 +136,21 @@ export default function TicketDetailPage() {
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
   const { data: comments = [] } = useTicketComments(id);
+  const { data: staffList = [] } = useStaffAssignmentList();
+
+  // #697 — assignments thay cho assignedStaffId: 1 PrimaryHandler + N Supporter.
+  // staffId chưa có trong staff list (đã nghỉ/ẩn) → fallback hiện UUID.
+  const { primaryHandlerName, supporterNames } = useMemo(() => {
+    const nameOf = (staffId: string) =>
+      staffList.find((s) => s.accountId === staffId)?.fullName ?? staffId;
+    const primary = getPrimaryHandler(ticket?.assignments);
+    return {
+      primaryHandlerName: primary ? nameOf(primary.staffId) : null,
+      supporterNames: getSupporters(ticket?.assignments).map((a) =>
+        nameOf(a.staffId),
+      ),
+    };
+  }, [ticket?.assignments, staffList]);
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -148,6 +171,7 @@ export default function TicketDetailPage() {
   }, [ticket, comments]);
   const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
+  const reVerify = useReVerifyTicket(id);
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
   const { mutate: updateChat, isPending: editChatPending } =
@@ -333,6 +357,17 @@ export default function TicketDetailPage() {
               Từ chối (Triage)
             </Button>
           )}
+          {/* Gộp ticket trùng — luôn cho Manager gộp thủ công (ticket chưa gộp/chưa đóng). */}
+          {!ticket.mergedIntoTicketId &&
+            ticket.status !== TicketStatusEnum.Closed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/manager/tickets/${id}/merge`)}
+              >
+                Gộp ticket
+              </Button>
+            )}
         </div>
       </div>
 
@@ -344,9 +379,10 @@ export default function TicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Thông tin</TabsTrigger>
-                <TabsTrigger value="comments">
+                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                <TabsTrigger value="comments" className="group">
                   Bình luận
-                  {comments.length > 0 && ` (${comments.length})`}
+                  <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
@@ -358,7 +394,33 @@ export default function TicketDetailPage() {
               value="info"
               className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
             >
-              <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
+              {/* Ticket có thể gắn nhiều pin — lặp từng pin. Fallback pin đơn (legacy). */}
+              {(() => {
+                const ids =
+                  ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
+                    ? ticket.batteryAssetIds
+                    : ticket.batteryAssetId
+                      ? [ticket.batteryAssetId]
+                      : [];
+                if (ids.length === 0)
+                  return <BatteryAssetInfoPanel batteryAssetId={null} />;
+                return (
+                  <div className="space-y-4">
+                    {ids.length > 1 && (
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {ids.length} thiết bị pin liên quan
+                      </p>
+                    )}
+                    {ids.map((bid) => (
+                      <BatteryAssetInfoPanel
+                        key={bid}
+                        batteryAssetId={bid}
+                        detectedAt={ticket.detectedAt}
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
               <div>
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Tệp đính kèm
@@ -491,6 +553,73 @@ export default function TicketDetailPage() {
                   <PanelRightClose className="size-4" />
                 </button>
               </div>
+              {/* ── AI verify + nghi trùng (chỉ ticket Customer tạo thủ công) ──
+                  Đặt TRÊN CÙNG: Manager cần đọc nhận định AI + cảnh báo trùng
+                  trước khi triage, không phải cuộn xuống đáy mới thấy. */}
+              {ticket.origin === "ManualByCustomer" &&
+                (ticket.aiVerifyStatus ||
+                  ticket.suspectedDuplicateOfTicketId) && (
+                  <div className="px-4 py-3 space-y-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Kiểm tra AI
+                    </p>
+                    {ticket.aiVerifyStatus && (
+                      <div className="flex items-center gap-2">
+                        <TicketVerifyBadge
+                          status={ticket.aiVerifyStatus}
+                          origin={ticket.origin}
+                        />
+                        {ticket.aiVerifyScore != null && (
+                          <span className="text-xs text-muted-foreground">
+                            {(ticket.aiVerifyScore * 100).toFixed(0)}% hợp lệ
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {ticket.aiVerifyReason && (
+                      <p className="text-xs text-muted-foreground">
+                        {ticket.aiVerifyReason}
+                      </p>
+                    )}
+                    {/* Nút kích hoạt AI kiểm tra lại — chỉ khi Skipped/Pending. */}
+                    {(ticket.aiVerifyStatus === "Skipped" ||
+                      ticket.aiVerifyStatus === "Pending") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7"
+                        disabled={reVerify.isPending}
+                        onClick={() => reVerify.mutate()}
+                      >
+                        {reVerify.isPending ? "Đang gửi…" : "AI kiểm tra lại"}
+                      </Button>
+                    )}
+                    {ticket.suspectedDuplicateOfTicketId && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                        <p className="font-medium">⚠ Nghi trùng ticket khác</p>
+                        {ticket.duplicateReason && (
+                          <p className="mt-0.5">{ticket.duplicateReason}</p>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-2 h-7"
+                          onClick={() =>
+                            navigate(`/manager/tickets/${id}/merge`, {
+                              state: {
+                                suggestedTargetId:
+                                  ticket.suspectedDuplicateOfTicketId,
+                              },
+                            })
+                          }
+                        >
+                          Gộp ticket
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
               {/* SLA */}
               <div className="p-4">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -653,6 +782,59 @@ export default function TicketDetailPage() {
                 />
                 <SideInfoRow label="Nguồn" value={ticket.origin} />
                 <SideInfoRow
+                  label="Phụ trách chính"
+                  value={primaryHandlerName}
+                />
+                {supporterNames.length > 0 && (
+                  <SideInfoRow
+                    label="Hỗ trợ"
+                    value={
+                      <span className="flex flex-wrap justify-end gap-1">
+                        {supporterNames.map((name) => (
+                          <Badge key={name} variant="secondary">
+                            {name}
+                          </Badge>
+                        ))}
+                      </span>
+                    }
+                  />
+                )}
+                <SideInfoRow
+                  label="Serial pin"
+                  value={ticket.batterySerialNumber ?? null}
+                />
+                {ticket.detectedAt && (
+                  <SideInfoRow
+                    label="Phát hiện lúc"
+                    value={format(
+                      new Date(ticket.detectedAt),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
+                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
+                {ticket.incidentDetectedFrom && (
+                  <SideInfoRow
+                    label="Sự cố từ"
+                    value={format(
+                      new Date(ticket.incidentDetectedFrom),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
+                {ticket.incidentDetectedTo && (
+                  <SideInfoRow
+                    label="Sự cố đến"
+                    value={format(
+                      new Date(ticket.incidentDetectedTo),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
+                <SideInfoRow
                   label="Phạm vi"
                   value={
                     ticket.impactScope
@@ -739,10 +921,20 @@ export default function TicketDetailPage() {
         />
       )}
       {dialog === "assign" && (
-        <AssignDialog ticketId={id} open onClose={() => setDialog(null)} />
+        <AssignDialog
+          ticketId={id}
+          priority={ticket.priority}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "reassign" && (
-        <ReassignDialog ticketId={id} open onClose={() => setDialog(null)} />
+        <ReassignDialog
+          ticketId={id}
+          priority={ticket.priority}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "reject" && (
         <RejectDialog ticketId={id} open onClose={() => setDialog(null)} />

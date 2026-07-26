@@ -2,17 +2,18 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useReadingHistory } from "@/features/admin/hooks/battery/useReadingHistory";
-import { useThresholdByType } from "@/features/admin/hooks/battery/useThresholds";
+import { useReadingHistory } from "@/shared/hooks/battery/useReadingHistory";
+import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import { useServerSort } from "@/shared/hooks/useServerSort";
 import { toneText, type StatusTone } from "@/shared/theme/statusColors";
 import type {
   SensorReadingDto,
   SensorReadingSortKey,
-} from "@/features/admin/types/battery/sensor-reading.types";
-import type { ThresholdConfigDto } from "@/features/admin/types/battery/threshold.types";
+} from "@/shared/types/battery/sensor-reading-history.types";
+import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
 
 // datetime-local (giờ địa phương, không timezone) → ISO UTC cho API. "" → undefined.
 const toUtc = (local: string): string | undefined =>
@@ -43,15 +44,14 @@ function voltageTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
 function temperatureTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
   return t ? rangeTone(v, t.temperatureMin, t.temperatureMax) : null;
 }
-// Ngưỡng dòng mặc định (A) khi loại pin chưa cấu hình currentMax* — để cột Dòng
-// vẫn tô màu như các cột khác khi bảng đã có ngưỡng.
-const DEFAULT_CURRENT_MAX_A = 20;
-
+// currentMaxCharge/currentMaxDischarge là optional trong ThresholdConfigDto.
+// Chưa cấu hình → KHÔNG tô màu cột Dòng (trả null), thay vì đoán một ngưỡng mặc
+// định: màu suy ra từ ngưỡng bịa sẽ lệch với cảnh báo BE bắn theo ngưỡng thật,
+// khiến người xem tin nhầm là đã đối chiếu.
 function currentTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
   if (!t) return null; // chưa có cấu hình ngưỡng → cả bảng không tô (giữ đồng bộ)
-  const maxCharge = t.currentMaxCharge ?? DEFAULT_CURRENT_MAX_A;
-  const maxDischarge = t.currentMaxDischarge ?? DEFAULT_CURRENT_MAX_A;
-  return rangeTone(v, -maxDischarge, maxCharge);
+  if (t.currentMaxCharge == null || t.currentMaxDischarge == null) return null;
+  return rangeTone(v, -t.currentMaxDischarge, t.currentMaxCharge);
 }
 function socOf(v: number, t?: ThresholdConfigDto): StatusTone | null {
   return t ? socTone(v, t.socWarningThreshold, t.socCriticalThreshold) : null;
@@ -187,6 +187,15 @@ export default function SensorHistoryTable({
 
   const hasFilter = !!fromLocal || !!toLocal;
 
+  // Bảng không tô màu trông y hệt "mọi giá trị đều bình thường" → phải nói rõ là
+  // thiếu ngưỡng, không phải đã đối chiếu xong.
+  const missingThresholdNote = !threshold
+    ? "Loại pin này chưa cấu hình ngưỡng — số liệu bên dưới không được đối chiếu."
+    : threshold.currentMaxCharge == null ||
+        threshold.currentMaxDischarge == null
+      ? "Chưa cấu hình ngưỡng dòng nạp/xả — cột Dòng (A) không được đối chiếu."
+      : null;
+
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3 px-5 py-3 border-b border-border">
       <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
@@ -227,6 +236,13 @@ export default function SensorHistoryTable({
     </div>
   );
 
+  const thresholdNotice = missingThresholdNote && (
+    <div className="flex items-start gap-2 px-5 py-2.5 border-b border-border text-[11px] text-amber-600 dark:text-amber-500">
+      <TriangleAlert className="size-3.5 shrink-0 mt-px" />
+      <span>{missingThresholdNote}</span>
+    </div>
+  );
+
   const tableContent = isLoading ? (
     <div className="py-12 text-center text-sm text-muted-foreground">
       Đang tải...
@@ -237,6 +253,7 @@ export default function SensorHistoryTable({
     </div>
   ) : (
     <>
+      {thresholdNotice}
       <DataTable
         data={rows}
         columns={columns}

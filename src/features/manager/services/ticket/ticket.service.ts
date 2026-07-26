@@ -20,6 +20,7 @@ import type {
   RejectPayload,
   EscalatePayload,
   AddCommentPayload,
+  MergeTicketPayload,
 } from "@/shared/types/ticket/ticket.types";
 
 function toListParams(params?: AdminTicketListParams) {
@@ -59,6 +60,12 @@ export const managerTicketService = {
     axiosInstance.get<CommonResponse<PaginationResponse<TicketDTO>>>(
       ENDPOINTS.ADMIN.TICKETS.QUEUE,
       { params: toQueueParams(params) },
+    ),
+
+  // #697 — badge số ticket chờ duyệt (Open, chưa xóa, chưa merge).
+  getQueueCount: () =>
+    axiosInstance.get<CommonResponse<number>>(
+      ENDPOINTS.ADMIN.TICKETS.QUEUE_COUNT,
     ),
 
   getDetail: (id: string) =>
@@ -135,5 +142,18 @@ export const managerTicketService = {
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.TICKETS.CHATS(ticketId),
       payload,
+    ),
+
+  // Gộp ticket nghi trùng (id) vào ticket đích (targetTicketId).
+  merge: (id: string, payload: MergeTicketPayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.MERGE(id),
+      payload,
+    ),
+
+  // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
+  reVerify: (id: string) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.RE_VERIFY(id),
     ),
 };

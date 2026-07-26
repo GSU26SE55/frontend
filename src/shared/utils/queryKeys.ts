@@ -15,6 +15,8 @@ export const KEY = {
   sensorReadings: "sensorReadings",
   thresholds: "thresholds",
   alerts: "alerts",
+  sohPredictions: "sohPredictions",
+  anomalyClassifications: "anomalyClassifications",
   ambient: "ambient",
   environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
@@ -54,7 +56,6 @@ export const KEY = {
   ticketChatFiles: "ticketChatFiles",
   slaRules: "slaRules",
   auditAggregate: "auditAggregate",
-  chatTemplates: "chatTemplates",
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
@@ -129,6 +130,14 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.thresholds, "list", params] as const,
     byType: (batteryTypeId: string, params?: object) =>
       [KEY.thresholds, "by-type", batteryTypeId, params] as const,
+  },
+  sohPredictions: {
+    list: (assetId: string, params?: object) =>
+      [KEY.sohPredictions, "list", assetId, params] as const,
+  },
+  anomalyClassifications: {
+    list: (assetId: string, params?: object) =>
+      [KEY.anomalyClassifications, "list", assetId, params] as const,
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,
@@ -260,6 +269,7 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.manager.tickets, "list", params],
       queue: (params?: object) => [...KEY.manager.tickets, "queue", params],
+      queueCount: () => [...KEY.manager.tickets, "queue-count"],
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },
@@ -372,10 +382,6 @@ export const QUERY_KEY = {
     accountTimeline: (accountId: string, limit?: number) =>
       [KEY.auditAggregate, "timeline", accountId, limit] as const,
     stats: (params?: object) => [KEY.auditAggregate, "stats", params] as const,
-  },
-  chatTemplates: {
-    list: (params?: object) => [KEY.chatTemplates, "list", params] as const,
-    detail: (id: string) => [KEY.chatTemplates, "detail", id] as const,
   },
   chatMentions: {
     me: (params?: object) => [KEY.chatMentions, "me", params] as const,
