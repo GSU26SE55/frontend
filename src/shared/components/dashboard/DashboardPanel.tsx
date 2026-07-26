@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   ChartContainer,
@@ -28,6 +29,7 @@ export function DashboardKpi({
   hint,
   icon,
   accent,
+  to,
 }: {
   label: string;
   value: string | number;
@@ -35,12 +37,15 @@ export function DashboardKpi({
   hint?: string;
   icon?: React.ReactNode;
   accent?: string;
+  /**
+   * Route đích khi bấm vào ô KPI. Có `to` thì ô thành link (hover đổi viền) —
+   * con số trên dashboard dẫn thẳng tới danh sách tương ứng thay vì bắt người
+   * dùng tự mò trong sidebar.
+   */
+  to?: string;
 }) {
-  return (
-    <div
-      className="bg-card rounded-lg border border-border px-3.5 py-2 flex flex-col gap-0.5 min-w-0"
-      style={{ boxShadow: "var(--shadow-sm)" }}
-    >
+  const body = (
+    <>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground truncate">
           {label}
@@ -67,6 +72,30 @@ export function DashboardKpi({
           {hint}
         </span>
       )}
+    </>
+  );
+
+  const shell =
+    "bg-card rounded-lg border border-border px-3.5 py-2 flex flex-col gap-0.5 min-w-0";
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className={cn(
+          shell,
+          "transition-colors hover:border-primary/50 hover:bg-muted/30",
+        )}
+        style={{ boxShadow: "var(--shadow-sm)" }}
+      >
+        {body}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={shell} style={{ boxShadow: "var(--shadow-sm)" }}>
+      {body}
     </div>
   );
 }

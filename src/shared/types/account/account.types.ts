@@ -68,5 +68,16 @@ export interface StaffAssignmentProfileDto {
   maxConcurrentTickets: number;
   isAvailable: boolean;
   displayAvatarUrl?: string;
+  /**
+   * Tier kỹ năng (StaffSkillTierEnum 1..3) — quyết định staff có được làm
+   * PrimaryHandler của ticket theo priority hay không.
+   *
+   * ⚠️ OPTIONAL vì `GET /api/staff` HIỆN CHƯA trả field này: BE có
+   * `StaffProfile.SkillTier` trong entity/DB nhưng `AccountProfileMapper`
+   * không map ra `StaffAssignmentProfileDto`. Mọi nơi đọc field này phải
+   * fallback an toàn (không chặn Manager khi undefined) — xem
+   * `shared/utils/ticket/staffTier.ts`. Khi BE map field ra, UI tự đầy đủ.
+   */
+  skillTier?: number;
   skills: StaffSkillDto[];
 }

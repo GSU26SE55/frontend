@@ -11,6 +11,7 @@ import type {
   ActivityActionEnum,
   ActorRoleEnum,
   TicketVerifyStatusEnum,
+  TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 export {
   TicketStatusEnum,
@@ -26,8 +27,18 @@ export {
   ActivityActionEnum,
   ActorRoleEnum,
   TicketVerifyStatusEnum,
+  TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 // --- DTOs ---
+
+/**
+ * #697 — 1 dòng phân công Staff trên ticket. BE đã lọc bản ghi soft-deleted.
+ * Đúng 1 phần tử role=PrimaryHandler, 0..N phần tử role=Supporter.
+ */
+export interface TicketAssignmentDTO {
+  staffId: string;
+  role: TicketAssignmentRoleEnum;
+}
 
 export interface SlaTimerDTO {
   id: string;
@@ -50,7 +61,12 @@ export interface TicketDTO {
   /** Danh sách ID pin gắn ticket (ticket có thể gắn nhiều pin). BE trả từ TicketBatteryAssets. */
   batteryAssetIds?: string[];
   customerId: string;
-  assignedStaffId?: string | null;
+  /**
+   * #697 — thay cho `assignedStaffId` (đã bỏ ở BE). Dùng
+   * `getPrimaryHandler()` / `getSupporters()` (shared/utils/ticket/assignments)
+   * thay vì tự lọc ở từng chỗ.
+   */
+  assignments: TicketAssignmentDTO[];
   title: string;
   category: TicketCategoryEnum;
   // BE trả null khi ticket chưa triage (state New/Open) — priority/impact/urgency
@@ -146,6 +162,12 @@ export interface StaffMaintenanceLogGroupDTO {
 }
 
 export interface TicketDetailDTO extends TicketDTO {
+  /**
+   * #698 — khoảng thời gian Customer phát hiện sự cố (ISO-8601 UTC).
+   * Ticket sinh tự động từ Alert có thể trả `incidentDetectedTo = null`.
+   */
+  incidentDetectedFrom?: string | null;
+  incidentDetectedTo?: string | null;
   description?: string | null;
   resolutionSummary?: string | null;
   resolvedAt?: string | null;
@@ -221,13 +243,24 @@ export interface TriagePayload {
   managerComment?: string;
 }
 
+/**
+ * #697 — POST /api/admin/tickets/{id}/assign.
+ * Primary phải active + available + đủ skill tier theo priority (không đạt → 403).
+ * Supporter KHÔNG bị check tier, nhưng không được trùng Primary và không trùng nhau.
+ */
 export interface AssignPayload {
-  staffId: string;
+  primaryHandlerStaffId: string;
+  supporterStaffIds: string[];
   notes?: string;
 }
 
+/**
+ * #697 — POST /api/admin/tickets/{id}/reassign.
+ * Primary hiện tại tự động hạ thành Supporter; KHÔNG gửi lại danh sách supporter.
+ * SLA timer không reset.
+ */
 export interface ReassignPayload {
-  newStaffId: string;
+  newPrimaryHandlerStaffId: string;
   reason: string;
 }
 

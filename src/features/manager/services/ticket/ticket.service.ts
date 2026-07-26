@@ -62,6 +62,12 @@ export const managerTicketService = {
       { params: toQueueParams(params) },
     ),
 
+  // #697 — badge số ticket chờ duyệt (Open, chưa xóa, chưa merge).
+  getQueueCount: () =>
+    axiosInstance.get<CommonResponse<number>>(
+      ENDPOINTS.ADMIN.TICKETS.QUEUE_COUNT,
+    ),
+
   getDetail: (id: string) =>
     axiosInstance.get<CommonResponse<TicketDetailDTO>>(
       ENDPOINTS.TICKETS.DETAIL(id),

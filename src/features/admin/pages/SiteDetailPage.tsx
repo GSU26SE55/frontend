@@ -162,11 +162,11 @@ export default function SiteDetailPage() {
         </div>
       </div>
 
-      {/* Dashboard summary */}
-      {dashboard && <SiteDashboardCard data={dashboard} />}
-
-      {/* Cascade risk summary */}
-      <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
+      {/* Top Summary Grid (Side by side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {dashboard && <SiteDashboardCard data={dashboard} />}
+        <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
+      </div>
 
       {/* Pin + Môi trường */}
       <Tabs defaultValue="assets">

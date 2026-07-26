@@ -32,6 +32,18 @@ export const useAdminTicketQueue = (params?: AdminTicketQueueParams) =>
     staleTime: 30_000,
   });
 
+/**
+ * #697 — badge số ticket chờ duyệt (Manager/Admin). Chỉ trả số, không có items:
+ * vẫn phải dùng `useAdminTicketQueue` cho danh sách.
+ */
+export const useAdminTicketQueueCount = () =>
+  useQuery({
+    queryKey: QUERY_KEY.manager.tickets.queueCount(),
+    queryFn: () =>
+      managerTicketService.getQueueCount().then((r) => r.data.data ?? 0),
+    staleTime: 30_000,
+  });
+
 export const useManagerTicketDetail = (id: string) =>
   useQuery({
     queryKey: QUERY_KEY.manager.tickets.detail(id),
@@ -83,6 +95,9 @@ export const useTriageTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.triaged);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.queueCount(),
+      });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -98,6 +113,9 @@ export const useTriageRejectTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.rejectedAtTriage);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.queueCount(),
+      });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -113,6 +131,8 @@ export const useAssignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffAssigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+      // #697 — Primary → PrimaryAssignee, Supporter → Collaborator trong chat.
+      qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -127,6 +147,11 @@ export const useReassignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffReassigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+      // #697 — Primary cũ → PreviousAssignee + Supporter, Primary mới → PrimaryAssignee.
+      qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.ticketParticipants.history(id),
+      });
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -198,6 +223,9 @@ export const useMergeTicket = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.queueCount(),
+      });
     },
     onError: (error) => handleErrorApi({ error }),
   });

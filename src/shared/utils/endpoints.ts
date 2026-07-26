@@ -104,10 +104,8 @@ export const ENDPOINTS = {
       `/api/tickets/${tid}/participants/history`,
   },
 
-  CHAT_TEMPLATES: {
-    LIST: "/api/chat-templates",
-    DETAIL: (id: string) => `/api/chat-templates/${id}`,
-  },
+  // #696 — CHAT_TEMPLATES đã bị xóa khỏi BE (/api/chat-templates,
+  // /api/tickets/{id}/chats/from-template/{templateId}). Không khôi phục.
 
   CHAT_MENTIONS: {
     ME: "/api/chats/mentions/me",
@@ -257,6 +255,9 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
+      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
+      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
+      QUEUE_COUNT: "/api/admin/tickets/queue/count",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,

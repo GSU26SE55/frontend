@@ -65,6 +65,22 @@ export const TicketVerifyStatusLabel: Record<TicketVerifyStatusEnum, string> = {
   [TicketVerifyStatusEnum.Skipped]: "Bỏ qua kiểm tra",
 };
 
+// #697 — 1 ticket có 1 PrimaryHandler + N Supporter (thay cho assignedStaffId cũ).
+export const TicketAssignmentRoleEnum = {
+  PrimaryHandler: "PrimaryHandler", // người chịu trách nhiệm chính, tính vào My Tickets/KPI
+  Supporter: "Supporter", // hỗ trợ, chỉ được vào chat nội bộ — KHÔNG tính workload
+} as const;
+export type TicketAssignmentRoleEnum =
+  (typeof TicketAssignmentRoleEnum)[keyof typeof TicketAssignmentRoleEnum];
+
+export const TicketAssignmentRoleLabel: Record<
+  TicketAssignmentRoleEnum,
+  string
+> = {
+  [TicketAssignmentRoleEnum.PrimaryHandler]: "Phụ trách chính",
+  [TicketAssignmentRoleEnum.Supporter]: "Hỗ trợ",
+};
+
 export const ImpactScopeEnum = {
   SingleAsset: "SingleAsset",
   Site: "Site",

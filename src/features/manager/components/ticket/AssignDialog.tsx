@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -30,14 +30,29 @@ import {
 } from "@/features/manager/schemas/ticket/ticket.schema";
 import { useAssignTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
+import StaffMultiSelect from "@/features/manager/components/ticket/StaffMultiSelect";
+import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
+import {
+  getMinTierForPriority,
+  getTierRequirementHint,
+  isEligiblePrimaryHandler,
+  staffOptionLabel,
+} from "@/shared/utils/ticket/staffTier";
 
 interface Props {
   ticketId: string;
+  /** Priority ticket — quyết định tier tối thiểu của Primary Handler. */
+  priority: TicketPriorityEnum | null;
   open: boolean;
   onClose: () => void;
 }
 
-export default function AssignDialog({ ticketId, open, onClose }: Props) {
+export default function AssignDialog({
+  ticketId,
+  priority,
+  open,
+  onClose,
+}: Props) {
   const { mutateAsync, isPending } = useAssignTicket(ticketId);
   const {
     data: staffList = [],
@@ -45,9 +60,28 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
     isError: staffError,
   } = useStaffAssignmentList();
 
+  // Nhất quán với ReassignDialog: hiện TẤT CẢ staff, disable người không đủ tier
+  // cho Primary (Supporter không check tier). Tier tối thiểu theo priority ticket.
+  const minTier = getMinTierForPriority(priority);
+  const tierHint = getTierRequirementHint(priority);
+  const primaryOptions = staffList.map((s) => ({
+    ...s,
+    eligible: isEligiblePrimaryHandler(s.skillTier, minTier),
+  }));
+  const hasEligiblePrimary = primaryOptions.some((s) => s.eligible);
+
   const form = useForm<AssignFormValues>({
     resolver: zodResolver(assignSchema),
-    defaultValues: { staffId: "", notes: "" },
+    defaultValues: {
+      primaryHandlerStaffId: "",
+      supporterStaffIds: [],
+      notes: "",
+    },
+  });
+
+  const primaryStaffId = useWatch({
+    control: form.control,
+    name: "primaryHandlerStaffId",
   });
 
   const onSubmit = async (values: AssignFormValues) => {
@@ -66,16 +100,25 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="staffId"
+              name="primaryHandlerStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chọn Staff *</FormLabel>
+                  <FormLabel>Staff phụ trách chính *</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(v: string | null) => {
+                      field.onChange(v ?? "");
+                      // Primary không được đồng thời là Supporter (BE reject).
+                      form.setValue(
+                        "supporterStaffIds",
+                        form
+                          .getValues("supporterStaffIds")
+                          .filter((id) => id !== v),
+                      );
+                    }}
                     value={field.value}
-                    items={staffList.map((s) => ({
+                    items={primaryOptions.map((s) => ({
                       value: s.accountId,
-                      label: s.fullName ?? s.accountId,
+                      label: staffOptionLabel(s),
                     }))}
                     disabled={loadingStaff}
                   >
@@ -103,13 +146,59 @@ export default function AssignDialog({ ticketId, open, onClose }: Props) {
                           Không có Staff khả dụng
                         </SelectItem>
                       )}
-                      {staffList.map((s) => (
-                        <SelectItem key={s.accountId} value={s.accountId}>
-                          {s.fullName ?? s.accountId}
+                      {primaryOptions.map((s) => (
+                        <SelectItem
+                          key={s.accountId}
+                          value={s.accountId}
+                          disabled={!s.eligible}
+                        >
+                          {staffOptionLabel(s)}
+                          {!s.eligible && " — không đủ tier"}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {tierHint && (
+                    <p className="text-xs text-muted-foreground">{tierHint}</p>
+                  )}
+                  {!loadingStaff && !staffError && !hasEligiblePrimary && (
+                    <p className="text-xs text-destructive">
+                      Không có Staff nào đủ tier cho ticket này. Cần nâng tier
+                      cho Staff hoặc điều chuyển từ nhóm khác.
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="supporterStaffIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Staff hỗ trợ (tuỳ chọn)</FormLabel>
+                  <FormControl>
+                    <StaffMultiSelect
+                      options={staffList
+                        .filter((s) => s.accountId !== primaryStaffId)
+                        .map((s) => ({
+                          value: s.accountId,
+                          label: staffOptionLabel(s),
+                        }))}
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      disabled={loadingStaff || !!staffError}
+                      placeholder={
+                        loadingStaff ? "Đang tải..." : "Chọn nhân viên hỗ trợ"
+                      }
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Staff hỗ trợ được vào chat nội bộ của ticket nhưng không
+                    được tính vào khối lượng công việc. Vai trò này không yêu
+                    cầu tier.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

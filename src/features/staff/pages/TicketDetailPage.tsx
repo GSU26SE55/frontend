@@ -38,6 +38,7 @@ import { AddCommentForm } from "@/features/staff/components/ticket/AddCommentFor
 import { MaintenanceLogDialog } from "@/features/staff/components/ticket/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "@/features/staff/components/ticket/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
   type ChatTab,
@@ -320,9 +321,10 @@ export default function TicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="comments">
+                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                <TabsTrigger value="comments" className="group">
                   Bình luận
-                  {comments.length > 0 && ` (${comments.length})`}
+                  <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   Nhật ký{logs.length > 0 && ` (${logs.length})`}
@@ -700,6 +702,27 @@ export default function TicketDetailPage() {
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow label="Danh mục" value={ticket.category} />
                 <SideInfoRow label="Nguồn" value={ticket.origin} />
+                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
+                {ticket.incidentDetectedFrom && (
+                  <SideInfoRow
+                    label="Sự cố từ"
+                    value={format(
+                      new Date(ticket.incidentDetectedFrom),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
+                {ticket.incidentDetectedTo && (
+                  <SideInfoRow
+                    label="Sự cố đến"
+                    value={format(
+                      new Date(ticket.incidentDetectedTo),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
                 <SideInfoRow
                   label="Phạm vi"
                   value={ticket.impactScope ?? null}

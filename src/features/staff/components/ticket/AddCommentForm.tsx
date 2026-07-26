@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import FileUploadField from "@/shared/components/file/FileUploadField";
 import { FilePurposeEnum } from "@/shared/types/file/file-storage.types";
 import { AttachmentPreviewStrip } from "@/shared/components/chat/AttachmentPreviewStrip";
@@ -191,24 +196,31 @@ export function AddCommentForm({
                   );
                 }}
               />
-              <button
-                type="button"
-                disabled={isInternal || uploading || transcribing}
-                title={
-                  isInternal
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={isInternal || uploading || transcribing}
+                      aria-label="Ghi am tin nhan"
+                      onClick={handleStartRecording}
+                      className="h-9 w-9 shrink-0 rounded-full p-0 text-muted-foreground"
+                    />
+                  }
+                >
+                  {transcribing ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Mic size={16} />
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isInternal
                     ? "Ghi am luon duoc gui cong khai"
-                    : "Ghi am tin nhan"
-                }
-                aria-label="Ghi am tin nhan"
-                onClick={handleStartRecording}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-              >
-                {transcribing ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Mic size={16} />
-                )}
-              </button>
+                    : "Ghi am tin nhan"}
+                </TooltipContent>
+              </Tooltip>
             </>
           )}
 

@@ -56,7 +56,6 @@ export const KEY = {
   ticketChatFiles: "ticketChatFiles",
   slaRules: "slaRules",
   auditAggregate: "auditAggregate",
-  chatTemplates: "chatTemplates",
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
@@ -270,6 +269,7 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.manager.tickets, "list", params],
       queue: (params?: object) => [...KEY.manager.tickets, "queue", params],
+      queueCount: () => [...KEY.manager.tickets, "queue-count"],
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },
@@ -382,10 +382,6 @@ export const QUERY_KEY = {
     accountTimeline: (accountId: string, limit?: number) =>
       [KEY.auditAggregate, "timeline", accountId, limit] as const,
     stats: (params?: object) => [KEY.auditAggregate, "stats", params] as const,
-  },
-  chatTemplates: {
-    list: (params?: object) => [KEY.chatTemplates, "list", params] as const,
-    detail: (id: string) => [KEY.chatTemplates, "detail", id] as const,
   },
   chatMentions: {
     me: (params?: object) => [KEY.chatMentions, "me", params] as const,

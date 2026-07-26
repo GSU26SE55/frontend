@@ -7,7 +7,7 @@ import AuthLayout from "@/shared/components/layout/AuthLayout";
 import AppLayout from "@/shared/components/layout/AppLayout";
 import RoleAwareAppLayout from "./RoleAwareAppLayout";
 import { ADMIN_NAV } from "@/features/admin/config/adminNav";
-import { MANAGER_NAV } from "@/features/manager/config/managerNav";
+import ManagerAppLayout from "@/features/manager/components/layout/ManagerAppLayout";
 import { STAFF_NAV } from "@/features/staff/config/staffNav";
 import GoogleCallbackPage from "@/features/auth/pages/GoogleCallbackPage";
 import UseMobileAppPage from "@/features/auth/pages/UseMobileAppPage";
@@ -208,7 +208,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "/manager",
-            element: <AppLayout sections={MANAGER_NAV} />,
+            element: <ManagerAppLayout />,
             children: [
               { index: true, element: <ManagerDashboardPage /> },
               { path: "dashboard", element: <ManagerDashboardPage /> },

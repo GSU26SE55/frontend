@@ -13,13 +13,13 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, XAxis, YAxis } from "recharts";
 import {
   DashboardKpi,
   DashboardPanel,
   DashboardDonut,
-  DashboardGauge,
 } from "@/shared/components/dashboard/DashboardPanel";
+import { SlaGaugePanel } from "@/shared/components/dashboard/SlaGaugePanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
@@ -32,16 +32,19 @@ import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
- * Staff = Bảng làm việc cá nhân: ticket được giao + rủi ro SLA.
+ * Staff = BÀN LÀM VIỆC CÁ NHÂN: ticket được giao, rủi ro SLA, thông báo.
  *
- * UX: hàng hero (danh sách ưu tiên xử lý + SLA cá nhân) luôn hiển thị — đây là
- * bề mặt làm việc chính, "không có ticket mở" là tín hiệu có nghĩa nên vẫn hiện.
- * Vùng tile bên dưới REFLOW — panel nào không có dữ liệu thì ẩn hẳn.
+ * KHÔNG hiển thị xu hướng 7 ngày / thống kê toàn hệ thống — Staff hành động
+ * trên từng ticket, biểu đồ xu hướng là công cụ quản trị của Manager/Admin.
+ *
+ * Layout: 1 KHUNG CỐ ĐỊNH, trang không cuộn. Lưới 3 cột × 2 hàng; danh sách
+ * ticket và thông báo tự cuộn BÊN TRONG panel.
+ *
+ * Mỗi panel một dạng khác nhau (danh sách thẻ / gauge / donut / bar ngang /
+ * dòng thời gian) để phân biệt loại thông tin ngay từ hình dạng.
  */
 
-const areaConfig = {
-  count: { label: "Ticket", color: "var(--chart-1)" },
-} satisfies ChartConfig;
+const statusBarConfig = { value: { label: "Ticket" } } satisfies ChartConfig;
 
 const fmtDateTime = (iso: string) =>
   new Date(iso).toLocaleString("vi-VN", {
@@ -78,21 +81,12 @@ export default function StaffDashboardPage() {
   const breachedCount = staffStats?.breachedCount ?? 0;
   const resolvedCount = staffStats?.resolvedCount ?? 0;
 
+  // Màu + gauge do SlaGaugePanel lo (dùng chung với Manager), ở đây chỉ cần
+  // chuỗi % cho ô KPI.
   const sla = staffStats?.sla;
   const slaText = sla ? `${sla.compliancePercent}%` : "—";
-  const slaPct = sla?.compliancePercent ?? 0;
-  const slaColor = !sla
-    ? "var(--muted-foreground)"
-    : slaPct >= 90
-      ? "var(--ok)"
-      : slaPct >= 70
-        ? "var(--p3)"
-        : "var(--p1)";
 
-  const ticketTrend = staffStats?.createdTrend7Days ?? [];
-  const hasTrend = ticketTrend.some((p) => p.count > 0);
-
-  // ── Status donut ──
+  // ── Trạng thái ticket — bar ngang (donut đã dùng cho rủi ro SLA, tránh 2 donut) ──
   const statusCounts = staffStats?.countByStatus ?? {};
   const totalTickets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const statusBuckets = [
@@ -123,7 +117,9 @@ export default function StaffDashboardPage() {
         (statusCounts.Closed ?? 0),
       fill: "var(--ok)",
     },
-  ].filter((b) => b.value > 0);
+  ]
+    .filter((b) => b.value > 0)
+    .reverse(); // Recharts layout=vertical vẽ phần tử đầu ở DƯỚI cùng
 
   // ── SLA risk donut (B.slaRisk) ──
   const riskData = [
@@ -149,13 +145,12 @@ export default function StaffDashboardPage() {
   const unread = unreadCount ?? 0;
 
   // ── Visibility ──
-  const showTrend = statsLoading || hasTrend;
   const showStatus = statsLoading || statusBuckets.length > 0;
   const showRisk = statsLoading || riskData.length > 0;
   const showNotifs = notifLoading || notifications.length > 0;
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+    <div className="h-full min-h-0 flex flex-col gap-3 p-3 lg:p-4 overflow-hidden">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 shrink-0">
         <div className="min-w-0">
@@ -228,12 +223,13 @@ export default function StaffDashboardPage() {
         </div>
       )}
 
-      {/* ── Hero row (danh sách ưu tiên + SLA — luôn hiển thị) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {/* ── Bento cố định 3×2, KHÔNG cuộn trang ── */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-3 overflow-hidden">
+        {/* [Danh sách thẻ] bề mặt làm việc chính */}
         <DashboardPanel
           title={OVERVIEW_PANELS.staff.priority}
           desc="Sắp theo % SLA còn lại"
-          className="lg:col-span-2 min-h-72"
+          className="lg:col-span-2 min-h-0"
           bodyClassName="overflow-y-auto"
         >
           {isLoading ? (
@@ -263,79 +259,21 @@ export default function StaffDashboardPage() {
           )}
         </DashboardPanel>
 
-        <DashboardPanel
+        {/* [Gauge] tỉ lệ tuân thủ SLA cá nhân */}
+        <SlaGaugePanel
           title={OVERVIEW_PANELS.staff.personalSla}
           desc="met / (met + breach)"
-          className="min-h-72"
-        >
-          {statsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : (
-            <DashboardGauge
-              percent={slaPct}
-              valueText={slaText}
-              caption="SLA met"
-              color={slaColor}
-              footer={
-                <div className="grid grid-cols-3 gap-1.5 text-center">
-                  <div className="rounded-md bg-muted/40 py-1.5">
-                    <p
-                      className="text-sm font-semibold tabular-nums"
-                      style={{ color: "var(--ok)" }}
-                    >
-                      {sla?.met ?? 0}
-                    </p>
-                    <p className="text-[9.5px] text-muted-foreground">Met</p>
-                  </div>
-                  <div className="rounded-md bg-muted/40 py-1.5">
-                    <p className="text-sm font-semibold tabular-nums">
-                      {sla?.running ?? 0}
-                    </p>
-                    <p className="text-[9.5px] text-muted-foreground">
-                      Running
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-muted/40 py-1.5">
-                    <p
-                      className="text-sm font-semibold tabular-nums"
-                      style={{ color: "var(--p1)" }}
-                    >
-                      {sla?.breached ?? 0}
-                    </p>
-                    <p className="text-[9.5px] text-muted-foreground">Breach</p>
-                  </div>
-                </div>
-              }
-            />
-          )}
-        </DashboardPanel>
-      </div>
+          sla={sla}
+          isLoading={statsLoading}
+          className="min-h-0"
+        />
 
-      {/* ── Vùng tile REFLOW (ẩn panel rỗng) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {showStatus && (
-          <DashboardPanel
-            title={OVERVIEW_PANELS.staff.ticketStatus}
-            desc={`${totalTickets} ticket của tôi`}
-            className="min-h-56"
-          >
-            {statsLoading ? (
-              <Skeleton className="h-full w-full" />
-            ) : (
-              <DashboardDonut
-                data={statusBuckets}
-                centerValue={totalTickets}
-                centerLabel="tickets"
-              />
-            )}
-          </DashboardPanel>
-        )}
-
+        {/* [Donut] cơ cấu rủi ro trên ticket đang mở */}
         {showRisk && (
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.slaRisk}
             desc="Trên ticket đang mở"
-            className="min-h-56"
+            className="min-h-0"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -349,76 +287,56 @@ export default function StaffDashboardPage() {
           </DashboardPanel>
         )}
 
-        {showTrend && (
+        {/* [Bar ngang] so sánh số lượng theo trạng thái */}
+        {showStatus && (
           <DashboardPanel
-            title={OVERVIEW_PANELS.staff.tickets7d}
-            desc="Ticket được giao theo ngày"
-            className="min-h-56"
+            title={OVERVIEW_PANELS.staff.ticketStatus}
+            desc={`${totalTickets} ticket của tôi`}
+            className="min-h-0"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
             ) : (
               <ChartContainer
-                config={areaConfig}
+                config={statusBarConfig}
                 className="h-full w-full aspect-auto min-h-0"
               >
-                <AreaChart data={ticketTrend}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(v: string) =>
-                      `${v.slice(8, 10)}/${v.slice(5, 7)}`
-                    }
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={6}
-                  />
+                <BarChart
+                  accessibilityLayer
+                  data={statusBuckets}
+                  layout="vertical"
+                  margin={{ left: 4, right: 16 }}
+                >
+                  <XAxis type="number" hide allowDecimals={false} />
                   <YAxis
-                    width={24}
+                    type="category"
+                    dataKey="name"
+                    width={78}
                     tickLine={false}
                     axisLine={false}
-                    tickMargin={6}
-                    allowDecimals={false}
+                    tick={{ fontSize: 10.5 }}
                   />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <defs>
-                    <linearGradient
-                      id="fillStaffTickets"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="5%"
-                        stopColor="var(--color-count)"
-                        stopOpacity={0.35}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="var(--color-count)"
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    dataKey="count"
-                    type="monotone"
-                    fill="url(#fillStaffTickets)"
-                    stroke="var(--color-count)"
-                    strokeWidth={2}
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
                   />
-                </AreaChart>
+                  <Bar dataKey="value" radius={4} maxBarSize={16}>
+                    {statusBuckets.map((b) => (
+                      <Cell key={b.name} fill={b.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ChartContainer>
             )}
           </DashboardPanel>
         )}
 
+        {/* [Dòng thời gian] thông báo gần đây */}
         {showNotifs && (
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.recentNotifications}
             desc={`${unread} chưa đọc`}
-            className="min-h-56 md:col-span-2 xl:col-span-3"
+            className="min-h-0"
             bodyClassName="overflow-y-auto"
           >
             {notifLoading ? (

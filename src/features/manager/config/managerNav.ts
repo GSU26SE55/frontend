@@ -21,6 +21,9 @@ import {
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
 
+// #697 — ManagerAppLayout dùng path này để gắn badge số ticket chờ duyệt.
+export const MANAGER_QUEUE_PATH = "/manager/tickets/queue";
+
 export const MANAGER_NAV: NavSection[] = [
   {
     items: [
@@ -45,7 +48,7 @@ export const MANAGER_NAV: NavSection[] = [
       // Route /manager/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
       { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
       { label: SIDEBAR_LABELS.tickets, path: "/manager/tickets", icon: Ticket },
-      { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Hàng chờ", path: MANAGER_QUEUE_PATH, icon: Clock },
       {
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/manager/kb",

@@ -25,6 +25,13 @@ export const ticketChatActionsService = {
       ENDPOINTS.TICKETS.CHAT_DETAIL(ticketId, chatId),
       { data: reason ? { reason } : undefined },
     ),
+  // Số chat CHƯA ĐỌC của chính user trong 1 ticket (badge tab "Bình luận").
+  // BE loại chat do chính mình viết + lọc chat internal theo quyền.
+  getUnreadCount: (ticketId: string) =>
+    axiosInstance.get<CommonResponse<number>>(
+      ENDPOINTS.TICKETS.CHAT_UNREAD_COUNT(ticketId),
+    ),
+
   markRead: (ticketId: string, payload: ChatMarkReadPayload) =>
     axiosInstance.post<CommonResponse<void>>(
       ENDPOINTS.TICKETS.CHAT_MARK_READ(ticketId),

@@ -9,6 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   useAddReaction,
   useChatReactions,
   useRemoveReaction,
@@ -87,24 +92,29 @@ export default function ChatReactionBar({
       )}
     >
       {active.map(({ type, count, mine }) => (
-        <button
-          key={type}
-          type="button"
-          disabled={pending}
-          onClick={() => toggle(type, mine)}
-          title={REACTION_META[type].label}
-          className={cn(
-            "flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] tabular-nums transition-colors disabled:opacity-60",
-            mine
-              ? "border-primary/40 bg-primary/10 text-primary"
-              : "border-border bg-muted/50 text-muted-foreground hover:bg-muted",
-          )}
-        >
-          <span className="text-[13px] leading-none">
-            {REACTION_META[type].emoji}
-          </span>
-          <span>{count}</span>
-        </button>
+        <Tooltip key={type}>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => toggle(type, mine)}
+                className={cn(
+                  "flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] tabular-nums transition-colors disabled:opacity-60",
+                  mine
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border bg-muted/50 text-muted-foreground hover:bg-muted",
+                )}
+              />
+            }
+          >
+            <span className="text-[13px] leading-none">
+              {REACTION_META[type].emoji}
+            </span>
+            <span>{count}</span>
+          </TooltipTrigger>
+          <TooltipContent>{REACTION_META[type].label}</TooltipContent>
+        </Tooltip>
       ))}
 
       <DropdownMenu>
@@ -129,18 +139,23 @@ export default function ChatReactionBar({
           {REACTION_ORDER.map((type) => {
             const mine = active.find((r) => r.type === type)?.mine ?? false;
             return (
-              <DropdownMenuItem
-                key={type}
-                disabled={pending}
-                onClick={() => toggle(type, mine)}
-                title={REACTION_META[type].label}
-                className={cn(
-                  "flex size-8 items-center justify-center rounded-full p-0 text-lg leading-none transition-transform hover:scale-125 focus:scale-125",
-                  mine && "bg-primary/10",
-                )}
-              >
-                {REACTION_META[type].emoji}
-              </DropdownMenuItem>
+              <Tooltip key={type}>
+                <TooltipTrigger
+                  render={
+                    <DropdownMenuItem
+                      disabled={pending}
+                      onClick={() => toggle(type, mine)}
+                      className={cn(
+                        "flex size-8 items-center justify-center rounded-full p-0 text-lg leading-none transition-transform hover:scale-125 focus:scale-125",
+                        mine && "bg-primary/10",
+                      )}
+                    />
+                  }
+                >
+                  {REACTION_META[type].emoji}
+                </TooltipTrigger>
+                <TooltipContent>{REACTION_META[type].label}</TooltipContent>
+              </Tooltip>
             );
           })}
         </DropdownMenuContent>

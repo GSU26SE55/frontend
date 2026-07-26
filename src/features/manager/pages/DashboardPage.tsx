@@ -10,12 +10,10 @@ import {
   DashboardKpi,
   DashboardPanel,
   DashboardDonut,
-  DashboardGauge,
 } from "@/shared/components/dashboard/DashboardPanel";
-import { useSiteList } from "@/features/manager/hooks/site/useSites";
+import { SlaGaugePanel } from "@/shared/components/dashboard/SlaGaugePanel";
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
-import { useBatteryDashboardStats } from "@/shared/hooks/dashboard/useBatteryDashboard";
 import { useTicketDashboardStats } from "@/shared/hooks/dashboard/useDashboardStats";
 import {
   Area,
@@ -34,20 +32,26 @@ import {
   Inbox,
   ShieldCheck,
   AlertTriangle,
-  WifiOff,
-  BellRing,
+  ClipboardCheck,
+  Users,
   ArrowRight,
 } from "lucide-react";
-import { siteHealth, healthColor } from "@/shared/utils/site.utils";
 import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
- * Manager = Điều phối vận hành ticket: pipeline, SLA, phân bố ưu tiên, tải nhân sự,
- * hàng chờ triage, site & pin cần chú ý.
+ * Manager = ĐIỀU PHỐI TICKET: pipeline, SLA, ưu tiên, tải nhân sự, hàng chờ
+ * triage, ticket chờ duyệt.
  *
- * UX: hàng hero (pipeline + SLA) luôn hiển thị. Vùng tile bên dưới REFLOW — panel
- * nào không có dữ liệu (không staff / hết triage / không site rủi ro / không pin
- * cảnh báo) thì ẩn hẳn, không để ô trống.
+ * KHÔNG hiển thị pin offline / cảnh báo pin / sức khỏe site — đó là bề mặt hạ
+ * tầng của Admin. Manager hành động trên TICKET; alert đã tự sinh ticket nên
+ * nhìn alert thô chỉ làm trùng việc.
+ *
+ * Layout: 1 KHUNG CỐ ĐỊNH, trang không cuộn. Lưới 4 cột × 2 hàng — hàng trên
+ * pipeline (3 cột) + SLA (1 cột), hàng dưới 4 panel bằng nhau. Panel danh sách
+ * tự cuộn bên trong.
+ *
+ * Mỗi panel một dạng biểu đồ khác nhau (bar ngang / gauge / donut / thanh tải /
+ * danh sách / area) để nhận ra loại thông tin ngay từ hình dạng.
  */
 
 const pipelineConfig = { value: { label: "Ticket" } } satisfies ChartConfig;
@@ -64,10 +68,6 @@ const loadColor = (active: number, max: number) => {
 
 export default function ManagerDashboardPage() {
   const navigate = useNavigate();
-  const { data: siteData, isLoading: sitesLoading } = useSiteList({
-    pageNumber: 1,
-    pageSize: 100,
-  });
   const { data: ticketStats, isLoading: ticketsLoading } =
     useTicketDashboardStats();
   const { data: queuePage, isLoading: queueLoading } = useAdminTicketQueue({
@@ -75,12 +75,6 @@ export default function ManagerDashboardPage() {
     pageSize: 50,
   });
   const { data: staffList, isLoading: staffLoading } = useStaffAssignmentList();
-  const { data: stats, isLoading: statsLoading } = useBatteryDashboardStats();
-
-  // ── Sites at-risk ──
-  const sites = siteData?.items ?? [];
-  const sitesH = sites.map((s) => ({ ...s, health: siteHealth(s) }));
-  const atRisk = sitesH.filter((s) => s.health < 80);
 
   // ── Tickets ──
   const sla = ticketStats?.sla;
@@ -88,30 +82,18 @@ export default function ManagerDashboardPage() {
   const openCount = ticketStats?.openCount ?? 0;
   const queueCount = queuePage?.totalItems ?? 0;
   const queueItems = queuePage?.items ?? [];
-  const slaText = sla ? `${sla.compliancePercent}%` : "—";
-  const slaPct = sla?.compliancePercent ?? 0;
-  const slaColor = !sla
-    ? "var(--muted-foreground)"
-    : slaPct >= 90
-      ? "var(--ok)"
-      : slaPct >= 70
-        ? "var(--p3)"
-        : "var(--p1)";
   const ticketTrend = ticketStats?.createdTrend7Days ?? [];
   const hasTrend = ticketTrend.some((p) => p.count > 0);
   const statusCounts = ticketStats?.countByStatus ?? {};
 
+  // Bar ngang: giai đoạn đầu nằm TRÊN → khai báo ngược rồi reverse.
   const pipeline = [
     {
       stage: "Mới/Mở",
       value: (statusCounts.New ?? 0) + (statusCounts.Open ?? 0),
       fill: "var(--muted-foreground)",
     },
-    {
-      stage: "Đã gán",
-      value: statusCounts.Assigned ?? 0,
-      fill: "var(--chart-1)",
-    },
+    { stage: "Đã gán", value: statusCounts.Assigned ?? 0, fill: "var(--chart-1)" },
     {
       stage: "Đang xử lý",
       value: statusCounts.InProgress ?? 0,
@@ -141,31 +123,21 @@ export default function ManagerDashboardPage() {
     },
   ];
   const pipelineTotal = pipeline.reduce((a, p) => a + p.value, 0);
+  const pipelineChart = [...pipeline].reverse();
 
-  // ── Phân bố ưu tiên — countByPriority ──
+  // ── Ưu tiên ──
   const priorityCounts = ticketStats?.countByPriority ?? {};
   const priorityData = [
-    {
-      name: "P1 · Khẩn",
-      value: priorityCounts.P1Critical ?? 0,
-      fill: "var(--p1)",
-    },
+    { name: "P1 · Khẩn", value: priorityCounts.P1Critical ?? 0, fill: "var(--p1)" },
     { name: "P2 · Cao", value: priorityCounts.P2High ?? 0, fill: "var(--p2)" },
-    {
-      name: "P3 · Thường",
-      value: priorityCounts.P3Normal ?? 0,
-      fill: "var(--p3)",
-    },
+    { name: "P3 · Thường", value: priorityCounts.P3Normal ?? 0, fill: "var(--p3)" },
   ].filter((d) => d.value > 0);
   const priorityTotal = priorityData.reduce((a, d) => a + d.value, 0);
 
-  // ── Staff workload ──
+  // ── Tải nhân sự ──
   const staff = staffList ?? [];
   const openByStaff = new Map(
-    (ticketStats?.openCountByStaff ?? []).map((o) => [
-      o.staffId,
-      o.activeCount,
-    ]),
+    (ticketStats?.openCountByStaff ?? []).map((o) => [o.staffId, o.activeCount]),
   );
   const workload = staff
     .map((s) => ({
@@ -176,23 +148,19 @@ export default function ManagerDashboardPage() {
       max: s.maxConcurrentTickets || 0,
     }))
     .sort((a, b) => b.active - a.active);
+  const availableStaff = workload.filter((w) => w.available).length;
 
-  // ── Alerts + pin ──
-  const openAlerts = stats?.openAlerts ?? 0;
-  const criticalOpen = stats?.openAlertsCritical ?? 0;
-  const offlineBatt = stats?.offlineAssets ?? 0;
-  const topAlerting = stats?.topAlertingAssets ?? [];
+  // Ticket Staff đã Resolved, đang chờ Manager duyệt/từ chối.
+  const awaitingApproval = statusCounts.Resolved ?? 0;
 
   // ── Visibility ──
   const showPriority = ticketsLoading || priorityData.length > 0;
   const showWorkload = staffLoading || workload.length > 0;
   const showTriage = queueLoading || queueItems.length > 0;
-  const showAtRisk = sitesLoading || atRisk.length > 0;
-  const showTopAlerting = statsLoading || topAlerting.length > 0;
   const showTrend = ticketsLoading || hasTrend;
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4 lg:h-full lg:min-h-0 lg:overflow-y-auto">
+    <div className="h-full min-h-0 flex flex-col gap-3 p-3 lg:p-4 overflow-hidden">
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-4 shrink-0">
         <div className="min-w-0">
@@ -200,27 +168,25 @@ export default function ManagerDashboardPage() {
             Manager · Điều phối vận hành
           </p>
           <h1 className="text-lg font-semibold text-foreground leading-tight truncate">
-            Vận hành ticket & SLA
+            {ticketsLoading
+              ? "Dashboard"
+              : `${openCount} ticket mở · ${queueCount} chờ triage`}
           </h1>
         </div>
         <RefreshButton
-          queryKeys={[
-            KEY.sites,
-            KEY.ticketDashboard,
-            KEY.manager.tickets,
-            KEY.batteryDashboard,
-          ]}
+          queryKeys={[KEY.ticketDashboard, KEY.manager.tickets]}
           label="Đồng bộ"
         />
       </div>
 
-      {/* ── KPI strip ── */}
+      {/* ── KPI strip — bấm được ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
         <DashboardKpi
           label="Tickets mở"
           value={ticketsLoading ? "--" : openCount}
           sub={`/${totalTickets}`}
           icon={<Ticket className="size-3.5" />}
+          to="/manager/tickets"
         />
         <DashboardKpi
           label="Cần triage"
@@ -228,6 +194,15 @@ export default function ManagerDashboardPage() {
           sub="hàng chờ"
           icon={<Inbox className="size-3.5" />}
           accent={queueCount > 0 ? "var(--p3)" : undefined}
+          to="/manager/tickets/queue"
+        />
+        <DashboardKpi
+          label="Chờ duyệt"
+          value={ticketsLoading ? "--" : awaitingApproval}
+          hint="Staff đã xử lý xong"
+          icon={<ClipboardCheck className="size-3.5" />}
+          accent={awaitingApproval > 0 ? "var(--p3)" : undefined}
+          to="/manager/tickets"
         />
         <DashboardKpi
           label="Quá hạn SLA"
@@ -235,36 +210,31 @@ export default function ManagerDashboardPage() {
           sub="breach"
           icon={<AlertTriangle className="size-3.5" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : undefined}
+          to="/manager/tickets"
         />
         <DashboardKpi
           label="SLA"
-          value={ticketsLoading ? "--" : slaText}
+          value={ticketsLoading ? "--" : sla ? `${sla.compliancePercent}%` : "—"}
           hint={`${sla?.met ?? 0} met`}
           icon={<ShieldCheck className="size-3.5" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
-          label="Cảnh báo mở"
-          value={statsLoading ? "--" : openAlerts}
-          hint={`${criticalOpen} critical`}
-          icon={<BellRing className="size-3.5" />}
-          accent={criticalOpen > 0 ? "var(--p1)" : undefined}
-        />
-        <DashboardKpi
-          label="Pin offline"
-          value={statsLoading ? "--" : offlineBatt}
-          hint="mất kết nối"
-          icon={<WifiOff className="size-3.5" />}
-          accent={offlineBatt > 0 ? "var(--p3)" : undefined}
+          label="Staff sẵn sàng"
+          value={staffLoading ? "--" : availableStaff}
+          sub={`/${workload.length}`}
+          icon={<Users className="size-3.5" />}
+          accent={availableStaff === 0 ? "var(--p1)" : undefined}
         />
       </div>
 
-      {/* ── Hero row (luôn hiển thị) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {/* ── Bento cố định 4×2, KHÔNG cuộn trang ── */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-3 overflow-hidden">
+        {/* [Bar ngang] pipeline theo giai đoạn */}
         <DashboardPanel
           title={OVERVIEW_PANELS.manager.ticketPipeline}
           desc={`${pipelineTotal} ticket theo giai đoạn`}
-          className="lg:col-span-2 min-h-64"
+          className="lg:col-span-3 min-h-0"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -279,15 +249,15 @@ export default function ManagerDashboardPage() {
             >
               <BarChart
                 accessibilityLayer
-                data={pipeline}
+                data={pipelineChart}
                 layout="vertical"
-                margin={{ left: 4, right: 12 }}
+                margin={{ left: 4, right: 16 }}
               >
                 <XAxis type="number" hide allowDecimals={false} />
                 <YAxis
                   type="category"
                   dataKey="stage"
-                  width={72}
+                  width={76}
                   tickLine={false}
                   axisLine={false}
                   tick={{ fontSize: 10.5 }}
@@ -296,8 +266,8 @@ export default function ManagerDashboardPage() {
                   cursor={false}
                   content={<ChartTooltipContent hideLabel />}
                 />
-                <Bar dataKey="value" radius={4} maxBarSize={20}>
-                  {pipeline.map((p) => (
+                <Bar dataKey="value" radius={4} maxBarSize={18}>
+                  {pipelineChart.map((p) => (
                     <Cell key={p.stage} fill={p.fill} />
                   ))}
                 </Bar>
@@ -306,61 +276,21 @@ export default function ManagerDashboardPage() {
           )}
         </DashboardPanel>
 
-        <DashboardPanel
+        {/* [Gauge] tỉ lệ tuân thủ SLA */}
+        <SlaGaugePanel
           title={OVERVIEW_PANELS.manager.sla}
           desc="met / (met + breach)"
-          className="min-h-64"
-        >
-          {ticketsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : (
-            <DashboardGauge
-              percent={slaPct}
-              valueText={slaText}
-              caption="SLA met"
-              color={slaColor}
-              footer={
-                <div className="grid grid-cols-3 gap-1.5 text-center">
-                  <div className="rounded-md bg-muted/40 py-1.5">
-                    <p
-                      className="text-sm font-semibold tabular-nums"
-                      style={{ color: "var(--ok)" }}
-                    >
-                      {sla?.met ?? 0}
-                    </p>
-                    <p className="text-[9.5px] text-muted-foreground">Met</p>
-                  </div>
-                  <div className="rounded-md bg-muted/40 py-1.5">
-                    <p className="text-sm font-semibold tabular-nums">
-                      {sla?.running ?? 0}
-                    </p>
-                    <p className="text-[9.5px] text-muted-foreground">
-                      Running
-                    </p>
-                  </div>
-                  <div className="rounded-md bg-muted/40 py-1.5">
-                    <p
-                      className="text-sm font-semibold tabular-nums"
-                      style={{ color: "var(--p1)" }}
-                    >
-                      {sla?.breached ?? 0}
-                    </p>
-                    <p className="text-[9.5px] text-muted-foreground">Breach</p>
-                  </div>
-                </div>
-              }
-            />
-          )}
-        </DashboardPanel>
-      </div>
+          sla={sla}
+          isLoading={ticketsLoading}
+          className="min-h-0"
+        />
 
-      {/* ── Vùng tile REFLOW (ẩn panel rỗng) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {/* [Donut] cơ cấu ưu tiên */}
         {showPriority && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.priority}
-            desc={`${priorityTotal} ticket phân theo mức`}
-            className="min-h-56"
+            desc={`${priorityTotal} ticket`}
+            className="min-h-0"
           >
             {ticketsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -374,11 +304,12 @@ export default function ManagerDashboardPage() {
           </DashboardPanel>
         )}
 
+        {/* [Thanh tải] mức sử dụng từng người */}
         {showWorkload && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.staffLoad}
-            desc={`${workload.length} staff · đang xử lý / tối đa`}
-            className="min-h-56"
+            desc={`${availableStaff}/${workload.length} sẵn sàng`}
+            className="min-h-0"
             bodyClassName="overflow-y-auto"
           >
             {staffLoading ? (
@@ -397,7 +328,7 @@ export default function ManagerDashboardPage() {
                         ? 100
                         : 0;
                   return (
-                    <div key={w.id} className="flex items-center gap-2.5">
+                    <div key={w.id} className="flex items-center gap-2">
                       <span
                         className="w-1.5 h-1.5 rounded-full shrink-0"
                         style={{
@@ -407,10 +338,10 @@ export default function ManagerDashboardPage() {
                         }}
                         title={w.available ? "Sẵn sàng" : "Bận"}
                       />
-                      <span className="text-xs font-medium truncate flex-1 min-w-0">
+                      <span className="text-[11px] font-medium truncate flex-1 min-w-0">
                         {w.name}
                       </span>
-                      <div className="w-24 h-1.5 rounded-full bg-border shrink-0">
+                      <div className="w-12 h-1.5 rounded-full bg-border shrink-0">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -419,7 +350,7 @@ export default function ManagerDashboardPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[11px] font-semibold font-mono-num w-9 text-right shrink-0">
+                      <span className="text-[10.5px] font-semibold font-mono-num w-8 text-right shrink-0">
                         {w.active}/{w.max || "–"}
                       </span>
                     </div>
@@ -430,11 +361,12 @@ export default function ManagerDashboardPage() {
           </DashboardPanel>
         )}
 
+        {/* [Danh sách] việc cần làm ngay */}
         {showTriage && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.triageQueue}
             desc={`${queueCount} ticket chờ phân loại`}
-            className="min-h-56"
+            className="min-h-0"
             bodyClassName="overflow-y-auto"
           >
             {queueLoading ? (
@@ -448,14 +380,14 @@ export default function ManagerDashboardPage() {
                 {queueItems.map((t) => (
                   <li key={t.id}>
                     <button
-                      className="flex items-center gap-2 w-full text-left rounded-md border border-border/70 bg-muted/20 px-2.5 py-1.5 group hover:border-primary/40 transition-colors"
+                      className="flex items-center gap-2 w-full text-left rounded-md border border-border/70 bg-muted/20 px-2 py-1.5 group hover:border-primary/40 transition-colors"
                       onClick={() => navigate(`/manager/tickets/${t.id}`)}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10.5px] font-mono-num text-muted-foreground">
+                        <p className="text-[10px] font-mono-num text-muted-foreground">
                           {t.code}
                         </p>
-                        <p className="text-xs font-medium truncate">
+                        <p className="text-[11px] font-medium truncate">
                           {t.title}
                         </p>
                       </div>
@@ -468,111 +400,12 @@ export default function ManagerDashboardPage() {
           </DashboardPanel>
         )}
 
-        {showAtRisk && (
-          <DashboardPanel
-            title={OVERVIEW_PANELS.manager.sitesNeedAttention}
-            desc={`Sức khỏe < 80% · ${atRisk.length} site`}
-            className="min-h-56"
-            bodyClassName="overflow-y-auto"
-          >
-            {sitesLoading ? (
-              <div className="space-y-2.5">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-5 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {atRisk.map((s) => (
-                  <button
-                    key={s.id}
-                    className="flex items-center gap-2.5 w-full text-left group"
-                    onClick={() => navigate(`/manager/sites/${s.id}`)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">
-                        {s.name}
-                      </p>
-                      <p className="text-[10.5px] text-muted-foreground truncate">
-                        {s.customerName}
-                      </p>
-                    </div>
-                    <div className="w-14 h-1.5 rounded-full bg-border shrink-0">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${s.health}%`,
-                          background: healthColor(s.health),
-                        }}
-                      />
-                    </div>
-                    <span
-                      className="text-[11px] font-semibold font-mono-num w-8 text-right shrink-0"
-                      style={{ color: healthColor(s.health) }}
-                    >
-                      {s.health}%
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </DashboardPanel>
-        )}
-
-        {showTopAlerting && (
-          <DashboardPanel
-            title={OVERVIEW_PANELS.manager.topAlerting}
-            desc="Nhiều cảnh báo mở nhất"
-            className="min-h-56"
-            bodyClassName="overflow-y-auto"
-          >
-            {statsLoading ? (
-              <div className="space-y-2.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-6 w-full" />
-                ))}
-              </div>
-            ) : (
-              <ol className="space-y-1">
-                {topAlerting.map((a, i) => (
-                  <li key={a.batteryAssetId}>
-                    <button
-                      className="flex items-center gap-2.5 w-full text-left rounded-md px-1.5 py-1.5 group hover:bg-muted/40 transition-colors"
-                      onClick={() => navigate("/manager/alerts")}
-                    >
-                      <span className="w-3.5 shrink-0 text-right text-[10px] font-semibold font-mono-num text-muted-foreground/60">
-                        {i + 1}
-                      </span>
-                      <span className="flex-1 min-w-0 text-xs font-medium truncate group-hover:text-primary transition-colors">
-                        {a.serialNumber}
-                      </span>
-                      {a.criticalCount > 0 && (
-                        <span
-                          className="rounded px-1.5 py-0.5 text-[9.5px] font-semibold shrink-0"
-                          style={{
-                            background: "var(--p1-soft)",
-                            color: "var(--p1)",
-                          }}
-                        >
-                          {a.criticalCount} critical
-                        </span>
-                      )}
-                      <span className="text-[11px] font-semibold font-mono-num tabular-nums w-5 text-right shrink-0">
-                        {a.alertCount}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </DashboardPanel>
-        )}
-
+        {/* [Area] xu hướng theo thời gian */}
         {showTrend && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.newTickets7d}
-            desc="Số ticket tạo theo ngày"
-            className="min-h-56"
+            desc="Ticket tạo theo ngày"
+            className="min-h-0"
           >
             {ticketsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -581,7 +414,7 @@ export default function ManagerDashboardPage() {
                 config={areaConfig}
                 className="h-full w-full aspect-auto min-h-0"
               >
-                <AreaChart data={ticketTrend}>
+                <AreaChart data={ticketTrend} margin={{ left: 0, right: 6, top: 4 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
                     dataKey="date"
@@ -593,7 +426,7 @@ export default function ManagerDashboardPage() {
                     tickMargin={6}
                   />
                   <YAxis
-                    width={24}
+                    width={30}
                     tickLine={false}
                     axisLine={false}
                     tickMargin={6}
@@ -601,13 +434,7 @@ export default function ManagerDashboardPage() {
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <defs>
-                    <linearGradient
-                      id="fillMgrTickets"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
+                    <linearGradient id="fillMgrTickets" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="5%"
                         stopColor="var(--color-count)"

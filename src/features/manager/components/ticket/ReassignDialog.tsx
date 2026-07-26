@@ -30,21 +30,43 @@ import {
 } from "@/features/manager/schemas/ticket/ticket.schema";
 import { useReassignTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
+import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
+import {
+  getMinTierForPriority,
+  getTierRequirementHint,
+  isEligiblePrimaryHandler,
+  staffOptionLabel,
+} from "@/shared/utils/ticket/staffTier";
 
 interface Props {
   ticketId: string;
+  /** Priority ticket — quyết định tier tối thiểu của Primary Handler mới. */
+  priority: TicketPriorityEnum | null;
   open: boolean;
   onClose: () => void;
 }
 
-export default function ReassignDialog({ ticketId, open, onClose }: Props) {
+export default function ReassignDialog({
+  ticketId,
+  priority,
+  open,
+  onClose,
+}: Props) {
   const { mutateAsync, isPending } = useReassignTicket(ticketId);
   const { data: staffList = [], isLoading: loadingStaff } =
     useStaffAssignmentList();
 
+  const minTier = getMinTierForPriority(priority);
+  const tierHint = getTierRequirementHint(priority);
+  const staffOptions = staffList.map((s) => ({
+    ...s,
+    eligible: isEligiblePrimaryHandler(s.skillTier, minTier),
+  }));
+  const hasEligibleStaff = staffOptions.some((s) => s.eligible);
+
   const form = useForm<ReassignFormValues>({
     resolver: zodResolver(reassignSchema),
-    defaultValues: { newStaffId: "", reason: "" },
+    defaultValues: { newPrimaryHandlerStaffId: "", reason: "" },
   });
 
   const onSubmit = async (values: ReassignFormValues) => {
@@ -58,21 +80,25 @@ export default function ReassignDialog({ ticketId, open, onClose }: Props) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Điều chuyển Staff</DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            Staff phụ trách chính hiện tại sẽ chuyển thành Staff hỗ trợ. SLA
+            không được đặt lại.
+          </p>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="newStaffId"
+              name="newPrimaryHandlerStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chọn Staff mới *</FormLabel>
+                  <FormLabel>Staff phụ trách chính mới *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    items={staffList.map((s) => ({
+                    items={staffOptions.map((s) => ({
                       value: s.accountId,
-                      label: s.fullName ?? s.accountId,
+                      label: staffOptionLabel(s),
                     }))}
                     disabled={loadingStaff}
                   >
@@ -91,13 +117,26 @@ export default function ReassignDialog({ ticketId, open, onClose }: Props) {
                           Không có Staff khả dụng
                         </SelectItem>
                       )}
-                      {staffList.map((s) => (
-                        <SelectItem key={s.accountId} value={s.accountId}>
-                          {s.fullName ?? s.accountId}
+                      {staffOptions.map((s) => (
+                        <SelectItem
+                          key={s.accountId}
+                          value={s.accountId}
+                          disabled={!s.eligible}
+                        >
+                          {staffOptionLabel(s)}
+                          {!s.eligible && " — không đủ tier"}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {tierHint && (
+                    <p className="text-xs text-muted-foreground">{tierHint}</p>
+                  )}
+                  {!loadingStaff && !hasEligibleStaff && staffList.length > 0 && (
+                    <p className="text-xs text-destructive">
+                      Không có Staff nào đủ tier cho ticket này.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

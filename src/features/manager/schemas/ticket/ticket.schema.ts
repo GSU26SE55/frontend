@@ -27,15 +27,36 @@ export const triageSchema = z
 
 export type TriageFormValues = z.infer<typeof triageSchema>;
 
-export const assignSchema = z.object({
-  staffId: z.string().uuid("ID Staff không hợp lệ"),
-  notes: z.string().optional(),
-});
+// #697 — 1 Primary Handler + N Supporter (TicketAssignCommand).
+export const assignSchema = z
+  .object({
+    primaryHandlerStaffId: z.string().uuid("ID Staff không hợp lệ"),
+    // Staff phụ (Collaborator trong chat) — hỗ trợ, không tính workload/KPI.
+    supporterStaffIds: z.array(z.string().uuid()),
+    notes: z.string().optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.supporterStaffIds.includes(val.primaryHandlerStaffId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["supporterStaffIds"],
+        message: "Staff phụ trách chính không được nằm trong danh sách hỗ trợ",
+      });
+    }
+    if (new Set(val.supporterStaffIds).size !== val.supporterStaffIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["supporterStaffIds"],
+        message: "Danh sách Staff hỗ trợ bị trùng",
+      });
+    }
+  });
 
 export type AssignFormValues = z.infer<typeof assignSchema>;
 
+// #697 — Primary hiện tại tự động hạ thành Supporter, không gửi lại supporter list.
 export const reassignSchema = z.object({
-  newStaffId: z.string().uuid("ID Staff không hợp lệ"),
+  newPrimaryHandlerStaffId: z.string().uuid("ID Staff không hợp lệ"),
   // BE required (TicketReassignCommand) — rỗng → 400.
   reason: z.string().min(1, "Lý do điều chuyển không được để trống"),
 });

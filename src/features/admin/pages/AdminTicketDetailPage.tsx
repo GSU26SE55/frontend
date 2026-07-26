@@ -34,6 +34,7 @@ import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge"
 import TicketActivityTimeline from "@/features/admin/components/ticket/TicketActivityTimeline";
 import AdminClosedOverrideDialog from "@/features/admin/components/ticket/AdminClosedOverrideDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import type { TicketCommentDTO } from "@/shared/types/ticket/ticket.types";
 import {
   TicketCommentThread,
@@ -232,9 +233,10 @@ export default function AdminTicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="timeline">Lịch sử hoạt động</TabsTrigger>
-                <TabsTrigger value="comments">
+                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                <TabsTrigger value="comments" className="group">
                   Bình luận
-                  {comments.length > 0 && ` (${comments.length})`}
+                  <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -450,6 +452,27 @@ export default function AdminTicketDetailPage() {
                 value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
                   locale: vi,
                 })}
+              />
+            )}
+            {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
+            {ticket.incidentDetectedFrom && (
+              <SideInfoRow
+                label="Sự cố từ"
+                value={format(
+                  new Date(ticket.incidentDetectedFrom),
+                  "dd/MM/yyyy HH:mm",
+                  { locale: vi },
+                )}
+              />
+            )}
+            {ticket.incidentDetectedTo && (
+              <SideInfoRow
+                label="Sự cố đến"
+                value={format(
+                  new Date(ticket.incidentDetectedTo),
+                  "dd/MM/yyyy HH:mm",
+                  { locale: vi },
+                )}
               />
             )}
             {ticket.updatedAt && (

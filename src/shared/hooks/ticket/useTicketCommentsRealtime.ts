@@ -46,6 +46,11 @@ export function useTicketCommentsRealtime(
     // "ChatDeleted"/"ReactionChanged" — KHÔNG phải "CommentAdded".
     const invalidateChatList = () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+      // Badge "chưa đọc" trên tab Bình luận phải nhảy ngay khi có tin mới /
+      // tin bị xoá — cùng nhịp với list, không chờ user reload.
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
+      });
       for (const key of extraKeysRef.current) {
         qc.invalidateQueries({ queryKey: key });
       }
