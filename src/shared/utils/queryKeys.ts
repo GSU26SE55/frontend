@@ -15,6 +15,8 @@ export const KEY = {
   sensorReadings: "sensorReadings",
   thresholds: "thresholds",
   alerts: "alerts",
+  sohPredictions: "sohPredictions",
+  anomalyClassifications: "anomalyClassifications",
   ambient: "ambient",
   environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
@@ -48,10 +50,12 @@ export const KEY = {
     tickets: ["manager", "tickets"] as const,
   },
   kb: "kb",
+  blog: "blog",
+  blogTemplates: "blogTemplates",
   ticketKbRefs: "ticketKbRefs",
+  ticketChatFiles: "ticketChatFiles",
   slaRules: "slaRules",
   auditAggregate: "auditAggregate",
-  chatTemplates: "chatTemplates",
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
@@ -119,11 +123,21 @@ export const QUERY_KEY = {
       [KEY.sensorReadings, "history", assetId, params] as const,
     aggregate: (assetId: string, params?: object) =>
       [KEY.sensorReadings, "aggregate", assetId, params] as const,
+    aggregateHourly: (assetId: string, params?: object) =>
+      [KEY.sensorReadings, "aggregate-hourly", assetId, params] as const,
   },
   thresholds: {
     list: (params?: object) => [KEY.thresholds, "list", params] as const,
     byType: (batteryTypeId: string, params?: object) =>
       [KEY.thresholds, "by-type", batteryTypeId, params] as const,
+  },
+  sohPredictions: {
+    list: (assetId: string, params?: object) =>
+      [KEY.sohPredictions, "list", assetId, params] as const,
+  },
+  anomalyClassifications: {
+    list: (assetId: string, params?: object) =>
+      [KEY.anomalyClassifications, "list", assetId, params] as const,
   },
   files: {
     metadata: (id: string) => [KEY.files, "metadata", id] as const,
@@ -255,6 +269,7 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.manager.tickets, "list", params],
       queue: (params?: object) => [...KEY.manager.tickets, "queue", params],
+      queueCount: () => [...KEY.manager.tickets, "queue-count"],
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },
@@ -269,9 +284,29 @@ export const QUERY_KEY = {
       [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
     suggest: (params?: object) => [KEY.kb, "suggest", params] as const,
     usageStats: (id: string) => [KEY.kb, "usage-stats", id] as const,
+    templates: (params?: object) => [KEY.kb, "templates", params] as const,
+  },
+  blog: {
+    // Public (chỉ bài Published)
+    publicList: (params?: object) => [KEY.blog, "public-list", params] as const,
+    publicDetail: (id: string) => [KEY.blog, "public-detail", id] as const,
+    // Internal (mọi trạng thái)
+    list: (params?: object) => [KEY.blog, "list", params] as const,
+    detail: (id: string) => [KEY.blog, "detail", id] as const,
+    versions: (id: string) => [KEY.blog, "versions", id] as const,
+    compare: (id: string, oldVersion?: number, newVersion?: number) =>
+      [KEY.blog, "compare", id, oldVersion, newVersion] as const,
+  },
+  blogTemplates: {
+    list: (params?: object) => [KEY.blogTemplates, "list", params] as const,
+    detail: (id: string) => [KEY.blogTemplates, "detail", id] as const,
   },
   ticketKbRefs: {
     list: (ticketId: string) => [KEY.ticketKbRefs, "list", ticketId] as const,
+  },
+  ticketChatFiles: {
+    list: (ticketId?: string) =>
+      [KEY.ticketChatFiles, "list", ticketId] as const,
   },
   iotDevices: {
     list: (params?: object) => [KEY.iotDevices, "list", params] as const,
@@ -347,10 +382,6 @@ export const QUERY_KEY = {
     accountTimeline: (accountId: string, limit?: number) =>
       [KEY.auditAggregate, "timeline", accountId, limit] as const,
     stats: (params?: object) => [KEY.auditAggregate, "stats", params] as const,
-  },
-  chatTemplates: {
-    list: (params?: object) => [KEY.chatTemplates, "list", params] as const,
-    detail: (id: string) => [KEY.chatTemplates, "detail", id] as const,
   },
   chatMentions: {
     me: (params?: object) => [KEY.chatMentions, "me", params] as const,

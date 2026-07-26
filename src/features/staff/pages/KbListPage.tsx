@@ -13,13 +13,18 @@ import { Plus, Search, Tag, X } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { useStaffKbList, useMarkStaffKbHelpful } from "../hooks/useStaffKb";
-import KbArticleTable from "../components/KbArticleTable";
+import {
+  useStaffKbList,
+  useMarkStaffKbHelpful,
+  useStaffDuplicateKbArticle,
+} from "@/features/staff/hooks/kb/useStaffKb";
+import KbArticleTable from "@/features/staff/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
-import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb.enum";
-import type { TicketCategoryEnum } from "@/shared/enums/ticket.enum";
+import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
+import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { loadFailed } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
@@ -28,13 +33,15 @@ const DEFAULTS = {
   keyword: "",
   tag: "",
   category: "",
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: PAGE_SIZE,
 };
 
 export default function KbListPage() {
   const navigate = useNavigate();
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
@@ -42,6 +49,7 @@ export default function KbListPage() {
   const tagSearch = useDebouncedSearch(filters.tag ?? "", (t) =>
     setFilter("tag", t),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const categoryValue = filters.category
     ? (filters.category as TicketCategoryEnum)
@@ -51,12 +59,20 @@ export default function KbListPage() {
     q: filters.keyword || undefined,
     tag: filters.tag || undefined,
     category: categoryValue ? KbCategoryCode[categoryValue] : undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
 
   const { data, isLoading, isError, refetch } = useStaffKbList(params);
   const { mutate: markHelpful } = useMarkStaffKbHelpful();
+  const { mutateAsync: duplicate } = useStaffDuplicateKbArticle();
+
+  const handleCopy = async (id: string) => {
+    const created = await duplicate(id);
+    if (created?.id) navigate(`/staff/kb/${created.id}/edit`);
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
@@ -181,6 +197,8 @@ export default function KbListPage() {
             hasFilter={hasActiveFilter}
             onResetFilter={resetFilters}
             onMarkHelpful={(a) => markHelpful(a.id)}
+            onCopy={(a) => handleCopy(a.id)}
+            sort={sort}
           />
         )}
       </Card>

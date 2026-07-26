@@ -19,7 +19,7 @@ import type {
   AcceptInvitePayload,
 } from "@/features/auth/types/auth.types";
 import type { CommonResponse } from "@/shared/types/api.types";
-import type { AccountDto } from "@/shared/types/account.types";
+import type { AccountDto } from "@/shared/types/account/account.types";
 
 export const authService = {
   login: (payload: LoginPayload) =>

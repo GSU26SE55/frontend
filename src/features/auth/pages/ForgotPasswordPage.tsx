@@ -2,9 +2,9 @@ import { useEffect, useReducer } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Check, ChevronLeft } from "lucide-react";
-import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
-import ResetOtpVerifyForm from "@/features/auth/components/ResetOtpVerifyForm";
-import ResetPasswordForm from "@/features/auth/components/ResetPasswordForm";
+import ForgotPasswordForm from "@/features/auth/components/password/ForgotPasswordForm";
+import ResetOtpVerifyForm from "@/features/auth/components/otp/ResetOtpVerifyForm";
+import ResetPasswordForm from "@/features/auth/components/password/ResetPasswordForm";
 import { cn } from "@/lib/utils";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 

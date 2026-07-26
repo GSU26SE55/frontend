@@ -5,6 +5,7 @@ import { ThemeProvider, useTheme } from "next-themes";
 import { Toaster } from "sonner";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/shared/context/authContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { env } from "@/config/env";
 import router from "@/router";
 
@@ -58,9 +59,11 @@ const App = () => (
         disableTransitionOnChange
       >
         <AuthProvider>
-          <RouterProvider router={router} />
-          <ThemedToaster />
-          <DismissSplash />
+          <TooltipProvider>
+            <RouterProvider router={router} />
+            <ThemedToaster />
+            <DismissSplash />
+          </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

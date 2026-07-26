@@ -1,11 +1,12 @@
 // Nav config sidebar cho role ADMIN.
-// Label/title chung (≥2 role) → import từ shared/utils/sidebarLabels.
+// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
 // Label/title đặc thù chỉ admin dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
+  LayoutTemplate,
   LayoutDashboard,
   MapPin,
-  Battery,
   BatteryCharging,
   Users,
   Shield,
@@ -17,7 +18,6 @@ import {
   FileClock,
   BookOpen,
   ShieldAlert,
-  Thermometer,
   MessageSquare,
   Workflow,
   BarChart3,
@@ -28,7 +28,7 @@ import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
-} from "@/shared/utils/sidebarLabels";
+} from "@/shared/constants/sidebarLabels";
 
 export const ADMIN_NAV: NavSection[] = [
   {
@@ -51,8 +51,9 @@ export const ADMIN_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
+      // Pin truy cập qua Site (Battery & Site → site detail → chi tiết pin).
+      // Route /admin/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
       { label: SIDEBAR_LABELS.sites, path: "/admin/sites", icon: MapPin },
-      { label: "Battery Assets", path: "/admin/battery-assets", icon: Battery },
       {
         label: "Loại pin & Ngưỡng",
         path: "/admin/battery-types",
@@ -68,11 +69,6 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/environmental-incidents",
         icon: ShieldAlert,
       },
-      {
-        label: SIDEBAR_LABELS.ambient,
-        path: "/admin/ambient",
-        icon: Thermometer,
-      },
       { label: "IoT Devices", path: "/admin/iot-devices", icon: Cpu },
       { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
     ],
@@ -87,6 +83,16 @@ export const ADMIN_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/admin/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/admin/blog",
+        icon: Newspaper,
+      },
+      {
+        label: SIDEBAR_LABELS.blogTemplates,
+        path: "/admin/blog/templates",
+        icon: LayoutTemplate,
       },
     ],
   },

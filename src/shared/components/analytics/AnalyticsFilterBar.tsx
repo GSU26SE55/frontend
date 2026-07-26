@@ -7,8 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ReportGranularityEnum } from "@/shared/enums/report.enum";
-import type { AnalyticsFilter } from "@/shared/types/analytics.types";
+import { ReportGranularityEnum } from "@/shared/enums/dashboard/report.enum";
+import type { AnalyticsFilter } from "@/shared/types/dashboard/analytics.types";
 
 export interface SiteOption {
   id: string;

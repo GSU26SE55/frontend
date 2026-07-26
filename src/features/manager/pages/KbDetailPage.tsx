@@ -6,7 +6,6 @@ import {
   useManagerKbDetail,
   useManagerPublishKbArticle,
   useManagerArchiveKbArticle,
-  useManagerUpdateKbArticle,
   useManagerApproveKbReview,
   useManagerRejectKbReview,
   useManagerKbVersions,
@@ -14,17 +13,16 @@ import {
   useManagerRollbackKbArticle,
   useManagerKbVersionDetail,
   useMarkManagerKbHelpful,
-  useManagerCopyKbTemplate,
-} from "../hooks/useManagerKb";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
+  useManagerDuplicateKbArticle,
+} from "@/features/manager/hooks/kb/useManagerKb";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
 } from "@/shared/components/kb/KbArticleDetail";
-import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbReviewActions } from "@/shared/components/kb/KbReviewActions";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
-import type { KbCompareParams } from "@/shared/types/kb.types";
+import type { KbCompareParams } from "@/shared/types/kb/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,14 +32,12 @@ export default function KbDetailPage() {
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: approve, isPending: approving } = useManagerApproveKbReview();
   const { mutate: reject, isPending: rejecting } = useManagerRejectKbReview();
-  const { mutateAsync: update, isPending: updating } =
-    useManagerUpdateKbArticle();
   const { mutate: rollback, isPending: rollingBack } =
     useManagerRollbackKbArticle();
   const { mutate: markHelpful, isPending: helpfulPending } =
     useMarkManagerKbHelpful();
-  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
-    useManagerCopyKbTemplate();
+  const { mutateAsync: duplicate, isPending: copyingTemplate } =
+    useManagerDuplicateKbArticle();
 
   const [verOpen, setVerOpen] = useState(false);
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
@@ -71,6 +67,7 @@ export default function KbDetailPage() {
         breadcrumb="Manager · Knowledge Base"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
+        onEdit={() => navigate(`/manager/kb/${article.id}/edit`)}
         actions={
           <>
             <Button
@@ -88,13 +85,12 @@ export default function KbDetailPage() {
               className="gap-1.5"
               disabled={copyingTemplate}
               onClick={async () => {
-                const template = await copyTemplate(article.id);
-                if (template)
-                  navigate("/manager/kb/new", { state: { template } });
+                const created = await duplicate(article.id);
+                if (created?.id) navigate(`/manager/kb/${created.id}/edit`);
               }}
             >
               <Copy className="size-3.5" />
-              Sao chép template
+              Sao chép
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -130,17 +126,6 @@ export default function KbDetailPage() {
             )}
           </>
         }
-        renderEditor={({ onClose }) => (
-          <KbEditorPanel
-            article={article}
-            onClose={onClose}
-            isPending={updating}
-            onSave={async (payload) => {
-              await update({ id: article.id, payload });
-              onClose();
-            }}
-          />
-        )}
       />
 
       <KbVersionDialog

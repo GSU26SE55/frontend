@@ -76,6 +76,8 @@ export const ENDPOINTS = {
     CHAT_CURSOR: (tid: string) => `/api/tickets/${tid}/chats/cursor`,
     CHAT_ATTACHMENTS: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments`,
+    // Tổng hợp mọi file đã gửi qua chat trong 1 ticket (dùng cho picker ảnh khi soạn KB)
+    CHAT_FILES: (tid: string) => `/api/tickets/${tid}/chats/files`,
     CHAT_ATTACHMENT: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}`,
     CHAT_TRANSLATE: (tid: string, cid: string) =>
@@ -102,10 +104,8 @@ export const ENDPOINTS = {
       `/api/tickets/${tid}/participants/history`,
   },
 
-  CHAT_TEMPLATES: {
-    LIST: "/api/chat-templates",
-    DETAIL: (id: string) => `/api/chat-templates/${id}`,
-  },
+  // #696 — CHAT_TEMPLATES đã bị xóa khỏi BE (/api/chat-templates,
+  // /api/tickets/{id}/chats/from-template/{templateId}). Không khôi phục.
 
   CHAT_MENTIONS: {
     ME: "/api/chats/mentions/me",
@@ -179,6 +179,8 @@ export const ENDPOINTS = {
   ENVIRONMENTAL_INCIDENTS: {
     // Note: POST /api/environmental-incidents là IoT ingest (API Key) — FE không gọi.
     LIST: "/api/environmental-incidents",
+    // Report thủ công bằng JWT (Staff/Manager/Admin) — reuse handler với POST / (IoT).
+    MANUAL: "/api/environmental-incidents/manual",
     DETAIL: (id: string) => `/api/environmental-incidents/${id}`,
     ACKNOWLEDGE: (id: string) =>
       `/api/environmental-incidents/${id}/acknowledge`,
@@ -192,6 +194,15 @@ export const ENDPOINTS = {
   SLA: {
     LIST: "/api/sla-rules",
     UPDATE: (id: string) => `/api/sla-rules/${id}`,
+  },
+
+  // AI — SOH prediction + anomaly classification (BE-AI: SohPredictionBackgroundService populate).
+  SOH_PREDICTIONS: {
+    LIST: "/api/v1/soh-predictions", // ?batteryAssetId=&from=&to=&pageNumber=&pageSize=
+  },
+  ANOMALY_CLASSIFICATIONS: {
+    LIST: "/api/v1/anomaly-classifications", // ?batteryAssetId=&classification=&from=&to=
+    FEEDBACK: (id: string) => `/api/v1/anomaly-classifications/${id}/feedback`,
   },
 
   // Audit logs thật nằm ở ADMIN.AUDIT_LOGS (/api/admin/audit-logs).
@@ -244,6 +255,9 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
+      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
+      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
+      QUEUE_COUNT: "/api/admin/tickets/queue/count",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
@@ -253,6 +267,10 @@ export const ENDPOINTS = {
       ESCALATE: (id: string) => `/api/admin/tickets/${id}/escalate`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
+      // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).
+      MERGE: (id: string) => `/api/admin/tickets/${id}/merge`,
+      // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
+      RE_VERIFY: (id: string) => `/api/admin/tickets/${id}/re-verify`,
     },
     SMS_GATEWAY: {
       DEVICES: "/api/admin/sms-gateway/devices",
@@ -336,6 +354,9 @@ export const ENDPOINTS = {
     LATEST: (assetId: string) => `/api/sensor-readings/${assetId}/latest`,
     HISTORY: (assetId: string) => `/api/sensor-readings/${assetId}/history`,
     AGGREGATE: (assetId: string) => `/api/sensor-readings/${assetId}/aggregate`,
+    // Bucket 1h cố định (continuous aggregate) — cho range dài; /aggregate cho ≤ 7 ngày.
+    AGGREGATE_HOURLY: (assetId: string) =>
+      `/api/sensor-readings/${assetId}/aggregate/hourly`,
     // SSE live telemetry — text/event-stream. Token qua ?access_token= (EventSource
     // không set được header). Chỉ trả PATH; wrapper sse.ts ghép ?scope=&access_token=.
     STREAM: "/api/sensor-readings/stream",
@@ -454,6 +475,12 @@ export const ENDPOINTS = {
     COMPARE: (id: string) => `/api/internal/knowledge-base/${id}/compare`,
     COPY_TEMPLATE: (id: string) =>
       `/api/internal/knowledge-base/${id}/copy-template`,
+    // Sao chép bài KB có sẵn → tạo bản mới (title "_copy", Draft), trả Id.
+    DUPLICATE: (id: string) => `/api/internal/knowledge-base/${id}/duplicate`,
+    // List bài mẫu — server ép IsTemplate=true + Status=Published
+    TEMPLATES: "/api/internal/knowledge-base/templates",
+    TEMPLATE_DETAIL: (id: string) =>
+      `/api/internal/knowledge-base/templates/${id}`,
   },
 
   // KB workflow — duyệt/xuất bản (Manager/Admin)
@@ -474,5 +501,40 @@ export const ENDPOINTS = {
     ADD: "/api/knowledge-base/references", // POST
     REMOVE: (referenceId: string) =>
       `/api/knowledge-base/references/${referenceId}`,
+  },
+
+  // Blog public — mọi role đã đăng nhập, CHỈ bài Published
+  BLOG: {
+    LIST: "/api/blog",
+    DETAIL: (id: string) => `/api/blog/${id}`,
+  },
+
+  // Blog nội bộ — authoring (Staff/Manager/Admin), đọc được mọi trạng thái
+  BLOG_INTERNAL: {
+    LIST: "/api/internal/blog",
+    // Dùng để POLL trạng thái Generating — KHÔNG dùng BLOG.DETAIL (404 khi chưa publish)
+    DETAIL: (id: string) => `/api/internal/blog/${id}`,
+    CREATE: "/api/internal/blog",
+    UPDATE: (id: string) => `/api/internal/blog/${id}`,
+    VERSIONS: (id: string) => `/api/internal/blog/${id}/versions`,
+    COMPARE: (id: string) => `/api/internal/blog/${id}/compare`,
+    TEMPLATES: "/api/internal/blog/templates",
+    TEMPLATE_DETAIL: (id: string) => `/api/internal/blog/templates/${id}`,
+  },
+
+  // Blog workflow — publish/archive/xóa/sinh bằng AI (Manager/Admin)
+  BLOG_ADMIN: {
+    GENERATE_FROM_KB: (kbId: string) =>
+      `/api/admin/blog/generate-from-kb/${kbId}`,
+    PUBLISH: (id: string) => `/api/admin/blog/${id}/publish`,
+    ARCHIVE: (id: string) => `/api/admin/blog/${id}/archive`,
+    DELETE: (id: string) => `/api/admin/blog/${id}`,
+  },
+
+  // Blog template — GHI chỉ Admin (đọc dùng BLOG_INTERNAL.TEMPLATES)
+  BLOG_TEMPLATES_ADMIN: {
+    CREATE: "/api/admin/blog/templates",
+    UPDATE: (id: string) => `/api/admin/blog/templates/${id}`,
+    DELETE: (id: string) => `/api/admin/blog/templates/${id}`,
   },
 } as const;

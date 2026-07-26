@@ -2,8 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
 import { saveTokens, clearTokens } from "@/shared/lib/axios";
-import { decodeToken, redirectByRole } from "@/shared/types/session.types";
-import { UserRole } from "@/shared/types/session.types";
+import {
+  decodeToken,
+  redirectByRole,
+} from "@/shared/types/account/session.types";
+import { UserRole } from "@/shared/types/account/session.types";
 import {
   CHALLENGE_TOKEN_KEY,
   type LoginPayload,

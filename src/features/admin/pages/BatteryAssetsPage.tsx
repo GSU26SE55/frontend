@@ -14,16 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useBatteryAssets } from "@/features/admin/hooks/useBatteryAssets";
-import { useBatteryTypes } from "@/features/admin/hooks/useBatteryTypes";
-import { useCustomers } from "@/features/admin/hooks/useCustomers";
-import { useSiteList } from "@/features/admin/hooks/useSites";
-import BatteryAssetTable from "@/features/admin/components/BatteryAssetTable";
-import BatteryAssetForm from "@/features/admin/components/BatteryAssetForm";
-import type { BatteryAssetDto } from "@/features/admin/types/battery-asset.types";
-import { BatteryStatusEnum } from "@/shared/enums/battery.enum";
+import { useBatteryAssets } from "@/features/admin/hooks/battery/useBatteryAssets";
+import { useBatteryTypes } from "@/features/admin/hooks/battery/useBatteryTypes";
+import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
+import { useSiteList } from "@/features/admin/hooks/site/useSites";
+import BatteryAssetTable from "@/features/admin/components/battery/BatteryAssetTable";
+import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
+import type { BatteryAssetDto } from "@/features/admin/types/battery/battery-asset.types";
+import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -42,16 +43,19 @@ const DEFAULTS = {
   siteId: "",
   status: "",
   includeDeleted: false,
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: 10,
 };
 
 export default function BatteryAssetsPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<BatteryAssetDto | null>(null);
 
@@ -71,6 +75,8 @@ export default function BatteryAssetsPage() {
       ? (Number(filters.status) as BatteryStatusEnum)
       : undefined,
     includeDeleted: filters.includeDeleted || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const items = data?.items ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -251,6 +257,7 @@ export default function BatteryAssetsPage() {
             pageSize={filters.pageSize}
             includeDeleted={!!filters.includeDeleted}
             onEdit={handleEdit}
+            sort={sort}
           />
         )}
       </Card>

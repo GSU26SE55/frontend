@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,7 +7,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import {
   BatteryStatusEnum,
   type BatteryAssetDto,
-} from "@/shared/types/battery.types";
+} from "@/shared/types/battery/battery.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
@@ -31,6 +32,8 @@ interface SiteAssetsTableProps {
   pageSize: number;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
+  /** Click 1 cục pin → mở chi tiết. Bỏ → hàng không click được. */
+  onAssetClick?: (asset: BatteryAssetDto) => void;
 }
 
 export default function SiteAssetsTable({
@@ -40,6 +43,7 @@ export default function SiteAssetsTable({
   pageSize,
   isLoading,
   onPageChange,
+  onAssetClick,
 }: SiteAssetsTableProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -97,6 +101,16 @@ export default function SiteAssetsTable({
     },
   ];
 
+  if (onAssetClick) {
+    columns.push({
+      id: "chevron",
+      header: "",
+      headClassName: "w-8",
+      cellClassName: "text-muted-foreground",
+      cell: () => <ChevronRight className="size-4" />,
+    });
+  }
+
   return (
     <div className="space-y-2">
       <DataTable
@@ -106,6 +120,7 @@ export default function SiteAssetsTable({
         showIndex
         pageNumber={pageNumber}
         pageSize={pageSize}
+        onRowClick={onAssetClick}
       />
 
       {totalPages > 1 && (

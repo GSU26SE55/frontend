@@ -1,4 +1,7 @@
-import type { SessionUser, UserRole } from "@/shared/types/session.types";
+import type {
+  SessionUser,
+  UserRole,
+} from "@/shared/types/account/session.types";
 
 type PermissionType = string & { readonly __brand: "Permission" };
 

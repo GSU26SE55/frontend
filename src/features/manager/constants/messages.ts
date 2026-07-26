@@ -15,6 +15,7 @@ export const MANAGER_MESSAGES = {
   kb: {
     created: "Đã tạo bài viết KB",
     updated: "Đã cập nhật bài viết",
+    duplicated: "Đã sao chép bài viết — mở bản mới để chỉnh sửa",
     markedHelpful: "Đã đánh dấu hữu ích",
   },
 } as const;

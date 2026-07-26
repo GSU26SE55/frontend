@@ -4,30 +4,27 @@ import { Button } from "@/components/ui/button";
 import { History, Copy } from "lucide-react";
 import {
   useStaffKbDetail,
-  useStaffKbUpdate,
   useStaffKbVersions,
   useStaffKbCompare,
   useStaffKbVersionDetail,
   useMarkStaffKbHelpful,
-  useStaffKbCopyTemplate,
-} from "../hooks/useStaffKb";
+  useStaffDuplicateKbArticle,
+} from "@/features/staff/hooks/kb/useStaffKb";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
 } from "@/shared/components/kb/KbArticleDetail";
-import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
-import type { KbCompareParams } from "@/shared/types/kb.types";
+import type { KbCompareParams } from "@/shared/types/kb/kb.types";
 
 export default function KbDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: article, isLoading } = useStaffKbDetail(id!);
-  const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
   const { mutate: markHelpful, isPending: helpfulPending } =
     useMarkStaffKbHelpful();
-  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
-    useStaffKbCopyTemplate();
+  const { mutateAsync: duplicate, isPending: copyingTemplate } =
+    useStaffDuplicateKbArticle();
 
   const [verOpen, setVerOpen] = useState(false);
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
@@ -57,6 +54,7 @@ export default function KbDetailPage() {
         breadcrumb="Staff · Knowledge Base"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
+        onEdit={() => navigate(`/staff/kb/${article.id}/edit`)}
         actions={
           <>
             <Button
@@ -74,27 +72,15 @@ export default function KbDetailPage() {
               className="gap-1.5"
               disabled={copyingTemplate}
               onClick={async () => {
-                const template = await copyTemplate(article.id);
-                if (template)
-                  navigate("/staff/kb/new", { state: { template } });
+                const created = await duplicate(article.id);
+                if (created?.id) navigate(`/staff/kb/${created.id}/edit`);
               }}
             >
               <Copy className="size-3.5" />
-              Sao chép template
+              Sao chép
             </Button>
           </>
         }
-        renderEditor={({ onClose }) => (
-          <KbEditorPanel
-            article={article}
-            onClose={onClose}
-            isPending={updating}
-            onSave={async (payload) => {
-              await update({ id: article.id, payload });
-              onClose();
-            }}
-          />
-        )}
       />
 
       <KbVersionDialog

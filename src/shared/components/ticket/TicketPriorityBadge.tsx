@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { TicketPriorityEnum } from "@/shared/enums/ticket.enum";
+import { TicketPriorityEnum } from "@/shared/enums/ticket/ticket.enum";
 
 // Badge priority DÙNG CHUNG cho admin/manager/staff — trước đây có 3 bản lệch
 // nhau (P3 green ở admin vs blue ở manager/staff; cường độ màu khác nhau; label

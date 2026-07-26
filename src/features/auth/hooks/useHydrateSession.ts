@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { authService } from "@/features/auth/services/auth.service";
 import { isTokenExpired, saveTokens } from "@/shared/lib/axios";
-import { decodeToken } from "@/shared/types/session.types";
+import { decodeToken } from "@/shared/types/account/session.types";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
-import type { SessionUser } from "@/shared/types/session.types";
+import type { SessionUser } from "@/shared/types/account/session.types";
 
 export const useHydrateSession = () => {
   return useQuery({

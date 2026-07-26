@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import CalibrationsExpiringTable from "@/shared/components/iot/CalibrationsExpiringTable";
-import { useExpiringCalibrations } from "@/shared/hooks/useIotCalibrations";
+import { useExpiringCalibrations } from "@/shared/hooks/iot/useIotCalibrations";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";

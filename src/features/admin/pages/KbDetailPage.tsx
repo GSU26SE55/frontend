@@ -20,12 +20,11 @@ import {
   Copy,
   BarChart3,
 } from "lucide-react";
-import { KbUsageStatsDialog } from "../components/KbUsageStatsDialog";
+import { KbUsageStatsDialog } from "@/features/admin/components/kb/KbUsageStatsDialog";
 import {
   useAdminKbDetail,
   usePublishKbArticle,
   useArchiveKbArticle,
-  useUpdateKbArticle,
   useApproveKbReview,
   useRejectKbReview,
   useAdminKbVersions,
@@ -34,17 +33,16 @@ import {
   useAdminKbVersionDetail,
   useMarkKbHelpful,
   useDeleteKbArticle,
-  useCopyKbTemplate,
-} from "../hooks/useAdminKb";
-import { KbArticleStatusEnum } from "@/shared/enums/kb.enum";
+  useDuplicateKbArticle,
+} from "@/features/admin/hooks/kb/useAdminKb";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 import {
   KbArticleDetail,
   KbArticleDetailSkeleton,
 } from "@/shared/components/kb/KbArticleDetail";
-import { KbEditorPanel } from "@/shared/components/kb/KbEditorPanel";
 import { KbReviewActions } from "@/shared/components/kb/KbReviewActions";
 import { KbVersionDialog } from "@/shared/components/kb/KbVersionDialog";
-import type { KbCompareParams } from "@/shared/types/kb.types";
+import type { KbCompareParams } from "@/shared/types/kb/kb.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
 export default function KbDetailPage() {
@@ -55,12 +53,11 @@ export default function KbDetailPage() {
   const { mutate: archive } = useArchiveKbArticle();
   const { mutate: approve, isPending: approving } = useApproveKbReview();
   const { mutate: reject, isPending: rejecting } = useRejectKbReview();
-  const { mutateAsync: update, isPending: updating } = useUpdateKbArticle();
   const { mutate: rollback, isPending: rollingBack } = useRollbackKbArticle();
   const { mutate: markHelpful, isPending: helpfulPending } = useMarkKbHelpful();
   const { mutate: deleteArticle, isPending: deleting } = useDeleteKbArticle();
-  const { mutateAsync: copyTemplate, isPending: copyingTemplate } =
-    useCopyKbTemplate();
+  const { mutateAsync: duplicate, isPending: copyingTemplate } =
+    useDuplicateKbArticle();
 
   const [verOpen, setVerOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
@@ -91,6 +88,7 @@ export default function KbDetailPage() {
         breadcrumb="Admin · Knowledge Base"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
+        onEdit={() => navigate(`/admin/kb/${article.id}/edit`)}
         actions={
           <>
             <Button
@@ -117,13 +115,12 @@ export default function KbDetailPage() {
               className="gap-1.5"
               disabled={copyingTemplate}
               onClick={async () => {
-                const template = await copyTemplate(article.id);
-                if (template)
-                  navigate("/admin/kb/new", { state: { template } });
+                const created = await duplicate(article.id);
+                if (created?.id) navigate(`/admin/kb/${created.id}/edit`);
               }}
             >
               <Copy className="size-3.5" />
-              Sao chép template
+              Sao chép
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -196,17 +193,6 @@ export default function KbDetailPage() {
             </AlertDialog>
           </>
         }
-        renderEditor={({ onClose }) => (
-          <KbEditorPanel
-            article={article}
-            onClose={onClose}
-            isPending={updating}
-            onSave={async (payload) => {
-              await update({ id: article.id, payload });
-              onClose();
-            }}
-          />
-        )}
       />
 
       <KbVersionDialog

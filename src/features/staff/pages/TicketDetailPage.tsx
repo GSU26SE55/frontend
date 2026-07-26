@@ -8,59 +8,61 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { TicketStatusEnum } from "@/shared/types/ticket.types";
+import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
-import type { MaintenanceLogDTO } from "@/shared/types/ticket.types";
+import type { MaintenanceLogDTO } from "@/shared/types/ticket/ticket.types";
 import {
   useStaffTicketDetail,
   useStaffTicketActivities,
   useStaffTicketComments,
-} from "../hooks/useStaffTicketDetail";
+} from "@/features/staff/hooks/ticket/useStaffTicketDetail";
 import {
   useStartTicket,
   useHoldTicket,
   useResumeTicket,
   useResolveTicket,
   useEscalateTicket,
-  useAddComment,
   useAddMaintenanceLog,
-} from "../hooks/useStaffTicketMutations";
+} from "@/features/staff/hooks/ticket/useStaffTicketMutations";
+import { staffTicketService } from "@/features/staff/services/ticket/ticket.service";
+import { useChatSender } from "@/shared/hooks/ticket/useChatSender";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import { SlaCountdown } from "../components/SlaCountdown";
-import { HoldDialog } from "../components/HoldDialog";
-import { ResolveDialog } from "../components/ResolveDialog";
-import { EscalateRequestDialog } from "../components/EscalateRequestDialog";
-import { TicketTimeline } from "../components/TicketTimeline";
-import { AddCommentForm } from "../components/AddCommentForm";
-import { MaintenanceLogDialog } from "../components/MaintenanceLogDialog";
-import { EditMaintenanceLogDialog } from "../components/EditMaintenanceLogDialog";
+import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
+import { HoldDialog } from "@/features/staff/components/ticket/HoldDialog";
+import { ResolveDialog } from "@/features/staff/components/ticket/ResolveDialog";
+import { EscalateRequestDialog } from "@/features/staff/components/ticket/EscalateRequestDialog";
+import { TicketTimeline } from "@/features/staff/components/ticket/TicketTimeline";
+import { AddCommentForm } from "@/features/staff/components/ticket/AddCommentForm";
+import { MaintenanceLogDialog } from "@/features/staff/components/ticket/MaintenanceLogDialog";
+import { EditMaintenanceLogDialog } from "@/features/staff/components/ticket/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
-import TicketKbReferencesPanel from "../components/TicketKbReferencesPanel";
-import SubIssuePanel from "../components/SubIssuePanel";
-import BatteryAssetInfoPanel from "../components/BatteryAssetInfoPanel";
+import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKbReferencesPanel";
+import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
+import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
-import { useTicketCommentsRealtime } from "@/shared/hooks/useTicketCommentsRealtime";
+import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
   useMarkTicketChatsRead,
   useTranslateTicketChat,
-} from "@/shared/hooks/useTicketChatActions";
-import type { HoldFormValues } from "../schemas/staff-ticket.schema";
-import type { ResolveFormValues } from "../schemas/staff-ticket.schema";
-import type { EscalateRequestFormValues } from "../schemas/staff-ticket.schema";
-import type { AddCommentFormValues } from "../schemas/staff-ticket.schema";
-import type { MaintenanceLogFormValues } from "../schemas/staff-ticket.schema";
+} from "@/shared/hooks/ticket/useTicketChatActions";
+import type { HoldFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { ResolveFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { EscalateRequestFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { AddCommentFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { MaintenanceLogFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
 const WAITING_STATUSES = [
   TicketStatusEnum.WaitingCustomer,
@@ -138,7 +140,13 @@ export default function TicketDetailPage() {
   const resumeMutation = useResumeTicket(ticketId);
   const resolveMutation = useResolveTicket(ticketId);
   const escalateMutation = useEscalateTicket(ticketId);
-  const commentMutation = useAddComment(ticketId);
+  // Outbox chat: worker gửi tuần tự + retry; composer chỉ enqueue.
+  const {
+    pending: pendingChats,
+    enqueue: enqueueChat,
+    retry: retryChat,
+    discard: discardChat,
+  } = useChatSender(ticketId, staffTicketService.addComment);
   const logMutation = useAddMaintenanceLog(ticketId);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
@@ -207,7 +215,7 @@ export default function TicketDetailPage() {
   };
 
   const handleCommentSubmit = (data: AddCommentFormValues) => {
-    commentMutation.mutate(data);
+    enqueueChat(data);
   };
 
   const handleLogSubmit = (data: MaintenanceLogFormValues) => {
@@ -313,9 +321,10 @@ export default function TicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="comments">
+                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                <TabsTrigger value="comments" className="group">
                   Bình luận
-                  {comments.length > 0 && ` (${comments.length})`}
+                  <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   Nhật ký{logs.length > 0 && ` (${logs.length})`}
@@ -376,6 +385,9 @@ export default function TicketDetailPage() {
                   deletePending={deleteChatPending}
                   onMarkRead={handleMarkRead}
                   onTranslate={handleTranslate}
+                  pendingMessages={pendingChats}
+                  onRetryPending={retryChat}
+                  onDiscardPending={discardChat}
                 />
               </div>
               {canComment && (
@@ -384,7 +396,7 @@ export default function TicketDetailPage() {
                   <AddCommentForm
                     ticketId={ticketId}
                     onSubmit={handleCommentSubmit}
-                    isPending={commentMutation.isPending}
+                    isPending={false}
                     onTyping={sendTyping}
                     isInternal={chatTab === "internal"}
                     existingFileIds={existingFileIds}
@@ -617,9 +629,34 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
-              {/* Thiết bị pin — site/khách hàng/pin gắn với ticket */}
-              <div className="p-4">
-                <BatteryAssetInfoPanel batteryAssetId={ticket.batteryAssetId} />
+              {/* Thiết bị pin — ticket có thể gắn nhiều pin, lặp từng cái. */}
+              <div className="p-4 space-y-4">
+                {(() => {
+                  const ids =
+                    ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
+                      ? ticket.batteryAssetIds
+                      : ticket.batteryAssetId
+                        ? [ticket.batteryAssetId]
+                        : [];
+                  if (ids.length === 0)
+                    return <BatteryAssetInfoPanel batteryAssetId={null} />;
+                  return (
+                    <>
+                      {ids.length > 1 && (
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          {ids.length} thiết bị pin liên quan
+                        </p>
+                      )}
+                      {ids.map((bid) => (
+                        <BatteryAssetInfoPanel
+                          key={bid}
+                          batteryAssetId={bid}
+                          detectedAt={ticket.detectedAt}
+                        />
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Description */}
@@ -665,6 +702,27 @@ export default function TicketDetailPage() {
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow label="Danh mục" value={ticket.category} />
                 <SideInfoRow label="Nguồn" value={ticket.origin} />
+                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
+                {ticket.incidentDetectedFrom && (
+                  <SideInfoRow
+                    label="Sự cố từ"
+                    value={format(
+                      new Date(ticket.incidentDetectedFrom),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
+                {ticket.incidentDetectedTo && (
+                  <SideInfoRow
+                    label="Sự cố đến"
+                    value={format(
+                      new Date(ticket.incidentDetectedTo),
+                      "dd/MM/yyyy HH:mm",
+                      { locale: vi },
+                    )}
+                  />
+                )}
                 <SideInfoRow
                   label="Phạm vi"
                   value={ticket.impactScope ?? null}

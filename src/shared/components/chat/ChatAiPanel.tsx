@@ -25,9 +25,9 @@ import {
   useSummarizeChat,
   useSentimentCheck,
   useExportChatPdf,
-} from "@/shared/hooks/useTicketChatActions";
-import { ChatAiIntentEnum } from "@/shared/enums/chat.enum";
-import type { ChatSentimentLabel } from "@/shared/types/chat.types";
+} from "@/shared/hooks/ticket/useTicketChatActions";
+import { ChatAiIntentEnum } from "@/shared/enums/ticket/chat.enum";
+import type { ChatSentimentLabel } from "@/shared/types/chat/chat.types";
 
 const SENTIMENT_VI: Record<ChatSentimentLabel, string> = {
   Positive: "Tích cực 🙂",

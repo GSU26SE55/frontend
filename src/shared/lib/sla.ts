@@ -13,6 +13,21 @@ export function isNearBreachPercent(remainingPercent?: number | null): boolean {
   return (remainingPercent ?? 100) <= SLA_WARNING_PERCENT;
 }
 
+/**
+ * Màu cho % TUÂN THỦ SLA của một TẬP ticket (met / (met + breach)).
+ * Khác `slaBarColorClass` — cái đó theo % thời gian còn lại của MỘT ticket.
+ * ≥90% ok · ≥70% chú ý · dưới nữa là báo động.
+ */
+export function slaComplianceColor(
+  compliancePercent: number | null | undefined,
+): string {
+  if (compliancePercent === null || compliancePercent === undefined)
+    return "var(--muted-foreground)";
+  if (compliancePercent >= 90) return "var(--ok)";
+  if (compliancePercent >= 70) return "var(--p3)";
+  return "var(--p1)";
+}
+
 /** Class Tailwind cho progress bar SLA theo % còn lại (token semantic — đúng dark mode). */
 export function slaBarColorClass(remainingPercent?: number | null): string {
   const pct = remainingPercent ?? 0;

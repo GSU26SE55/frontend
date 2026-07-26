@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { KpiCard } from "@/shared/components/dashboard/KpiCard";
-import { useStaffNotifications } from "@/features/staff/hooks/useStaffNotifications";
+import { useStaffNotifications } from "@/features/staff/hooks/notification/useStaffNotifications";
 import {
   toneClass,
   NOTIFICATION_STATUS_TONE,
@@ -22,8 +22,8 @@ import {
 import {
   NotificationStatusEnum,
   NotificationTypeEnum,
-} from "@/features/staff/types/notification.types";
-import type { NotificationDto } from "@/features/staff/types/notification.types";
+} from "@/features/staff/types/notification/notification.types";
+import type { NotificationDto } from "@/features/staff/types/notification/notification.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const PAGE_SIZE = 10;

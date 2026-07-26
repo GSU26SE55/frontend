@@ -16,9 +16,9 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import {
   createGatewayDeviceSchema,
   type CreateGatewayDeviceFormValues,
-} from "@/features/admin/schemas/sms-gateway.schema";
-import { useAdminCreateSmsDevice } from "@/features/admin/hooks/useAdminSmsGateway";
-import type { CreateGatewayDeviceResponseDto } from "@/features/admin/types/sms-gateway.types";
+} from "@/features/admin/schemas/notification/sms-gateway.schema";
+import { useAdminCreateSmsDevice } from "@/features/admin/hooks/notification/useAdminSmsGateway";
+import type { CreateGatewayDeviceResponseDto } from "@/features/admin/types/ticket/sms-gateway.types";
 
 interface CreateSmsDeviceDialogProps {
   open: boolean;

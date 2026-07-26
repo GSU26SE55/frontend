@@ -12,15 +12,16 @@ import {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
-} from "@/shared/types/ticket.types";
+} from "@/shared/types/ticket/ticket.types";
 import type {
   TicketStatusEnum as TicketStatus,
   TicketPriorityEnum as TicketPriority,
   TicketCategoryEnum as TicketCategory,
-} from "@/shared/types/ticket.types";
-import { useAdminTickets } from "../hooks/useAdminTickets";
-import AdminTicketTable from "../components/AdminTicketTable";
+} from "@/shared/types/ticket/ticket.types";
+import { useAdminTickets } from "@/features/admin/hooks/ticket/useAdminTickets";
+import AdminTicketTable from "@/features/admin/components/ticket/AdminTicketTable";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
@@ -71,22 +72,27 @@ const DEFAULTS = {
   status: "",
   priority: "",
   category: "",
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: PAGE_SIZE,
 };
 
 export default function AdminTicketListPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const params = {
     keyword: filters.keyword || undefined,
     status: (filters.status as TicketStatus) || undefined,
     priority: (filters.priority as TicketPriority) || undefined,
     category: (filters.category as TicketCategory) || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   };
@@ -214,6 +220,7 @@ export default function AdminTicketListPage() {
           pageSize={filters.pageSize}
           onPageChange={(p) => setFilter("pageNumber", p)}
           onPageSizeChange={(s) => setFilter("pageSize", s)}
+          sort={sort}
         />
       )}
     </div>

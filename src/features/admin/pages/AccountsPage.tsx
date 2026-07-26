@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
@@ -47,24 +48,23 @@ import {
   useAdminUnlockAccount,
   useAdminDeleteAccount,
   useAdminReset2fa,
-} from "@/features/admin/hooks/useAdminAccounts";
-import { AccountStatusEnum } from "@/shared/types/account.types";
+} from "@/features/admin/hooks/account/useAdminAccounts";
+import { AccountStatusEnum } from "@/shared/types/account/account.types";
 import { toneClass, ACCOUNT_STATUS_TONE } from "@/shared/theme/statusColors";
-import { UserRole } from "@/shared/types/session.types";
-import InviteAccountDialog from "@/features/admin/components/InviteAccountDialog";
-import CreateAccountDialog from "@/features/admin/components/CreateAccountDialog";
-import EditAccountDialog from "@/features/admin/components/EditAccountDialog";
-import ChangeAccountStatusDialog from "@/features/admin/components/ChangeAccountStatusDialog";
-import ChangeRoleDialog from "@/features/admin/components/ChangeRoleDialog";
-import AccountDetailDrawer from "@/features/admin/components/AccountDetailDrawer";
-import EditStaffProfileDialog from "@/features/admin/components/EditStaffProfileDialog";
-import MergeAccountDialog from "@/features/admin/components/MergeAccountDialog";
+import { UserRole } from "@/shared/types/account/session.types";
+import InviteAccountDialog from "@/features/admin/components/account/InviteAccountDialog";
+import CreateAccountDialog from "@/features/admin/components/account/CreateAccountDialog";
+import EditAccountDialog from "@/features/admin/components/account/EditAccountDialog";
+import ChangeAccountStatusDialog from "@/features/admin/components/account/ChangeAccountStatusDialog";
+import ChangeRoleDialog from "@/features/admin/components/account/ChangeRoleDialog";
+import AccountDetailDrawer from "@/features/admin/components/account/AccountDetailDrawer";
+import EditStaffProfileDialog from "@/features/admin/components/account/EditStaffProfileDialog";
+import MergeAccountDialog from "@/features/admin/components/account/MergeAccountDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
-import type { AccountDto } from "@/shared/types/account.types";
+import type { AccountDto } from "@/shared/types/account/account.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
-import { useSortableData } from "@/shared/hooks/useSortableData";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
@@ -116,20 +116,29 @@ type DialogState =
   | { type: "merge"; account: AccountDto }
   | { type: "staffProfile"; account: AccountDto };
 
-const DEFAULTS = { keyword: "", pageNumber: 1, pageSize: 10 };
+const DEFAULTS = {
+  keyword: "",
+  sortBy: "",
+  sortDir: "",
+  pageNumber: 1,
+  pageSize: 10,
+};
 
 export default function AccountsPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: "none" });
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const { data, isLoading, isError, refetch } = useAdminAccountList({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const { mutate: unlock } = useAdminUnlockAccount();
   const { mutate: deleteAccount, isPending: isDeleting } =
@@ -138,21 +147,10 @@ export default function AccountsPage() {
 
   const accounts = data?.items ?? [];
   const total = data?.totalItems ?? 0;
-  const { sorted, sortKey, sortDirection, toggleSort } =
-    useSortableData<AccountDto>(accounts, (acc, key) => {
-      switch (key) {
-        case "fullName":
-          return acc.fullName;
-        case "role":
-          return acc.role ?? "";
-        case "status":
-          return STATUS_MAP[acc.status]?.label ?? String(acc.status);
-        case "createdAt":
-          return new Date(acc.createdAt);
-        default:
-          return null;
-      }
-    });
+  // BE đã sort toàn dataset (SortBy/SortDir) → render accounts nguyên trạng.
+  const sortKey = sort.sortBy;
+  const sortDirection = sort.sortDir;
+  const toggleSort = sort.toggleSort;
 
   const close = () => setDialog({ type: "none" });
 
@@ -289,7 +287,7 @@ export default function AccountsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map((acc, index) => {
+              {accounts.map((acc, index) => {
                 const s = STATUS_MAP[acc.status] ?? {
                   label: String(acc.status),
                   cls: "bg-gray-100 text-gray-500",

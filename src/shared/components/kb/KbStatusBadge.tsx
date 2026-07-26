@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   KbArticleStatusEnum,
   KbArticleStatusLabel,
-} from "@/shared/enums/kb.enum";
+} from "@/shared/enums/kb/kb.enum";
 import { cn } from "@/lib/utils";
 import { toneClass, KB_STATUS_TONE } from "@/shared/theme/statusColors";
 

@@ -20,9 +20,9 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import {
   uploadFirmwareSchema,
   type UploadFirmwareForm,
-} from "@/features/admin/schemas/iot-firmware.schema";
-import { useCreateFirmwareRelease } from "@/features/admin/hooks/useIotFirmwareMutations";
-import { IotFirmwareChannelEnum } from "@/shared/enums/iot.enum";
+} from "@/features/admin/schemas/iot/iot-firmware.schema";
+import { useCreateFirmwareRelease } from "@/features/admin/hooks/iot/useIotFirmwareMutations";
+import { IotFirmwareChannelEnum } from "@/shared/enums/iot/iot.enum";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 export default function IoTFirmwareFormPage() {

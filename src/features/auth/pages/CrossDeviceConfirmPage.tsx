@@ -11,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   crossDeviceConfirmSchema,
   type CrossDeviceConfirmFormValues,
-} from "@/features/auth/schemas/cross-device-confirm.schema";
-import { useConfirmCrossDevice2fa } from "@/features/auth/hooks/useConfirmCrossDevice2fa";
+} from "@/features/auth/schemas/2fa/cross-device-confirm.schema";
+import { useConfirmCrossDevice2fa } from "@/features/auth/hooks/2fa/useConfirmCrossDevice2fa";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 

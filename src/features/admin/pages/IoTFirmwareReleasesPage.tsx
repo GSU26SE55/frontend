@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIotFirmware } from "@/features/admin/hooks/useIotFirmware";
-import IoTFirmwareTable from "@/features/admin/components/IoTFirmwareTable";
+import { useIotFirmware } from "@/features/admin/hooks/iot/useIotFirmware";
+import IoTFirmwareTable from "@/features/admin/components/iot/IoTFirmwareTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -16,23 +17,28 @@ import { KEY } from "@/shared/utils/queryKeys";
 const DEFAULTS = {
   hardwareRevision: "",
   publishedOnly: false,
-  page: 1,
+  sortBy: "",
+  sortDir: "",
+  pageNumber: 1,
   pageSize: 10,
 };
 
 export default function IoTFirmwareReleasesPage() {
   const navigate = useNavigate();
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.hardwareRevision ?? "", (kw) =>
     setFilter("hardwareRevision", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const { data, isLoading } = useIotFirmware({
-    page: filters.page,
+    pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     hardwareRevision: filters.hardwareRevision || undefined,
     publishedOnly: filters.publishedOnly || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const items = data?.items ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -99,7 +105,7 @@ export default function IoTFirmwareReleasesPage() {
             <span className="text-sm">Chưa có firmware release nào.</span>
           </div>
         ) : (
-          <IoTFirmwareTable items={items} />
+          <IoTFirmwareTable items={items} sort={sort} />
         )}
       </Card>
 
@@ -108,9 +114,9 @@ export default function IoTFirmwareReleasesPage() {
         totalPages={data?.totalPages ?? 1}
         hasNextPage={data?.hasNextPage ?? false}
         hasPreviousPage={data?.hasPreviousPage ?? false}
-        pageNumber={filters.page}
+        pageNumber={filters.pageNumber}
         pageSize={filters.pageSize}
-        onPageChange={(p) => setFilter("page", p)}
+        onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
     </div>

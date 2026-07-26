@@ -37,30 +37,31 @@ import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkRole } from "@/shared/lib/authz";
-import { UserRole } from "@/shared/types/session.types";
+import { UserRole } from "@/shared/types/account/session.types";
 import {
   useIncidentList,
   useIncidentDetail,
   useAcknowledgeIncident,
   useResolveIncident,
   useFalseAlarmIncident,
-} from "@/shared/hooks/useEnvironmentalIncidents";
+} from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import {
   EnvironmentalIncidentStatusEnum,
   EnvironmentalIncidentTypeEnum,
-} from "@/shared/enums/environmental.enum";
+} from "@/shared/enums/alerts/environmental.enum";
 import {
   resolveIncidentSchema,
   type ResolveIncidentFormValues,
-} from "@/shared/schemas/environmental.schema";
+} from "@/shared/schemas/alerts/environmental.schema";
 import {
   falseAlarmSchema,
   type FalseAlarmFormValues,
-} from "@/shared/schemas/environmental.schema";
-import type { SiteOption } from "@/shared/types/site.types";
+} from "@/shared/schemas/alerts/environmental.schema";
+import type { SiteOption } from "@/shared/types/site/site.types";
+import ManualIncidentDialog from "./ManualIncidentDialog";
 import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
-import { incidentTypeLabel } from "./incidentLabels";
+import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const DEFAULTS = {
@@ -108,6 +109,7 @@ export default function EnvironmentalIncidentsView({
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const siteNameById = new Map((sites ?? []).map((s) => [s.id, s.name]));
   const siteName = (id: string) => siteNameById.get(id) ?? id.slice(0, 8);
@@ -132,18 +134,33 @@ export default function EnvironmentalIncidentsView({
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          {subtitle}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Sự cố môi trường
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isLoading ? "..." : totalItems} sự cố &mdash; khói / cháy / rò khí /
-          ngập / quá nhiệt cấp site
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            {subtitle}
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Sự cố môi trường
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : totalItems} sự cố &mdash; khói / cháy / rò khí
+            / ngập / quá nhiệt cấp site
+          </p>
+        </div>
+        {/* Cần danh sách site để chọn SiteId (field bắt buộc) → ẩn nút khi chưa có.
+            Staff chỉ list được site sau khi BE mở GET /api/sites cho role Staff. */}
+        {sites && sites.length > 0 && (
+          <Button onClick={() => setReportOpen(true)}>Report thủ công</Button>
+        )}
       </div>
+
+      {sites && sites.length > 0 && (
+        <ManualIncidentDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          sites={sites}
+        />
+      )}
 
       <div className="flex items-center gap-3 flex-wrap">
         <Select

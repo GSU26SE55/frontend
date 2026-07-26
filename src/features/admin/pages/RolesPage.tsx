@@ -50,17 +50,17 @@ import {
 import {
   useAdminRoleList,
   useAdminDeleteRole,
-} from "@/features/admin/hooks/useAdminRoles";
+} from "@/features/admin/hooks/account/useAdminRoles";
 import {
   RoleStatusEnum,
   RoleTypeFilter,
-} from "@/features/admin/types/admin.types";
-import CreateRoleDialog from "@/features/admin/components/CreateRoleDialog";
-import EditRoleDialog from "@/features/admin/components/EditRoleDialog";
-import ChangeRoleStatusDialog from "@/features/admin/components/ChangeRoleStatusDialog";
-import PermissionsDialog from "@/features/admin/components/PermissionsDialog";
+} from "@/features/admin/types/account/admin.types";
+import CreateRoleDialog from "@/features/admin/components/account/CreateRoleDialog";
+import EditRoleDialog from "@/features/admin/components/account/EditRoleDialog";
+import ChangeRoleStatusDialog from "@/features/admin/components/account/ChangeRoleStatusDialog";
+import PermissionsDialog from "@/features/admin/components/account/PermissionsDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
-import type { RoleDto } from "@/features/admin/types/admin.types";
+import type { RoleDto } from "@/features/admin/types/account/admin.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";

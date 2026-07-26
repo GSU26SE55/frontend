@@ -1,26 +1,26 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Eye, EyeOff, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
-import DeviceKeyRevealDialog from "@/features/admin/components/DeviceKeyRevealDialog";
-import DeviceCommandDialog from "@/features/admin/components/DeviceCommandDialog";
-import ConfirmActionDialog from "@/features/admin/components/ConfirmActionDialog";
+import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
+import DeviceCommandDialog from "@/features/admin/components/iot/DeviceCommandDialog";
+import ConfirmActionDialog from "@/features/admin/components/common/ConfirmActionDialog";
 import CalibrationTable from "@/shared/components/iot/CalibrationTable";
 import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog";
-import { useIotDevice } from "@/features/admin/hooks/useIotDevice";
+import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
 import {
   useRotateIotDeviceKey,
   useRevokeIotDeviceKey,
-} from "@/features/admin/hooks/useIotDeviceMutations";
-import { useIotCalibrations } from "@/shared/hooks/useIotCalibrations";
+} from "@/features/admin/hooks/iot/useIotDeviceMutations";
+import { useIotCalibrations } from "@/shared/hooks/iot/useIotCalibrations";
 import { handleErrorApi } from "@/shared/lib/errors";
-import { IotDeviceStatusEnum } from "@/shared/enums/iot.enum";
-import type { IotDeviceCreatedDto } from "@/shared/types/iot.types";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+import type { IotDeviceCreatedDto } from "@/shared/types/iot/iot.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -28,6 +28,53 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="space-y-0.5">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm">{value ?? "—"}</p>
+    </div>
+  );
+}
+
+// Full plaintext API key — secret: mặc định che, chỉ hiện khi Admin chủ động bấm.
+// apiKey = null với device tạo trước khi BE bật lưu plaintext (DB cũ chỉ giữ hash).
+function ApiKeyReveal({ apiKey }: { apiKey: string | null }) {
+  const [shown, setShown] = useState(false);
+
+  if (apiKey == null) {
+    return (
+      <span className="text-xs text-muted-foreground">
+        Device cũ chưa lưu key dạng plaintext — rotate key để sinh key mới.
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="font-mono text-xs break-all">
+        {shown ? apiKey : "•".repeat(16)}
+      </span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        aria-label={shown ? "Ẩn API key" : "Hiện API key"}
+        onClick={() => setShown((v) => !v)}
+      >
+        {shown ? (
+          <EyeOff className="h-3.5 w-3.5" />
+        ) : (
+          <Eye className="h-3.5 w-3.5" />
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        aria-label="Copy API key"
+        onClick={() => {
+          navigator.clipboard.writeText(apiKey);
+          toast.success(ADMIN_MESSAGES.iot.apiKeyCopied);
+        }}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }
@@ -147,6 +194,10 @@ export default function IoTDeviceDetailPage() {
               value={
                 <span className="font-mono">…{device.apiKeyLastFour}</span>
               }
+            />
+            <Field
+              label="API key (đầy đủ)"
+              value={<ApiKeyReveal apiKey={device.apiKey} />}
             />
             <Field
               label="Key cấp lúc"

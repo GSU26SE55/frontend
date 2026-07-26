@@ -13,7 +13,7 @@ import {
   useEnvironmentalIncidentsReport,
   useTopAnomalies,
   useWarrantyExpiring,
-} from "@/shared/hooks/useReports";
+} from "@/shared/hooks/dashboard/useReports";
 import type {
   AnalyticsFilter,
   AssetLifecycleRow,
@@ -21,7 +21,7 @@ import type {
   EnvironmentalIncidentRow,
   TopAnomalyRow,
   WarrantyExpiringRow,
-} from "@/shared/types/analytics.types";
+} from "@/shared/types/dashboard/analytics.types";
 
 const dash = (v: string | number | null | undefined) =>
   v === null || v === undefined || v === "" ? "—" : v;

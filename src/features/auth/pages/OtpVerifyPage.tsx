@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import OtpVerifyForm from "@/features/auth/components/OtpVerifyForm";
+import OtpVerifyForm from "@/features/auth/components/otp/OtpVerifyForm";
 
 const OtpVerifyPage = () => {
   const location = useLocation();

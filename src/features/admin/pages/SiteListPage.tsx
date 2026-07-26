@@ -21,11 +21,12 @@ import {
   useSiteList,
   useDeleteSite,
   useRestoreSite,
-} from "@/features/admin/hooks/useSites";
-import SiteTable from "@/features/admin/components/SiteTable";
-import SiteFormDialog from "@/features/admin/components/SiteFormDialog";
-import type { SiteDto } from "@/shared/types/site.types";
+} from "@/features/admin/hooks/site/useSites";
+import SiteTable from "@/features/admin/components/site/SiteTable";
+import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
+import type { SiteDto } from "@/shared/types/site/site.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
@@ -35,6 +36,8 @@ import { loadFailed, noData } from "@/shared/constants/emptyStates";
 const DEFAULTS = {
   keyword: "",
   includeDeleted: false,
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: 10,
 };
@@ -45,11 +48,12 @@ type ConfirmState =
   | { type: "restore"; site: SiteDto };
 
 export default function SiteListPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editData, setEditData] = useState<SiteDto | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>({
@@ -61,6 +65,8 @@ export default function SiteListPage() {
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
     includeDeleted: filters.includeDeleted || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const { mutate: deleteSite } = useDeleteSite();
   const { mutate: restoreSite } = useRestoreSite();
@@ -157,6 +163,7 @@ export default function SiteListPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onRestore={handleRestore}
+            sort={sort}
           />
         )}
       </Card>

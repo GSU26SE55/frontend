@@ -7,11 +7,11 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TicketStatusEnum } from "@/shared/types/ticket.types";
-import { useStaffTickets } from "../hooks/useStaffTickets";
+import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
+import { useStaffTickets } from "@/features/staff/hooks/ticket/useStaffTickets";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { TicketCard } from "../components/TicketCard";
+import { TicketCard } from "@/features/staff/components/ticket/TicketCard";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { useSortableData } from "@/shared/hooks/useSortableData";
+import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
@@ -57,6 +58,13 @@ interface DataTableProps<T> {
   empty?: ReactNode;
   /** Click vào 1 hàng (vd navigate sang trang detail). Bỏ → hàng không click được. */
   onRowClick?: (row: T) => void;
+  /**
+   * Bật sort **server-side**: truyền state từ `useServerSort`. Khi có prop này,
+   * DataTable KHÔNG tự sort `data` (BE đã sort toàn dataset) — header click chỉ
+   * đổi `sortBy`/`sortDir` để hook refetch. `col.sortKey` phải khớp whitelist BE.
+   * Bỏ prop → giữ sort client-side cũ (useSortableData).
+   */
+  serverSort?: ServerSortState;
 }
 
 export function DataTable<T>({
@@ -68,15 +76,23 @@ export function DataTable<T>({
   pageSize = 0,
   empty,
   onRowClick,
+  serverSort,
 }: DataTableProps<T>) {
-  // Map sortKey → sortValue để useSortableData tra cứu.
+  // Map sortKey → sortValue để useSortableData tra cứu (chỉ dùng khi client-sort).
   const sortAccessors = new Map(
     columns.filter((c) => c.sortKey && c.sortValue).map((c) => [c.sortKey!, c]),
   );
-  const { sorted, sortKey, sortDirection, toggleSort } = useSortableData<T>(
+  const client = useSortableData<T>(
     data,
     (row, key) => sortAccessors.get(key)?.sortValue?.(row) ?? null,
   );
+
+  // Server-sort: BE đã sort toàn dataset → render data nguyên trạng, header lấy
+  // state từ serverSort. Client-sort (mặc định): dùng useSortableData như cũ.
+  const sorted = serverSort ? data : client.sorted;
+  const sortKey = serverSort ? serverSort.sortBy : client.sortKey;
+  const sortDirection = serverSort ? serverSort.sortDir : client.sortDirection;
+  const toggleSort = serverSort ? serverSort.toggleSort : client.toggleSort;
 
   const colSpan = columns.length + (showIndex ? 1 : 0);
   const indexBase = pageSize > 0 ? (pageNumber - 1) * pageSize : 0;
@@ -91,7 +107,7 @@ export function DataTable<T>({
             </TableHead>
           )}
           {columns.map((col) =>
-            col.sortKey && col.sortValue ? (
+            col.sortKey && (serverSort ? true : col.sortValue) ? (
               <SortableTableHead
                 key={col.id}
                 sortKey={col.sortKey}

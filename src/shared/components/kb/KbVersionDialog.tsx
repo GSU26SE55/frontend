@@ -15,11 +15,11 @@ import { KbDiffViewer } from "./KbDiffViewer";
 import {
   KbVersionStatusEnum,
   KbVersionStatusLabel,
-} from "@/shared/enums/kb.enum";
+} from "@/shared/enums/kb/kb.enum";
 import type {
   KbArticleVersionDTO,
   KbArticleDiffDTO,
-} from "@/shared/types/kb.types";
+} from "@/shared/types/kb/kb.types";
 
 interface KbVersionDialogProps {
   open: boolean;
@@ -146,15 +146,7 @@ export function KbVersionDialog({
 
 // ── Inline version content viewer ────────────────────────────────────────────
 function VersionContentView({ version }: { version: KbArticleVersionDTO }) {
-  const fields = [
-    { label: "Triệu chứng", value: version.symptoms },
-    { label: "Bước chẩn đoán", value: version.diagnosisSteps },
-    { label: "Hướng giải quyết", value: version.solutionSteps },
-    {
-      label: "Linh kiện khuyến nghị",
-      value: (version.recommendedParts ?? []).join("\n") || null,
-    },
-  ] as const;
+  const fields = [{ label: "Nội dung", value: version.content }] as const;
 
   return (
     <div className="space-y-4">

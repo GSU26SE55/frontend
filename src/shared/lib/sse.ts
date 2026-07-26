@@ -10,7 +10,10 @@ import { z } from "zod";
 import Cookies from "js-cookie";
 import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
-import type { LiveReadingDto } from "@/shared/types/sensor-stream.types";
+import type {
+  LiveReadingDto,
+  LiveStatsDto,
+} from "@/shared/types/battery/sensor-stream.types";
 
 // Zod cho payload `reading` (cả mỗi item của `summary` — cùng shape §5.3).
 // non-null = required; nullable (bị lược khi null) = .nullish(); sourceType để z.number()
@@ -46,8 +49,35 @@ export function parseReading(data: string): LiveReadingDto | null {
   }
 }
 
+// Zod cho payload `stats` (§5.3bis) — rolling min/max nạp/xả theo window.
+// min/max nullable (window chưa có mẫu chiều đó) → .nullish() vì null bị lược khỏi JSON.
+export const liveStatsSchema = z.object({
+  batteryAssetId: z.string(),
+  customerId: z.string(),
+  window: z.enum(["1h", "today"]),
+  windowStart: z.string(),
+  chargeSampleCount: z.number(),
+  dischargeSampleCount: z.number(),
+  updatedAt: z.string(),
+  siteId: z.string().nullish(),
+  maxChargeCurrent: z.number().nullish(),
+  minChargeCurrent: z.number().nullish(),
+  maxDischargeCurrent: z.number().nullish(),
+  minDischargeCurrent: z.number().nullish(),
+});
+
+// Parse defensive 1 stats từ raw SSE data. Lệch shape / JSON hỏng → null (drop, không throw).
+export function parseStats(data: string): LiveStatsDto | null {
+  try {
+    const parsed = liveStatsSchema.safeParse(JSON.parse(data));
+    return parsed.success ? (parsed.data as LiveStatsDto) : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface SseHandlers {
-  // event = "reading" | "summary" | "ping"; data = raw JSON string (chưa parse).
+  // event = "reading" | "summary" | "stats" | "ping"; data = raw JSON string (chưa parse).
   onEvent: (event: string, data: string) => void;
   onOpen?: () => void;
   onError?: (es: EventSource) => void;
@@ -69,6 +99,7 @@ export function openSse(scope: string, handlers: SseHandlers): EventSource {
     handlers.onEvent(event, (e as MessageEvent).data);
   es.addEventListener("reading", forward("reading"));
   es.addEventListener("summary", forward("summary"));
+  es.addEventListener("stats", forward("stats"));
   es.addEventListener("ping", forward("ping"));
   if (handlers.onError) {
     es.addEventListener("error", () => handlers.onError!(es));

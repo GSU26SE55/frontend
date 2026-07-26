@@ -8,11 +8,11 @@ import {
   useUnreadCount,
   useMarkNotificationRead,
   useMarkAllRead,
-} from "@/shared/hooks/useNotifications";
+} from "@/shared/hooks/notifications/useNotifications";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { UserRole } from "@/shared/types/session.types";
-import { NotificationStatusEnum } from "@/shared/enums/notification.enum";
-import type { NotificationDto } from "@/shared/types/notification.types";
+import { UserRole } from "@/shared/types/account/session.types";
+import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
+import type { NotificationDto } from "@/shared/types/notification/notification.types";
 import { cn } from "@/lib/utils";
 
 const ROLE_PREFIX: Record<UserRole, string> = {

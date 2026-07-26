@@ -1,48 +1,13 @@
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { ShieldAlert } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type {
-  SiteCascadeRiskSummaryDto,
-  CascadeRiskLevelName,
-} from "@/shared/types/cascade.types";
-import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
-
-// Heat map cascade risk theo site (presentational — data từ hook của từng feature).
-// Docs: docs/api-battery.md §Nhóm 12 (cascade-risk-summary).
-
-const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
-  Low: "Thấp",
-  Medium: "Trung bình",
-  High: "Cao",
-};
-
-// Fallback an toàn nếu BE trả level ngoài enum (tránh badge trống im lặng).
-const levelStyle = (lvl: CascadeRiskLevelName) =>
-  toneClass(CASCADE_RISK_TONE[lvl] ?? "muted");
-const levelLabel = (lvl: CascadeRiskLevelName) =>
-  LEVEL_LABEL[lvl] ?? String(lvl);
+import type { SiteCascadeRiskSummaryDto } from "@/shared/types/battery/cascade.types";
 
 interface CascadeRiskSummaryProps {
   summary: SiteCascadeRiskSummaryDto | undefined;
   isLoading?: boolean;
-}
-
-function StatBox({
-  label,
-  value,
-  className,
-}: {
-  label: string;
-  value: number | string;
-  className?: string;
-}) {
-  return (
-    <div className={`rounded-lg border p-3 ${className ?? "border-border"}`}>
-      <p className="text-2xl font-bold tabular-nums leading-none">{value}</p>
-      <p className="text-[11px] text-muted-foreground mt-1">{label}</p>
-    </div>
-  );
 }
 
 export default function CascadeRiskSummary({
@@ -51,91 +16,137 @@ export default function CascadeRiskSummary({
 }: CascadeRiskSummaryProps) {
   if (isLoading) {
     return (
-      <Card className="p-4 space-y-3">
-        <Skeleton className="h-5 w-40" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
+      <Card className="h-full">
+        <CardHeader className="pb-2">
+          <Skeleton className="h-5 w-40" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-28 w-full" />
+        </CardContent>
       </Card>
     );
   }
 
-  if (!summary) {
-    return (
-      <Card className="p-6 flex flex-col items-center gap-2 text-muted-foreground">
-        <ShieldAlert size={28} className="opacity-30" />
-        <span className="text-sm">Chưa có dữ liệu cascade risk.</span>
-      </Card>
-    );
-  }
+  if (!summary) return null;
+
+  const hasHighRisk = summary.highRiskCount > 0;
+
+  const pieData = [
+    { name: "Rủi ro cao", value: summary.highRiskCount, color: "#f43f5e" },
+    { name: "Trung bình", value: summary.mediumRiskCount, color: "#f59e0b" },
+    { name: "Thấp", value: summary.lowRiskCount, color: "#10b981" },
+  ].filter((d) => d.value > 0);
+
+  const chartData =
+    pieData.length > 0
+      ? pieData
+      : [{ name: "Thấp", value: 1, color: "#10b981" }];
 
   return (
-    <Card className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">
-            Rủi ro lan truyền (Cascade Risk)
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Tổng hợp theo site · điểm cao nhất{" "}
-            <span className="font-medium tabular-nums">
-              {summary.maxScore.toFixed(2)}
-            </span>
-          </p>
+    <Card className="h-full flex flex-col justify-between">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+        <div className="flex items-center gap-2">
+          <ShieldAlert
+            className={`size-4 ${
+              hasHighRisk ? "text-rose-600 dark:text-rose-400" : "text-emerald-500"
+            }`}
+          />
+          <CardTitle className="text-base">Rủi ro lan truyền (Cascade Risk)</CardTitle>
         </div>
-      </div>
+        <Badge
+          variant={hasHighRisk ? "destructive" : "outline"}
+          className={`font-mono text-xs font-semibold px-2 py-0.5 ${
+            hasHighRisk ? "bg-rose-600 text-white" : ""
+          }`}
+        >
+          Max: {summary.maxScore.toFixed(2)}
+        </Badge>
+      </CardHeader>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatBox label="Tổng số pin" value={summary.totalAssets} />
-        <StatBox
-          label="Rủi ro cao"
-          value={summary.highRiskCount}
-          className="border-red-200 bg-red-50/40"
-        />
-        <StatBox
-          label="Trung bình"
-          value={summary.mediumRiskCount}
-          className="border-amber-200 bg-amber-50/40"
-        />
-        <StatBox
-          label="Thấp"
-          value={summary.lowRiskCount}
-          className="border-emerald-200 bg-emerald-50/40"
-        />
-      </div>
+      <CardContent className="flex-1 flex flex-col justify-between space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Phân bổ mức rủi ro</p>
 
-      {summary.highRiskAssets.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Pin rủi ro cao
-          </p>
-          <ul className="divide-y divide-border rounded-lg border border-border">
-            {summary.highRiskAssets.map((a) => (
-              <li
-                key={a.batteryAssetId}
-                className="flex items-center justify-between gap-3 px-3 py-2"
+            <div className="space-y-1.5 text-xs font-medium">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
+                <span className="text-muted-foreground min-w-16">Rủi ro cao:</span>
+                <strong className={`font-bold ${summary.highRiskCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}>
+                  {summary.highRiskCount} pin {summary.totalAssets > 0 ? `(${((summary.highRiskCount / summary.totalAssets) * 100).toFixed(0)}%)` : ""}
+                </strong>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-muted-foreground min-w-16">Trung bình:</span>
+                <strong className={`font-bold ${summary.mediumRiskCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                  {summary.mediumRiskCount} pin {summary.totalAssets > 0 ? `(${((summary.mediumRiskCount / summary.totalAssets) * 100).toFixed(0)}%)` : ""}
+                </strong>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="text-muted-foreground min-w-16">Thấp:</span>
+                <strong className={`font-bold ${summary.lowRiskCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  {summary.lowRiskCount} pin {summary.totalAssets > 0 ? `(${((summary.lowRiskCount / summary.totalAssets) * 100).toFixed(0)}%)` : ""}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative w-32 h-32 shrink-0 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={24}
+                  outerRadius={44}
+                  paddingAngle={chartData.length > 1 ? 3 : 0}
+                  cornerRadius={3}
+                  dataKey="value"
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`risk-pie-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any) => [`${value} pin`, "Số lượng"]}
+                  contentStyle={{
+                    fontSize: "12px",
+                    borderRadius: "8px",
+                    padding: "4px 8px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+              <span
+                className={`text-xs font-bold font-mono ${
+                  hasHighRisk ? "text-rose-600 dark:text-rose-400" : "text-emerald-600"
+                }`}
               >
-                <span className="text-sm font-medium truncate">
-                  {a.serialNumber ?? a.batteryAssetId}
-                </span>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-semibold tabular-nums">
-                    {a.cascadeRiskScore.toFixed(2)}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10.5px] ${levelStyle(a.level)}`}
-                  >
-                    {levelLabel(a.level)}
-                  </Badge>
-                </div>
-              </li>
-            ))}
-          </ul>
+                {summary.maxScore.toFixed(2)}
+              </span>
+              <span className="text-[9px] text-muted-foreground font-medium">Risk Max</span>
+            </div>
+          </div>
         </div>
-      )}
+
+        {summary.highRiskAssets.length > 0 && (
+          <div className="pt-2 border-t border-border flex items-center gap-1.5 flex-wrap text-xs">
+            <span className="text-[11px] text-muted-foreground font-medium">Pin chú ý:</span>
+            {summary.highRiskAssets.slice(0, 4).map((a) => (
+              <Badge key={a.batteryAssetId} variant="outline" className="text-[10px] font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold">
+                {a.serialNumber ?? a.batteryAssetId} ({a.cascadeRiskScore.toFixed(2)})
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }

@@ -3,7 +3,7 @@ import {
   ActivityActionEnum,
   TicketStatusEnum,
   type TicketActivityDTO,
-} from "@/shared/types/ticket.types";
+} from "@/shared/types/ticket/ticket.types";
 
 interface ProcessingDurationTimerProps {
   activities: TicketActivityDTO[];

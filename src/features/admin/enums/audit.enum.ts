@@ -1,15 +1,5 @@
-export const LoginAttemptResult = {
-  Success: 1,
-  WrongPassword: 2,
-  AccountNotFound: 3,
-  AccountLocked: 4,
-  AccountSuspended: 5,
-  AccountBanned: 6,
-  AccountInactive: 7,
-  AccountNotVerified: 8,
-} as const;
-export type LoginAttemptResult =
-  (typeof LoginAttemptResult)[keyof typeof LoginAttemptResult];
+// LoginAttemptResult dùng chung — nguồn thật ở shared.
+export { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
 
 export const AuditActionEnum = {
   LOGIN_SUCCESS: 1,

@@ -4,10 +4,10 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import IoTDeviceForm from "@/features/admin/components/IoTDeviceForm";
-import DeviceKeyRevealDialog from "@/features/admin/components/DeviceKeyRevealDialog";
-import { useIotDevice } from "@/features/admin/hooks/useIotDevice";
-import type { IotDeviceCreatedDto } from "@/shared/types/iot.types";
+import IoTDeviceForm from "@/features/admin/components/iot/IoTDeviceForm";
+import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
+import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
+import type { IotDeviceCreatedDto } from "@/shared/types/iot/iot.types";
 
 export default function IoTDeviceFormPage() {
   const navigate = useNavigate();

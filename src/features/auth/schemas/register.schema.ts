@@ -1,18 +1,17 @@
 import { z } from "zod";
+import {
+  emailField,
+  fullNameField,
+  passwordField,
+  phoneField,
+} from "@/shared/schemas/common.schema";
 
 export const registerSchema = z
   .object({
-    fullName: z.string().min(2, "Họ tên tối thiểu 2 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    phoneNumber: z
-      .string()
-      .regex(/^(0[35789])[0-9]{8}$/, "Số điện thoại không hợp lệ"),
-    password: z
-      .string()
-      .regex(
-        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/,
-        "Mật khẩu tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
-      ),
+    fullName: fullNameField,
+    email: emailField,
+    phoneNumber: phoneField,
+    password: passwordField,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

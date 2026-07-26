@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toneClass } from "@/shared/theme/statusColors";
-import type { GatewayDeviceDto } from "@/features/admin/types/sms-gateway.types";
+import type { GatewayDeviceDto } from "@/features/admin/types/ticket/sms-gateway.types";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 

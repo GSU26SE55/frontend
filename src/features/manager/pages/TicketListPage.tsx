@@ -9,15 +9,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import TicketTable from "@/features/manager/components/TicketTable";
-import { useAdminTicketList } from "@/features/manager/hooks/useManagerTickets";
+import TicketTable from "@/features/manager/components/ticket/TicketTable";
+import { useAdminTicketList } from "@/features/manager/hooks/ticket/useManagerTickets";
 import {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
-} from "@/shared/types/ticket.types";
+} from "@/shared/types/ticket/ticket.types";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
@@ -60,22 +61,27 @@ const DEFAULTS = {
   status: "",
   priority: "",
   category: "",
+  sortBy: "",
+  sortDir: "",
   pageNumber: 1,
   pageSize: 25,
 };
 
 export default function TicketListPage() {
-  const { filters, setFilter, resetFilters, hasActiveFilter } =
+  const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
 
   const { data, isLoading, isError, refetch } = useAdminTicketList({
     keyword: filters.keyword || undefined,
     status: (filters.status as TicketStatusEnum) || undefined,
     priority: (filters.priority as TicketPriorityEnum) || undefined,
     category: (filters.category as TicketCategoryEnum) || undefined,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   });
@@ -200,6 +206,7 @@ export default function TicketListPage() {
             isLoading={isLoading}
             pageNumber={filters.pageNumber}
             pageSize={filters.pageSize}
+            sort={sort}
           />
         )}
       </Card>

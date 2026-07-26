@@ -1,13 +1,8 @@
-import { useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle,
-  Stethoscope,
-  CheckCircle2,
-  Wrench,
+  BookOpen,
   Eye,
   ThumbsUp,
   CalendarDays,
@@ -17,38 +12,16 @@ import {
   Tag,
   RefreshCcw,
   Pencil,
-  Lock,
-  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
-import { KbVisibilityBadge } from "./KbVisibilityBadge";
-import { KbCategoryLabel } from "@/shared/enums/kb.enum";
-import type { KbArticleDTO } from "@/shared/types/kb.types";
+import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
+import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
-
-// ── Sections ─────────────────────────────────────────────────────────────────
-const SECTIONS = [
-  { key: "symptoms" as const, label: "Triệu chứng", icon: AlertTriangle },
-  {
-    key: "diagnosisSteps" as const,
-    label: "Bước chẩn đoán",
-    icon: Stethoscope,
-  },
-  {
-    key: "solutionSteps" as const,
-    label: "Hướng giải quyết",
-    icon: CheckCircle2,
-  },
-  {
-    key: "recommendedParts" as const,
-    label: "Linh kiện khuyến nghị",
-    icon: Wrench,
-  },
-] as const;
+import { isHtmlContent } from "@/shared/lib/isHtmlContent";
+import { RichContentView } from "@/shared/components/editor/RichContentView";
 
 // ── Numbered list detection ───────────────────────────────────────────────────
 function isNumberedList(text: string): boolean {
@@ -68,6 +41,12 @@ function parseLines(text: string): string[] {
 
 // ── Section content renderer ─────────────────────────────────────────────────
 export function SectionContent({ text }: { text: string }) {
+  // Bài soạn bằng rich text (Tiptap) → render HTML đã sanitize.
+  // Bài cũ vẫn là text thuần → giữ nguyên cách hiển thị cũ bên dưới.
+  if (isHtmlContent(text)) {
+    return <RichContentView html={text} className="text-foreground/80" />;
+  }
+
   if (isNumberedList(text)) {
     return (
       <ol className="space-y-3">
@@ -140,8 +119,8 @@ interface KbArticleDetailProps {
   breadcrumb: string;
   /** Publish / Archive buttons */
   actions?: React.ReactNode;
-  /** If provided, shows "Chỉnh sửa" button + renders a slide-in edit panel */
-  renderEditor?: (props: { onClose: () => void }) => React.ReactNode;
+  /** Nếu có → hiện nút "Chỉnh sửa" điều hướng sang trang edit riêng. */
+  onEdit?: () => void;
   onMarkHelpful?: () => void;
   helpfulPending?: boolean;
 }
@@ -151,18 +130,11 @@ export function KbArticleDetail({
   backUrl,
   breadcrumb,
   actions,
-  renderEditor,
+  onEdit,
   onMarkHelpful,
   helpfulPending,
 }: KbArticleDetailProps) {
   const navigate = useNavigate();
-  const [editOpen, setEditOpen] = useState(false);
-
-  const visibleSections = SECTIONS.filter((s) => {
-    if (s.key === "recommendedParts")
-      return (article.recommendedParts?.length ?? 0) > 0;
-    return !!(article[s.key] as string | null)?.trim();
-  });
 
   return (
     <>
@@ -188,14 +160,9 @@ export function KbArticleDetail({
           </div>
           <div className="flex items-center gap-2 shrink-0 pt-0.5">
             <KbStatusBadge status={article.status} />
-            <KbVisibilityBadge isInternalOnly={article.isInternalOnly} />
             {actions}
-            {renderEditor && (
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setEditOpen(true)}
-              >
+            {onEdit && (
+              <Button size="sm" className="gap-1.5" onClick={onEdit}>
                 <Pencil className="size-3.5" />
                 Chỉnh sửa
               </Button>
@@ -207,32 +174,19 @@ export function KbArticleDetail({
         <div className="grid lg:grid-cols-[1fr_272px] gap-5 items-start">
           {/* Left — article content */}
           <div className="border border-border rounded-xl overflow-hidden bg-card">
-            {visibleSections.map((sec, idx) => {
-              const Icon = sec.icon;
-              const text =
-                sec.key === "recommendedParts"
-                  ? (article.recommendedParts ?? []).join("\n")
-                  : (article[sec.key] as string);
-
-              return (
-                <div key={sec.key}>
-                  {idx > 0 && <Separator />}
-                  <div className="px-6 py-5">
-                    {/* Section header */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
-                        <Icon size={14} className="text-muted-foreground" />
-                      </div>
-                      <h2 className="text-base font-semibold text-foreground">
-                        {sec.label}
-                      </h2>
-                    </div>
-                    {/* Content */}
-                    <SectionContent text={text} />
-                  </div>
+            <div className="px-6 py-5">
+              {/* Section header */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                  <BookOpen size={14} className="text-muted-foreground" />
                 </div>
-              );
-            })}
+                <h2 className="text-base font-semibold text-foreground">
+                  Nội dung
+                </h2>
+              </div>
+              {/* Content */}
+              <SectionContent text={article.content} />
+            </div>
           </div>
 
           {/* Right — sidebar metadata */}
@@ -301,13 +255,6 @@ export function KbArticleDetail({
                 value={`v${article.version}`}
               />
               <MetaItem
-                icon={article.isInternalOnly ? Lock : Globe}
-                label="Phạm vi"
-                value={
-                  article.isInternalOnly ? "Chỉ nội bộ" : "Công khai cho khách"
-                }
-              />
-              <MetaItem
                 icon={CalendarDays}
                 label="Ngày tạo"
                 value={format(new Date(article.createdAt), "dd/MM/yyyy", {
@@ -349,40 +296,6 @@ export function KbArticleDetail({
           </div>
         </div>
       </div>
-
-      {/* ── Edit panel (slide from right, AuditLog pattern) ────────────────── */}
-      {renderEditor && (
-        <AnimatePresence>
-          {editOpen && (
-            <>
-              <motion.div
-                key="kb-edit-backdrop"
-                className="fixed inset-0 z-50 bg-black/20"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                onClick={() => setEditOpen(false)}
-              />
-              <motion.div
-                key="kb-edit-panel"
-                className="fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col bg-popover text-popover-foreground shadow-2xl sm:max-w-140"
-                initial={{ x: "100%", opacity: 0.5 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: "100%", opacity: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 340,
-                  damping: 32,
-                  mass: 0.9,
-                }}
-              >
-                {renderEditor({ onClose: () => setEditOpen(false) })}
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      )}
     </>
   );
 }

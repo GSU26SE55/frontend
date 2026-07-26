@@ -1,8 +1,9 @@
 // Nav config sidebar cho role MANAGER.
-// Label/title chung (≥2 role) → import từ shared/utils/sidebarLabels.
+// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
 // Label/title đặc thù chỉ manager dùng → giữ inline ở đây.
 
 import {
+  Newspaper,
   LayoutDashboard,
   MapPin,
   Settings,
@@ -11,7 +12,6 @@ import {
   Clock,
   BookOpen,
   ShieldAlert,
-  Thermometer,
   BarChart3,
   SlidersHorizontal,
 } from "lucide-react";
@@ -19,7 +19,10 @@ import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
-} from "@/shared/utils/sidebarLabels";
+} from "@/shared/constants/sidebarLabels";
+
+// #697 — ManagerAppLayout dùng path này để gắn badge số ticket chờ duyệt.
+export const MANAGER_QUEUE_PATH = "/manager/tickets/queue";
 
 export const MANAGER_NAV: NavSection[] = [
   {
@@ -41,13 +44,20 @@ export const MANAGER_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
+      // Pin truy cập qua Site (Sites → site detail → chi tiết pin).
+      // Route /manager/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
       { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
       { label: SIDEBAR_LABELS.tickets, path: "/manager/tickets", icon: Ticket },
-      { label: "Hàng chờ", path: "/manager/tickets/queue", icon: Clock },
+      { label: "Hàng chờ", path: MANAGER_QUEUE_PATH, icon: Clock },
       {
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/manager/kb",
         icon: BookOpen,
+      },
+      {
+        label: SIDEBAR_LABELS.blog,
+        path: "/manager/blog",
+        icon: Newspaper,
       },
       {
         label: SIDEBAR_LABELS.batteryAlerts,
@@ -58,11 +68,6 @@ export const MANAGER_NAV: NavSection[] = [
         label: SIDEBAR_LABELS.envIncidents,
         path: "/manager/environmental-incidents",
         icon: ShieldAlert,
-      },
-      {
-        label: SIDEBAR_LABELS.ambient,
-        path: "/manager/ambient",
-        icon: Thermometer,
       },
       {
         label: "Calibration sắp hết hạn",
