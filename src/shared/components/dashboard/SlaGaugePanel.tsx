@@ -29,11 +29,11 @@ function FooterCell({
   color?: string;
 }) {
   return (
-    <div className="rounded-md bg-muted/40 py-1.5">
-      <p className="text-sm font-semibold tabular-nums" style={{ color }}>
+    <div className="rounded-lg bg-muted/40 py-2 px-1">
+      <p className="text-base lg:text-lg font-bold tabular-nums" style={{ color }}>
         {value}
       </p>
-      <p className="text-[9.5px] text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
     </div>
   );
 }
@@ -43,7 +43,7 @@ export function SlaGaugePanel({
   desc,
   sla,
   isLoading,
-  className = "min-h-64",
+  className = "min-h-[260px]",
 }: {
   title: string;
   desc: string;
@@ -64,7 +64,7 @@ export function SlaGaugePanel({
           caption="SLA met"
           color={slaComplianceColor(sla?.compliancePercent)}
           footer={
-            <div className="grid grid-cols-3 gap-1.5 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <FooterCell
                 value={sla?.met ?? 0}
                 label="Met"

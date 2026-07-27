@@ -60,8 +60,8 @@ function TabHeader({
   exportDisabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 mb-3">
-      <h3 className="text-sm font-semibold">{title}</h3>
+    <div className="flex items-center justify-between gap-2 mb-4">
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
       <ReportExportMenu
         endpoint={endpoint}
         filename={filename}
@@ -244,9 +244,9 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
     <Tabs
       value={active}
       onValueChange={setActive}
-      className="bg-card rounded-lg border border-border p-4"
+      className="bg-card rounded-xl border border-border p-5 lg:p-6 shadow-xs"
     >
-      <TabsList className="flex-wrap h-auto">
+      <TabsList className="flex-wrap h-auto gap-1 p-1">
         <TabsTrigger value={TAB.health}>Sức khỏe theo loại</TabsTrigger>
         <TabsTrigger value={TAB.alertVolume}>Số lượng cảnh báo</TabsTrigger>
         <TabsTrigger value={TAB.anomalies}>Top anomaly</TabsTrigger>

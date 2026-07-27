@@ -162,19 +162,9 @@ export default function AdminDashboardPage() {
   const showTopAlerting = statsLoading || topAlerting.length > 0;
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-3 p-3 lg:p-4 overflow-hidden">
+    <div className="h-full flex flex-col gap-2.5 p-3 lg:p-4 overflow-y-auto lg:overflow-hidden">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 shrink-0">
-        <div className="min-w-0">
-          <p className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
-            Admin · Hạ tầng & sức khỏe hệ thống
-          </p>
-          <h1 className="text-lg font-semibold text-foreground leading-tight truncate">
-            {siteStatsLoading || statsLoading
-              ? "Dashboard"
-              : `${totalSites} site · ${totalBatt} pin · ${openAlerts} cảnh báo mở`}
-          </h1>
-        </div>
+      <div className="flex justify-end shrink-0">
         <RefreshButton
           queryKeys={[KEY.siteDashboard, KEY.batteryDashboard]}
           label="Đồng bộ"
@@ -182,26 +172,26 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* ── KPI strip — bấm được, nhảy thẳng tới trang tương ứng ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:gap-2.5 shrink-0">
         <DashboardKpi
           label="Sites"
           value={siteStatsLoading ? "--" : totalSites}
           hint={`${activeSites} hoạt động`}
-          icon={<MapPin className="size-3.5" />}
+          icon={<MapPin className="size-4" />}
           to="/admin/sites"
         />
         <DashboardKpi
           label="Pin hoạt động"
           value={statsLoading ? "--" : activeBatt}
           sub={`/${totalBatt}`}
-          icon={<BatteryCharging className="size-3.5" />}
+          icon={<BatteryCharging className="size-4" />}
           to="/admin/battery-assets"
         />
         <DashboardKpi
           label="Pin offline"
           value={statsLoading ? "--" : offlineBatt}
           hint="mất kết nối"
-          icon={<WifiOff className="size-3.5" />}
+          icon={<WifiOff className="size-4" />}
           accent={offlineBatt > 0 ? "var(--p3)" : undefined}
           to="/admin/iot-devices"
         />
@@ -209,7 +199,7 @@ export default function AdminDashboardPage() {
           label="Cảnh báo mở"
           value={statsLoading ? "--" : openAlerts}
           hint={`${criticalOpen} critical`}
-          icon={<BellRing className="size-3.5" />}
+          icon={<BellRing className="size-4" />}
           accent={criticalOpen > 0 ? "var(--p1)" : undefined}
           to="/admin/alerts"
         />
@@ -217,7 +207,7 @@ export default function AdminDashboardPage() {
           label="Sự cố môi trường"
           value={statsLoading ? "--" : activeIncidents}
           hint="đang mở"
-          icon={<ShieldAlert className="size-3.5" />}
+          icon={<ShieldAlert className="size-4" />}
           accent={activeIncidents > 0 ? "var(--p1)" : undefined}
           to="/admin/environmental-incidents"
         />
@@ -228,13 +218,13 @@ export default function AdminDashboardPage() {
         <TicketHealthCard />
       </div>
 
-      {/* ── Bento cố định: 2 hàng chia đều chiều cao còn lại, KHÔNG cuộn trang ── */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-2 gap-3 overflow-hidden">
+      {/* ── Bento Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 lg:gap-3 flex-1 min-h-0">
         {/* [Area] xu hướng theo thời gian */}
         <DashboardPanel
           title={OVERVIEW_PANELS.admin.alerts7d}
           desc="Theo mức độ nghiêm trọng"
-          className="lg:col-span-2 min-h-0"
+          className="lg:col-span-2 min-h-[180px] lg:min-h-0"
         >
           {statsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -250,15 +240,17 @@ export default function AdminDashboardPage() {
                   tickFormatter={(v: string) => `${v.slice(8, 10)}/${v.slice(5, 7)}`}
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={6}
+                  tickMargin={8}
+                  tick={{ fontSize: 12 }}
                 />
-                {/* width 24 cắt mất số từ 3 chữ số (đếm cảnh báo lên hàng trăm). */}
+                {/* width 38 cắt mất số từ 3 chữ số (đếm cảnh báo lên hàng trăm). */}
                 <YAxis
                   width={38}
                   tickLine={false}
                   axisLine={false}
                   tickMargin={6}
                   allowDecimals={false}
+                  tick={{ fontSize: 12 }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
@@ -305,7 +297,7 @@ export default function AdminDashboardPage() {
         <DashboardPanel
           title="Pin còn kết nối"
           desc={`${onlineBatt}/${totalBatt} thiết bị gửi dữ liệu`}
-          className="min-h-0"
+          className="min-h-[180px] lg:min-h-0"
         >
           {statsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -316,24 +308,24 @@ export default function AdminDashboardPage() {
               caption="online"
               color={onlineColor}
               footer={
-                <div className="grid grid-cols-2 gap-1.5 text-center">
-                  <div className="rounded-md bg-muted/40 py-1.5">
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-lg bg-muted/40 py-2 px-1">
                     <p
-                      className="text-sm font-semibold tabular-nums"
+                      className="text-base font-bold tabular-nums"
                       style={{ color: "var(--ok)" }}
                     >
                       {onlineBatt}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Online</p>
+                    <p className="text-xs font-medium text-muted-foreground">Online</p>
                   </div>
-                  <div className="rounded-md bg-muted/40 py-1.5">
+                  <div className="rounded-lg bg-muted/40 py-2 px-1">
                     <p
-                      className="text-sm font-semibold tabular-nums"
+                      className="text-base font-bold tabular-nums"
                       style={{ color: offlineBatt > 0 ? "var(--p3)" : undefined }}
                     >
                       {offlineBatt}
                     </p>
-                    <p className="text-[9.5px] text-muted-foreground">Offline</p>
+                    <p className="text-xs font-medium text-muted-foreground">Offline</p>
                   </div>
                 </div>
               }
@@ -346,7 +338,7 @@ export default function AdminDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.admin.alertsByType}
             desc="Top loại · màu theo mức độ"
-            className="min-h-0"
+            className="min-h-[160px] lg:min-h-0"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -365,16 +357,16 @@ export default function AdminDashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="label"
-                    width={92}
+                    width={100}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fontSize: 10.5 }}
+                    tick={{ fontSize: 11.5, fontWeight: 500 }}
                   />
                   <ChartTooltip
                     cursor={false}
                     content={<ChartTooltipContent hideLabel />}
                   />
-                  <Bar dataKey="value" radius={4} maxBarSize={16}>
+                  <Bar dataKey="value" radius={4} maxBarSize={18}>
                     {anomalyData.map((d) => (
                       <Cell key={d.label} fill={d.color} />
                     ))}
@@ -384,13 +376,12 @@ export default function AdminDashboardPage() {
             )}
           </DashboardPanel>
         )}
-
         {/* [Donut] cơ cấu thành phần */}
         {showBattStatus && (
           <DashboardPanel
             title={OVERVIEW_PANELS.admin.batteryByStatus}
             desc={`${totalBatt} pin`}
-            className="min-h-0"
+            className="min-h-[160px] lg:min-h-0"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -411,7 +402,7 @@ export default function AdminDashboardPage() {
             assets={topAlerting}
             isLoading={statsLoading}
             onSelect={(a) => navigate(`/admin/battery-assets/${a.batteryAssetId}`)}
-            className="min-h-0"
+            className="min-h-[160px] lg:min-h-0"
           />
         )}
       </div>

@@ -37,38 +37,33 @@ export function DashboardKpi({
   hint?: string;
   icon?: React.ReactNode;
   accent?: string;
-  /**
-   * Route đích khi bấm vào ô KPI. Có `to` thì ô thành link (hover đổi viền) —
-   * con số trên dashboard dẫn thẳng tới danh sách tương ứng thay vì bắt người
-   * dùng tự mò trong sidebar.
-   */
   to?: string;
 }) {
   const body = (
     <>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground truncate">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">
           {label}
         </span>
         {icon ? (
           <span className="text-muted-foreground shrink-0">{icon}</span>
         ) : accent ? (
           <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
+            className="w-2 h-2 rounded-full shrink-0"
             style={{ background: accent }}
           />
         ) : null}
       </div>
-      <div className="flex items-baseline gap-1.5">
-        <span className="text-xl font-semibold tabular-nums leading-none">
+      <div className="flex items-baseline gap-1.5 mt-1">
+        <span className="text-2xl lg:text-3xl font-bold tabular-nums leading-none text-foreground">
           {value}
         </span>
         {sub && (
-          <span className="text-[11px] text-muted-foreground">{sub}</span>
+          <span className="text-xs font-medium text-muted-foreground">{sub}</span>
         )}
       </div>
       {hint && (
-        <span className="text-[10.5px] text-muted-foreground truncate">
+        <span className="text-xs text-muted-foreground/80 truncate mt-1">
           {hint}
         </span>
       )}
@@ -76,7 +71,7 @@ export function DashboardKpi({
   );
 
   const shell =
-    "bg-card rounded-lg border border-border px-3.5 py-2 flex flex-col gap-0.5 min-w-0";
+    "bg-card rounded-xl border border-border p-4 flex flex-col justify-between gap-1 min-w-0 shadow-sm transition-all";
 
   if (to) {
     return (
@@ -84,20 +79,15 @@ export function DashboardKpi({
         to={to}
         className={cn(
           shell,
-          "transition-colors hover:border-primary/50 hover:bg-muted/30",
+          "hover:border-primary/60 hover:bg-muted/30 hover:shadow-md",
         )}
-        style={{ boxShadow: "var(--shadow-sm)" }}
       >
         {body}
       </Link>
     );
   }
 
-  return (
-    <div className={shell} style={{ boxShadow: "var(--shadow-sm)" }}>
-      {body}
-    </div>
-  );
+  return <div className={shell}>{body}</div>;
 }
 
 // ── Panel shell (flex-col card: header + flexible body) ───────────────────────
@@ -119,25 +109,24 @@ export function DashboardPanel({
   return (
     <div
       className={cn(
-        "bg-card rounded-lg border border-border flex flex-col min-h-0 overflow-hidden",
+        "bg-card rounded-xl border border-border flex flex-col min-h-[260px] overflow-hidden shadow-sm",
         className,
       )}
-      style={{ boxShadow: "var(--shadow-sm)" }}
     >
-      <div className="px-3.5 pt-2.5 pb-1.5 shrink-0 flex items-start justify-between gap-2">
+      <div className="px-4 pt-4 pb-2.5 shrink-0 flex items-start justify-between gap-3 border-b border-border/40">
         <div className="min-w-0">
-          <h3 className="text-[12.5px] font-semibold leading-tight truncate">
+          <h3 className="text-sm lg:text-base font-semibold text-foreground leading-tight truncate">
             {title}
           </h3>
           {desc && (
-            <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 truncate">
+            <p className="text-xs text-muted-foreground leading-tight mt-1 truncate">
               {desc}
             </p>
           )}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
-      <div className={cn("flex-1 min-h-0 px-3.5 pb-3", bodyClassName)}>
+      <div className={cn("flex-1 min-h-0 p-4", bodyClassName)}>
         {children}
       </div>
     </div>
@@ -163,17 +152,17 @@ export function DashboardDonut({
   centerLabel: string;
 }) {
   return (
-    <div className="flex items-center gap-4 h-full">
+    <div className="flex items-center gap-5 h-full">
       <ChartContainer
         config={donutConfig}
-        className="h-full aspect-square max-w-37.5 min-h-0 shrink-0"
+        className="h-full aspect-square max-w-40 lg:max-w-44 min-h-0 shrink-0"
       >
         <PieChart>
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
-            innerRadius="62%"
+            innerRadius="66%"
             outerRadius="92%"
             strokeWidth={2}
             stroke="var(--background)"
@@ -194,14 +183,14 @@ export function DashboardDonut({
                       <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="text-xl font-bold fill-foreground"
+                        className="text-xl lg:text-2xl font-bold fill-foreground"
                       >
                         {centerValue}
                       </tspan>
                       <tspan
                         x={viewBox.cx}
                         y={(viewBox.cy ?? 0) + 16}
-                        className="text-[10px] fill-muted-foreground"
+                        className="text-xs font-medium fill-muted-foreground"
                       >
                         {centerLabel}
                       </tspan>
@@ -214,19 +203,19 @@ export function DashboardDonut({
           <ChartTooltip content={<ChartTooltipContent />} />
         </PieChart>
       </ChartContainer>
-      <ul className="flex-1 min-w-0 space-y-2">
+      <ul className="flex-1 min-w-0 space-y-2.5">
         {data.map((b) => (
-          <li key={b.name} className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
+          <li key={b.name} className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
               <span
-                className="size-2.5 rounded-full shrink-0"
+                className="size-3 rounded-full shrink-0 shadow-xs"
                 style={{ background: b.fill }}
               />
-              <span className="text-[12.5px] text-muted-foreground truncate">
+              <span className="text-xs lg:text-sm font-medium text-muted-foreground truncate">
                 {b.name}
               </span>
             </div>
-            <span className="text-[12.5px] font-semibold tabular-nums">
+            <span className="text-xs lg:text-sm font-bold tabular-nums text-foreground">
               {b.value}
             </span>
           </li>
@@ -253,18 +242,18 @@ export function DashboardGauge({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col h-full">
-      <div className="relative flex-1 min-h-0 grid place-items-center">
+    <div className="flex flex-col h-full justify-between gap-2 min-h-0">
+      <div className="relative flex-1 min-h-[100px] w-full flex items-center justify-center">
         <ChartContainer
           config={gaugeConfig}
-          className="h-full aspect-square max-w-42.5 min-h-0"
+          className="h-full aspect-square max-w-[150px] min-h-[100px] mx-auto"
         >
           <RadialBarChart
             data={[{ name: "v", value: percent, fill: color }]}
             startAngle={90}
             endAngle={-270}
-            innerRadius="72%"
-            outerRadius="100%"
+            innerRadius="76%"
+            outerRadius="96%"
           >
             <PolarAngleAxis
               type="number"
@@ -275,19 +264,19 @@ export function DashboardGauge({
             <RadialBar dataKey="value" background cornerRadius={10} />
           </RadialBarChart>
         </ChartContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           <span
-            className="text-2xl font-bold tabular-nums leading-none"
+            className="text-lg lg:text-xl font-bold tabular-nums leading-none tracking-tight"
             style={{ color }}
           >
             {valueText}
           </span>
-          <span className="text-[10px] text-muted-foreground mt-0.5">
+          <span className="text-[10px] lg:text-[11px] font-medium text-muted-foreground leading-none mt-1">
             {caption}
           </span>
         </div>
       </div>
-      {footer && <div className="shrink-0">{footer}</div>}
+      {footer && <div className="shrink-0 pt-0.5">{footer}</div>}
     </div>
   );
 }
