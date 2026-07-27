@@ -160,14 +160,14 @@ export default function ManagerDashboardPage() {
   const showTrend = ticketsLoading || hasTrend;
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-3 p-3 lg:p-4 overflow-hidden">
+    <div className="min-h-full flex flex-col gap-4 p-4 lg:p-6 overflow-y-auto space-y-1">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 shrink-0">
+      <div className="flex items-center justify-between gap-4 shrink-0 pb-1">
         <div className="min-w-0">
-          <p className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Manager · Điều phối vận hành
           </p>
-          <h1 className="text-lg font-semibold text-foreground leading-tight truncate">
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight truncate mt-0.5">
             {ticketsLoading
               ? "Dashboard"
               : `${openCount} ticket mở · ${queueCount} chờ triage`}
@@ -180,19 +180,19 @@ export default function ManagerDashboardPage() {
       </div>
 
       {/* ── KPI strip — bấm được ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 shrink-0">
         <DashboardKpi
           label="Tickets mở"
           value={ticketsLoading ? "--" : openCount}
           sub={`/${totalTickets}`}
-          icon={<Ticket className="size-3.5" />}
+          icon={<Ticket className="size-4" />}
           to="/manager/tickets"
         />
         <DashboardKpi
           label="Cần triage"
           value={queueLoading ? "--" : queueCount}
           sub="hàng chờ"
-          icon={<Inbox className="size-3.5" />}
+          icon={<Inbox className="size-4" />}
           accent={queueCount > 0 ? "var(--p3)" : undefined}
           to="/manager/tickets/queue"
         />
@@ -200,7 +200,7 @@ export default function ManagerDashboardPage() {
           label="Chờ duyệt"
           value={ticketsLoading ? "--" : awaitingApproval}
           hint="Staff đã xử lý xong"
-          icon={<ClipboardCheck className="size-3.5" />}
+          icon={<ClipboardCheck className="size-4" />}
           accent={awaitingApproval > 0 ? "var(--p3)" : undefined}
           to="/manager/tickets"
         />
@@ -208,7 +208,7 @@ export default function ManagerDashboardPage() {
           label="Quá hạn SLA"
           value={ticketsLoading ? "--" : (sla?.breached ?? 0)}
           sub="breach"
-          icon={<AlertTriangle className="size-3.5" />}
+          icon={<AlertTriangle className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : undefined}
           to="/manager/tickets"
         />
@@ -216,25 +216,25 @@ export default function ManagerDashboardPage() {
           label="SLA"
           value={ticketsLoading ? "--" : sla ? `${sla.compliancePercent}%` : "—"}
           hint={`${sla?.met ?? 0} met`}
-          icon={<ShieldCheck className="size-3.5" />}
+          icon={<ShieldCheck className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
           label="Staff sẵn sàng"
           value={staffLoading ? "--" : availableStaff}
           sub={`/${workload.length}`}
-          icon={<Users className="size-3.5" />}
+          icon={<Users className="size-4" />}
           accent={availableStaff === 0 ? "var(--p1)" : undefined}
         />
       </div>
 
-      {/* ── Bento cố định 4×2, KHÔNG cuộn trang ── */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2 gap-3 overflow-hidden">
+      {/* ── Bento Grid ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[580px] flex-1">
         {/* [Bar ngang] pipeline theo giai đoạn */}
         <DashboardPanel
           title={OVERVIEW_PANELS.manager.ticketPipeline}
           desc={`${pipelineTotal} ticket theo giai đoạn`}
-          className="lg:col-span-3 min-h-0"
+          className="lg:col-span-3 min-h-[280px]"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -245,7 +245,7 @@ export default function ManagerDashboardPage() {
           ) : (
             <ChartContainer
               config={pipelineConfig}
-              className="h-full w-full aspect-auto min-h-0"
+              className="h-full w-full aspect-auto min-h-[200px]"
             >
               <BarChart
                 accessibilityLayer
@@ -257,16 +257,16 @@ export default function ManagerDashboardPage() {
                 <YAxis
                   type="category"
                   dataKey="stage"
-                  width={76}
+                  width={84}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 10.5 }}
+                  tick={{ fontSize: 11.5, fontWeight: 500 }}
                 />
                 <ChartTooltip
                   cursor={false}
                   content={<ChartTooltipContent hideLabel />}
                 />
-                <Bar dataKey="value" radius={4} maxBarSize={18}>
+                <Bar dataKey="value" radius={4} maxBarSize={20}>
                   {pipelineChart.map((p) => (
                     <Cell key={p.stage} fill={p.fill} />
                   ))}
@@ -282,7 +282,7 @@ export default function ManagerDashboardPage() {
           desc="met / (met + breach)"
           sla={sla}
           isLoading={ticketsLoading}
-          className="min-h-0"
+          className="min-h-[280px]"
         />
 
         {/* [Donut] cơ cấu ưu tiên */}
@@ -290,7 +290,7 @@ export default function ManagerDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.priority}
             desc={`${priorityTotal} ticket`}
-            className="min-h-0"
+            className="min-h-[280px]"
           >
             {ticketsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -309,17 +309,17 @@ export default function ManagerDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.staffLoad}
             desc={`${availableStaff}/${workload.length} sẵn sàng`}
-            className="min-h-0"
+            className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >
             {staffLoading ? (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-6 w-full" />
+                  <Skeleton key={i} className="h-7 w-full rounded-md" />
                 ))}
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {workload.map((w) => {
                   const pct =
                     w.max > 0
@@ -328,9 +328,9 @@ export default function ManagerDashboardPage() {
                         ? 100
                         : 0;
                   return (
-                    <div key={w.id} className="flex items-center gap-2">
+                    <div key={w.id} className="flex items-center gap-2.5">
                       <span
-                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{
                           background: w.available
                             ? "var(--ok)"
@@ -338,10 +338,10 @@ export default function ManagerDashboardPage() {
                         }}
                         title={w.available ? "Sẵn sàng" : "Bận"}
                       />
-                      <span className="text-[11px] font-medium truncate flex-1 min-w-0">
+                      <span className="text-xs lg:text-sm font-medium truncate flex-1 min-w-0">
                         {w.name}
                       </span>
-                      <div className="w-12 h-1.5 rounded-full bg-border shrink-0">
+                      <div className="w-14 h-2 rounded-full bg-border shrink-0">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -350,7 +350,7 @@ export default function ManagerDashboardPage() {
                           }}
                         />
                       </div>
-                      <span className="text-[10.5px] font-semibold font-mono-num w-8 text-right shrink-0">
+                      <span className="text-xs font-bold font-mono-num w-9 text-right shrink-0">
                         {w.active}/{w.max || "–"}
                       </span>
                     </div>
@@ -366,7 +366,7 @@ export default function ManagerDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.triageQueue}
             desc={`${queueCount} ticket chờ phân loại`}
-            className="min-h-0"
+            className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >
             {queueLoading ? (
@@ -376,22 +376,22 @@ export default function ManagerDashboardPage() {
                 ))}
               </div>
             ) : (
-              <ol className="space-y-1.5">
+              <ol className="space-y-2">
                 {queueItems.map((t) => (
                   <li key={t.id}>
                     <button
-                      className="flex items-center gap-2 w-full text-left rounded-md border border-border/70 bg-muted/20 px-2 py-1.5 group hover:border-primary/40 transition-colors"
+                      className="flex items-center gap-2.5 w-full text-left rounded-lg border border-border/70 bg-muted/20 px-2.5 py-2 group hover:border-primary/40 hover:bg-muted/40 transition-colors"
                       onClick={() => navigate(`/manager/tickets/${t.id}`)}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-mono-num text-muted-foreground">
+                        <p className="text-xs font-bold font-mono-num text-muted-foreground">
                           {t.code}
                         </p>
-                        <p className="text-[11px] font-medium truncate">
+                        <p className="text-xs lg:text-sm font-medium truncate mt-0.5">
                           {t.title}
                         </p>
                       </div>
-                      <ArrowRight className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                      <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary shrink-0" />
                     </button>
                   </li>
                 ))}
@@ -405,14 +405,14 @@ export default function ManagerDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.newTickets7d}
             desc="Ticket tạo theo ngày"
-            className="min-h-0"
+            className="min-h-[280px]"
           >
             {ticketsLoading ? (
               <Skeleton className="h-full w-full" />
             ) : (
               <ChartContainer
                 config={areaConfig}
-                className="h-full w-full aspect-auto min-h-0"
+                className="h-full w-full aspect-auto min-h-[200px]"
               >
                 <AreaChart data={ticketTrend} margin={{ left: 0, right: 6, top: 4 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -423,14 +423,16 @@ export default function ManagerDashboardPage() {
                     }
                     tickLine={false}
                     axisLine={false}
-                    tickMargin={6}
+                    tickMargin={8}
+                    tick={{ fontSize: 12 }}
                   />
                   <YAxis
-                    width={30}
+                    width={32}
                     tickLine={false}
                     axisLine={false}
                     tickMargin={6}
                     allowDecimals={false}
+                    tick={{ fontSize: 12 }}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <defs>
