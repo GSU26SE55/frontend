@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-react";
+import { PanelLeftClose, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/logo.png";
 
@@ -168,12 +168,16 @@ export default function Sidebar({
       >
         {collapsed ? (
           <button
-            className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors p-0.5 group"
             onClick={onToggle}
-            title="Mở menu"
+            title="Mở rộng thanh bên"
             aria-label="Mở rộng thanh bên"
           >
-            <PanelLeftOpen size={16} />
+            <img
+              src={logoImg}
+              alt="Logo"
+              className="h-7 w-7 shrink-0 object-contain group-hover:scale-105 transition-transform"
+            />
           </button>
         ) : (
           <>

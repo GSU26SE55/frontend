@@ -12,10 +12,10 @@ export function AnalyticsDashboard({ sites }: { sites: SiteOption[] }) {
   });
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto min-h-full">
       <div>
-        <h1 className="text-lg font-semibold">Analytics & Reports</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl lg:text-2xl font-bold text-foreground">Analytics & Reports</h1>
+        <p className="text-xs lg:text-sm text-muted-foreground mt-1">
           Tổng quan pin và báo cáo vận hành — lọc theo site và khoảng thời gian.
         </p>
       </div>

@@ -150,14 +150,14 @@ export default function StaffDashboardPage() {
   const showNotifs = notifLoading || notifications.length > 0;
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-3 p-3 lg:p-4 overflow-hidden">
+    <div className="min-h-full flex flex-col gap-4 p-4 lg:p-6 overflow-y-auto space-y-1">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4 shrink-0">
+      <div className="flex items-center justify-between gap-4 shrink-0 pb-1">
         <div className="min-w-0">
-          <p className="text-[10.5px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Staff · Bảng làm việc
           </p>
-          <h1 className="text-lg font-semibold text-foreground leading-tight truncate">
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight truncate mt-0.5">
             Ticket được giao & rủi ro SLA
           </h1>
         </div>
@@ -173,46 +173,46 @@ export default function StaffDashboardPage() {
       </div>
 
       {/* ── KPI strip ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 shrink-0">
         <DashboardKpi
           label="Đang phụ trách"
           value={statsLoading ? "--" : openCount}
           sub="tickets"
-          icon={<FileText className="size-3.5" />}
+          icon={<FileText className="size-4" />}
         />
         <DashboardKpi
           label="Sắp breach"
           value={statsLoading ? "--" : nearBreach}
           sub="≤ 25%"
-          icon={<Clock className="size-3.5" />}
+          icon={<Clock className="size-4" />}
           accent={nearBreach > 0 ? "var(--p3)" : undefined}
         />
         <DashboardKpi
           label="Đã quá hạn"
           value={statsLoading ? "--" : breachedCount}
           sub="tickets"
-          icon={<AlertTriangle className="size-3.5" />}
+          icon={<AlertTriangle className="size-4" />}
           accent={breachedCount > 0 ? "var(--p1)" : undefined}
         />
         <DashboardKpi
           label="Đã xử lý"
           value={statsLoading ? "--" : resolvedCount}
           sub="tickets"
-          icon={<CheckCircle className="size-3.5" />}
+          icon={<CheckCircle className="size-4" />}
           accent="var(--ok)"
         />
         <DashboardKpi
           label="SLA met"
           value={statsLoading ? "--" : slaText}
           hint={`${sla?.breached ?? 0} breach`}
-          icon={<ShieldCheck className="size-3.5" />}
+          icon={<ShieldCheck className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
           label="Thông báo mới"
           value={unreadLoading ? "--" : unread}
           sub="chưa đọc"
-          icon={<Bell className="size-3.5" />}
+          icon={<Bell className="size-4" />}
           accent={unread > 0 ? "var(--p3)" : undefined}
         />
       </div>
@@ -223,13 +223,13 @@ export default function StaffDashboardPage() {
         </div>
       )}
 
-      {/* ── Bento cố định 3×2, KHÔNG cuộn trang ── */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2 gap-3 overflow-hidden">
+      {/* ── Bento Grid ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[580px] flex-1">
         {/* [Danh sách thẻ] bề mặt làm việc chính */}
         <DashboardPanel
           title={OVERVIEW_PANELS.staff.priority}
           desc="Sắp theo % SLA còn lại"
-          className="lg:col-span-2 min-h-0"
+          className="lg:col-span-2 min-h-[280px]"
           bodyClassName="overflow-y-auto"
         >
           {isLoading ? (
@@ -265,7 +265,7 @@ export default function StaffDashboardPage() {
           desc="met / (met + breach)"
           sla={sla}
           isLoading={statsLoading}
-          className="min-h-0"
+          className="min-h-[280px]"
         />
 
         {/* [Donut] cơ cấu rủi ro trên ticket đang mở */}
@@ -273,7 +273,7 @@ export default function StaffDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.slaRisk}
             desc="Trên ticket đang mở"
-            className="min-h-0"
+            className="min-h-[280px]"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -292,14 +292,14 @@ export default function StaffDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.ticketStatus}
             desc={`${totalTickets} ticket của tôi`}
-            className="min-h-0"
+            className="min-h-[280px]"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
             ) : (
               <ChartContainer
                 config={statusBarConfig}
-                className="h-full w-full aspect-auto min-h-0"
+                className="h-full w-full aspect-auto min-h-[200px]"
               >
                 <BarChart
                   accessibilityLayer
@@ -311,16 +311,16 @@ export default function StaffDashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={78}
+                    width={84}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fontSize: 10.5 }}
+                    tick={{ fontSize: 11.5, fontWeight: 500 }}
                   />
                   <ChartTooltip
                     cursor={false}
                     content={<ChartTooltipContent hideLabel />}
                   />
-                  <Bar dataKey="value" radius={4} maxBarSize={16}>
+                  <Bar dataKey="value" radius={4} maxBarSize={18}>
                     {statusBuckets.map((b) => (
                       <Cell key={b.name} fill={b.fill} />
                     ))}
@@ -336,7 +336,7 @@ export default function StaffDashboardPage() {
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.recentNotifications}
             desc={`${unread} chưa đọc`}
-            className="min-h-0"
+            className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >
             {notifLoading ? (
@@ -350,9 +350,9 @@ export default function StaffDashboardPage() {
                 {notifications.map((n) => {
                   const isUnread = n.status !== NotificationStatusEnum.Read;
                   return (
-                    <li key={n.id} className="flex gap-2 items-start">
+                    <li key={n.id} className="flex gap-2.5 items-start py-0.5">
                       <span
-                        className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
+                        className="mt-1.5 w-2 h-2 rounded-full shrink-0"
                         style={{
                           background: isUnread
                             ? "var(--p3)"
@@ -362,18 +362,18 @@ export default function StaffDashboardPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline justify-between gap-2">
                           <span
-                            className={`text-xs truncate ${
-                              isUnread ? "font-semibold" : "font-medium"
+                            className={`text-xs lg:text-sm truncate ${
+                              isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
                             }`}
                           >
                             {n.title}
                           </span>
-                          <span className="font-mono-num text-[10px] text-muted-foreground shrink-0">
+                          <span className="font-mono-num text-xs text-muted-foreground shrink-0">
                             {fmtDateTime(n.createdAt)}
                           </span>
                         </div>
                         {n.body && (
-                          <p className="text-[11px] text-muted-foreground truncate">
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
                             {n.body}
                           </p>
                         )}
