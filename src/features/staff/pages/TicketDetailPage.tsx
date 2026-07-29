@@ -527,7 +527,7 @@ export default function TicketDetailPage() {
         {/* Right: Sidebar — luôn mount, animate width (đồng bộ sidebar trái) */}
         <aside
           className={cn(
-            "shrink-0 border-l border-border overflow-hidden transition-all duration-200",
+            "shrink-0 border-l border-border overflow-hidden",
             sidebarOpen ? "w-75" : "w-8",
           )}
         >

@@ -283,15 +283,15 @@
   animation: fade-up 0.28s ease both;
 }
 
-/* Page enter — fade + slide nhẹ khi vào 1 trang (dùng ở wrapper trang) */
+/* Page enter — fade khi vào 1 trang (dùng ở wrapper trang). Không dịch
+   chuyển vị trí (translateY) — tránh cảm giác nội dung "xê dịch" mỗi lần
+   chuyển route. */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 .page-enter {

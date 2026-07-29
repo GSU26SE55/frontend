@@ -5,6 +5,7 @@ import {
   fullNameField,
   optionalPhoneField,
   passwordField,
+  birthDateField,
 } from "@/shared/schemas/common.schema";
 
 export const inviteAccountSchema = z.object({
@@ -21,7 +22,7 @@ export const createAccountSchema = z
     password: passwordField,
     confirmPassword: z.string(),
     phoneNumber: optionalPhoneField,
-    dateOfBirth: z.string().optional(),
+    dateOfBirth: birthDateField,
     address: z.string().optional(),
     roleId: z.string().min(1, "Cần chọn role"),
   })
@@ -33,7 +34,7 @@ export const createAccountSchema = z
 export const editAccountSchema = z.object({
   fullName: fullNameField,
   phoneNumber: optionalPhoneField,
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: birthDateField,
   address: z.string().optional(),
 });
 

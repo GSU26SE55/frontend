@@ -203,6 +203,7 @@ export default function SensorHistoryTable({
         <DateTimePicker
           value={fromLocal}
           onChange={setFromLocal}
+          max={toLocal ? new Date(toLocal) : new Date()}
           className="h-8 w-52"
         />
       </label>
@@ -211,6 +212,8 @@ export default function SensorHistoryTable({
         <DateTimePicker
           value={toLocal}
           onChange={setToLocal}
+          min={fromLocal ? new Date(fromLocal) : undefined}
+          max={new Date()}
           className="h-8 w-52"
         />
       </label>
