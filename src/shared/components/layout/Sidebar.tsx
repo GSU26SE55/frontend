@@ -31,7 +31,11 @@ interface SidebarProps {
 // Khi 1 item khác trong sidebar có path CỤ THỂ HƠN cũng khớp (vd "Hàng chờ"
 // /manager/tickets/queue là con của "Tickets"), chỉ item cụ thể hơn được active —
 // tránh 2 mục cùng sáng lên khi đứng ở /manager/tickets/queue.
-function isPathActive(path: string, pathname: string, allPaths: string[]): boolean {
+function isPathActive(
+  path: string,
+  pathname: string,
+  allPaths: string[],
+): boolean {
   const matches = (p: string) => pathname === p || pathname.startsWith(`${p}/`);
   if (!matches(path)) return false;
   return !allPaths.some(
@@ -96,13 +100,19 @@ function Section({
           </p>
         ))}
 
-      {/* Items */}
+      {/* Items — khi sidebar collapsed, luôn hiện đầy đủ icon bất kể state
+          open/close của section (open chỉ có ý nghĩa để ẩn/hiện label khi
+          sidebar mở rộng — collapsed không có label để mà đóng). */}
       <div
         className="overflow-hidden transition-all duration-200"
-        style={{
-          maxHeight: open ? `${section.items.length * 42}px` : "0px",
-          opacity: open ? 1 : 0,
-        }}
+        style={
+          sidebarCollapsed
+            ? undefined
+            : {
+                maxHeight: open ? `${section.items.length * 42}px` : "0px",
+                opacity: open ? 1 : 0,
+              }
+        }
       >
         <ul className="space-y-0.5">
           {section.items.map((item) => {
@@ -206,7 +216,10 @@ export default function Sidebar({
       </div>
 
       {/* ── Navigation ── */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-3">
+      <nav
+        className="flex-1 overflow-y-auto py-3 px-2 space-y-3"
+        style={{ scrollbarGutter: "stable" }}
+      >
         {sections.map((section, si) => (
           <Section
             key={si}
