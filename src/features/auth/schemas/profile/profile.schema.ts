@@ -2,13 +2,14 @@ import { z } from "zod";
 import {
   fullNameField,
   optionalPhoneField,
+  birthDateField,
 } from "@/shared/schemas/common.schema";
 
 export const profileSchema = z.object({
   fullName: fullNameField,
   phoneNumber: optionalPhoneField,
   address: z.string().optional(),
-  birthDate: z.string().optional(),
+  birthDate: birthDateField,
   timeZone: z.string().optional(),
 });
 

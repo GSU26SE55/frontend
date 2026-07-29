@@ -107,6 +107,10 @@ interface DateTimePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Chặn chọn thời điểm < min. */
+  min?: Date;
+  /** Chặn chọn thời điểm > max (vd: `new Date()` — không cho chọn tương lai). */
+  max?: Date;
 }
 
 /** Thay thế <Input type="datetime-local"> — value/onChange giữ nguyên dạng chuỗi "yyyy-MM-ddTHH:mm". */
@@ -117,10 +121,18 @@ export function DateTimePicker({
   placeholder = "Chọn ngày giờ",
   disabled,
   className,
+  min,
+  max,
 }: DateTimePickerProps) {
   const [open, setOpen] = useState(false);
   const selected = parseDateTimeValue(value);
   const timeValue = selected ? format(selected, "HH:mm") : "";
+
+  const clamp = (date: Date): Date => {
+    if (min && date < min) return new Date(min);
+    if (max && date > max) return new Date(max);
+    return date;
+  };
 
   const commit = (date: Date | undefined, time: string) => {
     if (!date) {
@@ -130,7 +142,7 @@ export function DateTimePicker({
     const [hours, minutes] = time ? time.split(":").map(Number) : [0, 0];
     const next = new Date(date);
     next.setHours(hours ?? 0, minutes ?? 0, 0, 0);
-    onChange(format(next, DATETIME_FORMAT));
+    onChange(format(clamp(next), DATETIME_FORMAT));
   };
 
   return (
@@ -159,6 +171,10 @@ export function DateTimePicker({
           locale={vi}
           selected={selected}
           defaultMonth={selected}
+          disabled={[
+            ...(min ? [{ before: min }] : []),
+            ...(max ? [{ after: max }] : []),
+          ]}
           onSelect={(date) => commit(date, timeValue || "00:00")}
         />
         <div className="flex items-center gap-2 border-t border-border p-2.5">

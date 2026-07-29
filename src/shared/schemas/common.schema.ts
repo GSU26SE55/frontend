@@ -61,3 +61,12 @@ export const coordField = (label: string, min: number, max: number) =>
         (!isNaN(Number(v)) && Number(v) >= min && Number(v) <= max),
       `${label} phải trong khoảng ${min} đến ${max}`,
     );
+
+/** Ngày sinh dạng "yyyy-MM-dd" — không bắt buộc, không được ở tương lai. */
+export const birthDateField = z
+  .string()
+  .optional()
+  .refine(
+    (v) => !v || new Date(v) <= new Date(),
+    "Ngày sinh không được ở tương lai",
+  );
