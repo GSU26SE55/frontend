@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReadingHistory } from "@/shared/hooks/battery/useReadingHistory";
@@ -200,19 +200,17 @@ export default function SensorHistoryTable({
     <div className="flex flex-wrap items-end gap-3 px-5 py-3 border-b border-border">
       <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
         Từ
-        <Input
-          type="datetime-local"
+        <DateTimePicker
           value={fromLocal}
-          onChange={(e) => setFromLocal(e.target.value)}
+          onChange={setFromLocal}
           className="h-8 w-52"
         />
       </label>
       <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
         Đến
-        <Input
-          type="datetime-local"
+        <DateTimePicker
           value={toLocal}
-          onChange={(e) => setToLocal(e.target.value)}
+          onChange={setToLocal}
           className="h-8 w-52"
         />
       </label>

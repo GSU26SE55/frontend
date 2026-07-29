@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   Table,
   TableBody,
@@ -231,17 +231,17 @@ export default function EnvironmentalIncidentsView({
           </Select>
         )}
 
-        <Input
-          type="date"
+        <DatePicker
           className="w-40"
-          value={filters.from || ""}
-          onChange={(e) => setFilter("from", e.target.value || undefined)}
+          value={filters.from}
+          onChange={(v) => setFilter("from", v)}
+          max={filters.to}
         />
-        <Input
-          type="date"
+        <DatePicker
           className="w-40"
-          value={filters.to || ""}
-          onChange={(e) => setFilter("to", e.target.value || undefined)}
+          value={filters.to}
+          onChange={(v) => setFilter("to", v)}
+          min={filters.from}
         />
 
         {hasActiveFilter && (

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import {
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFileBlobUrl } from "@/shared/hooks/file/useFileBlobUrl";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   profileSchema,
   type ProfileFormValues,
@@ -90,6 +91,7 @@ const ProfilePage = () => {
     register,
     handleSubmit,
     setError,
+    control,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -336,7 +338,17 @@ const ProfilePage = () => {
           {/* Ngày sinh */}
           <div className="space-y-1.5">
             <Label className="text-xs">Ngày sinh</Label>
-            <Input type="date" {...register("birthDate")} className="h-9" />
+            <Controller
+              control={control}
+              name="birthDate"
+              render={({ field }) => (
+                <DatePicker
+                  value={field.value}
+                  onChange={(v) => field.onChange(v ?? "")}
+                  className="h-9"
+                />
+              )}
+            />
           </div>
 
           {/* Múi giờ */}

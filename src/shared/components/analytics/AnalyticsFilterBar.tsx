@@ -1,5 +1,5 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   Select,
   SelectContent,
@@ -70,27 +70,21 @@ export function AnalyticsFilterBar({
 
       <div className="flex flex-col gap-1">
         <Label className="text-[11px] text-muted-foreground">Từ ngày</Label>
-        <Input
-          type="date"
+        <DatePicker
           className="w-40"
-          value={filter.from ?? ""}
-          max={filter.to || undefined}
-          onChange={(e) =>
-            onChange({ ...filter, from: e.target.value || undefined })
-          }
+          value={filter.from}
+          max={filter.to}
+          onChange={(v) => onChange({ ...filter, from: v })}
         />
       </div>
 
       <div className="flex flex-col gap-1">
         <Label className="text-[11px] text-muted-foreground">Đến ngày</Label>
-        <Input
-          type="date"
+        <DatePicker
           className="w-40"
-          value={filter.to ?? ""}
-          min={filter.from || undefined}
-          onChange={(e) =>
-            onChange({ ...filter, to: e.target.value || undefined })
-          }
+          value={filter.to}
+          min={filter.from}
+          onChange={(v) => onChange({ ...filter, to: v })}
         />
       </div>
 

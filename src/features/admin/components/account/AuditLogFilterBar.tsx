@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 
 const ALL = "Tất cả hành động";
 
@@ -82,20 +83,20 @@ export default function AuditLogFilterBar({
 
       <div className="space-y-1">
         <Label className="text-xs">Từ ngày</Label>
-        <Input
-          type="date"
-          value={values.dateFrom ?? ""}
-          onChange={(e) => onChange("dateFrom", e.target.value || undefined)}
+        <DatePicker
+          value={values.dateFrom}
+          onChange={(v) => onChange("dateFrom", v)}
+          max={values.dateTo}
           className="w-full lg:w-40"
         />
       </div>
 
       <div className="space-y-1">
         <Label className="text-xs">Đến ngày</Label>
-        <Input
-          type="date"
-          value={values.dateTo ?? ""}
-          onChange={(e) => onChange("dateTo", e.target.value || undefined)}
+        <DatePicker
+          value={values.dateTo}
+          onChange={(v) => onChange("dateTo", v)}
+          min={values.dateFrom}
           className="w-full lg:w-40"
         />
       </div>

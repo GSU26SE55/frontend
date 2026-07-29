@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   createCalibrationSchema,
@@ -37,11 +38,14 @@ export default function CalibrationFormDialog({
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateCalibrationForm>({
     resolver: zodResolver(createCalibrationSchema),
     defaultValues: { scale: 1, offset: 0 },
   });
+
+  const calibratedAt = useWatch({ control, name: "calibratedAt" });
 
   const { mutateAsync: createCalibration } = useCreateCalibration(deviceId);
 
@@ -135,10 +139,16 @@ export default function CalibrationFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="calibratedAt">Ngày calibration *</Label>
-              <Input
-                id="calibratedAt"
-                type="date"
-                {...register("calibratedAt")}
+              <Controller
+                control={control}
+                name="calibratedAt"
+                render={({ field }) => (
+                  <DatePicker
+                    id="calibratedAt"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                  />
+                )}
               />
               {errors.calibratedAt && (
                 <p className="text-sm text-destructive">
@@ -148,7 +158,18 @@ export default function CalibrationFormDialog({
             </div>
             <div className="space-y-1">
               <Label htmlFor="expiresAt">Ngày hết hạn</Label>
-              <Input id="expiresAt" type="date" {...register("expiresAt")} />
+              <Controller
+                control={control}
+                name="expiresAt"
+                render={({ field }) => (
+                  <DatePicker
+                    id="expiresAt"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    min={calibratedAt || undefined}
+                  />
+                )}
+              />
               {errors.expiresAt && (
                 <p className="text-sm text-destructive">
                   {errors.expiresAt.message}

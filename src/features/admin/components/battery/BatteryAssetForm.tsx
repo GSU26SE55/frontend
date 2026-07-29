@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   batteryAssetFormSchema,
@@ -65,10 +67,13 @@ export default function BatteryAssetForm({
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<BatteryAssetFormValues>({
     resolver: zodResolver(batteryAssetFormSchema),
   });
+
+  const installDate = useWatch({ control, name: "installDate" });
 
   const { mutateAsync: createAsset } = useCreateBatteryAsset();
   const { mutateAsync: updateAsset } = useUpdateBatteryAsset(
@@ -205,10 +210,17 @@ export default function BatteryAssetForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="installDate">Ngày lắp đặt *</Label>
-              <Input
-                id="installDate"
-                type="date"
-                {...register("installDate")}
+              <Controller
+                control={control}
+                name="installDate"
+                render={({ field }) => (
+                  <DatePicker
+                    id="installDate"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    max={format(new Date(), "yyyy-MM-dd")}
+                  />
+                )}
               />
               {errors.installDate && (
                 <p className="text-sm text-destructive">
@@ -218,10 +230,17 @@ export default function BatteryAssetForm({
             </div>
             <div className="space-y-1">
               <Label htmlFor="warrantyEndDate">Hết bảo hành</Label>
-              <Input
-                id="warrantyEndDate"
-                type="date"
-                {...register("warrantyEndDate")}
+              <Controller
+                control={control}
+                name="warrantyEndDate"
+                render={({ field }) => (
+                  <DatePicker
+                    id="warrantyEndDate"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    min={installDate || undefined}
+                  />
+                )}
               />
             </div>
           </div>
