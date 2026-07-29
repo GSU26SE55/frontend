@@ -114,6 +114,13 @@ export default function DeviceCommandDialog({
                       onValueChange={(v) =>
                         field.onChange(v === CUSTOM ? "" : (v ?? ""))
                       }
+                      items={[
+                        ...IOT_COMMAND_TYPES.map((t) => ({
+                          value: t,
+                          label: t,
+                        })),
+                        { value: CUSTOM, label: "Khác (tự nhập)…" },
+                      ]}
                     >
                       <SelectTrigger>
                         <SelectValue />

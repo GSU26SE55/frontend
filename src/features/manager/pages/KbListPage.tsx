@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -179,6 +178,10 @@ export default function KbListPage() {
             onValueChange={(v: string | null) =>
               setFilter("category", v || undefined)
             }
+            items={[
+              { value: null, label: "Tất cả danh mục" },
+              ...KB_CATEGORY_OPTIONS,
+            ]}
           >
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Tất cả danh mục" />
@@ -198,6 +201,13 @@ export default function KbListPage() {
             onValueChange={(v: string | null) =>
               setFilter("status", v || undefined)
             }
+            items={[
+              { value: null, label: "Tất cả trạng thái" },
+              ...STATUS_OPTIONS.map((s) => ({
+                value: s,
+                label: KbArticleStatusLabel[s],
+              })),
+            ]}
           >
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Tất cả trạng thái" />
@@ -234,29 +244,25 @@ export default function KbListPage() {
         )}
       </div>
 
-      <Card className="gap-0 py-0 overflow-hidden">
-        {isError ? (
-          <ErrorState
-            message={loadFailed("bài viết")}
-            onRetry={() => refetch()}
-          />
-        ) : (
-          <KbArticleTable
-            data={data?.items ?? []}
-            isLoading={isLoading}
-            pageNumber={data?.pageNumber ?? 1}
-            pageSize={data?.pageSize ?? 10}
-            hasFilter={hasActiveFilter}
-            onResetFilter={resetFilters}
-            onPublish={(a) => publish(a.id)}
-            onArchive={(a) => archive(a.id)}
-            onMarkHelpful={(a) => markHelpful(a.id)}
-            onEdit={(a) => navigate(`/manager/kb/${a.id}/edit`)}
-            onCopy={(a) => handleCopy(a.id)}
-            sort={sort}
-          />
-        )}
-      </Card>
+      {isError ? (
+        <ErrorState
+          message={loadFailed("bài viết")}
+          onRetry={() => refetch()}
+        />
+      ) : (
+        <KbArticleTable
+          data={data?.items ?? []}
+          isLoading={isLoading}
+          hasFilter={hasActiveFilter}
+          onResetFilter={resetFilters}
+          onPublish={(a) => publish(a.id)}
+          onArchive={(a) => archive(a.id)}
+          onMarkHelpful={(a) => markHelpful(a.id)}
+          onEdit={(a) => navigate(`/manager/kb/${a.id}/edit`)}
+          onCopy={(a) => handleCopy(a.id)}
+          sort={sort}
+        />
+      )}
 
       {data && (
         <DataPagination
@@ -267,6 +273,7 @@ export default function KbListPage() {
           hasNextPage={data.hasNextPage}
           hasPreviousPage={data.hasPreviousPage}
           onPageChange={(p) => setFilter("pageNumber", p)}
+          onPageSizeChange={(s) => setFilter("pageSize", s)}
         />
       )}
     </div>

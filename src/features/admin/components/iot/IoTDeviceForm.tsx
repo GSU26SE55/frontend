@@ -185,6 +185,10 @@ export default function IoTDeviceForm({
                 <Select
                   value={field.value != null ? String(field.value) : null}
                   onValueChange={(v) => field.onChange(Number(v))}
+                  items={STATUS_OPTIONS.map((o) => ({
+                    value: String(o.value),
+                    label: o.label,
+                  }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn trạng thái" />
@@ -231,6 +235,12 @@ export default function IoTDeviceForm({
               <Select
                 value={field.value ?? null}
                 onValueChange={field.onChange}
+                items={
+                  firmwareData?.items.map((f) => ({
+                    value: f.id,
+                    label: `${f.version} (${f.hardwareRevision})`,
+                  })) ?? []
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Không đặt target" />

@@ -122,7 +122,12 @@ function useAuditTabState() {
     }
     setPageNumber(1);
   };
-  const sort: ServerSortState = { sortBy, sortDir, toggleSort };
+  const setSort = (key: string | null, dir: SortDirection) => {
+    setSortBy(key);
+    setSortDir(dir);
+    setPageNumber(1);
+  };
+  const sort: ServerSortState = { sortBy, sortDir, toggleSort, setSort };
 
   return {
     filters,

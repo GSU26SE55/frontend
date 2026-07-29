@@ -28,15 +28,6 @@ export function useAdminKbDetail(id: string) {
   });
 }
 
-// List bài mẫu (chọn khi tạo bài mới). enabled: bật khi ở trang create.
-export function useAdminKbTemplates(enabled = true) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.templates(),
-    queryFn: () => adminKbService.getTemplates().then((r) => r.data.data),
-    enabled,
-  });
-}
-
 export function useAdminKbVersions(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.versions(id),
@@ -113,14 +104,6 @@ export function useUpdateKbArticle() {
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
-  });
-}
-
-export function useCopyKbTemplate() {
-  return useMutation({
-    mutationFn: (id: string) =>
-      adminKbService.copyTemplate(id).then((r) => r.data.data),
-    onError: (error) => handleErrorApi({ error }),
   });
 }
 

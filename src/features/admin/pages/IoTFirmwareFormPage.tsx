@@ -148,6 +148,16 @@ export default function IoTFirmwareFormPage() {
                   <Select
                     value={field.value != null ? String(field.value) : null}
                     onValueChange={(v) => field.onChange(Number(v))}
+                    items={[
+                      {
+                        value: String(IotFirmwareChannelEnum.Stable),
+                        label: "Stable",
+                      },
+                      {
+                        value: String(IotFirmwareChannelEnum.Beta),
+                        label: "Beta",
+                      },
+                    ]}
                   >
                     <SelectTrigger>
                       <SelectValue />

@@ -51,6 +51,10 @@ export default function AuditLogFilterBar({
           onValueChange={(v) =>
             onChange("action", v && v !== ALL ? v : undefined)
           }
+          items={[
+            { value: ALL, label: ALL },
+            ...actionOptions.map((a) => ({ value: a, label: a })),
+          ]}
         >
           <SelectTrigger className="w-full lg:w-56">
             <SelectValue placeholder="Tất cả hành động" />

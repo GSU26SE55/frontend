@@ -76,6 +76,10 @@ export default function DataPagination({
             <Select
               value={String(pageSize)}
               onValueChange={(v) => onPageSizeChange(Number(v))}
+              items={pageSizeOptions.map((s) => ({
+                value: String(s),
+                label: String(s),
+              }))}
             >
               <SelectTrigger className="h-8 w-16">
                 <SelectValue />

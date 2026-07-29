@@ -191,29 +191,27 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
             : noData("bài blog")}
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((b) => (
             <Card
               key={b.id}
               onClick={() => navigate(`${basePath}/blog/${b.id}`)}
               className="hover:bg-accent/40 cursor-pointer p-4 transition-colors"
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-medium">{b.title}</h3>
-                  <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
-                    {b.summary}
-                  </p>
-                  <p className="text-muted-foreground mt-1.5 font-mono text-[11px]">
-                    /{b.slug} &middot; v{b.currentVersion} &middot;{" "}
-                    {format(new Date(b.createdAt), "dd/MM/yyyy")}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                  <BlogStatusBadge status={b.status} />
-                  <BlogOriginBadge origin={b.origin} />
-                </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <BlogStatusBadge status={b.status} />
+                <BlogOriginBadge origin={b.origin} />
               </div>
+              <h3 className="mt-1.5 line-clamp-2 text-sm font-medium leading-snug">
+                {b.title}
+              </h3>
+              <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
+                {b.summary}
+              </p>
+              <p className="text-muted-foreground mt-3 border-t border-border/60 pt-2.5 font-mono text-[11px]">
+                /{b.slug} &middot; v{b.currentVersion} &middot;{" "}
+                {format(new Date(b.createdAt), "dd/MM/yyyy")}
+              </p>
             </Card>
           ))}
         </div>

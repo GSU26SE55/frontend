@@ -103,6 +103,7 @@ export default function ManualIncidentDialog({
                 <Select
                   value={field.value ?? ""}
                   onValueChange={field.onChange}
+                  items={sites.map((s) => ({ value: s.id, label: s.name }))}
                 >
                   <SelectTrigger id="siteId">
                     <SelectValue placeholder="Chọn site" />
@@ -133,6 +134,10 @@ export default function ManualIncidentDialog({
                 <Select
                   value={field.value != null ? String(field.value) : ""}
                   onValueChange={(v) => field.onChange(Number(v))}
+                  items={TYPE_OPTIONS.map((t) => ({
+                    value: String(t),
+                    label: incidentTypeLabel(t),
+                  }))}
                 >
                   <SelectTrigger id="incidentType">
                     <SelectValue placeholder="Chọn loại" />
@@ -163,6 +168,10 @@ export default function ManualIncidentDialog({
                 <Select
                   value={field.value != null ? String(field.value) : ""}
                   onValueChange={(v) => field.onChange(Number(v))}
+                  items={SEVERITY_OPTIONS.map((s) => ({
+                    value: String(s.value),
+                    label: s.label,
+                  }))}
                 >
                   <SelectTrigger id="severity">
                     <SelectValue placeholder="Chọn mức độ" />

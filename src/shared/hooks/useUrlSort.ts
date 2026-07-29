@@ -40,5 +40,9 @@ export function useUrlSort(
     }
   };
 
-  return { sortBy, sortDir, toggleSort };
+  const setSort = (key: string | null, dir: SortDirection) => {
+    setFilters({ sortBy: key ?? undefined, sortDir: key ? dir : undefined });
+  };
+
+  return { sortBy, sortDir, toggleSort, setSort };
 }

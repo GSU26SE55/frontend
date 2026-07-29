@@ -49,6 +49,10 @@ export function AnalyticsFilterBar({
               siteId: !v || v === ALL_SITES ? undefined : (v as string),
             })
           }
+          items={[
+            { value: ALL_SITES, label: "Toàn hệ thống" },
+            ...sites.map((s) => ({ value: s.id, label: s.name })),
+          ]}
         >
           <SelectTrigger className="w-52" size="sm">
             <SelectValue placeholder="Chọn site" />
@@ -101,6 +105,10 @@ export function AnalyticsFilterBar({
                 (v as ReportGranularityEnum) ?? ReportGranularityEnum.Day,
             })
           }
+          items={Object.values(ReportGranularityEnum).map((g) => ({
+            value: g,
+            label: GRANULARITY_LABEL[g],
+          }))}
         >
           <SelectTrigger className="w-32" size="sm">
             <SelectValue />

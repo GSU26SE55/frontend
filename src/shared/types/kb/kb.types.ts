@@ -83,13 +83,6 @@ export interface KbArticleDiffDTO {
   tagsDiff: DiffSection;
 }
 
-// copy-template (category dạng STRING — BE trả TicketCategoryEnum)
-export interface KbArticleTemplateDTO {
-  category: TicketCategoryEnum;
-  content: string;
-  tags: string[];
-}
-
 export interface KbArticleActionDTO {
   id: string;
   code: string;

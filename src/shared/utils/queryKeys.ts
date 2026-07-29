@@ -284,7 +284,6 @@ export const QUERY_KEY = {
       [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
     suggest: (params?: object) => [KEY.kb, "suggest", params] as const,
     usageStats: (id: string) => [KEY.kb, "usage-stats", id] as const,
-    templates: (params?: object) => [KEY.kb, "templates", params] as const,
   },
   blog: {
     // Public (chỉ bài Published)
