@@ -10,7 +10,6 @@ import type {
   KbArticleSummaryDTO,
   KbArticleVersionDTO,
   KbArticleDiffDTO,
-  KbArticleTemplateDTO,
   KbArticleActionDTO,
   KbArticleListParams,
   KbCompareParams,
@@ -94,24 +93,10 @@ export const adminKbService = {
         },
       },
     ),
-  copyTemplate: (id: string) =>
-    axiosInstance.get<CommonResponse<KbArticleTemplateDTO>>(
-      ENDPOINTS.KB_INTERNAL.COPY_TEMPLATE(id),
-    ),
   // Sao chép bài KB có sẵn → tạo bản mới (title "_copy", Draft), trả Id.
   duplicate: (id: string) =>
     axiosInstance.post<CommonResponse<KbArticleActionDTO>>(
       ENDPOINTS.KB_INTERNAL.DUPLICATE(id),
-    ),
-  // Danh sách bài mẫu (IsTemplate=true, Published) để chọn khi tạo bài mới.
-  getTemplates: () =>
-    axiosInstance.get<CommonResponse<PaginationResponse<KbArticleSummaryDTO>>>(
-      ENDPOINTS.KB_INTERNAL.TEMPLATES,
-      { params: { PageSize: 100 } },
-    ),
-  getTemplateDetail: (id: string) =>
-    axiosInstance.get<CommonResponse<KbArticleDTO>>(
-      ENDPOINTS.KB_INTERNAL.TEMPLATE_DETAIL(id),
     ),
 
   // ── Workflow (Manager/Admin) ──

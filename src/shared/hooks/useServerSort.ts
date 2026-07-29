@@ -7,6 +7,8 @@ export interface ServerSortState {
   sortDir: SortDirection;
   /** Toggle theo header click: asc → desc → clear (về default BE). */
   toggleSort: (key: string) => void;
+  /** Set trực tiếp key + direction — dùng cho UI dạng Select (không có state "clear" giữa chừng như toggleSort). */
+  setSort: (key: string | null, dir: SortDirection) => void;
 }
 
 /**
@@ -35,5 +37,10 @@ export function useServerSort(
     }
   };
 
-  return { sortBy, sortDir, toggleSort };
+  const setSort = (key: string | null, dir: SortDirection) => {
+    setSortBy(key);
+    setSortDir(dir);
+  };
+
+  return { sortBy, sortDir, toggleSort, setSort };
 }

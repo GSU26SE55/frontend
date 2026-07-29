@@ -240,7 +240,11 @@ export default function NotificationPreferencesSection() {
           name="timeZone"
           control={control}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={TIMEZONE_OPTIONS.map((tz) => ({ value: tz, label: tz }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn múi giờ" />
               </SelectTrigger>

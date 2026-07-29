@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   siteFormSchema,
@@ -52,6 +54,7 @@ export default function SiteFormDialog({
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<SiteFormValues>({
     resolver: zodResolver(siteFormSchema),
@@ -148,7 +151,18 @@ export default function SiteFormDialog({
 
           <div className="space-y-1">
             <Label htmlFor="installDate">Ngày lắp *</Label>
-            <Input id="installDate" type="date" {...register("installDate")} />
+            <Controller
+              control={control}
+              name="installDate"
+              render={({ field }) => (
+                <DatePicker
+                  id="installDate"
+                  value={field.value}
+                  onChange={(v) => field.onChange(v ?? "")}
+                  max={format(new Date(), "yyyy-MM-dd")}
+                />
+              )}
+            />
             {errors.installDate && (
               <p className="text-sm text-destructive">
                 {errors.installDate.message}

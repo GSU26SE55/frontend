@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   editStaffProfileSchema,
   addSkillSchema,
@@ -339,9 +340,15 @@ export default function EditStaffProfileDialog({
                   </div>
                   <div className="col-span-2 space-y-1.5">
                     <Label>Hết hạn chứng chỉ</Label>
-                    <Input
-                      type="date"
-                      {...skillForm.register("certifiedUntil")}
+                    <Controller
+                      control={skillForm.control}
+                      name="certifiedUntil"
+                      render={({ field }) => (
+                        <DatePicker
+                          value={field.value}
+                          onChange={(v) => field.onChange(v ?? "")}
+                        />
+                      )}
                     />
                   </div>
                 </div>

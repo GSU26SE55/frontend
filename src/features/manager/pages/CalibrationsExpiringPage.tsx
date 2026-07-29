@@ -44,6 +44,10 @@ export default function CalibrationsExpiringPage() {
         <Select
           value={String(filters.within)}
           onValueChange={(v) => setFilter("within", Number(v))}
+          items={WITHIN_OPTIONS.map((d) => ({
+            value: String(d),
+            label: `${d} ngày`,
+          }))}
         >
           <SelectTrigger size="sm" className="w-32">
             <SelectValue />

@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   editAccountSchema,
   type EditAccountFormValues,
@@ -35,6 +36,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors },
   } = useForm<EditAccountFormValues>({
     resolver: zodResolver(editAccountSchema),
@@ -106,7 +108,16 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>Ngày sinh</Label>
-              <Input type="date" {...register("dateOfBirth")} />
+              <Controller
+                control={control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <DatePicker
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                  />
+                )}
+              />
             </div>
           </div>
           <div className="space-y-1.5">

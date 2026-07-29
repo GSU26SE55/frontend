@@ -28,15 +28,6 @@ export function useManagerKbDetail(id: string) {
   });
 }
 
-// List bài mẫu (chọn khi tạo bài mới).
-export function useManagerKbTemplates(enabled = true) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.templates(),
-    queryFn: () => managerKbService.getTemplates().then((r) => r.data.data),
-    enabled,
-  });
-}
-
 export function useManagerKbVersions(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.versions(id),
@@ -110,14 +101,6 @@ export function useManagerUpdateKbArticle() {
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
-  });
-}
-
-export function useManagerCopyKbTemplate() {
-  return useMutation({
-    mutationFn: (id: string) =>
-      managerKbService.copyTemplate(id).then((r) => r.data.data),
-    onError: (error) => handleErrorApi({ error }),
   });
 }
 

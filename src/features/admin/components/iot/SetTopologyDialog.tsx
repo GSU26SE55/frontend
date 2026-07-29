@@ -113,7 +113,11 @@ export default function SetTopologyDialog({
               name="electricalTopology"
               control={control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  items={TOPOLOGY_OPTIONS}
+                >
                   <SelectTrigger id="electricalTopology">
                     <SelectValue placeholder="Chọn cách đấu nối điện" />
                   </SelectTrigger>

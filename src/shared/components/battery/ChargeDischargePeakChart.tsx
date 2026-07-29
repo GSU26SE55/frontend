@@ -148,7 +148,11 @@ export default function ChargeDischargePeakChart({
     <Card>
       <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base">Nạp/Xả đỉnh (A)</CardTitle>
-        <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
+        <Select
+          value={range}
+          onValueChange={(v) => setRange(v as RangeKey)}
+          items={RANGE_ITEMS}
+        >
           <SelectTrigger size="sm" className="w-28">
             <SelectValue />
           </SelectTrigger>

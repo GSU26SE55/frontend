@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   createAccountSchema,
   type CreateAccountFormValues,
@@ -185,7 +186,16 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>Ngày sinh</Label>
-              <Input type="date" {...register("dateOfBirth")} />
+              <Controller
+                control={control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <DatePicker
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                  />
+                )}
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Địa chỉ</Label>

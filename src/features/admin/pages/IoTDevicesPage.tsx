@@ -99,6 +99,13 @@ export default function IoTDevicesPage() {
         <Select
           value={filters.siteId || null}
           onValueChange={(v) => setFilter("siteId", v || undefined)}
+          items={[
+            { value: null, label: "Tất cả site" },
+            ...(sitesData?.items.map((s) => ({
+              value: s.id,
+              label: s.name,
+            })) ?? []),
+          ]}
         >
           <SelectTrigger size="sm" className="w-44">
             <SelectValue placeholder="Site" />
@@ -116,6 +123,13 @@ export default function IoTDevicesPage() {
         <Select
           value={filters.status || null}
           onValueChange={(v) => setFilter("status", v || undefined)}
+          items={[
+            { value: null, label: "Mọi trạng thái" },
+            ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          ]}
         >
           <SelectTrigger size="sm" className="w-40">
             <SelectValue placeholder="Trạng thái" />
