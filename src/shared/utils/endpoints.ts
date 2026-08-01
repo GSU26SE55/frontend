@@ -83,6 +83,8 @@ export const ENDPOINTS = {
     CHAT_TRANSLATE: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/translate`,
     CHAT_VOICE: (tid: string) => `/api/tickets/${tid}/chats/voice`,
+    CHAT_VOICE_RETRY: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/voice/retry`,
     // GH-133 Nhóm C — AI chats + download attachment
     CHAT_ATTACHMENT_DOWNLOAD: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}/download`, // C3

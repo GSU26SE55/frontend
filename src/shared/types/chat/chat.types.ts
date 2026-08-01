@@ -93,8 +93,9 @@ export interface ChatTranslateDTO {
   fromCache: boolean;
 }
 
-// POST /api/tickets/{id}/chats/voice (multipart/form-data) — response giống
-// TicketActionResponse dùng chung cho các action ticket khác.
+// POST /api/tickets/{id}/chats/voice (application/json — ChatAttachmentInput của
+// file audio đã upload sẵn qua FileStorage). Tạo chat placeholder + transcribe async;
+// response giống TicketActionResponse dùng chung cho các action ticket khác.
 export interface ChatVoiceActionDTO {
   id: string | null;
   ticketId: string | null;

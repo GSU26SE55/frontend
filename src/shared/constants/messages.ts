@@ -18,6 +18,7 @@ export const MESSAGES = {
     commentDeleted: "Đã xóa bình luận",
     fileScanning: "File đang được quét virus, vui lòng thử lại sau ít giây.",
     fileInfected: "File bị nhiễm virus — không thể tải xuống.",
+    voiceRetryQueued: "Đang chuyển đổi lại giọng nói...",
   },
 
   // Alerts / môi trường (shared/hooks)
