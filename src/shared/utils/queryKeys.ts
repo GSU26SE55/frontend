@@ -279,7 +279,6 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.manager.tickets, "list", params],
       queue: (params?: object) => [...KEY.manager.tickets, "queue", params],
-      queueCount: () => [...KEY.manager.tickets, "queue-count"],
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },

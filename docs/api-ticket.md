@@ -366,6 +366,17 @@ Phong cách gợi ý AI cho endpoint `POST /chats/suggest`.
 | `Resolution` | 3 | Đề xuất giải pháp xử lý |
 | `FollowUp` | 4 | Theo dõi tiến độ |
 
+### `VoiceTranscriptionStatusEnum`
+
+Trạng thái transcribe của một chat thoại (`TicketChatDTO.voiceTranscriptionStatus`). Serialize dạng **chuỗi**.
+
+| Giá trị | Ý nghĩa |
+|---|---|
+| `Pending` | Placeholder vừa tạo, đang chờ xếp hàng transcribe. `body` tạm rỗng |
+| `Processing` | Đang transcribe (Gemini). `body` vẫn tạm rỗng |
+| `Completed` | Transcribe xong — `body` chứa nội dung transcript |
+| `Failed` | Transcribe lỗi (Gemini rate limit / kết quả rỗng…). Cho phép gọi `POST .../voice/retry` |
+
 ---
 
 ## DTOs
@@ -478,6 +489,7 @@ Bao gồm tất cả field của `TicketDTO`, cộng thêm:
 | `attachments` | `TicketAttachmentDTO[]?` | Null trong GetList, có trong GetById | Danh sách attachment đầy đủ (chỉ khi GetById) |
 | `mentions` | `TicketChatMentionDTO[]` | Không (default `[]`) | Danh sách mention trong chat này |
 | `reactions` | `TicketChatReactionsAggregateDTO` | Không | Tổng hợp reaction theo loại |
+| `voiceTranscriptionStatus` | `VoiceTranscriptionStatusEnum?` | **Null với chat text thường** | Trạng thái transcribe của chat thoại (tạo qua `POST /chats/voice`). `null` = chat không phải voice. `Pending`/`Processing` = đang chờ/đang transcribe (body tạm rỗng), `Completed` = `body` đã có transcript, `Failed` = transcribe lỗi → cho phép `POST .../voice/retry` |
 
 **`TicketChatReactionsAggregateDTO`:**
 
@@ -831,7 +843,8 @@ Base path: `/api/tickets/{ticketId}/chats`
 | `POST` | `/api/tickets/{ticketId}/chats/sentiment-check` | Staff/Manager/Admin | AI phân tích tone Customer |
 | `POST` | `/api/tickets/{ticketId}/chats/summarize` | Staff/Manager/Admin | AI tóm tắt thread |
 | `POST` | `/api/tickets/{ticketId}/chats/{id}/translate` | Mọi role | Dịch nội dung chat |
-| `POST` | `/api/tickets/{ticketId}/chats/voice` | Mọi role | Upload audio → transcribe → tạo chat |
+| `POST` | `/api/tickets/{ticketId}/chats/voice` | Mọi role | Tạo chat thoại từ metadata file đã upload → transcribe async |
+| `POST` | `/api/tickets/{ticketId}/chats/{id}/voice/retry` | Mọi role | Retry transcribe chat thoại đã `Failed` |
 | `GET` | `/api/tickets/{ticketId}/chats/export-pdf` | Staff/Manager/Admin | Export PDF toàn bộ chat |
 | `POST` | `/api/tickets/{ticketId}/chats/{id}/escalation-review/ack` | Manager/Admin | ACK escalation review |
 
@@ -1093,24 +1106,35 @@ Base path: `/api/tickets/{ticketId}/chats`
 
 ### `POST /api/tickets/{ticketId}/chats/voice` (AI)
 
-**Mục đích:** Upload file audio → Gemini transcribe → tạo chat với nội dung transcribed + đính kèm audio trong `ticket_attachments`.
-**Auth:** Mọi role
-**Content-Type:** `multipart/form-data`
+**Mục đích:** Tạo **chat audio placeholder** từ metadata của file **đã upload sẵn** qua FileStorage, rồi **xếp hàng transcribe bất đồng bộ** (Gemini). Chat trả về ngay với `voiceTranscriptionStatus = "Pending"` và `body` tạm rỗng; khi transcribe xong BE cập nhật `body` = transcript + đẩy realtime.
 
-**Form field:** `audioFile` — file âm thanh
+> ⚠️ **Đổi so với bản cũ:** endpoint KHÔNG còn nhận `multipart/form-data` với `audioFile`. FE phải upload file audio lên FileStorage trước (`POST /api/files/upload`, `purpose = TicketAttachment`), lấy metadata (`fileId`, `fileName`, `contentType`, `sizeBytes`) rồi gửi JSON xuống endpoint này. Việc transcribe chạy nền — không block response.
+
+**Auth:** Mọi role
+**Content-Type:** `application/json`
+
+**Request body:** `ChatAttachmentInput` — metadata của file audio đã upload
+
+| Field | Type | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `fileId` | `Guid` | **Bắt buộc** | FileId trả về từ `POST /api/files/upload` |
+| `fileName` | `string` | **Bắt buộc** | Tên file gốc |
+| `contentType` | `string` | **Bắt buộc** | MIME type — phải nằm trong whitelist audio bên dưới |
+| `sizeBytes` | `int64` | **Bắt buộc** | Kích thước file (bytes) — BE validate 1 byte → 20 MB |
+| `url` | `string` | **Bắt buộc** | `publicUrl` của file vừa upload (BE dùng để fetch audio khi transcribe). Thiếu → `400` |
 
 **MIME types hỗ trợ** (từ `Chat:Voice:AllowedAudioMimeTypes`):
 `audio/mpeg` · `audio/wav` · `audio/ogg` · `audio/webm` · `audio/mp4` · `audio/flac`
 
-**Giới hạn:** 20MB / file
+**Giới hạn:** 20MB / file (đã enforce ở bước upload FileStorage)
 
-**Response `201`:** `TicketActionResponse`
+**Response `201`:** `TicketActionResponse` — `data.id` = ID chat placeholder vừa tạo.
 
 ```json
 {
   "isSuccess": true,
   "statusCode": 201,
-  "message": "Voice transcription thành công.",
+  "message": "Đã tạo tin nhắn thoại, đang xử lý transcribe.",
   "data": {
     "id": "guid-of-new-chat",
     "ticketId": "guid",
@@ -1120,17 +1144,26 @@ Base path: `/api/tickets/{ticketId}/chats`
 }
 ```
 
+> Chat vừa tạo có `voiceTranscriptionStatus = "Pending"`, `body = ""`. Theo dõi transcript qua realtime `ChatAdded`/cập nhật chat, hoặc refetch `GET /chats`. Khi `voiceTranscriptionStatus = "Failed"` → gọi `POST .../voice/retry`.
+
 **Lỗi:**
-- `400` — MIME không hỗ trợ hoặc file quá lớn
-- `404` — Không tìm thấy ticket
-- `422` — Transcription trả kết quả rỗng
-- `429` (wrap trong `isSuccess:false`) — Gemini rate limit
+- `400` — `fileId`/`fileName`/`contentType` thiếu, hoặc MIME không thuộc whitelist audio
+- `404` — Không tìm thấy ticket, hoặc `fileId` không tồn tại trên FileStorage
+- `422` — Transcription trả kết quả rỗng (chỉ khi transcribe đồng bộ; luồng async sẽ set `Failed` thay vì trả lỗi ở đây)
 
 ---
 
 ### `POST /api/tickets/{ticketId}/chats/{chatId}/voice/retry`
 
-**Auth:** user có quyền chat trên ticket. Không body. Chỉ retry chat có `voiceTranscriptionStatus = "Failed"`; response `202 Accepted`. `404` nếu chat không thuộc ticket; `409` nếu chat chưa failed hoặc không có audio attachment.
+**Mục đích:** Xếp hàng transcribe lại một chat thoại đã `Failed`. Dùng đúng audio attachment cũ — không upload lại.
+
+**Auth:** user có quyền chat trên ticket. **Không body.**
+
+**Response `202 Accepted`** — đã xếp hàng transcribe lại; `voiceTranscriptionStatus` quay về `Pending`.
+
+**Lỗi:**
+- `404` — chat không thuộc ticket
+- `409` — chat chưa ở trạng thái `Failed`, hoặc chat không có audio attachment
 
 ---
 

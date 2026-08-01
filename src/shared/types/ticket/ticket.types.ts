@@ -13,6 +13,8 @@ import type {
   TicketVerifyStatusEnum,
   TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
+import type { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
+export { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
 export {
   TicketStatusEnum,
   TicketPriorityEnum,
@@ -132,6 +134,9 @@ export interface TicketCommentDTO {
   // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
   editCount?: number;
   updatedAt?: string | null;
+  // Chat thoại (tạo qua POST /chats/voice): Pending/Processing = đang transcribe (body tạm rỗng),
+  // Completed = body đã có transcript, Failed = lỗi → cho phép retry. null với chat text thường.
+  voiceTranscriptionStatus?: VoiceTranscriptionStatusEnum | null;
 }
 
 export interface MaintenanceLogDTO {
@@ -293,8 +298,15 @@ export interface CommentAttachmentInput {
   sizeBytes?: number;
 }
 
+// @-mention gửi lên BE (POST /chats field `mentions`) — khớp record ChatMentionInput.
+export interface CommentMentionInput {
+  userId: string;
+  displayName: string;
+}
+
 export interface AddCommentPayload {
   body: string;
   isInternal: boolean;
   attachments?: CommentAttachmentInput[];
+  mentions?: CommentMentionInput[];
 }

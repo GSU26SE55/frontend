@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { EllipsisVertical, Globe, Lock, Sparkles } from "lucide-react";
+import {
+  EllipsisVertical,
+  Globe,
+  Loader2,
+  Lock,
+  RotateCw,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -36,14 +43,17 @@ import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import VoiceMessagePlayer from "@/shared/components/media/VoiceMessagePlayer";
 import ChatAiPanel from "@/shared/components/chat/ChatAiPanel";
 import ChatReactionBar from "@/shared/components/chat/ChatReactionBar";
+import { renderTextWithMentions } from "@/shared/components/chat/renderMentions";
 import {
   isFileId,
   useAudioAttachment,
 } from "@/shared/hooks/file/useAudioAttachment";
 import {
   ActorRoleEnum,
+  VoiceTranscriptionStatusEnum,
   type TicketCommentDTO,
 } from "@/shared/types/ticket/ticket.types";
+import { useRetryVoiceChat } from "@/shared/hooks/ticket/useTicketChatActions";
 import type { OutboxMessage } from "@/shared/types/chat/chat.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
@@ -103,12 +113,28 @@ function CommentBubbleContent({
 }: CommentBubbleContentProps) {
   const fileIds = (comment.attachmentFileIds ?? []).filter(isFileId);
   const hasBody = !!comment.body?.trim();
+  const voiceStatus = comment.voiceTranscriptionStatus ?? null;
+  // Chat thoại: BE gắn voiceTranscriptionStatus. Trước đây (transcribe đồng bộ) chỉ có
+  // body + 1 attachment audio nên phải hỏi metadata; luồng async có thể body rỗng
+  // (Pending/Processing/Failed) — vẫn là voice khi có status HOẶC (có body + 1 audio).
   const voiceCandidateId =
-    hasBody && fileIds.length === 1 ? fileIds[0] : undefined;
+    fileIds.length === 1 && (voiceStatus !== null || hasBody)
+      ? fileIds[0]
+      : undefined;
   const { isAudio } = useAudioAttachment(voiceCandidateId);
-  const isVoice = isAudio === true;
+  const isVoice = voiceStatus !== null || isAudio === true;
 
-  if (isVoice) {
+  const { mutate: retryVoice, isPending: retrying } = useRetryVoiceChat();
+
+  if (isVoice && voiceCandidateId) {
+    const isPending =
+      voiceStatus === VoiceTranscriptionStatusEnum.Pending ||
+      voiceStatus === VoiceTranscriptionStatusEnum.Processing;
+    const isFailed = voiceStatus === VoiceTranscriptionStatusEnum.Failed;
+    const statusHint = isOwn
+      ? "text-primary-foreground/85"
+      : "text-muted-foreground";
+
     return (
       <div className="group/bubble flex items-center gap-1">
         {isOwn && canShowActions && actionsMenu}
@@ -121,10 +147,46 @@ function CommentBubbleContent({
           )}
         >
           <VoiceMessagePlayer
-            fileId={voiceCandidateId!}
+            fileId={voiceCandidateId}
             transcript={displayBody}
             isOwn={isOwn}
           />
+          {isPending && (
+            <p
+              className={cn(
+                "mt-1.5 flex items-center gap-1 text-[11px]",
+                statusHint,
+              )}
+            >
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Đang chuyển giọng nói thành văn bản…
+            </p>
+          )}
+          {isFailed && (
+            <div
+              className={cn(
+                "mt-1.5 flex items-center gap-2 text-[11px]",
+                statusHint,
+              )}
+            >
+              <span>Không chuyển được giọng nói thành văn bản.</span>
+              {ticketId && (
+                <button
+                  type="button"
+                  disabled={retrying}
+                  onClick={() => retryVoice({ ticketId, chatId: comment.id })}
+                  className="inline-flex items-center gap-1 font-medium underline underline-offset-2 hover:opacity-80 disabled:opacity-50"
+                >
+                  {retrying ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RotateCw className="h-3 w-3" />
+                  )}
+                  Thử lại
+                </button>
+              )}
+            </div>
+          )}
         </div>
         {!isOwn && canShowActions && actionsMenu}
       </div>
@@ -143,7 +205,7 @@ function CommentBubbleContent({
               : "rounded-bl-sm bg-muted text-foreground",
           )}
         >
-          {displayBody}
+          {renderTextWithMentions(displayBody, isOwn)}
         </div>
         {!isOwn && canShowActions && actionsMenu}
       </div>
@@ -770,7 +832,7 @@ function PendingBubble({
     <div className="flex items-end gap-2 justify-end">
       <div className="flex max-w-[75%] flex-col items-end">
         <div className="rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-primary-foreground">
-          {message.payload.body}
+          {renderTextWithMentions(message.payload.body, true)}
         </div>
         {attachCount > 0 && (
           <span className="text-[10px] text-muted-foreground px-1 mt-0.5">

@@ -83,6 +83,8 @@ export const ENDPOINTS = {
     CHAT_TRANSLATE: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/translate`,
     CHAT_VOICE: (tid: string) => `/api/tickets/${tid}/chats/voice`,
+    CHAT_VOICE_RETRY: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/voice/retry`,
     // GH-133 Nhóm C — AI chats + download attachment
     CHAT_ATTACHMENT_DOWNLOAD: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}/download`, // C3
@@ -263,9 +265,6 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
-      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
-      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
-      QUEUE_COUNT: "/api/admin/tickets/queue/count",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
