@@ -13,7 +13,10 @@ import type {
   RejectPayload,
   EscalatePayload,
   AddCommentPayload,
+  ReprioritizePayload,
 } from "@/shared/types/ticket/ticket.types";
+import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
+import { KEY } from "@/shared/utils/queryKeys";
 import { MANAGER_MESSAGES } from "@/features/manager/constants/messages";
 
 export const useAdminTicketList = (params?: AdminTicketListParams) =>
@@ -195,6 +198,44 @@ export const useEscalateTicket = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
     onError: (error) => handleErrorApi({ error }),
+  });
+};
+
+/**
+ * Đổi mức ưu tiên ticket (Manager). SLA do BE tính lại — FE chỉ refetch.
+ *
+ * BE có side-effect: nếu priority mới vượt tier của Staff đang xử lý thì ticket bị
+ * tự escalate + hạ primary handler. Phát hiện qua `data.status === Escalated`
+ * (KHÔNG dùng `warnings` — handler re-prioritize không set field đó), khi đó phải
+ * invalidate cả participants vì assignee đã đổi.
+ */
+export const useReprioritizeTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ReprioritizePayload) =>
+      managerTicketService.reprioritize(id, payload).then((r) => r.data),
+    onSuccess: (res) => {
+      const autoEscalated = res.data?.status === TicketStatusEnum.Escalated;
+      toast.success(
+        autoEscalated
+          ? MANAGER_MESSAGES.ticket.reprioritizedWithEscalation
+          : MANAGER_MESSAGES.ticket.reprioritized,
+      );
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.activities(id),
+      });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+      if (autoEscalated) {
+        qc.invalidateQueries({ queryKey: [KEY.ticketParticipants] });
+      }
+    },
+    // KHÔNG gọi handleErrorApi ở đây — đây là mutation của form, lỗi phải đi qua
+    // try-catch + setError ở dialog để EntityError map được xuống input. Hook chỉ
+    // lo refetch: 409 nghĩa là state ticket đã đổi ở nơi khác, không auto-retry.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 

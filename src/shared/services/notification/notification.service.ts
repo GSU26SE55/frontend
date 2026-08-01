@@ -26,6 +26,14 @@ export const notificationService = {
       ENDPOINTS.NOTIFICATIONS.MARK_READ(id),
     ),
 
+  // PATCH — body rỗng. User chủ động MỞ notification (bấm deep link): BE set
+  // Status = Opened và ReadAt ??= now, nên không cần gọi kèm markRead.
+  // Idempotent: đã Opened rồi vẫn trả 200.
+  markOpened: (id: string) =>
+    axiosInstance.patch<CommonResponse<string>>(
+      ENDPOINTS.NOTIFICATIONS.OPENED(id),
+    ),
+
   // POST — body rỗng. data = số notification đã được mark.
   markAllRead: () =>
     axiosInstance.post<CommonResponse<number>>(

@@ -34,6 +34,19 @@ export const useMarkNotificationRead = () => {
   });
 };
 
+// User chủ động MỞ notification (bấm deep link) — mạnh hơn markRead, dùng để đo
+// open-rate thật của kênh push. BE tự set ReadAt nên KHÔNG cần gọi kèm markRead.
+export const useMarkNotificationOpened = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationService.markOpened(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY.notifications] });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+};
+
 export const useMarkAllRead = () => {
   const qc = useQueryClient();
   return useMutation({

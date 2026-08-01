@@ -279,6 +279,13 @@ export interface EscalatePayload {
   note?: string;
 }
 
+// POST /api/admin/tickets/{id}/re-prioritize — Manager đổi priority kèm lý do.
+// KHÔNG gửi managerId/managerName/ticketId: BE lấy identity từ JWT, ticket id từ URL.
+export interface ReprioritizePayload {
+  priority: TicketPriorityEnum;
+  reason: string;
+}
+
 export interface CommentAttachmentInput {
   fileId: string;
   fileName?: string;

@@ -19,6 +19,7 @@ import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog"
 import RejectDialog from "@/features/manager/components/ticket/RejectDialog";
 import TriageRejectDialog from "@/features/manager/components/ticket/TriageRejectDialog";
 import EscalateDialog from "@/features/manager/components/ticket/EscalateDialog";
+import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareIncidentDialog";
 import TicketActivityTimeline from "@/features/manager/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
@@ -72,6 +73,7 @@ type DialogType =
   | "reassign"
   | "reject"
   | "escalate"
+  | "reprioritize"
   | "incident"
   | null;
 
@@ -244,6 +246,16 @@ export default function TicketDetailPage() {
       TicketStatusEnum.Escalated,
     ] as TicketStatusEnum[]
   ).includes(status);
+  // Whitelist khớp TicketReprioritizeCommandHandler: mọi status ngoài 4 giá trị
+  // này đều bị BE trả 409 (kể cả Waiting* — khác allow-list của Escalate).
+  const canReprioritize = (
+    [
+      TicketStatusEnum.Open,
+      TicketStatusEnum.Assigned,
+      TicketStatusEnum.InProgress,
+      TicketStatusEnum.Escalated,
+    ] as TicketStatusEnum[]
+  ).includes(status);
   const canDeclareIncident = !ticket.isIncident;
 
   // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
@@ -337,6 +349,15 @@ export default function TicketDetailPage() {
               onClick={() => setDialog("escalate")}
             >
               Chuyển cấp
+            </Button>
+          )}
+          {canReprioritize && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDialog("reprioritize")}
+            >
+              Đổi mức ưu tiên
             </Button>
           )}
           {canDeclareIncident && (
@@ -938,6 +959,14 @@ export default function TicketDetailPage() {
       )}
       {dialog === "reject" && (
         <RejectDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "reprioritize" && (
+        <ReprioritizeDialog
+          ticketId={id}
+          currentPriority={ticket.priority}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "escalate" && (
         <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />

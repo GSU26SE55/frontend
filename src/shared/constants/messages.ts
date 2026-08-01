@@ -51,6 +51,9 @@ export const MESSAGES = {
   },
   notificationPrefs: {
     saved: "Đã lưu cài đặt thông báo",
+    matrixSaved: "Đã lưu tuỳ chọn theo nhóm",
+    matrixNoChange: "Chưa có thay đổi nào để lưu",
+    matrixSaveFailed: "Không lưu được tuỳ chọn theo nhóm",
   },
   file: {
     loadInfoFailed: "Lỗi khi tải thông tin tệp tin.",

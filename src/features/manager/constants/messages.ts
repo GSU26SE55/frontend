@@ -11,6 +11,10 @@ export const MANAGER_MESSAGES = {
     escalated: "Ticket đã được chuyển cấp",
     markedIncident: "Ticket đã được đánh dấu là Incident",
     commentAdded: "Đã thêm bình luận",
+    reprioritized: "Đã đổi mức ưu tiên ticket",
+    // BE tự escalate khi priority mới vượt tier của Staff đang xử lý.
+    reprioritizedWithEscalation:
+      "Đã đổi mức ưu tiên — hệ thống tự chuyển cấp vì Staff hiện tại không đủ tier",
   },
   kb: {
     created: "Đã tạo bài viết KB",

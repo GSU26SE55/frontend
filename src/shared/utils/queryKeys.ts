@@ -45,6 +45,7 @@ export const KEY = {
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
+    notificationTemplates: ["admin", "notificationTemplates"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -96,6 +97,8 @@ export const QUERY_KEY = {
   },
   notificationPreferences: {
     me: () => [KEY.notificationPreferences, "me"] as const,
+    matrix: () => [KEY.notificationPreferences, "matrix"] as const,
+    categories: () => [KEY.notificationPreferences, "categories"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,
@@ -205,6 +208,13 @@ export const QUERY_KEY = {
     },
     smsGateway: {
       list: (params?: object) => [...KEY.admin.smsGateway, "list", params],
+    },
+    notificationTemplates: {
+      list: (params?: object) => [
+        ...KEY.admin.notificationTemplates,
+        "list",
+        params,
+      ],
     },
     sagas: {
       list: (params?: object) => [...KEY.admin.sagas, "alert-ticket", params],

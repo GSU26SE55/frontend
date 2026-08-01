@@ -18,7 +18,10 @@ interface SiteDashboardCardProps {
 }
 
 export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
-  const activeOnly = Math.max(0, data.activeAssets - data.assetsWithActiveAlerts);
+  const activeOnly = Math.max(
+    0,
+    data.activeAssets - data.assetsWithActiveAlerts,
+  );
   const alertsCount = data.assetsWithActiveAlerts;
   const inactiveCount = Math.max(0, data.totalAssets - data.activeAssets);
 
@@ -42,18 +45,24 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Trạng thái sức khỏe</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                Trạng thái sức khỏe
+              </p>
               <div className="flex items-baseline gap-1.5 mt-0.5">
-                <span className={`text-2xl font-bold ${getHealthColor(data.healthScore)}`}>
+                <span
+                  className={`text-2xl font-bold ${getHealthColor(data.healthScore)}`}
+                >
                   {data.healthScore}%
                 </span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  data.healthScore >= 80
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : data.healthScore >= 50
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                }`}>
+                <span
+                  className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    data.healthScore >= 80
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : data.healthScore >= 50
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                  }`}
+                >
                   {getHealthLabel(data.healthScore)}
                 </span>
               </div>
@@ -61,18 +70,28 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
               <div>
-                <span className="text-muted-foreground block text-[11px] font-medium">Tổng số pin</span>
-                <strong className="text-base font-bold text-foreground">{data.totalAssets}</strong>
+                <span className="text-muted-foreground block text-[11px] font-medium">
+                  Tổng số pin
+                </span>
+                <strong className="text-base font-bold text-foreground">
+                  {data.totalAssets}
+                </strong>
               </div>
               <div>
-                <span className="text-muted-foreground block text-[11px] font-medium">Đang hoạt động</span>
+                <span className="text-muted-foreground block text-[11px] font-medium">
+                  Đang hoạt động
+                </span>
                 <strong className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                   {data.activeAssets}
                 </strong>
               </div>
               <div>
-                <span className="text-muted-foreground block text-[11px] font-medium">Cảnh báo mở</span>
-                <strong className={`text-base font-bold ${data.assetsWithActiveAlerts > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600"}`}>
+                <span className="text-muted-foreground block text-[11px] font-medium">
+                  Cảnh báo mở
+                </span>
+                <strong
+                  className={`text-base font-bold ${data.assetsWithActiveAlerts > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600"}`}
+                >
                   {data.assetsWithActiveAlerts}
                 </strong>
               </div>
@@ -93,11 +112,18 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
                   dataKey="value"
                 >
                   {chartData.map((entry, index) => (
-                    <Cell key={`site-pie-${index}`} fill={entry.color} stroke="none" />
+                    <Cell
+                      key={`site-pie-${index}`}
+                      fill={entry.color}
+                      stroke="none"
+                    />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any) => [`${value} pin`, "Số lượng"]}
+                  formatter={(value: unknown) => [
+                    `${String(value)} pin`,
+                    "Số lượng",
+                  ]}
                   contentStyle={{
                     fontSize: "12px",
                     borderRadius: "8px",
@@ -108,10 +134,14 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-              <span className={`text-sm font-bold ${getHealthColor(data.healthScore)}`}>
+              <span
+                className={`text-sm font-bold ${getHealthColor(data.healthScore)}`}
+              >
                 {data.healthScore}%
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium">Sức khỏe</span>
+              <span className="text-[10px] text-muted-foreground font-medium">
+                Sức khỏe
+              </span>
             </div>
           </div>
         </div>

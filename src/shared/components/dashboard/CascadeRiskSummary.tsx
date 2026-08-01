@@ -48,10 +48,14 @@ export default function CascadeRiskSummary({
         <div className="flex items-center gap-2">
           <ShieldAlert
             className={`size-4 ${
-              hasHighRisk ? "text-rose-600 dark:text-rose-400" : "text-emerald-500"
+              hasHighRisk
+                ? "text-rose-600 dark:text-rose-400"
+                : "text-emerald-500"
             }`}
           />
-          <CardTitle className="text-base">Rủi ro lan truyền (Cascade Risk)</CardTitle>
+          <CardTitle className="text-base">
+            Rủi ro lan truyền (Cascade Risk)
+          </CardTitle>
         </div>
         <Badge
           variant={hasHighRisk ? "destructive" : "outline"}
@@ -66,30 +70,51 @@ export default function CascadeRiskSummary({
       <CardContent className="flex-1 flex flex-col justify-between space-y-3">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">Phân bổ mức rủi ro</p>
+            <p className="text-xs text-muted-foreground font-medium">
+              Phân bổ mức rủi ro
+            </p>
 
             <div className="space-y-1.5 text-xs font-medium">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
-                <span className="text-muted-foreground min-w-16">Rủi ro cao:</span>
-                <strong className={`font-bold ${summary.highRiskCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}>
-                  {summary.highRiskCount} pin {summary.totalAssets > 0 ? `(${((summary.highRiskCount / summary.totalAssets) * 100).toFixed(0)}%)` : ""}
+                <span className="text-muted-foreground min-w-16">
+                  Rủi ro cao:
+                </span>
+                <strong
+                  className={`font-bold ${summary.highRiskCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}
+                >
+                  {summary.highRiskCount} pin{" "}
+                  {summary.totalAssets > 0
+                    ? `(${((summary.highRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
+                    : ""}
                 </strong>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-muted-foreground min-w-16">Trung bình:</span>
-                <strong className={`font-bold ${summary.mediumRiskCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
-                  {summary.mediumRiskCount} pin {summary.totalAssets > 0 ? `(${((summary.mediumRiskCount / summary.totalAssets) * 100).toFixed(0)}%)` : ""}
+                <span className="text-muted-foreground min-w-16">
+                  Trung bình:
+                </span>
+                <strong
+                  className={`font-bold ${summary.mediumRiskCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
+                >
+                  {summary.mediumRiskCount} pin{" "}
+                  {summary.totalAssets > 0
+                    ? `(${((summary.mediumRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
+                    : ""}
                 </strong>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
                 <span className="text-muted-foreground min-w-16">Thấp:</span>
-                <strong className={`font-bold ${summary.lowRiskCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-                  {summary.lowRiskCount} pin {summary.totalAssets > 0 ? `(${((summary.lowRiskCount / summary.totalAssets) * 100).toFixed(0)}%)` : ""}
+                <strong
+                  className={`font-bold ${summary.lowRiskCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
+                >
+                  {summary.lowRiskCount} pin{" "}
+                  {summary.totalAssets > 0
+                    ? `(${((summary.lowRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
+                    : ""}
                 </strong>
               </div>
             </div>
@@ -109,11 +134,19 @@ export default function CascadeRiskSummary({
                   dataKey="value"
                 >
                   {chartData.map((entry, index) => (
-                    <Cell key={`risk-pie-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={1.5} />
+                    <Cell
+                      key={`risk-pie-${index}`}
+                      fill={entry.color}
+                      stroke="#ffffff"
+                      strokeWidth={1.5}
+                    />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any) => [`${value} pin`, "Số lượng"]}
+                  formatter={(value: unknown) => [
+                    `${String(value)} pin`,
+                    "Số lượng",
+                  ]}
                   contentStyle={{
                     fontSize: "12px",
                     borderRadius: "8px",
@@ -126,22 +159,33 @@ export default function CascadeRiskSummary({
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
               <span
                 className={`text-xs font-bold font-mono ${
-                  hasHighRisk ? "text-rose-600 dark:text-rose-400" : "text-emerald-600"
+                  hasHighRisk
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-emerald-600"
                 }`}
               >
                 {summary.maxScore.toFixed(2)}
               </span>
-              <span className="text-[9px] text-muted-foreground font-medium">Risk Max</span>
+              <span className="text-[9px] text-muted-foreground font-medium">
+                Risk Max
+              </span>
             </div>
           </div>
         </div>
 
         {summary.highRiskAssets.length > 0 && (
           <div className="pt-2 border-t border-border flex items-center gap-1.5 flex-wrap text-xs">
-            <span className="text-[11px] text-muted-foreground font-medium">Pin chú ý:</span>
+            <span className="text-[11px] text-muted-foreground font-medium">
+              Pin chú ý:
+            </span>
             {summary.highRiskAssets.slice(0, 4).map((a) => (
-              <Badge key={a.batteryAssetId} variant="outline" className="text-[10px] font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold">
-                {a.serialNumber ?? a.batteryAssetId} ({a.cascadeRiskScore.toFixed(2)})
+              <Badge
+                key={a.batteryAssetId}
+                variant="outline"
+                className="text-[10px] font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold"
+              >
+                {a.serialNumber ?? a.batteryAssetId} (
+                {a.cascadeRiskScore.toFixed(2)})
               </Badge>
             ))}
           </div>
