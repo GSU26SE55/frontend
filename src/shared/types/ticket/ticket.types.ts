@@ -293,8 +293,15 @@ export interface CommentAttachmentInput {
   sizeBytes?: number;
 }
 
+// @-mention gửi lên BE (POST /chats field `mentions`) — khớp record ChatMentionInput.
+export interface CommentMentionInput {
+  userId: string;
+  displayName: string;
+}
+
 export interface AddCommentPayload {
   body: string;
   isInternal: boolean;
   attachments?: CommentAttachmentInput[];
+  mentions?: CommentMentionInput[];
 }

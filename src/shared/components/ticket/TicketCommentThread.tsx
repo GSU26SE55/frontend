@@ -36,6 +36,7 @@ import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import VoiceMessagePlayer from "@/shared/components/media/VoiceMessagePlayer";
 import ChatAiPanel from "@/shared/components/chat/ChatAiPanel";
 import ChatReactionBar from "@/shared/components/chat/ChatReactionBar";
+import { renderTextWithMentions } from "@/shared/components/chat/renderMentions";
 import {
   isFileId,
   useAudioAttachment,
@@ -143,7 +144,7 @@ function CommentBubbleContent({
               : "rounded-bl-sm bg-muted text-foreground",
           )}
         >
-          {displayBody}
+          {renderTextWithMentions(displayBody, isOwn)}
         </div>
         {!isOwn && canShowActions && actionsMenu}
       </div>
@@ -770,7 +771,7 @@ function PendingBubble({
     <div className="flex items-end gap-2 justify-end">
       <div className="flex max-w-[75%] flex-col items-end">
         <div className="rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-primary-foreground">
-          {message.payload.body}
+          {renderTextWithMentions(message.payload.body, true)}
         </div>
         {attachCount > 0 && (
           <span className="text-[10px] text-muted-foreground px-1 mt-0.5">

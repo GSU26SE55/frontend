@@ -263,9 +263,6 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
-      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
-      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
-      QUEUE_COUNT: "/api/admin/tickets/queue/count",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,

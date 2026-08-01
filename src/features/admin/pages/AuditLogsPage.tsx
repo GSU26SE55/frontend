@@ -529,11 +529,11 @@ export default function AuditLogsPage() {
                 <TableHead className="w-12 text-center">
                   {TABLE_COLUMNS.index}
                 </TableHead>
-                <TableHead className="w-1/5">{TABLE_COLUMNS.time}</TableHead>
-                <TableHead className="w-1/5">Hành động</TableHead>
-                <TableHead className="w-1/5">Kết quả</TableHead>
-                <TableHead className="w-1/5">Tài khoản</TableHead>
-                <TableHead className="w-1/5">IP</TableHead>
+                <TableHead className="w-[18%]">{TABLE_COLUMNS.time}</TableHead>
+                <TableHead className="w-[26%]">Hành động</TableHead>
+                <TableHead className="w-[12%]">Kết quả</TableHead>
+                <TableHead className="w-[26%]">Tài khoản</TableHead>
+                <TableHead className="w-[18%]">IP</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

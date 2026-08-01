@@ -176,6 +176,24 @@ export default function TicketDetailPage() {
   const reVerify = useReVerifyTicket(id);
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
+  // Người có thể @-tag: tác giả đã tham gia hội thoại (dedup, bỏ chính mình).
+  const mentionCandidates = useMemo(() => {
+    const seen = new Map<
+      string,
+      { userId: string; displayName: string; role?: string }
+    >();
+    comments.forEach((c) => {
+      if (!c.authorUserId || c.authorUserId === currentUserId) return;
+      if (!seen.has(c.authorUserId)) {
+        seen.set(c.authorUserId, {
+          userId: c.authorUserId,
+          displayName: c.authorDisplayName ?? "Người dùng",
+          role: c.authorRole,
+        });
+      }
+    });
+    return Array.from(seen.values());
+  }, [comments, currentUserId]);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
   const { mutate: deleteChat, isPending: deleteChatPending } =
@@ -507,6 +525,7 @@ export default function TicketDetailPage() {
                   existingFileIds={existingFileIds}
                   prefillText={composerPrefill.text}
                   prefillVersion={composerPrefill.version}
+                  mentionCandidates={mentionCandidates}
                 />
               </div>
             </TabsContent>
