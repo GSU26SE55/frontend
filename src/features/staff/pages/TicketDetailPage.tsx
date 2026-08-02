@@ -52,6 +52,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
+import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
@@ -134,6 +135,10 @@ export default function TicketDetailPage() {
     });
     return Array.from(ids);
   }, [ticket, comments]);
+
+  // Người có thể @-tag: participant active của ticket (GET .../participants).
+  // KHÔNG dùng tác giả đã chat — người mới add vào ticket chưa nhắn gì vẫn phải tag được.
+  const mentionCandidates = useMentionCandidates(ticketId);
 
   const startMutation = useStartTicket(ticketId);
   const holdMutation = useHoldTicket(ticketId);
@@ -402,6 +407,7 @@ export default function TicketDetailPage() {
                     existingFileIds={existingFileIds}
                     prefillText={composerPrefill.text}
                     prefillVersion={composerPrefill.version}
+                    mentionCandidates={mentionCandidates}
                   />
                 </div>
               )}
@@ -702,22 +708,12 @@ export default function TicketDetailPage() {
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow label="Danh mục" value={ticket.category} />
                 <SideInfoRow label="Nguồn" value={ticket.origin} />
-                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
-                {ticket.incidentDetectedFrom && (
+                {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+                {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Sự cố từ"
+                    label="Phát hiện lúc"
                     value={format(
-                      new Date(ticket.incidentDetectedFrom),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
-                    )}
-                  />
-                )}
-                {ticket.incidentDetectedTo && (
-                  <SideInfoRow
-                    label="Sự cố đến"
-                    value={format(
-                      new Date(ticket.incidentDetectedTo),
+                      new Date(ticket.detectedAt),
                       "dd/MM/yyyy HH:mm",
                       { locale: vi },
                     )}

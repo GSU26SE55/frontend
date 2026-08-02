@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationPreferenceService } from "@/shared/services/notification/notification-preference.service";
-import { QUERY_KEY } from "@/shared/utils/queryKeys";
+import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { UpdateNotificationPreferencePayload } from "@/shared/types/notification/notification-preference.types";
 
 export const useNotificationPreferences = () =>
@@ -16,9 +16,9 @@ export const useUpdateNotificationPreferences = () => {
     mutationFn: (payload: UpdateNotificationPreferencePayload) =>
       notificationPreferenceService.update(payload),
     onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.notificationPreferences.me(),
-      });
+      // Invalidate key gốc feature — đổi channel toàn cục ảnh hưởng cả matrix
+      // (nhóm isCustomized=false kế thừa từ channels), không chỉ riêng .me().
+      qc.invalidateQueries({ queryKey: [KEY.notificationPreferences] });
     },
   });
 };

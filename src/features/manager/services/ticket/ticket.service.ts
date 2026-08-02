@@ -21,6 +21,7 @@ import type {
   EscalatePayload,
   AddCommentPayload,
   MergeTicketPayload,
+  ReprioritizePayload,
 } from "@/shared/types/ticket/ticket.types";
 
 function toListParams(params?: AdminTicketListParams) {
@@ -60,12 +61,6 @@ export const managerTicketService = {
     axiosInstance.get<CommonResponse<PaginationResponse<TicketDTO>>>(
       ENDPOINTS.ADMIN.TICKETS.QUEUE,
       { params: toQueueParams(params) },
-    ),
-
-  // #697 — badge số ticket chờ duyệt (Open, chưa xóa, chưa merge).
-  getQueueCount: () =>
-    axiosInstance.get<CommonResponse<number>>(
-      ENDPOINTS.ADMIN.TICKETS.QUEUE_COUNT,
     ),
 
   getDetail: (id: string) =>
@@ -155,5 +150,13 @@ export const managerTicketService = {
   reVerify: (id: string) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.RE_VERIFY(id),
+    ),
+
+  // Đổi priority + lý do. SLA được BE tính lại (không reset) — có thể breach ngay
+  // trong transaction nếu deadline mới đã qua. FE KHÔNG tự tính deadline.
+  reprioritize: (id: string, payload: ReprioritizePayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.RE_PRIORITIZE(id),
+      payload,
     ),
 };

@@ -125,6 +125,11 @@ export const ADMIN_NAV: NavSection[] = [
       },
       { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
       {
+        label: "Mẫu thông báo",
+        path: "/admin/notification-templates",
+        icon: LayoutTemplate,
+      },
+      {
         label: SIDEBAR_LABELS.settings,
         path: "/admin/settings",
         icon: Settings,

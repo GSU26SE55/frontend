@@ -10,8 +10,11 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  MentionTextarea,
+  type MentionCandidate,
+} from "@/shared/components/chat/MentionTextarea";
 import {
   Tooltip,
   TooltipContent,
@@ -39,6 +42,8 @@ interface Props {
   existingFileIds?: string[];
   prefillText?: string;
   prefillVersion?: number;
+  /** Người có thể @-tag — thường build từ tác giả trong hội thoại. */
+  mentionCandidates?: MentionCandidate[];
 }
 
 export default function AddCommentForm({
@@ -48,6 +53,7 @@ export default function AddCommentForm({
   existingFileIds = [],
   prefillText,
   prefillVersion = 0,
+  mentionCandidates = [],
 }: Props) {
   const { enqueue } = useChatOutbox(ticketId);
   const [uploading, setUploading] = useState(false);
@@ -165,30 +171,36 @@ export default function AddCommentForm({
                 control={form.control}
                 name="body"
                 render={({ field }) => {
-                  const { ref: fieldRef, ...fieldProps } = field;
+                  const { ref: fieldRef, value } = field;
                   return (
                     <FormItem className="flex-1 self-center">
                       <FormControl>
-                        <Textarea
+                        <MentionTextarea
                           key={resetCount}
                           ref={(el) => {
                             fieldRef(el);
                             textareaRef.current = el;
                           }}
+                          candidates={mentionCandidates}
+                          isInternal={isInternal}
+                          value={value ?? ""}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            onTyping?.();
+                            const el = textareaRef.current;
+                            if (el) autoResize(el);
+                          }}
+                          onMentionsChange={(mentions) =>
+                            form.setValue("mentions", mentions)
+                          }
                           placeholder={
                             isInternal
                               ? "Ghi chu noi bo (khach khong thay)..."
-                              : "Nhap binh luan..."
+                              : "Nhap binh luan... (go @ de tag)"
                           }
                           rows={1}
                           className="min-h-9 resize-none overflow-y-auto rounded-xl border-0 bg-transparent py-2 leading-4.5 shadow-none focus-visible:ring-0"
                           style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
-                          {...fieldProps}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            onTyping?.();
-                          }}
-                          onInput={(e) => autoResize(e.currentTarget)}
                         />
                       </FormControl>
                       <FormMessage />

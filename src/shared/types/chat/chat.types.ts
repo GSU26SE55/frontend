@@ -20,6 +20,8 @@ export interface OutboxMessage {
   createdAt: number;
   /** createdAt + tổng timeout — quá mốc này mà chưa gửi được → "failed". */
   deadline: number;
+  /** Lý do fail hiển thị cho user (vd trùng nội dung) — chỉ set khi retry vô nghĩa. */
+  failReason?: string;
 }
 
 export interface ChatDto {
@@ -93,8 +95,9 @@ export interface ChatTranslateDTO {
   fromCache: boolean;
 }
 
-// POST /api/tickets/{id}/chats/voice (multipart/form-data) — response giống
-// TicketActionResponse dùng chung cho các action ticket khác.
+// POST /api/tickets/{id}/chats/voice (application/json — ChatAttachmentInput của
+// file audio đã upload sẵn qua FileStorage). Tạo chat placeholder + transcribe async;
+// response giống TicketActionResponse dùng chung cho các action ticket khác.
 export interface ChatVoiceActionDTO {
   id: string | null;
   ticketId: string | null;
@@ -113,18 +116,6 @@ export interface ChatSuggestPayload {
 export interface ChatSuggestDTO {
   suggestionId: string;
   suggestions: string[];
-}
-
-// POST /api/tickets/{id}/chats/sentiment-check — response data
-export type ChatSentimentLabel =
-  | "Positive"
-  | "Neutral"
-  | "Negative"
-  | "Critical";
-export interface ChatSentimentCheckDTO {
-  score: number; // [-1, 1]
-  label: ChatSentimentLabel;
-  isAlertSent: boolean;
 }
 
 // POST /api/tickets/{id}/chats/summarize — response data

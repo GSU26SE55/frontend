@@ -46,6 +46,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
+import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
@@ -124,6 +125,9 @@ export default function AdminTicketDetailPage() {
   const { mutate: declareIncident, isPending } = useDeclareIncident();
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
+  // Người có thể @-tag: participant active của ticket (GET .../participants).
+  // KHÔNG dùng tác giả đã chat — người mới add vào ticket chưa nhắn gì vẫn phải tag được.
+  const mentionCandidates = useMentionCandidates(ticketId);
   const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
@@ -306,6 +310,7 @@ export default function AdminTicketDetailPage() {
                   existingFileIds={existingFileIds}
                   prefillText={composerPrefill.text}
                   prefillVersion={composerPrefill.version}
+                  mentionCandidates={mentionCandidates}
                 />
               </div>
             </TabsContent>
@@ -454,25 +459,13 @@ export default function AdminTicketDetailPage() {
                 })}
               />
             )}
-            {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
-            {ticket.incidentDetectedFrom && (
+            {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+            {ticket.detectedAt && (
               <SideInfoRow
-                label="Sự cố từ"
-                value={format(
-                  new Date(ticket.incidentDetectedFrom),
-                  "dd/MM/yyyy HH:mm",
-                  { locale: vi },
-                )}
-              />
-            )}
-            {ticket.incidentDetectedTo && (
-              <SideInfoRow
-                label="Sự cố đến"
-                value={format(
-                  new Date(ticket.incidentDetectedTo),
-                  "dd/MM/yyyy HH:mm",
-                  { locale: vi },
-                )}
+                label="Phát hiện lúc"
+                value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
+                  locale: vi,
+                })}
               />
             )}
             {ticket.updatedAt && (

@@ -83,14 +83,13 @@ export const ENDPOINTS = {
     CHAT_TRANSLATE: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/translate`,
     CHAT_VOICE: (tid: string) => `/api/tickets/${tid}/chats/voice`,
+    CHAT_VOICE_RETRY: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/voice/retry`,
     // GH-133 Nhóm C — AI chats + download attachment
     CHAT_ATTACHMENT_DOWNLOAD: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}/download`, // C3
     CHAT_SUGGEST: (tid: string) => `/api/tickets/${tid}/chats/suggest`, // C2 (AI)
-    CHAT_SENTIMENT: (tid: string) =>
-      `/api/tickets/${tid}/chats/sentiment-check`, // C2 (AI)
     CHAT_SUMMARIZE: (tid: string) => `/api/tickets/${tid}/chats/summarize`, // C2 (AI)
-    CHAT_EXPORT_PDF: (tid: string) => `/api/tickets/${tid}/chats/export-pdf`, // C2
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,
@@ -109,7 +108,6 @@ export const ENDPOINTS = {
 
   CHAT_MENTIONS: {
     ME: "/api/chats/mentions/me",
-    ACKNOWLEDGE: (id: string) => `/api/chats/mentions/${id}/acknowledge`,
   },
 
   MY_CHATS: {
@@ -146,6 +144,9 @@ export const ENDPOINTS = {
     MARK_READ: (id: string) => `/api/notifications/${id}/read`, // PATCH — idempotent
     MARK_ALL_READ: "/api/notifications/read-all", // POST — body rỗng
     UNREAD_COUNT: "/api/notifications/unread-count", // GET — badge count
+    // PATCH — user chủ động MỞ notification (bấm push / deep link). Mạnh hơn /read,
+    // dùng để đo open-rate thật. Idempotent → gọi lại vẫn 200.
+    OPENED: (id: string) => `/api/notifications/${id}/opened`,
   },
 
   DEVICE_TOKENS: {
@@ -157,6 +158,11 @@ export const ENDPOINTS = {
   NOTIFICATION_PREFERENCES: {
     GET: "/api/notification-preferences",
     UPDATE: "/api/notification-preferences", // PUT — upsert preference của user hiện tại
+    // Sprint 6.3 NOTI3-04 — ma trận nhóm × kênh.
+    // GET trả đủ 6 nhóm; PUT VÁ TỪNG DÒNG (chỉ nhóm gửi lên bị đổi).
+    MATRIX: "/api/notification-preferences/matrix",
+    // Bảng tra cứu NotificationType → nhóm (không nhân bản mapping ở client).
+    CATEGORIES: "/api/notification-preferences/categories",
   },
 
   ALERTS: {
@@ -255,9 +261,6 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
-      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
-      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
-      QUEUE_COUNT: "/api/admin/tickets/queue/count",
       TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
@@ -271,10 +274,25 @@ export const ENDPOINTS = {
       MERGE: (id: string) => `/api/admin/tickets/${id}/merge`,
       // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
       RE_VERIFY: (id: string) => `/api/admin/tickets/${id}/re-verify`,
+      // Manager đổi priority + reason. BE có thể tự escalate + đổi primary handler
+      // nếu tier staff không đủ cho priority mới → response.data.status có thể = Escalated.
+      RE_PRIORITIZE: (id: string) => `/api/admin/tickets/${id}/re-prioritize`,
     },
     SMS_GATEWAY: {
       DEVICES: "/api/admin/sms-gateway/devices",
       DEVICE_REVOKE: (id: string) => `/api/admin/sms-gateway/devices/${id}`,
+    },
+    // Sprint 6.3 NOTI3-12 — quản lý template. Chưa có endpoint create/update:
+    // tạo bản mới làm bằng SQL/seed, ACTIVATE chỉ chuyển giữa các bản đã tồn tại.
+    NOTIFICATION_TEMPLATES: {
+      LIST: "/api/admin/notification-templates", // ?type=&channel=&locale=
+      PREVIEW: (id: string) =>
+        `/api/admin/notification-templates/${id}/preview`,
+      // Chỉ template kênh Email; rate limit 5 lần/giờ/admin (429 khi vượt).
+      TEST_SEND: (id: string) =>
+        `/api/admin/notification-templates/${id}/test-send`,
+      ACTIVATE: (id: string) =>
+        `/api/admin/notification-templates/${id}/activate`,
     },
     SAGAS: {
       ALERT_TICKET_LIST: "/api/admin/sagas/alert-ticket",

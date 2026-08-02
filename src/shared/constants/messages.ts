@@ -18,6 +18,7 @@ export const MESSAGES = {
     commentDeleted: "Đã xóa bình luận",
     fileScanning: "File đang được quét virus, vui lòng thử lại sau ít giây.",
     fileInfected: "File bị nhiễm virus — không thể tải xuống.",
+    voiceRetryQueued: "Đang chuyển đổi lại giọng nói...",
   },
 
   // Alerts / môi trường (shared/hooks)
@@ -51,6 +52,9 @@ export const MESSAGES = {
   },
   notificationPrefs: {
     saved: "Đã lưu cài đặt thông báo",
+    matrixSaved: "Đã lưu tuỳ chọn theo nhóm",
+    matrixNoChange: "Chưa có thay đổi nào để lưu",
+    matrixSaveFailed: "Không lưu được tuỳ chọn theo nhóm",
   },
   file: {
     loadInfoFailed: "Lỗi khi tải thông tin tệp tin.",

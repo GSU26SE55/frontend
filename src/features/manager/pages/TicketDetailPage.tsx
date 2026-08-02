@@ -19,6 +19,7 @@ import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog"
 import RejectDialog from "@/features/manager/components/ticket/RejectDialog";
 import TriageRejectDialog from "@/features/manager/components/ticket/TriageRejectDialog";
 import EscalateDialog from "@/features/manager/components/ticket/EscalateDialog";
+import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareIncidentDialog";
 import TicketActivityTimeline from "@/features/manager/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
@@ -39,6 +40,7 @@ import {
 } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
+import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
@@ -72,6 +74,7 @@ type DialogType =
   | "reassign"
   | "reject"
   | "escalate"
+  | "reprioritize"
   | "incident"
   | null;
 
@@ -174,6 +177,9 @@ export default function TicketDetailPage() {
   const reVerify = useReVerifyTicket(id);
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
+  // Người có thể @-tag: participant active của ticket (GET .../participants).
+  // KHÔNG dùng tác giả đã chat — người mới add vào ticket chưa nhắn gì vẫn phải tag được.
+  const mentionCandidates = useMentionCandidates(id);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
   const { mutate: deleteChat, isPending: deleteChatPending } =
@@ -215,13 +221,17 @@ export default function TicketDetailPage() {
   }
 
   const status = ticket.status;
-  const canTriage = status === TicketStatusEnum.Open;
-  // triage-reject: Open|Escalated → ClosedRejected (BE verified — state machine
-  // cho phép cả 2 source). Tách khỏi canTriage (chỉ Open) vốn dùng cho nút Triage.
+  // Triage = New → Open (TransitionRuleProvider, Manager/Admin/System). Trước đây
+  // gate nhầm sang Open: queue chỉ trả ticket New nên nút không bao giờ hiện.
+  const canTriage = status === TicketStatusEnum.New;
+  // triage-reject: New|Escalated → ClosedRejected — rule provider có cả 2 source.
+  // Đổi Open→New theo cùng lý do canTriage; giữ nguyên nhánh Escalated.
   const canTriageReject = (
-    [TicketStatusEnum.Open, TicketStatusEnum.Escalated] as TicketStatusEnum[]
+    [TicketStatusEnum.New, TicketStatusEnum.Escalated] as TicketStatusEnum[]
   ).includes(status);
-  const canAssign = status === TicketStatusEnum.Approved;
+  // Assign = Open → Assigned. Trước đây gate theo 'Approved' — status này KHÔNG
+  // tồn tại ở BE (chỉ có ActivityActionEnum.Approved) nên nút không bao giờ hiện.
+  const canAssign = status === TicketStatusEnum.Open;
   const canReassign = (
     [
       TicketStatusEnum.Assigned,
@@ -241,6 +251,16 @@ export default function TicketDetailPage() {
       TicketStatusEnum.WaitingCustomer,
       TicketStatusEnum.WaitingParts,
       TicketStatusEnum.WaitingOnsiteSchedule,
+      TicketStatusEnum.Escalated,
+    ] as TicketStatusEnum[]
+  ).includes(status);
+  // Whitelist khớp TicketReprioritizeCommandHandler: mọi status ngoài 4 giá trị
+  // này đều bị BE trả 409 (kể cả Waiting* — khác allow-list của Escalate).
+  const canReprioritize = (
+    [
+      TicketStatusEnum.Open,
+      TicketStatusEnum.Assigned,
+      TicketStatusEnum.InProgress,
       TicketStatusEnum.Escalated,
     ] as TicketStatusEnum[]
   ).includes(status);
@@ -337,6 +357,15 @@ export default function TicketDetailPage() {
               onClick={() => setDialog("escalate")}
             >
               Chuyển cấp
+            </Button>
+          )}
+          {canReprioritize && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDialog("reprioritize")}
+            >
+              Đổi mức ưu tiên
             </Button>
           )}
           {canDeclareIncident && (
@@ -486,6 +515,7 @@ export default function TicketDetailPage() {
                   existingFileIds={existingFileIds}
                   prefillText={composerPrefill.text}
                   prefillVersion={composerPrefill.version}
+                  mentionCandidates={mentionCandidates}
                 />
               </div>
             </TabsContent>
@@ -813,22 +843,12 @@ export default function TicketDetailPage() {
                     )}
                   />
                 )}
-                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
-                {ticket.incidentDetectedFrom && (
+                {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+                {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Sự cố từ"
+                    label="Phát hiện lúc"
                     value={format(
-                      new Date(ticket.incidentDetectedFrom),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
-                    )}
-                  />
-                )}
-                {ticket.incidentDetectedTo && (
-                  <SideInfoRow
-                    label="Sự cố đến"
-                    value={format(
-                      new Date(ticket.incidentDetectedTo),
+                      new Date(ticket.detectedAt),
                       "dd/MM/yyyy HH:mm",
                       { locale: vi },
                     )}
@@ -938,6 +958,14 @@ export default function TicketDetailPage() {
       )}
       {dialog === "reject" && (
         <RejectDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "reprioritize" && (
+        <ReprioritizeDialog
+          ticketId={id}
+          currentPriority={ticket.priority}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "escalate" && (
         <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />

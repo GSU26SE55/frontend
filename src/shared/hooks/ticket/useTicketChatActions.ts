@@ -113,6 +113,9 @@ export function useTranslateTicketChat() {
   });
 }
 
+// Gửi tin nhắn thoại: upload audio lên FileStorage rồi POST metadata xuống /chats/voice
+// (service lo cả 2 bước). BE tạo chat placeholder + transcribe async → invalidate để thấy
+// bubble mới ngay (trạng thái Pending), transcript tự cập nhật sau qua realtime/refetch.
 export function useTranscribeVoiceChat() {
   const qc = useQueryClient();
   return useMutation({
@@ -124,6 +127,21 @@ export function useTranscribeVoiceChat() {
       audioFile: File;
     }) => ticketChatActionsService.transcribeVoice(ticketId, audioFile),
     onSuccess: (_, { ticketId }) => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+}
+
+// Retry transcribe chat thoại đã Failed (BE trả 202, đưa status về Pending).
+// Invalidate để badge/bubble phản ánh Pending ngay; transcript cập nhật sau.
+export function useRetryVoiceChat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ticketId, chatId }: { ticketId: string; chatId: string }) =>
+      ticketChatActionsService.retryVoice(ticketId, chatId),
+    onSuccess: (_, { ticketId }) => {
+      toast.success(MESSAGES.chat.voiceRetryQueued);
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -147,39 +165,10 @@ export function useSuggestChat() {
   });
 }
 
-export function useSentimentCheck() {
-  return useMutation({
-    mutationFn: ({ ticketId }: { ticketId: string }) =>
-      ticketChatActionsService.sentimentCheck(ticketId).then((r) => r.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
 export function useSummarizeChat() {
   return useMutation({
     mutationFn: ({ ticketId }: { ticketId: string }) =>
       ticketChatActionsService.summarize(ticketId).then((r) => r.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
-// C2 — export PDF: nhận blob rồi trigger tải file.
-export function useExportChatPdf() {
-  return useMutation({
-    mutationFn: ({ ticketId }: { ticketId: string }) =>
-      ticketChatActionsService
-        .exportPdf(ticketId)
-        .then((r) => ({ blob: r.data, ticketId })),
-    onSuccess: ({ blob, ticketId }) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ticket-${ticketId}-chats.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

@@ -7,11 +7,12 @@ import {
   useNotifications,
   useUnreadCount,
   useMarkNotificationRead,
+  useMarkNotificationOpened,
   useMarkAllRead,
 } from "@/shared/hooks/notifications/useNotifications";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { UserRole } from "@/shared/types/account/session.types";
-import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
+import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
 import type { NotificationDto } from "@/shared/types/notification/notification.types";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export default function NotificationBell() {
   const items = data?.items ?? [];
 
   const markRead = useMarkNotificationRead();
+  const markOpened = useMarkNotificationOpened();
   const markAllRead = useMarkAllRead();
 
   const badge = unreadCount > 99 ? "99+" : String(unreadCount);
@@ -47,12 +49,23 @@ export default function NotificationBell() {
   }, [open]);
 
   const handleItemClick = (n: NotificationDto) => {
-    if (n.status !== NotificationStatusEnum.Read) markRead.mutate(n.id);
-    setOpen(false);
-    if (n.entityType === "Ticket" && n.entityId) {
-      const prefix = user ? ROLE_PREFIX[user.role] : "";
-      if (prefix) navigate(`/${prefix}/tickets/${n.entityId}`);
+    const prefix = user ? ROLE_PREFIX[user.role] : "";
+    // Deep-link = mở được nội dung thật. Chỉ khi đó mới là "Opened" (bằng chứng
+    // user chủ động mở); click thường chỉ là "Read". Tách 2 nhánh để open-rate
+    // không bị loãng — đúng lý do BE tách /opened khỏi /read.
+    const deepLink =
+      n.entityType === "Ticket" && n.entityId && prefix
+        ? `/${prefix}/tickets/${n.entityId}`
+        : null;
+
+    if (isUnreadStatus(n.status)) {
+      // BE tự set ReadAt khi Opened → không cần gọi kèm markRead.
+      if (deepLink) markOpened.mutate(n.id);
+      else markRead.mutate(n.id);
     }
+
+    setOpen(false);
+    if (deepLink) navigate(deepLink);
   };
 
   return (
@@ -114,7 +127,9 @@ export default function NotificationBell() {
                 </div>
               ) : (
                 items.map((n) => {
-                  const unread = n.status !== NotificationStatusEnum.Read;
+                  // Khớp định nghĩa của BE: loại cả Read lẫn Opened, nếu chỉ so
+                  // với Read thì noti đã mở vẫn hiện đậm trong khi badge đã trừ.
+                  const unread = isUnreadStatus(n.status);
                   return (
                     <button
                       key={n.id}

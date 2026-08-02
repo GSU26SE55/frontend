@@ -27,6 +27,7 @@ import LoginHistoryTable from "@/features/auth/components/account/LoginHistoryTa
 import DangerZone from "@/features/auth/components/profile/DangerZone";
 import DeviceTokensSection from "@/features/auth/components/profile/DeviceTokensSection";
 import NotificationPreferencesSection from "@/features/auth/components/profile/NotificationPreferencesSection";
+import NotificationCategoryMatrixSection from "@/features/auth/components/profile/NotificationCategoryMatrixSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
@@ -357,7 +358,10 @@ const AccountSettingsPage = () => {
                 {active === "devices" && <DeviceTokensSection />}
 
                 {active === "notifications" && (
-                  <NotificationPreferencesSection />
+                  <div className="space-y-8">
+                    <NotificationPreferencesSection />
+                    <NotificationCategoryMatrixSection />
+                  </div>
                 )}
 
                 {/* Lịch sử — fills remaining height, table scrolls, pagination fixed */}

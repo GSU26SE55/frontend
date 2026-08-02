@@ -85,6 +85,18 @@ export const escalateSchema = z.object({
 
 export type EscalateFormValues = z.infer<typeof escalateSchema>;
 
+// TicketReprioritizeCommand — reason bắt buộc, BE giới hạn 1000 ký tự.
+export const reprioritizeSchema = z.object({
+  priority: z.nativeEnum(TicketPriorityEnum),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Lý do đổi mức ưu tiên không được để trống")
+    .max(1000, "Lý do tối đa 1000 ký tự"),
+});
+
+export type ReprioritizeFormValues = z.infer<typeof reprioritizeSchema>;
+
 export const declareIncidentSchema = z.object({
   // BE required (TicketDeclareIncidentCommand) — rỗng/whitespace → 400.
   incidentDescription: z.string().min(1, "Mô tả sự cố không được để trống"),

@@ -224,6 +224,21 @@
   }
 }
 
+/* sr-only — bản shadcn/tailwind.css preset thiếu `clip: rect(0,0,0,0)` nên phần tử
+   ẩn vẫn chiếm chỗ layout (vd PaginationEllipsis "More pages"), làm <html> dài ra
+   → sinh scrollbar thứ 2. Override lại bản chuẩn để phần tử ẩn không ảnh hưởng layout. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 /* Dashboard typography utilities */
 .font-mono-num {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;

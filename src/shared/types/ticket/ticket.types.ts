@@ -13,6 +13,8 @@ import type {
   TicketVerifyStatusEnum,
   TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
+import type { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
+export { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
 export {
   TicketStatusEnum,
   TicketPriorityEnum,
@@ -83,7 +85,11 @@ export interface TicketDTO {
   slaTimer: SlaTimerDTO | null;
 
   // ── Ticket thủ công: giờ phát hiện + serial pin (snapshot) + AI verify + merge ──
-  /** Thời điểm Customer phát hiện pin bất thường (điền từ Mobile). Khác createdAt. */
+  /**
+   * GH-866 — MỘT mốc thời gian Customer phát hiện sự cố (ISO-8601 UTC), thay cho
+   * cặp `incidentDetectedFrom`/`To` đã bị BE xoá. Khác `createdAt`.
+   * Null với ticket sinh tự động từ Alert.
+   */
   detectedAt?: string | null;
   /** Serial pin (snapshot lúc tạo) — hiển thị không cần gọi thêm API. */
   batterySerialNumber?: string | null;
@@ -132,6 +138,9 @@ export interface TicketCommentDTO {
   // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
   editCount?: number;
   updatedAt?: string | null;
+  // Chat thoại (tạo qua POST /chats/voice): Pending/Processing = đang transcribe (body tạm rỗng),
+  // Completed = body đã có transcript, Failed = lỗi → cho phép retry. null với chat text thường.
+  voiceTranscriptionStatus?: VoiceTranscriptionStatusEnum | null;
 }
 
 export interface MaintenanceLogDTO {
@@ -162,12 +171,6 @@ export interface StaffMaintenanceLogGroupDTO {
 }
 
 export interface TicketDetailDTO extends TicketDTO {
-  /**
-   * #698 — khoảng thời gian Customer phát hiện sự cố (ISO-8601 UTC).
-   * Ticket sinh tự động từ Alert có thể trả `incidentDetectedTo = null`.
-   */
-  incidentDetectedFrom?: string | null;
-  incidentDetectedTo?: string | null;
   description?: string | null;
   resolutionSummary?: string | null;
   resolvedAt?: string | null;
@@ -279,6 +282,13 @@ export interface EscalatePayload {
   note?: string;
 }
 
+// POST /api/admin/tickets/{id}/re-prioritize — Manager đổi priority kèm lý do.
+// KHÔNG gửi managerId/managerName/ticketId: BE lấy identity từ JWT, ticket id từ URL.
+export interface ReprioritizePayload {
+  priority: TicketPriorityEnum;
+  reason: string;
+}
+
 export interface CommentAttachmentInput {
   fileId: string;
   fileName?: string;
@@ -286,8 +296,15 @@ export interface CommentAttachmentInput {
   sizeBytes?: number;
 }
 
+// @-mention gửi lên BE (POST /chats field `mentions`) — khớp record ChatMentionInput.
+export interface CommentMentionInput {
+  userId: string;
+  displayName: string;
+}
+
 export interface AddCommentPayload {
   body: string;
   isInternal: boolean;
   attachments?: CommentAttachmentInput[];
+  mentions?: CommentMentionInput[];
 }
