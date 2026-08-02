@@ -33,12 +33,15 @@ export const NotificationTypeEnum = {
   TicketRatingRequested: 31,
   BatteryAnomalyWarning: 32,
   BatteryAnomalyInfo: 33,
+  // GH-83 — trước đây BE khai `= 27`, trùng value với ChatEscalatedToAdmin nên FE bỏ
+  // qua. Nay BE đã tách sang 34 (NotificationTypeEnum.cs:106), 27 chỉ còn là
+  // ChatEscalatedToAdmin. Notification này báo Customer khi ticket của họ bị gộp.
+  TicketMerged: 34,
   System: 99,
 } as const;
 // ⚠️ Số lấy theo BE `NotificationTypeEnum.cs`, KHÔNG theo docs/api-notification.md —
 // docs thiếu BlogGenerationCompleted(25)/BlogGenerationFailed(26) nên lệch 2 từ
-// ChatEscalatedToAdmin trở đi. Cố ý BỎ `TicketMerged` vì BE khai `= 27`, trùng value
-// với ChatEscalatedToAdmin → map value→tên sẽ ambiguous.
+// ChatEscalatedToAdmin trở đi.
 export type NotificationTypeEnum =
   (typeof NotificationTypeEnum)[keyof typeof NotificationTypeEnum];
 

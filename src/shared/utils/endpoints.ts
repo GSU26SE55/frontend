@@ -197,11 +197,6 @@ export const ENDPOINTS = {
       `/api/environmental-incidents/by-site/${siteId}/active`,
   },
 
-  SLA: {
-    LIST: "/api/sla-rules",
-    UPDATE: (id: string) => `/api/sla-rules/${id}`,
-  },
-
   // AI — SOH prediction + anomaly classification (BE-AI: SohPredictionBackgroundService populate).
   SOH_PREDICTIONS: {
     LIST: "/api/v1/soh-predictions", // ?batteryAssetId=&from=&to=&pageNumber=&pageSize=

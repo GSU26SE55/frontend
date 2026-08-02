@@ -11,6 +11,7 @@ import type {
   ActivityActionEnum,
   ActorRoleEnum,
   TicketVerifyStatusEnum,
+  TicketCloseReasonEnum,
   TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 import type { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
@@ -29,6 +30,7 @@ export {
   ActivityActionEnum,
   ActorRoleEnum,
   TicketVerifyStatusEnum,
+  TicketCloseReasonEnum,
   TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 // --- DTOs ---
@@ -80,6 +82,8 @@ export interface TicketDTO {
   origin: TicketOriginEnum;
   reopenCount: number;
   isIncident: boolean;
+  /** BE tính sẵn theo user hiện tại — dùng chấm badge chat chưa đọc trên danh sách. */
+  hasUnreadChat: boolean;
   createdAt: string;
   updatedAt?: string | null;
   slaTimer: SlaTimerDTO | null;
@@ -105,6 +109,8 @@ export interface TicketDTO {
   duplicateReason?: string | null;
   /** Set khi Manager đã gộp ticket này vào ticket khác (ẩn khỏi queue). */
   mergedIntoTicketId?: string | null;
+  /** Lý do đóng đặc biệt — set cùng `mergedIntoTicketId` khi Manager gộp ticket. */
+  closeReason?: TicketCloseReasonEnum | null;
 }
 
 /** Payload gộp ticket (Manager) — gộp ticket hiện tại vào ticket đích. */
@@ -186,7 +192,12 @@ export interface TicketDetailDTO extends TicketDTO {
   escalationReason?: EscalationReasonEnum;
   originAlertId?: string | null;
   activities?: TicketActivityDTO[] | null;
-  comments?: TicketCommentDTO[] | null;
+  /**
+   * BE trả `chats` (TicketChatDTO[]) — KHÔNG còn `comments`.
+   * `TicketCommentsController` đã bị xoá; `TicketCommentDTO` ở file này chính là
+   * shape của TicketChatDTO (giữ tên cũ để không phải đổi toàn bộ call site).
+   */
+  chats?: TicketCommentDTO[] | null;
   maintenanceLogs?: MaintenanceLogDTO[] | null;
   // BE trả mảng FileId (string[]), KHÔNG phải mảng TicketAttachmentDTO.
   attachmentFileIds?: string[] | null;
