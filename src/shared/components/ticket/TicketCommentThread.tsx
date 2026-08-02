@@ -841,13 +841,21 @@ function PendingBubble({
         )}
         {failed ? (
           <span className="flex items-center gap-1.5 px-1 mt-0.5">
-            <button
-              type="button"
-              onClick={() => onRetry?.(message.tempId)}
-              className="text-[10px] text-destructive hover:underline"
-            >
-              ⚠ Gửi lỗi · Nhấn để thử lại
-            </button>
+            {/* Có failReason = BE từ chối vì nội dung (vd trùng tin) → gửi lại
+                cũng hỏng, nêu lý do thay vì mời user bấm thử lại vô ích. */}
+            {message.failReason ? (
+              <span className="text-[10px] text-destructive">
+                ⚠ {message.failReason}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onRetry?.(message.tempId)}
+                className="text-[10px] text-destructive hover:underline"
+              >
+                ⚠ Gửi lỗi · Nhấn để thử lại
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onDiscard?.(message.tempId)}

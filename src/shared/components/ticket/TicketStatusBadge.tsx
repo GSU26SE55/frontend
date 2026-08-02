@@ -9,7 +9,6 @@ import { toneClass, TICKET_STATUS_TONE } from "@/shared/theme/statusColors";
 const STATUS_LABEL: Record<TicketStatusEnum, string> = {
   [TicketStatusEnum.New]: "Mới",
   [TicketStatusEnum.Open]: "Chờ triage",
-  [TicketStatusEnum.Approved]: "Đã duyệt",
   [TicketStatusEnum.Assigned]: "Đã gán",
   [TicketStatusEnum.InProgress]: "Đang xử lý",
   [TicketStatusEnum.WaitingCustomer]: "Chờ khách hàng",

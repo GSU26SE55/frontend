@@ -111,7 +111,9 @@ export function enqueue(
 export function patch(
   ticketId: string,
   tempId: string,
-  partial: Partial<Pick<OutboxMessage, "status" | "attempt" | "deadline">>,
+  partial: Partial<
+    Pick<OutboxMessage, "status" | "attempt" | "deadline" | "failReason">
+  >,
 ) {
   const next = getSnapshot(ticketId).map((m) =>
     m.tempId === tempId ? { ...m, ...partial } : m,

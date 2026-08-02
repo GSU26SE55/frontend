@@ -85,7 +85,11 @@ export interface TicketDTO {
   slaTimer: SlaTimerDTO | null;
 
   // ── Ticket thủ công: giờ phát hiện + serial pin (snapshot) + AI verify + merge ──
-  /** Thời điểm Customer phát hiện pin bất thường (điền từ Mobile). Khác createdAt. */
+  /**
+   * GH-866 — MỘT mốc thời gian Customer phát hiện sự cố (ISO-8601 UTC), thay cho
+   * cặp `incidentDetectedFrom`/`To` đã bị BE xoá. Khác `createdAt`.
+   * Null với ticket sinh tự động từ Alert.
+   */
   detectedAt?: string | null;
   /** Serial pin (snapshot lúc tạo) — hiển thị không cần gọi thêm API. */
   batterySerialNumber?: string | null;
@@ -167,12 +171,6 @@ export interface StaffMaintenanceLogGroupDTO {
 }
 
 export interface TicketDetailDTO extends TicketDTO {
-  /**
-   * #698 — khoảng thời gian Customer phát hiện sự cố (ISO-8601 UTC).
-   * Ticket sinh tự động từ Alert có thể trả `incidentDetectedTo = null`.
-   */
-  incidentDetectedFrom?: string | null;
-  incidentDetectedTo?: string | null;
   description?: string | null;
   resolutionSummary?: string | null;
   resolvedAt?: string | null;
