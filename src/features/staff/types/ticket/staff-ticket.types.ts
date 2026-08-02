@@ -15,11 +15,9 @@ export interface StaffTicketsParams {
   sortBy?: "slaRemaining";
 }
 
-export interface StartTicketRequest {
-  logType?: MaintenanceLogTypeEnum;
-  latitude?: number;
-  longitude?: number;
-}
+// `POST /api/staff/tickets/{id}/start` KHÔNG nhận body — controller khai
+// `Start(Guid id, CancellationToken ct)`, không có [FromBody]. Command chỉ lấy
+// TicketId + StaffId/StaffName từ JWT nên mọi field gửi lên đều bị bỏ qua im lặng.
 
 export interface HoldTicketRequest {
   reason: PauseReasonEnum;

@@ -14,7 +14,6 @@ import type {
 } from "@/shared/types/ticket/ticket.types";
 import type {
   StaffTicketsParams,
-  StartTicketRequest,
   HoldTicketRequest,
   ResolveTicketRequest,
   EscalateTicketRequest,
@@ -54,11 +53,9 @@ export const staffTicketService = {
       { params: { page, pageSize } },
     ),
 
-  start: (id: string, data?: StartTicketRequest) =>
-    axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.STAFF_TICKETS.START(id),
-      data,
-    ),
+  // BE không nhận body ở endpoint này — xem ghi chú ở staff-ticket.types.ts.
+  start: (id: string) =>
+    axiosInstance.post<TicketActionResponse>(ENDPOINTS.STAFF_TICKETS.START(id)),
 
   hold: (id: string, data: HoldTicketRequest) =>
     axiosInstance.post<TicketActionResponse>(
