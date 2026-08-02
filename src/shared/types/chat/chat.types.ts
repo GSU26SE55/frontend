@@ -20,6 +20,8 @@ export interface OutboxMessage {
   createdAt: number;
   /** createdAt + tổng timeout — quá mốc này mà chưa gửi được → "failed". */
   deadline: number;
+  /** Lý do fail hiển thị cho user (vd trùng nội dung) — chỉ set khi retry vô nghĩa. */
+  failReason?: string;
 }
 
 export interface ChatDto {

@@ -38,7 +38,6 @@ const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
 const STATUS_LABELS: Record<TicketStatus, string> = {
   New: "Mới",
   Open: "Đang mở",
-  Approved: "Đã duyệt",
   Assigned: "Đã gán",
   InProgress: "Đang xử lý",
   WaitingCustomer: "Chờ khách hàng",

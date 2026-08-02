@@ -18,12 +18,34 @@ interface Options {
   onSent: () => void;
 }
 
+// GH-866 — BE trả mã lỗi trong `message` (ChatAddCommandHandler.Fail), không có
+// field errorCode riêng.
+const CHAT_SPAM_CHECK_IN_PROGRESS = "CHAT_SPAM_CHECK_IN_PROGRESS";
+const CHAT_DUPLICATE_MESSAGE_LIMIT = "CHAT_DUPLICATE_MESSAGE_LIMIT";
+
+// Mã lỗi BE → câu hiển thị. Các mã này retry cũng vô ích nên nêu rõ lý do.
+function failReasonOf(error: unknown): string | undefined {
+  if (!(error instanceof AxiosError)) return undefined;
+  if (error.response?.data?.message === CHAT_DUPLICATE_MESSAGE_LIMIT) {
+    return "Bạn đã gửi tin nhắn này quá nhiều lần";
+  }
+  return undefined;
+}
+
 // Lỗi 4xx (trừ 408/429) là do payload → không retry, fail luôn để user sửa/bỏ.
 function isRetriable(error: unknown): boolean {
   if (error instanceof AxiosError) {
     const status = error.response?.status;
     if (status === undefined) return true; // network/timeout → retry
     if (status === 408 || status === 429) return true;
+    // 409 CHAT_SPAM_CHECK_IN_PROGRESS: spam-check của user đang chạy song song —
+    // trạng thái tạm thời, backoff rồi gửi lại. Các 409 khác vẫn fail luôn.
+    if (
+      status === 409 &&
+      error.response?.data?.message === CHAT_SPAM_CHECK_IN_PROGRESS
+    ) {
+      return true;
+    }
     return status >= 500;
   }
   return true;
@@ -84,7 +106,11 @@ export function useChatOutboxWorker({
       } catch (error) {
         const attempt = next.attempt + 1;
         if (!isRetriable(error) || Date.now() > next.deadline) {
-          outbox.patch(ticketId, next.tempId, { status: "failed", attempt });
+          outbox.patch(ticketId, next.tempId, {
+            status: "failed",
+            attempt,
+            failReason: failReasonOf(error),
+          });
         } else {
           // Trả về "queued" và hẹn thử lại sau backoff.
           outbox.patch(ticketId, next.tempId, { status: "queued", attempt });

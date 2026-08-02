@@ -221,13 +221,17 @@ export default function TicketDetailPage() {
   }
 
   const status = ticket.status;
-  const canTriage = status === TicketStatusEnum.Open;
-  // triage-reject: Open|Escalated → ClosedRejected (BE verified — state machine
-  // cho phép cả 2 source). Tách khỏi canTriage (chỉ Open) vốn dùng cho nút Triage.
+  // Triage = New → Open (TransitionRuleProvider, Manager/Admin/System). Trước đây
+  // gate nhầm sang Open: queue chỉ trả ticket New nên nút không bao giờ hiện.
+  const canTriage = status === TicketStatusEnum.New;
+  // triage-reject: New|Escalated → ClosedRejected — rule provider có cả 2 source.
+  // Đổi Open→New theo cùng lý do canTriage; giữ nguyên nhánh Escalated.
   const canTriageReject = (
-    [TicketStatusEnum.Open, TicketStatusEnum.Escalated] as TicketStatusEnum[]
+    [TicketStatusEnum.New, TicketStatusEnum.Escalated] as TicketStatusEnum[]
   ).includes(status);
-  const canAssign = status === TicketStatusEnum.Approved;
+  // Assign = Open → Assigned. Trước đây gate theo 'Approved' — status này KHÔNG
+  // tồn tại ở BE (chỉ có ActivityActionEnum.Approved) nên nút không bao giờ hiện.
+  const canAssign = status === TicketStatusEnum.Open;
   const canReassign = (
     [
       TicketStatusEnum.Assigned,
@@ -839,22 +843,12 @@ export default function TicketDetailPage() {
                     )}
                   />
                 )}
-                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
-                {ticket.incidentDetectedFrom && (
+                {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+                {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Sự cố từ"
+                    label="Phát hiện lúc"
                     value={format(
-                      new Date(ticket.incidentDetectedFrom),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
-                    )}
-                  />
-                )}
-                {ticket.incidentDetectedTo && (
-                  <SideInfoRow
-                    label="Sự cố đến"
-                    value={format(
-                      new Date(ticket.incidentDetectedTo),
+                      new Date(ticket.detectedAt),
                       "dd/MM/yyyy HH:mm",
                       { locale: vi },
                     )}

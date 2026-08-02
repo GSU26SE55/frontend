@@ -708,22 +708,12 @@ export default function TicketDetailPage() {
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow label="Danh mục" value={ticket.category} />
                 <SideInfoRow label="Nguồn" value={ticket.origin} />
-                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
-                {ticket.incidentDetectedFrom && (
+                {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+                {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Sự cố từ"
+                    label="Phát hiện lúc"
                     value={format(
-                      new Date(ticket.incidentDetectedFrom),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
-                    )}
-                  />
-                )}
-                {ticket.incidentDetectedTo && (
-                  <SideInfoRow
-                    label="Sự cố đến"
-                    value={format(
-                      new Date(ticket.incidentDetectedTo),
+                      new Date(ticket.detectedAt),
                       "dd/MM/yyyy HH:mm",
                       { locale: vi },
                     )}

@@ -121,7 +121,6 @@ export function toneVars(tone: StatusTone): {
 export const TICKET_STATUS_TONE: Record<TicketStatusEnum, StatusTone> = {
   [TicketStatusEnum.New]: "info",
   [TicketStatusEnum.Open]: "info",
-  [TicketStatusEnum.Approved]: "info",
   [TicketStatusEnum.Assigned]: "info",
   [TicketStatusEnum.InProgress]: "info",
   [TicketStatusEnum.ClosedPendingRate]: "info",
