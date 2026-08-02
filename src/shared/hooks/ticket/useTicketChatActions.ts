@@ -165,39 +165,10 @@ export function useSuggestChat() {
   });
 }
 
-export function useSentimentCheck() {
-  return useMutation({
-    mutationFn: ({ ticketId }: { ticketId: string }) =>
-      ticketChatActionsService.sentimentCheck(ticketId).then((r) => r.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
 export function useSummarizeChat() {
   return useMutation({
     mutationFn: ({ ticketId }: { ticketId: string }) =>
       ticketChatActionsService.summarize(ticketId).then((r) => r.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
-// C2 — export PDF: nhận blob rồi trigger tải file.
-export function useExportChatPdf() {
-  return useMutation({
-    mutationFn: ({ ticketId }: { ticketId: string }) =>
-      ticketChatActionsService
-        .exportPdf(ticketId)
-        .then((r) => ({ blob: r.data, ticketId })),
-    onSuccess: ({ blob, ticketId }) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ticket-${ticketId}-chats.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    },
     onError: (error) => handleErrorApi({ error }),
   });
 }

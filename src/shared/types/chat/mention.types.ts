@@ -1,9 +1,9 @@
 import type { ActorRoleEnum } from "@/shared/enums/ticket/ticket.enum";
 export type { ActorRoleEnum } from "@/shared/enums/ticket/ticket.enum";
 
-// GET  /api/chats/mentions/me           → CommonResponse<PaginationResponse<ChatMentionDto>>
-// PATCH /api/chats/mentions/{id}/acknowledge → CommonResponse<ChatMentionDto>
+// GET /api/chats/mentions/me → CommonResponse<PaginationResponse<ChatMentionDto>>
 // Khớp BE TicketChatMentionDTO (TicketService.Application/DTOs/Response/Chats).
+// GH-866: BE bỏ isAcknowledged/acknowledgedAt (không còn cơ chế ACK) và thêm isInternal.
 export interface ChatMentionDto {
   id: string;
   chatId: string;
@@ -11,14 +11,13 @@ export interface ChatMentionDto {
   mentionedUserId: string;
   mentionedUserRole: ActorRoleEnum;
   mentionedDisplayName?: string | null;
-  isAcknowledged: boolean;
-  acknowledgedAt?: string | null;
+  /** Mention nằm trong chat nội bộ — chọn view public/internal. KHÔNG phải authz check. */
+  isInternal: boolean;
   createdAt: string;
 }
 
 // Query params cho GET /api/chats/mentions/me
 export interface MyMentionsParams {
-  unreadOnly?: boolean;
   page?: number;
   pageSize?: number;
 }

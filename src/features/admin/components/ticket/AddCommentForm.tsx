@@ -180,6 +180,7 @@ export default function AddCommentForm({
                             textareaRef.current = el;
                           }}
                           candidates={mentionCandidates}
+                          isInternal={isInternal}
                           value={value ?? ""}
                           onChange={(v) => {
                             field.onChange(v);

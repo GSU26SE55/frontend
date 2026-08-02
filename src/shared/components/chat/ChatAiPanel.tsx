@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  FileDown,
-  Loader2,
-  Smile,
-  Sparkles,
-  Text as TextIcon,
-} from "lucide-react";
+import { Loader2, Sparkles, Text as TextIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,18 +17,8 @@ import {
 import {
   useSuggestChat,
   useSummarizeChat,
-  useSentimentCheck,
-  useExportChatPdf,
 } from "@/shared/hooks/ticket/useTicketChatActions";
 import { ChatAiIntentEnum } from "@/shared/enums/ticket/chat.enum";
-import type { ChatSentimentLabel } from "@/shared/types/chat/chat.types";
-
-const SENTIMENT_VI: Record<ChatSentimentLabel, string> = {
-  Positive: "Tích cực 🙂",
-  Neutral: "Trung lập 😐",
-  Negative: "Tiêu cực 🙁",
-  Critical: "Nghiêm trọng 🚨",
-};
 
 const INTENT_LABEL: Record<ChatAiIntentEnum, string> = {
   RequestInfo: "Yêu cầu thêm thông tin",
@@ -51,24 +35,17 @@ interface Props {
 
 /**
  * GH-133 C2 — thanh công cụ AI cho chat thread (Staff/Manager/Admin).
- * Gợi ý (suggest) · Tóm tắt (summarize) · Xuất PDF (export-pdf).
+ * Gợi ý (suggest) · Tóm tắt (summarize).
+ * GH-866 — BE đã xóa sentiment-check và export-pdf, không khôi phục.
  * Gợi ý trả về được đẩy lên parent (onSuggestions) để hiển thị dạng bong bóng
  * cuối luồng chat — bấm chọn sẽ đổ vào ô nhập rồi user tự gửi.
  */
 export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
   const suggestM = useSuggestChat();
   const summarizeM = useSummarizeChat();
-  const sentimentM = useSentimentCheck();
-  const exportM = useExportChatPdf();
 
   const [summary, setSummary] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [sentiment, setSentiment] = useState<{
-    label: ChatSentimentLabel;
-    score: number;
-    isAlertSent: boolean;
-  } | null>(null);
-  const [sentimentOpen, setSentimentOpen] = useState(false);
 
   const handleSuggest = async (intent: ChatAiIntentEnum) => {
     try {
@@ -92,20 +69,6 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
       }
       setSummary(res.data.summary);
       setSummaryOpen(true);
-    } catch {
-      /* hook onError đã toast */
-    }
-  };
-
-  const handleSentiment = async () => {
-    try {
-      const res = await sentimentM.mutateAsync({ ticketId });
-      if (!res.isSuccess || !res.data) {
-        toast.error(res.message ?? "AI không phân tích được cảm xúc.");
-        return;
-      }
-      setSentiment(res.data);
-      setSentimentOpen(true);
     } catch {
       /* hook onError đã toast */
     }
@@ -155,38 +118,6 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
         Tóm tắt
       </Button>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-7"
-        disabled={sentimentM.isPending}
-        onClick={() => void handleSentiment()}
-      >
-        {sentimentM.isPending ? (
-          <Loader2 className="size-3.5 animate-spin" />
-        ) : (
-          <Smile className="size-3.5" />
-        )}
-        Cảm xúc
-      </Button>
-
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="h-7"
-        disabled={exportM.isPending}
-        onClick={() => exportM.mutate({ ticketId })}
-      >
-        {exportM.isPending ? (
-          <Loader2 className="size-3.5 animate-spin" />
-        ) : (
-          <FileDown className="size-3.5" />
-        )}
-        Xuất PDF
-      </Button>
-
       {/* Dialog tóm tắt */}
       <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
         <DialogContent>
@@ -194,30 +125,6 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
             <DialogTitle>Tóm tắt thread (AI)</DialogTitle>
           </DialogHeader>
           <p className="text-sm whitespace-pre-wrap break-words">{summary}</p>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog cảm xúc */}
-      <Dialog open={sentimentOpen} onOpenChange={setSentimentOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cảm xúc khách hàng (AI)</DialogTitle>
-          </DialogHeader>
-          {sentiment && (
-            <div className="space-y-2 text-sm">
-              <p>
-                <span className="font-medium">
-                  {SENTIMENT_VI[sentiment.label] ?? sentiment.label}
-                </span>{" "}
-                · score {sentiment.score.toFixed(2)}
-              </p>
-              {sentiment.isAlertSent && (
-                <p className="text-red-600 dark:text-red-400">
-                  ⚠️ Đã gửi cảnh báo tới Manager.
-                </p>
-              )}
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
