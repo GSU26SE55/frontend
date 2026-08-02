@@ -59,6 +59,13 @@ export const TicketVerifyStatusEnum = {
 export type TicketVerifyStatusEnum =
   (typeof TicketVerifyStatusEnum)[keyof typeof TicketVerifyStatusEnum];
 
+// Lý do đóng đặc biệt — hiện BE chỉ có 1 giá trị.
+export const TicketCloseReasonEnum = {
+  MergedDuplicate: "MergedDuplicate", // đóng do được gộp vào ticket khác
+} as const;
+export type TicketCloseReasonEnum =
+  (typeof TicketCloseReasonEnum)[keyof typeof TicketCloseReasonEnum];
+
 export const TicketVerifyStatusLabel: Record<TicketVerifyStatusEnum, string> = {
   [TicketVerifyStatusEnum.Pending]: "Đang kiểm tra",
   [TicketVerifyStatusEnum.Legitimate]: "Hợp lệ",
