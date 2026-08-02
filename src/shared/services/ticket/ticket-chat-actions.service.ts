@@ -8,7 +8,6 @@ import type {
   ChatVoiceActionDTO,
   ChatSuggestPayload,
   ChatSuggestDTO,
-  ChatSentimentCheckDTO,
   ChatSummarizeDTO,
 } from "@/shared/types/chat/chat.types";
 import { fileStorageService } from "@/shared/services/file/file-storage.service";
@@ -87,21 +86,11 @@ export const ticketChatActionsService = {
       ENDPOINTS.TICKETS.CHAT_SUGGEST(ticketId),
       payload,
     ),
-  sentimentCheck: (ticketId: string) =>
-    axiosInstance.post<CommonResponse<ChatSentimentCheckDTO>>(
-      ENDPOINTS.TICKETS.CHAT_SENTIMENT(ticketId),
-      null,
-    ),
   summarize: (ticketId: string) =>
     axiosInstance.post<CommonResponse<ChatSummarizeDTO>>(
       ENDPOINTS.TICKETS.CHAT_SUMMARIZE(ticketId),
       null,
     ),
-  // C2 — export PDF: BE trả application/pdf (blob), không phải CommonResponse.
-  exportPdf: (ticketId: string) =>
-    axiosInstance.get<Blob>(ENDPOINTS.TICKETS.CHAT_EXPORT_PDF(ticketId), {
-      responseType: "blob",
-    }),
   // C3 — download attachment: 200 (url) · 202 (đang scan) · 451 (nhiễm virus).
   // Trả nguyên AxiosResponse để hook đọc status; 451 (4xx) axios sẽ throw → hook catch.
   downloadAttachment: (

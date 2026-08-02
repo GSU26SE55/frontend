@@ -241,7 +241,7 @@ interface TicketCommentThreadProps {
   ticketClosed?: boolean;
   /** GH-133 C2 — ticketId để gọi AI endpoint (bắt buộc nếu bật aiEnabled) */
   ticketId?: string;
-  /** GH-133 C2 — hiện thanh AI (suggest/summarize/sentiment/export). Page tự gate role. */
+  /** GH-133 C2 — hiện thanh AI (suggest/summarize). Page tự gate role. */
   aiEnabled?: boolean;
   /** Khi chọn 1 gợi ý AI, page có thể đổ nội dung xuống composer riêng theo role. */
   onSelectSuggestion?: (text: string) => void;

@@ -10,16 +10,10 @@ import type {
 } from "@/shared/types/chat/mention.types";
 
 export const chatMentionService = {
-  // GET /api/chats/mentions/me?unreadOnly&page&pageSize
+  // GET /api/chats/mentions/me?page&pageSize
   getMyMentions: (params?: MyMentionsParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<ChatMentionDto>>>(
       ENDPOINTS.CHAT_MENTIONS.ME,
       { params },
-    ),
-
-  // PATCH /api/chats/mentions/{id}/acknowledge — chỉ chính chủ mention.
-  acknowledge: (id: string) =>
-    axiosInstance.patch<CommonResponse<ChatMentionDto>>(
-      ENDPOINTS.CHAT_MENTIONS.ACKNOWLEDGE(id),
     ),
 };

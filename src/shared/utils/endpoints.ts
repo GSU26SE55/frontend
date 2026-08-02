@@ -89,10 +89,7 @@ export const ENDPOINTS = {
     CHAT_ATTACHMENT_DOWNLOAD: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}/download`, // C3
     CHAT_SUGGEST: (tid: string) => `/api/tickets/${tid}/chats/suggest`, // C2 (AI)
-    CHAT_SENTIMENT: (tid: string) =>
-      `/api/tickets/${tid}/chats/sentiment-check`, // C2 (AI)
     CHAT_SUMMARIZE: (tid: string) => `/api/tickets/${tid}/chats/summarize`, // C2 (AI)
-    CHAT_EXPORT_PDF: (tid: string) => `/api/tickets/${tid}/chats/export-pdf`, // C2
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,
@@ -111,7 +108,6 @@ export const ENDPOINTS = {
 
   CHAT_MENTIONS: {
     ME: "/api/chats/mentions/me",
-    ACKNOWLEDGE: (id: string) => `/api/chats/mentions/${id}/acknowledge`,
   },
 
   MY_CHATS: {

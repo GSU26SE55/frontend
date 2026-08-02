@@ -116,18 +116,6 @@ export interface ChatSuggestDTO {
   suggestions: string[];
 }
 
-// POST /api/tickets/{id}/chats/sentiment-check — response data
-export type ChatSentimentLabel =
-  | "Positive"
-  | "Neutral"
-  | "Negative"
-  | "Critical";
-export interface ChatSentimentCheckDTO {
-  score: number; // [-1, 1]
-  label: ChatSentimentLabel;
-  isAlertSent: boolean;
-}
-
 // POST /api/tickets/{id}/chats/summarize — response data
 export interface ChatSummarizeDTO {
   summary: string;

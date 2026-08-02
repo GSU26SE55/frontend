@@ -52,6 +52,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
+import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
@@ -135,24 +136,9 @@ export default function TicketDetailPage() {
     return Array.from(ids);
   }, [ticket, comments]);
 
-  // Người có thể @-tag: tác giả đã tham gia hội thoại (dedup, bỏ chính mình).
-  const mentionCandidates = useMemo(() => {
-    const seen = new Map<
-      string,
-      { userId: string; displayName: string; role?: string }
-    >();
-    comments.forEach((c) => {
-      if (!c.authorUserId || c.authorUserId === currentUserId) return;
-      if (!seen.has(c.authorUserId)) {
-        seen.set(c.authorUserId, {
-          userId: c.authorUserId,
-          displayName: c.authorDisplayName ?? "Người dùng",
-          role: c.authorRole,
-        });
-      }
-    });
-    return Array.from(seen.values());
-  }, [comments, currentUserId]);
+  // Người có thể @-tag: participant active của ticket (GET .../participants).
+  // KHÔNG dùng tác giả đã chat — người mới add vào ticket chưa nhắn gì vẫn phải tag được.
+  const mentionCandidates = useMentionCandidates(ticketId);
 
   const startMutation = useStartTicket(ticketId);
   const holdMutation = useHoldTicket(ticketId);

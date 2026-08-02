@@ -10,11 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { MentionInput } from "@/shared/schemas/ticket/ticket-comment.schema";
 
-// Người có thể tag — build từ tác giả trong hội thoại (authorUserId + authorDisplayName).
+// Người có thể tag — build từ participant active của ticket (GET .../participants).
 export interface MentionCandidate {
   userId: string;
   displayName: string;
   role?: string;
+  /** Xem được chat nội bộ. false + đang soạn chat nội bộ → cảnh báo trong dropdown. */
+  canViewInternal?: boolean;
 }
 
 // Regex bắt token @đang-gõ ngay trước con trỏ: "@" + ký tự tên (không xuống dòng, cho phép khoảng trắng đơn giữa từ).
@@ -39,6 +41,8 @@ interface Props extends Omit<TextareaProps, "onChange" | "value"> {
   value: string;
   onChange: (value: string) => void;
   candidates: MentionCandidate[];
+  /** Đang soạn chat nội bộ — bật cảnh báo với người không xem được internal. */
+  isInternal?: boolean;
   /** Báo lên form danh sách người đã được tag (để gửi field `mentions`). */
   onMentionsChange?: (mentions: MentionInput[]) => void;
 }
@@ -51,7 +55,15 @@ interface Props extends Omit<TextareaProps, "onChange" | "value"> {
  */
 export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
   function MentionTextarea(
-    { value, onChange, candidates, onMentionsChange, className, ...rest },
+    {
+      value,
+      onChange,
+      candidates,
+      isInternal = false,
+      onMentionsChange,
+      className,
+      ...rest
+    },
     ref,
   ) {
     const innerRef = useRef<HTMLTextAreaElement | null>(null);
@@ -173,6 +185,16 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
                     </AvatarFallback>
                   </Avatar>
                   <span className="truncate">{c.displayName}</span>
+                  {/* BE không chặn mention người không xem được chat nội bộ —
+                      cảnh báo để người soạn tự cân nhắc. */}
+                  {isInternal && c.canViewInternal === false && (
+                    <span
+                      className="shrink-0 text-[10px] text-amber-600 dark:text-amber-400"
+                      title="Người này không xem được chat nội bộ"
+                    >
+                      không xem được
+                    </span>
+                  )}
                   {c.role && (
                     <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
                       {c.role}
