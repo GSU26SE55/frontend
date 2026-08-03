@@ -80,8 +80,6 @@ import StaffKbEditorPage from "@/features/staff/pages/KbEditorPage";
 import AdminBlogListPage from "@/features/admin/pages/BlogListPage";
 import AdminBlogDetailPage from "@/features/admin/pages/BlogDetailPage";
 import AdminBlogEditorPage from "@/features/admin/pages/BlogEditorPage";
-import AdminBlogTemplatePage from "@/features/admin/pages/BlogTemplatePage";
-import AdminBlogTemplateEditorPage from "@/features/admin/pages/BlogTemplateEditorPage";
 import ManagerBlogListPage from "@/features/manager/pages/BlogListPage";
 import ManagerBlogDetailPage from "@/features/manager/pages/BlogDetailPage";
 import ManagerBlogEditorPage from "@/features/manager/pages/BlogEditorPage";
@@ -181,15 +179,6 @@ const router = createBrowserRouter([
               { path: "kb/:id/edit", element: <AdminKbEditorPage /> },
               { path: "blog", element: <AdminBlogListPage /> },
               { path: "blog/new", element: <AdminBlogEditorPage /> },
-              { path: "blog/templates", element: <AdminBlogTemplatePage /> },
-              {
-                path: "blog/templates/new",
-                element: <AdminBlogTemplateEditorPage />,
-              },
-              {
-                path: "blog/templates/:id/edit",
-                element: <AdminBlogTemplateEditorPage />,
-              },
               { path: "blog/:id", element: <AdminBlogDetailPage /> },
               { path: "blog/:id/edit", element: <AdminBlogEditorPage /> },
               { path: "alerts", element: <AdminAlertsPage /> },

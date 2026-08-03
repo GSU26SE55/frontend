@@ -89,11 +89,6 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/blog",
         icon: Newspaper,
       },
-      {
-        label: SIDEBAR_LABELS.blogTemplates,
-        path: "/admin/blog/templates",
-        icon: LayoutTemplate,
-      },
     ],
   },
   {

@@ -13,7 +13,6 @@ export const SIDEBAR_LABELS = {
   tickets: "Tickets",
   knowledgeBase: "Knowledge Base",
   blog: "Blog",
-  blogTemplates: "Mẫu bài blog",
   batteryAlerts: "Cảnh báo pin",
   envIncidents: "Sự cố môi trường",
   ambient: "Môi trường site",
