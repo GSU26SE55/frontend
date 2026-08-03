@@ -280,7 +280,13 @@ export const ENDPOINTS = {
     // Sprint 6.3 NOTI3-12 — quản lý template. Chưa có endpoint create/update:
     // tạo bản mới làm bằng SQL/seed, ACTIVATE chỉ chuyển giữa các bản đã tồn tại.
     NOTIFICATION_TEMPLATES: {
-      LIST: "/api/admin/notification-templates", // ?type=&channel=&locale=
+      LIST: "/api/admin/notification-templates", // ?type=&channel=&activeOnly=&pageNumber=&pageSize=
+      // 02/08/2026 — soạn thảo template. CREATE dùng chung path với LIST (POST vs GET).
+      CREATE: "/api/admin/notification-templates",
+      DETAIL: (id: string) => `/api/admin/notification-templates/${id}`,
+      // PUT = sinh phiên bản MỚI rồi bật lên, không ghi đè bản cũ.
+      REVISE: (id: string) => `/api/admin/notification-templates/${id}`,
+      DELETE: (id: string) => `/api/admin/notification-templates/${id}`,
       PREVIEW: (id: string) =>
         `/api/admin/notification-templates/${id}/preview`,
       // Chỉ template kênh Email; rate limit 5 lần/giờ/admin (429 khi vượt).
@@ -288,6 +294,40 @@ export const ENDPOINTS = {
         `/api/admin/notification-templates/${id}/test-send`,
       ACTIVATE: (id: string) =>
         `/api/admin/notification-templates/${id}/activate`,
+      // 03/08/2026 — hai endpoint tra cứu, không sửa gì.
+      // VARIABLES: biến hợp lệ theo từng loại thông báo. Cần vì template gọi sai tên biến thì
+      // Handlebars render ra RỖNG chứ không báo lỗi — người soạn phải tự đoán và đoán sai thì
+      // không ai biết. Đây là dữ liệu tĩnh, không chạm DB.
+      VARIABLES: "/api/admin/notification-templates/variables",
+      // COVERAGE: cặp (loại × kênh) nào đang sinh thông báo thật mà thiếu template, và template
+      // nào đang dùng biến không tồn tại.
+      COVERAGE: "/api/admin/notification-templates/coverage",
+    },
+    // Sprint 6.4 — nhóm người nhận. Nhóm `Role` (kind=2) do seeder tạo, không sửa/xoá được.
+    NOTIFICATION_GROUPS: {
+      LIST: "/api/admin/notification-groups", // ?kind=&search=&pageNumber=&pageSize=
+      CREATE: "/api/admin/notification-groups", // POST — luôn tạo nhóm Static
+      DETAIL: (id: string) => `/api/admin/notification-groups/${id}`,
+      UPDATE: (id: string) => `/api/admin/notification-groups/${id}`,
+      DELETE: (id: string) => `/api/admin/notification-groups/${id}`,
+      MEMBERS: (id: string) => `/api/admin/notification-groups/${id}/members`,
+      ADD_MEMBERS: (id: string) =>
+        `/api/admin/notification-groups/${id}/members`,
+      REMOVE_MEMBER: (id: string, userId: string) =>
+        `/api/admin/notification-groups/${id}/members/${userId}`,
+    },
+    // Sprint 6.4 — gửi hàng loạt + lịch sử gửi.
+    NOTIFICATION_BROADCAST: {
+      // POST — KHÔNG gửi gì, chỉ trả số người nhận SAU KHI gom trùng. Cộng memberCount
+      // từng nhóm ở client là sai khi các nhóm giao nhau.
+      PREVIEW: "/api/admin/notifications/broadcast/preview",
+      // 03/08/2026 — xem trước NỘI DUNG theo từng kênh khi bật "dùng mẫu". Tách khỏi PREVIEW ở trên
+      // vì hai câu hỏi khác nhau: "gửi cho bao nhiêu người" và "mỗi kênh sẽ hiện ra chữ gì".
+      // Phải tách theo kênh vì mẫu khoá theo (Loại × Kênh) và bản SMS được nén ngắn riêng.
+      TEMPLATE_PREVIEW: "/api/admin/notifications/broadcast/template-preview",
+      SEND: "/api/admin/notifications/broadcast",
+      BATCHES: "/api/admin/notifications/batches",
+      BATCH_DETAIL: (id: string) => `/api/admin/notifications/batches/${id}`,
     },
     SAGAS: {
       ALERT_TICKET_LIST: "/api/admin/sagas/alert-ticket",

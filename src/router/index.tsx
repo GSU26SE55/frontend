@@ -26,6 +26,8 @@ import BatteryAuditLogsPage from "@/features/admin/pages/BatteryAuditLogsPage";
 import FilesAuditLogsPage from "@/features/admin/pages/FilesAuditLogsPage";
 import NotificationAdminPage from "@/features/admin/pages/NotificationAdminPage";
 import NotificationTemplatesPage from "@/features/admin/pages/NotificationTemplatesPage";
+import NotificationGroupsPage from "@/features/admin/pages/NotificationGroupsPage";
+import NotificationBatchesPage from "@/features/admin/pages/NotificationBatchesPage";
 import AdminDashboardPage from "@/features/admin/pages/DashboardPage";
 import AdminAnalyticsPage from "@/features/admin/pages/AnalyticsPage";
 import AdminSiteListPage from "@/features/admin/pages/SiteListPage";
@@ -200,6 +202,14 @@ const router = createBrowserRouter([
               {
                 path: "notification-templates",
                 element: <NotificationTemplatesPage />,
+              },
+              {
+                path: "notification-groups",
+                element: <NotificationGroupsPage />,
+              },
+              {
+                path: "notification-batches",
+                element: <NotificationBatchesPage />,
               },
               { path: "settings", element: <AccountSettingsPage /> },
             ],

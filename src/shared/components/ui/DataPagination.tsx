@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -55,8 +56,27 @@ export default function DataPagination({
   onPageSizeChange,
   pageSizeOptions = PAGE_SIZE_OPTIONS,
 }: DataPaginationProps) {
+  // Trang vượt quá dữ liệu — URL/bookmark cũ, hoặc dữ liệu vừa bị lọc/xoá bớt.
+  const outOfRange =
+    totalItems > 0 && (pageNumber - 1) * pageSize >= totalItems;
+
+  // Tự kéo về trang cuối CÒN dữ liệu.
+  //
+  // Vì sao cần: BE trả 200 + items rỗng cho trang vượt quá dữ liệu (trước 02/08/2026 nó ném 500 do
+  // tràn int, nên FE chưa bao giờ phải xử lý trạng thái này). Không kéo về thì màn hình tự mâu thuẫn:
+  // tiêu đề "4 loại pin", thanh này "Hiển thị 0 / 4", nhưng bảng lại báo "Chưa có loại pin nào" —
+  // người dùng tưởng mất sạch dữ liệu. Nút "Trước" cũng chỉ lùi 1 trang, từ trang 99 phải bấm 98 lần.
+  //
+  // Không lặp vô hạn: sau khi kéo về, pageNumber = totalPages nên outOfRange thành false. Mọi consumer
+  // của onPageChange đều thực sự cập nhật state (đã rà cả 29 chỗ), nên lần render sau chắc chắn thoát.
+  useEffect(() => {
+    if (outOfRange) onPageChange(totalPages);
+  }, [outOfRange, totalPages, onPageChange]);
+
   if (totalItems === 0) return null;
 
+  // outOfRange chỉ tồn tại trong đúng 1 lần render trước khi effect ở trên kéo về trang cuối.
+  // Vẫn phải xử lý ở đây, nếu không lần render đó in ra chuỗi vô nghĩa kiểu "Hiển thị 76–39 / 39".
   const from = (pageNumber - 1) * pageSize + 1;
   const to = Math.min(pageNumber * pageSize, totalItems);
   const pageRange = buildPageRange(pageNumber, totalPages);
@@ -65,7 +85,9 @@ export default function DataPagination({
     <div className="flex items-center justify-between px-1">
       {/* Left: total */}
       <span className="text-sm text-muted-foreground whitespace-nowrap">
-        Hiển thị {from}–{to} / {totalItems}
+        {outOfRange
+          ? `Hiển thị 0 / ${totalItems}`
+          : `Hiển thị ${from}–${to} / ${totalItems}`}
       </span>
 
       {/* Right: page size selector + pagination */}

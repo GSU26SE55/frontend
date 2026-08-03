@@ -11,7 +11,9 @@ export const NotificationTypeEnum = {
   EnvironmentalIncidentDetected: 10,
   EnvironmentalIncidentResolved: 11,
   AccountActivated: 12,
-  AdminInvite: 13,
+  // 13 = AdminInvite — ĐÃ GỠ 03/08/2026 cùng backend, cố ý để trống số này.
+  // Thư mời quản trị đi thẳng AuthService → EmailService, KHÔNG qua NotificationService: không
+  // consumer nào ghi, không dòng notifications nào mang type 13. Không dùng lại số 13.
   IncidentDeclared: 14,
   // Cascade risk ≥ 0.7 trên 1 pin (BatteryCascadeRiskHighEvent) → notify Manager/Admin.
   CascadeRiskHigh: 15,
@@ -33,15 +35,15 @@ export const NotificationTypeEnum = {
   TicketRatingRequested: 31,
   BatteryAnomalyWarning: 32,
   BatteryAnomalyInfo: 33,
-  // GH-83 — trước đây BE khai `= 27`, trùng value với ChatEscalatedToAdmin nên FE bỏ
-  // qua. Nay BE đã tách sang 34 (NotificationTypeEnum.cs:106), 27 chỉ còn là
-  // ChatEscalatedToAdmin. Notification này báo Customer khi ticket của họ bị gộp.
+  // 03/08/2026 — BE đã tách `TicketMerged` khỏi 27 sang 34 (hoàn tất GH-83), nên nay mirror được.
+  // Trước đó BE khai `TicketMerged = 27` TRÙNG `ChatEscalatedToAdmin` ⇒ map value→tên ambiguous
+  // nên FE từng cố ý bỏ trống. Notification này báo Customer khi ticket của họ bị gộp.
+  // KHÔNG dùng lại 27 cho bất kỳ loại nào.
   TicketMerged: 34,
   System: 99,
 } as const;
-// ⚠️ Số lấy theo BE `NotificationTypeEnum.cs`, KHÔNG theo docs/api-notification.md —
-// docs thiếu BlogGenerationCompleted(25)/BlogGenerationFailed(26) nên lệch 2 từ
-// ChatEscalatedToAdmin trở đi.
+// ⚠️ Số lấy theo BE `NotificationTypeEnum.cs`. Nhóm Sprint 6.2 nằm ở 27–33 (không phải 25–31):
+// module Blog GH-671 chiếm 25/26 nên đẩy toàn bộ nhóm sau lên 2 bậc.
 export type NotificationTypeEnum =
   (typeof NotificationTypeEnum)[keyof typeof NotificationTypeEnum];
 
