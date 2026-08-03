@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
@@ -15,13 +15,23 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { HttpError } from "@/shared/lib/errors";
 import { MESSAGES } from "@/shared/constants/messages";
+import { NotificationChannelEnum } from "@/shared/enums/notification/notification.enum";
+import {
+  notificationTypeLabel,
+  notificationChannelLabel,
+} from "@/shared/constants/notificationLabels";
+import {
+  extractPlaceholders,
+  toInputValue,
+} from "@/features/admin/utils/handlebars";
 import {
   templateSampleDataSchema,
   parseSampleData,
@@ -41,6 +51,8 @@ interface Props {
   onClose: () => void;
 }
 
+type InputMode = "form" | "json";
+
 export default function NotificationTemplatePreviewDialog({
   template,
   onClose,
@@ -51,6 +63,12 @@ export default function NotificationTemplatePreviewDialog({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
 
+  // Mặc định là form: bộ biến của mẫu đã biết trước nên không có lý do bắt gõ JSON tay.
+  // JSON thô giữ lại làm lối thoát cho mẫu tương lai dùng block helper (cần giá trị đúng kiểu
+  // bool/số) — bộ mẫu hiện tại không có mẫu nào như vậy.
+  const [mode, setMode] = useState<InputMode>("form");
+  const [vars, setVars] = useState<Record<string, string>>({});
+
   const preview = usePreviewTemplate();
   const testSend = useTestSendTemplate();
 
@@ -59,20 +77,84 @@ export default function NotificationTemplatePreviewDialog({
     defaultValues: { sampleDataJson: "" },
   });
 
+  // Biến lấy từ CẢ tiêu đề lẫn thân — thân mới là chỗ chứa phần lớn biến, mà bảng lại không hiện.
+  const placeholders = useMemo(
+    () =>
+      template
+        ? extractPlaceholders(template.titleTemplate, template.bodyTemplate)
+        : [],
+    [template],
+  );
+
   // Reset state khi đổi template được xử lý bằng `key` ở phía page (remount
   // component) — không dùng effect setState, tránh cascading render.
   if (!template) return null;
 
   // BE chặn gửi thử kênh khác Email (SMS tốn tiền thật, push cần device token).
-  const canTestSend = template.channel === "Email";
+  // 02/08/2026: channel là SỐ, không còn là chuỗi "Email" — so bằng enum.
+  const canTestSend = template.channel === NotificationChannelEnum.Email;
   const outOfQuota = remaining === 0;
 
-  const onPreview = async (values: TemplateSampleDataFormValues) => {
+  const jsonText = form.getValues().sampleDataJson?.trim() ?? "";
+
+  /**
+   * Gom dữ liệu mẫu theo chế độ đang mở.
+   * Ô để trống ⇒ BỎ QUA (không gửi khoá đó) — giữ đúng ngữ nghĩa cũ của JSON rỗng: placeholder
+   * không có giá trị sẽ render ra rỗng, đó là cách phát hiện mẫu gọi sai tên biến.
+   */
+  const buildSampleData = (): Record<string, unknown> | undefined => {
+    if (mode === "json") return parseSampleData(jsonText);
+
+    const entries = placeholders
+      .map((name) => [name, vars[name] ?? ""] as const)
+      .filter(([, value]) => value !== "");
+
+    // Object.fromEntries thay vì gán khoá động vào object literal: khoá tên "__proto__" sẽ ghi đè
+    // prototype nếu gán trực tiếp.
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+  };
+
+  /** JSON hỏng ⇒ chặn, để nút Gửi thử không âm thầm gửi đi với dữ liệu rỗng. */
+  const hasBrokenJson = () =>
+    mode === "json" &&
+    jsonText !== "" &&
+    parseSampleData(jsonText) === undefined;
+
+  const switchMode = (next: InputMode) => {
+    if (next === mode) return;
+
+    if (next === "json") {
+      // Nạp sẵn JSON từ giá trị đang có trong form để không phải gõ lại.
+      const data = buildSampleData();
+      form.setValue(
+        "sampleDataJson",
+        data ? JSON.stringify(data, null, 2) : "",
+      );
+    } else {
+      // JSON hỏng thì giữ nguyên form, không ghi đè bằng dữ liệu không parse được.
+      const parsed = parseSampleData(jsonText);
+      if (parsed) {
+        setVars((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            placeholders.map((name) => [name, toInputValue(parsed[name])]),
+          ),
+        }));
+      }
+      // Dọn ô JSON: nó vẫn nằm trong form state kể cả khi không hiển thị, để lại chuỗi hỏng thì
+      // zodResolver sẽ chặn submit bằng một lỗi mà người dùng không nhìn thấy ở chế độ form.
+      form.setValue("sampleDataJson", "", { shouldValidate: true });
+    }
+
+    setMode(next);
+  };
+
+  const runPreview = async () => {
     setPreviewError(null);
     try {
       const res = await preview.mutateAsync({
         id: template.id,
-        payload: { sampleData: parseSampleData(values.sampleDataJson) },
+        payload: { sampleData: buildSampleData() },
       });
       setRendered(res.data ?? null);
     } catch (error) {
@@ -83,11 +165,26 @@ export default function NotificationTemplatePreviewDialog({
     }
   };
 
+  // Chỉ chế độ JSON mới chạy validate của zod. Ở chế độ form, ô JSON bị ẩn nên một lỗi validate
+  // trên nó sẽ chặn submit mà không hiện ra ở đâu cả.
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (mode === "json") {
+      void form.handleSubmit(() => runPreview())(e);
+      return;
+    }
+    e.preventDefault();
+    void runPreview();
+  };
+
   const onTestSend = async () => {
-    const values = form.getValues();
+    if (hasBrokenJson()) {
+      setPreviewError("Dữ liệu mẫu không phải JSON hợp lệ.");
+      return;
+    }
+    setPreviewError(null);
     const res = await testSend.mutateAsync({
       id: template.id,
-      payload: { sampleData: parseSampleData(values.sampleDataJson) },
+      payload: { sampleData: buildSampleData() },
     });
     setRemaining(res.data?.remainingThisHour ?? null);
   };
@@ -97,38 +194,86 @@ export default function NotificationTemplatePreviewDialog({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {template.type} · {template.channel} · {template.locale} · v
-            {template.version}
+            {notificationTypeLabel(template.type)} ·{" "}
+            {notificationChannelLabel(template.channel)} · v{template.version}
           </DialogTitle>
           <DialogDescription>
-            Dựng thử với dữ liệu mẫu — không gửi đi đâu cả. Placeholder không có
-            trong dữ liệu mẫu sẽ ra rỗng, đó là cách phát hiện template gọi sai
-            tên biến.
+            Dựng thử với dữ liệu mẫu — không gửi đi đâu cả. Ô để trống sẽ render
+            ra rỗng, đó là cách phát hiện mẫu gọi sai tên biến.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onPreview)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="sampleDataJson"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dữ liệu mẫu (JSON, tuỳ chọn)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      rows={5}
-                      className="font-mono text-xs"
-                      placeholder={
-                        '{\n  "ticketCode": "TK-001",\n  "priority": "P1Critical"\n}'
-                      }
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">Dữ liệu mẫu</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => switchMode(mode === "form" ? "json" : "form")}
+              >
+                {mode === "form" ? "Nhập JSON thô" : "Quay lại dạng form"}
+              </Button>
+            </div>
+
+            {mode === "form" ? (
+              placeholders.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Mẫu này không có biến nào — bấm “Xem trước” để dựng thử luôn.
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {placeholders.map((name) => (
+                    <div key={name} className="space-y-1.5">
+                      {/* Nhãn để nguyên dạng {{tên}} — admin thấy đúng biến mà mẫu đang gọi. */}
+                      <Label
+                        htmlFor={`tpl-var-${name}`}
+                        className="font-mono text-xs"
+                      >
+                        {`{{${name}}}`}
+                      </Label>
+                      <Input
+                        id={`tpl-var-${name}`}
+                        value={vars[name] ?? ""}
+                        onChange={(e) =>
+                          setVars((prev) => ({
+                            ...prev,
+                            [name]: e.target.value,
+                          }))
+                        }
+                        placeholder="(để trống)"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              <FormField
+                control={form.control}
+                name="sampleDataJson"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        rows={5}
+                        className="font-mono text-xs"
+                        placeholder={
+                          placeholders.length > 0
+                            ? `{\n${placeholders
+                                .map((n) => `  "${n}": ""`)
+                                .join(",\n")}\n}`
+                            : "{}"
+                        }
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="flex items-center gap-2">
               <Button type="submit" disabled={preview.isPending}>

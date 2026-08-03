@@ -41,7 +41,6 @@ const TYPE_LABEL: Record<number, string> = {
   [NotificationTypeEnum.EnvironmentalIncidentDetected]: "Sự cố môi trường",
   [NotificationTypeEnum.EnvironmentalIncidentResolved]: "Đã xử lý môi trường",
   [NotificationTypeEnum.AccountActivated]: "Tài khoản",
-  [NotificationTypeEnum.AdminInvite]: "Lời mời",
   [NotificationTypeEnum.IncidentDeclared]: "Incident",
   [NotificationTypeEnum.System]: "Hệ thống",
 };

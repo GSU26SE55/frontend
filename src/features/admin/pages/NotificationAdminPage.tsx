@@ -1,6 +1,6 @@
 import { BellRing } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import CreateNotificationForm from "@/features/admin/components/notification/CreateNotificationForm";
+import BroadcastNotificationForm from "@/features/admin/components/notification/BroadcastNotificationForm";
 
 export default function NotificationAdminPage() {
   return (
@@ -12,12 +12,13 @@ export default function NotificationAdminPage() {
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">Gửi thông báo</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Tạo notification thủ công cho một user (backfill / smoke test).
+          Gửi cho nhiều nhóm và cá nhân trong một lần. Người vừa ở trong nhóm
+          vừa được chọn đích danh chỉ nhận <b>một</b> lần.
         </p>
       </div>
 
       <Card className="rounded-xl p-6">
-        <CreateNotificationForm />
+        <BroadcastNotificationForm />
       </Card>
     </div>
   );

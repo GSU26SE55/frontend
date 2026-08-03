@@ -3,6 +3,7 @@
 // Label/title đặc thù chỉ admin dùng → giữ inline ở đây.
 
 import {
+  History,
   Newspaper,
   LayoutTemplate,
   LayoutDashboard,
@@ -119,6 +120,16 @@ export const ADMIN_NAV: NavSection[] = [
         icon: FileClock,
       },
       { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
+      {
+        label: "Nhóm nhận thông báo",
+        path: "/admin/notification-groups",
+        icon: Users,
+      },
+      {
+        label: "Lịch sử gửi",
+        path: "/admin/notification-batches",
+        icon: History,
+      },
       {
         label: "Mẫu thông báo",
         path: "/admin/notification-templates",

@@ -46,6 +46,8 @@ export const KEY = {
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
     notificationTemplates: ["admin", "notificationTemplates"] as const,
+    notificationGroups: ["admin", "notificationGroups"] as const, // Sprint 6.4
+    notificationBatches: ["admin", "notificationBatches"] as const, // Sprint 6.4
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -213,6 +215,45 @@ export const QUERY_KEY = {
       list: (params?: object) => [
         ...KEY.admin.notificationTemplates,
         "list",
+        params,
+      ],
+      // Hợp đồng tĩnh giữa consumer và template — không đổi trong một phiên làm việc.
+      variables: () => [...KEY.admin.notificationTemplates, "variables"],
+      // Phụ thuộc dữ liệu thật nên phải invalidate sau khi sửa template.
+      coverage: () => [...KEY.admin.notificationTemplates, "coverage"],
+    },
+    notificationGroups: {
+      list: (params?: object) => [
+        ...KEY.admin.notificationGroups,
+        "list",
+        params,
+      ],
+      detail: (id: string) => [...KEY.admin.notificationGroups, "detail", id],
+      members: (id: string, params?: object) => [
+        ...KEY.admin.notificationGroups,
+        "members",
+        id,
+        params,
+      ],
+    },
+    notificationBatches: {
+      list: (params?: object) => [
+        ...KEY.admin.notificationBatches,
+        "list",
+        params,
+      ],
+      detail: (id: string) => [...KEY.admin.notificationBatches, "detail", id],
+      // Xem trước phụ thuộc CẢ nhóm lẫn cá nhân lẫn kênh đang chọn — đưa hết vào khoá
+      // để đổi lựa chọn là truy vấn lại, không dùng nhầm số cũ.
+      preview: (params?: object) => [
+        ...KEY.admin.notificationBatches,
+        "preview",
+        params,
+      ],
+      // Nội dung xem trước phụ thuộc mẫu trong DB + biến admin đang gõ.
+      templatePreview: (params?: object) => [
+        ...KEY.admin.notificationBatches,
+        "template-preview",
         params,
       ],
     },

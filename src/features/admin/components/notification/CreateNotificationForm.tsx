@@ -56,7 +56,6 @@ const TYPE_OPTIONS: { value: NotificationTypeEnum; label: string }[] = [
     label: "Environmental Incident Resolved",
   },
   { value: NotificationTypeEnum.AccountActivated, label: "Account Activated" },
-  { value: NotificationTypeEnum.AdminInvite, label: "Admin Invite" },
   { value: NotificationTypeEnum.IncidentDeclared, label: "Incident Declared" },
   {
     value: NotificationTypeEnum.CascadeRiskHigh,
