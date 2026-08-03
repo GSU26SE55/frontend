@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbStatusBadge } from "./KbStatusBadge";
+import { KbPendingReviewNotice } from "./KbPendingReviewNotice";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
 import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
@@ -123,6 +124,8 @@ interface KbArticleDetailProps {
   onEdit?: () => void;
   onMarkHelpful?: () => void;
   helpfulPending?: boolean;
+  /** Mở dialog lịch sử phiên bản từ banner "chờ phê duyệt". */
+  onViewVersions?: () => void;
 }
 
 export function KbArticleDetail({
@@ -133,6 +136,7 @@ export function KbArticleDetail({
   onEdit,
   onMarkHelpful,
   helpfulPending,
+  onViewVersions,
 }: KbArticleDetailProps) {
   const navigate = useNavigate();
 
@@ -169,6 +173,12 @@ export function KbArticleDetail({
             )}
           </div>
         </div>
+
+        {/* ── Cảnh báo bản chờ duyệt / bị từ chối ──────────────────────── */}
+        <KbPendingReviewNotice
+          article={article}
+          onViewVersions={onViewVersions}
+        />
 
         {/* ── Two-column body (content + meta) ─────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_272px] gap-5 items-start">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { History, GitCompare, Undo2, Eye } from "lucide-react";
+import { History, GitCompare, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,7 +24,6 @@ interface KbVersionHistoryProps {
   versions: KbArticleVersionDTO[];
   onCompare: (fromVersionId: string, toVersionId?: string) => void;
   onRollback?: (versionId: string) => void; // chỉ Manager/Admin
-  onViewVersion?: (versionId: string) => void;
   isPending?: boolean;
 }
 
@@ -32,7 +31,6 @@ export function KbVersionHistory({
   versions,
   onCompare,
   onRollback,
-  onViewVersion,
   isPending,
 }: KbVersionHistoryProps) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -108,17 +106,6 @@ export function KbVersionHistory({
                   {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
                 </p>
               </div>
-              {onViewVersion && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-7"
-                  title="Xem nội dung phiên bản này"
-                  onClick={() => onViewVersion(v.id)}
-                >
-                  <Eye className="size-3.5" />
-                </Button>
-              )}
               {onRollback && (
                 <AlertDialog>
                   <AlertDialogTrigger

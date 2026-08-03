@@ -10,6 +10,7 @@ import type {
   UpdateKbArticlePayload,
 } from "@/shared/types/kb/kb.types";
 import { STAFF_MESSAGES } from "@/features/staff/constants/messages";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 
 export function useStaffKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -31,15 +32,6 @@ export function useStaffKbVersions(id: string) {
     queryKey: QUERY_KEY.kb.versions(id),
     queryFn: () => staffKbService.getVersions(id).then((r) => r.data.data),
     enabled: !!id,
-  });
-}
-
-export function useStaffKbVersionDetail(id: string, versionId: string | null) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
-    queryFn: () =>
-      staffKbService.getVersionById(id, versionId!).then((r) => r.data.data),
-    enabled: !!id && !!versionId,
   });
 }
 
@@ -87,8 +79,13 @@ export function useStaffKbUpdate() {
       id: string;
       payload: UpdateKbArticlePayload;
     }) => staffKbService.update(id, payload).then((r) => r.data.data),
-    onSuccess: (_, { id }) => {
-      toast.success(STAFF_MESSAGES.kb.updated);
+    onSuccess: (article, { id }) => {
+      // Staff sửa bài của chính mình được cập nhật thẳng; sửa bài người khác thì phải chờ duyệt.
+      toast.success(
+        article?.status === KbArticleStatusEnum.PendingReview
+          ? STAFF_MESSAGES.kb.updatePending
+          : STAFF_MESSAGES.kb.updated,
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
