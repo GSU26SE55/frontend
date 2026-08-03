@@ -33,6 +33,7 @@ import {
   useDuplicateKbArticle,
   useDeleteKbArticle,
 } from "@/features/admin/hooks/kb/useAdminKb";
+import { useGenerateBlogFromKb } from "@/shared/hooks/blog/useBlog";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import KbArticleTable from "@/features/admin/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
@@ -106,7 +107,12 @@ export default function KbListPage() {
   const { mutate: markHelpful } = useMarkKbHelpful();
   const { mutateAsync: duplicate } = useDuplicateKbArticle();
   const { mutate: deleteKb } = useDeleteKbArticle();
+  const { mutate: generateBlog, isPending: generatingBlog } =
+    useGenerateBlogFromKb();
   const [toDelete, setToDelete] = useState<KbArticleSummaryDTO | null>(null);
+  const [toGenerate, setToGenerate] = useState<KbArticleSummaryDTO | null>(
+    null,
+  );
 
   const handleCopy = async (id: string) => {
     const created = await duplicate(id);
@@ -275,6 +281,7 @@ export default function KbListPage() {
           onMarkHelpful={(a) => markHelpful(a.id)}
           onEdit={(a) => navigate(`/admin/kb/${a.id}/edit`)}
           onCopy={(a) => handleCopy(a.id)}
+          onGenerateBlog={(a) => setToGenerate(a)}
           onDelete={(a) => setToDelete(a)}
           sort={sort}
         />
@@ -292,6 +299,39 @@ export default function KbListPage() {
           onPageSizeChange={(s) => setFilter("pageSize", s)}
         />
       )}
+
+      <AlertDialog
+        open={!!toGenerate}
+        onOpenChange={(open) => !open && setToGenerate(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tạo blog bằng AI?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toGenerate && (
+                <>
+                  AI sẽ tạo bài blog từ <strong>{toGenerate.title}</strong>. Bài
+                  viết được lưu ở trạng thái nháp để bạn xem lại trước khi xuất
+                  bản. Mỗi bài KB chỉ tạo được một blog — cần lưu trữ blog cũ
+                  trước khi tạo lại.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToGenerate(null)} />
+            <AlertDialogAction
+              disabled={generatingBlog}
+              onClick={() => {
+                if (toGenerate) generateBlog(toGenerate.id);
+                setToGenerate(null);
+              }}
+            >
+              Tạo blog
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={!!toDelete}

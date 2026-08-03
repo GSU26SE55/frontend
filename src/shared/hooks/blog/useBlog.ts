@@ -14,8 +14,6 @@ import type {
   BlogCompareParams,
   CreateBlogPostPayload,
   UpdateBlogPostPayload,
-  CreateBlogTemplatePayload,
-  UpdateBlogTemplatePayload,
 } from "@/shared/types/blog/blog.types";
 
 /** Số lần poll tối đa khi chờ AI sinh bài (~2 phút với interval 3s). */
@@ -119,14 +117,6 @@ export function useBlogTemplates(params?: BlogTemplateListParams) {
   });
 }
 
-export function useBlogTemplateDetail(id: string) {
-  return useQuery({
-    queryKey: QUERY_KEY.blogTemplates.detail(id),
-    queryFn: () => blogService.getTemplateDetail(id).then((r) => r.data.data),
-    enabled: !!id,
-  });
-}
-
 // ── Write: soạn thảo (Staff+) ──
 // Form dùng mutateAsync + try/catch + handleErrorApi({ error, setError }) ở component.
 
@@ -209,50 +199,6 @@ export function useDeleteBlogPost() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.blog] });
       toast.success("Đã xóa bài viết");
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
-// ── Write: blog templates (chỉ Admin) ──
-
-export function useCreateBlogTemplate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: CreateBlogTemplatePayload) =>
-      blogService.createTemplate(payload).then((r) => r.data.data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [KEY.blogTemplates] });
-      toast.success("Đã tạo template");
-    },
-  });
-}
-
-export function useUpdateBlogTemplate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string;
-      payload: UpdateBlogTemplatePayload;
-    }) => blogService.updateTemplate(id, payload).then((r) => r.data.data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [KEY.blogTemplates] });
-      toast.success("Đã cập nhật template");
-    },
-  });
-}
-
-export function useDeleteBlogTemplate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) =>
-      blogService.removeTemplate(id).then((r) => r.data.data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [KEY.blogTemplates] });
-      toast.success("Đã xóa template");
     },
     onError: (error) => handleErrorApi({ error }),
   });

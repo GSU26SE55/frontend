@@ -55,6 +55,8 @@ interface KbArticleTableProps {
   onEdit?: (article: KbArticleSummaryDTO) => void;
   /** Sao chép row này → tạo bài mới tương tự (mở trang create điền sẵn). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
+  /** Sinh blog bằng AI — BE chỉ nhận bài Published (409 nếu khác). */
+  onGenerateBlog?: (article: KbArticleSummaryDTO) => void;
   basePath?: string;
   /** Sort server-side — state từ useUrlSort. */
   sort: ServerSortState;
@@ -71,6 +73,7 @@ export default function KbArticleTable({
   onMarkHelpful,
   onEdit,
   onCopy,
+  onGenerateBlog,
   basePath = "/admin/kb",
   sort,
 }: KbArticleTableProps) {
@@ -182,6 +185,14 @@ export default function KbArticleTable({
                       onPublish && (
                         <DropdownMenuItem onClick={() => onPublish(article)}>
                           Xuất bản
+                        </DropdownMenuItem>
+                      )}
+                    {article.status === KbArticleStatusEnum.Published &&
+                      onGenerateBlog && (
+                        <DropdownMenuItem
+                          onClick={() => onGenerateBlog(article)}
+                        >
+                          Tạo blog bằng AI
                         </DropdownMenuItem>
                       )}
                     {article.status === KbArticleStatusEnum.Published &&
