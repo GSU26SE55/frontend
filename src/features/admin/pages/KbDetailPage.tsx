@@ -30,7 +30,6 @@ import {
   useAdminKbVersions,
   useAdminKbCompare,
   useRollbackKbArticle,
-  useAdminKbVersionDetail,
   useMarkKbHelpful,
   useDeleteKbArticle,
   useDuplicateKbArticle,
@@ -64,11 +63,9 @@ export default function KbDetailPage() {
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
     null,
   );
-  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
 
   const { data: versions } = useAdminKbVersions(verOpen ? id! : "");
   const { data: diff } = useAdminKbCompare(id!, compareParams);
-  const { data: versionDetail } = useAdminKbVersionDetail(id!, viewVersionId);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
@@ -88,6 +85,7 @@ export default function KbDetailPage() {
         breadcrumb="Admin · Knowledge Base"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
+        onViewVersions={() => setVerOpen(true)}
         onEdit={() => navigate(`/admin/kb/${article.id}/edit`)}
         actions={
           <>
@@ -200,12 +198,10 @@ export default function KbDetailPage() {
         onOpenChange={setVerOpen}
         versions={versions ?? []}
         diff={diff}
-        versionDetail={versionDetail}
         isPending={rollingBack}
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
         }
-        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }

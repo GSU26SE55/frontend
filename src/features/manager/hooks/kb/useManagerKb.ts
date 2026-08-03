@@ -12,6 +12,7 @@ import type {
   RollbackPayload,
 } from "@/shared/types/kb/kb.types";
 import { MANAGER_MESSAGES } from "@/features/manager/constants/messages";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 
 export function useManagerKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -33,18 +34,6 @@ export function useManagerKbVersions(id: string) {
     queryKey: QUERY_KEY.kb.versions(id),
     queryFn: () => managerKbService.getVersions(id).then((r) => r.data.data),
     enabled: !!id,
-  });
-}
-
-export function useManagerKbVersionDetail(
-  id: string,
-  versionId: string | null,
-) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
-    queryFn: () =>
-      managerKbService.getVersionById(id, versionId!).then((r) => r.data.data),
-    enabled: !!id && !!versionId,
   });
 }
 
@@ -96,8 +85,13 @@ export function useManagerUpdateKbArticle() {
       id: string;
       payload: UpdateKbArticlePayload;
     }) => managerKbService.update(id, payload).then((r) => r.data.data),
-    onSuccess: (_, { id }) => {
-      toast.success(MANAGER_MESSAGES.kb.updated);
+    onSuccess: (article, { id }) => {
+      // BE đưa bài về PendingReview khi thay đổi cần duyệt — nội dung mới chưa hiển thị ngay.
+      toast.success(
+        article?.status === KbArticleStatusEnum.PendingReview
+          ? MANAGER_MESSAGES.kb.updatePending
+          : MANAGER_MESSAGES.kb.updated,
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },

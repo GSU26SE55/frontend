@@ -11,7 +11,6 @@ import {
   useManagerKbVersions,
   useManagerKbCompare,
   useManagerRollbackKbArticle,
-  useManagerKbVersionDetail,
   useMarkManagerKbHelpful,
   useManagerDuplicateKbArticle,
 } from "@/features/manager/hooks/kb/useManagerKb";
@@ -43,11 +42,9 @@ export default function KbDetailPage() {
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
     null,
   );
-  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
 
   const { data: versions } = useManagerKbVersions(verOpen ? id! : "");
   const { data: diff } = useManagerKbCompare(id!, compareParams);
-  const { data: versionDetail } = useManagerKbVersionDetail(id!, viewVersionId);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
@@ -67,6 +64,7 @@ export default function KbDetailPage() {
         breadcrumb="Manager · Knowledge Base"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
+        onViewVersions={() => setVerOpen(true)}
         onEdit={() => navigate(`/manager/kb/${article.id}/edit`)}
         actions={
           <>
@@ -133,12 +131,10 @@ export default function KbDetailPage() {
         onOpenChange={setVerOpen}
         versions={versions ?? []}
         diff={diff}
-        versionDetail={versionDetail}
         isPending={rollingBack}
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
         }
-        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }
