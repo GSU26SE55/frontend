@@ -23,6 +23,8 @@ import {
   useCreateSite,
   useUpdateSite,
 } from "@/features/admin/hooks/site/useSites";
+import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
+import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
 import {
   SiteStatusEnum,
   type SiteDto,
@@ -48,6 +50,8 @@ export default function SiteFormDialog({
   editData,
 }: SiteFormDialogProps) {
   const isEdit = !!editData;
+
+  const { data: customersData } = useCustomers({ pageSize: 100 });
 
   const {
     register,
@@ -128,13 +132,19 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Customer ID *</Label>
-            <Input
-              id="customerId"
-              {...register("customerId")}
-              placeholder="UUID"
-              readOnly={isEdit}
-              className={isEdit ? "cursor-not-allowed opacity-60" : undefined}
+            <Label htmlFor="customerId">Khách hàng *</Label>
+            <Controller
+              control={control}
+              name="customerId"
+              render={({ field }) => (
+                <CustomerCombobox
+                  id="customerId"
+                  customers={customersData?.items ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isEdit}
+                />
+              )}
             />
             {isEdit && (
               <p className="text-xs text-muted-foreground">

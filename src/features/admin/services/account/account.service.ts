@@ -5,16 +5,18 @@ import type {
   PaginationResponse,
 } from "@/shared/types/api.types";
 import type { CustomerDropdownItem } from "@/features/admin/types/battery/battery-asset.types";
-import { CUSTOMER_ROLE_ID } from "@/shared/constants/roleIds";
 
 export const adminAccountService = {
-  getCustomers: (params?: {
+  // roleId do caller truyền vào (resolve động qua useRoleId) — KHÔNG hardcode
+  // GUID vì BE seed system role bằng Guid.NewGuid() nên id khác nhau mỗi môi trường.
+  getCustomers: (params: {
+    roleId: string;
     pageNumber?: number;
     pageSize?: number;
     keyword?: string;
   }) =>
     axiosInstance.get<CommonResponse<PaginationResponse<CustomerDropdownItem>>>(
       ENDPOINTS.ADMIN.ACCOUNTS.LIST,
-      { params: { roleId: CUSTOMER_ROLE_ID, ...params } },
+      { params },
     ),
 };

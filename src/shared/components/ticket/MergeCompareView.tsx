@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,6 +77,19 @@ export default function MergeCompareView({
     source?.suspectedDuplicateOfTicketId,
   );
 
+  // Ticket đang chọn PHẢI có mặt trong danh sách, nếu không Select không tra được
+  // label từ value và sẽ hiển thị thẳng GUID ra trigger.
+  //
+  // Vì sao thiếu: useMergeCandidates loại ticket status=New không thuộc AUTO_ORIGINS,
+  // nhưng targetId lại được set sẵn từ suspectedDuplicateOfTicketId (AI gợi ý) —
+  // gợi ý đó có thể trỏ tới đúng loại ticket vừa bị loại. Danh sách cũng rỗng trong
+  // lúc `tickets` còn đang tải.
+  const options = useMemo(() => {
+    if (!targetId || candidates.some((t) => t.id === targetId))
+      return candidates;
+    return target ? [target, ...candidates] : candidates;
+  }, [candidates, targetId, target]);
+
   // Ticket chỉ có customerId (GUID) — tên khách hàng lấy từ battery asset.
   // Hook tự disable khi thiếu id, và 2 ticket cùng pin sẽ dùng chung cache.
   const { data: sourceAsset } = useBatteryAsset(source?.batteryAssetId);
@@ -127,7 +140,7 @@ export default function MergeCompareView({
           <Select
             value={targetId || undefined}
             onValueChange={(v) => onTargetIdChange(v ?? "")}
-            items={candidates.map((t) => ({
+            items={options.map((t) => ({
               value: t.id,
               label: `${t.id === source.suspectedDuplicateOfTicketId ? "⭐ " : ""}${t.code} — ${t.title}`,
             }))}
@@ -143,7 +156,7 @@ export default function MergeCompareView({
               />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
-              {candidates.map((t) => (
+              {options.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.id === source.suspectedDuplicateOfTicketId ? "⭐ " : ""}
                   {t.code} — {t.title}

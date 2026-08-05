@@ -265,6 +265,11 @@ export default function TicketDetailPage() {
     ] as TicketStatusEnum[]
   ).includes(status);
   const canDeclareIncident = !ticket.isIncident;
+  // Gộp ticket: ticket NGUỒN (bị gộp đi) phải còn New — chưa triage, chưa gán ai.
+  // Đã triage = Manager đã quyết định xử lý riêng → không cho gộp nữa. Đây cũng là
+  // cách Manager "tách" 1 ticket nghi trùng: chỉ cần triage nó là nút Gộp biến mất.
+  const canMerge =
+    !ticket.mergedIntoTicketId && status === TicketStatusEnum.New;
 
   // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
 
@@ -386,17 +391,15 @@ export default function TicketDetailPage() {
               Từ chối (Triage)
             </Button>
           )}
-          {/* Gộp ticket trùng — luôn cho Manager gộp thủ công (ticket chưa gộp/chưa đóng). */}
-          {!ticket.mergedIntoTicketId &&
-            ticket.status !== TicketStatusEnum.Closed && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(`/manager/tickets/${id}/merge`)}
-              >
-                Gộp ticket
-              </Button>
-            )}
+          {canMerge && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/manager/tickets/${id}/merge`)}
+            >
+              Gộp ticket
+            </Button>
+          )}
         </div>
       </div>
 
