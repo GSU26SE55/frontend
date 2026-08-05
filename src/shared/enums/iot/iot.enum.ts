@@ -18,7 +18,12 @@ export const IotApiKeyScopeEnum = {
   DeviceHeartbeat: 2,
   EnvironmentalIngest: 4,
   FirmwareCheck: 8,
-  EdgeDeviceDefault: 11, // SensorIngest | DeviceHeartbeat | FirmwareCheck (1+2+8)
+  // GH-785 — 15 = SensorIngest | DeviceHeartbeat | EnvironmentalIngest | FirmwareCheck (1+2+4+8).
+  // Trước đây là 11 (thiếu EnvironmentalIngest=4), khớp giá trị cũ của BE. Firmware ESP32 mang sẵn
+  // cảm biến môi trường và gửi lên ngay từ lần khởi động đầu, nên bộ mặc định thiếu quyền đó khiến
+  // chính dữ liệu thiết bị có sẵn bị chặn 403. Thiết bị tạo qua màn hình Admin cũng dính y hệt nếu
+  // hằng số này không đi cùng BE.
+  EdgeDeviceDefault: 15,
 } as const;
 export type IotApiKeyScopeEnum =
   (typeof IotApiKeyScopeEnum)[keyof typeof IotApiKeyScopeEnum];

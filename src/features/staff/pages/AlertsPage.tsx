@@ -22,6 +22,7 @@ import {
 import {
   NotificationStatusEnum,
   NotificationTypeEnum,
+  isUnreadStatus,
 } from "@/features/staff/types/notification/notification.types";
 import type { NotificationDto } from "@/features/staff/types/notification/notification.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -51,8 +52,13 @@ function getStatusClass(status: number) {
 
 function getStatusLabel(status: number) {
   if (status === NotificationStatusEnum.Read) return "Đã đọc";
+  // Sprint 6.3 NOTI3-14 — Opened mạnh hơn Read; Delivered là bằng chứng giao hàng thật. Thiếu hai
+  // nhánh này thì cả hai rơi xuống "Đang chờ", ngược hẳn ý nghĩa.
+  if (status === NotificationStatusEnum.Opened) return "Đã mở";
+  if (status === NotificationStatusEnum.Delivered) return "Đã nhận";
   if (status === NotificationStatusEnum.Sent) return "Đã gửi";
   if (status === NotificationStatusEnum.Failed) return "Lỗi";
+  // Pending và Processing (GH-792) đều là "chưa xong" dưới góc nhìn người dùng.
   return "Đang chờ";
 }
 
@@ -79,8 +85,11 @@ export default function AlertsPage() {
   const totalItems = data?.totalItems ?? 0;
   const totalPages =
     data?.totalPages ?? Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  const unreadCount = notifications.filter(
-    (item) => item.status !== NotificationStatusEnum.Read,
+  // Dùng helper thay vì tự so `!== Read`: định nghĩa "chưa đọc" của BE
+  // (GetUnreadCountQueryHandler) loại CẢ Read LẪN Opened, nên tự so sẽ đếm dư mọi record user đã
+  // bấm mở và badge lệch hẳn con số server trả về.
+  const unreadCount = notifications.filter((item) =>
+    isUnreadStatus(item.status),
   ).length;
   const slaCount = notifications.filter(
     (item) =>

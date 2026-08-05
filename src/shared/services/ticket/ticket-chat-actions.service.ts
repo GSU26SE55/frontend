@@ -53,13 +53,18 @@ export const ticketChatActionsService = {
       purpose: FilePurposeEnum.TicketAttachment,
     });
     const meta = upload.data.data;
-    if (!meta?.fileId || !meta.publicUrl) {
-      // BE ChatVoiceTranscribeCommand validate `Url` là bắt buộc — thiếu publicUrl thì bước 2
-      // chắc chắn 400. Chặn sớm với thông báo rõ thay vì để lỗi mơ hồ từ /chats/voice.
+    if (!meta?.fileId) {
       throw new Error("Upload audio thất bại — vui lòng ghi âm và gửi lại.");
     }
-    // Body khớp ChatVoiceTranscribeCommand của BE (Swagger): metadata + `url` = publicUrl file
-    // vừa upload để BE fetch audio khi transcribe async.
+    // Body khớp ChatVoiceTranscribeCommand của BE (Swagger). `url` là BẮT BUỘC ở validate của BE,
+    // nhưng chỉ được lưu làm metadata trên TicketAttachment.Url — bản thân việc transcribe thì
+    // VoiceTranscriptionRequestedConsumer tải audio qua gRPC nội bộ theo `fileId`, không đụng tới
+    // chuỗi này.
+    //
+    // GH-788 — vì thế KHÔNG được chặn khi publicUrl null. Bucket đối tượng là private nên
+    // PublicBaseUrl để rỗng ở mọi môi trường ⇒ publicUrl luôn null ⇒ bản cũ ném lỗi ngay tại đây
+    // và tính năng ghi âm không bao giờ chạy được. Rơi về đường tải có kiểm quyền, đúng quy ước
+    // mobile đang dùng cho attachment thường.
     return axiosInstance.post<CommonResponse<ChatVoiceActionDTO>>(
       ENDPOINTS.TICKETS.CHAT_VOICE(ticketId),
       {
@@ -67,7 +72,7 @@ export const ticketChatActionsService = {
         fileName: meta.fileName,
         contentType: meta.contentType,
         sizeBytes: meta.size,
-        url: meta.publicUrl,
+        url: meta.publicUrl ?? ENDPOINTS.FILES.DOWNLOAD(meta.fileId),
       },
     );
   },
