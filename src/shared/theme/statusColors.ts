@@ -219,6 +219,11 @@ export const NOTIFICATION_STATUS_TONE: Record<number, StatusTone> = {
   [NotificationStatusEnum.Sent]: "info",
   [NotificationStatusEnum.Failed]: "p1",
   [NotificationStatusEnum.Read]: "muted",
+  // Sprint 6.3 NOTI3-14 — Delivered/Opened thiếu ở đây từ lúc ra đời nên rơi về "muted",
+  // trông hệt như đã đọc. GH-792 thêm Processing.
+  [NotificationStatusEnum.Delivered]: "ok",
+  [NotificationStatusEnum.Opened]: "muted",
+  [NotificationStatusEnum.Processing]: "p3",
 };
 
 // Cascade risk (BE trả string-name "Low"/"Medium"/"High").

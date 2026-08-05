@@ -49,10 +49,17 @@ export interface IotDeviceDetailDto extends IotDeviceDto {
 export interface IotDeviceCreatedDto extends IotDeviceDto {
   rawApiKey: string;
   provisioningQrCode: string;
-  mqttUsername: string;
-  mqttPassword: string;
-  mqttBrokerHost: string;
-  mqttBrokerPort: number;
+  // Cả sáu trường MQTT đều nullable ở BE (`string?` / `int?` / `bool?`) và cùng rỗng khi bridge
+  // chưa bật (`MqttBrokerEndpoint.Disabled`). Khai `string`/`number` như trước là kiểu NÓI DỐI:
+  // TypeScript tin là luôn có giá trị, còn lúc chạy thì `mqttBrokerPort` null bị `String()` biến
+  // thành chuỗi "null" và hiện nguyên si trong ô cho người vận hành copy.
+  mqttUsername: string | null;
+  mqttPassword: string | null;
+  mqttBrokerHost: string | null;
+  mqttBrokerPort: number | null;
+  // GH-784 — hai trường này tồn tại để người cấu hình thiết bị KHỎI phải suy đoán.
+  mqttUseTls: boolean | null;
+  mqttTopicPrefix: string | null;
 }
 
 export interface CreateIotDevicePayload {

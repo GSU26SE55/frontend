@@ -22,7 +22,7 @@ import {
 import { SlaGaugePanel } from "@/shared/components/dashboard/SlaGaugePanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { NotificationStatusEnum } from "@/shared/enums/notification/notification.enum";
+import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
 import { useStaffTickets } from "@/features/staff/hooks/ticket/useStaffTickets";
 import { useStaffTicketDashboardStats } from "@/shared/hooks/dashboard/useDashboardStats";
 import { useStaffNotifications } from "@/features/staff/hooks/notification/useStaffNotifications";
@@ -348,7 +348,9 @@ export default function StaffDashboardPage() {
             ) : (
               <ol className="space-y-2">
                 {notifications.map((n) => {
-                  const isUnread = n.status !== NotificationStatusEnum.Read;
+                  // Định nghĩa "chưa đọc" của BE loại CẢ Read LẪN Opened — tự so `!== Read` sẽ
+                  // chấm đậm cả những thông báo user đã bấm mở.
+                  const isUnread = isUnreadStatus(n.status);
                   return (
                     <li key={n.id} className="flex gap-2.5 items-start py-0.5">
                       <span

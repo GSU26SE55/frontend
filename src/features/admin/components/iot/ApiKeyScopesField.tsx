@@ -17,7 +17,7 @@ const SCOPE_LABEL: Record<number, string> = {
 };
 
 interface Props {
-  value: number; // bitmask hiện tại (default EdgeDeviceDefault = 11)
+  value: number; // bitmask hiện tại (default EdgeDeviceDefault = 15 — GH-785)
   onChange: (value: number) => void;
 }
 

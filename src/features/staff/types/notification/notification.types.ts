@@ -2,6 +2,7 @@ export {
   NotificationTypeEnum,
   NotificationChannelEnum,
   NotificationStatusEnum,
+  isUnreadStatus,
 } from "@/shared/enums/notification/notification.enum";
 
 // NotificationDto trùng shape với shared → dùng chung, không định nghĩa lại.

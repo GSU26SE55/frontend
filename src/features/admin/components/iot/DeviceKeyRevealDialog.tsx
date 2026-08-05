@@ -58,13 +58,51 @@ export default function DeviceKeyRevealDialog({
         <div className="space-y-3">
           <CopyRow label="API Key" value={device.rawApiKey} />
           <CopyRow label="Provisioning QR" value={device.provisioningQrCode} />
-          <CopyRow label="MQTT Username" value={device.mqttUsername} />
-          <CopyRow label="MQTT Password" value={device.mqttPassword} />
-          <CopyRow label="MQTT Broker Host" value={device.mqttBrokerHost} />
-          <CopyRow
-            label="MQTT Broker Port"
-            value={String(device.mqttBrokerPort)}
-          />
+          {device.mqttUsername && (
+            <CopyRow label="MQTT Username" value={device.mqttUsername} />
+          )}
+          {device.mqttPassword && (
+            <CopyRow label="MQTT Password" value={device.mqttPassword} />
+          )}
+
+          {/* BE trả CẢ SÁU trường MQTT cùng rỗng khi bridge chưa bật
+              (`MqttBrokerEndpointProvider` → `MqttBrokerEndpoint.Disabled`), nên xử lý khối này
+              như MỘT đơn vị: hoặc đủ để cấu hình, hoặc nói thẳng là chưa có.
+
+              Trước đây host/port render vô điều kiện: ô "Broker Host" trống (React còn cảnh báo
+              `value` prop is null) và ô "Broker Port" hiện đúng chữ "null" do `String(null)` —
+              người vận hành copy nguyên chuỗi đó vào firmware. Đo được trực tiếp trên stack dev. */}
+          {device.mqttBrokerHost ? (
+            <>
+              <CopyRow label="MQTT Broker Host" value={device.mqttBrokerHost} />
+              <CopyRow
+                label="MQTT Broker Port"
+                value={String(device.mqttBrokerPort ?? "")}
+              />
+              {/* GH-784 — hai giá trị này tồn tại để KHỎI phải suy đoán: thiếu chúng thì người
+                  cấu hình vẫn đoán TLS theo số cổng, và vẫn gõ tiền tố topic theo deviceCode
+                  nguyên bản chữ hoa — broker so khớp topic phân biệt hoa/thường nên thiết bị bị
+                  từ chối dù credential hoàn toàn đúng. */}
+              {device.mqttUseTls !== null && (
+                <CopyRow
+                  label="MQTT TLS"
+                  value={device.mqttUseTls ? "true" : "false"}
+                />
+              )}
+              {device.mqttTopicPrefix && (
+                <CopyRow
+                  label="MQTT Topic Prefix"
+                  value={device.mqttTopicPrefix}
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              MQTT bridge chưa được bật trên máy chủ, nên chưa có thông tin
+              broker để cấu hình thiết bị. Thiết bị vẫn dùng được API Key ở
+              trên.
+            </p>
+          )}
         </div>
 
         <DialogFooter>
