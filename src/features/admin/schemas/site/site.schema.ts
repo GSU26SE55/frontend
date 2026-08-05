@@ -4,7 +4,7 @@ import { coordField } from "@/shared/schemas/common.schema";
 
 export const siteFormSchema = z.object({
   name: z.string().min(1, "Bắt buộc").max(200),
-  customerId: z.string().uuid("UUID không hợp lệ"),
+  customerId: z.string().uuid("Vui lòng chọn khách hàng"),
   address: z.string().max(500).optional(),
   latitude: coordField("Vĩ độ", -90, 90),
   longitude: coordField("Kinh độ", -180, 180),

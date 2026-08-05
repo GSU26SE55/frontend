@@ -10,6 +10,8 @@ export function useUpdateBatteryAsset(id: string) {
       batteryAssetService.update(id, payload).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.batteryAssets] });
+      // Sửa pin có thể đổi site → danh sách pin của site cũ/mới đều phải load lại.
+      qc.invalidateQueries({ queryKey: [KEY.sites] });
     },
   });
 }

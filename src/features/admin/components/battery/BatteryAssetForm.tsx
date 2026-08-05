@@ -21,6 +21,7 @@ import {
 } from "@/features/admin/schemas/battery/battery-asset.schema";
 import { useBatteryTypes } from "@/features/admin/hooks/battery/useBatteryTypes";
 import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
+import { useSiteList } from "@/features/admin/hooks/site/useSites";
 import { useCreateBatteryAsset } from "@/features/admin/hooks/battery/useCreateBatteryAsset";
 import { useUpdateBatteryAsset } from "@/features/admin/hooks/battery/useUpdateBatteryAsset";
 import type { BatteryAssetDto } from "@/features/admin/types/battery/battery-asset.types";
@@ -50,17 +51,24 @@ interface BatteryAssetFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editData?: BatteryAssetDto | null;
+  /**
+   * Mở form từ trang chi tiết site → site điền sẵn và khoá lại, người dùng
+   * không phải tự chọn (và không chọn nhầm sang site khác).
+   */
+  lockedSiteId?: string;
 }
 
 export default function BatteryAssetForm({
   open,
   onOpenChange,
   editData,
+  lockedSiteId,
 }: BatteryAssetFormProps) {
   const isEdit = !!editData;
 
   const { data: batteryTypesData } = useBatteryTypes({ pageSize: 100 });
   const { data: customersData } = useCustomers({ pageSize: 100 });
+  const { data: sitesData } = useSiteList({ pageSize: 100 });
 
   const {
     register,
@@ -98,10 +106,11 @@ export default function BatteryAssetForm({
           status: editData.status,
         });
       } else {
-        reset({});
+        // Tạo mới từ trang site → điền sẵn site đang mở.
+        reset(lockedSiteId ? { siteId: lockedSiteId } : {});
       }
     }
-  }, [open, editData, reset]);
+  }, [open, editData, reset, lockedSiteId]);
 
   const onSubmit = async (data: BatteryAssetFormValues) => {
     const payload = {
@@ -203,6 +212,48 @@ export default function BatteryAssetForm({
             {errors.customerId && (
               <p className="text-sm text-destructive">
                 {errors.customerId.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="siteId">Site</Label>
+            {/* Khoá site bằng cách chỉ render đúng 1 option — KHÔNG dùng `disabled`
+                vì select disabled không gửi giá trị lên khi submit. */}
+            <select
+              id="siteId"
+              {...register("siteId")}
+              className={selectClass}
+              aria-readonly={!!lockedSiteId}
+            >
+              {lockedSiteId ? (
+                <option value={lockedSiteId}>
+                  {sitesData?.items.find((s) => s.id === lockedSiteId)?.name ??
+                    "Site đang mở"}
+                </option>
+              ) : (
+                <>
+                  <option value="">-- Chưa gán site --</option>
+                  {sitesData?.items.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+            {lockedSiteId ? (
+              <p className="text-xs text-muted-foreground">
+                Pin sẽ được gán vào site đang mở.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Để trống nếu pin chưa lắp vào site nào.
+              </p>
+            )}
+            {errors.siteId && (
+              <p className="text-sm text-destructive">
+                {errors.siteId.message}
               </p>
             )}
           </div>

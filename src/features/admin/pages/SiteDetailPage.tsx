@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Battery, Thermometer } from "lucide-react";
+import { ArrowLeft, MapPin, Battery, Thermometer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
+import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
 import { useSiteCascadeSummary } from "@/features/admin/hooks/battery/useSiteCascadeSummary";
 import {
   useSiteDetail,
@@ -55,6 +56,7 @@ export default function SiteDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const [assetFormOpen, setAssetFormOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>({ type: "none" });
   const [assetsParams, setAssetsParams] = useState<SiteAssetsFilterParams>({
     pageNumber: 1,
@@ -180,7 +182,7 @@ export default function SiteDetailPage() {
         </TabsList>
 
         <TabsContent value="assets" className="mt-4 space-y-3">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-2">
             <Select
               value={
                 assetsParams.status != null
@@ -219,6 +221,9 @@ export default function SiteDetailPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button size="sm" onClick={() => setAssetFormOpen(true)}>
+              <Plus className="size-3.5" /> Thêm pin
+            </Button>
           </div>
           <Card>
             <SiteAssetsTable
@@ -247,6 +252,13 @@ export default function SiteDetailPage() {
         open={editOpen}
         onOpenChange={setEditOpen}
         editData={site}
+      />
+
+      {/* Thêm pin vào site đang mở — siteId điền sẵn, không cho đổi. */}
+      <BatteryAssetForm
+        open={assetFormOpen}
+        onOpenChange={setAssetFormOpen}
+        lockedSiteId={id}
       />
 
       {/* Delete confirm */}
