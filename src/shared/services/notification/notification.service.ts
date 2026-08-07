@@ -20,6 +20,13 @@ export const notificationService = {
       { params: { channel: NotificationChannelEnum.InApp, ...params } },
     ),
 
+  // GET chi tiết 1 noti (màn hình hộp thư). BE không lọc channel ở endpoint này nên
+  // mở được cả record giao nhận Push/Email/Sms, không chỉ feed InApp.
+  getById: (id: string) =>
+    axiosInstance.get<CommonResponse<NotificationDto>>(
+      ENDPOINTS.NOTIFICATIONS.DETAIL(id),
+    ),
+
   // PATCH — body rỗng. data = id của notification vừa mark.
   markRead: (id: string) =>
     axiosInstance.patch<CommonResponse<string>>(

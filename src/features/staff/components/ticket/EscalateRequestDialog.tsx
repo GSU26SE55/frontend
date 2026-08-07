@@ -32,7 +32,8 @@ import {
 
 const ESCALATION_REASON_LABELS: Record<string, string> = {
   [EscalationReasonEnum.SkillGap]: "Vượt quá năng lực kỹ thuật",
-  [EscalationReasonEnum.PartsRequired]: "Cần linh kiện không có sẵn",
+  // PartsRequired bị bỏ khỏi danh sách chọn — hệ thống không có luồng warehouse/kho
+  // linh kiện nên chọn xong cũng không xử lý tiếp được.
   [EscalationReasonEnum.SafetyConcern]: "Lo ngại về an toàn",
   [EscalationReasonEnum.SlaBreach]: "SLA đã vi phạm",
   [EscalationReasonEnum.CustomerComplaint]: "Khiếu nại của khách hàng",

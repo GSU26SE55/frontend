@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -29,6 +37,12 @@ import {
 } from "@/features/admin/hooks/ticket/useAdminSagas";
 import type { AlertTicketSagaDTO } from "@/features/admin/types/ticket/saga.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { sagaStateLabel } from "@/features/admin/enums/saga.enum";
+import {
+  alertSeverityLabel,
+  anomalyTypeLabel,
+} from "@/shared/constants/alertLabels";
+import { toneClass, SAGA_STATE_TONE } from "@/shared/theme/statusColors";
 
 function fmt(d?: string | null) {
   return d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: vi }) : "—";
@@ -138,8 +152,13 @@ export default function SagaDebugPage() {
                         {s.alertId.slice(0, 8)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={failed ? "destructive" : "outline"}>
-                          {s.currentState}
+                        <Badge
+                          variant="outline"
+                          className={toneClass(
+                            SAGA_STATE_TONE[s.currentState] ?? "muted",
+                          )}
+                        >
+                          {sagaStateLabel(s.currentState)}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-mono text-xs">
@@ -152,28 +171,41 @@ export default function SagaDebugPage() {
                         {fmt(s.startedAt)}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {s.failedAtStage ?? "—"}
+                        {/* FailedAtStage dùng lại tên state của state machine (xem MarkFailed). */}
+                        {s.failedAtStage
+                          ? sagaStateLabel(s.failedAtStage)
+                          : "—"}
                       </TableCell>
-                      <TableCell className="text-right space-x-2 whitespace-nowrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => setDetail(s)}
-                        >
-                          Chi tiết
-                        </Button>
-                        {failed && canReprocess && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            disabled={reprocessing}
-                            onClick={() => reprocess(s.alertId)}
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7"
+                              />
+                            }
                           >
-                            Xử lý lại
-                          </Button>
-                        )}
+                            <EllipsisVertical className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuItem onClick={() => setDetail(s)}>
+                              Xem chi tiết
+                            </DropdownMenuItem>
+                            {failed && canReprocess && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  disabled={reprocessing}
+                                  onClick={() => reprocess(s.alertId)}
+                                >
+                                  Xử lý lại
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
@@ -208,15 +240,24 @@ export default function SagaDebugPage() {
           {detail && (
             <div className="space-y-0.5">
               <DetailRow label="Correlation ID" value={detail.correlationId} />
-              <DetailRow label="Trạng thái" value={detail.currentState} />
+              <DetailRow
+                label="Trạng thái"
+                value={sagaStateLabel(detail.currentState)}
+              />
               <DetailRow label="Alert ID" value={detail.alertId} />
               <DetailRow
                 label="Battery Asset"
                 value={detail.assetSerialNumber ?? detail.batteryAssetId}
               />
               <DetailRow label="Customer ID" value={detail.customerId} />
-              <DetailRow label="Anomaly type" value={detail.anomalyType} />
-              <DetailRow label="Severity" value={detail.severity} />
+              <DetailRow
+                label="Loại bất thường"
+                value={anomalyTypeLabel(detail.anomalyType)}
+              />
+              <DetailRow
+                label="Mức độ"
+                value={alertSeverityLabel(detail.severity)}
+              />
               <DetailRow
                 label="Ticket"
                 value={
@@ -226,7 +267,14 @@ export default function SagaDebugPage() {
                 }
               />
               <DetailRow label="Retry" value={detail.retryCount} />
-              <DetailRow label="Lỗi tại stage" value={detail.failedAtStage} />
+              <DetailRow
+                label="Lỗi tại stage"
+                value={
+                  detail.failedAtStage
+                    ? sagaStateLabel(detail.failedAtStage)
+                    : "—"
+                }
+              />
               <DetailRow label="Lý do lỗi" value={detail.failureReason} />
               <DetailRow label="Mã lỗi" value={detail.failureErrorCode} />
               <DetailRow label="Thời điểm lỗi" value={fmt(detail.failedAt)} />

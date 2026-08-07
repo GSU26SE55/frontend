@@ -8,6 +8,7 @@ import {
   MapPin,
   Settings,
   BellRing,
+  Inbox,
   Ticket,
   Clock,
   BookOpen,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
+  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -37,6 +39,8 @@ export const MANAGER_NAV: NavSection[] = [
         path: "/manager/analytics",
         icon: BarChart3,
       },
+      // Route dùng chung mọi role (không có prefix /manager) — BE đã lọc theo UserId trong JWT.
+      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {

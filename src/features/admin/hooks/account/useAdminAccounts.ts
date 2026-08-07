@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminAccountsService } from "@/features/admin/services/account/admin-accounts.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import { toast } from "sonner";
+import { HttpError, handleErrorApi } from "@/shared/lib/errors";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 import type {
   GetAccountsParams,
   CreateAccountPayload,
@@ -148,11 +151,29 @@ export const useAdminChangeAccountRole = () => {
     }: {
       id: string;
       payload: ChangeAccountRolePayload;
-    }) => adminAccountsService.changeRole(id, payload),
-    onSuccess: (_data, { id }) => {
+    }) =>
+      adminAccountsService.changeRole(id, payload).then((res) => {
+        // AdminAccountsController dùng StatusCode(result.StatusCode, result) nên lỗi ra
+        // đúng HTTP 4xx và axios tự reject. Riêng nhánh retry-cạn ở handler trả 409 kèm
+        // isSuccess=false — check thêm cho chắc, không phụ thuộc vào status.
+        if (!res.data.isSuccess) {
+          throw new HttpError(
+            res.status,
+            res.data.message ?? "Đổi role thất bại",
+          );
+        }
+        return res.data;
+      }),
+    // Toast đặt ở đây, KHÔNG ở callback của mutate(): submenu đóng ngay khi bấm nên
+    // component unmount trước lúc request về, mà callback truyền qua mutate() bị bỏ qua
+    // nếu component đã unmount — đổi role thành công nhưng tuyệt nhiên không có toast.
+    onSuccess: (data, { id }) => {
       qc.invalidateQueries({ queryKey: KEY.admin.accounts });
       qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+      // BE trả sẵn message kèm tên role mới ("Đã đổi role sang Manager.").
+      toast.success(data.message || ADMIN_MESSAGES.account.roleChanged);
     },
+    onError: (error) => handleErrorApi({ error }),
   });
 };
 

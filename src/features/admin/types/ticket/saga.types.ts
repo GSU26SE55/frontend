@@ -1,14 +1,23 @@
 // Contract khớp BE — AdminAlertTicketSagasController + AlertTicketSagaDTO.
+import type {
+  AlertSeverityEnum,
+  AnomalyTypeEnum,
+} from "@/shared/enums/alerts/alert.enum";
+import type { SagaStateEnum } from "@/features/admin/enums/saga.enum";
+
+export { SagaStateEnum } from "@/features/admin/enums/saga.enum";
 
 export interface AlertTicketSagaDTO {
   correlationId: string;
-  currentState: string;
+  // MassTransit trả state dạng string-name; giữ `string` để state mới từ BE không vỡ type.
+  currentState: SagaStateEnum | string;
   alertId: string;
   batteryAssetId?: string | null;
   customerId: string;
   assetSerialNumber?: string | null;
-  anomalyType: number;
-  severity: number;
+  // BE gửi số (AnomalyTypeEnum / AlertSeverityEnum trong BatteryService.Domain).
+  anomalyType: AnomalyTypeEnum;
+  severity: AlertSeverityEnum;
   ticketId?: string | null;
   ticketCode?: string | null;
   ticketIsReused: boolean;
@@ -22,7 +31,7 @@ export interface AlertTicketSagaDTO {
 }
 
 export interface AlertTicketSagaFilterParams {
-  state?: string;
+  state?: SagaStateEnum;
   alertId?: string;
   batteryAssetId?: string;
   customerId?: string;

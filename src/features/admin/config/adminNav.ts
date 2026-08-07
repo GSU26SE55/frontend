@@ -14,6 +14,7 @@ import {
   Settings,
   Bell,
   BellRing,
+  Inbox,
   Ticket,
   ScrollText,
   FileClock,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
+  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -45,6 +47,8 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/analytics",
         icon: BarChart3,
       },
+      // Route dùng chung mọi role (không có prefix /admin) — BE đã lọc theo UserId trong JWT.
+      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {

@@ -1,8 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
-import { APP_NAME } from "@/shared/constants/sidebarLabels";
+import {
+  APP_NAME,
+  INBOX_PATH,
+  SIDEBAR_LABELS,
+} from "@/shared/constants/sidebarLabels";
+import { useChatUnreadCount } from "@/shared/hooks/ticket/useChatUnreadCount";
+import { useUnreadCount } from "@/shared/hooks/notifications/useNotifications";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/account/session.types";
@@ -155,11 +161,35 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
+  // Badge số chưa đọc trên mục "Hộp thư". Bơm ở đây (không phải trong từng nav config)
+  // vì cả 3 role đều đi qua AppLayout và cùng trỏ về một path — làm ở đây là một chỗ
+  // thay vì ba. Không đụng badge sẵn có của mục khác (vd hàng chờ của Manager) vì chỉ
+  // map đúng item có path INBOX_PATH.
+  const { data: unreadCount = 0 } = useUnreadCount();
+  // Tổng chat chưa đọc trên mọi ticket → badge mục "Tickets". Khác hẳn unreadCount ở
+  // trên (notification). Khớp theo LABEL chứ không theo path: path ticket có prefix
+  // /admin|/manager|/staff nên không có hằng dùng chung như INBOX_PATH.
+  const { data: chatUnread = 0 } = useChatUnreadCount();
+  const sectionsWithBadge = useMemo(() => {
+    if (!unreadCount && !chatUnread) return sections;
+    return sections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => {
+        if (unreadCount && item.path === INBOX_PATH)
+          return { ...item, badge: unreadCount > 99 ? "99+" : unreadCount };
+        // Không ghi đè badge sẵn có của mục khác (vd "Hàng chờ" của Manager).
+        if (chatUnread && item.label === SIDEBAR_LABELS.tickets && !item.badge)
+          return { ...item, badge: chatUnread > 99 ? "99+" : chatUnread };
+        return item;
+      }),
+    }));
+  }, [sections, unreadCount, chatUnread]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
         appName={APP_NAME}
-        sections={sections}
+        sections={sectionsWithBadge}
         collapsed={collapsed}
         onToggle={() => setCollapsed((v) => !v)}
       />

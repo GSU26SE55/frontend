@@ -49,6 +49,7 @@ import {
   useAdminDeleteAccount,
   useAdminReset2fa,
 } from "@/features/admin/hooks/account/useAdminAccounts";
+import { useAdminRoleList } from "@/features/admin/hooks/account/useAdminRoles";
 import { AccountStatusEnum } from "@/shared/types/account/account.types";
 import { toneClass, ACCOUNT_STATUS_TONE } from "@/shared/theme/statusColors";
 import { UserRole } from "@/shared/types/account/session.types";
@@ -56,7 +57,7 @@ import InviteAccountDialog from "@/features/admin/components/account/InviteAccou
 import CreateAccountDialog from "@/features/admin/components/account/CreateAccountDialog";
 import EditAccountDialog from "@/features/admin/components/account/EditAccountDialog";
 import ChangeAccountStatusDialog from "@/features/admin/components/account/ChangeAccountStatusDialog";
-import ChangeRoleDialog from "@/features/admin/components/account/ChangeRoleDialog";
+import ChangeRoleSubmenu from "@/features/admin/components/account/ChangeRoleSubmenu";
 import AccountDetailDrawer from "@/features/admin/components/account/AccountDetailDrawer";
 import EditStaffProfileDialog from "@/features/admin/components/account/EditStaffProfileDialog";
 import MergeAccountDialog from "@/features/admin/components/account/MergeAccountDialog";
@@ -108,7 +109,6 @@ type DialogState =
   | { type: "create" }
   | { type: "edit"; account: AccountDto }
   | { type: "status"; account: AccountDto }
-  | { type: "role"; account: AccountDto }
   | { type: "unlock"; account: AccountDto }
   | { type: "reset2fa"; account: AccountDto }
   | { type: "delete"; account: AccountDto }
@@ -140,6 +140,10 @@ export default function AccountsPage() {
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
   });
+  // Fetch 1 lần cho cả bảng — submenu "Đổi role" ở mỗi hàng dùng chung danh sách này.
+  const { data: rolesData } = useAdminRoleList({ pageSize: 100 });
+  const roles = rolesData?.items ?? [];
+
   const { mutate: unlock } = useAdminUnlockAccount();
   const { mutate: deleteAccount, isPending: isDeleting } =
     useAdminDeleteAccount();
@@ -370,13 +374,7 @@ export default function AccountsPage() {
                           >
                             Đổi trạng thái
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setDialog({ type: "role", account: acc })
-                            }
-                          >
-                            Đổi role
-                          </DropdownMenuItem>
+                          <ChangeRoleSubmenu account={acc} roles={roles} />
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "detail", account: acc })
@@ -469,9 +467,6 @@ export default function AccountsPage() {
           onClose={close}
           account={dialog.account}
         />
-      )}
-      {dialog.type === "role" && (
-        <ChangeRoleDialog open onClose={close} account={dialog.account} />
       )}
       {dialog.type === "detail" && (
         <AccountDetailDrawer open onClose={close} account={dialog.account} />

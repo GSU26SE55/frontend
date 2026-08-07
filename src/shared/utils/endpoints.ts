@@ -113,6 +113,9 @@ export const ENDPOINTS = {
   MY_CHATS: {
     LIST: "/api/chats/me",
     ERASE: "/api/chats/erase-my-data",
+    // Tổng tin chưa đọc trên MỌI ticket của user hiện tại. BE đếm theo bản ghi chat nên
+    // tin có @mention đã nằm trong số này — không cộng thêm list mention (đếm gấp đôi).
+    UNREAD_COUNT: "/api/chats/unread-count",
   },
 
   ADMIN_CHAT_SEARCH: {
@@ -140,6 +143,9 @@ export const ENDPOINTS = {
 
   NOTIFICATIONS: {
     LIST: "/api/notifications",
+    // GET chi tiết 1 noti — KHÔNG áp bộ lọc feed InApp như LIST (đã cầm id thì trả
+    // đúng bản ghi đó). Chỉ đọc, không tự mark read. 404 nếu là noti của user khác.
+    DETAIL: (id: string) => `/api/notifications/${id}`,
     CREATE: "/api/notifications", // Admin only — tạo notification thủ công
     MARK_READ: (id: string) => `/api/notifications/${id}/read`, // PATCH — idempotent
     MARK_ALL_READ: "/api/notifications/read-all", // POST — body rỗng

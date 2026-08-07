@@ -177,41 +177,35 @@ export default function StaffDashboardPage() {
         <DashboardKpi
           label="Đang phụ trách"
           value={statsLoading ? "--" : openCount}
-          sub="tickets"
           icon={<FileText className="size-4" />}
         />
         <DashboardKpi
           label="Sắp breach"
           value={statsLoading ? "--" : nearBreach}
-          sub="≤ 25%"
           icon={<Clock className="size-4" />}
           accent={nearBreach > 0 ? "var(--p3)" : undefined}
         />
         <DashboardKpi
           label="Đã quá hạn"
           value={statsLoading ? "--" : breachedCount}
-          sub="tickets"
           icon={<AlertTriangle className="size-4" />}
           accent={breachedCount > 0 ? "var(--p1)" : undefined}
         />
         <DashboardKpi
           label="Đã xử lý"
           value={statsLoading ? "--" : resolvedCount}
-          sub="tickets"
           icon={<CheckCircle className="size-4" />}
           accent="var(--ok)"
         />
         <DashboardKpi
           label="SLA met"
           value={statsLoading ? "--" : slaText}
-          hint={`${sla?.breached ?? 0} breach`}
           icon={<ShieldCheck className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
           label="Thông báo mới"
           value={unreadLoading ? "--" : unread}
-          sub="chưa đọc"
           icon={<Bell className="size-4" />}
           accent={unread > 0 ? "var(--p3)" : undefined}
         />
@@ -365,7 +359,9 @@ export default function StaffDashboardPage() {
                         <div className="flex items-baseline justify-between gap-2">
                           <span
                             className={`text-xs lg:text-sm truncate ${
-                              isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+                              isUnread
+                                ? "font-semibold text-foreground"
+                                : "font-medium text-muted-foreground"
                             }`}
                           >
                             {n.title}

@@ -10,6 +10,7 @@ import {
   useMarkNotificationOpened,
   useMarkAllRead,
 } from "@/shared/hooks/notifications/useNotifications";
+import { useNotificationsRealtime } from "@/shared/hooks/notifications/useNotificationsRealtime";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { UserRole } from "@/shared/types/account/session.types";
 import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
@@ -27,6 +28,10 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useSessionStore();
+
+  // Kết nối hub thông báo. Bell mount 1 lần ở layout ⇒ đúng 1 WebSocket toàn app.
+  // Gate theo user: chưa đăng nhập thì không có token, hub [Authorize] sẽ từ chối.
+  useNotificationsRealtime(!!user);
 
   const { data: unreadCount = 0 } = useUnreadCount();
   const { data, isLoading } = useNotifications({ pageSize: 10 }, open);
@@ -65,7 +70,9 @@ export default function NotificationBell() {
     }
 
     setOpen(false);
-    if (deepLink) navigate(deepLink);
+    // Không có deep link (noti hệ thống, cảnh báo pin…) thì mở trong hộp thư — trước
+    // đây bấm vào chỉ đánh dấu đã đọc rồi không đi đâu cả, nhìn như nút hỏng.
+    navigate(deepLink ?? `/notifications?id=${n.id}`);
   };
 
   return (
@@ -168,6 +175,16 @@ export default function NotificationBell() {
                 })
               )}
             </div>
+
+            <button
+              onClick={() => {
+                setOpen(false);
+                navigate("/notifications");
+              }}
+              className="w-full px-3.5 py-2.5 border-t border-border text-[12px] text-primary hover:bg-muted transition-colors"
+            >
+              Xem tất cả trong hộp thư
+            </button>
           </div>
         </>
       )}
