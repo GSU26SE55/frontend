@@ -114,7 +114,6 @@ export default function AdminDashboardPage() {
   const totalSites = siteStats?.total ?? 0;
   const activeSites = siteStats?.activeCount ?? 0;
   const totalBatt = stats?.totalAssets ?? 0;
-  const activeBatt = stats?.activeAssets ?? 0;
   const offlineBatt = stats?.offlineAssets ?? 0;
   const openAlerts = stats?.openAlerts ?? 0;
   const criticalOpen = stats?.openAlertsCritical ?? 0;
@@ -182,8 +181,9 @@ export default function AdminDashboardPage() {
         />
         <DashboardKpi
           label="Pin hoạt động"
-          value={statsLoading ? "--" : activeBatt}
+          value={statsLoading ? "--" : onlineBatt}
           sub={`/${totalBatt}`}
+          hint={`${onlinePct}% kết nối`}
           icon={<BatteryCharging className="size-4" />}
           to="/admin/battery-assets"
         />

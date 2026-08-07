@@ -3,7 +3,13 @@ import type {
   SensorStreamState,
   LiveStatsDto,
 } from "@/shared/types/battery/sensor-stream.types";
-import { toneDot, toneFill } from "@/shared/theme/statusColors";
+import { ChargingStateEnum } from "@/shared/enums/battery/battery.enum";
+import {
+  toneDot,
+  toneFill,
+  toneVars,
+  type StatusTone,
+} from "@/shared/theme/statusColors";
 
 // Display contract — nhận diện các metric hiển thị, KHÔNG ràng buộc DTO cụ thể.
 // `LiveReadingDto` (SSE) và `BatteryAssetRealtimeDto` (REST snapshot) đều structurally
@@ -16,7 +22,19 @@ export interface TelemetryDisplay {
   socPercent?: number | null;
   sohPercent?: number | null;
   cycleCount?: number | null;
+  chargingState?: number | null;
 }
+
+// Viền màu quanh card Dòng điện theo trạng thái sạc/xả — đọc thẳng
+// ChargingStateEnum từ BMS, KHÔNG suy đoán từ dấu dòng điện (khác với khối
+// "Đỉnh" bên dưới vốn dùng maxCharge/maxDischarge tách sẵn từ BE).
+const CHARGING_STATE_META: Record<number, { label: string; tone: StatusTone }> = {
+  [ChargingStateEnum.IDLE]: { label: "Nghỉ", tone: "muted" },
+  [ChargingStateEnum.CHARGING]: { label: "Đang sạc", tone: "ok" },
+  [ChargingStateEnum.DISCHARGING]: { label: "Đang xả", tone: "info" },
+  [ChargingStateEnum.FLOAT]: { label: "Float", tone: "muted" },
+  [ChargingStateEnum.BYPASS]: { label: "Bypass", tone: "p3" },
+};
 
 const fmtNum = (v: number | null | undefined, dec = 1) =>
   v != null ? v.toFixed(dec) : "—";
@@ -35,14 +53,22 @@ function StatTile({
   value,
   unit,
   className,
+  style,
+  title,
 }: {
   label: string;
   value: string;
   unit: string;
   className?: string;
+  style?: React.CSSProperties;
+  title?: string;
 }) {
   return (
-    <div className={cn("rounded-lg p-3 flex flex-col gap-1", className)}>
+    <div
+      className={cn("rounded-lg p-3 flex flex-col gap-1", className)}
+      style={style}
+      title={title}
+    >
       <div className="flex items-baseline gap-1 leading-none">
         <span className="text-2xl font-bold tabular-nums tracking-tight">
           {value}
@@ -77,8 +103,9 @@ interface LiveTelemetryCardProps {
   /** Ngưỡng từ ThresholdConfig BE (theo BatteryType). Bỏ trống → dùng ngưỡng mặc định. */
   thresholds?: TelemetryThresholds;
   /**
-   * Rolling min/max nạp/xả của 1 window (SSE event `stats`). Bỏ trống → ẩn section.
-   * Không có event `stats` → trống, KHÔNG phải lỗi.
+   * Rolling min/max nạp/xả của 1 window (SSE event `stats`). Chưa có event →
+   * khối "Đỉnh" vẫn hiện, chỉ thay số bằng "—" thay vì ẩn cả khối (tránh UI
+   * biến mất trắng khi SSE chưa kịp push lần đầu hoặc pack đang idle).
    */
   stats?: LiveStatsDto | null;
 }
@@ -120,6 +147,11 @@ export function LiveTelemetryCard({
   // status undefined → mặc định emerald khi có data (dùng cho nơi không track status).
   const dotCls = status ? DOT_CLS[status] : data ? DOT_CLS.live : null;
 
+  const chargingMeta =
+    data?.chargingState != null
+      ? CHARGING_STATE_META[data.chargingState]
+      : undefined;
+
   return (
     <div className="px-4 py-4 flex-1">
       <div className="flex items-center gap-2 mb-4">
@@ -152,7 +184,16 @@ export function LiveTelemetryCard({
               label="Dòng điện"
               value={fmtNum(data.current)}
               unit="A"
-              className="bg-muted/50 text-foreground"
+              className={cn(
+                "bg-muted/50 text-foreground",
+                chargingMeta && "border-2",
+              )}
+              style={
+                chargingMeta
+                  ? { borderColor: toneVars(chargingMeta.tone).border }
+                  : undefined
+              }
+              title={chargingMeta?.label}
             />
             <StatTile
               label="Nhiệt độ"
@@ -175,33 +216,37 @@ export function LiveTelemetryCard({
           </div>
 
           {/* Min/max nạp-xả trong window (SSE `stats`). Giá trị LUÔN dương cả 2
-              chiều — chiều nằm trong tên field. null = window chưa có mẫu chiều đó. */}
-          {stats && (
-            <div className="rounded-lg bg-muted/50 px-3 py-2 mt-1 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Đỉnh {stats.window === "1h" ? "1 giờ" : "hôm nay"}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {stats.chargeSampleCount + stats.dischargeSampleCount} mẫu
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10.5px] text-muted-foreground">Nạp</span>
-                <span className="text-[10.5px] font-medium font-mono-num">
-                  {fmtNum(stats.minChargeCurrent, 2)} –{" "}
-                  {fmtNum(stats.maxChargeCurrent, 2)} A
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[10.5px] text-muted-foreground">Xả</span>
-                <span className="text-[10.5px] font-medium font-mono-num">
-                  {fmtNum(stats.minDischargeCurrent, 2)} –{" "}
-                  {fmtNum(stats.maxDischargeCurrent, 2)} A
-                </span>
-              </div>
+              chiều — chiều nằm trong tên field. null = window/chiều chưa có mẫu.
+              Khối luôn hiện (không ẩn theo `stats`) để tránh biến mất trắng khi
+              SSE chưa push lần đầu hoặc pack đang idle không sạc không xả. */}
+          <div className="rounded-lg bg-muted/50 px-3 py-2 mt-1 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Đỉnh {stats?.window === "today" ? "hôm nay" : "1 giờ"}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {stats
+                  ? `${stats.chargeSampleCount + stats.dischargeSampleCount} mẫu`
+                  : "chưa có dữ liệu"}
+              </span>
             </div>
-          )}
+            <div className="flex items-center justify-between">
+              <span className="text-[10.5px] text-muted-foreground">Nạp</span>
+              <span className="text-[10.5px] font-medium font-mono-num">
+                {stats
+                  ? `${fmtNum(stats.minChargeCurrent, 2)} – ${fmtNum(stats.maxChargeCurrent, 2)} A`
+                  : "—"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10.5px] text-muted-foreground">Xả</span>
+              <span className="text-[10.5px] font-medium font-mono-num">
+                {stats
+                  ? `${fmtNum(stats.minDischargeCurrent, 2)} – ${fmtNum(stats.maxDischargeCurrent, 2)} A`
+                  : "—"}
+              </span>
+            </div>
+          </div>
         </div>
       )}
     </div>

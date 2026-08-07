@@ -9,6 +9,7 @@ import {
   type BatteryAssetDto,
 } from "@/shared/types/battery/battery.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { toneClass } from "@/shared/theme/statusColors";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Hoạt động",
@@ -24,6 +25,21 @@ const STATUS_VARIANT: Record<
   [BatteryStatusEnum.Inactive]: "secondary",
   [BatteryStatusEnum.Decommissioned]: "destructive",
 };
+
+// `status` là vòng đời nghiệp vụ (Active/Suspended/Decommissioned), admin tự tay
+// đặt — KHÔNG tự đổi theo kết nối. Vì vậy pin "Active" vẫn có thể ngừng gửi dữ
+// liệu (dây đứt, mất điện, hỏng cảm biến) mà cột status trong DB không hề biết.
+// Badge "Hoạt động" mà đứng cạnh "Đọc cuối" đã cũ hàng ngày là tự mâu thuẫn ngay
+// trên cùng 1 hàng — che badge đó bằng "Mất kết nối" khi rơi vào tình huống đó.
+// Ngưỡng khớp mặc định `OfflineThresholdMinutes` phía BE (xem docs/api-battery.md,
+// mục offlineAssets) — chỉ dùng để HIỂN THỊ, không phải nguồn cảnh báo thật.
+const OFFLINE_THRESHOLD_MINUTES = 10;
+
+function isReadingStale(lastSensorReadingAt: string | null | undefined) {
+  if (!lastSensorReadingAt) return true; // chưa từng có reading nào → coi như mất kết nối
+  const ageMs = Date.now() - new Date(lastSensorReadingAt).getTime();
+  return ageMs > OFFLINE_THRESHOLD_MINUTES * 60_000;
+}
 
 interface SiteAssetsTableProps {
   data: BatteryAssetDto[];
@@ -80,11 +96,24 @@ export default function SiteAssetsTable({
     {
       id: "status",
       header: TABLE_COLUMNS.status,
-      cell: (asset) => (
-        <Badge variant={STATUS_VARIANT[asset.status]}>
-          {STATUS_LABEL[asset.status]}
-        </Badge>
-      ),
+      cell: (asset) => {
+        const offline =
+          asset.status === BatteryStatusEnum.Active &&
+          isReadingStale(asset.lastSensorReadingAt);
+        return offline ? (
+          <Badge
+            variant="outline"
+            className={toneClass("p3")}
+            title="Status Active trong hồ sơ, nhưng không có sensor reading nào gần đây"
+          >
+            Mất kết nối
+          </Badge>
+        ) : (
+          <Badge variant={STATUS_VARIANT[asset.status]}>
+            {STATUS_LABEL[asset.status]}
+          </Badge>
+        );
+      },
     },
     {
       id: "installDate",
