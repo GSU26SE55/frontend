@@ -115,7 +115,6 @@ export default function AdminDashboardPage() {
   // ── Hạ tầng ──
   const totalSites = siteStats?.total ?? 0;
   const totalBatt = stats?.totalAssets ?? 0;
-  const activeBatt = stats?.activeAssets ?? 0;
   const offlineBatt = stats?.offlineAssets ?? 0;
   const openAlerts = stats?.openAlerts ?? 0;
   const criticalOpen = stats?.openAlertsCritical ?? 0;
