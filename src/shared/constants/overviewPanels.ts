@@ -9,7 +9,10 @@ export const OVERVIEW_PANELS = {
     alerts7d: "Cảnh báo 7 ngày",
     alertsByType: "Cảnh báo theo loại",
     slaSystem: "Tuân thủ SLA hệ thống",
-    batteryByStatus: "Pin theo trạng thái",
+    // "Trạng thái vận hành" = vòng đời nghiệp vụ (Active/Suspended/Decommissioned,
+    // admin tự đặt tay), KHÔNG phải kết nối. Đặt tên rõ để khỏi mâu thuẫn thị giác
+    // với panel "Pin còn kết nối" (online/offline) đứng ngay cạnh nó trên dashboard.
+    batteryByStatus: "Pin theo trạng thái vận hành",
     topAlerting: "Pin cảnh báo nhiều nhất",
     siteHealth: "Sức khỏe site",
     telemetry24h: "Telemetry trung bình · 24h",
