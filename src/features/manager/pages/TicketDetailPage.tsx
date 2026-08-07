@@ -21,7 +21,7 @@ import TriageRejectDialog from "@/features/manager/components/ticket/TriageRejec
 import EscalateDialog from "@/features/manager/components/ticket/EscalateDialog";
 import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareIncidentDialog";
-import TicketActivityTimeline from "@/features/manager/components/ticket/TicketActivityTimeline";
+import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
@@ -38,7 +38,6 @@ import {
   useTicketComments,
   useReVerifyTicket,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
-import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
@@ -55,15 +54,15 @@ import {
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketCategoryEnum,
-  EscalationReasonEnum,
 } from "@/shared/types/ticket/ticket.types";
 import {
-  getPrimaryHandler,
-  getSupporters,
+  getPrimaryHandlerName,
+  getSupporterNames,
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { slaBarColorClass } from "@/shared/lib/sla";
+import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
@@ -99,14 +98,6 @@ const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
   High: "Cao",
 };
 
-const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
-  SkillGap: "Thiếu kỹ năng xử lý",
-  PartsRequired: "Cần linh kiện thay thế",
-  SafetyConcern: "Nguy cơ an toàn",
-  SlaBreach: "Vi phạm SLA",
-  CustomerComplaint: "Khách hàng khiếu nại",
-};
-
 function SideInfoRow({
   label,
   value,
@@ -139,21 +130,11 @@ export default function TicketDetailPage() {
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
   const { data: comments = [] } = useTicketComments(id);
-  const { data: staffList = [] } = useStaffAssignmentList();
 
-  // #697 — assignments thay cho assignedStaffId: 1 PrimaryHandler + N Supporter.
-  // staffId chưa có trong staff list (đã nghỉ/ẩn) → fallback hiện UUID.
-  const { primaryHandlerName, supporterNames } = useMemo(() => {
-    const nameOf = (staffId: string) =>
-      staffList.find((s) => s.accountId === staffId)?.fullName ?? staffId;
-    const primary = getPrimaryHandler(ticket?.assignments);
-    return {
-      primaryHandlerName: primary ? nameOf(primary.staffId) : null,
-      supporterNames: getSupporters(ticket?.assignments).map((a) =>
-        nameOf(a.staffId),
-      ),
-    };
-  }, [ticket?.assignments, staffList]);
+  // BE trả sẵn `staffName` trong assignments (từ StaffAccount đã sync) nên không
+  // cần tra qua staffList nữa — helper tự fallback staffId khi thiếu tên.
+  const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
+  const supporterNames = getSupporterNames(ticket?.assignments);
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();

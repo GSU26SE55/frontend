@@ -95,6 +95,11 @@ export const QUERY_KEY = {
   },
   notifications: {
     list: (params?: object) => [KEY.notifications, "list", params] as const,
+    // Hộp thư cuộn vô hạn — key RIÊNG với list để cache nhiều trang của hộp thư
+    // không đè lên cache 10 mục của dropdown bell.
+    infinite: (params?: object) =>
+      [KEY.notifications, "infinite", params] as const,
+    detail: (id: string) => [KEY.notifications, "detail", id] as const,
     unreadCount: () => [KEY.notifications, "unread-count"] as const,
   },
   notificationPreferences: {
@@ -435,6 +440,7 @@ export const QUERY_KEY = {
   },
   myChats: {
     list: (params?: object) => [KEY.myChats, "list", params] as const,
+    unreadCount: () => [KEY.myChats, "unread-count"] as const,
   },
   ticketParticipants: {
     list: (tid: string) => [KEY.ticketParticipants, "list", tid] as const,

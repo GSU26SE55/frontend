@@ -20,6 +20,7 @@ import OtpVerifyPage from "@/features/auth/pages/OtpVerifyPage";
 import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
 import AcceptInvitePage from "@/features/auth/pages/AcceptInvitePage";
 import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
+import NotificationInboxPage from "@/shared/pages/NotificationInboxPage";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
 import BatteryAuditLogsPage from "@/features/admin/pages/BatteryAuditLogsPage";
@@ -138,6 +139,13 @@ const router = createBrowserRouter([
         path: "/settings",
         element: <RoleAwareAppLayout />,
         children: [{ index: true, element: <AccountSettingsPage /> }],
+      },
+      {
+        // Hộp thư dùng chung cho mọi role (giống /settings) — nội dung đã lọc theo
+        // UserId trong JWT ở BE nên không cần nhân bản route cho từng role.
+        path: "/notifications",
+        element: <RoleAwareAppLayout />,
+        children: [{ index: true, element: <NotificationInboxPage /> }],
       },
       {
         // #AUTH-51: Device B confirm — chỉ cần đăng nhập (mọi role), không qua AppLayout

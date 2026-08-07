@@ -42,6 +42,14 @@ export {
 export interface TicketAssignmentDTO {
   staffId: string;
   role: TicketAssignmentRoleEnum;
+  /**
+   * Tên nhân viên — BE lấy từ StaffAccount đã sync sang TicketService.
+   * Null khi chưa sync kịp → hiển thị fallback `staffId`.
+   *
+   * Nhờ field này mà MỌI role đọc được tên; trước đây phải gọi thêm
+   * `/api/staff` (chỉ Admin/Manager) nên Staff không hiện được ai phụ trách.
+   */
+  staffName?: string | null;
 }
 
 export interface SlaTimerDTO {
@@ -144,6 +152,12 @@ export interface TicketCommentDTO {
   // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
   editCount?: number;
   updatedAt?: string | null;
+  /**
+   * User hiện tại đã đọc tin này chưa. BE set ở GET /chats (list + cursor); tin do chính
+   * mình gửi luôn true. Realtime ChatAdded KHÔNG kèm → undefined = "chưa biết", đừng coi
+   * undefined là chưa đọc (sẽ vẽ nhầm mốc "Tin nhắn chưa đọc").
+   */
+  isRead?: boolean;
   // Chat thoại (tạo qua POST /chats/voice): Pending/Processing = đang transcribe (body tạm rỗng),
   // Completed = body đã có transcript, Failed = lỗi → cho phép retry. null với chat text thường.
   voiceTranscriptionStatus?: VoiceTranscriptionStatusEnum | null;

@@ -6,6 +6,7 @@ import {
 import {
   NotificationTypeEnum,
   NotificationChannelEnum,
+  NotificationStatusEnum,
 } from "@/shared/enums/notification/notification.enum";
 
 // Nhãn tiếng Việt cho enum notification.
@@ -74,6 +75,25 @@ export const notificationTypeLabel = (t: NotificationTypeEnum) =>
 
 export const notificationChannelLabel = (c: NotificationChannelEnum) =>
   NOTIFICATION_CHANNEL_LABELS[c] ?? `#${c}`;
+
+// Trạng thái giao nhận — hiện ở pane chi tiết hộp thư.
+// Pending/Processing/Sent/Delivered là các chặng của một lần gửi, còn Read/Opened là hành vi
+// người nhận; diễn đạt theo góc người dùng chứ không bê nguyên tên kỹ thuật của BE.
+export const NOTIFICATION_STATUS_LABELS: Record<
+  NotificationStatusEnum,
+  string
+> = {
+  [NotificationStatusEnum.Pending]: "Chờ gửi",
+  [NotificationStatusEnum.Processing]: "Đang gửi",
+  [NotificationStatusEnum.Sent]: "Đã gửi",
+  [NotificationStatusEnum.Delivered]: "Đã tới thiết bị",
+  [NotificationStatusEnum.Failed]: "Gửi lỗi",
+  [NotificationStatusEnum.Read]: "Đã đọc",
+  [NotificationStatusEnum.Opened]: "Đã mở",
+};
+
+export const notificationStatusLabel = (s: NotificationStatusEnum) =>
+  NOTIFICATION_STATUS_LABELS[s] ?? `#${s}`;
 
 // ── Sprint 6.4 — nhóm người nhận và lần gửi hàng loạt ────────────────────────────────────────
 

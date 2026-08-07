@@ -1,9 +1,15 @@
-import { ShieldAlert } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronUp, ShieldAlert } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useReadingEvidence,
   toWarningRows,
 } from "@/shared/hooks/battery/useReadingEvidence";
+
+/** Số dòng hiện sẵn trước khi bấm "Xem thêm". */
+const PREVIEW_ROWS = 10;
+/** Mỗi lần bấm "Xem thêm" mở thêm bấy nhiêu dòng. */
+const LOAD_MORE_STEP = 25;
 
 const num = (v: number | null | undefined, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
@@ -26,6 +32,12 @@ export default function BatteryWarningEvidencePanel({
   const { data, isLoading } = useReadingEvidence(batteryAssetId, detectedAt);
   const warnings = toWarningRows(data?.items ?? []);
 
+  // Cửa sổ ±15' ở tần suất 5s cho ra vài trăm dòng — đổ hết thì bảng nuốt trọn trang.
+  // Mặc định 10 dòng, mỗi lần "Xem thêm" mở thêm 25 (đồng bộ với bản mobile).
+  const [limit, setLimit] = useState(PREVIEW_ROWS);
+  const visibleRows = warnings.slice(0, limit);
+  const hiddenCount = warnings.length - visibleRows.length;
+
   // Không có pin hoặc ticket không có mốc phát hiện → không có bằng chứng để hiện.
   if (!batteryAssetId || !detectedAt) return null;
 
@@ -36,6 +48,11 @@ export default function BatteryWarningEvidencePanel({
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
           Bằng chứng cảnh báo (lúc phát hiện)
         </p>
+        {warnings.length > 0 && (
+          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+            {warnings.length}
+          </span>
+        )}
       </div>
 
       {isLoading ? (
@@ -70,7 +87,7 @@ export default function BatteryWarningEvidencePanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-200/60 dark:divide-amber-900/60">
-              {warnings.map(({ reading: r, reasons }) => (
+              {visibleRows.map(({ reading: r, reasons }) => (
                 <tr
                   key={r.time}
                   className="bg-amber-50/50 dark:bg-amber-950/20"
@@ -106,6 +123,31 @@ export default function BatteryWarningEvidencePanel({
               ))}
             </tbody>
           </table>
+
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setLimit((v) => v + LOAD_MORE_STEP)}
+              className="flex w-full items-center justify-center gap-1.5 border-t border-amber-200/60 bg-amber-50/60 py-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/60"
+            >
+              Xem thêm {Math.min(LOAD_MORE_STEP, hiddenCount)} dòng
+              <span className="font-normal text-muted-foreground">
+                còn {hiddenCount}
+              </span>
+              <ChevronDown className="size-3.5" />
+            </button>
+          )}
+
+          {hiddenCount === 0 && warnings.length > PREVIEW_ROWS && (
+            <button
+              type="button"
+              onClick={() => setLimit(PREVIEW_ROWS)}
+              className="flex w-full items-center justify-center gap-1.5 border-t border-amber-200/60 bg-amber-50/60 py-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/60"
+            >
+              Thu gọn
+              <ChevronUp className="size-3.5" />
+            </button>
+          )}
         </div>
       )}
     </div>

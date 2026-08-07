@@ -41,11 +41,14 @@ const ORIGIN_ITEMS = [
   ...BLOG_ORIGIN_OPTIONS,
 ];
 
+// Dùng `pageNumber` (giống KB) — `setFilter` chỉ auto-reset về trang 1 cho đúng
+// key này. Trước đây Blog đặt tên `page` nên đổi filter KHÔNG reset trang, và
+// service cũng gửi sai param `Page` khiến BE bỏ qua → phân trang không chạy.
 const DEFAULTS = {
   keyword: "",
   status: "",
   origin: "",
-  page: 1,
+  pageNumber: 1,
   pageSize: PAGE_SIZE,
 };
 
@@ -64,24 +67,16 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
     setFilter("keyword", kw),
   );
 
-  // ⚠️ Blog dùng `page` (KB dùng `pageNumber`) — response vẫn trả `pageNumber`.
+  // BE lọc theo `Q` (Title/Summary) — tìm trên TOÀN BỘ bài, không chỉ trang hiện tại.
   const { data, isLoading, isError, refetch } = useBlogList({
     status: (filters.status || undefined) as BlogPostStatusEnum | undefined,
     origin: (filters.origin || undefined) as BlogPostOriginEnum | undefined,
-    page: filters.page,
+    page: filters.pageNumber,
     pageSize: filters.pageSize,
+    q: filters.keyword || undefined,
   });
 
-  // BE `GetBlogPostListQuery` không có param từ khóa (chỉ Status/Origin/Page/PageSize)
-  // → chỉ lọc được trong trang đang xem. Nhãn ô input nói rõ điều đó để người dùng
-  // không tưởng là tìm toàn bộ.
-  const keyword = (filters.keyword ?? "").trim().toLowerCase();
-  const items = (data?.items ?? []).filter(
-    (b) =>
-      !keyword ||
-      b.title.toLowerCase().includes(keyword) ||
-      b.summary.toLowerCase().includes(keyword),
-  );
+  const items = data?.items ?? [];
 
   return (
     <div className="mx-auto max-w-360 space-y-6 p-6">
@@ -107,7 +102,7 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
         <div className="relative w-full sm:max-w-md">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2" />
           <Input
-            placeholder="Lọc trong trang này…"
+            placeholder="Tìm theo tiêu đề hoặc tóm tắt…"
             value={search.value}
             onChange={search.onChange}
             className="pr-8 pl-8"
@@ -186,8 +181,8 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
         </div>
       ) : items.length === 0 ? (
         <p className="text-muted-foreground py-12 text-center text-sm">
-          {keyword
-            ? "Không có bài nào khớp trong trang này. Thử chuyển trang hoặc lọc theo trạng thái."
+          {filters.keyword
+            ? `Không tìm thấy bài viết nào khớp "${filters.keyword}".`
             : noData("bài blog")}
         </p>
       ) : (
@@ -225,7 +220,7 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
           totalPages={data.totalPages}
           hasNextPage={data.hasNextPage}
           hasPreviousPage={data.hasPreviousPage}
-          onPageChange={(p) => setFilter("page", p)}
+          onPageChange={(p) => setFilter("pageNumber", p)}
           onPageSizeChange={(s) => setFilter("pageSize", s)}
         />
       )}

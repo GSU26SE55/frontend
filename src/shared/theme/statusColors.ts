@@ -233,6 +233,16 @@ export const CASCADE_RISK_TONE: Record<string, StatusTone> = {
   High: "p1",
 };
 
+// Alert→Ticket saga state (MassTransit trả string-name, không phải enum số).
+export const SAGA_STATE_TONE: Record<string, StatusTone> = {
+  Initial: "muted",
+  TicketRequested: "info",
+  TicketProvisioned: "info",
+  AlertLinkRequested: "info",
+  Completed: "ok",
+  Failed: "p1",
+};
+
 /** Health score 0-100 → tông (dùng cho SiteDashboardCard). */
 export function healthScoreTone(score: number): StatusTone {
   if (score >= 80) return "ok";

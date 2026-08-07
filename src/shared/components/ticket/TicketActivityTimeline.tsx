@@ -17,6 +17,14 @@ interface Props {
   activities: TicketActivityDTO[];
 }
 
+/**
+ * Timeline hoạt động của ticket — DÙNG CHUNG cho Manager và Staff.
+ *
+ * Trước đây mỗi feature có một bản riêng (`manager/.../TicketActivityTimeline` và
+ * `staff/.../TicketTimeline`) render cùng dữ liệu nhưng khác cách xếp dòng, nên cùng một
+ * ticket lại nhìn khác nhau tuỳ role. Quyền thao tác vẫn nằm ở trang chi tiết của từng
+ * role — component này chỉ hiển thị, không chứa action nào.
+ */
 export default function TicketActivityTimeline({ activities }: Props) {
   if (!activities.length) {
     return (

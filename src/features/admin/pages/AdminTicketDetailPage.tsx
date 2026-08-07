@@ -6,6 +6,10 @@ import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import {
+  getPrimaryHandlerName,
+  getSupporterNames,
+} from "@/shared/utils/ticket/assignments";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -101,6 +105,9 @@ export default function AdminTicketDetailPage() {
   } | null>(null);
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
+  // Tên người phụ trách — lấy thẳng từ assignments (BE đã kèm staffName).
+  const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
+  const supporterNames = getSupporterNames(ticket?.assignments);
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
@@ -439,6 +446,23 @@ export default function AdminTicketDetailPage() {
               value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
             />
             <SideInfoRow label="Nguồn" value={ticket.origin} />
+            {/* Ai đang phụ trách — BE trả kèm staffName nên mọi role đọc được,
+                không cần gọi /api/staff (endpoint đó chỉ mở cho Admin/Manager). */}
+            <SideInfoRow label="Phụ trách chính" value={primaryHandlerName} />
+            {supporterNames.length > 0 && (
+              <SideInfoRow
+                label="Hỗ trợ"
+                value={
+                  <span className="flex flex-wrap justify-end gap-1">
+                    {supporterNames.map((name) => (
+                      <Badge key={name} variant="secondary">
+                        {name}
+                      </Badge>
+                    ))}
+                  </span>
+                }
+              />
+            )}
             <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
             <SideInfoRow label="Khẩn cấp" value={ticket.urgencyLevel ?? null} />
             <SideInfoRow

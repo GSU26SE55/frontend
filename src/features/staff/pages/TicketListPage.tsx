@@ -19,7 +19,6 @@ const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: TicketStatusEnum.Assigned, label: "Đã gán" },
   { value: TicketStatusEnum.InProgress, label: "Đang xử lý" },
   { value: TicketStatusEnum.WaitingCustomer, label: "Chờ khách hàng" },
-  { value: TicketStatusEnum.WaitingParts, label: "Chờ linh kiện" },
   { value: TicketStatusEnum.WaitingOnsiteSchedule, label: "Chờ lịch hẹn" },
   { value: TicketStatusEnum.Resolved, label: "Đã xử lý" },
   { value: TicketStatusEnum.Escalated, label: "Đã chuyển cấp" },

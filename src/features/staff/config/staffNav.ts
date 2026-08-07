@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Settings,
   BellRing,
+  Inbox,
   Ticket,
   Clock,
   FileText,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
+  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -29,6 +31,8 @@ export const STAFF_NAV: NavSection[] = [
         path: "/staff/dashboard",
         icon: LayoutDashboard,
       },
+      // Route dùng chung mọi role (không có prefix /staff) — BE đã lọc theo UserId trong JWT.
+      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
       {
         label: "Lịch sử bảo trì",

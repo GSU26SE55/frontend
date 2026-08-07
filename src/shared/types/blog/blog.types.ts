@@ -89,6 +89,8 @@ export interface BlogPostListParams {
   origin?: BlogPostOriginEnum;
   page?: number;
   pageSize?: number;
+  /** Từ khoá tìm theo tiêu đề / tóm tắt — BE lọc, không phải lọc client. */
+  q?: string;
 }
 
 export interface BlogTemplateListParams {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -322,6 +322,36 @@ export function TicketCommentThread({
     [sorted, tab],
   );
 
+  // Mốc "Tin nhắn chưa đọc" — chốt id tin CŨ NHẤT chưa đọc ở lần đầu có dữ liệu rồi giữ
+  // nguyên suốt phiên. onMarkRead bên dưới đánh dấu đã đọc ngay khi mở tab ⇒ nếu tính lại
+  // theo data mới thì vạch vừa hiện đã biến mất, người dùng không kịp thấy đọc từ đâu.
+  // Chốt bằng state + "adjust during render" (pattern chính thức của React cho state phái
+  // sinh từ props): chỉ set khi tab đổi hoặc lần đầu có isRead, nên không lặp vô hạn.
+  const [unreadAnchor, setUnreadAnchor] = useState<{
+    tab: ChatTab;
+    id: string | null;
+  } | null>(null);
+
+  // Chỉ chốt khi BE đã trả isRead cho ít nhất 1 tin — realtime ChatAdded không kèm field
+  // này, chốt sớm sẽ ra "không có mốc" dù đang thực sự có tin chưa đọc.
+  if (
+    unreadAnchor?.tab !== tab &&
+    visible.some((c) => c.isRead !== undefined)
+  ) {
+    setUnreadAnchor({
+      tab,
+      id: visible.find((c) => c.isRead === false)?.id ?? null,
+    });
+  }
+
+  const unreadAnchorId = unreadAnchor?.tab === tab ? unreadAnchor.id : null;
+
+  const unreadCount = useMemo(() => {
+    if (!unreadAnchorId) return 0;
+    const idx = visible.findIndex((c) => c.id === unreadAnchorId);
+    return idx < 0 ? 0 : visible.length - idx;
+  }, [visible, unreadAnchorId]);
+
   // Tin đang chờ gửi (outbox) thuộc tab hiện tại — bubble optimistic cuối luồng.
   const pendingForTab = useMemo(
     () =>
@@ -332,10 +362,29 @@ export function TicketCommentThread({
   );
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const unreadDividerRef = useRef<HTMLDivElement>(null);
+  const jumpedToUnreadRef = useRef(false);
   const isFirstScrollRef = useRef(true);
+
+  useEffect(() => {
+    jumpedToUnreadRef.current = false;
+  }, [tab]);
+
   useEffect(() => {
     const el = bottomRef.current;
     if (!el) return;
+
+    // Còn tin chưa đọc → cuộn tới vạch thay vì xuống đáy, để đọc từ tin cũ nhất chưa đọc.
+    // Chỉ làm MỘT lần mỗi phiên; các lần scroll sau (tin mới, ảnh load xong) vẫn về đáy.
+    if (unreadDividerRef.current && !jumpedToUnreadRef.current) {
+      jumpedToUnreadRef.current = true;
+      isFirstScrollRef.current = false;
+      unreadDividerRef.current.scrollIntoView({
+        behavior: "auto",
+        block: "center",
+      });
+      return;
+    }
 
     // Tìm tổ tiên có thanh cuộn dọc (overflowY is auto/scroll)
     let parent = el.parentElement;
@@ -540,125 +589,144 @@ export function TicketCommentThread({
               canEditThis || canDeleteThis || !!onTranslate || canOverride;
 
             return (
-              <div
-                key={c.id}
-                className={cn("flex items-end gap-2", isOwn && "justify-end")}
-              >
-                {!isOwn && (
-                  <Avatar size="sm" className="mb-4">
-                    <AvatarFallback>{initials(name)}</AvatarFallback>
-                  </Avatar>
+              <Fragment key={c.id}>
+                {c.id === unreadAnchorId && (
+                  <div
+                    ref={unreadDividerRef}
+                    className="flex items-center gap-2 py-1"
+                  >
+                    <div className="h-px flex-1 bg-destructive" />
+                    <span className="rounded-full bg-destructive px-2.5 py-0.5 text-[11px] font-bold text-white">
+                      {unreadCount > 1
+                        ? `${unreadCount} tin nhắn chưa đọc`
+                        : "Tin nhắn chưa đọc"}
+                    </span>
+                    <div className="h-px flex-1 bg-destructive" />
+                  </div>
                 )}
                 <div
-                  className={cn(
-                    "flex max-w-[75%] flex-col",
-                    isOwn ? "items-end" : "items-start",
-                  )}
+                  className={cn("flex items-end gap-2", isOwn && "justify-end")}
                 >
-                  <div className="flex items-center gap-1.5 px-1 mb-0.5">
-                    {!isOwn && (
-                      <span className="text-[11px] font-medium text-muted-foreground">
-                        {name}
-                      </span>
+                  {!isOwn && (
+                    <Avatar size="sm" className="mb-4">
+                      <AvatarFallback>{initials(name)}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={cn(
+                      "flex max-w-[75%] flex-col",
+                      isOwn ? "items-end" : "items-start",
                     )}
-                    {c.isInternal && (
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] h-4 px-1.5 gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-300"
-                      >
-                        <Lock className="size-2.5" />
-                        Nội bộ
-                      </Badge>
-                    )}
-                  </div>
-
-                  {isEditing ? (
-                    <div className="w-full min-w-[220px] space-y-1.5">
-                      <Textarea
-                        value={editBody}
-                        onChange={(e) => setEditBody(e.target.value)}
-                        rows={2}
-                        className="text-sm"
-                        autoFocus
-                      />
-                      <div className="flex justify-end gap-1.5">
-                        <Button size="sm" variant="ghost" onClick={cancelEdit}>
-                          Hủy
-                        </Button>
-                        <Button
-                          size="sm"
-                          disabled={editPending || !editBody.trim()}
-                          onClick={() => saveEdit(c)}
-                        >
-                          Lưu
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <CommentBubbleContent
-                      comment={c}
-                      displayBody={displayBody}
-                      isOwn={isOwn}
-                      canShowActions={canShowActions}
-                      ticketId={ticketId}
-                      actionsMenu={
-                        <CommentActionsMenu
-                          canEdit={canEditThis}
-                          canDelete={canDeleteThis}
-                          canTranslate={!!onTranslate}
-                          canOverride={canOverride}
-                          translating={translatingId === c.id}
-                          onEdit={() => startEdit(c)}
-                          onDelete={() => setDeleteTarget(c)}
-                          onTranslate={(lang) => handleTranslate(c, lang)}
-                          onOverrideEdit={() => onOverrideEdit?.(c)}
-                          onOverrideDelete={() => onOverrideDelete?.(c)}
-                        />
-                      }
-                    />
-                  )}
-
-                  {!isEditing && ticketId && (
-                    <ChatReactionBar
-                      ticketId={ticketId}
-                      chatId={c.id}
-                      currentUserId={currentUserId}
-                      align={isOwn ? "end" : "start"}
-                    />
-                  )}
-
-                  {translation && (
-                    <button
-                      type="button"
-                      onClick={() => toggleShowOriginal(c.id)}
-                      className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1 mt-0.5"
-                    >
-                      {showingOriginal
-                        ? `Xem bản dịch (${LANGUAGE_LABEL[translation.lang] ?? translation.lang})`
-                        : "Xem bản gốc"}
-                    </button>
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <span className="text-[10px] text-muted-foreground px-1 mt-0.5 cursor-default" />
-                      }
-                    >
-                      {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
-                        locale: vi,
-                      })}
-                      {!!c.editCount && c.editCount > 0 && " · đã chỉnh sửa"}
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {format(
-                        new Date(c.createdAt),
-                        "EEEE, dd/MM/yyyy HH:mm:ss",
-                        { locale: vi },
+                  >
+                    <div className="flex items-center gap-1.5 px-1 mb-0.5">
+                      {!isOwn && (
+                        <span className="text-[11px] font-medium text-muted-foreground">
+                          {name}
+                        </span>
                       )}
-                    </TooltipContent>
-                  </Tooltip>
+                      {c.isInternal && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] h-4 px-1.5 gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-300"
+                        >
+                          <Lock className="size-2.5" />
+                          Nội bộ
+                        </Badge>
+                      )}
+                    </div>
+
+                    {isEditing ? (
+                      <div className="w-full min-w-[220px] space-y-1.5">
+                        <Textarea
+                          value={editBody}
+                          onChange={(e) => setEditBody(e.target.value)}
+                          rows={2}
+                          className="text-sm"
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={cancelEdit}
+                          >
+                            Hủy
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={editPending || !editBody.trim()}
+                            onClick={() => saveEdit(c)}
+                          >
+                            Lưu
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <CommentBubbleContent
+                        comment={c}
+                        displayBody={displayBody}
+                        isOwn={isOwn}
+                        canShowActions={canShowActions}
+                        ticketId={ticketId}
+                        actionsMenu={
+                          <CommentActionsMenu
+                            canEdit={canEditThis}
+                            canDelete={canDeleteThis}
+                            canTranslate={!!onTranslate}
+                            canOverride={canOverride}
+                            translating={translatingId === c.id}
+                            onEdit={() => startEdit(c)}
+                            onDelete={() => setDeleteTarget(c)}
+                            onTranslate={(lang) => handleTranslate(c, lang)}
+                            onOverrideEdit={() => onOverrideEdit?.(c)}
+                            onOverrideDelete={() => onOverrideDelete?.(c)}
+                          />
+                        }
+                      />
+                    )}
+
+                    {!isEditing && ticketId && (
+                      <ChatReactionBar
+                        ticketId={ticketId}
+                        chatId={c.id}
+                        currentUserId={currentUserId}
+                        align={isOwn ? "end" : "start"}
+                      />
+                    )}
+
+                    {translation && (
+                      <button
+                        type="button"
+                        onClick={() => toggleShowOriginal(c.id)}
+                        className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1 mt-0.5"
+                      >
+                        {showingOriginal
+                          ? `Xem bản dịch (${LANGUAGE_LABEL[translation.lang] ?? translation.lang})`
+                          : "Xem bản gốc"}
+                      </button>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <span className="text-[10px] text-muted-foreground px-1 mt-0.5 cursor-default" />
+                        }
+                      >
+                        {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
+                          locale: vi,
+                        })}
+                        {!!c.editCount && c.editCount > 0 && " · đã chỉnh sửa"}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {format(
+                          new Date(c.createdAt),
+                          "EEEE, dd/MM/yyyy HH:mm:ss",
+                          { locale: vi },
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
+              </Fragment>
             );
           })}
 

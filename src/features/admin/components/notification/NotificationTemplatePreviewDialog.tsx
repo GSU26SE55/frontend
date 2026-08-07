@@ -62,6 +62,11 @@ export default function NotificationTemplatePreviewDialog({
   // trong khi admin đang cần sửa template.
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+  // Kết quả gửi thử hiện NGAY TRONG dialog, không chỉ bằng toast: điều admin cần biết nhất là thư
+  // đi tới địa chỉ NÀO (tài khoản seed thường mang email placeholder kiểu admin@yourdomain.com —
+  // thư gửi thành công nhưng không ai nhận được). Toast trôi mất sau vài giây, đúng lúc người dùng
+  // còn đang đợi thư nên bỏ lỡ.
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   // Mặc định là form: bộ biến của mẫu đã biết trước nên không có lý do bắt gõ JSON tay.
   // JSON thô giữ lại làm lối thoát cho mẫu tương lai dùng block helper (cần giá trị đúng kiểu
@@ -187,6 +192,8 @@ export default function NotificationTemplatePreviewDialog({
       payload: { sampleData: buildSampleData() },
     });
     setRemaining(res.data?.remainingThisHour ?? null);
+    // BE trả message dạng "Đã gửi thử tới {email}." — giữ lại để hiện cố định trong dialog.
+    setSentTo(res.message ?? "Đã gửi thử.");
   };
 
   return (
@@ -301,6 +308,35 @@ export default function NotificationTemplatePreviewDialog({
                 </span>
               )}
             </div>
+
+            {/* Lý do nút bị khoá phải đọc được mà không cần hover: thuộc tính `title` KHÔNG hiện
+                tooltip trên phần tử disabled (hành vi chuẩn của HTML — phần tử disabled không nhận
+                sự kiện chuột), nên trước đây nút xám mà không nói vì sao. */}
+            {!canTestSend ? (
+              <p className="text-xs text-muted-foreground">
+                Chỉ gửi thử được mẫu kênh Email — mẫu này thuộc kênh{" "}
+                {notificationChannelLabel(template.channel)}.
+              </p>
+            ) : outOfQuota ? (
+              <p className="text-xs text-muted-foreground">
+                Đã dùng hết 5 lượt gửi thử trong giờ này. Thử lại vào giờ sau.
+              </p>
+            ) : null}
+
+            {sentTo && (
+              <div className="text-xs rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
+                <p className="font-medium text-emerald-600 dark:text-emerald-400">
+                  {sentTo}
+                </p>
+                {/* Gửi được ≠ nhận được. Nói rõ chỗ cần kiểm tra khi chờ mãi không thấy thư —
+                    nguyên nhân hay gặp nhất là tài khoản đang mang email mặc định lúc seed. */}
+                <p className="mt-1 text-muted-foreground">
+                  Thư gửi tới địa chỉ email của tài khoản bạn đang đăng nhập.
+                  Không thấy thư? Kiểm tra hộp thư rác, và đối chiếu địa chỉ ở
+                  trên có đúng hòm thư bạn đang mở không.
+                </p>
+              </div>
+            )}
           </form>
         </Form>
 

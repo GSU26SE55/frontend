@@ -39,6 +39,12 @@ const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
   CustomerComplaint: "Khiếu nại của khách hàng",
 };
 
+// Lý do cho người dùng chọn — bỏ PartsRequired vì hệ thống không có luồng warehouse.
+// Nhãn ở trên vẫn giữ để ticket cũ đã lưu giá trị này còn hiện đúng chữ.
+const REASON_OPTIONS = (
+  Object.values(EscalationReasonEnum) as EscalationReasonEnum[]
+).filter((v) => v !== EscalationReasonEnum.PartsRequired);
+
 interface Props {
   ticketId: string;
   open: boolean;
@@ -76,12 +82,10 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    items={Object.entries(EscalationReasonEnum).map(
-                      ([, v]) => ({
-                        value: v,
-                        label: ESCALATION_REASON_LABEL[v],
-                      }),
-                    )}
+                    items={REASON_OPTIONS.map((v) => ({
+                      value: v,
+                      label: ESCALATION_REASON_LABEL[v],
+                    }))}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -89,7 +93,7 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
-                      {Object.entries(EscalationReasonEnum).map(([, v]) => (
+                      {REASON_OPTIONS.map((v) => (
                         <SelectItem key={v} value={v}>
                           {ESCALATION_REASON_LABEL[v]}
                         </SelectItem>

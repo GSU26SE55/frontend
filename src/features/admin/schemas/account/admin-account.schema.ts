@@ -43,16 +43,9 @@ export const changeAccountStatusSchema = z.object({
   reason: z.string().optional(),
 });
 
-export const changeAccountRoleSchema = z.object({
-  roleId: z.string().min(1, "Cần chọn role"),
-});
-
 export type InviteAccountFormValues = z.infer<typeof inviteAccountSchema>;
 export type CreateAccountFormValues = z.infer<typeof createAccountSchema>;
 export type EditAccountFormValues = z.infer<typeof editAccountSchema>;
 export type ChangeAccountStatusFormValues = z.infer<
   typeof changeAccountStatusSchema
->;
-export type ChangeAccountRoleFormValues = z.infer<
-  typeof changeAccountRoleSchema
 >;

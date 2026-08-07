@@ -1,14 +1,7 @@
 import { useMemo, useState } from "react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Send,
-  Users,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Send, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -233,7 +226,9 @@ export default function BroadcastNotificationForm() {
                           ? `Ẩn danh sách người trong nhóm ${g.name}`
                           : `Xem những ai trong nhóm ${g.name}`
                       }
-                      title={expanded ? "Ẩn danh sách" : "Xem những ai trong nhóm"}
+                      title={
+                        expanded ? "Ẩn danh sách" : "Xem những ai trong nhóm"
+                      }
                     >
                       {expanded ? (
                         <ChevronUp className="size-3.5" />
@@ -539,14 +534,16 @@ export default function BroadcastNotificationForm() {
         trọng tuỳ chọn nhận tin và khung giờ yên tĩnh của từng người.
       </p>
 
-      <Button type="submit" disabled={send.isPending}>
-        {send.isPending ? (
-          <Loader2 className="mr-2 size-4 animate-spin" />
-        ) : (
-          <Send className="mr-2 size-4" />
-        )}
-        Gửi thông báo
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={send.isPending}>
+          {send.isPending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Send className="mr-2 size-4" />
+          )}
+          Gửi thông báo
+        </Button>
+      </div>
     </form>
   );
 }

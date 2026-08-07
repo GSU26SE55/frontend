@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -13,6 +13,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import SearchableSelect from "@/shared/components/ui/SearchableSelect";
+import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
+import { cn } from "@/lib/utils";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
@@ -82,6 +92,13 @@ export default function BatteryAssetForm({
   });
 
   const installDate = useWatch({ control, name: "installDate" });
+
+  const batteryTypeOptions = useMemo(
+    () =>
+      batteryTypesData?.items.map((t) => ({ value: t.id, label: t.name })) ??
+      [],
+    [batteryTypesData],
+  );
 
   const { mutateAsync: createAsset } = useCreateBatteryAsset();
   const { mutateAsync: updateAsset } = useUpdateBatteryAsset(
@@ -176,18 +193,21 @@ export default function BatteryAssetForm({
 
           <div className="space-y-1">
             <Label htmlFor="batteryTypeId">Loại pin *</Label>
-            <select
-              id="batteryTypeId"
-              {...register("batteryTypeId")}
-              className={selectClass}
-            >
-              <option value="">-- Chọn loại pin --</option>
-              {batteryTypesData?.items.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              control={control}
+              name="batteryTypeId"
+              render={({ field }) => (
+                <SearchableSelect
+                  id="batteryTypeId"
+                  options={batteryTypeOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="-- Chọn loại pin --"
+                  searchPlaceholder="Tìm theo tên loại pin..."
+                  emptyText="Không tìm thấy loại pin"
+                />
+              )}
+            />
             {errors.batteryTypeId && (
               <p className="text-sm text-destructive">
                 {errors.batteryTypeId.message}
@@ -197,18 +217,18 @@ export default function BatteryAssetForm({
 
           <div className="space-y-1">
             <Label htmlFor="customerId">Khách hàng *</Label>
-            <select
-              id="customerId"
-              {...register("customerId")}
-              className={selectClass}
-            >
-              <option value="">-- Chọn khách hàng --</option>
-              {customersData?.items.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.fullName} ({c.email})
-                </option>
-              ))}
-            </select>
+            <Controller
+              control={control}
+              name="customerId"
+              render={({ field }) => (
+                <CustomerCombobox
+                  id="customerId"
+                  customers={customersData?.items ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
             {errors.customerId && (
               <p className="text-sm text-destructive">
                 {errors.customerId.message}
@@ -218,30 +238,45 @@ export default function BatteryAssetForm({
 
           <div className="space-y-1">
             <Label htmlFor="siteId">Site</Label>
-            {/* Khoá site bằng cách chỉ render đúng 1 option — KHÔNG dùng `disabled`
-                vì select disabled không gửi giá trị lên khi submit. */}
-            <select
-              id="siteId"
-              {...register("siteId")}
-              className={selectClass}
-              aria-readonly={!!lockedSiteId}
-            >
-              {lockedSiteId ? (
-                <option value={lockedSiteId}>
-                  {sitesData?.items.find((s) => s.id === lockedSiteId)?.name ??
-                    "Site đang mở"}
-                </option>
-              ) : (
-                <>
-                  <option value="">-- Chưa gán site --</option>
-                  {sitesData?.items.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </>
+            {/* Mở từ trang site → khoá trigger. Giá trị vẫn nằm trong form state
+                (Controller) nên submit vẫn gửi siteId dù trigger bị disabled. */}
+            <Controller
+              control={control}
+              name="siteId"
+              render={({ field }) => (
+                <Select
+                  value={field.value || null}
+                  items={
+                    sitesData?.items.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    })) ?? []
+                  }
+                  onValueChange={(value) => field.onChange(value ?? "")}
+                  disabled={!!lockedSiteId}
+                >
+                  {/* disabled mặc định opacity-50 làm mờ cả chevron → giữ
+                      opacity-100 và chỉ làm dịu màu chữ cho rõ là đang khoá. */}
+                  <SelectTrigger
+                    id="siteId"
+                    className={cn(
+                      "w-full",
+                      lockedSiteId &&
+                        "disabled:opacity-100 disabled:text-muted-foreground",
+                    )}
+                  >
+                    <SelectValue placeholder="-- Chưa gán site --" />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    {sitesData?.items.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </select>
+            />
             {lockedSiteId ? (
               <p className="text-xs text-muted-foreground">
                 Pin sẽ được gán vào site đang mở.

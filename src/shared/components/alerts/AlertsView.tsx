@@ -37,8 +37,12 @@ import {
 import {
   AlertSeverityEnum,
   AlertStatusEnum,
-  AnomalyTypeEnum,
 } from "@/shared/enums/alerts/alert.enum";
+import {
+  ALERT_SEVERITY_LABELS as SEVERITY_LABELS,
+  ALERT_STATUS_LABELS as STATUS_LABELS,
+  anomalyTypeLabel,
+} from "@/shared/constants/alertLabels";
 import type { AlertDto } from "@/shared/types/alerts/alert.types";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
@@ -51,35 +55,11 @@ const DEFAULTS = {
   pageSize: 10,
 };
 
-const ANOMALY_LABELS: Record<AnomalyTypeEnum, string> = {
-  [AnomalyTypeEnum.Overheat]: "Quá nhiệt",
-  [AnomalyTypeEnum.Overvoltage]: "Quá áp",
-  [AnomalyTypeEnum.Undervoltage]: "Sụt áp",
-  [AnomalyTypeEnum.LowSoc]: "SOC thấp",
-  [AnomalyTypeEnum.RapidDischarge]: "Xả nhanh",
-  [AnomalyTypeEnum.AbnormalCharging]: "Nạp bất thường",
-  [AnomalyTypeEnum.DeviceOffline]: "Mất kết nối",
-  [AnomalyTypeEnum.SohDegradation]: "Suy giảm SOH",
-  [AnomalyTypeEnum.HighAmbientTemp]: "Nhiệt độ môi trường cao",
-  [AnomalyTypeEnum.HighHumidity]: "Độ ẩm cao",
-  [AnomalyTypeEnum.HighTempHumidityCombo]: "Combo nhiệt độ + độ ẩm",
-  [AnomalyTypeEnum.HighInternalResistance]: "Điện trở trong cao",
-  [AnomalyTypeEnum.CellImbalance]: "Mất cân bằng cell",
-  [AnomalyTypeEnum.EnvironmentalIncident]: "Sự cố môi trường",
-  [AnomalyTypeEnum.SensorMismatch]: "Lệch cảm biến",
-  [AnomalyTypeEnum.Undertemp]: "Nhiệt độ thấp",
-};
-
 const SEVERITY_OPTIONS = [
   AlertSeverityEnum.Info,
   AlertSeverityEnum.Warning,
   AlertSeverityEnum.Critical,
 ];
-const SEVERITY_LABELS: Record<AlertSeverityEnum, string> = {
-  [AlertSeverityEnum.Info]: "Thông tin",
-  [AlertSeverityEnum.Warning]: "Cảnh báo",
-  [AlertSeverityEnum.Critical]: "Nguy hiểm",
-};
 
 const STATUS_OPTIONS = [
   AlertStatusEnum.Open,
@@ -87,14 +67,8 @@ const STATUS_OPTIONS = [
   AlertStatusEnum.Resolved,
   AlertStatusEnum.Merged,
 ];
-const STATUS_LABELS: Record<AlertStatusEnum, string> = {
-  [AlertStatusEnum.Open]: "Mở",
-  [AlertStatusEnum.Acknowledged]: "Đã xác nhận",
-  [AlertStatusEnum.Merged]: "Đã gộp",
-  [AlertStatusEnum.Resolved]: "Đã xử lý",
-};
 
-const anomalyLabel = (t: AnomalyTypeEnum) => ANOMALY_LABELS[t] ?? `#${t}`;
+const anomalyLabel = anomalyTypeLabel;
 
 // Alert cấp site (ambient / environmental incident) có batteryAssetId = "" (chuỗi rỗng,
 // KHÔNG null) và siteId non-null → không có serial pin để hiện. Dùng `=== ""` chứ không

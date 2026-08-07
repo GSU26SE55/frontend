@@ -8,8 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import {
+  getPrimaryHandlerName,
+  getSupporterNames,
+} from "@/shared/utils/ticket/assignments";
 import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
+import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import type { MaintenanceLogDTO } from "@/shared/types/ticket/ticket.types";
 import {
   useStaffTicketDetail,
@@ -33,11 +38,12 @@ import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
 import { HoldDialog } from "@/features/staff/components/ticket/HoldDialog";
 import { ResolveDialog } from "@/features/staff/components/ticket/ResolveDialog";
 import { EscalateRequestDialog } from "@/features/staff/components/ticket/EscalateRequestDialog";
-import { TicketTimeline } from "@/features/staff/components/ticket/TicketTimeline";
+import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
 import { AddCommentForm } from "@/features/staff/components/ticket/AddCommentForm";
 import { MaintenanceLogDialog } from "@/features/staff/components/ticket/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "@/features/staff/components/ticket/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
@@ -114,6 +120,9 @@ export default function TicketDetailPage() {
   const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
 
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
+  // Tên người phụ trách — lấy thẳng từ assignments (BE đã kèm staffName).
+  const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
+  const supporterNames = getSupporterNames(ticket?.assignments);
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
   const { data: comments = [] } = useStaffTicketComments(ticketId);
@@ -322,9 +331,10 @@ export default function TicketDetailPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Left: Tabs */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <Tabs defaultValue="timeline" className="h-full gap-0">
+          <Tabs defaultValue="info" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
+                <TabsTrigger value="info">Thông tin</TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
                 <TabsTrigger value="comments" className="group">
@@ -339,6 +349,53 @@ export default function TicketDetailPage() {
               </TabsList>
             </div>
 
+            {/* Info — battery asset info + attachments (đồng bộ tab "Thông tin" của Manager) */}
+            <TabsContent
+              value="info"
+              className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
+            >
+              {/* Ticket có thể gắn nhiều pin — lặp từng pin. Fallback pin đơn (legacy). */}
+              {(() => {
+                const ids =
+                  ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
+                    ? ticket.batteryAssetIds
+                    : ticket.batteryAssetId
+                      ? [ticket.batteryAssetId]
+                      : [];
+                if (ids.length === 0)
+                  return <BatteryAssetInfoPanel batteryAssetId={null} />;
+                return (
+                  <div className="space-y-4">
+                    {ids.length > 1 && (
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        {ids.length} thiết bị pin liên quan
+                      </p>
+                    )}
+                    {ids.map((bid) => (
+                      <BatteryAssetInfoPanel
+                        key={bid}
+                        batteryAssetId={bid}
+                        detectedAt={ticket.detectedAt}
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Tệp đính kèm
+                </p>
+                {ticket.attachmentFileIds &&
+                ticket.attachmentFileIds.length > 0 ? (
+                  <TicketAttachments fileIds={ticket.attachmentFileIds} />
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Không có tệp đính kèm.
+                  </p>
+                )}
+              </div>
+            </TabsContent>
+
             {/* Timeline */}
             <TabsContent
               value="timeline"
@@ -351,7 +408,7 @@ export default function TicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketTimeline activities={activities} />
+                <TicketActivityTimeline activities={activities} />
               )}
             </TabsContent>
 
@@ -566,6 +623,47 @@ export default function TicketDetailPage() {
                   <PanelRightClose className="size-4" />
                 </button>
               </div>
+
+              {/* ── Kiểm tra AI + nghi trùng (chỉ ticket Customer tạo thủ công) ──
+                  Đồng bộ với sidebar của Manager. Staff chỉ ĐỌC nhận định của AI —
+                  hai nút "AI kiểm tra lại" và "Gộp ticket" là quyền triage của
+                  Manager nên không đưa sang đây. */}
+              {ticket.origin === "ManualByCustomer" &&
+                (ticket.aiVerifyStatus ||
+                  ticket.suspectedDuplicateOfTicketId) && (
+                  <div className="px-4 py-3 space-y-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Kiểm tra AI
+                    </p>
+                    {ticket.aiVerifyStatus && (
+                      <div className="flex items-center gap-2">
+                        <TicketVerifyBadge
+                          status={ticket.aiVerifyStatus}
+                          origin={ticket.origin}
+                        />
+                        {ticket.aiVerifyScore != null && (
+                          <span className="text-xs text-muted-foreground">
+                            {(ticket.aiVerifyScore * 100).toFixed(0)}% hợp lệ
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {ticket.aiVerifyReason && (
+                      <p className="text-xs text-muted-foreground">
+                        {ticket.aiVerifyReason}
+                      </p>
+                    )}
+                    {ticket.suspectedDuplicateOfTicketId && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                        <p className="font-medium">⚠ Nghi trùng ticket khác</p>
+                        {ticket.duplicateReason && (
+                          <p className="mt-0.5">{ticket.duplicateReason}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
               {/* SLA */}
               <div className="p-4">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -635,35 +733,8 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
-              {/* Thiết bị pin — ticket có thể gắn nhiều pin, lặp từng cái. */}
-              <div className="p-4 space-y-4">
-                {(() => {
-                  const ids =
-                    ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
-                      ? ticket.batteryAssetIds
-                      : ticket.batteryAssetId
-                        ? [ticket.batteryAssetId]
-                        : [];
-                  if (ids.length === 0)
-                    return <BatteryAssetInfoPanel batteryAssetId={null} />;
-                  return (
-                    <>
-                      {ids.length > 1 && (
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          {ids.length} thiết bị pin liên quan
-                        </p>
-                      )}
-                      {ids.map((bid) => (
-                        <BatteryAssetInfoPanel
-                          key={bid}
-                          batteryAssetId={bid}
-                          detectedAt={ticket.detectedAt}
-                        />
-                      ))}
-                    </>
-                  );
-                })()}
-              </div>
+              {/* Thiết bị pin đã chuyển sang tab "Thông tin" (đồng bộ với Manager) —
+                  để cả hai chỗ thì cùng một bảng pin + bằng chứng render hai lần. */}
 
               {/* Description */}
               {ticket.description && (
@@ -692,15 +763,76 @@ export default function TicketDetailPage() {
                   </div>
                 )}
 
+              {/* Rejection reason */}
+              {ticket.rejectionReason && (
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
+                    Lý do từ chối
+                  </p>
+                  <p className="text-xs leading-relaxed">
+                    {ticket.rejectionReason}
+                  </p>
+                </div>
+              )}
+
               {/* Resolution */}
               {ticket.resolutionSummary && (
                 <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
                   <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                    Tóm tắt giải quyết
+                    Kết quả giải quyết
                   </p>
-                  <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
+                  {ticket.resolvedAt && (
+                    <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
+                      Xử lý xong lúc{" "}
+                      {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
+                        locale: vi,
+                      })}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Escalation */}
+              {ticket.escalatedAt && (
+                <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
+                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
+                    Chuyển cấp
+                  </p>
+                  {ticket.escalationReason && (
+                    <p className="text-xs leading-relaxed">
+                      {ESCALATION_REASON_LABEL[ticket.escalationReason] ??
+                        ticket.escalationReason}
+                    </p>
+                  )}
+                  <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
+                    {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
+                      locale: vi,
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Customer rating */}
+              {ticket.rating != null && (
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Đánh giá khách hàng
+                  </p>
+                  <p className="text-xs font-medium">
+                    {"★".repeat(ticket.rating)}
+                    {"☆".repeat(5 - ticket.rating)}
+                    <span className="text-muted-foreground font-normal ml-1">
+                      ({ticket.rating}/5)
+                    </span>
+                  </p>
+                  {ticket.ratingComment && (
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {ticket.ratingComment}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -708,6 +840,26 @@ export default function TicketDetailPage() {
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow label="Danh mục" value={ticket.category} />
                 <SideInfoRow label="Nguồn" value={ticket.origin} />
+                {/* Ai đang phụ trách — BE trả kèm staffName nên mọi role đọc được,
+                    không cần gọi /api/staff (endpoint đó chỉ mở cho Admin/Manager). */}
+                <SideInfoRow
+                  label="Phụ trách chính"
+                  value={primaryHandlerName}
+                />
+                {supporterNames.length > 0 && (
+                  <SideInfoRow
+                    label="Hỗ trợ"
+                    value={
+                      <span className="flex flex-wrap justify-end gap-1">
+                        {supporterNames.map((name) => (
+                          <Badge key={name} variant="secondary">
+                            {name}
+                          </Badge>
+                        ))}
+                      </span>
+                    }
+                  />
+                )}
                 {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
                 {ticket.detectedAt && (
                   <SideInfoRow

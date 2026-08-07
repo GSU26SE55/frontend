@@ -21,14 +21,17 @@ import type {
 } from "@/shared/types/blog/blog.types";
 
 // Map params FE → query BE.
-// ⚠️ Blog dùng `Page` (KB dùng `PageNumber`) — response cả hai đều trả `pageNumber`.
+// `GetBlogPostListQuery` kế thừa `PaginationRequest` → param đúng là `PageNumber`,
+// giống KB. Trước đây gửi `Page` nên BE không bind được, luôn rơi về mặc định
+// trang 1 (phân trang blog thực chất không hoạt động).
 function toListQuery(params?: BlogPostListParams) {
   if (!params) return undefined;
   return {
     Status: params.status,
     Origin: params.origin,
-    Page: params.page,
+    PageNumber: params.page,
     PageSize: params.pageSize,
+    Q: params.q?.trim() || undefined,
   };
 }
 

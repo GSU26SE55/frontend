@@ -1,13 +1,21 @@
-import { Eye, Power, Pencil, Trash2 } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import {
   notificationTypeLabel,
   notificationChannelLabel,
 } from "@/shared/constants/notificationLabels";
 import type { NotificationTemplateDto } from "@/features/admin/types/notification/notification-template.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 interface Props {
   templates: NotificationTemplateDto[];
@@ -58,7 +66,9 @@ export default function NotificationTemplateTable({
             <th className="px-3 py-2.5 font-medium text-center">Phiên bản</th>
             <th className="px-3 py-2.5 font-medium">Tiêu đề</th>
             <th className="px-3 py-2.5 font-medium">Cập nhật</th>
-            <th className="px-3 py-2.5 font-medium text-right">Thao tác</th>
+            <th className="px-3 py-2.5 font-medium text-right">
+              {TABLE_COLUMNS.actions}
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border/60">
@@ -93,57 +103,49 @@ export default function NotificationTemplateTable({
                   "dd/MM/yyyy HH:mm",
                 )}
               </td>
-              <td className="px-3 py-2.5">
-                <div className="flex items-center justify-end gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPreview(t)}
-                    title="Dựng thử với dữ liệu mẫu"
+              <td className="px-3 py-2.5 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button variant="ghost" size="icon" className="size-7" />
+                    }
                   >
-                    <Eye className="size-3.5" />
-                    Xem trước
-                  </Button>
+                    <EllipsisVertical className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-36">
+                    <DropdownMenuItem onClick={() => onPreview(t)}>
+                      Xem trước
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(t)}>
+                      Chỉnh sửa
+                    </DropdownMenuItem>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(t)}
-                    title={`Sửa — tạo phiên bản ${t.version + 1} và bật lên`}
-                  >
-                    <Pencil className="size-3.5" />
-                    Sửa
-                  </Button>
+                    {/* Chỉ bản chưa active mới có gì để kích hoạt (quay lui phiên bản). */}
+                    {!t.isActive && (
+                      <DropdownMenuItem
+                        disabled={activatingId === t.id}
+                        onClick={() => onActivate(t)}
+                      >
+                        {activatingId === t.id ? "Đang bật…" : "Kích hoạt"}
+                      </DropdownMenuItem>
+                    )}
 
-                  {/* Chỉ bản chưa active mới có gì để kích hoạt (quay lui phiên bản). */}
-                  {!t.isActive && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={activatingId === t.id}
-                      onClick={() => onActivate(t)}
-                      title="Quay lui: bật lại phiên bản này"
-                    >
-                      <Power className="size-3.5" />
-                      {activatingId === t.id ? "Đang bật…" : "Kích hoạt"}
-                    </Button>
-                  )}
-
-                  {/* Bản đang dùng KHÔNG cho xoá — BE cũng chặn (409). Ẩn nút thay vì để bấm rồi
-                      báo lỗi: mất bản đang dùng thì dispatcher rơi về chuỗi hardcode, im lặng. */}
-                  {!t.isActive && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={deletingId === t.id}
-                      onClick={() => onDelete(t)}
-                      title="Xoá phiên bản này"
-                    >
-                      <Trash2 className="size-3.5" />
-                      {deletingId === t.id ? "Đang xoá…" : "Xoá"}
-                    </Button>
-                  )}
-                </div>
+                    {/* Bản đang dùng KHÔNG cho xoá — BE cũng chặn (409). Ẩn nút thay vì để bấm rồi
+                        báo lỗi: mất bản đang dùng thì dispatcher rơi về chuỗi hardcode, im lặng. */}
+                    {!t.isActive && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          disabled={deletingId === t.id}
+                          onClick={() => onDelete(t)}
+                        >
+                          {deletingId === t.id ? "Đang xoá…" : "Xoá"}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </td>
             </tr>
           ))}

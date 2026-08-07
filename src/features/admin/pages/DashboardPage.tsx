@@ -60,7 +60,9 @@ const alertChartConfig = {
   info: { label: "Info", color: "var(--muted-foreground)" },
 } satisfies ChartConfig;
 
-const anomalyChartConfig = { value: { label: "Cảnh báo" } } satisfies ChartConfig;
+const anomalyChartConfig = {
+  value: { label: "Cảnh báo" },
+} satisfies ChartConfig;
 
 const ANOMALY_LABEL: Record<number, string> = {
   1: "Quá nhiệt",
@@ -112,7 +114,6 @@ export default function AdminDashboardPage() {
 
   // ── Hạ tầng ──
   const totalSites = siteStats?.total ?? 0;
-  const activeSites = siteStats?.activeCount ?? 0;
   const totalBatt = stats?.totalAssets ?? 0;
   const activeBatt = stats?.activeAssets ?? 0;
   const offlineBatt = stats?.offlineAssets ?? 0;
@@ -122,7 +123,8 @@ export default function AdminDashboardPage() {
 
   // ── Tỉ lệ pin còn kết nối — chỉ số "hệ thống có đang thấy được thiết bị không" ──
   const onlineBatt = Math.max(0, totalBatt - offlineBatt);
-  const onlinePct = totalBatt > 0 ? Math.round((onlineBatt / totalBatt) * 100) : 0;
+  const onlinePct =
+    totalBatt > 0 ? Math.round((onlineBatt / totalBatt) * 100) : 0;
   const onlineColor =
     totalBatt === 0
       ? "var(--muted-foreground)"
@@ -176,21 +178,18 @@ export default function AdminDashboardPage() {
         <DashboardKpi
           label="Sites"
           value={siteStatsLoading ? "--" : totalSites}
-          hint={`${activeSites} hoạt động`}
           icon={<MapPin className="size-4" />}
           to="/admin/sites"
         />
         <DashboardKpi
           label="Pin hoạt động"
           value={statsLoading ? "--" : activeBatt}
-          sub={`/${totalBatt}`}
           icon={<BatteryCharging className="size-4" />}
           to="/admin/battery-assets"
         />
         <DashboardKpi
           label="Pin offline"
           value={statsLoading ? "--" : offlineBatt}
-          hint="mất kết nối"
           icon={<WifiOff className="size-4" />}
           accent={offlineBatt > 0 ? "var(--p3)" : undefined}
           to="/admin/iot-devices"
@@ -198,7 +197,6 @@ export default function AdminDashboardPage() {
         <DashboardKpi
           label="Cảnh báo mở"
           value={statsLoading ? "--" : openAlerts}
-          hint={`${criticalOpen} critical`}
           icon={<BellRing className="size-4" />}
           accent={criticalOpen > 0 ? "var(--p1)" : undefined}
           to="/admin/alerts"
@@ -206,7 +204,6 @@ export default function AdminDashboardPage() {
         <DashboardKpi
           label="Sự cố môi trường"
           value={statsLoading ? "--" : activeIncidents}
-          hint="đang mở"
           icon={<ShieldAlert className="size-4" />}
           accent={activeIncidents > 0 ? "var(--p1)" : undefined}
           to="/admin/environmental-incidents"
@@ -233,11 +230,16 @@ export default function AdminDashboardPage() {
               config={alertChartConfig}
               className="h-full w-full aspect-auto min-h-0"
             >
-              <AreaChart data={alertSeries} margin={{ left: 0, right: 6, top: 4 }}>
+              <AreaChart
+                data={alertSeries}
+                margin={{ left: 0, right: 6, top: 4 }}
+              >
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(v: string) => `${v.slice(8, 10)}/${v.slice(5, 7)}`}
+                  tickFormatter={(v: string) =>
+                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                  }
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
@@ -316,16 +318,22 @@ export default function AdminDashboardPage() {
                     >
                       {onlineBatt}
                     </p>
-                    <p className="text-xs font-medium text-muted-foreground">Online</p>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Online
+                    </p>
                   </div>
                   <div className="rounded-lg bg-muted/40 py-2 px-1">
                     <p
                       className="text-base font-bold tabular-nums"
-                      style={{ color: offlineBatt > 0 ? "var(--p3)" : undefined }}
+                      style={{
+                        color: offlineBatt > 0 ? "var(--p3)" : undefined,
+                      }}
                     >
                       {offlineBatt}
                     </p>
-                    <p className="text-xs font-medium text-muted-foreground">Offline</p>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Offline
+                    </p>
                   </div>
                 </div>
               }
@@ -401,7 +409,9 @@ export default function AdminDashboardPage() {
             title={OVERVIEW_PANELS.admin.topAlerting}
             assets={topAlerting}
             isLoading={statsLoading}
-            onSelect={(a) => navigate(`/admin/battery-assets/${a.batteryAssetId}`)}
+            onSelect={(a) =>
+              navigate(`/admin/battery-assets/${a.batteryAssetId}`)
+            }
             className="min-h-[160px] lg:min-h-0"
           />
         )}
