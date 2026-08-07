@@ -93,7 +93,11 @@ export default function ManagerDashboardPage() {
       value: (statusCounts.New ?? 0) + (statusCounts.Open ?? 0),
       fill: "var(--muted-foreground)",
     },
-    { stage: "Đã gán", value: statusCounts.Assigned ?? 0, fill: "var(--chart-1)" },
+    {
+      stage: "Đã gán",
+      value: statusCounts.Assigned ?? 0,
+      fill: "var(--chart-1)",
+    },
     {
       stage: "Đang xử lý",
       value: statusCounts.InProgress ?? 0,
@@ -128,16 +132,27 @@ export default function ManagerDashboardPage() {
   // ── Ưu tiên ──
   const priorityCounts = ticketStats?.countByPriority ?? {};
   const priorityData = [
-    { name: "P1 · Khẩn", value: priorityCounts.P1Critical ?? 0, fill: "var(--p1)" },
+    {
+      name: "P1 · Khẩn",
+      value: priorityCounts.P1Critical ?? 0,
+      fill: "var(--p1)",
+    },
     { name: "P2 · Cao", value: priorityCounts.P2High ?? 0, fill: "var(--p2)" },
-    { name: "P3 · Thường", value: priorityCounts.P3Normal ?? 0, fill: "var(--p3)" },
+    {
+      name: "P3 · Thường",
+      value: priorityCounts.P3Normal ?? 0,
+      fill: "var(--p3)",
+    },
   ].filter((d) => d.value > 0);
   const priorityTotal = priorityData.reduce((a, d) => a + d.value, 0);
 
   // ── Tải nhân sự ──
   const staff = staffList ?? [];
   const openByStaff = new Map(
-    (ticketStats?.openCountByStaff ?? []).map((o) => [o.staffId, o.activeCount]),
+    (ticketStats?.openCountByStaff ?? []).map((o) => [
+      o.staffId,
+      o.activeCount,
+    ]),
   );
   const workload = staff
     .map((s) => ({
@@ -184,14 +199,12 @@ export default function ManagerDashboardPage() {
         <DashboardKpi
           label="Tickets mở"
           value={ticketsLoading ? "--" : openCount}
-          sub={`/${totalTickets}`}
           icon={<Ticket className="size-4" />}
           to="/manager/tickets"
         />
         <DashboardKpi
           label="Cần triage"
           value={queueLoading ? "--" : queueCount}
-          sub="hàng chờ"
           icon={<Inbox className="size-4" />}
           accent={queueCount > 0 ? "var(--p3)" : undefined}
           to="/manager/tickets/queue"
@@ -199,7 +212,6 @@ export default function ManagerDashboardPage() {
         <DashboardKpi
           label="Chờ duyệt"
           value={ticketsLoading ? "--" : awaitingApproval}
-          hint="Staff đã xử lý xong"
           icon={<ClipboardCheck className="size-4" />}
           accent={awaitingApproval > 0 ? "var(--p3)" : undefined}
           to="/manager/tickets"
@@ -207,22 +219,21 @@ export default function ManagerDashboardPage() {
         <DashboardKpi
           label="Quá hạn SLA"
           value={ticketsLoading ? "--" : (sla?.breached ?? 0)}
-          sub="breach"
           icon={<AlertTriangle className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : undefined}
           to="/manager/tickets"
         />
         <DashboardKpi
           label="SLA"
-          value={ticketsLoading ? "--" : sla ? `${sla.compliancePercent}%` : "—"}
-          hint={`${sla?.met ?? 0} met`}
+          value={
+            ticketsLoading ? "--" : sla ? `${sla.compliancePercent}%` : "—"
+          }
           icon={<ShieldCheck className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
           label="Staff sẵn sàng"
           value={staffLoading ? "--" : availableStaff}
-          sub={`/${workload.length}`}
           icon={<Users className="size-4" />}
           accent={availableStaff === 0 ? "var(--p1)" : undefined}
         />
@@ -414,7 +425,10 @@ export default function ManagerDashboardPage() {
                 config={areaConfig}
                 className="h-full w-full aspect-auto min-h-[200px]"
               >
-                <AreaChart data={ticketTrend} margin={{ left: 0, right: 6, top: 4 }}>
+                <AreaChart
+                  data={ticketTrend}
+                  margin={{ left: 0, right: 6, top: 4 }}
+                >
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
                     dataKey="date"
@@ -436,7 +450,13 @@ export default function ManagerDashboardPage() {
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <defs>
-                    <linearGradient id="fillMgrTickets" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="fillMgrTickets"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="5%"
                         stopColor="var(--color-count)"
