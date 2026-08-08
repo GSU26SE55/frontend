@@ -31,9 +31,9 @@ import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Không hoạt động",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 interface BatteryAssetTableProps {
@@ -42,7 +42,7 @@ interface BatteryAssetTableProps {
   pageSize: number;
   includeDeleted?: boolean;
   onEdit: (item: BatteryAssetDto) => void;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Sort server-side — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -57,7 +57,7 @@ export default function BatteryAssetTable({
   const navigate = useNavigate();
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
   const { mutate: restoreAsset } = useRestoreBatteryAsset();
-  // BE đã sort toàn dataset (SortBy/SortDir) → render items nguyên trạng.
+  // BE already sorts the whole dataset (SortBy/SortDir) → render items as-is.
   const sortKey = sort.sortBy;
   const sortDirection = sort.sortDir;
   const toggleSort = sort.toggleSort;
@@ -83,7 +83,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Loại pin
+            Battery type
           </SortableTableHead>
           <SortableTableHead
             sortKey="customerName"
@@ -91,7 +91,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Khách hàng
+            Customer
           </SortableTableHead>
           <SortableTableHead
             sortKey="siteName"
@@ -107,7 +107,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Trạng thái
+            Status
           </SortableTableHead>
           <SortableTableHead
             sortKey="installDate"
@@ -115,7 +115,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Ngày lắp
+            Install date
           </SortableTableHead>
           <TableHead className="text-right">{TABLE_COLUMNS.actions}</TableHead>
         </TableRow>
@@ -169,12 +169,12 @@ export default function BatteryAssetTable({
                         })
                       }
                     >
-                      Khôi phục
+                      Restore
                     </DropdownMenuItem>
                   ) : (
                     <>
                       <DropdownMenuItem onClick={() => onEdit(item)}>
-                        Chỉnh sửa
+                        Edit
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -186,7 +186,7 @@ export default function BatteryAssetTable({
                           })
                         }
                       >
-                        Xóa
+                        Delete
                       </DropdownMenuItem>
                     </>
                   )}
@@ -201,7 +201,7 @@ export default function BatteryAssetTable({
               colSpan={8}
               className="text-center text-muted-foreground py-8"
             >
-              Không có dữ liệu
+              No data yet
             </TableCell>
           </TableRow>
         )}

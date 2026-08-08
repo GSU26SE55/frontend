@@ -1,18 +1,19 @@
 import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-// Bắt token "@Tên" trong text đã gửi. Từ đầu tiên sau "@" luôn thuộc tên; các từ
-// TIẾP THEO chỉ được gộp nếu bắt đầu bằng CHỮ HOA (tên riêng, vd "Tri Tran",
-// "Staff Tier3 Senior"). Nhờ vậy "@Tri Tran con cc" chỉ tô "@Tri Tran" — "con cc"
-// viết thường bị loại. FE không có danh sách tên chính xác trong body (BE không
-// trả mentions kèm comment), nên đây là heuristic đáng tin nhất.
+// Captures the "@Name" token in sent text. The first word after "@" always belongs to
+// the name; SUBSEQUENT words are only merged in if they start with an UPPERCASE letter
+// (proper names, e.g. "Tri Tran", "Staff Tier3 Senior"). This way "@Tri Tran con cc" only
+// highlights "@Tri Tran" — the lowercase "con cc" is excluded. The FE doesn't have an
+// exact name list in the body (the BE doesn't return mentions alongside the comment),
+// so this is the most reliable heuristic available.
 const MENTION_RE = /@[\p{L}\p{N}_]+(?: \p{Lu}[\p{L}\p{N}_]*){0,4}/gu;
 
 /**
- * Render body comment, tô màu phần "@Tên" khác với text còn lại.
+ * Renders the comment body, coloring the "@Name" part differently from the rest of the text.
  *
- * `isOwn` = tin của chính mình (bong bóng nền primary) → dùng màu sáng để nổi
- * trên nền tối; ngược lại dùng màu primary trên nền muted.
+ * `isOwn` = your own message (bubble with primary background) → use a light color to stand
+ * out against the dark background; otherwise use the primary color on a muted background.
  */
 export function renderTextWithMentions(text: string, isOwn = false): ReactNode {
   const parts: ReactNode[] = [];

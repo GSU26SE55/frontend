@@ -48,6 +48,7 @@ export const KEY = {
     notificationTemplates: ["admin", "notificationTemplates"] as const,
     notificationGroups: ["admin", "notificationGroups"] as const, // Sprint 6.4
     notificationBatches: ["admin", "notificationBatches"] as const, // Sprint 6.4
+    notificationSettings: ["admin", "notificationSettings"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -62,7 +63,7 @@ export const KEY = {
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
-  permissionsCatalog: "permissionsCatalog", // GH-133 C1 — catalog full mọi role
+  permissionsCatalog: "permissionsCatalog", // GH-133 C1 — full catalog for every role
 } as const;
 
 export const QUERY_KEY = {
@@ -95,8 +96,8 @@ export const QUERY_KEY = {
   },
   notifications: {
     list: (params?: object) => [KEY.notifications, "list", params] as const,
-    // Hộp thư cuộn vô hạn — key RIÊNG với list để cache nhiều trang của hộp thư
-    // không đè lên cache 10 mục của dropdown bell.
+    // Infinite-scroll inbox — a SEPARATE key from list so the inbox's many cached pages
+    // do not overwrite the bell dropdown's 10-item cache.
     infinite: (params?: object) =>
       [KEY.notifications, "infinite", params] as const,
     detail: (id: string) => [KEY.notifications, "detail", id] as const,
@@ -144,6 +145,9 @@ export const QUERY_KEY = {
   sohPredictions: {
     list: (assetId: string, params?: object) =>
       [KEY.sohPredictions, "list", assetId, params] as const,
+    long: (assetId: string, params?: object) =>
+      [KEY.sohPredictions, "long", assetId, params] as const,
+    batch: (params?: object) => [KEY.sohPredictions, "batch", params] as const,
   },
   anomalyClassifications: {
     list: (assetId: string, params?: object) =>
@@ -222,9 +226,10 @@ export const QUERY_KEY = {
         "list",
         params,
       ],
-      // Hợp đồng tĩnh giữa consumer và template — không đổi trong một phiên làm việc.
+      // A static contract between the consumer and the template — it does not change
+      // within a single working session.
       variables: () => [...KEY.admin.notificationTemplates, "variables"],
-      // Phụ thuộc dữ liệu thật nên phải invalidate sau khi sửa template.
+      // Depends on real data, so it must be invalidated after a template is edited.
       coverage: () => [...KEY.admin.notificationTemplates, "coverage"],
     },
     notificationGroups: {
@@ -248,14 +253,15 @@ export const QUERY_KEY = {
         params,
       ],
       detail: (id: string) => [...KEY.admin.notificationBatches, "detail", id],
-      // Xem trước phụ thuộc CẢ nhóm lẫn cá nhân lẫn kênh đang chọn — đưa hết vào khoá
-      // để đổi lựa chọn là truy vấn lại, không dùng nhầm số cũ.
+      // The preview depends on the selected groups AND individuals AND channels — put all
+      // of them in the key so changing a selection refetches instead of reusing a stale count.
       preview: (params?: object) => [
         ...KEY.admin.notificationBatches,
         "preview",
         params,
       ],
-      // Nội dung xem trước phụ thuộc mẫu trong DB + biến admin đang gõ.
+      // The previewed content depends on the template in the DB + the variables the admin
+      // is typing.
       templatePreview: (params?: object) => [
         ...KEY.admin.notificationBatches,
         "template-preview",
@@ -270,6 +276,10 @@ export const QUERY_KEY = {
         "detail",
         alertId,
       ],
+    },
+    notificationSettings: {
+      pushTransport: () =>
+        [...KEY.admin.notificationSettings, "pushTransport"] as const,
     },
   },
   alerts: {
@@ -294,6 +304,12 @@ export const QUERY_KEY = {
   },
   tickets: {
     detail: (id: string) => [KEY.tickets, "detail", id] as const,
+    // AI suggestions — do NOT cache for long: staff availability changes constantly, and a
+    // stale suggestion can point at someone who has just been loaded up with tickets.
+    staffSuggestions: (id: string, topN: number) =>
+      [KEY.tickets, "staffSuggestions", id, topN] as const,
+    kbSuggestions: (id: string, topN: number) =>
+      [KEY.tickets, "kbSuggestions", id, topN] as const,
     activities: (id: string) => [KEY.tickets, "activities", id] as const,
     maintenanceLogs: (id: string) =>
       [KEY.tickets, "maintenanceLogs", id] as const,
@@ -339,10 +355,10 @@ export const QUERY_KEY = {
     usageStats: (id: string) => [KEY.kb, "usage-stats", id] as const,
   },
   blog: {
-    // Public (chỉ bài Published)
+    // Public (Published posts only)
     publicList: (params?: object) => [KEY.blog, "public-list", params] as const,
     publicDetail: (id: string) => [KEY.blog, "public-detail", id] as const,
-    // Internal (mọi trạng thái)
+    // Internal (every status)
     list: (params?: object) => [KEY.blog, "list", params] as const,
     detail: (id: string) => [KEY.blog, "detail", id] as const,
     versions: (id: string) => [KEY.blog, "versions", id] as const,

@@ -17,7 +17,7 @@ export const useChangePassword = () => {
     onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? "Đổi mật khẩu thất bại");
+        toast.error(res.message ?? "Couldn't change the password");
         return;
       }
       Cookies.remove("accessToken");

@@ -6,7 +6,7 @@ export const BatteryStatusEnum = {
 export type BatteryStatusEnum =
   (typeof BatteryStatusEnum)[keyof typeof BatteryStatusEnum];
 
-// WarrantyStatusEnum — dùng chung admin/manager/staff (trước đây nhân bản mỗi feature).
+// WarrantyStatusEnum — shared by admin/manager/staff (previously duplicated per feature).
 export const WarrantyStatusEnum = {
   ACTIVE: 1,
   EXPIRED: 2,
@@ -15,7 +15,8 @@ export const WarrantyStatusEnum = {
 export type WarrantyStatusEnum =
   (typeof WarrantyStatusEnum)[keyof typeof WarrantyStatusEnum];
 
-// ChargingStateEnum — trạng thái sạc/xả (dùng cho realtime + sensor-stream). Dùng chung 3 role.
+// ChargingStateEnum — charge/discharge state (used by realtime + sensor-stream).
+// Shared by all 3 roles.
 export const ChargingStateEnum = {
   IDLE: 1,
   CHARGING: 2,
@@ -26,7 +27,8 @@ export const ChargingStateEnum = {
 export type ChargingStateEnum =
   (typeof ChargingStateEnum)[keyof typeof ChargingStateEnum];
 
-// BatteryChemistryEnum — hóa học pin (dùng cho BatteryType). Đặt shared để tránh cross-feature import.
+// BatteryChemistryEnum — battery chemistry (used by BatteryType). Kept in shared to
+// avoid a cross-feature import.
 export const BatteryChemistryEnum = {
   LI_FE_PO4: 1,
   NMC: 2,

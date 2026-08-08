@@ -9,9 +9,10 @@ export {
   ChargingStateEnum,
 } from "@/shared/enums/battery/battery.enum";
 
-// BatteryAssetDetailDto — DTO đầy đủ 18 field của battery asset (GET /api/battery-assets/{id}).
-// Dùng chung admin/manager/staff (trước đây nhân bản với tên BatteryAssetDto ở mỗi feature).
-// Đặt tên khác bản BatteryAssetDto 10-field ở battery.types.ts (dùng cho danh sách site) để tránh đụng.
+// BatteryAssetDetailDto — the full 18-field battery asset DTO (GET /api/battery-assets/{id}).
+// Shared by admin/manager/staff (previously duplicated as BatteryAssetDto in each feature).
+// Named differently from the 10-field BatteryAssetDto in battery.types.ts (used for the site
+// list) to avoid a clash.
 export interface BatteryAssetDetailDto {
   id: string;
   serialNumber: string;
@@ -33,7 +34,7 @@ export interface BatteryAssetDetailDto {
   createdAt: string;
 }
 
-// Snapshot realtime (GET /api/battery-assets/{id}/realtime). Dùng chung 3 role.
+// Realtime snapshot (GET /api/battery-assets/{id}/realtime). Shared by all 3 roles.
 export interface BatteryAssetRealtimeDto {
   assetId: string;
   serialNumber: string;
@@ -59,12 +60,12 @@ export interface BatteryAssetListParams {
   status?: BatteryStatusEnum;
   includeDeleted?: boolean;
   // Server-side sort — whitelist: serialNumber, batteryTypeName, customerName,
-  // siteName, status, installDate. Bỏ trống → BE default createdAt desc.
+  // siteName, status, installDate. Leave empty → the BE defaults to createdAt desc.
   sortBy?: string;
   sortDir?: string;
 }
 
-// ── Payload CRUD (chỉ Admin dùng; đặt shared để service read/write chung 1 nguồn type) ──
+// ── CRUD payloads (Admin only; kept in shared so read/write services use one type source) ──
 export interface CreateBatteryAssetPayload {
   serialNumber: string;
   batteryTypeId: string;

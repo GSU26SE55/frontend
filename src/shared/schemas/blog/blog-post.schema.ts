@@ -1,26 +1,26 @@
 import { z } from "zod";
 import { htmlToPlainText } from "@/shared/lib/sanitizeHtml";
 
-// Tiptap luôn trả về ít nhất "<p></p>" khi rỗng → phải kiểm tra text thuần,
-// không dùng .min(1) trên chuỗi HTML.
+// Tiptap always returns at least "<p></p>" when empty → check the plain text
+// instead; .min(1) on the HTML string is useless.
 const contentHtmlField = z
   .string()
-  .refine((v) => htmlToPlainText(v).length > 0, "Nội dung không được để trống");
+  .refine((v) => htmlToPlainText(v).length > 0, "Content is required");
 
 export const blogPostSchema = z.object({
   title: z
     .string()
-    .min(1, "Tiêu đề không được để trống")
-    .max(256, "Tiêu đề tối đa 256 ký tự"),
+    .min(1, "Title is required")
+    .max(256, "Title must be at most 256 characters"),
   slug: z
     .string()
-    .min(1, "Slug không được để trống")
-    .max(300, "Slug tối đa 300 ký tự")
+    .min(1, "Slug is required")
+    .max(300, "Slug must be at most 300 characters")
     .regex(
       /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Slug chỉ gồm chữ thường, số và dấu gạch ngang",
+      "Slug may only contain lowercase letters, digits and hyphens",
     ),
-  summary: z.string().min(1, "Tóm tắt không được để trống"),
+  summary: z.string().min(1, "Summary is required"),
   contentHtml: contentHtmlField,
   changeNote: z.string().optional(),
   blogTemplateId: z.string().optional(),

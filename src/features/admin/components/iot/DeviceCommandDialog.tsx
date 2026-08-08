@@ -66,7 +66,7 @@ export default function DeviceCommandDialog({
       try {
         parsedParams = JSON.parse(data.params);
       } catch {
-        setError("params", { type: "manual", message: "JSON không hợp lệ" });
+        setError("params", { type: "manual", message: "Invalid JSON" });
         return;
       }
     }
@@ -77,7 +77,7 @@ export default function DeviceCommandDialog({
         cmdId: data.cmdId || undefined,
       });
       toast.success(
-        res.data ? `Đã gửi command tới ${res.data.topic}` : "Đã gửi command",
+        res.data ? `Command sent to ${res.data.topic}` : "Command sent",
       );
       onOpenChange(false);
     } catch (error) {
@@ -89,20 +89,21 @@ export default function DeviceCommandDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Gửi command tới thiết bị</DialogTitle>
+          <DialogTitle>Send command to device</DialogTitle>
           <DialogDescription>
-            Relay xuống MQTT topic của thiết bị; device ack qua kênh riêng.
+            Relays down to the device's MQTT topic; the device acks over a
+            separate channel.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label>Loại command *</Label>
+            <Label>Command type *</Label>
             <Controller
               control={control}
               name="type"
               render={({ field }) => {
-                // type không thuộc danh sách gợi ý = chế độ custom (input tự nhập).
+                // type not in the suggested list = custom mode (free text input).
                 const isKnown = (
                   IOT_COMMAND_TYPES as readonly string[]
                 ).includes(field.value);
@@ -119,7 +120,7 @@ export default function DeviceCommandDialog({
                           value: t,
                           label: t,
                         })),
-                        { value: CUSTOM, label: "Khác (tự nhập)…" },
+                        { value: CUSTOM, label: "Other (custom)…" },
                       ]}
                     >
                       <SelectTrigger>
@@ -131,12 +132,12 @@ export default function DeviceCommandDialog({
                             {t}
                           </SelectItem>
                         ))}
-                        <SelectItem value={CUSTOM}>Khác (tự nhập)…</SelectItem>
+                        <SelectItem value={CUSTOM}>Other (custom)…</SelectItem>
                       </SelectContent>
                     </Select>
                     {selectValue === CUSTOM && (
                       <Input
-                        placeholder="Nhập loại command"
+                        placeholder="Enter command type"
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
                         className="mt-2"
@@ -167,11 +168,11 @@ export default function DeviceCommandDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="cmdId">Command ID (tuỳ chọn)</Label>
+            <Label htmlFor="cmdId">Command ID (optional)</Label>
             <Input
               id="cmdId"
               {...register("cmdId")}
-              placeholder="Bỏ trống → backend tự sinh"
+              placeholder="Leave blank → backend auto-generates"
             />
           </div>
 
@@ -181,10 +182,10 @@ export default function DeviceCommandDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Gửi
+              Send
             </Button>
           </DialogFooter>
         </form>

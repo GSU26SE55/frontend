@@ -5,12 +5,13 @@ const SEARCH_DEBOUNCE_MS = 1000;
 const MIN_SEARCH_CHARS = 2;
 
 /**
- * Quản lý ô search server-side: gõ tức thì trên UI nhưng chỉ đẩy keyword lên
- * filter (→ call API) sau khi ngừng gõ `SEARCH_DEBOUNCE_MS` và đạt tối thiểu
- * `MIN_SEARCH_CHARS` ký tự. Dưới ngưỡng → coi như rỗng (không filter).
+ * Manages a server-side search box: types instantly in the UI but only pushes
+ * the keyword up to the filter (→ API call) after typing pauses for
+ * `SEARCH_DEBOUNCE_MS` and reaches at least `MIN_SEARCH_CHARS` characters.
+ * Below the threshold → treated as empty (no filter).
  *
- * Đồng bộ 2 chiều với keyword trong URL (qua useUrlFilters): khi keyword bị
- * đổi từ bên ngoài (vd resetFilters), ô input cập nhật theo.
+ * Two-way sync with the keyword in the URL (via useUrlFilters): when the
+ * keyword changes externally (e.g. resetFilters), the input updates to match.
  *
  * Usage:
  *   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
@@ -25,10 +26,10 @@ export function useDebouncedSearch(
   const [value, setValue] = useState(externalValue);
   const debounced = useDebounce(value, SEARCH_DEBOUNCE_MS);
 
-  // Tránh commit ngược lại đúng giá trị vừa đến từ bên ngoài
+  // Avoid committing back the exact value that just arrived from outside
   const lastCommitted = useRef(externalValue);
 
-  // Đồng bộ ngược: keyword đổi từ ngoài (resetFilters, back/forward) → cập nhật input
+  // Reverse sync: keyword changed externally (resetFilters, back/forward) → update input
   useEffect(() => {
     if (externalValue !== lastCommitted.current) {
       lastCommitted.current = externalValue;
@@ -36,7 +37,7 @@ export function useDebouncedSearch(
     }
   }, [externalValue]);
 
-  // Đẩy giá trị đã debounce lên filter
+  // Push the debounced value up to the filter
   useEffect(() => {
     const trimmed = debounced.trim();
     const next = trimmed.length >= MIN_SEARCH_CHARS ? trimmed : undefined;
@@ -44,7 +45,7 @@ export function useDebouncedSearch(
     if (next === committed) return;
     lastCommitted.current = next ?? "";
     onCommit(next);
-    // onCommit (setFilter) ổn định qua useCallback nên không cần đưa vào deps
+    // onCommit (setFilter) is stable via useCallback, so it doesn't need to be in deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
 

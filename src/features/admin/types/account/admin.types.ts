@@ -26,13 +26,13 @@ export interface RoleDto {
   updatedAt?: string;
 }
 
-// PermissionDto dùng chung — nguồn thật ở shared.
+// PermissionDto is shared — the real source lives in shared.
 export type { PermissionDto } from "@/shared/types/account/permission.types";
 
-// SessionDto dùng chung — nguồn thật ở shared.
+// SessionDto is shared — the real source lives in shared.
 export type { SessionDto } from "@/shared/types/account/session.types";
 
-// LoginAttemptDto dùng chung — nguồn thật ở shared.
+// LoginAttemptDto is shared — the real source lives in shared.
 export type { LoginAttemptDto } from "@/shared/types/ticket/login-attempt.types";
 
 export interface AuditLogDto {
@@ -52,7 +52,7 @@ export interface AuditLogDto {
   createdAt: string;
 }
 
-// ── Nhóm 5 Payloads ──
+// ── Group 5 Payloads ──
 
 export interface GetAccountsParams {
   pageNumber?: number;
@@ -122,9 +122,9 @@ export interface GetAccountSessionsParams {
   activeOnly?: boolean;
 }
 
-// ── Nhóm 6 Payloads ──
+// ── Group 6 Payloads ──
 
-// = Pick<StaffProfileDto, ...> — cùng field, không viết lại.
+// = Pick<StaffProfileDto, ...> — same fields, no need to restate them.
 export type UpdateStaffProfilePayload = Pick<
   StaffProfileDto,
   | "employeeCode"
@@ -141,7 +141,7 @@ export interface AddSkillPayload {
   certifiedUntil?: string;
 }
 
-// ── Nhóm 7 Payloads ──
+// ── Group 7 Payloads ──
 
 export interface GetRolesParams {
   pageNumber?: number;
@@ -162,14 +162,14 @@ export interface ChangeRoleStatusPayload {
   status: RoleStatusEnum;
 }
 
-// ── Nhóm 8 Payloads ──
+// ── Group 8 Payloads ──
 
 export interface SetPermissionsPayload {
   permissionIds: string[];
   allowSystemRole?: boolean;
 }
 
-// ── Nhóm 9 Params ──
+// ── Group 9 Params ──
 
 export interface GetAuditLogsParams {
   pageNumber?: number;
@@ -182,7 +182,7 @@ export interface GetAuditLogsParams {
   toUtc?: string;
 }
 
-// GET /api/admin/audit-logs/by-account/{accountId} — chỉ nhận 4 query param này
+// GET /api/admin/audit-logs/by-account/{accountId} — accepts only these 4 query params
 export interface GetAuditLogsByAccountParams {
   pageNumber?: number;
   pageSize?: number;

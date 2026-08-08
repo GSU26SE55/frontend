@@ -32,19 +32,19 @@ import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 const TOPOLOGY_OPTIONS: { value: string; label: string }[] = [
   {
     value: String(ElectricalTopologyEnum.Independent),
-    label: "Độc lập (không kết nối điện)",
+    label: "Independent (no electrical connection)",
   },
   {
     value: String(ElectricalTopologyEnum.SeriesString),
-    label: "Nối tiếp (Series String)",
+    label: "Series (Series String)",
   },
   {
     value: String(ElectricalTopologyEnum.ParallelBank),
-    label: "Song song (Parallel Bank)",
+    label: "Parallel (Parallel Bank)",
   },
   {
     value: String(ElectricalTopologyEnum.SeriesParallel),
-    label: "Hỗn hợp (Series-Parallel)",
+    label: "Mixed (Series-Parallel)",
   },
 ];
 
@@ -99,16 +99,16 @@ export default function SetTopologyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Gán electrical topology</DialogTitle>
+          <DialogTitle>Assign electrical topology</DialogTitle>
           <DialogDescription>
-            Cách đấu nối điện ảnh hưởng trực tiếp tới điểm cascade risk. Sau khi
-            lưu, điểm được tính lại ngay.
+            The wiring layout directly affects the cascade risk score. After
+            saving, the score is recalculated immediately.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="electricalTopology">Cách đấu nối *</Label>
+            <Label htmlFor="electricalTopology">Wiring layout *</Label>
             <Controller
               name="electricalTopology"
               control={control}
@@ -119,7 +119,7 @@ export default function SetTopologyDialog({
                   items={TOPOLOGY_OPTIONS}
                 >
                   <SelectTrigger id="electricalTopology">
-                    <SelectValue placeholder="Chọn cách đấu nối điện" />
+                    <SelectValue placeholder="Select wiring layout" />
                   </SelectTrigger>
                   <SelectContent>
                     {TOPOLOGY_OPTIONS.map((o) => (
@@ -144,10 +144,10 @@ export default function SetTopologyDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Lưu
+              Save
             </Button>
           </DialogFooter>
         </form>

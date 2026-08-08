@@ -27,7 +27,7 @@ import {
 } from "@/shared/hooks/notifications/useDeviceTokens";
 import { MESSAGES } from "@/shared/constants/messages";
 
-// Map int → nhãn (repo không có util chung — khai báo inline theo pattern hiện hữu)
+// Map int → label (no shared util in repo — declared inline following existing pattern)
 const PLATFORM_LABEL: Record<DevicePlatformEnum, string> = {
   [DevicePlatformEnum.Ios]: "iOS",
   [DevicePlatformEnum.Android]: "Android",
@@ -103,20 +103,18 @@ export default function DeviceTokensSection() {
 
   return (
     <div className="space-y-6">
-      {/* Danh sách thiết bị */}
+      {/* Registered devices list */}
       <div>
-        <p className="text-[13px] font-semibold mb-3">Thiết bị đã đăng ký</p>
+        <p className="text-[13px] font-semibold mb-3">Registered devices</p>
         {isLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Đang tải…
+            <Loader2 className="size-4 animate-spin" /> Loading…
           </div>
         ) : isError ? (
-          <p className="text-sm text-red-500">
-            Không tải được danh sách thiết bị.
-          </p>
+          <p className="text-sm text-red-500">Failed to load device list.</p>
         ) : !devices || devices.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Chưa có thiết bị nào đăng ký nhận thông báo đẩy.
+            No devices registered for push notifications yet.
           </p>
         ) : (
           <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
@@ -128,25 +126,25 @@ export default function DeviceTokensSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-medium">
-                      {PLATFORM_LABEL[d.platform] ?? "Khác"}
+                      {PLATFORM_LABEL[d.platform] ?? "Other"}
                     </p>
                     {d.isActive ? (
                       <span
                         className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${toneClass("ok")}`}
                       >
-                        Đang hoạt động
+                        Active
                       </span>
                     ) : (
                       <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
-                        Đã hủy
+                        Revoked
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {d.deviceInfo || "Không có mô tả thiết bị"}
+                    {d.deviceInfo || "No device description"}
                   </p>
                   <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-                    Dùng gần nhất: {formatDate(d.lastUsedAt)}
+                    Last used: {formatDate(d.lastUsedAt)}
                   </p>
                 </div>
               </div>
@@ -155,9 +153,9 @@ export default function DeviceTokensSection() {
         )}
       </div>
 
-      {/* Đăng ký thiết bị mới */}
+      {/* Register new device */}
       <form onSubmit={handleSubmit(onRegister)} className="space-y-3">
-        <p className="text-[13px] font-semibold">Đăng ký thiết bị</p>
+        <p className="text-[13px] font-semibold">Register device</p>
         <div className="space-y-1.5">
           <Label htmlFor="dt-token">
             Push token <span className="text-red-500">*</span>
@@ -177,7 +175,7 @@ export default function DeviceTokensSection() {
               {register.isPending && (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               )}
-              Đăng ký
+              Register
             </Button>
           </div>
           {errors.token && (
@@ -199,7 +197,7 @@ export default function DeviceTokensSection() {
                 onValueChange={(v) => field.onChange(Number(v))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn platform" />
+                  <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {PLATFORM_OPTIONS.map((o) => (
@@ -216,10 +214,10 @@ export default function DeviceTokensSection() {
           )}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="dt-info">Mô tả thiết bị</Label>
+          <Label htmlFor="dt-info">Device description</Label>
           <Input
             id="dt-info"
-            placeholder="VD: Pixel 8 — Android 15"
+            placeholder="E.g.: Pixel 8 — Android 15"
             {...registerField("deviceInfo")}
           />
           {errors.deviceInfo && (
@@ -228,13 +226,13 @@ export default function DeviceTokensSection() {
         </div>
       </form>
 
-      {/* Hủy đăng ký theo token (GET không trả raw token nên không thể hủy từ list) */}
+      {/* Unregister by token (GET doesn't return raw token, so can't unregister from the list) */}
       <div className="space-y-1.5">
-        <Label htmlFor="dt-revoke">Hủy đăng ký theo token</Label>
+        <Label htmlFor="dt-revoke">Unregister by token</Label>
         <div className="flex gap-2">
           <Input
             id="dt-revoke"
-            placeholder="Dán push token cần hủy"
+            placeholder="Paste the push token to revoke"
             value={revokeToken}
             onChange={(e) => setRevokeToken(e.target.value)}
           />

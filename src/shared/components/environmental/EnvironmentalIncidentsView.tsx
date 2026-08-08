@@ -81,10 +81,10 @@ const STATUS_OPTIONS = [
   EnvironmentalIncidentStatusEnum.FalseAlarm,
 ];
 const STATUS_LABELS: Record<EnvironmentalIncidentStatusEnum, string> = {
-  [EnvironmentalIncidentStatusEnum.Open]: "Mở",
-  [EnvironmentalIncidentStatusEnum.Acknowledged]: "Đã xác nhận",
-  [EnvironmentalIncidentStatusEnum.Resolved]: "Đã xử lý",
-  [EnvironmentalIncidentStatusEnum.FalseAlarm]: "Báo động giả",
+  [EnvironmentalIncidentStatusEnum.Open]: "Open",
+  [EnvironmentalIncidentStatusEnum.Acknowledged]: "Acknowledged",
+  [EnvironmentalIncidentStatusEnum.Resolved]: "Resolved",
+  [EnvironmentalIncidentStatusEnum.FalseAlarm]: "False alarm",
 };
 
 const TYPE_OPTIONS = [
@@ -125,8 +125,8 @@ export default function EnvironmentalIncidentsView({
       ? (Number(filters.incidentType) as EnvironmentalIncidentTypeEnum)
       : undefined,
     from: filters.from || undefined,
-    // to là date-only từ input → gửi cuối ngày để bao trọn ngày được chọn
-    // (tránh loại các incident trong chính ngày `to`).
+    // `to` is date-only from the input → send end-of-day so the selected day is fully covered
+    // (avoids excluding incidents that fall on the `to` day itself).
     to: filters.to ? `${filters.to}T23:59:59` : undefined,
   });
   const items = data?.items ?? [];
@@ -140,17 +140,17 @@ export default function EnvironmentalIncidentsView({
             {subtitle}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Sự cố môi trường
+            Environmental incidents
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} sự cố &mdash; khói / cháy / rò khí
-            / ngập / quá nhiệt cấp site
+            {isLoading ? "..." : totalItems} incidents &mdash; smoke / fire /
+            gas leak / flood / overheat at site level
           </p>
         </div>
-        {/* Cần danh sách site để chọn SiteId (field bắt buộc) → ẩn nút khi chưa có.
-            Staff chỉ list được site sau khi BE mở GET /api/sites cho role Staff. */}
+        {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
+            Staff can only list sites once BE opens GET /api/sites to the Staff role. */}
         {sites && sites.length > 0 && (
-          <Button onClick={() => setReportOpen(true)}>Report thủ công</Button>
+          <Button onClick={() => setReportOpen(true)}>Manual report</Button>
         )}
       </div>
 
@@ -174,10 +174,10 @@ export default function EnvironmentalIncidentsView({
           }
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Tất cả trạng thái" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={String(s)}>
                 {STATUS_LABELS[s]}
@@ -197,10 +197,10 @@ export default function EnvironmentalIncidentsView({
           }
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Tất cả loại" />
+            <SelectValue placeholder="All types" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả loại</SelectItem>
+            <SelectItem value={null}>All types</SelectItem>
             {TYPE_OPTIONS.map((t) => (
               <SelectItem key={t} value={String(t)}>
                 {incidentTypeLabel(t)}
@@ -218,10 +218,10 @@ export default function EnvironmentalIncidentsView({
             }
           >
             <SelectTrigger className="w-52">
-              <SelectValue placeholder="Tất cả site" />
+              <SelectValue placeholder="All sites" />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
-              <SelectItem value={null}>Tất cả site</SelectItem>
+              <SelectItem value={null}>All sites</SelectItem>
               {sites.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.name}
@@ -246,7 +246,7 @@ export default function EnvironmentalIncidentsView({
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -261,7 +261,7 @@ export default function EnvironmentalIncidentsView({
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ShieldAlert className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có sự cố nào.</span>
+            <span className="text-sm">No incidents yet.</span>
           </div>
         ) : (
           <Table>
@@ -271,7 +271,7 @@ export default function EnvironmentalIncidentsView({
                   {TABLE_COLUMNS.index}
                 </TableHead>
                 <TableHead>Site</TableHead>
-                <TableHead>Loại sự cố</TableHead>
+                <TableHead>Incident type</TableHead>
                 <TableHead>{TABLE_COLUMNS.severity}</TableHead>
                 <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
                 <TableHead>{TABLE_COLUMNS.status}</TableHead>
@@ -329,7 +329,7 @@ export default function EnvironmentalIncidentsView({
   );
 }
 
-// ── Detail dialog ───────────────────────────────────────────────────────────
+// ── Detail dialog ────────────────────────────────────────────────────────────
 function IncidentDetailDialog({
   incidentId,
   siteName,
@@ -370,11 +370,11 @@ function IncidentDetailDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Chi tiết sự cố</DialogTitle>
+          <DialogTitle>Incident details</DialogTitle>
           <DialogDescription>
             {incident
               ? `${siteName(incident.siteId)} · ${incidentTypeLabel(incident.incidentType)}`
-              : "Đang tải..."}
+              : "Loading..."}
           </DialogDescription>
         </DialogHeader>
 
@@ -386,34 +386,34 @@ function IncidentDetailDialog({
           </div>
         ) : (
           <dl className="grid grid-cols-3 gap-x-4 gap-y-3 text-sm py-2">
-            <DetailRow label="Loại">
+            <DetailRow label="Type">
               <IncidentTypeBadge incidentType={incident.incidentType} />
             </DetailRow>
-            <DetailRow label="Mức độ">
+            <DetailRow label="Severity">
               <AlertSeverityBadge severity={incident.severity} />
             </DetailRow>
-            <DetailRow label="Trạng thái">
+            <DetailRow label="Status">
               <IncidentStatusBadge status={incident.status} />
             </DetailRow>
-            <DetailRow label="Báo cáo bởi">
+            <DetailRow label="Reported by">
               {incident.reportedBy ?? "—"}
             </DetailRow>
-            <DetailRow label="Phát hiện lúc">
+            <DetailRow label="Detected at">
               {formatDateTime(incident.detectedAt)}
             </DetailRow>
-            <DetailRow label="Xác nhận lúc">
+            <DetailRow label="Acknowledged at">
               {formatDateTime(incident.acknowledgedAt)}
             </DetailRow>
-            <DetailRow label="Xử lý lúc">
+            <DetailRow label="Resolved at">
               {formatDateTime(incident.resolvedAt)}
             </DetailRow>
             {incident.resolutionNote && (
-              <DetailRow label="Ghi chú xử lý">
+              <DetailRow label="Resolution note">
                 {incident.resolutionNote}
               </DetailRow>
             )}
             {incident.falseAlarmReason && (
-              <DetailRow label="Lý do báo giả">
+              <DetailRow label="False alarm reason">
                 {incident.falseAlarmReason}
               </DetailRow>
             )}
@@ -440,15 +440,15 @@ function IncidentDetailDialog({
               disabled={!canAck || ackPending}
               onClick={() => acknowledge(incident.id)}
             >
-              Xác nhận
+              Acknowledge
             </Button>
             {canMarkFalseAlarm && (
               <Button variant="outline" onClick={() => setPanel("falseAlarm")}>
-                Báo động giả
+                False alarm
               </Button>
             )}
             <Button disabled={!canResolve} onClick={() => setPanel("resolve")}>
-              Xử lý
+              Resolve
             </Button>
           </DialogFooter>
         )}
@@ -457,7 +457,7 @@ function IncidentDetailDialog({
   );
 }
 
-// ── Resolve form ────────────────────────────────────────────────────────────
+// ── Resolve form ─────────────────────────────────────────────────────────────
 function ResolveForm({
   incidentId,
   onDone,
@@ -487,11 +487,11 @@ function ResolveForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
       <div className="space-y-1">
-        <Label htmlFor="resolutionNote">Ghi chú xử lý *</Label>
+        <Label htmlFor="resolutionNote">Resolution note *</Label>
         <Textarea
           id="resolutionNote"
           rows={3}
-          placeholder="Mô tả cách xử lý (audit trail)..."
+          placeholder="Describe how it was resolved (audit trail)..."
           {...register("resolutionNote")}
         />
         {errors.resolutionNote && (
@@ -502,17 +502,17 @@ function ResolveForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          Đánh dấu đã xử lý
+          Mark as resolved
         </Button>
       </DialogFooter>
     </form>
   );
 }
 
-// ── False alarm form ────────────────────────────────────────────────────────
+// ── False alarm form ─────────────────────────────────────────────────────────
 function FalseAlarmForm({
   incidentId,
   onDone,
@@ -542,11 +542,11 @@ function FalseAlarmForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
       <div className="space-y-1">
-        <Label htmlFor="falseAlarmReason">Lý do báo động giả *</Label>
+        <Label htmlFor="falseAlarmReason">False alarm reason *</Label>
         <Textarea
           id="falseAlarmReason"
           rows={3}
-          placeholder="Vì sao đây không phải sự cố thật..."
+          placeholder="Why this isn't a real incident..."
           {...register("falseAlarmReason")}
         />
         {errors.falseAlarmReason && (
@@ -557,10 +557,10 @@ function FalseAlarmForm({
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onDone}>
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" variant="destructive" disabled={isSubmitting}>
-          Xác nhận báo động giả
+          Confirm false alarm
         </Button>
       </DialogFooter>
     </form>

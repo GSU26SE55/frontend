@@ -28,15 +28,15 @@ export const authService = {
       payload,
     ),
 
-  // GH-295: bước 2 của 2FA login — verify TOTP/backup/SMS code bằng challengeToken
+  // GH-295: step 2 of the 2FA login — verify the TOTP/backup/SMS code with the challengeToken
   verify2faLogin: (payload: Verify2faLoginPayload) =>
     axiosInstance.post<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.LOGIN_VERIFY_2FA,
       payload,
     ),
 
-  // #AUTH-58: gửi OTP SMS fallback — partition rate-limit theo header X-Challenge-Token.
-  // data trả về là số điện thoại đã mask (vd "******1234").
+  // #AUTH-58: send the SMS OTP fallback — rate limit partitioned by the X-Challenge-Token header.
+  // The returned data is the masked phone number (e.g. "******1234").
   send2faSms: (payload: Sms2faPayload) =>
     axiosInstance.post<CommonResponse<string>>(
       ENDPOINTS.AUTH.LOGIN_2FA_SMS,
@@ -44,7 +44,7 @@ export const authService = {
       { headers: { "X-Challenge-Token": payload.challengeToken } },
     ),
 
-  // #AUTH-50: khôi phục account đã soft-delete (window 90 ngày)
+  // #AUTH-50: restore a soft-deleted account (90-day window)
   reactivateRequest: (payload: ReactivateRequestPayload) =>
     axiosInstance.post<CommonResponse<string>>(
       ENDPOINTS.AUTH.REACTIVATE_REQUEST,
@@ -93,7 +93,7 @@ export const authService = {
       payload,
     ),
 
-  // GH-295: google callback trả JSON LoginResultDto (data.tokens.*), KHÔNG redirect token qua URL
+  // GH-295: the google callback returns a JSON LoginResultDto (data.tokens.*), it does NOT redirect the token through the URL
   googleCallback: (code: string, state: string) =>
     axiosInstance.get<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.GOOGLE_CALLBACK,

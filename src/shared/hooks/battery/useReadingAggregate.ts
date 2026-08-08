@@ -4,7 +4,7 @@ import { sensorReadingService } from "@/shared/services/battery/sensor-reading.s
 import type { SensorReadingInterval } from "@/shared/types/battery/sensor-reading-history.types";
 
 interface UseReadingAggregateOptions {
-  hours: number; // khoảng thời gian lùi từ hiện tại → tính `from` lúc fetch
+  hours: number; // lookback window from now → `from` is computed at fetch time
   interval: SensorReadingInterval;
 }
 
@@ -14,7 +14,7 @@ export function useReadingAggregate(
 ) {
   return useQuery({
     queryKey: QUERY_KEY.sensorReadings.aggregate(assetId, opts),
-    // `from` tính trong queryFn (thời điểm fetch) — không gọi Date.now trong render.
+    // `from` is computed inside queryFn (at fetch time) — never call Date.now during render.
     queryFn: () => {
       const from = new Date(Date.now() - opts.hours * 3_600_000).toISOString();
       return sensorReadingService

@@ -31,6 +31,7 @@ import {
 import { useAssignTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import StaffMultiSelect from "@/features/manager/components/ticket/StaffMultiSelect";
+import { StaffSuggestionPanel } from "@/shared/components/ticket/StaffSuggestionPanel";
 import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
 import {
   getMinTierForPriority,
@@ -41,7 +42,7 @@ import {
 
 interface Props {
   ticketId: string;
-  /** Priority ticket — quyết định tier tối thiểu của Primary Handler. */
+  /** Ticket priority — determines the Primary Handler's minimum tier. */
   priority: TicketPriorityEnum | null;
   open: boolean;
   onClose: () => void;
@@ -60,8 +61,8 @@ export default function AssignDialog({
     isError: staffError,
   } = useStaffAssignmentList();
 
-  // Nhất quán với ReassignDialog: hiện TẤT CẢ staff, disable người không đủ tier
-  // cho Primary (Supporter không check tier). Tier tối thiểu theo priority ticket.
+  // Consistent with ReassignDialog: show ALL staff, disable those without enough tier
+  // for Primary (Supporter doesn't check tier). Minimum tier follows the ticket priority.
   const minTier = getMinTierForPriority(priority);
   const tierHint = getTierRequirementHint(priority);
   const primaryOptions = staffList.map((s) => ({
@@ -92,22 +93,41 @@ export default function AssignDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Gán Staff xử lý</DialogTitle>
+          <DialogTitle>Assign Staff</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Suggestions placed RIGHT ABOVE the select: the Manager is at the exact decision
+                point, so clicking "Pick" fills the field below directly. Putting it in a separate
+                tab or sidebar would force them to remember the name and hunt for it in the list. */}
+            <StaffSuggestionPanel
+              ticketId={ticketId}
+              selectedStaffId={primaryStaffId}
+              onPick={(s) => {
+                form.setValue("primaryHandlerStaffId", s.staffId, {
+                  shouldValidate: true,
+                });
+                form.setValue(
+                  "supporterStaffIds",
+                  form
+                    .getValues("supporterStaffIds")
+                    .filter((id) => id !== s.staffId),
+                );
+              }}
+            />
+
             <FormField
               control={form.control}
               name="primaryHandlerStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Staff phụ trách chính *</FormLabel>
+                  <FormLabel>Primary Handler *</FormLabel>
                   <Select
                     onValueChange={(v: string | null) => {
                       field.onChange(v ?? "");
-                      // Primary không được đồng thời là Supporter (BE reject).
+                      // Primary cannot also be a Supporter (rejected by BE).
                       form.setValue(
                         "supporterStaffIds",
                         form
@@ -127,10 +147,10 @@ export default function AssignDialog({
                         <SelectValue
                           placeholder={
                             loadingStaff
-                              ? "Đang tải..."
+                              ? "Loading..."
                               : staffError
-                                ? "Lỗi tải danh sách"
-                                : "Chọn nhân viên"
+                                ? "Failed to load list"
+                                : "Select a staff member"
                           }
                         />
                       </SelectTrigger>
@@ -138,12 +158,12 @@ export default function AssignDialog({
                     <SelectContent alignItemWithTrigger={false}>
                       {staffError && (
                         <SelectItem value="_error" disabled>
-                          Không thể tải danh sách Staff
+                          Couldn't load the Staff list
                         </SelectItem>
                       )}
                       {!staffError && staffList.length === 0 && (
                         <SelectItem value="_empty" disabled>
-                          Không có Staff khả dụng
+                          No Staff available
                         </SelectItem>
                       )}
                       {primaryOptions.map((s) => (
@@ -153,7 +173,7 @@ export default function AssignDialog({
                           disabled={!s.eligible}
                         >
                           {staffOptionLabel(s)}
-                          {!s.eligible && " — không đủ tier"}
+                          {!s.eligible && " — tier not sufficient"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -163,8 +183,8 @@ export default function AssignDialog({
                   )}
                   {!loadingStaff && !staffError && !hasEligiblePrimary && (
                     <p className="text-xs text-destructive">
-                      Không có Staff nào đủ tier cho ticket này. Cần nâng tier
-                      cho Staff hoặc điều chuyển từ nhóm khác.
+                      No Staff has a sufficient tier for this ticket. Raise a
+                      Staff member's tier or transfer one from another group.
                     </p>
                   )}
                   <FormMessage />
@@ -177,7 +197,7 @@ export default function AssignDialog({
               name="supporterStaffIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Staff hỗ trợ (tuỳ chọn)</FormLabel>
+                  <FormLabel>Supporter (optional)</FormLabel>
                   <FormControl>
                     <StaffMultiSelect
                       options={staffList
@@ -190,14 +210,14 @@ export default function AssignDialog({
                       onChange={field.onChange}
                       disabled={loadingStaff || !!staffError}
                       placeholder={
-                        loadingStaff ? "Đang tải..." : "Chọn nhân viên hỗ trợ"
+                        loadingStaff ? "Loading..." : "Select supporting staff"
                       }
                     />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
-                    Staff hỗ trợ được vào chat nội bộ của ticket nhưng không
-                    được tính vào khối lượng công việc. Vai trò này không yêu
-                    cầu tier.
+                    Supporters get access to the ticket's internal chat but
+                    aren't counted toward workload. This role doesn't require a
+                    tier.
                   </p>
                   <FormMessage />
                 </FormItem>
@@ -209,9 +229,12 @@ export default function AssignDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú (tuỳ chọn)</FormLabel>
+                  <FormLabel>Notes (optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Ghi chú khi gán..." {...field} />
+                    <Textarea
+                      placeholder="Notes for this assignment..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -220,13 +243,13 @@ export default function AssignDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isPending || loadingStaff || staffError}
               >
-                {isPending ? "Đang xử lý..." : "Gán Staff"}
+                {isPending ? "Processing..." : "Assign Staff"}
               </Button>
             </DialogFooter>
           </form>

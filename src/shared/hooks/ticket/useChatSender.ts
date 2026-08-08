@@ -8,11 +8,12 @@ import {
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 
 /**
- * Gộp outbox + worker + invalidate cho 1 ticket — page chỉ cần gọi 1 dòng.
+ * Combines outbox + worker + invalidation for a ticket — the page only needs one line.
  *
- * Feature inject `send` (service addComment của mình) để không cross-feature.
- * Trả `pending` (truyền xuống TicketCommentThread render bubble optimistic) và
- * `retry`/`discard` (bấm dòng "Thử lại" đỏ / bỏ tin). Mount worker luôn ở đây.
+ * The feature injects `send` (its own addComment service) to avoid cross-feature imports.
+ * Returns `pending` (passed down to TicketCommentThread to render optimistic bubbles) and
+ * `retry`/`discard` (tapping the red "Retry" line / discarding a message). The worker is
+ * always mounted here.
  */
 export function useChatSender(ticketId: string, send: ChatSendFn) {
   const qc = useQueryClient();

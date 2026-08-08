@@ -13,8 +13,9 @@ function formatDuration(totalSeconds: number): string {
 }
 
 /**
- * Waveform tĩnh (0.3–1) sinh từ seed (fileId) — cùng file luôn ra cùng hình sóng, không nhấp
- * nháy mỗi render. Trang trí kiểu Zalo/Messenger; biên độ thật của audio không có sẵn ở client.
+ * Static waveform (0.3–1) generated from a seed (fileId) — same file always produces the same
+ * waveform shape, no flicker on every render. Zalo/Messenger-style decoration; the real audio
+ * amplitude isn't available on the client.
  */
 function seededWaveform(seed: string): number[] {
   const bars: number[] = [];
@@ -28,18 +29,19 @@ function seededWaveform(seed: string): number[] {
 }
 
 interface Props {
-  /** FileId của file audio — tải qua useFileBlobUrl (kèm Bearer). */
+  /** FileId of the audio file — loaded via useFileBlobUrl (with Bearer). */
   fileId: string;
-  /** Text transcribe hiển thị dưới player (kiểu Zalo). Rỗng thì không hiện. */
+  /** Transcript text shown below the player (Zalo-style). Empty means hidden. */
   transcript?: string;
-  /** Tin của mình (bên phải, nền primary) — đổi màu cho hợp nền. */
+  /** Own message (right side, primary background) — adjust colors to match the background. */
   isOwn?: boolean;
 }
 
 /**
- * Bong bóng tin nhắn thoại kiểu Zalo — nút play/pause + waveform tô dần theo tiến độ phát
- * + thời lượng + transcript bên dưới. Dùng chung admin/manager/staff (qua TicketCommentThread).
- * Audio tải qua blob URL (auth Bearer) rồi phát bằng thẻ <audio> ẩn.
+ * Zalo-style voice message bubble — play/pause button + waveform filling in as playback
+ * progresses + duration + transcript below. Shared across admin/manager/staff (via
+ * TicketCommentThread). Audio loads via blob URL (auth Bearer) then plays through a hidden
+ * <audio> tag.
  */
 export default function VoiceMessagePlayer({
   fileId,
@@ -52,12 +54,12 @@ export default function VoiceMessagePlayer({
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
-  // Transcript ẩn mặc định — bấm nút mới xổ ra (giống Zalo hiển thị lời thoại theo yêu cầu).
+  // Transcript hidden by default — expands on button press (like Zalo's show-on-demand transcript).
   const [showTranscript, setShowTranscript] = useState(false);
 
   const waveform = useMemo(() => seededWaveform(fileId), [fileId]);
 
-  // Đồng bộ state React với sự kiện của thẻ <audio>.
+  // Sync React state with the <audio> tag's events.
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -118,7 +120,7 @@ export default function VoiceMessagePlayer({
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50",
             btnCls,
           )}
-          aria-label={playing ? "Tạm dừng" : "Phát"}
+          aria-label={playing ? "Pause" : "Play"}
         >
           {!blobUrl && !isError ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -153,7 +155,7 @@ export default function VoiceMessagePlayer({
       </div>
 
       {isError && (
-        <p className={cn("text-[11px]", timeText)}>Không tải được âm thanh</p>
+        <p className={cn("text-[11px]", timeText)}>Failed to load audio</p>
       )}
 
       {!!transcript?.trim() && (
@@ -166,7 +168,7 @@ export default function VoiceMessagePlayer({
               timeText,
             )}
           >
-            {showTranscript ? "Ẩn lời thoại" : "Xem lời thoại"}
+            {showTranscript ? "Hide transcript" : "View transcript"}
             {showTranscript ? (
               <ChevronUp className="h-3 w-3" />
             ) : (

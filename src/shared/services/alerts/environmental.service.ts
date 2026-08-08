@@ -28,8 +28,8 @@ export const environmentalService = {
       CommonResponse<PaginationResponse<EnvironmentalIncidentDto>>
     >(ENDPOINTS.ENVIRONMENTAL_INCIDENTS.ACTIVE_BY_SITE(siteId)),
 
-  // Dedup: đã có incident active (Open/Acknowledged) cùng SiteId+IncidentType
-  // → BE trả 200 kèm incident CŨ, không phát event lần nữa.
+  // Dedup: an active incident (Open/Acknowledged) already exists with the same
+  // SiteId+IncidentType → BE returns 200 with the OLD incident, no new event is fired.
   reportManual: (payload: ManualIncidentPayload) =>
     axiosInstance.post<CommonResponse<EnvironmentalIncidentDto>>(
       ENDPOINTS.ENVIRONMENTAL_INCIDENTS.MANUAL,

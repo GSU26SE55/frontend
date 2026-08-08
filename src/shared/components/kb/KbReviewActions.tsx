@@ -16,7 +16,7 @@ interface KbReviewActionsProps {
   isPending?: boolean;
 }
 
-// Hiển thị cho Manager/Admin khi bài viết ở trạng thái PendingReview.
+// Shown to Manager/Admin when the article is in PendingReview status.
 export function KbReviewActions({
   onApprove,
   onReject,
@@ -42,7 +42,7 @@ export function KbReviewActions({
         onClick={() => setRejectOpen(true)}
       >
         <X className="size-3.5" />
-        Từ chối
+        Reject
       </Button>
       <Button
         size="sm"
@@ -51,19 +51,19 @@ export function KbReviewActions({
         onClick={onApprove}
       >
         <Check className="size-3.5" />
-        Phê duyệt
+        Approve
       </Button>
 
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Từ chối thay đổi</DialogTitle>
+            <DialogTitle>Reject change</DialogTitle>
           </DialogHeader>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={4}
-            placeholder="Lý do từ chối (bắt buộc)..."
+            placeholder="Rejection reason (required)..."
             className="text-sm"
           />
           <DialogFooter>
@@ -72,7 +72,7 @@ export function KbReviewActions({
               size="sm"
               onClick={() => setRejectOpen(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button
               size="sm"
@@ -80,7 +80,7 @@ export function KbReviewActions({
               disabled={!reason.trim() || isPending}
               onClick={submitReject}
             >
-              Từ chối
+              Reject
             </Button>
           </DialogFooter>
         </DialogContent>

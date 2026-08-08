@@ -9,13 +9,14 @@ import {
 interface Props {
   assetId?: string | null;
   detectedAt?: string | null;
-  /** Nhãn cột (mã ticket) — để Manager biết bằng chứng thuộc ticket nào. */
+  /** Column label (ticket code) — so the Manager knows which ticket the evidence belongs to. */
   title: string;
 }
 
 /**
- * Bằng chứng cảm biến quanh thời điểm phát hiện của MỘT ticket.
- * Ticket auto-gen không có `detectedAt` → hook bị disable, phải báo rõ thay vì treo loading.
+ * Sensor evidence around the detection time of ONE ticket.
+ * Auto-generated tickets have no `detectedAt` → the hook gets disabled, must show a clear
+ * message instead of hanging on loading.
  */
 export default function CompareEvidencePanel({
   assetId,
@@ -25,7 +26,7 @@ export default function CompareEvidencePanel({
   const { data, isLoading } = useReadingEvidence(assetId, detectedAt);
   const rows = toWarningRows(data?.items ?? []);
 
-  // Hook có enabled: !!assetId && !!detectedAt → không có mốc thì không bao giờ fetch.
+  // Hook has enabled: !!assetId && !!detectedAt → never fetches without a timestamp.
   const disabled = !assetId || !detectedAt;
 
   return (
@@ -34,8 +35,8 @@ export default function CompareEvidencePanel({
 
       {disabled ? (
         <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-          Ticket không có mốc thời gian phát hiện (thường là ticket tự động) —
-          không truy được bằng chứng cảm biến.
+          This ticket has no detection timestamp (usually an auto-generated
+          ticket) — sensor evidence can't be looked up.
         </p>
       ) : isLoading ? (
         <div className="space-y-1.5">
@@ -45,24 +46,24 @@ export default function CompareEvidencePanel({
         </div>
       ) : rows.length === 0 ? (
         <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-          Không có chỉ số vượt ngưỡng trong khoảng ±15 phút quanh lúc phát hiện.
+          No readings exceeded thresholds within ±15 minutes of detection.
         </p>
       ) : (
         <div className="max-h-64 overflow-y-auto rounded-md border">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-muted/50">
               <tr>
-                <th className="px-2 py-1.5 text-left font-medium">Thời điểm</th>
+                <th className="px-2 py-1.5 text-left font-medium">Time</th>
                 <th className="px-2 py-1.5 text-right font-medium">°C</th>
                 <th className="px-2 py-1.5 text-right font-medium">SOC%</th>
-                <th className="px-2 py-1.5 text-left font-medium">Cảnh báo</th>
+                <th className="px-2 py-1.5 text-left font-medium">Alert</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((w) => (
                 <tr key={w.reading.time} className="border-t">
                   <td className="px-2 py-1.5 whitespace-nowrap">
-                    {format(new Date(w.reading.time), "HH:mm:ss dd/MM")}
+                    {format(new Date(w.reading.time), "HH:mm:ss MM/dd")}
                   </td>
                   <td className="px-2 py-1.5 text-right">
                     {w.reading.temperature.toFixed(1)}

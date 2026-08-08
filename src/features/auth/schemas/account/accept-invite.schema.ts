@@ -7,6 +7,6 @@ export const acceptInviteSchema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });

@@ -22,25 +22,25 @@ export interface VerifyPhoneOtpPayload {
   otp: string;
 }
 
-// ── GH-295: 2FA enroll flow 2 bước ──
-// Bước 1 — POST /api/accounts/me/2fa/init (CHƯA activate)
+// ── GH-295: two-step 2FA enroll flow ──
+// Step 1 — POST /api/accounts/me/2fa/init (NOT activated yet)
 export interface Init2faResponseData {
-  secret: string; // base32 — user nhập tay nếu không quét QR
+  secret: string; // base32 — the user types it manually if they do not scan the QR
   otpAuthUri: string; // otpauth://... — render QR
-  pendingToken: string; // gửi kèm bước confirm
+  pendingToken: string; // sent along with the confirm step
 }
 
-// Bước 2 — POST /api/accounts/me/2fa/confirm
+// Step 2 — POST /api/accounts/me/2fa/confirm
 export interface Confirm2faPayload {
   pendingToken: string;
-  code: string; // TOTP 6 số
+  code: string; // 6-digit TOTP
 }
 export interface Confirm2faResponseData {
   enabled: boolean;
-  backupCodes: string[]; // 8 codes — hiển thị 1 lần duy nhất
+  backupCodes: string[]; // 8 codes — shown only once
 }
 
-// POST /api/accounts/me/2fa/disable — re-auth bằng password + TOTP
+// POST /api/accounts/me/2fa/disable — re-auth with password + TOTP
 export interface Disable2faPayload {
   password: string;
   totpCode: string;
@@ -59,22 +59,22 @@ export interface LinkGooglePayload {
 }
 
 // ── #AUTH-51: Cross-device 2FA setup ──
-// Bước 1 — POST /api/auth/2fa/cross-device-confirm/request (Device A, body rỗng)
+// Step 1 — POST /api/auth/2fa/cross-device-confirm/request (Device A, empty body)
 export interface CrossDeviceRequestResponseData {
-  confirmToken: string; // 64 hex — FE chỉ hiển thị/debug, Device B đọc từ email link
-  expiresInSeconds: number; // luôn 600 (10 phút) — countdown
-  otpAuthUri: string; // otpauth://... — render QR cho Device B scan
-  secret: string; // base32 — fallback nhập tay nếu không scan QR
+  confirmToken: string; // 64 hex — the FE only displays/debugs it, Device B reads it from the email link
+  expiresInSeconds: number; // always 600 (10 minutes) — countdown
+  otpAuthUri: string; // otpauth://... — render the QR for Device B to scan
+  secret: string; // base32 — manual-entry fallback if the QR is not scanned
 }
 
-// Bước 2 — POST /api/auth/2fa/cross-device-confirm (Device B)
+// Step 2 — POST /api/auth/2fa/cross-device-confirm (Device B)
 export interface CrossDeviceConfirmPayload {
-  confirmToken: string; // 64 hex từ query param email link
-  totpCode: string; // TOTP 6 số từ Authenticator
+  confirmToken: string; // 64 hex from the email link query param
+  totpCode: string; // 6-digit TOTP from the Authenticator
 }
 
 // ── #AUTH-62: GDPR Article 20 — GET /api/accounts/me/export ──
-// Shape khớp BE AccountDataExportDto (ExportMyDataQuery.cs).
+// Shape matches the BE AccountDataExportDto (ExportMyDataQuery.cs).
 export interface AccountSnapshot {
   id: string;
   email: string;
@@ -161,9 +161,9 @@ export interface LoginHistoryParams {
   sortDir?: string;
 }
 
-// LoginAttemptDto dùng chung — nguồn thật ở shared.
+// LoginAttemptDto is shared — the real source lives in shared.
 import type { LoginAttemptDto } from "@/shared/types/ticket/login-attempt.types";
 export type { LoginAttemptDto } from "@/shared/types/ticket/login-attempt.types";
 
-// = PaginationResponse<LoginAttemptDto> — dùng generic thay vì viết tay.
+// = PaginationResponse<LoginAttemptDto> — use the generic instead of hand-writing it.
 export type LoginHistoryResponseData = PaginationResponse<LoginAttemptDto>;

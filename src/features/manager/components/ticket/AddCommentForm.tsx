@@ -42,7 +42,7 @@ interface Props {
   existingFileIds?: string[];
   prefillText?: string;
   prefillVersion?: number;
-  /** Người có thể @-tag — thường build từ tác giả trong hội thoại. */
+  /** People who can be @-tagged — usually built from participants in the conversation. */
   mentionCandidates?: MentionCandidate[];
 }
 
@@ -92,8 +92,8 @@ export default function AddCommentForm({
     });
   }, [form, prefillText, prefillVersion]);
 
-  // Đưa vào hàng đợi (outbox) rồi clear ô nhập ngay — không chờ round-trip BE.
-  // Worker gửi tuần tự + retry; trạng thái gửi/lỗi hiển thị dưới bubble.
+  // Enqueue (outbox) then clear the input immediately — no waiting for the BE round-trip.
+  // The worker sends sequentially with retry; send/error status shows below the bubble.
   const onSubmit = (values: AddCommentFormValues) => {
     enqueue({ ...values, isInternal });
     form.reset();
@@ -193,10 +193,16 @@ export default function AddCommentForm({
                           onMentionsChange={(mentions) =>
                             form.setValue("mentions", mentions)
                           }
+                          // Enter sends / Shift+Enter adds a newline. The guard matches the
+                          // send button below exactly so Enter can't bypass the button's block.
+                          onSubmitKey={() => {
+                            if (uploading || isRecording || isEmpty) return;
+                            form.handleSubmit(onSubmit)();
+                          }}
                           placeholder={
                             isInternal
-                              ? "Ghi chu noi bo (khach khong thay)..."
-                              : "Nhap binh luan... (go @ de tag)"
+                              ? "Internal note (customer can't see)..."
+                              : "Type a comment... (type @ to tag)"
                           }
                           rows={1}
                           className="min-h-9 resize-none overflow-y-auto rounded-xl border-0 bg-transparent py-2 leading-4.5 shadow-none focus-visible:ring-0"
@@ -215,7 +221,7 @@ export default function AddCommentForm({
                       type="button"
                       variant="ghost"
                       disabled={isInternal || uploading || transcribing}
-                      aria-label="Ghi am tin nhan"
+                      aria-label="Record voice message"
                       onClick={handleStartRecording}
                       className="h-9 w-9 shrink-0 rounded-full p-0 text-muted-foreground"
                     />
@@ -229,8 +235,8 @@ export default function AddCommentForm({
                 </TooltipTrigger>
                 <TooltipContent>
                   {isInternal
-                    ? "Ghi am luon duoc gui cong khai"
-                    : "Ghi am tin nhan"}
+                    ? "Voice recordings are always sent publicly"
+                    : "Record voice message"}
                 </TooltipContent>
               </Tooltip>
             </>
@@ -241,7 +247,7 @@ export default function AddCommentForm({
             size="icon-lg"
             className="shrink-0 rounded-full"
             disabled={uploading || isRecording || isEmpty}
-            aria-label="Gui binh luan"
+            aria-label="Send comment"
           >
             <Send size={16} />
           </Button>

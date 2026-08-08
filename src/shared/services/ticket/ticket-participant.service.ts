@@ -4,8 +4,8 @@ import type { CommonResponse } from "@/shared/types/api.types";
 import type { TicketParticipantDto } from "@/shared/types/ticket/participant.types";
 
 export const ticketParticipantService = {
-  // GET /api/tickets/{ticketId}/participants — participant active của ticket.
-  // Auth: bất kỳ ai access được ticket (BE tự check, trả 403 nếu không).
+  // GET /api/tickets/{ticketId}/participants — active participants of the ticket.
+  // Auth: anyone who can access the ticket (BE checks this itself, returns 403 otherwise).
   getParticipants: (ticketId: string) =>
     axiosInstance.get<CommonResponse<TicketParticipantDto[]>>(
       ENDPOINTS.TICKETS.PARTICIPANTS(ticketId),

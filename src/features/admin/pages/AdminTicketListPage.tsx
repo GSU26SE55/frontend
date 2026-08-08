@@ -36,19 +36,19 @@ const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
 const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
 
 const STATUS_LABELS: Record<TicketStatus, string> = {
-  New: "Mới",
-  Open: "Đang mở",
-  Assigned: "Đã gán",
-  InProgress: "Đang xử lý",
-  WaitingCustomer: "Chờ khách hàng",
-  WaitingParts: "Chờ linh kiện",
-  WaitingOnsiteSchedule: "Chờ lịch hẹn",
-  Resolved: "Đã giải quyết",
-  Escalated: "Chuyển cấp",
-  ClosedPendingRate: "Chờ đánh giá",
-  Closed: "Đã đóng",
-  ClosedRejected: "Từ chối đóng",
-  Incident: "Sự cố",
+  New: "New",
+  Open: "Open",
+  Assigned: "Assigned",
+  InProgress: "In progress",
+  WaitingCustomer: "Waiting on customer",
+  WaitingParts: "Waiting on parts",
+  WaitingOnsiteSchedule: "Waiting on onsite schedule",
+  Resolved: "Resolved",
+  Escalated: "Escalated",
+  ClosedPendingRate: "Pending rating",
+  Closed: "Closed",
+  ClosedRejected: "Closed - rejected",
+  Incident: "Incident",
 };
 
 const PRIORITY_LABELS: Record<TicketPriority, string> = {
@@ -58,12 +58,12 @@ const PRIORITY_LABELS: Record<TicketPriority, string> = {
 };
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
-  Charging: "Lỗi sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
-  Other: "Khác",
-  Repair: "Sửa chữa",
+  Charging: "Charging fault",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
+  Other: "Other",
+  Repair: "Repair",
 };
 
 const DEFAULTS = {
@@ -106,12 +106,10 @@ export default function AdminTicketListPage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Admin &middot; Ticket
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Danh sách ticket
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Ticket list</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
-            dõi toàn bộ ticket hệ thống.
+            {isLoading ? "..." : (data?.totalItems ?? 0)} tickets &mdash; track
+            every ticket in the system.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.tickets]} />
@@ -121,7 +119,7 @@ export default function AdminTicketListPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo mã hoặc tiêu đề..."
+            placeholder="Search by code or title..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -139,10 +137,10 @@ export default function AdminTicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-44">
-            <SelectValue placeholder="Tất cả trạng thái" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
                 {STATUS_LABELS[s]}
@@ -162,10 +160,10 @@ export default function AdminTicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-36">
-            <SelectValue placeholder="Tất cả priority" />
+            <SelectValue placeholder="All priorities" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả priority</SelectItem>
+            <SelectItem value={null}>All priorities</SelectItem>
             {PRIORITY_OPTIONS.map((p) => (
               <SelectItem key={p} value={p}>
                 {PRIORITY_LABELS[p]}
@@ -185,10 +183,10 @@ export default function AdminTicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="Tất cả loại" />
+            <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả loại</SelectItem>
+            <SelectItem value={null}>All categories</SelectItem>
             {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c]}
@@ -199,7 +197,7 @@ export default function AdminTicketListPage() {
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>

@@ -12,7 +12,7 @@ interface SortableTableHeadProps {
   className?: string;
 }
 
-/** TableHead có thể click để sort — dùng chung useSortableData. */
+/** Clickable TableHead for sorting — shared with useSortableData. */
 export function SortableTableHead({
   sortKey,
   activeSortKey,

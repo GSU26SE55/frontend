@@ -153,31 +153,32 @@ export const useAdminChangeAccountRole = () => {
       payload: ChangeAccountRolePayload;
     }) =>
       adminAccountsService.changeRole(id, payload).then((res) => {
-        // AdminAccountsController dùng StatusCode(result.StatusCode, result) nên lỗi ra
-        // đúng HTTP 4xx và axios tự reject. Riêng nhánh retry-cạn ở handler trả 409 kèm
-        // isSuccess=false — check thêm cho chắc, không phụ thuộc vào status.
+        // AdminAccountsController uses StatusCode(result.StatusCode, result), so errors come
+        // back as proper HTTP 4xx and axios rejects on its own. The retry-exhausted branch in
+        // the handler returns 409 with isSuccess=false — check it too, don't rely on status.
         if (!res.data.isSuccess) {
           throw new HttpError(
             res.status,
-            res.data.message ?? "Đổi role thất bại",
+            res.data.message ?? "Couldn't change role",
           );
         }
         return res.data;
       }),
-    // Toast đặt ở đây, KHÔNG ở callback của mutate(): submenu đóng ngay khi bấm nên
-    // component unmount trước lúc request về, mà callback truyền qua mutate() bị bỏ qua
-    // nếu component đã unmount — đổi role thành công nhưng tuyệt nhiên không có toast.
+    // The toast lives here, NOT in the mutate() callback: the submenu closes as soon as it is
+    // clicked, so the component unmounts before the request returns, and callbacks passed via
+    // mutate() are skipped once the component is unmounted — the role change would succeed
+    // with no toast at all.
     onSuccess: (data, { id }) => {
       qc.invalidateQueries({ queryKey: KEY.admin.accounts });
       qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
-      // BE trả sẵn message kèm tên role mới ("Đã đổi role sang Manager.").
+      // BE already returns a message including the new role name ("Role changed to Manager.").
       toast.success(data.message || ADMIN_MESSAGES.account.roleChanged);
     },
     onError: (error) => handleErrorApi({ error }),
   });
 };
 
-// GH-295: admin reset 2FA của user khác
+// GH-295: admin resets another user's 2FA
 export const useAdminReset2fa = () => {
   const qc = useQueryClient();
   return useMutation({

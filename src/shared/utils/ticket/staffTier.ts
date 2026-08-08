@@ -1,7 +1,8 @@
-// Rule tier PrimaryHandler theo priority ticket — mirror của BE
+// PrimaryHandler tier rules by ticket priority — mirrors the BE's
 // `TicketService.Application.Common.Helpers.AssignmentRoleHelper`.
-// Đây là bản sao ở FE để cảnh báo SỚM, KHÔNG thay thế check của BE:
-// BE vẫn trả 403 nếu lọt qua. Sửa rule BE thì phải sửa file này theo.
+// This FE copy exists to warn EARLY; it does NOT replace the BE check:
+// the BE still returns 403 for anything that slips through. If the BE rule changes,
+// this file has to change with it.
 
 import {
   StaffSkillTierEnum,
@@ -11,10 +12,10 @@ import {
 import { TicketPriorityEnum } from "@/shared/enums/ticket/ticket.enum";
 
 /**
- * Tier tối thiểu mà PrimaryHandler phải đạt.
+ * Minimum tier a PrimaryHandler must reach.
  * P1 → Tier 3 · P2 → Tier 2 · P3 → Tier 1.
- * Trả `null` khi ticket chưa triage (priority null) — BE bỏ qua check tier
- * trong trường hợp này (`ticket.Priority.HasValue`), FE cũng không chặn.
+ * Returns `null` when the ticket has not been triaged (priority null) — the BE skips the
+ * tier check in that case (`ticket.Priority.HasValue`), so the FE does not block it either.
  */
 export function getMinTierForPriority(
   priority: TicketPriorityEnum | null | undefined,
@@ -32,10 +33,10 @@ export function getMinTierForPriority(
 }
 
 /**
- * Staff có đủ tier làm PrimaryHandler không.
+ * Whether a staff member's tier is high enough to be the PrimaryHandler.
  *
- * Fallback an toàn: `skillTier` undefined (BE chưa expose field) → trả `true`.
- * Thà để Manager thử và nhận 403 còn hơn khoá nhầm toàn bộ danh sách.
+ * Safe fallback: `skillTier` undefined (the BE does not expose the field yet) → returns `true`.
+ * Better to let the Manager try and get a 403 than to lock the whole list by mistake.
  */
 export function isEligiblePrimaryHandler(
   skillTier: number | undefined,
@@ -45,16 +46,17 @@ export function isEligiblePrimaryHandler(
   return skillTier >= minTier;
 }
 
-// Nhãn ngắn — khớp label của TicketPriorityBadge để Manager đối chiếu với badge trên ticket.
+// Short labels — match TicketPriorityBadge so the Manager can line them up with the badge
+// on the ticket.
 const PRIORITY_SHORT_LABEL: Record<TicketPriorityEnum, string> = {
-  [TicketPriorityEnum.P1Critical]: "P1 · Nghiêm trọng",
-  [TicketPriorityEnum.P2High]: "P2 · Cao",
-  [TicketPriorityEnum.P3Normal]: "P3 · Bình thường",
+  [TicketPriorityEnum.P1Critical]: "P1 · Critical",
+  [TicketPriorityEnum.P2High]: "P2 · High",
+  [TicketPriorityEnum.P3Normal]: "P3 · Standard",
 };
 
 /**
- * Nhãn 1 dòng cho option Staff trong dropdown: "Tên · Tier 2".
- * Bỏ phần tier khi BE chưa trả `skillTier` — không hiện "Tier undefined".
+ * One-line label for a staff option in the dropdown: "Name · Tier 2".
+ * Drops the tier part when the BE has not returned `skillTier` — never shows "Tier undefined".
  */
 export function staffOptionLabel(staff: {
   accountId: string;
@@ -66,11 +68,11 @@ export function staffOptionLabel(staff: {
   return `${name} · ${StaffSkillTierShortLabel[staff.skillTier] ?? `Tier ${staff.skillTier}`}`;
 }
 
-/** Câu nhắc hiển thị trong dialog gán/điều chuyển. `null` = không có ràng buộc. */
+/** Hint shown in the assign/reassign dialog. `null` = no constraint. */
 export function getTierRequirementHint(
   priority: TicketPriorityEnum | null | undefined,
 ): string | null {
   const minTier = getMinTierForPriority(priority);
   if (!priority || minTier === null) return null;
-  return `Ticket ${PRIORITY_SHORT_LABEL[priority]} yêu cầu Staff phụ trách chính từ ${StaffSkillTierLabel[minTier]} trở lên.`;
+  return `A ${PRIORITY_SHORT_LABEL[priority]} ticket requires a primary handler at ${StaffSkillTierLabel[minTier]} or above.`;
 }

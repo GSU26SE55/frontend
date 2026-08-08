@@ -9,7 +9,7 @@ import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { NotificationsParams } from "@/shared/types/notification/notification.types";
 
-// List notification cho dropdown bell. `enabled` để chỉ fetch khi dropdown mở.
+// Notification list for the bell dropdown. `enabled` fetches only while the dropdown is open.
 export const useNotifications = (params: NotificationsParams, enabled = true) =>
   useQuery({
     queryKey: QUERY_KEY.notifications.list(params),
@@ -18,12 +18,12 @@ export const useNotifications = (params: NotificationsParams, enabled = true) =>
     enabled,
   });
 
-// Hộp thư: cuộn vô hạn thay vì phân trang. BE trả `hasNextPage` sẵn nên
-// getNextPageParam chỉ cần tăng pageNumber — không cần tự tính theo totalPages.
+// Inbox: infinite scroll instead of pagination. BE already returns `hasNextPage`, so
+// getNextPageParam just increments pageNumber — no need to compute it from totalPages.
 //
-// Tách khỏi useNotifications (dropdown bell) chứ không dùng chung: bell lấy đúng 10 mục
-// mới nhất và chỉ fetch khi mở, còn hộp thư giữ nhiều trang tích lũy. Gộp lại thì
-// mở bell sẽ nuốt nguyên cache nhiều trang của hộp thư (hoặc ngược lại).
+// Kept separate from useNotifications (bell dropdown) rather than shared: the bell fetches
+// exactly the latest 10 items and only while open, while the inbox accumulates many pages.
+// Merging them would mean opening the bell swallows the inbox's multi-page cache (or vice versa).
 export const useNotificationsInfinite = (
   params: Omit<NotificationsParams, "pageNumber"> = {},
 ) =>
@@ -39,8 +39,8 @@ export const useNotificationsInfinite = (
     staleTime: 30_000,
   });
 
-// Chi tiết 1 noti cho pane bên phải. Ưu tiên dùng bản đã có trong cache list làm
-// initialData → click là hiện ngay, request nền chỉ để xác nhận/bù field thiếu.
+// Detail of a single notification for the right pane. Prefers the version already in the list
+// cache as initialData → shows instantly on click, the background request only confirms/fills missing fields.
 export const useNotificationDetail = (id: string | null) =>
   useQuery({
     queryKey: QUERY_KEY.notifications.detail(id ?? ""),
@@ -49,10 +49,10 @@ export const useNotificationDetail = (id: string | null) =>
     staleTime: 30_000,
   });
 
-// Badge số chưa đọc. KHÔNG poll: useNotificationsRealtime nhận event
-// "UnreadCountChanged" từ hub và ghi thẳng số mới vào cache key này.
-// Fetch ở đây chỉ còn là giá trị khởi tạo lúc mount + lúc quay lại tab
-// (refetchOnWindowFocus mặc định) để bù event lỡ khi hub rớt.
+// Unread count badge. Does NOT poll: useNotificationsRealtime receives the
+// "UnreadCountChanged" event from the hub and writes the new number straight into this cache key.
+// The fetch here only provides the initial value on mount + when returning to the tab
+// (default refetchOnWindowFocus) to cover for events missed while the hub was down.
 export const useUnreadCount = () =>
   useQuery({
     queryKey: QUERY_KEY.notifications.unreadCount(),
@@ -72,8 +72,8 @@ export const useMarkNotificationRead = () => {
   });
 };
 
-// User chủ động MỞ notification (bấm deep link) — mạnh hơn markRead, dùng để đo
-// open-rate thật của kênh push. BE tự set ReadAt nên KHÔNG cần gọi kèm markRead.
+// User actively OPENS a notification (taps the deep link) — stronger signal than markRead, used to
+// measure the push channel's real open rate. BE sets ReadAt itself, so no need to also call markRead.
 export const useMarkNotificationOpened = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -95,3 +95,18 @@ export const useMarkAllRead = () => {
     onError: (error) => handleErrorApi({ error }),
   });
 };
+
+export const useNotificationUnsubscribeGet = (token: string) =>
+  useQuery({
+    queryKey: [KEY.notifications, "unsubscribe", token],
+    queryFn: () =>
+      notificationService.getUnsubscribe(token).then((r) => r.data.data),
+    enabled: !!token,
+  });
+
+export const useNotificationUnsubscribePost = () =>
+  useMutation({
+    mutationFn: (token: string) =>
+      notificationService.unsubscribe(token).then((r) => r.data.data),
+    onError: (error) => handleErrorApi({ error }),
+  });

@@ -3,12 +3,12 @@ import axiosInstance from "@/shared/lib/axios";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 
 /**
- * Tải file cần Bearer (`GET /api/files/{id}/download`) qua axios → tạo object URL
- * để render trong `<img>`. Object URL được revoke khi `fileId` đổi/unmount.
+ * Downloads a file that requires Bearer auth (`GET /api/files/{id}/download`) via axios → creates
+ * an object URL to render in `<img>`. The object URL is revoked when `fileId` changes/unmounts.
  *
- * Cố ý KHÔNG cache qua React Query: cache object URL sẽ trả về URL đã bị revoke
- * sau khi component unmount rồi remount trong gcTime → ảnh vỡ. Mỗi mount fetch lại
- * blob mới (giống pattern `AuthImage`).
+ * Deliberately NOT cached via React Query: caching the object URL would return an already-revoked
+ * URL after the component unmounts and remounts within gcTime → broken image. Each mount fetches a
+ * fresh blob (same pattern as `AuthImage`).
  */
 export function useFileBlobUrl(fileId: string | undefined) {
   const [state, setState] = useState<{ data: string | null; isError: boolean }>(

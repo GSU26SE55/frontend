@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Smartphone } from "lucide-react";
 
-// Tài khoản CUSTOMER không dùng web — mọi luồng login (thường/2FA/invite/Google)
-// điều hướng CUSTOMER về đây thay vì cho vào portal.
+// CUSTOMER accounts don't use the web app — every login flow (regular/2FA/invite/Google)
+// redirects CUSTOMER here instead of letting them into the portal.
 const UseMobileAppPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-4 py-12">
@@ -12,18 +12,19 @@ const UseMobileAppPage = () => {
         </div>
 
         <h1 className="mt-5 text-xl font-bold tracking-tight">
-          Vui lòng sử dụng ứng dụng di động
+          Please use the mobile app
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Tài khoản khách hàng chỉ đăng nhập được trên Mobile App để theo dõi
-          pin và tạo yêu cầu hỗ trợ. Trang web dành cho Admin, Manager và Staff.
+          Customer accounts can only log in through the mobile app to monitor
+          batteries and create support requests. The web app is for Admin,
+          Manager, and Staff.
         </p>
 
         <Link
           to="/login"
           className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Quay lại đăng nhập
+          Back to log in
         </Link>
       </div>
     </div>

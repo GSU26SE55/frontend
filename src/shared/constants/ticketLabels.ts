@@ -1,15 +1,16 @@
 import type { EscalationReasonEnum } from "@/shared/types/ticket/ticket.types";
 
 /**
- * Nhãn tiếng Việt cho lý do chuyển cấp.
+ * Display labels for escalation reasons.
  *
- * Đặt ở shared vì cả Manager (dialog chuyển cấp + sidebar) và Staff (sidebar) cùng dùng —
- * trước đây map này bị chép ở hai nơi trong feature manager, sửa một chỗ là hai chỗ lệch nhau.
+ * Lives in shared because both Manager (escalation dialog + sidebar) and Staff
+ * (sidebar) use it — this map used to be copied in two places inside the manager
+ * feature, so editing one left the two out of sync.
  */
 export const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
-  SkillGap: "Thiếu kỹ năng xử lý",
-  PartsRequired: "Cần linh kiện thay thế",
-  SafetyConcern: "Nguy cơ an toàn",
-  SlaBreach: "Vi phạm SLA",
-  CustomerComplaint: "Khách hàng khiếu nại",
+  SkillGap: "Skill gap",
+  PartsRequired: "Replacement parts required",
+  SafetyConcern: "Safety concern",
+  SlaBreach: "SLA breach",
+  CustomerComplaint: "Customer complaint",
 };

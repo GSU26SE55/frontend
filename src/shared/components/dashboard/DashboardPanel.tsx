@@ -17,8 +17,8 @@ import {
 } from "recharts";
 
 /**
- * Compact building blocks cho dashboard "1 khung" (full-height bento, no scroll).
- * Dùng chung bởi Admin / Manager / Staff dashboard.
+ * Compact building blocks for the "single-frame" dashboard (full-height bento, no scroll).
+ * Shared by the Admin / Manager / Staff dashboards.
  */
 
 // ── Compact KPI ───────────────────────────────────────────────────────────────
@@ -59,7 +59,9 @@ export function DashboardKpi({
           {value}
         </span>
         {sub && (
-          <span className="text-xs font-medium text-muted-foreground">{sub}</span>
+          <span className="text-xs font-medium text-muted-foreground">
+            {sub}
+          </span>
         )}
       </div>
       {hint && (
@@ -126,15 +128,13 @@ export function DashboardPanel({
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
-      <div className={cn("flex-1 min-h-0 p-4", bodyClassName)}>
-        {children}
-      </div>
+      <div className={cn("flex-1 min-h-0 p-4", bodyClassName)}>{children}</div>
     </div>
   );
 }
 
 // ── Donut (chart + legend) ────────────────────────────────────────────────────
-const donutConfig = { value: { label: "Số lượng" } } satisfies ChartConfig;
+const donutConfig = { value: { label: "Count" } } satisfies ChartConfig;
 
 export interface DonutDatum {
   name: string;

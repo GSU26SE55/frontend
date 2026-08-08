@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// "HH:mm" 24h — khớp BE TimeOnly.TryParseExact(x, "HH:mm")
+// "HH:mm" 24h — matches BE TimeOnly.TryParseExact(x, "HH:mm")
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const notificationPreferenceSchema = z
@@ -9,19 +9,17 @@ export const notificationPreferenceSchema = z
     emailEnabled: z.boolean(),
     smsEnabled: z.boolean(),
     inAppEnabled: z.boolean(),
-    quietHoursStart: z
-      .string()
-      .regex(HHMM, "Định dạng phải là HH:mm")
-      .nullable(),
-    quietHoursEnd: z.string().regex(HHMM, "Định dạng phải là HH:mm").nullable(),
+    quietHoursStart: z.string().regex(HHMM, "Format must be HH:mm").nullable(),
+    quietHoursEnd: z.string().regex(HHMM, "Format must be HH:mm").nullable(),
     timeZone: z
       .string()
-      .min(1, "TimeZone không được trống")
-      .max(100, "TimeZone tối đa 100 ký tự"),
+      .min(1, "TimeZone is required")
+      .max(100, "TimeZone must be at most 100 characters"),
   })
-  // BE validate quiet hours độc lập (không cross-field) → enforce cặp ở FE.
+  // The BE validates quiet hours independently (no cross-field check) → the FE
+  // enforces the pair.
   .refine((v) => (v.quietHoursStart == null) === (v.quietHoursEnd == null), {
-    message: "Phải nhập cả giờ bắt đầu và kết thúc, hoặc bỏ trống cả hai",
+    message: "Enter both a start and an end time, or leave both blank",
     path: ["quietHoursEnd"],
   });
 

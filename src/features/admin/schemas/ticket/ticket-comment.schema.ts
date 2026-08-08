@@ -1,4 +1,4 @@
-// addCommentSchema dùng chung — nguồn thật ở shared (trùng admin/manager/staff).
+// Shared addCommentSchema — real source lives in shared (identical across admin/manager/staff).
 export {
   addCommentSchema,
   type AddCommentFormValues,

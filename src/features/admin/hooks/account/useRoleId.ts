@@ -3,14 +3,14 @@ import { adminRolesService } from "@/features/admin/services/account/admin-roles
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 
 /**
- * Resolve roleId theo normalizedName ("CUSTOMER", "STAFF", "MANAGER", "ADMIN").
+ * Resolve roleId by normalizedName ("CUSTOMER", "STAFF", "MANAGER", "ADMIN").
  *
- * BE seed system role bằng Guid.NewGuid() lúc runtime (migration
- * RemoveRoleHasDataSeed đã bỏ GUID hardcode) → roleId KHÁC NHAU giữa các môi
- * trường. Vì vậy FE không được hardcode role GUID, phải tra theo
- * normalizedName — field này ổn định.
+ * BE seeds system roles with Guid.NewGuid() at runtime (the
+ * RemoveRoleHasDataSeed migration removed the hardcoded GUID) → roleId
+ * DIFFERS between environments. So FE must not hardcode a role GUID and
+ * must look it up by normalizedName — this field is stable.
  *
- * Cache lâu (staleTime 1h) vì system role gần như không đổi.
+ * Long cache (staleTime 1h) since system roles almost never change.
  */
 export function useRoleId(normalizedName: string) {
   const params = { pageSize: 100 };

@@ -13,7 +13,7 @@ function daysUntil(dateStr: string): number {
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
 }
 
-// Manager view — flat list calibration sắp hết hạn (cross-device, sort expiresAt ASC từ BE).
+// Manager view — flat list of calibrations about to expire (cross-device, sorted expiresAt ASC by the BE).
 export default function CalibrationsExpiringTable({ items }: Props) {
   const columns: ColumnDef<IotDeviceCalibrationDto>[] = [
     {
@@ -47,12 +47,12 @@ export default function CalibrationsExpiringTable({ items }: Props) {
     },
     {
       id: "daysRemaining",
-      header: "Còn lại",
+      header: "Remaining",
       cell: (item) => {
         const days = item.expiresAt ? daysUntil(item.expiresAt) : null;
         return days !== null ? (
           <Badge variant={days <= 7 ? "destructive" : "secondary"}>
-            {days} ngày
+            {days} days
           </Badge>
         ) : null;
       },
@@ -64,7 +64,7 @@ export default function CalibrationsExpiringTable({ items }: Props) {
       data={items}
       columns={columns}
       rowKey={(item) => item.id}
-      empty={<EmptyState title="Không có calibration sắp hết hạn" />}
+      empty={<EmptyState title="No calibrations expiring soon" />}
     />
   );
 }

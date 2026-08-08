@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { accountService } from "@/features/auth/services/account.service";
 import type { AccountDataExportDto } from "@/features/auth/types/account.types";
 
-// yyyymmdd theo UTC — khớp filename BE (account-export-{id:N}-{yyyyMMdd}.json)
+// yyyymmdd in UTC — matches the BE filename (account-export-{id:N}-{yyyyMMdd}.json)
 const formatDateUtc = (d: Date): string =>
   `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(
     d.getUTCDate(),
@@ -22,7 +22,7 @@ const triggerDownload = (data: AccountDataExportDto) => {
   URL.revokeObjectURL(url);
 };
 
-// #AUTH-62: GDPR export — axios KHÔNG unwrap → đọc res.data.data → build Blob → tải file
+// #AUTH-62: GDPR export — axios does NOT unwrap → read res.data.data → build Blob → download file
 export const useExportMyData = () =>
   useMutation({
     mutationFn: async () => {

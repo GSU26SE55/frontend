@@ -7,14 +7,14 @@ import {
   type HubConnection,
 } from "@/shared/lib/signalr";
 
-// SignalR realtime cho comment panel: join phòng ticket, nhận ChatAdded
-// (invalidate query comment) + UserTyping. Lỗi connect được nuốt → UI không crash,
-// query vẫn dùng được (chỉ mất push realtime).
+// SignalR realtime for the comment panel: joins the ticket room, receives ChatAdded
+// (invalidates the comment query) + UserTyping. Connection errors are swallowed → UI doesn't
+// crash, the query still works (only realtime push is lost).
 //
-// extraInvalidateKeys: các query key BỔ SUNG cần invalidate khi có ChatAdded.
-// Manager render comment từ QUERY_KEY.tickets.chats (default), nhưng staff/admin
-// render comment NHÚNG trong ticket detail (key khác) → truyền key detail tương ứng
-// để comment mới hiện realtime mà không phải reload.
+// extraInvalidateKeys: ADDITIONAL query keys to invalidate on ChatAdded.
+// Manager renders comments from QUERY_KEY.tickets.chats (default), but staff/admin render
+// comments EMBEDDED in the ticket detail (a different key) → pass the corresponding detail key
+// so new comments show up realtime without a reload.
 export function useTicketCommentsRealtime(
   ticketId: string,
   extraInvalidateKeys: readonly (readonly unknown[])[] = [],
@@ -26,10 +26,10 @@ export function useTicketCommentsRealtime(
   );
   const [typingNames, setTypingNames] = useState<string[]>([]);
 
-  // extraInvalidateKeys giữ trong ref — caller truyền inline array MỚI mỗi render.
-  // Nếu để trong deps, connection bị rebuild liên tục → race teardown → nhận event
-  // trùng. Ref cho phép handler đọc keys mới nhất mà KHÔNG tái tạo connection.
-  // Cập nhật trong effect (không phải trong render) để không vi phạm react-hooks/refs.
+  // extraInvalidateKeys is kept in a ref — the caller passes a NEW inline array every render.
+  // If it were in the deps, the connection would rebuild constantly → teardown races → duplicate
+  // events received. The ref lets the handler read the latest keys WITHOUT recreating the connection.
+  // Updated in an effect (not during render) to avoid violating react-hooks/refs.
   const extraKeysRef = useRef(extraInvalidateKeys);
   useEffect(() => {
     extraKeysRef.current = extraInvalidateKeys;
@@ -42,12 +42,12 @@ export function useTicketCommentsRealtime(
     let cancelled = false;
     const timers = typingTimers.current;
 
-    // Tên event PHẢI khớp BE (SignalRTicketChatNotifier): "ChatAdded"/"ChatEdited"/
-    // "ChatDeleted"/"ReactionChanged" — KHÔNG phải "CommentAdded".
+    // Event names MUST match BE (SignalRTicketChatNotifier): "ChatAdded"/"ChatEdited"/
+    // "ChatDeleted"/"ReactionChanged" — NOT "CommentAdded".
     const invalidateChatList = () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
-      // Badge "chưa đọc" trên tab Bình luận phải nhảy ngay khi có tin mới /
-      // tin bị xoá — cùng nhịp với list, không chờ user reload.
+      // The "unread" badge on the Comments tab must jump immediately on a new message /
+      // deleted message — in step with the list, no waiting for the user to reload.
       qc.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
       });
@@ -60,8 +60,8 @@ export function useTicketCommentsRealtime(
     conn.on("ChatEdited", invalidateChatList);
     conn.on("ChatDeleted", invalidateChatList);
 
-    // ReactionChanged payload: { chatId, reactions } — BE gửi kèm aggregate đầy đủ.
-    // Ghi thẳng vào cache (không refetch) → client khác cập nhật tức thì, 0 request thừa.
+    // ReactionChanged payload: { chatId, reactions } — BE sends the full aggregate along with it.
+    // Write straight into the cache (no refetch) → other clients update instantly, zero extra requests.
     conn.on(
       "ReactionChanged",
       (payload: { chatId: string; reactions?: unknown }) => {
@@ -88,29 +88,29 @@ export function useTicketCommentsRealtime(
       },
     );
 
-    // Giữ promise start() để cleanup CHỜ nó settle trước khi stop(). Gọi stop() khi
-    // start() còn pending → SignalR ném "Failed to start the HttpConnection before
-    // stop() was called" (lỗi thấy khi StrictMode mount kép / remount nhanh).
+    // Keep the start() promise so cleanup WAITS for it to settle before calling stop(). Calling
+    // stop() while start() is still pending → SignalR throws "Failed to start the HttpConnection
+    // before stop() was called" (seen with StrictMode's double mount / fast remounts).
     const startPromise = conn
       .start()
       .then(() => {
         if (!cancelled) return conn.invoke("JoinTicket", ticketId);
       })
       .catch(() => {
-        // realtime không khả dụng → bỏ qua, query vẫn hoạt động bình thường
+        // realtime unavailable → ignore, the query still works normally
       });
 
     return () => {
       cancelled = true;
       Object.values(timers).forEach(clearTimeout);
-      // Gỡ handler TRƯỚC khi stop — chống event treo bắn vào connection đang teardown
-      // (StrictMode mount kép / rebuild) gây invalidate trùng.
+      // Remove handlers BEFORE stopping — guards against a stray event firing into a connection
+      // mid-teardown (StrictMode double mount / rebuild) causing a duplicate invalidate.
       conn.off("ChatAdded");
       conn.off("ChatEdited");
       conn.off("ChatDeleted");
       conn.off("ReactionChanged");
       conn.off("UserTyping");
-      // CHỜ start() xong rồi mới leave + stop — tránh stop-trước-start.
+      // WAIT for start() to finish before leave + stop — avoids stop-before-start.
       void startPromise.finally(() => {
         if (conn.state === HubConnectionState.Connected) {
           conn
@@ -125,7 +125,7 @@ export function useTicketCommentsRealtime(
       });
       connRef.current = null;
     };
-    // Chỉ rebuild connection theo ticketId — extraInvalidateKeys đọc qua ref.
+    // Only rebuild the connection on ticketId — extraInvalidateKeys is read via ref.
   }, [ticketId, qc]);
 
   const sendTyping = useCallback(() => {

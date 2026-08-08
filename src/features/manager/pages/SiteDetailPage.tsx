@@ -29,9 +29,9 @@ import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 export default function ManagerSiteDetailPage() {
@@ -73,9 +73,9 @@ export default function ManagerSiteDetailPage() {
       <div className="p-6 max-w-360 mx-auto">
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
-          <span className="text-sm">Không tìm thấy site.</span>
+          <span className="text-sm">Site not found.</span>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-3.5" /> Quay lại
+            <ArrowLeft className="size-3.5" /> Back
           </Button>
         </div>
       </div>
@@ -93,7 +93,7 @@ export default function ManagerSiteDetailPage() {
             className="-ml-2"
             onClick={() => navigate(-1)}
           >
-            <ArrowLeft className="size-3.5" /> Quay lại
+            <ArrowLeft className="size-3.5" /> Back
           </Button>
           <RefreshButton queryKeys={[KEY.sites]} size="icon" />
         </div>
@@ -110,14 +110,14 @@ export default function ManagerSiteDetailPage() {
         <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
       </div>
 
-      {/* Pin + Môi trường */}
+      {/* Batteries + Environment */}
       <Tabs defaultValue="assets">
         <TabsList>
           <TabsTrigger value="assets">
-            <Battery className="size-3.5" /> Danh sách pin
+            <Battery className="size-3.5" /> Battery list
           </TabsTrigger>
           <TabsTrigger value="ambient">
-            <Thermometer className="size-3.5" /> Môi trường
+            <Thermometer className="size-3.5" /> Environment
           </TabsTrigger>
         </TabsList>
 
@@ -130,7 +130,7 @@ export default function ManagerSiteDetailPage() {
                   : ASSET_STATUS_ALL
               }
               items={[
-                { value: ASSET_STATUS_ALL, label: "Mọi trạng thái" },
+                { value: ASSET_STATUS_ALL, label: "All statuses" },
                 ...Object.entries(ASSET_STATUS_LABELS).map(
                   ([value, label]) => ({
                     value,
@@ -150,10 +150,10 @@ export default function ManagerSiteDetailPage() {
               }
             >
               <SelectTrigger size="sm" className="w-40">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ASSET_STATUS_ALL}>Mọi trạng thái</SelectItem>
+                <SelectItem value={ASSET_STATUS_ALL}>All statuses</SelectItem>
                 {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {label}

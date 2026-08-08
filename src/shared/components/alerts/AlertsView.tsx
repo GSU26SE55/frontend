@@ -70,18 +70,18 @@ const STATUS_OPTIONS = [
 
 const anomalyLabel = anomalyTypeLabel;
 
-// Alert cấp site (ambient / environmental incident) có batteryAssetId = "" (chuỗi rỗng,
-// KHÔNG null) và siteId non-null → không có serial pin để hiện. Dùng `=== ""` chứ không
-// falsy-check: "" và null mang nghĩa khác nhau trong contract này.
+// Site-level alerts (ambient / environmental incident) have batteryAssetId = "" (empty
+// string, NOT null) with a non-null siteId → no battery serial to show. Use `=== ""` rather
+// than a falsy check: "" and null mean different things in this contract.
 const isSiteLevel = (alert: AlertDto) => alert.batteryAssetId === "";
 
 const alertSubject = (alert: AlertDto) =>
-  isSiteLevel(alert) ? "Cấp site" : alert.batterySerialNumber;
+  isSiteLevel(alert) ? "Site level" : alert.batterySerialNumber;
 
 const formatDateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
-// Giá trị đo có thể null từ BE (thresholdValue/actualValue/unit là nullable)
+// Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable)
 const formatMeasure = (value?: number | null, unit?: string | null) =>
   value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
 
@@ -109,10 +109,12 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           {subtitle}
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Cảnh báo pin</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Battery alerts
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {isLoading ? "..." : totalItems} cảnh báo &mdash; bất thường phát hiện
-          từ hệ thống
+          {isLoading ? "..." : totalItems} alerts &mdash; anomalies detected by
+          the system
         </p>
       </div>
 
@@ -128,10 +130,10 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
           }
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Tất cả mức độ" />
+            <SelectValue placeholder="All severities" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả mức độ</SelectItem>
+            <SelectItem value={null}>All severities</SelectItem>
             {SEVERITY_OPTIONS.map((s) => (
               <SelectItem key={s} value={String(s)}>
                 {SEVERITY_LABELS[s]}
@@ -151,10 +153,10 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
           }
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Tất cả trạng thái" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={String(s)}>
                 {STATUS_LABELS[s]}
@@ -165,7 +167,7 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -180,7 +182,7 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <BellRing className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có cảnh báo nào.</span>
+            <span className="text-sm">No alerts yet.</span>
           </div>
         ) : (
           <Table>
@@ -189,10 +191,10 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
                 <TableHead className="w-12 text-center">
                   {TABLE_COLUMNS.index}
                 </TableHead>
-                <TableHead>Serial pin</TableHead>
-                <TableHead>Loại bất thường</TableHead>
+                <TableHead>Battery serial</TableHead>
+                <TableHead>Anomaly type</TableHead>
                 <TableHead>{TABLE_COLUMNS.severity}</TableHead>
-                <TableHead>Giá trị</TableHead>
+                <TableHead>Value</TableHead>
                 <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
                 <TableHead>{TABLE_COLUMNS.status}</TableHead>
               </TableRow>
@@ -250,7 +252,7 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
   );
 }
 
-// ── Detail dialog ───────────────────────────────────────────────────────────
+// ── Detail dialog ────────────────────────────────────────────────────────
 function AlertDetailDialog({
   alertId,
   onClose,
@@ -276,11 +278,11 @@ function AlertDetailDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Chi tiết cảnh báo</DialogTitle>
+          <DialogTitle>Alert details</DialogTitle>
           <DialogDescription>
             {alert
               ? `${alertSubject(alert)} · ${anomalyLabel(alert.anomalyType)}`
-              : "Đang tải..."}
+              : "Loading..."}
           </DialogDescription>
         </DialogHeader>
 
@@ -292,36 +294,36 @@ function AlertDetailDialog({
           </div>
         ) : (
           <dl className="grid grid-cols-3 gap-x-4 gap-y-3 text-sm py-2">
-            <DetailRow label="Mức độ">
+            <DetailRow label="Severity">
               <AlertSeverityBadge severity={alert.severity} />
             </DetailRow>
-            <DetailRow label="Trạng thái">
+            <DetailRow label="Status">
               <AlertStatusBadge status={alert.status} />
             </DetailRow>
-            <DetailRow label="Giá trị thực tế">
+            <DetailRow label="Actual value">
               <span className="font-mono-num">
                 {formatMeasure(alert.actualValue, alert.unit)}
               </span>
             </DetailRow>
-            <DetailRow label="Ngưỡng">
+            <DetailRow label="Threshold">
               <span className="font-mono-num">
                 {formatMeasure(alert.thresholdValue, alert.unit)}
               </span>
             </DetailRow>
-            <DetailRow label={isSiteLevel(alert) ? "Site" : "Pin"}>
+            <DetailRow label={isSiteLevel(alert) ? "Site" : "Battery"}>
               <span className="font-mono text-xs">
                 {isSiteLevel(alert)
                   ? (alert.siteId ?? "—")
                   : alert.batterySerialNumber}
               </span>
             </DetailRow>
-            <DetailRow label="Phát hiện lúc">
+            <DetailRow label="Detected at">
               {formatDateTime(alert.detectedAt)}
             </DetailRow>
-            <DetailRow label="Xác nhận lúc">
+            <DetailRow label="Acknowledged at">
               {formatDateTime(alert.acknowledgedAt)}
             </DetailRow>
-            <DetailRow label="Xử lý lúc">
+            <DetailRow label="Resolved at">
               {formatDateTime(alert.resolvedAt)}
             </DetailRow>
             <DetailRow label="Ticket">
@@ -340,13 +342,13 @@ function AlertDetailDialog({
             disabled={!canAck || ackPending}
             onClick={() => alert && acknowledge(alert.id)}
           >
-            Xác nhận
+            Acknowledge
           </Button>
           <Button
             disabled={!canResolve || resolvePending}
             onClick={() => alert && resolve(alert.id)}
           >
-            Đánh dấu đã xử lý
+            Mark resolved
           </Button>
         </DialogFooter>
       </DialogContent>

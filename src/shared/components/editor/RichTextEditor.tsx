@@ -34,7 +34,7 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
   disabled?: boolean;
   className?: string;
-  /** Có giá trị → picker bật thêm tab "Ảnh từ chat" của ticket này. */
+  /** When set → picker enables the extra "Images from chat" tab for this ticket. */
   ticketId?: string;
 }
 
@@ -83,7 +83,7 @@ function Toolbar({
 }) {
   const promptLink = () => {
     const prev = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("Nhập URL liên kết", prev ?? "https://");
+    const url = window.prompt("Enter link URL", prev ?? "https://");
     if (url === null) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
@@ -100,7 +100,7 @@ function Toolbar({
   return (
     <div className="border-input flex flex-wrap items-center gap-0.5 border-b p-1">
       <ToolbarButton
-        label="Đậm"
+        label="Bold"
         disabled={disabled}
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -108,7 +108,7 @@ function Toolbar({
         <Bold className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Nghiêng"
+        label="Italic"
         disabled={disabled}
         active={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -116,7 +116,7 @@ function Toolbar({
         <Italic className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Gạch ngang"
+        label="Strikethrough"
         disabled={disabled}
         active={editor.isActive("strike")}
         onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -127,7 +127,7 @@ function Toolbar({
       <span className="bg-border mx-1 h-5 w-px" />
 
       <ToolbarButton
-        label="Tiêu đề 2"
+        label="Heading 2"
         disabled={disabled}
         active={editor.isActive("heading", { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -135,7 +135,7 @@ function Toolbar({
         <Heading2 className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Tiêu đề 3"
+        label="Heading 3"
         disabled={disabled}
         active={editor.isActive("heading", { level: 3 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
@@ -146,7 +146,7 @@ function Toolbar({
       <span className="bg-border mx-1 h-5 w-px" />
 
       <ToolbarButton
-        label="Danh sách"
+        label="Bullet list"
         disabled={disabled}
         active={editor.isActive("bulletList")}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -154,7 +154,7 @@ function Toolbar({
         <List className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Danh sách đánh số"
+        label="Numbered list"
         disabled={disabled}
         active={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -162,7 +162,7 @@ function Toolbar({
         <ListOrdered className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Trích dẫn"
+        label="Quote"
         disabled={disabled}
         active={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -170,7 +170,7 @@ function Toolbar({
         <Quote className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Khối mã"
+        label="Code block"
         disabled={disabled}
         active={editor.isActive("codeBlock")}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
@@ -181,7 +181,7 @@ function Toolbar({
       <span className="bg-border mx-1 h-5 w-px" />
 
       <ToolbarButton
-        label="Liên kết"
+        label="Link"
         disabled={disabled}
         active={editor.isActive("link")}
         onClick={promptLink}
@@ -189,7 +189,7 @@ function Toolbar({
         <LinkIcon className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Chèn ảnh"
+        label="Insert image"
         disabled={disabled || uploading}
         onClick={onPickImage}
       >
@@ -203,14 +203,14 @@ function Toolbar({
       <span className="bg-border mx-1 h-5 w-px" />
 
       <ToolbarButton
-        label="Hoàn tác"
+        label="Undo"
         disabled={disabled || !editor.can().undo()}
         onClick={() => editor.chain().focus().undo().run()}
       >
         <Undo className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Làm lại"
+        label="Redo"
         disabled={disabled || !editor.can().redo()}
         onClick={() => editor.chain().focus().redo().run()}
       >
@@ -221,11 +221,11 @@ function Toolbar({
 }
 
 /**
- * Editor WYSIWYG dùng chung cho Blog (`contentHtml`) và Knowledge Base
+ * WYSIWYG editor shared between Blog (`contentHtml`) and Knowledge Base
  * (`content`).
- * Bind vào React Hook Form qua `Controller` — nhận `value`, gọi `onChange(html)`.
+ * Bound to React Hook Form via `Controller` — receives `value`, calls `onChange(html)`.
  *
- * `@tiptap/extension-link` đã nằm sẵn trong StarterKit v3, không cần cài riêng.
+ * `@tiptap/extension-link` already ships inside StarterKit v3, no need to install it separately.
  */
 export function RichTextEditor({
   value,
@@ -258,7 +258,7 @@ export function RichTextEditor({
     },
   });
 
-  // Đồng bộ khi form reset() nạp dữ liệu từ server sau lúc editor đã mount
+  // Sync when form reset() loads server data after the editor has already mounted
   useEffect(() => {
     if (!editor) return;
     const incoming = value || "";
@@ -271,19 +271,17 @@ export function RichTextEditor({
     editor?.setEditable(!disabled);
   }, [disabled, editor]);
 
-  // Upload ảnh → chèn node lưu fileId (không nhúng base64 vào nội dung)
+  // Upload image → insert a node storing fileId (no base64 embedded in the content)
   const insertImages = useCallback(
     async (files: File[]) => {
       if (!editor) return;
       for (const file of files) {
         if (!IMAGE_MIME.test(file.type)) {
-          toast.error(
-            `"${file.name}" không phải ảnh hợp lệ (png/jpg/gif/webp)`,
-          );
+          toast.error(`"${file.name}" is not a valid image (png/jpg/gif/webp)`);
           continue;
         }
         if (file.size > MAX_IMAGE_BYTES) {
-          toast.error(`"${file.name}" vượt quá 5MB`);
+          toast.error(`"${file.name}" exceeds 5MB`);
           continue;
         }
         try {
@@ -294,12 +292,12 @@ export function RichTextEditor({
           });
           const fileId = res.data?.fileId;
           if (!fileId) {
-            toast.error(`Tải "${file.name}" thất bại`);
+            toast.error(`Failed to upload "${file.name}"`);
             continue;
           }
           editor.chain().focus().setAuthImage({ fileId, alt: file.name }).run();
         } catch {
-          toast.error(`Tải "${file.name}" thất bại`);
+          toast.error(`Failed to upload "${file.name}"`);
         }
       }
     },

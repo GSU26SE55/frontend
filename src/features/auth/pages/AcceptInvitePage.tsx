@@ -46,17 +46,17 @@ const AcceptInvitePage = () => {
     return (
       <div className="space-y-3 text-center">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Liên kết không hợp lệ
+          Invalid link
         </h1>
         <p className="text-sm text-slate-500">
-          Liên kết mời không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ Admin để
-          được gửi lại.
+          The invitation link is invalid or has expired. Please contact an Admin
+          to have it resent.
         </p>
         <Link
           to="/login"
           className="inline-block text-sm font-semibold text-emerald-600 hover:text-emerald-700"
         >
-          Quay lại đăng nhập
+          Back to login
         </Link>
       </div>
     );
@@ -66,10 +66,10 @@ const AcceptInvitePage = () => {
     <div className="space-y-5">
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Kích hoạt tài khoản
+          Activate account
         </h1>
         <p className="text-sm text-slate-500">
-          Đặt mật khẩu để hoàn tất kích hoạt tài khoản
+          Set a password to finish activating your account
         </p>
       </div>
 
@@ -79,7 +79,7 @@ const AcceptInvitePage = () => {
             htmlFor="password"
             className="text-sm font-medium text-slate-700"
           >
-            Mật khẩu
+            Password
           </Label>
           <div className="relative">
             <Input
@@ -92,7 +92,7 @@ const AcceptInvitePage = () => {
             />
             <button
               type="button"
-              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               onClick={() => setShowPassword((v) => !v)}
             >
@@ -113,7 +113,7 @@ const AcceptInvitePage = () => {
             htmlFor="confirmPassword"
             className="text-sm font-medium text-slate-700"
           >
-            Xác nhận mật khẩu
+            Confirm password
           </Label>
           <div className="relative">
             <Input
@@ -126,7 +126,7 @@ const AcceptInvitePage = () => {
             />
             <button
               type="button"
-              aria-label={showConfirm ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              aria-label={showConfirm ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               onClick={() => setShowConfirm((v) => !v)}
             >
@@ -150,7 +150,7 @@ const AcceptInvitePage = () => {
           className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
         >
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Kích hoạt tài khoản
+          Activate account
         </Button>
       </form>
     </div>

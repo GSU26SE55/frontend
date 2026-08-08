@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,7 +48,6 @@ import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDu
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { checkPermission, P } from "@/shared/lib/authz";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
@@ -61,12 +60,12 @@ import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
 
 const CATEGORY_LABELS: Record<string, string> = {
-  Charging: "Lỗi sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
-  Repair: "Sửa chữa",
-  Other: "Khác",
+  Charging: "Charging fault",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
+  Repair: "Repair",
+  Other: "Other",
 };
 
 function SideInfoRow({
@@ -86,6 +85,19 @@ function SideInfoRow({
   );
 }
 
+/**
+ * The Admin page DELIBERATELY offers only: view, Declare Incident, Merge ticket, and chat override.
+ *
+ * The triage / assign Staff / approve buttons are not missing. User Guide §3.9–3.13 assigns
+ * those to the Manager role; Admin in §3.3 only handles site, battery and alert threshold setup.
+ *
+ * The BE does still let Admin take every transition (TransitionRuleProvider has an
+ * ActorRoleEnum.Admin branch in most rules, see the "Admin Override Transitions" region in
+ * TicketStateMachineTests). That is a technical escape hatch — unsticking a ticket when Staff
+ * leave mid-way or a Manager is unavailable, done through the API directly — not an everyday
+ * permission. Don't "fill in the gaps" by adding those buttons here: it would turn this into a
+ * copy of the Manager page and diverge from the documentation.
+ */
 export default function AdminTicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -98,14 +110,14 @@ export default function AdminTicketDetailPage() {
     text: "",
     version: 0,
   });
-  // GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed.
+  // GH-133 C4 — Admin override to edit/delete chat on a Closed ticket.
   const [overrideTarget, setOverrideTarget] = useState<{
     chat: TicketCommentDTO;
     mode: "edit" | "delete";
   } | null>(null);
 
   const { data: ticket, isLoading: loadingDetail } = useAdminTicketDetail(id!);
-  // Tên người phụ trách — lấy thẳng từ assignments (BE đã kèm staffName).
+  // Handler names — taken straight from assignments (BE already includes staffName).
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
   const { data: activities = [], isLoading: loadingActivities } =
@@ -132,8 +144,8 @@ export default function AdminTicketDetailPage() {
   const { mutate: declareIncident, isPending } = useDeclareIncident();
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
-  // Người có thể @-tag: participant active của ticket (GET .../participants).
-  // KHÔNG dùng tác giả đã chat — người mới add vào ticket chưa nhắn gì vẫn phải tag được.
+  // Who can be @-tagged: the ticket's active participants (GET .../participants).
+  // Do NOT use chat authors — someone newly added to the ticket who hasn't posted yet must still be taggable.
   const mentionCandidates = useMentionCandidates(ticketId);
   const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
   const { mutate: updateChat, isPending: editChatPending } =
@@ -171,9 +183,9 @@ export default function AdminTicketDetailPage() {
   if (!ticket) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <p className="text-muted-foreground">Không tìm thấy ticket.</p>
+        <p className="text-muted-foreground">Ticket not found.</p>
         <Button variant="outline" onClick={() => navigate("/admin/tickets")}>
-          Quay lại
+          Back
         </Button>
       </div>
     );
@@ -206,7 +218,7 @@ export default function AdminTicketDetailPage() {
               {ticket.isIncident && (
                 <Badge variant="destructive" className="text-xs">
                   <AlertTriangle size={10} className="mr-1" />
-                  Sự cố
+                  Incident
                 </Badge>
               )}
             </div>
@@ -231,22 +243,22 @@ export default function AdminTicketDetailPage() {
             onClick={() => setConfirmOpen(true)}
           >
             <AlertTriangle size={13} />
-            {ticket.isIncident ? "Đã là Incident" : "Declare Incident"}
+            {ticket.isIncident ? "Already an Incident" : "Declare Incident"}
           </Button>
         </div>
       </div>
 
       {/* ── Main content ────────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 flex">
-        {/* Left: Timeline / Bình luận */}
+        {/* Left: Timeline / Comments */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
           <Tabs defaultValue="timeline" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
-                <TabsTrigger value="timeline">Lịch sử hoạt động</TabsTrigger>
-                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                <TabsTrigger value="timeline">Activity history</TabsTrigger>
+                {/* `group` lets ChatUnreadBadge hide itself while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
-                  Bình luận
+                  Comments
                   <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
               </TabsList>
@@ -277,8 +289,6 @@ export default function AdminTicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={ticket.status === TicketStatusEnum.Closed}
                   ticketId={ticketId}
                   aiEnabled
@@ -334,9 +344,7 @@ export default function AdminTicketDetailPage() {
             {ticket.slaTimer ? (
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Trạng thái
-                  </span>
+                  <span className="text-xs text-muted-foreground">Status</span>
                   <span className="text-xs font-medium">
                     {ticket.slaTimer.status}
                   </span>
@@ -346,11 +354,13 @@ export default function AdminTicketDetailPage() {
                     Deadline
                   </span>
                   <span className="text-xs font-medium tabular-nums">
-                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                    {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Còn lại</span>
+                  <span className="text-xs text-muted-foreground">
+                    Remaining
+                  </span>
                   <span className="text-xs font-medium">
                     {ticket.slaTimer.remainingPercent.toFixed(0)}%
                   </span>
@@ -365,25 +375,23 @@ export default function AdminTicketDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
-                Chưa có SLA timer.
-              </p>
+              <p className="text-xs text-muted-foreground">No SLA timer yet.</p>
             )}
           </div>
 
-          {/* Trạng thái + thời gian xử lý */}
+          {/* Status + processing time */}
           <div className="p-4">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Trạng thái
+              Status
             </p>
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Hiện tại</span>
+                <span className="text-xs text-muted-foreground">Current</span>
                 <TicketStatusBadge status={ticket.status} />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  Thời gian xử lý
+                  Processing time
                 </span>
                 <ProcessingDurationTimer
                   activities={activities}
@@ -397,7 +405,7 @@ export default function AdminTicketDetailPage() {
           {ticket.description && (
             <div className="p-4">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Mô tả
+                Description
               </p>
               <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {ticket.description}
@@ -409,7 +417,7 @@ export default function AdminTicketDetailPage() {
           {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
             <div className="p-4">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Tệp đính kèm
+                Attachments
               </p>
               <TicketAttachments fileIds={ticket.attachmentFileIds} />
             </div>
@@ -419,7 +427,7 @@ export default function AdminTicketDetailPage() {
           {ticket.rejectionReason && (
             <div className="p-4">
               <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                Lý do từ chối
+                Rejection reason
               </p>
               <p className="text-xs leading-relaxed">
                 {ticket.rejectionReason}
@@ -431,7 +439,7 @@ export default function AdminTicketDetailPage() {
           {ticket.resolutionSummary && (
             <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
               <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                Kết quả giải quyết
+                Resolution
               </p>
               <p className="text-xs leading-relaxed whitespace-pre-wrap">
                 {ticket.resolutionSummary}
@@ -442,16 +450,16 @@ export default function AdminTicketDetailPage() {
           {/* Meta */}
           <div className="px-4 py-1">
             <SideInfoRow
-              label="Danh mục"
+              label="Category"
               value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
             />
-            <SideInfoRow label="Nguồn" value={ticket.origin} />
-            {/* Ai đang phụ trách — BE trả kèm staffName nên mọi role đọc được,
-                không cần gọi /api/staff (endpoint đó chỉ mở cho Admin/Manager). */}
-            <SideInfoRow label="Phụ trách chính" value={primaryHandlerName} />
+            <SideInfoRow label="Origin" value={ticket.origin} />
+            {/* Who is handling it — BE returns staffName inline so every role can read it,
+                no need to call /api/staff (that endpoint is Admin/Manager only). */}
+            <SideInfoRow label="Primary handler" value={primaryHandlerName} />
             {supporterNames.length > 0 && (
               <SideInfoRow
-                label="Hỗ trợ"
+                label="Supporters"
                 value={
                   <span className="flex flex-wrap justify-end gap-1">
                     {supporterNames.map((name) => (
@@ -463,51 +471,51 @@ export default function AdminTicketDetailPage() {
                 }
               />
             )}
-            <SideInfoRow label="Phạm vi" value={ticket.impactScope ?? null} />
-            <SideInfoRow label="Khẩn cấp" value={ticket.urgencyLevel ?? null} />
+            <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />
+            <SideInfoRow label="Urgency" value={ticket.urgencyLevel ?? null} />
             <SideInfoRow
-              label="Serial pin"
+              label="Battery serial"
               value={ticket.batterySerialNumber ?? null}
             />
             <SideInfoRow
-              label="Ngày tạo"
-              value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
-                locale: vi,
+              label="Created"
+              value={format(new Date(ticket.createdAt), "MM/dd/yyyy HH:mm", {
+                locale: enUS,
               })}
             />
             {ticket.detectedAt && (
               <SideInfoRow
-                label="Phát hiện lúc"
-                value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
-                  locale: vi,
+                label="Detected at"
+                value={format(new Date(ticket.detectedAt), "MM/dd/yyyy HH:mm", {
+                  locale: enUS,
                 })}
               />
             )}
-            {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+            {/* GH-866 — a single incident detection timestamp (replaces the old from/to pair). */}
             {ticket.detectedAt && (
               <SideInfoRow
-                label="Phát hiện lúc"
-                value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
-                  locale: vi,
+                label="Detected at"
+                value={format(new Date(ticket.detectedAt), "MM/dd/yyyy HH:mm", {
+                  locale: enUS,
                 })}
               />
             )}
             {ticket.updatedAt && (
               <SideInfoRow
-                label="Cập nhật"
-                value={format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm", {
-                  locale: vi,
+                label="Updated"
+                value={format(new Date(ticket.updatedAt), "MM/dd/yyyy HH:mm", {
+                  locale: enUS,
                 })}
               />
             )}
           </div>
 
-          {/* ── AI verify + nghi trùng (chỉ ticket Customer tạo thủ công) ── */}
+          {/* ── AI verify + suspected duplicate (only tickets created manually by a Customer) ── */}
           {ticket.origin === "ManualByCustomer" &&
             (ticket.aiVerifyStatus || ticket.suspectedDuplicateOfTicketId) && (
               <div className="px-4 py-3 space-y-2">
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Kiểm tra AI
+                  AI check
                 </p>
                 {ticket.aiVerifyStatus && (
                   <div className="flex items-center gap-2">
@@ -517,7 +525,7 @@ export default function AdminTicketDetailPage() {
                     />
                     {ticket.aiVerifyScore != null && (
                       <span className="text-xs text-muted-foreground">
-                        {(ticket.aiVerifyScore * 100).toFixed(0)}% hợp lệ
+                        {(ticket.aiVerifyScore * 100).toFixed(0)}% valid
                       </span>
                     )}
                   </div>
@@ -529,7 +537,9 @@ export default function AdminTicketDetailPage() {
                 )}
                 {ticket.suspectedDuplicateOfTicketId && (
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-                    <p className="font-medium">⚠ Nghi trùng ticket khác</p>
+                    <p className="font-medium">
+                      ⚠ Suspected duplicate of another ticket
+                    </p>
                     {ticket.duplicateReason && (
                       <p className="mt-0.5">{ticket.duplicateReason}</p>
                     )}
@@ -539,7 +549,7 @@ export default function AdminTicketDetailPage() {
                       className="mt-2 h-7"
                       onClick={() => setMergeOpen(true)}
                     >
-                      Gộp ticket
+                      Merge ticket
                     </Button>
                   </div>
                 )}
@@ -563,36 +573,34 @@ export default function AdminTicketDetailPage() {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Đánh dấu là Incident nghiêm trọng?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Mark as a major Incident?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ticket <strong>{ticket.code}</strong> sẽ được đánh dấu là Incident
-              và xử lý theo quy trình ưu tiên cao nhất. Hành động này không thể
-              hoàn tác.
+              Ticket <strong>{ticket.code}</strong> will be marked as an
+              Incident and handled under the highest-priority process. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
             <Label htmlFor="incident-description">
-              Mô tả lý do <span className="text-destructive">*</span>
+              Reason <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="incident-description"
-              placeholder="Mô tả ngắn lý do declare incident..."
+              placeholder="Briefly describe why you're declaring an incident..."
               value={incidentDescription}
               onChange={(e) => setIncidentDescription(e.target.value)}
             />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setConfirmOpen(false)}>
-              Hủy
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={handleConfirm}
               disabled={isPending || !incidentDescription.trim()}
             >
-              {isPending ? "Đang xử lý..." : "Xác nhận"}
+              {isPending ? "Processing..." : "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

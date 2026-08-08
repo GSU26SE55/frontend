@@ -40,7 +40,7 @@ import {
 
 interface Props {
   ticketId: string;
-  /** Priority ticket — quyết định tier tối thiểu của Primary Handler mới. */
+  /** Ticket priority — determines the new Primary Handler's minimum tier. */
   priority: TicketPriorityEnum | null;
   open: boolean;
   onClose: () => void;
@@ -79,10 +79,10 @@ export default function ReassignDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Điều chuyển Staff</DialogTitle>
+          <DialogTitle>Reassign Staff</DialogTitle>
           <p className="text-xs text-muted-foreground">
-            Staff phụ trách chính hiện tại sẽ chuyển thành Staff hỗ trợ. SLA
-            không được đặt lại.
+            The current Primary Handler will become a Supporter. The SLA is not
+            reset.
           </p>
         </DialogHeader>
         <Form {...form}>
@@ -92,7 +92,7 @@ export default function ReassignDialog({
               name="newPrimaryHandlerStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Staff phụ trách chính mới *</FormLabel>
+                  <FormLabel>New Primary Handler *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -106,7 +106,9 @@ export default function ReassignDialog({
                       <SelectTrigger>
                         <SelectValue
                           placeholder={
-                            loadingStaff ? "Đang tải..." : "Chọn nhân viên"
+                            loadingStaff
+                              ? "Loading..."
+                              : "Select a staff member"
                           }
                         />
                       </SelectTrigger>
@@ -114,7 +116,7 @@ export default function ReassignDialog({
                     <SelectContent alignItemWithTrigger={false}>
                       {staffList.length === 0 && (
                         <SelectItem value="_empty" disabled>
-                          Không có Staff khả dụng
+                          No Staff available
                         </SelectItem>
                       )}
                       {staffOptions.map((s) => (
@@ -124,7 +126,7 @@ export default function ReassignDialog({
                           disabled={!s.eligible}
                         >
                           {staffOptionLabel(s)}
-                          {!s.eligible && " — không đủ tier"}
+                          {!s.eligible && " — tier not sufficient"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -132,11 +134,13 @@ export default function ReassignDialog({
                   {tierHint && (
                     <p className="text-xs text-muted-foreground">{tierHint}</p>
                   )}
-                  {!loadingStaff && !hasEligibleStaff && staffList.length > 0 && (
-                    <p className="text-xs text-destructive">
-                      Không có Staff nào đủ tier cho ticket này.
-                    </p>
-                  )}
+                  {!loadingStaff &&
+                    !hasEligibleStaff &&
+                    staffList.length > 0 && (
+                      <p className="text-xs text-destructive">
+                        No Staff has a sufficient tier for this ticket.
+                      </p>
+                    )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -147,9 +151,9 @@ export default function ReassignDialog({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do điều chuyển</FormLabel>
+                  <FormLabel>Reassignment reason</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Lý do..." {...field} />
+                    <Textarea placeholder="Reason..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -158,10 +162,10 @@ export default function ReassignDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending || loadingStaff}>
-                {isPending ? "Đang xử lý..." : "Điều chuyển"}
+                {isPending ? "Processing..." : "Reassign"}
               </Button>
             </DialogFooter>
           </form>

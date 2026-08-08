@@ -30,8 +30,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [clearSession, session, setSession, status]);
 
-  // GH-106 — sau khi authenticated, lấy permission server-resolved (DB) override perm[] JWT.
-  // Gate isAuthenticated nằm trong useMyPermissions → tự chạy cho mọi flow login (reload/SPA).
+  // GH-106 — once authenticated, fetch server-resolved permissions (DB) to override the JWT perm[].
+  // The isAuthenticated gate lives inside useMyPermissions → runs automatically for every login flow (reload/SPA).
   const { data: permissions } = useMyPermissions();
 
   useEffect(() => {

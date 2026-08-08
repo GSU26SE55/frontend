@@ -43,7 +43,7 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Báo hoàn thành</DialogTitle>
+          <DialogTitle>Report resolution</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,10 +52,10 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
               name="resolutionSummary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tóm tắt cách giải quyết</FormLabel>
+                  <FormLabel>Resolution summary</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả cách bạn đã xử lý vấn đề..."
+                      placeholder="Describe how you resolved the issue..."
                       rows={4}
                       {...field}
                     />
@@ -71,10 +71,10 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
                 onClick={onClose}
                 disabled={isPending}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Xác nhận hoàn thành"}
+                {isPending ? "Processing..." : "Confirm resolution"}
               </Button>
             </DialogFooter>
           </form>

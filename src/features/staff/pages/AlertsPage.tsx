@@ -30,20 +30,22 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 const PAGE_SIZE = 10;
 
 const TYPE_LABEL: Record<number, string> = {
-  [NotificationTypeEnum.TicketCreated]: "Ticket mới",
-  [NotificationTypeEnum.TicketAssigned]: "Ticket được giao",
-  [NotificationTypeEnum.TicketStatusChanged]: "Đổi trạng thái",
-  [NotificationTypeEnum.TicketResolved]: "Ticket đã xử lý",
-  [NotificationTypeEnum.TicketClosed]: "Ticket đã đóng",
-  [NotificationTypeEnum.TicketEscalated]: "Chuyển cấp",
-  [NotificationTypeEnum.SlaWarning]: "SLA cảnh báo",
-  [NotificationTypeEnum.SlaBreached]: "SLA quá hạn",
-  [NotificationTypeEnum.BatteryAnomalyDetected]: "Bất thường pin",
-  [NotificationTypeEnum.EnvironmentalIncidentDetected]: "Sự cố môi trường",
-  [NotificationTypeEnum.EnvironmentalIncidentResolved]: "Đã xử lý môi trường",
-  [NotificationTypeEnum.AccountActivated]: "Tài khoản",
+  [NotificationTypeEnum.TicketCreated]: "New ticket",
+  [NotificationTypeEnum.TicketAssigned]: "Ticket assigned",
+  [NotificationTypeEnum.TicketStatusChanged]: "Status changed",
+  [NotificationTypeEnum.TicketResolved]: "Ticket resolved",
+  [NotificationTypeEnum.TicketClosed]: "Ticket closed",
+  [NotificationTypeEnum.TicketEscalated]: "Escalated",
+  [NotificationTypeEnum.SlaWarning]: "SLA warning",
+  [NotificationTypeEnum.SlaBreached]: "SLA breached",
+  [NotificationTypeEnum.BatteryAnomalyDetected]: "Battery anomaly",
+  [NotificationTypeEnum.EnvironmentalIncidentDetected]:
+    "Environmental incident",
+  [NotificationTypeEnum.EnvironmentalIncidentResolved]:
+    "Environmental incident resolved",
+  [NotificationTypeEnum.AccountActivated]: "Account",
   [NotificationTypeEnum.IncidentDeclared]: "Incident",
-  [NotificationTypeEnum.System]: "Hệ thống",
+  [NotificationTypeEnum.System]: "System",
 };
 
 function getStatusClass(status: number) {
@@ -51,15 +53,16 @@ function getStatusClass(status: number) {
 }
 
 function getStatusLabel(status: number) {
-  if (status === NotificationStatusEnum.Read) return "Đã đọc";
-  // Sprint 6.3 NOTI3-14 — Opened mạnh hơn Read; Delivered là bằng chứng giao hàng thật. Thiếu hai
-  // nhánh này thì cả hai rơi xuống "Đang chờ", ngược hẳn ý nghĩa.
-  if (status === NotificationStatusEnum.Opened) return "Đã mở";
-  if (status === NotificationStatusEnum.Delivered) return "Đã nhận";
-  if (status === NotificationStatusEnum.Sent) return "Đã gửi";
-  if (status === NotificationStatusEnum.Failed) return "Lỗi";
-  // Pending và Processing (GH-792) đều là "chưa xong" dưới góc nhìn người dùng.
-  return "Đang chờ";
+  if (status === NotificationStatusEnum.Read) return "Read";
+  // Sprint 6.3 NOTI3-14 — Opened is stronger than Read; Delivered is actual proof of
+  // delivery. Without these two branches, both would fall to "Pending", which is the
+  // opposite of their meaning.
+  if (status === NotificationStatusEnum.Opened) return "Opened";
+  if (status === NotificationStatusEnum.Delivered) return "Delivered";
+  if (status === NotificationStatusEnum.Sent) return "Sent";
+  if (status === NotificationStatusEnum.Failed) return "Failed";
+  // Pending and Processing (GH-792) are both "not done yet" from the user's point of view.
+  return "Pending";
 }
 
 function canOpenTicket(notification: NotificationDto) {
@@ -85,9 +88,10 @@ export default function AlertsPage() {
   const totalItems = data?.totalItems ?? 0;
   const totalPages =
     data?.totalPages ?? Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-  // Dùng helper thay vì tự so `!== Read`: định nghĩa "chưa đọc" của BE
-  // (GetUnreadCountQueryHandler) loại CẢ Read LẪN Opened, nên tự so sẽ đếm dư mọi record user đã
-  // bấm mở và badge lệch hẳn con số server trả về.
+  // Uses the helper instead of comparing `!== Read` directly: the BE's definition of
+  // "unread" (GetUnreadCountQueryHandler) excludes BOTH Read AND Opened, so a naive
+  // comparison would overcount every record the user already opened and the badge
+  // would drift from the number the server returns.
   const unreadCount = notifications.filter((item) =>
     isUnreadStatus(item.status),
   ).length;
@@ -105,10 +109,10 @@ export default function AlertsPage() {
             Staff &middot; Alerts
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Alerts & Báo cáo
+            Alerts & Reports
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Thông báo từ ticket, SLA và hệ thống.
+            Notifications from tickets, SLA, and the system.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -120,7 +124,7 @@ export default function AlertsPage() {
               setPage(1);
             }}
           >
-            Chưa đọc
+            Unread
           </Button>
           <Button
             variant="outline"
@@ -131,20 +135,20 @@ export default function AlertsPage() {
             <RefreshCw
               className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
             />
-            Làm mới
+            Refresh
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <KpiCard
-          label="Tổng thông báo"
+          label="Total notifications"
           value={isLoading ? "--" : totalItems}
           sub="items"
           icon={<Bell className="size-4" />}
         />
         <KpiCard
-          label="Chưa đọc trang này"
+          label="Unread on this page"
           value={isLoading ? "--" : unreadCount}
           sub="items"
           icon={<AlertTriangle className="size-4" />}
@@ -163,7 +167,7 @@ export default function AlertsPage() {
 
       <Card className="gap-0 py-0">
         <CardHeader className="border-b border-border py-4">
-          <CardTitle>Danh sách thông báo</CardTitle>
+          <CardTitle>Notification list</CardTitle>
         </CardHeader>
         {isLoading ? (
           <div className="p-4 space-y-3">
@@ -173,11 +177,11 @@ export default function AlertsPage() {
           </div>
         ) : isError ? (
           <CardContent className="py-10 text-center text-destructive">
-            Không thể tải thông báo.
+            Couldn't load notifications.
           </CardContent>
         ) : notifications.length === 0 ? (
           <CardContent className="py-10 text-center text-muted-foreground">
-            Không có thông báo phù hợp.
+            No matching notifications.
           </CardContent>
         ) : (
           <Table>
@@ -186,11 +190,11 @@ export default function AlertsPage() {
                 <TableHead className="w-12 text-center">
                   {TABLE_COLUMNS.index}
                 </TableHead>
-                <TableHead>Nội dung</TableHead>
-                <TableHead>Loại</TableHead>
+                <TableHead>Content</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>{TABLE_COLUMNS.status}</TableHead>
                 <TableHead>{TABLE_COLUMNS.time}</TableHead>
-                <TableHead className="text-right">Liên kết</TableHead>
+                <TableHead className="text-right">Link</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -232,7 +236,7 @@ export default function AlertsPage() {
                           navigate(`/staff/tickets/${item.entityId}`)
                         }
                       >
-                        Mở ticket
+                        Open ticket
                       </Button>
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
@@ -253,7 +257,7 @@ export default function AlertsPage() {
             disabled={page <= 1}
             onClick={() => setPage((value) => value - 1)}
           >
-            Trước
+            Previous
           </Button>
           <span className="text-sm text-muted-foreground">
             {page} / {totalPages}
@@ -264,7 +268,7 @@ export default function AlertsPage() {
             disabled={page >= totalPages}
             onClick={() => setPage((value) => value + 1)}
           >
-            Sau
+            Next
           </Button>
         </div>
       )}

@@ -181,8 +181,8 @@ export const useAddReaction = () => {
       ticketChatService
         .addReaction(ticketId, chatId, reactionType)
         .then((r) => r.data.data),
-    // BE trả aggregate mới nhất → ghi thẳng vào cache: người thả thấy đổi tức thì,
-    // không chờ refetch. SignalR ReactionChanged lo phần đồng bộ cho client khác.
+    // BE returns the latest aggregate → write it straight to the cache: the person who reacted sees the change instantly,
+    // without waiting for a refetch. SignalR ReactionChanged handles syncing for other clients.
     onSuccess: (data, { ticketId, chatId }) => {
       if (data) {
         qc.setQueryData(

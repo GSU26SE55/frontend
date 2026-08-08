@@ -16,13 +16,13 @@ export {
   NotificationBatchTargetKindEnum,
 } from "@/shared/enums/notification/notification-group.enum";
 
-/** Khớp giới hạn cột DB `name varchar(128)` và validate ở backend. */
+/** Matches the DB column limit `name varchar(128)` and backend validation. */
 export const GROUP_NAME_MAX = 128;
-/** Khớp `description varchar(512)`. */
+/** Matches `description varchar(512)`. */
 export const GROUP_DESCRIPTION_MAX = 512;
-/** Khớp `title varchar(200)` của cả lần gửi lẫn từng thông báo. */
+/** Matches `title varchar(200)` for both the broadcast and each notification. */
 export const BROADCAST_TITLE_MAX = 200;
-/** Khớp `body varchar(2000)`. */
+/** Matches `body varchar(2000)`. */
 export const BROADCAST_BODY_MAX = 2000;
 
 export interface NotificationGroupDto {
@@ -30,13 +30,13 @@ export interface NotificationGroupDto {
   name: string;
   description: string | null;
   kind: NotificationGroupKindEnum;
-  /** Chỉ có giá trị khi `kind = Role`. */
+  /** Only has a value when `kind = Role`. */
   roleFilter: string | null;
-  /** Nhóm hệ thống — ẩn nút sửa/xoá. */
+  /** System group — hides edit/delete buttons. */
   isSystem: boolean;
   /**
-   * Số người nhận **thực tế** — đã loại người có tài khoản ngừng hoạt động hoặc đã xoá.
-   * Đây là con số cần nhìn trước khi gửi, không phải số dòng trong bảng thành viên.
+   * **Actual** recipient count — excludes accounts that are inactive or deleted.
+   * This is the number to check before sending, not the row count in the member table.
    */
   memberCount: number;
   createdAt: string;
@@ -48,9 +48,9 @@ export interface NotificationGroupMemberDto {
   email: string;
   fullName: string;
   role: string;
-  /** `false` ⇒ còn trong nhóm nhưng sẽ KHÔNG nhận thông báo. Hiển thị mờ để admin dọn. */
+  /** `false` ⇒ still in the group but will NOT receive notifications. Displayed dimmed so admin can clean up. */
   isActive: boolean;
-  /** `null` với nhóm `Role` — không có dòng thành viên thật. */
+  /** `null` for `Role` groups — there's no real member row. */
   addedAt: string | null;
 }
 
@@ -79,16 +79,16 @@ export interface AddGroupMembersPayload {
   userIds: string[];
 }
 
-/** Ba con số tách riêng vì thêm hàng loạt gần như luôn có phần tử bị bỏ qua. */
+/** Three separate counts because a batch add almost always has some elements skipped. */
 export interface AddGroupMembersResult {
   added: number;
   alreadyMembers: number;
-  /** Id không có trong read-model tài khoản — thường là tài khoản vừa tạo, chưa đồng bộ kịp. */
+  /** Id not present in the account read-model — usually a newly created account that hasn't synced yet. */
   unknownAccounts: number;
   memberCount: number;
 }
 
-// ── Gửi hàng loạt ────────────────────────────────────────────────────────────────────────────
+// ── Broadcast send ───────────────────────────────────────────────────────────────────────────
 
 export interface BroadcastPayload {
   type: NotificationTypeEnum;
@@ -99,22 +99,23 @@ export interface BroadcastPayload {
   groupIds: string[];
   userIds: string[];
   /**
-   * 03/08/2026 — render nội dung qua **mẫu thông báo** thay vì dùng thẳng `title`/`body`.
+   * 03/08/2026 — render content via a **notification template** instead of using `title`/`body` directly.
    *
-   * `false` (mặc định): chữ admin gõ được gửi đi y nguyên.
+   * `false` (default): the text the admin typed is sent as-is.
    *
-   * `true`: máy chủ tra mẫu theo cặp (Loại × Kênh) và render với `payloadJson`. Phải render lúc
-   * gửi chứ không đổ sẵn chữ vào ô soạn, vì **mỗi kênh có mẫu riêng** — bản SMS nén ngắn lại do
-   * tính tiền theo đoạn — nên một lần gửi 3 kênh cho ra 3 nội dung khác nhau.
+   * `true`: the server looks up the template by pair (Type × Channel) and renders it with `payloadJson`.
+   * Must render at send time rather than pre-filling the compose box, because **each channel has its
+   * own template** — the SMS version is compressed shorter since billing is per-segment — so a single
+   * send to 3 channels produces 3 different contents.
    *
-   * `title`/`body` vẫn bắt buộc, trở thành **nội dung dự phòng** cho kênh không có mẫu khớp.
+   * `title`/`body` are still required, becoming the **fallback content** for channels without a matching template.
    */
   useTemplate?: boolean;
-  /** Giá trị các biến của mẫu, dạng JSON object. Chỉ có nghĩa khi `useTemplate = true`. */
+  /** Template variable values, as a JSON object. Only meaningful when `useTemplate = true`. */
   payloadJson?: string | null;
 }
 
-// ── Xem trước nội dung theo từng kênh khi bật "dùng mẫu" ─────────────────────────────────────
+// ── Preview content per channel when "use template" is enabled ─────────────────────────────────
 
 export interface BroadcastTemplatePreviewPayload {
   type: NotificationTypeEnum;
@@ -126,13 +127,13 @@ export interface BroadcastTemplatePreviewPayload {
 
 export interface BroadcastChannelPreviewDto {
   channel: NotificationChannelEnum;
-  /** `false` ⇒ cặp (Loại × Kênh) này không có mẫu, kênh đó dùng chữ admin gõ. */
+  /** `false` ⇒ this (Type × Channel) pair has no template, that channel uses the admin's typed text. */
   hasTemplate: boolean;
   title: string;
   body: string;
-  /** Biến mẫu gọi mà chưa có giá trị ⇒ chỗ đó render ra rỗng. Rỗng là tốt. */
+  /** Template variables referenced but without a value ⇒ that spot renders empty. Empty is fine. */
   missingVariables: string[];
-  /** Mẫu hỏng cú pháp ⇒ lúc gửi thật rơi về nội dung dự phòng. */
+  /** Template has broken syntax ⇒ falls back to fallback content at actual send time. */
   renderError?: string | null;
 }
 
@@ -143,12 +144,12 @@ export interface BroadcastPreviewPayload {
 }
 
 export interface BroadcastPreviewDto {
-  /** Số người nhận sau khi gom trùng — con số thật sẽ nhận. */
+  /** Recipient count after deduplication — the actual number that will receive it. */
   recipientCount: number;
   notificationCount: number;
   /**
-   * Tổng nếu cộng dồn từng nhóm mà KHÔNG gom trùng. Lớn hơn `recipientCount` nghĩa là các
-   * nhóm đang giao nhau — hiển thị chênh lệch để admin hiểu vì sao con số nhỏ hơn họ nhẩm.
+   * Sum if each group is added up WITHOUT deduplication. Greater than `recipientCount` means the
+   * groups overlap — the difference is shown so the admin understands why the number is smaller than expected.
    */
   rawCount: number;
   skippedUsers: number;
@@ -181,9 +182,10 @@ export interface NotificationBatchTargetDto {
   targetKind: NotificationBatchTargetKindEnum;
   groupId: string | null;
   /**
-   * Tên nhóm tại thời điểm gửi. Nhóm bị **xoá mềm** vẫn trả về ĐÚNG TÊN — backend cố ý không lọc
-   * dòng đã xoá, vì lịch sử mà mất tên thì người xem chỉ còn thấy "một nhóm nào đó".
-   * Chỉ `null` khi dòng nhóm bị xoá **cứng** khỏi DB, điều không xảy ra qua API.
+   * Group name at the time it was sent. A **soft-deleted** group still returns the CORRECT NAME — the
+   * backend intentionally doesn't filter out deleted rows, because if the name is lost from history,
+   * the viewer just sees "some group".
+   * Only `null` when the group row is **hard-deleted** from the DB, which doesn't happen via the API.
    */
   groupName: string | null;
   userId: string | null;

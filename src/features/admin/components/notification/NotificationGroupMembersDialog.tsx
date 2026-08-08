@@ -55,8 +55,9 @@ export default function NotificationGroupMembersDialog({
     },
   );
 
-  // Ô chọn người: tìm kiếm PHÍA SERVER. Cố ý không lấy `pageSize: 100` rồi lọc ở client như một
-  // số dropdown cũ trong repo — quá 100 tài khoản là âm thầm mất người, không có gì báo.
+  // People picker: search happens SERVER-SIDE. Deliberately not fetching `pageSize: 100` and
+  // filtering on the client like some older dropdowns in this repo — past 100 accounts that
+  // silently drops people with no indication.
   const { data: accountList, isFetching: isSearchingAccounts } =
     useAdminAccountList({
       pageSize: 20,
@@ -90,18 +91,19 @@ export default function NotificationGroupMembersDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Thành viên: {group.name}</DialogTitle>
+          <DialogTitle>Members: {group.name}</DialogTitle>
           <DialogDescription>
             {isRoleGroup ? (
               <>
-                Nhóm <b>theo vai trò</b> — thành viên tự suy ra từ tài khoản có
-                vai trò <b>{group.roleFilter}</b>, không thêm/bớt tay được. Cấp
-                hoặc thu vai trò cho tài khoản ở màn hình Tài khoản.
+                <b>Role-based</b> group — members are derived from accounts with
+                the <b>{group.roleFilter}</b> role and can't be added or removed
+                by hand. Grant or revoke the role on the Accounts screen.
               </>
             ) : (
               <>
-                Người có tài khoản đang ngừng hoạt động vẫn nằm trong danh sách
-                nhưng <b>không nhận được thông báo</b> — hiển thị mờ để bạn dọn.
+                People whose account is deactivated stay in the list but{" "}
+                <b>don't receive notifications</b> — dimmed so you can clean
+                them up.
               </>
             )}
           </DialogDescription>
@@ -109,9 +111,9 @@ export default function NotificationGroupMembersDialog({
 
         {!isRoleGroup && (
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-            <p className="text-xs font-medium">Thêm người vào nhóm</p>
+            <p className="text-xs font-medium">Add people to the group</p>
             <Input
-              placeholder="Tìm theo tên hoặc email…"
+              placeholder="Search by name or email…"
               value={pickerSearch}
               onChange={(e) => setPickerSearch(e.target.value)}
               className="h-8"
@@ -119,13 +121,13 @@ export default function NotificationGroupMembersDialog({
             <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-background">
               {isSearchingAccounts ? (
                 <p className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  Đang tìm…
+                  Searching…
                 </p>
               ) : candidates.length === 0 ? (
                 <p className="px-3 py-4 text-center text-xs text-muted-foreground">
                   {pickerSearch
-                    ? "Không tìm thấy tài khoản nào chưa ở trong nhóm."
-                    : "Gõ để tìm tài khoản."}
+                    ? "No matching accounts outside this group."
+                    : "Type to search for accounts."}
                 </p>
               ) : (
                 candidates.map((a) => (
@@ -143,7 +145,7 @@ export default function NotificationGroupMembersDialog({
                     </span>
                     {selected.includes(a.id) && (
                       <Badge variant="secondary" className="text-[10px]">
-                        đã chọn
+                        selected
                       </Badge>
                     )}
                   </button>
@@ -152,7 +154,7 @@ export default function NotificationGroupMembersDialog({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
-                Đã chọn {selected.length} người
+                {selected.length} selected
               </span>
               <Button
                 size="sm"
@@ -164,7 +166,7 @@ export default function NotificationGroupMembersDialog({
                 ) : (
                   <UserPlus className="mr-1 size-3.5" />
                 )}
-                Thêm vào nhóm
+                Add to group
               </Button>
             </div>
           </div>
@@ -172,7 +174,7 @@ export default function NotificationGroupMembersDialog({
 
         <div className="space-y-2">
           <Input
-            placeholder="Lọc trong danh sách thành viên…"
+            placeholder="Filter the member list…"
             value={memberSearch}
             onChange={(e) => {
               setMemberSearch(e.target.value);
@@ -184,11 +186,11 @@ export default function NotificationGroupMembersDialog({
           <div className="rounded-lg border border-border">
             {isLoading ? (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-                Đang tải…
+                Loading…
               </p>
             ) : (data?.items.length ?? 0) === 0 ? (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-                Nhóm chưa có thành viên nào.
+                No members in this group yet.
               </p>
             ) : (
               <ul className="divide-y divide-border">
@@ -208,7 +210,7 @@ export default function NotificationGroupMembersDialog({
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {m.role}
-                        {!m.isActive && " · tài khoản đang ngừng hoạt động"}
+                        {!m.isActive && " · account deactivated"}
                       </p>
                     </div>
                     {!isRoleGroup && (

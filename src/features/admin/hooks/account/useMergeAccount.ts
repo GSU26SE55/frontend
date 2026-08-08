@@ -3,7 +3,7 @@ import { adminAccountsService } from "@/features/admin/services/account/admin-ac
 import { KEY } from "@/shared/utils/queryKeys";
 import type { MergeAccountPayload } from "@/features/admin/types/account/admin.types";
 
-// #AUTH-47: Admin merge secondary vào primary → refetch danh sách account
+// #AUTH-47: Admin merges secondary into primary → refetch account list
 export const useMergeAccount = () => {
   const qc = useQueryClient();
   return useMutation({

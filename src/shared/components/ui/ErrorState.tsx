@@ -2,19 +2,19 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ErrorStateProps {
-  /** Thông báo hiển thị. Mặc định: lỗi tải dữ liệu chung. */
+  /** Message to display. Defaults to a generic load-failure message. */
   message?: string;
-  /** Gọi refetch khi bấm "Thử lại". Không truyền → ẩn nút. */
+  /** Called when "Retry" is clicked. Not passed → button is hidden. */
   onRetry?: () => void;
   className?: string;
 }
 
 /**
- * State lỗi dùng chung cho list/detail khi query `isError`.
- * Trước đây nhiều page bỏ qua isError → lỗi mạng hiển thị nhầm thành empty state.
+ * Shared error state for list/detail views when the query is `isError`.
+ * Previously many pages ignored isError → network errors were mistakenly shown as an empty state.
  */
 export function ErrorState({
-  message = "Không thể tải dữ liệu. Vui lòng thử lại.",
+  message = "Couldn't load data. Please try again.",
   onRetry,
   className,
 }: ErrorStateProps) {
@@ -26,7 +26,7 @@ export function ErrorState({
       <p className="text-sm text-muted-foreground max-w-sm">{message}</p>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          Thử lại
+          Retry
         </Button>
       )}
     </div>

@@ -5,7 +5,7 @@ export default function EnvironmentalIncidentsPage() {
   const { data } = useSiteList({ pageSize: 100 });
   return (
     <EnvironmentalIncidentsView
-      subtitle="Admin · Sự cố môi trường"
+      subtitle="Admin · Environmental incidents"
       sites={data?.items}
     />
   );

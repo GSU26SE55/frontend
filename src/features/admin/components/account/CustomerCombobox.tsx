@@ -11,7 +11,7 @@ interface CustomerComboboxProps {
 }
 
 /**
- * Select khách hàng có ô tìm kiếm — tìm theo cả tên lẫn email.
+ * Customer select with a search box — matches on both name and email.
  */
 export default function CustomerCombobox({
   id,
@@ -42,9 +42,9 @@ export default function CustomerCombobox({
       value={value}
       onChange={onChange}
       disabled={disabled}
-      placeholder="-- Chọn khách hàng --"
-      searchPlaceholder="Tìm theo tên hoặc email..."
-      emptyText="Không tìm thấy khách hàng"
+      placeholder="-- Select a customer --"
+      searchPlaceholder="Search by name or email..."
+      emptyText="No matching customers"
     />
   );
 }

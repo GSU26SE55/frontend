@@ -1,18 +1,19 @@
-// Tên cột table dùng chung (lặp ≥2 bảng). Cột đặc thù 1 bảng giữ tại chỗ.
-// Dùng: <TableHead>{TABLE_COLUMNS.index}</TableHead>
+// Shared table column names (repeated across ≥2 tables). Columns specific to a
+// single table stay where they are.
+// Usage: <TableHead>{TABLE_COLUMNS.index}</TableHead>
 
 export const TABLE_COLUMNS = {
-  index: "STT",
-  actions: "Thao tác",
-  status: "Trạng thái",
-  unit: "Đơn vị",
+  index: "#",
+  actions: "Actions",
+  status: "Status",
+  unit: "Unit",
   ticket: "Ticket",
-  time: "Thời gian",
+  time: "Time",
   sla: "SLA",
-  detectedAt: "Phát hiện lúc",
-  source: "Nguồn",
-  severity: "Mức độ",
-  expiresAt: "Hết hạn",
+  detectedAt: "Detected at",
+  source: "Source",
+  severity: "Severity",
+  expiresAt: "Expires",
   channel: "Channel",
   calibrated: "Calibrated",
 } as const;

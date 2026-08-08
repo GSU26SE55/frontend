@@ -5,20 +5,23 @@ import {
 } from "@/shared/enums/notification/notification.enum";
 
 export const createNotificationSchema = z.object({
-  userId: z.string().uuid("UserId phải là UUID hợp lệ"),
+  userId: z.string().uuid("UserId must be a valid UUID"),
   type: z.nativeEnum(NotificationTypeEnum),
   channel: z.nativeEnum(NotificationChannelEnum),
   title: z
     .string()
     .trim()
-    .min(1, "Title không được trống")
-    .max(200, "Title tối đa 200 ký tự"),
+    .min(1, "Title is required")
+    .max(200, "Title must be at most 200 characters"),
   body: z
     .string()
     .trim()
-    .min(1, "Body không được trống")
-    .max(2000, "Body tối đa 2000 ký tự"),
-  entityType: z.string().max(100, "EntityType tối đa 100 ký tự").optional(),
+    .min(1, "Body is required")
+    .max(2000, "Body must be at most 2000 characters"),
+  entityType: z
+    .string()
+    .max(100, "EntityType must be at most 100 characters")
+    .optional(),
   bypassQuietHours: z.boolean().optional(),
 });
 

@@ -126,9 +126,9 @@ export default function ThresholdConfigDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Cấu hình ngưỡng cảnh báo</DialogTitle>
+          <DialogTitle>Configure alert thresholds</DialogTitle>
           <DialogDescription>
-            Loại pin: <strong>{batteryType?.name}</strong>
+            Battery type: <strong>{batteryType?.name}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -141,14 +141,18 @@ export default function ThresholdConfigDialog({
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {field("voltageMin", "Điện áp tối thiểu (V)")}
-              {field("voltageMax", "Điện áp tối đa (V)")}
-              {field("temperatureMin", "Nhiệt độ tối thiểu (°C)")}
-              {field("temperatureMax", "Nhiệt độ tối đa (°C)")}
+              {field("voltageMin", "Minimum voltage (V)")}
+              {field("voltageMax", "Maximum voltage (V)")}
+              {field("temperatureMin", "Minimum temperature (°C)")}
+              {field("temperatureMax", "Maximum temperature (°C)")}
               {field("socWarningThreshold", "SOC Warning (%)")}
               {field("socCriticalThreshold", "SOC Critical (%)")}
-              {field("currentMaxCharge", "Dòng nạp tối đa (A)", true)}
-              {field("currentMaxDischarge", "Dòng xả tối đa (A)", true)}
+              {field("currentMaxCharge", "Maximum charge current (A)", true)}
+              {field(
+                "currentMaxDischarge",
+                "Maximum discharge current (A)",
+                true,
+              )}
               {field("sohWarningThreshold", "SOH Warning (%)", true)}
               {field("sohCriticalThreshold", "SOH Critical (%)", true)}
             </div>
@@ -159,10 +163,10 @@ export default function ThresholdConfigDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                Lưu ngưỡng
+                Save thresholds
               </Button>
             </DialogFooter>
           </form>

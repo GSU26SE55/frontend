@@ -79,7 +79,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Mời người dùng</DialogTitle>
+          <DialogTitle>Invite user</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -98,11 +98,11 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="invite-fullName">
-              Họ và tên <span className="text-red-500">*</span>
+              Full name <span className="text-red-500">*</span>
             </Label>
             <Input
               id="invite-fullName"
-              placeholder="Nguyễn Văn A"
+              placeholder="Nguyen Van A"
               {...register("fullName")}
             />
             {errors.fullName && (
@@ -110,7 +110,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
             )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="invite-phone">Số điện thoại</Label>
+            <Label htmlFor="invite-phone">Phone number</Label>
             <Input
               id="invite-phone"
               {...register("phoneNumber")}
@@ -136,7 +136,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn role" />
+                    <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {roles.map((r) => (
@@ -154,7 +154,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -162,7 +162,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Gửi lời mời
+              Send invite
             </Button>
           </DialogFooter>
         </form>

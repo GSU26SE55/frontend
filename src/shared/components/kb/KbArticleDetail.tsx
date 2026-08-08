@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { isHtmlContent } from "@/shared/lib/isHtmlContent";
 import { RichContentView } from "@/shared/components/editor/RichContentView";
 
-// ── Numbered list detection ───────────────────────────────────────────────────
+// ── Numbered list detection ────────────────────────────────────────────────────
 function isNumberedList(text: string): boolean {
   const lines = text
     .split("\n")
@@ -40,10 +40,10 @@ function parseLines(text: string): string[] {
     .filter(Boolean);
 }
 
-// ── Section content renderer ─────────────────────────────────────────────────
+// ── Section content renderer ──────────────────────────────────────────────────
 export function SectionContent({ text }: { text: string }) {
-  // Bài soạn bằng rich text (Tiptap) → render HTML đã sanitize.
-  // Bài cũ vẫn là text thuần → giữ nguyên cách hiển thị cũ bên dưới.
+  // Articles written with rich text (Tiptap) → render sanitized HTML.
+  // Older articles are still plain text → keep the old display logic below.
   if (isHtmlContent(text)) {
     return <RichContentView html={text} className="text-foreground/80" />;
   }
@@ -72,7 +72,7 @@ export function SectionContent({ text }: { text: string }) {
   );
 }
 
-// ── Sidebar metadata row ─────────────────────────────────────────────────────
+// ── Sidebar metadata row ──────────────────────────────────────────────────────
 function MetaItem({
   icon: Icon,
   label,
@@ -93,7 +93,7 @@ function MetaItem({
   );
 }
 
-// ── Loading skeleton ─────────────────────────────────────────────────────────
+// ── Loading skeleton ──────────────────────────────────────────────────────────
 export function KbArticleDetailSkeleton() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-4">
@@ -113,18 +113,18 @@ export function KbArticleDetailSkeleton() {
   );
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Main export ────────────────────────────────────────────────────────────────
 interface KbArticleDetailProps {
   article: KbArticleDTO;
   backUrl: string;
   breadcrumb: string;
   /** Publish / Archive buttons */
   actions?: React.ReactNode;
-  /** Nếu có → hiện nút "Chỉnh sửa" điều hướng sang trang edit riêng. */
+  /** When set → shows an "Edit" button that navigates to a dedicated edit page. */
   onEdit?: () => void;
   onMarkHelpful?: () => void;
   helpfulPending?: boolean;
-  /** Mở dialog lịch sử phiên bản từ banner "chờ phê duyệt". */
+  /** Opens the version history dialog from the "pending review" banner. */
   onViewVersions?: () => void;
 }
 
@@ -143,7 +143,7 @@ export function KbArticleDetail({
   return (
     <>
       <div className="p-6 max-w-6xl mx-auto space-y-5">
-        {/* ── Header ─────────────────────────────────────────────────────── */}
+        {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="flex items-start gap-3">
           <Button
             variant="ghost"
@@ -168,19 +168,19 @@ export function KbArticleDetail({
             {onEdit && (
               <Button size="sm" className="gap-1.5" onClick={onEdit}>
                 <Pencil className="size-3.5" />
-                Chỉnh sửa
+                Edit
               </Button>
             )}
           </div>
         </div>
 
-        {/* ── Cảnh báo bản chờ duyệt / bị từ chối ──────────────────────── */}
+        {/* ── Pending review / rejected notice ─────────────────────────── */}
         <KbPendingReviewNotice
           article={article}
           onViewVersions={onViewVersions}
         />
 
-        {/* ── Two-column body (content + meta) ─────────────────────────── */}
+        {/* ── Two-column body (content + meta) ──────────────────────────── */}
         <div className="grid lg:grid-cols-[1fr_272px] gap-5 items-start">
           {/* Left — article content */}
           <div className="border border-border rounded-xl overflow-hidden bg-card">
@@ -191,7 +191,7 @@ export function KbArticleDetail({
                   <BookOpen size={14} className="text-muted-foreground" />
                 </div>
                 <h2 className="text-base font-semibold text-foreground">
-                  Nội dung
+                  Content
                 </h2>
               </div>
               {/* Content */}
@@ -204,7 +204,7 @@ export function KbArticleDetail({
             {/* Stats */}
             <div className="px-4 py-4">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Thống kê
+                Stats
               </p>
               <div className="flex gap-5">
                 <div className="flex items-center gap-1.5 text-sm">
@@ -212,9 +212,7 @@ export function KbArticleDetail({
                   <span className="font-semibold tabular-nums">
                     {article.viewCount}
                   </span>
-                  <span className="text-muted-foreground text-xs">
-                    lượt xem
-                  </span>
+                  <span className="text-muted-foreground text-xs">views</span>
                 </div>
                 <button
                   type="button"
@@ -227,7 +225,7 @@ export function KbArticleDetail({
                       "cursor-pointer hover:text-primary transition-colors",
                     (!onMarkHelpful || helpfulPending) && "cursor-default",
                   )}
-                  title={onMarkHelpful ? "Đánh dấu hữu ích" : undefined}
+                  title={onMarkHelpful ? "Mark as helpful" : undefined}
                 >
                   <ThumbsUp
                     size={13}
@@ -239,7 +237,7 @@ export function KbArticleDetail({
                   <span className="font-semibold tabular-nums">
                     {article.helpfulCount}
                   </span>
-                  <span className="text-muted-foreground text-xs">hữu ích</span>
+                  <span className="text-muted-foreground text-xs">helpful</span>
                 </button>
               </div>
             </div>
@@ -247,38 +245,38 @@ export function KbArticleDetail({
             {/* Info */}
             <div className="px-4 py-4 space-y-3.5">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Thông tin
+                Info
               </p>
               <MetaItem
                 icon={Hash}
-                label="Mã bài viết"
+                label="Article code"
                 value={<span className="font-mono">{article.code}</span>}
               />
               <MetaItem
                 icon={Tag}
-                label="Danh mục"
+                label="Category"
                 value={KbCategoryLabel[article.category] ?? article.category}
               />
               <MetaItem
                 icon={RefreshCcw}
-                label="Phiên bản"
+                label="Version"
                 value={`v${article.version}`}
               />
               <MetaItem
                 icon={CalendarDays}
-                label="Ngày tạo"
-                value={format(new Date(article.createdAt), "dd/MM/yyyy", {
-                  locale: vi,
+                label="Created"
+                value={format(new Date(article.createdAt), "MM/dd/yyyy", {
+                  locale: enUS,
                 })}
               />
               {article.updatedAt && (
                 <MetaItem
                   icon={Clock}
-                  label="Cập nhật lần cuối"
+                  label="Last updated"
                   value={format(
                     new Date(article.updatedAt),
-                    "dd/MM/yyyy HH:mm",
-                    { locale: vi },
+                    "MM/dd/yyyy HH:mm",
+                    { locale: enUS },
                   )}
                 />
               )}

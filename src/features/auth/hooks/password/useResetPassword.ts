@@ -11,7 +11,7 @@ export const useResetPassword = (onSuccess: () => void) => {
     onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? "Đặt lại mật khẩu thất bại");
+        toast.error(res.message ?? "Couldn't reset the password");
         return;
       }
       toast.success(AUTH_MESSAGES.password.reset);

@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { NotificationCategoryEnum } from "@/shared/enums/notification/notification.enum";
 
-// 1 dòng nhóm — BE bắt buộc đủ 4 kênh trong mỗi dòng: bỏ trống 1 kênh sẽ được ghi
-// thành false chứ KHÔNG giữ giá trị cũ ("vá theo nhóm", không vá theo từng ô kênh).
+// One category row — the BE requires all 4 channels in every row: leaving a
+// channel out writes it as false rather than KEEPING the old value (patching is
+// per row, not per channel cell).
 export const notificationCategoryRowSchema = z.object({
   category: z.nativeEnum(NotificationCategoryEnum),
   pushEnabled: z.boolean(),
@@ -11,7 +12,8 @@ export const notificationCategoryRowSchema = z.object({
   inAppEnabled: z.boolean(),
 });
 
-// Form giữ đủ 6 dòng (BE luôn trả 6); lúc submit mới lọc ra dòng đã đổi.
+// The form keeps all 6 rows (the BE always returns 6); only the changed rows
+// are filtered out at submit time.
 export const notificationMatrixSchema = z.object({
   items: z.array(notificationCategoryRowSchema).length(6),
 });

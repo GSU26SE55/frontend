@@ -5,33 +5,35 @@ import AuthImage from "@/shared/components/media/AuthImage";
 import { useDownloadChatAttachment } from "@/shared/hooks/ticket/useTicketChatActions";
 
 interface TicketAttachmentsProps {
-  // BE trả về mảng FileId (string[]) — không kèm metadata (fileName/contentType).
+  // BE returns an array of FileId (string[]) — no metadata (fileName/contentType) included.
   fileIds?: string[] | null;
-  // Nhãn hiển thị phía trên lưới ảnh; truyền null/"" để ẩn nhãn. Mặc định "Ảnh đính kèm".
+  // Label shown above the image grid; pass null/"" to hide it. Defaults to "Attachments".
   label?: string | null;
-  // Thumbnail nhỏ hơn cho ngữ cảnh inline (comment, nhật ký bảo trì).
+  // Smaller thumbnail for inline contexts (comment, maintenance log).
   compact?: boolean;
-  // GH-133 C3 — khi có đủ ticketId + chatId, hiện nút download qua endpoint chat-attachment
-  // có virus-scan gating (200 url · 202 đang scan · 451 nhiễm). BE khớp {attachmentId} theo FileId.
+  // GH-133 C3 — when both ticketId + chatId are present, shows a download button via the
+  // chat-attachment endpoint with virus-scan gating (200 url · 202 scanning · 451 infected).
+  // The BE matches {attachmentId} by FileId.
   ticketId?: string;
   chatId?: string;
 }
 
 /**
- * Hiển thị ảnh đính kèm (ticket attachment, ảnh trong comment, ảnh bảo trì...).
- * Ảnh tải qua AuthImage (kèm Bearer). BE chỉ trả FileId nên hiển thị tất cả dạng ảnh;
- * AuthImage tự xử lý trường hợp file không phải ảnh (hiển thị fallback của nó).
+ * Displays attached images (ticket attachment, image in a comment, maintenance photo...).
+ * Images load via AuthImage (with Bearer). The BE only returns FileId so it renders
+ * everything as an image; AuthImage handles the case where the file isn't an image
+ * (shows its own fallback).
  */
 export default function TicketAttachments({
   fileIds,
-  label = "Ảnh đính kèm",
+  label = "Attachments",
   compact = false,
   ticketId,
   chatId,
 }: TicketAttachmentsProps) {
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const downloadM = useDownloadChatAttachment();
-  // Narrow ticketId/chatId trong closure — tránh non-null assertion (eslint no-non-null-assertion).
+  // Narrow ticketId/chatId inside the closure — avoids a non-null assertion (eslint no-non-null-assertion).
   const handleDownload =
     ticketId && chatId
       ? (fileId: string) =>
@@ -55,15 +57,15 @@ export default function TicketAttachments({
             >
               <AuthImage
                 fileId={fileId}
-                alt="Ảnh đính kèm"
+                alt="Attachment"
                 className="h-full w-full object-cover"
               />
             </button>
             {handleDownload && (
               <button
                 type="button"
-                aria-label="Tải xuống"
-                title="Tải xuống (quét virus)"
+                aria-label="Download"
+                title="Download (virus scan)"
                 disabled={downloadM.isPending}
                 onClick={() => handleDownload(fileId)}
                 className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-md bg-background/80 text-foreground opacity-0 shadow-sm transition-opacity group-hover/att:opacity-100 hover:bg-background disabled:opacity-40"
@@ -80,11 +82,11 @@ export default function TicketAttachments({
         onOpenChange={(open) => !open && setPreviewFileId(null)}
       >
         <DialogContent className="max-w-3xl">
-          <DialogTitle className="sr-only">Xem ảnh đính kèm</DialogTitle>
+          <DialogTitle className="sr-only">View attachment</DialogTitle>
           {previewFileId && (
             <AuthImage
               fileId={previewFileId}
-              alt="Ảnh đính kèm"
+              alt="Attachment"
               className="max-h-[80vh] w-full object-contain"
             />
           )}

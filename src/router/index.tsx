@@ -21,6 +21,7 @@ import ForgotPasswordPage from "@/features/auth/pages/ForgotPasswordPage";
 import AcceptInvitePage from "@/features/auth/pages/AcceptInvitePage";
 import AccountSettingsPage from "@/features/auth/pages/AccountSettingsPage";
 import NotificationInboxPage from "@/shared/pages/NotificationInboxPage";
+import NotificationUnsubscribePage from "@/shared/pages/NotificationUnsubscribePage";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import AuditLogsPage from "@/features/admin/pages/AuditLogsPage";
 import BatteryAuditLogsPage from "@/features/admin/pages/BatteryAuditLogsPage";
@@ -115,9 +116,13 @@ const router = createBrowserRouter([
     element: <GoogleCallbackPage />,
   },
   {
-    // CUSTOMER login trên web → điều hướng về đây (không dùng web, dùng Mobile App)
+    // CUSTOMER login on web → redirected here (web not supported, use the Mobile App)
     path: "/use-mobile-app",
     element: <UseMobileAppPage />,
+  },
+  {
+    path: "/notification-unsubscribe",
+    element: <NotificationUnsubscribePage />,
   },
   {
     path: "/unauthorized",
@@ -126,7 +131,7 @@ const router = createBrowserRouter([
         <div className="text-center">
           <h1 className="text-4xl font-semibold text-destructive">403</h1>
           <p className="mt-2 text-muted-foreground">
-            Bạn không có quyền truy cập trang này.
+            You do not have permission to access this page.
           </p>
         </div>
       </div>
@@ -141,14 +146,14 @@ const router = createBrowserRouter([
         children: [{ index: true, element: <AccountSettingsPage /> }],
       },
       {
-        // Hộp thư dùng chung cho mọi role (giống /settings) — nội dung đã lọc theo
-        // UserId trong JWT ở BE nên không cần nhân bản route cho từng role.
+        // Inbox shared across every role (like /settings) — the content is already
+        // filtered by the UserId in the JWT on the BE, so no need to duplicate the route per role.
         path: "/notifications",
         element: <RoleAwareAppLayout />,
         children: [{ index: true, element: <NotificationInboxPage /> }],
       },
       {
-        // #AUTH-51: Device B confirm — chỉ cần đăng nhập (mọi role), không qua AppLayout
+        // #AUTH-51: Device B confirm — only requires login (any role), bypasses AppLayout
         path: "/2fa/cross-device-confirm",
         element: <CrossDeviceConfirmPage />,
       },

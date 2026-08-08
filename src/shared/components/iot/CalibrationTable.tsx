@@ -52,7 +52,7 @@ export default function CalibrationTable({
             <TableHead>{TABLE_COLUMNS.unit}</TableHead>
             <TableHead>{TABLE_COLUMNS.calibrated}</TableHead>
             <TableHead>{TABLE_COLUMNS.expiresAt}</TableHead>
-            {canDelete && <TableHead className="text-right">Xóa</TableHead>}
+            {canDelete && <TableHead className="text-right">Delete</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -88,7 +88,7 @@ export default function CalibrationTable({
                 colSpan={canDelete ? 7 : 6}
                 className="text-center text-muted-foreground py-8"
               >
-                Chưa có calibration
+                No calibration yet
               </TableCell>
             </TableRow>
           )}
@@ -101,9 +101,9 @@ export default function CalibrationTable({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa calibration?</AlertDialogTitle>
+            <AlertDialogTitle>Delete calibration?</AlertDialogTitle>
             <AlertDialogDescription>
-              Thao tác này không thể hoàn tác.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -119,7 +119,7 @@ export default function CalibrationTable({
                 setConfirmId(null);
               }}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

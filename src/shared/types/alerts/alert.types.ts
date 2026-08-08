@@ -12,11 +12,12 @@ export {
 
 export interface AlertDto {
   id: string;
-  // Chuỗi rỗng "" (KHÔNG phải null) cho alert cấp SITE — ambient (HighAmbientTemp/
-  // HighHumidity/HighTempHumidityCombo) hoặc EnvironmentalIncident. Khi đó dùng `siteId`.
+  // Empty string "" (NOT null) for SITE-level alerts — ambient (HighAmbientTemp/
+  // HighHumidity/HighTempHumidityCombo) or EnvironmentalIncident. Use `siteId` in
+  // that case.
   batteryAssetId: string;
   batterySerialNumber: string;
-  // Non-null cho alert cấp site; null với alert gắn 1 pin cụ thể.
+  // Non-null for site-level alerts; null for alerts tied to one specific battery.
   siteId: string | null;
   anomalyType: AnomalyTypeEnum;
   severity: AlertSeverityEnum;
@@ -41,4 +42,25 @@ export interface AlertListParams {
   status?: AlertStatusEnum;
   from?: string;
   to?: string;
+}
+
+export interface AiPrescriptionDto {
+  prescription: string;
+  actionSteps: string[];
+  ppeRequired: string[];
+  sopReferences: string[];
+  safetyWarnings: string[];
+  escalationConditions: string[];
+  humanVerificationRequired: boolean;
+  enriched: boolean;
+  llmProvider: string;
+  blocked: boolean;
+  cached: boolean;
+  prescriptionId: string | null;
+}
+
+export interface SubmitPrescriptionFeedbackCommand {
+  status: "accepted" | "edited" | "rejected";
+  editedSteps?: string[] | null;
+  note?: string | null;
 }

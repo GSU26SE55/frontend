@@ -8,12 +8,15 @@ export default function NotificationAdminPage() {
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           <BellRing className="inline size-3 mr-1 -mt-0.5" />
-          Thông báo
+          Notifications
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Gửi thông báo</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Send notification
+        </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Gửi cho nhiều nhóm và cá nhân trong một lần. Người vừa ở trong nhóm
-          vừa được chọn đích danh chỉ nhận <b>một</b> lần.
+          Send to multiple groups and individuals at once. Someone who is both
+          in a group and individually selected receives <b>only one</b>{" "}
+          notification.
         </p>
       </div>
 

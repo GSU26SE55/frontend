@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,7 +56,6 @@ import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAs
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { checkPermission, P } from "@/shared/lib/authz";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
@@ -103,7 +102,7 @@ export default function TicketDetailPage() {
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
-  // Tab chat: bình luận mới gửi theo tab đang mở (public/internal).
+  // Chat tab: new comments are sent under whichever tab is active (public/internal).
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [composerPrefill, setComposerPrefill] = useState({
@@ -115,12 +114,12 @@ export default function TicketDetailPage() {
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
 
-  // Realtime: invalidate tickets.chats khi ChatAdded (cùng key với useStaffTicketComments)
-  // + typing indicator (typingNames render "đang gõ", sendTyping báo khi mình gõ).
+  // Realtime: invalidates tickets.chats on ChatAdded (same key as useStaffTicketComments)
+  // + typing indicator (typingNames renders "is typing", sendTyping reports when we type).
   const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
 
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
-  // Tên người phụ trách — lấy thẳng từ assignments (BE đã kèm staffName).
+  // Handler's name — taken directly from assignments (BE already includes staffName).
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
   const { data: activities = [], isLoading: activitiesLoading } =
@@ -145,8 +144,9 @@ export default function TicketDetailPage() {
     return Array.from(ids);
   }, [ticket, comments]);
 
-  // Người có thể @-tag: participant active của ticket (GET .../participants).
-  // KHÔNG dùng tác giả đã chat — người mới add vào ticket chưa nhắn gì vẫn phải tag được.
+  // People who can be @-tagged: active participants of the ticket (GET .../participants).
+  // Does NOT use chat authors — someone newly added to the ticket who hasn't chatted yet
+  // must still be taggable.
   const mentionCandidates = useMentionCandidates(ticketId);
 
   const startMutation = useStartTicket(ticketId);
@@ -154,7 +154,7 @@ export default function TicketDetailPage() {
   const resumeMutation = useResumeTicket(ticketId);
   const resolveMutation = useResolveTicket(ticketId);
   const escalateMutation = useEscalateTicket(ticketId);
-  // Outbox chat: worker gửi tuần tự + retry; composer chỉ enqueue.
+  // Outbox chat: a worker sends sequentially + retries; the composer only enqueues.
   const {
     pending: pendingChats,
     enqueue: enqueueChat,
@@ -177,10 +177,10 @@ export default function TicketDetailPage() {
     return (
       <div className="text-center py-16">
         <p className="text-destructive mb-4">
-          Không tìm thấy ticket hoặc bạn không có quyền truy cập.
+          Ticket not found, or you don't have access.
         </p>
         <Button variant="outline" onClick={() => navigate("/staff/tickets")}>
-          Quay lại danh sách
+          Back to list
         </Button>
       </div>
     );
@@ -203,11 +203,12 @@ export default function TicketDetailPage() {
   );
   const canComment = isInProgress || isWaiting || isAssigned;
   const canAddLog = isInProgress || isWaiting;
-  // Khoá sửa log khi ticket đã Resolved/ClosedPendingRate/Closed (BE enforce).
+  // Locks log editing once the ticket is Resolved/ClosedPendingRate/Closed (BE enforced).
   const canEditLog = isInProgress || isWaiting;
-  // Gắn KB reference: khớp BE (AddTicketKbReferenceCommandHandler) — chặn từ
-  // ClosedPendingRate/Closed. Ở Resolved vẫn cho gắn nhưng CHỈ 2 type
-  // after-resolve (GeneratedAfterResolve/ProvidedToCustomer) — guard H.
+  // Attaching a KB reference: matches the BE (AddTicketKbReferenceCommandHandler) —
+  // blocked from ClosedPendingRate/Closed onward. At Resolved, attaching is still
+  // allowed but ONLY for the 2 after-resolve types
+  // (GeneratedAfterResolve/ProvidedToCustomer) — guard H.
   const canAddKb = !(
     [
       TicketStatusEnum.ClosedPendingRate,
@@ -262,7 +263,7 @@ export default function TicketDetailPage() {
               <TicketPriorityBadge priority={ticket.priority} />
               {ticket.isIncident && (
                 <Badge variant="destructive" className="text-xs">
-                  Sự cố
+                  Incident
                 </Badge>
               )}
             </div>
@@ -287,7 +288,7 @@ export default function TicketDetailPage() {
               onClick={() => startMutation.mutate(undefined)}
               disabled={startMutation.isPending}
             >
-              {startMutation.isPending ? "Đang xử lý..." : "Bắt đầu xử lý"}
+              {startMutation.isPending ? "Processing..." : "Start handling"}
             </Button>
           )}
           {isInProgress && (
@@ -297,21 +298,21 @@ export default function TicketDetailPage() {
                 size="sm"
                 onClick={() => setHoldOpen(true)}
               >
-                Tạm dừng
+                Hold
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setResolveOpen(true)}
               >
-                Báo hoàn thành
+                Report resolution
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setEscalateOpen(true)}
               >
-                Yêu cầu chuyển cấp
+                Request escalation
               </Button>
             </>
           )}
@@ -321,7 +322,7 @@ export default function TicketDetailPage() {
               onClick={() => resumeMutation.mutate(undefined)}
               disabled={resumeMutation.isPending}
             >
-              {resumeMutation.isPending ? "Đang xử lý..." : "Tiếp tục xử lý"}
+              {resumeMutation.isPending ? "Processing..." : "Resume handling"}
             </Button>
           )}
         </div>
@@ -334,27 +335,27 @@ export default function TicketDetailPage() {
           <Tabs defaultValue="info" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
-                <TabsTrigger value="info">Thông tin</TabsTrigger>
+                <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                {/* `group` so ChatUnreadBadge auto-hides while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
-                  Bình luận
+                  Comments
                   <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
-                  Nhật ký{logs.length > 0 && ` (${logs.length})`}
+                  Logs{logs.length > 0 && ` (${logs.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="sub-issues">Sub Issue</TabsTrigger>
-                <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
+                <TabsTrigger value="kb">KB articles</TabsTrigger>
               </TabsList>
             </div>
 
-            {/* Info — battery asset info + attachments (đồng bộ tab "Thông tin" của Manager) */}
+            {/* Info — battery asset info + attachments (matches Manager's "Info" tab) */}
             <TabsContent
               value="info"
               className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
             >
-              {/* Ticket có thể gắn nhiều pin — lặp từng pin. Fallback pin đơn (legacy). */}
+              {/* A ticket can have multiple batteries attached — iterate each one. Fallback to a single battery (legacy). */}
               {(() => {
                 const ids =
                   ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
@@ -368,7 +369,7 @@ export default function TicketDetailPage() {
                   <div className="space-y-4">
                     {ids.length > 1 && (
                       <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        {ids.length} thiết bị pin liên quan
+                        {ids.length} related batteries
                       </p>
                     )}
                     {ids.map((bid) => (
@@ -383,14 +384,14 @@ export default function TicketDetailPage() {
               })()}
               <div>
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Tệp đính kèm
+                  Attachments
                 </p>
                 {ticket.attachmentFileIds &&
                 ticket.attachmentFileIds.length > 0 ? (
                   <TicketAttachments fileIds={ticket.attachmentFileIds} />
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    Không có tệp đính kèm.
+                    No attachments.
                   </p>
                 )}
               </div>
@@ -423,8 +424,6 @@ export default function TicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={status === TicketStatusEnum.Closed}
                   ticketId={ticketId}
                   aiEnabled
@@ -482,13 +481,13 @@ export default function TicketDetailPage() {
                     size="sm"
                     onClick={() => setLogOpen(true)}
                   >
-                    + Thêm nhật ký
+                    + Add log
                   </Button>
                 </div>
               )}
               {logs.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Chưa có nhật ký bảo trì.
+                  No maintenance logs yet.
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -503,8 +502,8 @@ export default function TicketDetailPage() {
                           <p className="text-xs text-muted-foreground">
                             {format(
                               new Date(log.startedAt),
-                              "dd/MM/yyyy HH:mm",
-                              { locale: vi },
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
                             )}
                           </p>
                           {canEditLog && (
@@ -514,7 +513,7 @@ export default function TicketDetailPage() {
                               className="h-7 px-2 text-xs"
                               onClick={() => setEditingLog(log)}
                             >
-                              Sửa
+                              Edit
                             </Button>
                           )}
                         </div>
@@ -524,24 +523,24 @@ export default function TicketDetailPage() {
                       )}
                       {log.diagnosisDetails && (
                         <p className="text-muted-foreground">
-                          Chẩn đoán: {log.diagnosisDetails}
+                          Diagnosis: {log.diagnosisDetails}
                         </p>
                       )}
                       {log.actionsTaken && (
                         <p className="text-muted-foreground">
-                          Hành động: {log.actionsTaken}
+                          Actions: {log.actionsTaken}
                         </p>
                       )}
                       {log.durationMinutes > 0 && (
                         <p className="text-muted-foreground">
-                          Thời lượng: {log.durationMinutes} phút
+                          Duration: {log.durationMinutes} min
                         </p>
                       )}
                       {log.attachmentFileIds &&
                         log.attachmentFileIds.length > 0 && (
                           <TicketAttachments
                             fileIds={log.attachmentFileIds}
-                            label="Ảnh đính kèm"
+                            label="Attached photos"
                             compact
                           />
                         )}
@@ -549,7 +548,7 @@ export default function TicketDetailPage() {
                         log.beforePhotosFileIds.length > 0 && (
                           <TicketAttachments
                             fileIds={log.beforePhotosFileIds}
-                            label="Ảnh trước"
+                            label="Before photos"
                             compact
                           />
                         )}
@@ -557,7 +556,7 @@ export default function TicketDetailPage() {
                         log.afterPhotosFileIds.length > 0 && (
                           <TicketAttachments
                             fileIds={log.afterPhotosFileIds}
-                            label="Ảnh sau"
+                            label="After photos"
                             compact
                           />
                         )}
@@ -567,7 +566,7 @@ export default function TicketDetailPage() {
               )}
             </TabsContent>
 
-            {/* Sub Issue — staff tự chia nhỏ ticket thành các việc con */}
+            {/* Sub Issue — staff break the ticket down into smaller tasks themselves */}
             <TabsContent
               value="sub-issues"
               className="min-h-0 overflow-y-auto m-0 p-6"
@@ -587,53 +586,53 @@ export default function TicketDetailPage() {
           </Tabs>
         </div>
 
-        {/* Right: Sidebar — luôn mount, animate width (đồng bộ sidebar trái) */}
+        {/* Right: Sidebar — always mounted, animates width (matches the left sidebar) */}
         <aside
           className={cn(
             "shrink-0 border-l border-border overflow-hidden",
             sidebarOpen ? "w-75" : "w-8",
           )}
         >
-          {/* Collapsed rail — nút mở lại bảng thông tin */}
+          {/* Collapsed rail — button to reopen the info panel */}
           {!sidebarOpen && (
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              title="Mở bảng thông tin"
+              title="Open info panel"
               className="w-8 h-full flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
             >
               <PanelRightOpen className="size-4" />
             </button>
           )}
 
-          {/* Nội dung bảng — chỉ hiện khi mở, width cố định w-75 để không reflow lúc trượt */}
+          {/* Panel content — only shown when open; fixed width w-75 so it doesn't reflow while sliding */}
           {sidebarOpen && (
             <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
-              {/* Header — nút thu gọn */}
+              {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Thông tin
+                  Info
                 </p>
                 <button
                   type="button"
                   onClick={() => setSidebarOpen(false)}
-                  title="Thu gọn bảng thông tin"
+                  title="Collapse info panel"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <PanelRightClose className="size-4" />
                 </button>
               </div>
 
-              {/* ── Kiểm tra AI + nghi trùng (chỉ ticket Customer tạo thủ công) ──
-                  Đồng bộ với sidebar của Manager. Staff chỉ ĐỌC nhận định của AI —
-                  hai nút "AI kiểm tra lại" và "Gộp ticket" là quyền triage của
-                  Manager nên không đưa sang đây. */}
+              {/* ── AI check + suspected duplicate (only for tickets manually created by a Customer) ──
+                  Matches the Manager sidebar. Staff only READS the AI's assessment —
+                  the "Re-check AI" and "Merge ticket" buttons are Manager triage
+                  permissions, so they aren't carried over here. */}
               {ticket.origin === "ManualByCustomer" &&
                 (ticket.aiVerifyStatus ||
                   ticket.suspectedDuplicateOfTicketId) && (
                   <div className="px-4 py-3 space-y-2">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Kiểm tra AI
+                      AI check
                     </p>
                     {ticket.aiVerifyStatus && (
                       <div className="flex items-center gap-2">
@@ -643,7 +642,7 @@ export default function TicketDetailPage() {
                         />
                         {ticket.aiVerifyScore != null && (
                           <span className="text-xs text-muted-foreground">
-                            {(ticket.aiVerifyScore * 100).toFixed(0)}% hợp lệ
+                            {(ticket.aiVerifyScore * 100).toFixed(0)}% valid
                           </span>
                         )}
                       </div>
@@ -655,7 +654,9 @@ export default function TicketDetailPage() {
                     )}
                     {ticket.suspectedDuplicateOfTicketId && (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-                        <p className="font-medium">⚠ Nghi trùng ticket khác</p>
+                        <p className="font-medium">
+                          ⚠ Suspected duplicate of another ticket
+                        </p>
                         {ticket.duplicateReason && (
                           <p className="mt-0.5">{ticket.duplicateReason}</p>
                         )}
@@ -671,23 +672,30 @@ export default function TicketDetailPage() {
                 </p>
                 {ticket.slaTimer ? (
                   <div className="space-y-2.5">
+                    {/* Single-line chip clock — MATCHES Manager. A multi-line version with its
+                        own progress bar would give the SLA block 2 bars drawing the same
+                        ratio (the small one here + the "remaining" bar below). */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        Trạng thái
+                        Status
                       </span>
-                      <SlaCountdown slaTimer={ticket.slaTimer} />
+                      <SlaCountdown
+                        slaTimer={ticket.slaTimer}
+                        hideBar
+                        compact
+                      />
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         Deadline
                       </span>
                       <span className="text-xs font-medium tabular-nums">
-                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                        {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        Còn lại
+                        Remaining
                       </span>
                       <span className="text-xs font-medium">
                         {ticket.slaTimer.remainingPercent.toFixed(0)}%
@@ -704,43 +712,37 @@ export default function TicketDetailPage() {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Chưa được triage.
+                    Not triaged yet.
                   </p>
                 )}
               </div>
 
-              {/* Trạng thái + thời gian xử lý */}
+              {/* Processing time.
+                  Dropped a "Current status" badge row: the badge already sits right next to
+                  the ticket code in the page header, so adding it here would repeat the same
+                  info twice. The "Status" label in the SLA block above is the SLA countdown —
+                  a completely different meaning, so merging the two blocks would only confuse. */}
               <div className="p-4">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Trạng thái
+                  Processing time
                 </p>
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      Hiện tại
-                    </span>
-                    <TicketStatusBadge status={ticket.status} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      Thời gian xử lý
-                    </span>
-                    <ProcessingDurationTimer
-                      activities={activities}
-                      status={ticket.status}
-                    />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Elapsed</span>
+                  <ProcessingDurationTimer
+                    activities={activities}
+                    status={ticket.status}
+                  />
                 </div>
               </div>
 
-              {/* Thiết bị pin đã chuyển sang tab "Thông tin" (đồng bộ với Manager) —
-                  để cả hai chỗ thì cùng một bảng pin + bằng chứng render hai lần. */}
+              {/* Battery asset info moved to the "Info" tab (matches Manager) —
+                  keeping it in both places would render the same battery panel + evidence twice. */}
 
               {/* Description */}
               {ticket.description && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Mô tả
+                    Description
                   </p>
                   <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
                     {ticket.description}
@@ -748,12 +750,12 @@ export default function TicketDetailPage() {
                 </div>
               )}
 
-              {/* Attachments (ảnh khách đính kèm khi tạo ticket) */}
+              {/* Attachments (photos the customer attached when creating the ticket) */}
               {ticket.attachmentFileIds &&
                 ticket.attachmentFileIds.length > 0 && (
                   <div className="p-4">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                      Ảnh đính kèm
+                      Attached photos
                     </p>
                     <TicketAttachments
                       fileIds={ticket.attachmentFileIds}
@@ -767,7 +769,7 @@ export default function TicketDetailPage() {
               {ticket.rejectionReason && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                    Lý do từ chối
+                    Rejection reason
                   </p>
                   <p className="text-xs leading-relaxed">
                     {ticket.rejectionReason}
@@ -779,16 +781,16 @@ export default function TicketDetailPage() {
               {ticket.resolutionSummary && (
                 <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
                   <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                    Kết quả giải quyết
+                    Resolution
                   </p>
                   <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
                   {ticket.resolvedAt && (
                     <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
-                      Xử lý xong lúc{" "}
-                      {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
-                        locale: vi,
+                      Resolved at{" "}
+                      {format(new Date(ticket.resolvedAt), "MM/dd/yyyy HH:mm", {
+                        locale: enUS,
                       })}
                     </p>
                   )}
@@ -799,7 +801,7 @@ export default function TicketDetailPage() {
               {ticket.escalatedAt && (
                 <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
                   <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
-                    Chuyển cấp
+                    Escalation
                   </p>
                   {ticket.escalationReason && (
                     <p className="text-xs leading-relaxed">
@@ -808,8 +810,8 @@ export default function TicketDetailPage() {
                     </p>
                   )}
                   <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
-                    {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
-                      locale: vi,
+                    {format(new Date(ticket.escalatedAt), "MM/dd/yyyy HH:mm", {
+                      locale: enUS,
                     })}
                   </p>
                 </div>
@@ -819,7 +821,7 @@ export default function TicketDetailPage() {
               {ticket.rating != null && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Đánh giá khách hàng
+                    Customer rating
                   </p>
                   <p className="text-xs font-medium">
                     {"★".repeat(ticket.rating)}
@@ -838,17 +840,17 @@ export default function TicketDetailPage() {
 
               {/* Meta */}
               <div className="px-4 py-1 divide-y divide-border/50">
-                <SideInfoRow label="Danh mục" value={ticket.category} />
-                <SideInfoRow label="Nguồn" value={ticket.origin} />
-                {/* Ai đang phụ trách — BE trả kèm staffName nên mọi role đọc được,
-                    không cần gọi /api/staff (endpoint đó chỉ mở cho Admin/Manager). */}
+                <SideInfoRow label="Category" value={ticket.category} />
+                <SideInfoRow label="Origin" value={ticket.origin} />
+                {/* Who's handling it — the BE returns staffName, so every role can read it
+                    without calling /api/staff (that endpoint is only open to Admin/Manager). */}
                 <SideInfoRow
-                  label="Phụ trách chính"
+                  label="Primary handler"
                   value={primaryHandlerName}
                 />
                 {supporterNames.length > 0 && (
                   <SideInfoRow
-                    label="Hỗ trợ"
+                    label="Supporters"
                     value={
                       <span className="flex flex-wrap justify-end gap-1">
                         {supporterNames.map((name) => (
@@ -860,39 +862,36 @@ export default function TicketDetailPage() {
                     }
                   />
                 )}
-                {/* GH-866 — 1 mốc thời gian phát hiện sự cố (thay cặp from/to cũ). */}
+                {/* GH-866 — 1 detection timestamp (replaces the old from/to pair). */}
                 {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Phát hiện lúc"
+                    label="Detected at"
                     value={format(
                       new Date(ticket.detectedAt),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
+                      "MM/dd/yyyy HH:mm",
+                      { locale: enUS },
                     )}
                   />
                 )}
+                <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />
                 <SideInfoRow
-                  label="Phạm vi"
-                  value={ticket.impactScope ?? null}
-                />
-                <SideInfoRow
-                  label="Khẩn cấp"
+                  label="Urgency"
                   value={ticket.urgencyLevel ?? null}
                 />
                 <SideInfoRow
-                  label="Ngày tạo"
+                  label="Created"
                   value={format(
                     new Date(ticket.createdAt),
-                    "dd/MM/yyyy HH:mm",
+                    "MM/dd/yyyy HH:mm",
                     {
-                      locale: vi,
+                      locale: enUS,
                     },
                   )}
                 />
                 {ticket.reopenCount > 0 && (
                   <SideInfoRow
-                    label="Mở lại"
-                    value={`${ticket.reopenCount} lần`}
+                    label="Reopened"
+                    value={`${ticket.reopenCount} times`}
                   />
                 )}
               </div>

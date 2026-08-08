@@ -3,7 +3,7 @@ import { notificationMatrixService } from "@/shared/services/notification/notifi
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import type { UpdateNotificationMatrixPayload } from "@/shared/types/notification/notification-matrix.types";
 
-// Ma trận nhóm × kênh của user hiện tại. Cùng nhịp cache với preference (5 phút).
+// Group × channel matrix for the current user. Same cache cadence as preferences (5 min).
 export const useNotificationMatrix = () =>
   useQuery({
     queryKey: QUERY_KEY.notificationPreferences.matrix(),
@@ -12,7 +12,7 @@ export const useNotificationMatrix = () =>
     staleTime: 5 * 60_000,
   });
 
-// Bảng tra cứu type → nhóm. Gần như tĩnh (chỉ đổi khi BE thêm NotificationType).
+// Type → group lookup table. Nearly static (only changes when BE adds a NotificationType).
 export const useNotificationCategories = () =>
   useQuery({
     queryKey: QUERY_KEY.notificationPreferences.categories(),
@@ -21,7 +21,7 @@ export const useNotificationCategories = () =>
     staleTime: 30 * 60_000,
   });
 
-// PUT trả về ma trận đầy đủ sau cập nhật → set thẳng vào cache, khỏi refetch thừa.
+// PUT returns the full matrix after the update → set it straight into the cache, skip the extra refetch.
 export const useUpdateNotificationMatrix = () => {
   const qc = useQueryClient();
   return useMutation({

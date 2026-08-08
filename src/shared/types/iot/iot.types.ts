@@ -1,6 +1,6 @@
-// IoT Device Management types — Nhóm 11 BatteryService.
-// Import + re-export enum từ shared/enums/iot.enum.ts (không define enum inline).
-// Guid/DateTime từ BE → string ở FE.
+// IoT Device Management types — Group 11, BatteryService.
+// Enums are imported and re-exported from shared/enums/iot.enum.ts (never
+// defined inline here). Guid/DateTime from the BE become string on the FE.
 import type {
   IotDeviceStatusEnum,
   IotFirmwareChannelEnum,
@@ -23,7 +23,7 @@ export interface IotDeviceDto {
   currentFirmwareVersion: string | null;
   targetFirmwareReleaseId: string | null;
   targetFirmwareVersion: string | null;
-  apiKeyScopes: number; // bitmask IotApiKeyScopeEnum — combo (vd 3, 5) không phải member enum
+  apiKeyScopes: number; // bitmask IotApiKeyScopeEnum — a combo (e.g. 3, 5), not an enum member
   apiKeyLastFour: string;
   apiKeyIssuedAt: string;
   apiKeyRevokedAt: string | null;
@@ -36,28 +36,31 @@ export interface IotDeviceDto {
   createdAt: string;
 }
 
-// Trả bởi GET /api/admin/iot-devices/{id} — endpoint DUY NHẤT trả full key ngoài
-// lúc create/rotate (xem lại được nhiều lần, khác `rawApiKey` chỉ trả 1 lần).
-// List KHÔNG có field này — chỉ có apiKeyLastFour.
+// Returned by GET /api/admin/iot-devices/{id} — the ONLY endpoint that returns the
+// full key outside of create/rotate (it can be read back any number of times, unlike
+// `rawApiKey` which is returned once). The list does NOT carry this field — only
+// apiKeyLastFour.
 export interface IotDeviceDetailDto extends IotDeviceDto {
-  // null với device tạo TRƯỚC khi bật lưu plaintext (DB cũ chỉ giữ hash SHA-256,
-  // không backfill được) → rotate-key để sinh key mới + lưu plaintext.
+  // null for devices created BEFORE plaintext storage was enabled (the old DB kept
+  // only the SHA-256 hash and cannot be backfilled) → use rotate-key to mint a new
+  // key and store the plaintext.
   apiKey: string | null;
 }
 
-// Trả khi create + rotate-key — secrets chỉ trả 1 lần.
+// Returned on create and rotate-key — secrets are returned only once.
 export interface IotDeviceCreatedDto extends IotDeviceDto {
   rawApiKey: string;
   provisioningQrCode: string;
-  // Cả sáu trường MQTT đều nullable ở BE (`string?` / `int?` / `bool?`) và cùng rỗng khi bridge
-  // chưa bật (`MqttBrokerEndpoint.Disabled`). Khai `string`/`number` như trước là kiểu NÓI DỐI:
-  // TypeScript tin là luôn có giá trị, còn lúc chạy thì `mqttBrokerPort` null bị `String()` biến
-  // thành chuỗi "null" và hiện nguyên si trong ô cho người vận hành copy.
+  // All six MQTT fields are nullable on the BE (`string?` / `int?` / `bool?`) and are all empty
+  // while the bridge is off (`MqttBrokerEndpoint.Disabled`). Declaring them as `string`/`number`
+  // the way we used to is a LIE: TypeScript believes a value is always present, while at runtime
+  // a null `mqttBrokerPort` gets turned into the string "null" by `String()` and shows up verbatim
+  // in the field the operator is meant to copy.
   mqttUsername: string | null;
   mqttPassword: string | null;
   mqttBrokerHost: string | null;
   mqttBrokerPort: number | null;
-  // GH-784 — hai trường này tồn tại để người cấu hình thiết bị KHỎI phải suy đoán.
+  // GH-784 — these two fields exist so whoever configures the device does NOT have to guess.
   mqttUseTls: boolean | null;
   mqttTopicPrefix: string | null;
 }
@@ -155,7 +158,7 @@ export interface IotFirmwareReleaseDto {
   deviceModel: string | null;
 }
 
-// Trả từ upload-binary — KHÔNG tạo release, chỉ artifact info.
+// Returned by upload-binary — does NOT create a release, only artifact info.
 export interface FirmwareBinaryUploadDto {
   artifactUrl: string;
   sha256Checksum: string;
@@ -179,7 +182,7 @@ export interface CreateFirmwareReleasePayload {
   deviceModel?: string;
 }
 
-// Form upload firmware (multipart) — bước 1 của 2-step create.
+// Firmware upload form (multipart) — step 1 of the 2-step create.
 export interface UploadFirmwareBinaryPayload {
   file: File;
   version: string;

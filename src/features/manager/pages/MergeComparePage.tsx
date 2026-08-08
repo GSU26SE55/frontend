@@ -8,8 +8,8 @@ import {
 import MergeCompareView from "@/shared/components/ticket/MergeCompareView";
 
 /**
- * Trang so sánh ticket nguồn với ticket đích trước khi gộp (Manager).
- * `suggestedTargetId` truyền qua router state từ panel "AI nghi trùng" ở trang chi tiết.
+ * Page comparing a source ticket with a target ticket before merging (Manager).
+ * `suggestedTargetId` is passed via router state from the "AI suspected duplicate" panel on the detail page.
  */
 export default function MergeComparePage() {
   const { id = "" } = useParams();
@@ -33,10 +33,10 @@ export default function MergeComparePage() {
     if (!targetId) return;
     try {
       await merge.mutateAsync(targetId);
-      // Điều hướng về ticket ĐƯỢC GIỮ LẠI — ticket nguồn đã bị đóng.
+      // Navigate to the ticket that WAS KEPT — the source ticket has been closed.
       navigate(`/manager/tickets/${targetId}`, { replace: true });
     } catch {
-      // lỗi đã toast trong hook onError
+      // error already toasted in the hook's onError
     }
   };
 

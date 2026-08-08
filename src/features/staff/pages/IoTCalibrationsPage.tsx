@@ -32,10 +32,11 @@ export default function IoTCalibrationsPage() {
           Staff &middot; IoT
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Calibration thiết bị
+          Device calibration
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Nhập device code (in trên thân thiết bị) để quản lý calibration.
+          Enter the device code (printed on the device body) to manage
+          calibration.
         </p>
       </div>
 
@@ -50,7 +51,7 @@ export default function IoTCalibrationsPage() {
             className="pl-8 font-mono"
           />
         </div>
-        <Button onClick={submit}>Tra cứu</Button>
+        <Button onClick={submit}>Search</Button>
       </div>
 
       {submittedCode && isLoading && (
@@ -60,9 +61,9 @@ export default function IoTCalibrationsPage() {
       {submittedCode && isError && (
         <Card className="p-6">
           <p className="text-sm text-muted-foreground">
-            Không tìm thấy thiết bị với code{" "}
-            <span className="font-mono">{submittedCode}</span> (hoặc đã ngừng sử
-            dụng).
+            No device found with code{" "}
+            <span className="font-mono">{submittedCode}</span> (or it has been
+            decommissioned).
           </p>
         </Card>
       )}
@@ -82,7 +83,7 @@ export default function IoTCalibrationsPage() {
               </p>
             </div>
             <Button size="sm" onClick={() => setCalibrationOpen(true)}>
-              <Plus className="size-3.5" /> Thêm calibration
+              <Plus className="size-3.5" /> Add calibration
             </Button>
           </Card>
 

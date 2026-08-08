@@ -30,7 +30,7 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { AccountDto } from "@/shared/types/account/account.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
-// Map int → nhãn (inline theo pattern repo — không có util chung)
+// Map int → label (inline, following the repo pattern — there is no shared util)
 const TYPE_OPTIONS: { value: NotificationTypeEnum; label: string }[] = [
   { value: NotificationTypeEnum.TicketCreated, label: "Ticket Created" },
   { value: NotificationTypeEnum.TicketAssigned, label: "Ticket Assigned" },
@@ -134,7 +134,7 @@ export default function CreateNotificationForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
       <div className="space-y-1.5">
         <Label>
-          Người nhận <span className="text-red-500">*</span>
+          Recipient <span className="text-red-500">*</span>
         </Label>
         <Controller
           name="userId"
@@ -152,14 +152,16 @@ export default function CreateNotificationForm() {
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    isLoadingAccounts ? "Đang tải user..." : "Chọn user nhận"
+                    isLoadingAccounts
+                      ? "Loading users..."
+                      : "Select a recipient"
                   }
                 />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
                 <div className="p-1.5">
                   <Input
-                    placeholder="Tìm theo tên hoặc email..."
+                    placeholder="Search by name or email..."
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     onKeyDown={(e) => e.stopPropagation()}
@@ -168,7 +170,7 @@ export default function CreateNotificationForm() {
                 </div>
                 {accounts.length === 0 ? (
                   <p className="px-2 py-3 text-center text-xs text-muted-foreground">
-                    {isLoadingAccounts ? "Đang tải..." : "Không tìm thấy user"}
+                    {isLoadingAccounts ? "Loading..." : "No matching users"}
                   </p>
                 ) : (
                   accounts.map((a) => (
@@ -185,14 +187,14 @@ export default function CreateNotificationForm() {
           <p className="text-xs text-red-500">{errors.userId.message}</p>
         )}
         <p className="text-[11px] text-muted-foreground">
-          Chọn user từ danh sách tài khoản — không cần nhập UUID thủ công.
+          Pick a user from the account list — no need to type a UUID by hand.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>
-            Loại <span className="text-red-500">*</span>
+            Type <span className="text-red-500">*</span>
           </Label>
           <Controller
             name="type"
@@ -207,7 +209,7 @@ export default function CreateNotificationForm() {
                 onValueChange={(v) => field.onChange(Number(v))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn loại" />
+                  <SelectValue placeholder="Select a type" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {TYPE_OPTIONS.map((o) => (
@@ -226,7 +228,7 @@ export default function CreateNotificationForm() {
 
         <div className="space-y-1.5">
           <Label>
-            Kênh <span className="text-red-500">*</span>
+            Channel <span className="text-red-500">*</span>
           </Label>
           <Controller
             name="channel"
@@ -241,7 +243,7 @@ export default function CreateNotificationForm() {
                 onValueChange={(v) => field.onChange(Number(v))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn kênh" />
+                  <SelectValue placeholder="Select a channel" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {CHANNEL_OPTIONS.map((o) => (
@@ -261,11 +263,11 @@ export default function CreateNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="notif-title">
-          Tiêu đề <span className="text-red-500">*</span>
+          Title <span className="text-red-500">*</span>
         </Label>
         <Input
           id="notif-title"
-          placeholder="Tiêu đề notification"
+          placeholder="Notification title"
           {...register("title")}
         />
         {errors.title && (
@@ -275,12 +277,12 @@ export default function CreateNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="notif-body">
-          Nội dung <span className="text-red-500">*</span>
+          Body <span className="text-red-500">*</span>
         </Label>
         <Textarea
           id="notif-body"
           rows={4}
-          placeholder="Nội dung notification"
+          placeholder="Notification body"
           {...register("body")}
         />
         {errors.body && (
@@ -292,7 +294,7 @@ export default function CreateNotificationForm() {
         <Label htmlFor="notif-entityType">Entity Type</Label>
         <Input
           id="notif-entityType"
-          placeholder="VD: Ticket, Battery (tùy chọn)"
+          placeholder="e.g. Ticket, Battery (optional)"
           {...register("entityType")}
         />
         {errors.entityType && (
@@ -313,13 +315,13 @@ export default function CreateNotificationForm() {
           )}
         />
         <Label htmlFor="notif-bypass" className="cursor-pointer">
-          Bypass quiet hours (chỉ cho channel Critical)
+          Bypass quiet hours (Critical channel only)
         </Label>
       </div>
 
       <Button type="submit" disabled={isPending}>
         {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-        Tạo notification
+        Create notification
       </Button>
     </form>
   );

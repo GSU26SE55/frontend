@@ -16,36 +16,38 @@ interface Props {
 }
 
 /**
- * Đổi role ngay trong dropdown thao tác — 1 click, không mở modal.
- * Danh sách role fetch 1 lần ở page rồi truyền xuống, tránh mỗi hàng gọi lại API.
+ * Change the role right in the action dropdown — 1 click, no modal.
+ * The role list is fetched once at the page level and passed down, avoiding a
+ * repeated API call per row.
  */
 export default function ChangeRoleSubmenu({ account, roles }: Props) {
   const { mutate, isPending } = useAdminChangeAccountRole();
 
-  // Role Inactive/Deprecated không còn được gán mới — ẩn khỏi menu đổi nhanh.
+  // Inactive/Deprecated roles can no longer be newly assigned — hide from the quick-change menu.
   const assignable = roles.filter((r) => r.status === RoleStatusEnum.Active);
 
-  // So khớp bằng roleId, không bằng name: name là chuỗi hiển thị, đổi tên role bên
-  // trang Vai trò là dấu ✓ lệch ngay.
+  // Match by roleId, not name: name is just the display string — renaming a role on
+  // the Roles page would immediately throw off the ✓ marker.
   const isCurrentRole = (role: RoleDto) => role.id === account.roleId;
 
   const handleChange = (role: RoleDto) => {
-    // Đang giữ role đó rồi thì bấm cũng không đổi gì — bỏ qua để khỏi gọi API thừa.
+    // Already on that role — clicking changes nothing, so skip the redundant API call.
     if (isCurrentRole(role)) return;
 
-    // Toast/invalidate nằm trong useAdminChangeAccountRole — submenu đóng ngay khi bấm
-    // nên component này unmount trước lúc response về, callback truyền ở đây sẽ mất.
+    // Toast/invalidate lives in useAdminChangeAccountRole — the submenu closes as soon
+    // as it's clicked, so this component unmounts before the response returns, and any
+    // callback passed here would be lost.
     mutate({ id: account.id, payload: { roleId: role.id } });
   };
 
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        {isPending ? "Đang đổi role…" : "Đổi role"}
+        {isPending ? "Changing role…" : "Change role"}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-40">
         {assignable.length === 0 ? (
-          <DropdownMenuItem disabled>Không có role</DropdownMenuItem>
+          <DropdownMenuItem disabled>No roles</DropdownMenuItem>
         ) : (
           assignable.map((r) => {
             const isCurrent = isCurrentRole(r);

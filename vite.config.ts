@@ -16,9 +16,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Proxy /api → API gateway để FE và API cùng origin (localhost:5173) trong dev.
-  // Cần cho luồng Google OAuth: cookie g_oauth_state (SameSite=Lax) chỉ được gửi kèm
-  // khi callback XHR same-origin. Đích lấy từ VITE_DEV_API_TARGET (mặc định 4001).
+  // Proxy /api → API gateway so the FE and API share an origin (localhost:5173) in dev.
+  // Needed for the Google OAuth flow: the g_oauth_state cookie (SameSite=Lax) is only
+  // sent when the callback XHR is same-origin. Target comes from VITE_DEV_API_TARGET
+  // (default 4001).
   server: {
     proxy: {
       "/api": {

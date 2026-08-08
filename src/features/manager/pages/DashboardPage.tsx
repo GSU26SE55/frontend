@@ -39,24 +39,25 @@ import {
 import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
- * Manager = ĐIỀU PHỐI TICKET: pipeline, SLA, ưu tiên, tải nhân sự, hàng chờ
- * triage, ticket chờ duyệt.
+ * Manager = TICKET COORDINATION: pipeline, SLA, priority, staff load, triage
+ * queue, tickets awaiting approval.
  *
- * KHÔNG hiển thị pin offline / cảnh báo pin / sức khỏe site — đó là bề mặt hạ
- * tầng của Admin. Manager hành động trên TICKET; alert đã tự sinh ticket nên
- * nhìn alert thô chỉ làm trùng việc.
+ * Does NOT show offline batteries / battery alerts / site health — that's
+ * Admin's infrastructure surface. Manager acts on TICKETS; alerts already
+ * auto-generate tickets, so showing raw alerts just duplicates the work.
  *
- * Layout: 1 KHUNG CỐ ĐỊNH, trang không cuộn. Lưới 4 cột × 2 hàng — hàng trên
- * pipeline (3 cột) + SLA (1 cột), hàng dưới 4 panel bằng nhau. Panel danh sách
- * tự cuộn bên trong.
+ * Layout: 1 FIXED FRAME, the page doesn't scroll. 4-column × 2-row grid — top
+ * row is pipeline (3 cols) + SLA (1 col), bottom row is 4 equal panels. List
+ * panels scroll internally.
  *
- * Mỗi panel một dạng biểu đồ khác nhau (bar ngang / gauge / donut / thanh tải /
- * danh sách / area) để nhận ra loại thông tin ngay từ hình dạng.
+ * Each panel uses a different chart shape (horizontal bar / gauge / donut /
+ * load bars / list / area) so the type of information is recognizable from
+ * its shape alone.
  */
 
 const pipelineConfig = { value: { label: "Ticket" } } satisfies ChartConfig;
 const areaConfig = {
-  count: { label: "Ticket mới", color: "var(--chart-1)" },
+  count: { label: "New tickets", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 const loadColor = (active: number, max: number) => {
@@ -86,25 +87,25 @@ export default function ManagerDashboardPage() {
   const hasTrend = ticketTrend.some((p) => p.count > 0);
   const statusCounts = ticketStats?.countByStatus ?? {};
 
-  // Bar ngang: giai đoạn đầu nằm TRÊN → khai báo ngược rồi reverse.
+  // Horizontal bar: the first stage sits ON TOP → declare in reverse then reverse it.
   const pipeline = [
     {
-      stage: "Mới/Mở",
+      stage: "New/Open",
       value: (statusCounts.New ?? 0) + (statusCounts.Open ?? 0),
       fill: "var(--muted-foreground)",
     },
     {
-      stage: "Đã gán",
+      stage: "Assigned",
       value: statusCounts.Assigned ?? 0,
       fill: "var(--chart-1)",
     },
     {
-      stage: "Đang xử lý",
+      stage: "In progress",
       value: statusCounts.InProgress ?? 0,
       fill: "var(--chart-1)",
     },
     {
-      stage: "Đang chờ",
+      stage: "Waiting",
       value:
         (statusCounts.WaitingCustomer ?? 0) +
         (statusCounts.WaitingParts ?? 0) +
@@ -112,12 +113,12 @@ export default function ManagerDashboardPage() {
       fill: "var(--p3)",
     },
     {
-      stage: "Nâng cấp",
+      stage: "Escalated",
       value: (statusCounts.Escalated ?? 0) + (statusCounts.Incident ?? 0),
       fill: "var(--p1)",
     },
     {
-      stage: "Hoàn tất",
+      stage: "Completed",
       value:
         (statusCounts.Resolved ?? 0) +
         (statusCounts.Approved ?? 0) +
@@ -129,24 +130,24 @@ export default function ManagerDashboardPage() {
   const pipelineTotal = pipeline.reduce((a, p) => a + p.value, 0);
   const pipelineChart = [...pipeline].reverse();
 
-  // ── Ưu tiên ──
+  // ── Priority ──
   const priorityCounts = ticketStats?.countByPriority ?? {};
   const priorityData = [
     {
-      name: "P1 · Khẩn",
+      name: "P1 · Critical",
       value: priorityCounts.P1Critical ?? 0,
       fill: "var(--p1)",
     },
-    { name: "P2 · Cao", value: priorityCounts.P2High ?? 0, fill: "var(--p2)" },
+    { name: "P2 · High", value: priorityCounts.P2High ?? 0, fill: "var(--p2)" },
     {
-      name: "P3 · Thường",
+      name: "P3 · Standard",
       value: priorityCounts.P3Normal ?? 0,
       fill: "var(--p3)",
     },
   ].filter((d) => d.value > 0);
   const priorityTotal = priorityData.reduce((a, d) => a + d.value, 0);
 
-  // ── Tải nhân sự ──
+  // ── Staff load ──
   const staff = staffList ?? [];
   const openByStaff = new Map(
     (ticketStats?.openCountByStaff ?? []).map((o) => [
@@ -165,7 +166,7 @@ export default function ManagerDashboardPage() {
     .sort((a, b) => b.active - a.active);
   const availableStaff = workload.filter((w) => w.available).length;
 
-  // Ticket Staff đã Resolved, đang chờ Manager duyệt/từ chối.
+  // Tickets Staff has Resolved, awaiting Manager's approve/reject decision.
   const awaitingApproval = statusCounts.Resolved ?? 0;
 
   // ── Visibility ──
@@ -180,44 +181,44 @@ export default function ManagerDashboardPage() {
       <div className="flex items-center justify-between gap-4 shrink-0 pb-1">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Manager · Điều phối vận hành
+            Manager · Operations coordination
           </p>
           <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight truncate mt-0.5">
             {ticketsLoading
               ? "Dashboard"
-              : `${openCount} ticket mở · ${queueCount} chờ triage`}
+              : `${openCount} open tickets · ${queueCount} awaiting triage`}
           </h1>
         </div>
         <RefreshButton
           queryKeys={[KEY.ticketDashboard, KEY.manager.tickets]}
-          label="Đồng bộ"
+          label="Sync"
         />
       </div>
 
-      {/* ── KPI strip — bấm được ── */}
+      {/* ── KPI strip — clickable ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 shrink-0">
         <DashboardKpi
-          label="Tickets mở"
+          label="Open tickets"
           value={ticketsLoading ? "--" : openCount}
           icon={<Ticket className="size-4" />}
           to="/manager/tickets"
         />
         <DashboardKpi
-          label="Cần triage"
+          label="Needs triage"
           value={queueLoading ? "--" : queueCount}
           icon={<Inbox className="size-4" />}
           accent={queueCount > 0 ? "var(--p3)" : undefined}
           to="/manager/tickets/queue"
         />
         <DashboardKpi
-          label="Chờ duyệt"
+          label="Awaiting approval"
           value={ticketsLoading ? "--" : awaitingApproval}
           icon={<ClipboardCheck className="size-4" />}
           accent={awaitingApproval > 0 ? "var(--p3)" : undefined}
           to="/manager/tickets"
         />
         <DashboardKpi
-          label="Quá hạn SLA"
+          label="SLA breached"
           value={ticketsLoading ? "--" : (sla?.breached ?? 0)}
           icon={<AlertTriangle className="size-4" />}
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : undefined}
@@ -232,7 +233,7 @@ export default function ManagerDashboardPage() {
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
-          label="Staff sẵn sàng"
+          label="Staff available"
           value={staffLoading ? "--" : availableStaff}
           icon={<Users className="size-4" />}
           accent={availableStaff === 0 ? "var(--p1)" : undefined}
@@ -241,17 +242,17 @@ export default function ManagerDashboardPage() {
 
       {/* ── Bento Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 min-h-[580px] flex-1">
-        {/* [Bar ngang] pipeline theo giai đoạn */}
+        {/* [Horizontal bar] pipeline by stage */}
         <DashboardPanel
           title={OVERVIEW_PANELS.manager.ticketPipeline}
-          desc={`${pipelineTotal} ticket theo giai đoạn`}
+          desc={`${pipelineTotal} tickets by stage`}
           className="lg:col-span-3 min-h-[280px]"
         >
           {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : totalTickets === 0 ? (
             <div className="h-full grid place-items-center text-sm text-muted-foreground">
-              Chưa có ticket.
+              No tickets yet.
             </div>
           ) : (
             <ChartContainer
@@ -287,7 +288,7 @@ export default function ManagerDashboardPage() {
           )}
         </DashboardPanel>
 
-        {/* [Gauge] tỉ lệ tuân thủ SLA */}
+        {/* [Gauge] SLA compliance rate */}
         <SlaGaugePanel
           title={OVERVIEW_PANELS.manager.sla}
           desc="met / (met + breach)"
@@ -296,11 +297,11 @@ export default function ManagerDashboardPage() {
           className="min-h-[280px]"
         />
 
-        {/* [Donut] cơ cấu ưu tiên */}
+        {/* [Donut] priority breakdown */}
         {showPriority && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.priority}
-            desc={`${priorityTotal} ticket`}
+            desc={`${priorityTotal} tickets`}
             className="min-h-[280px]"
           >
             {ticketsLoading ? (
@@ -309,17 +310,17 @@ export default function ManagerDashboardPage() {
               <DashboardDonut
                 data={priorityData}
                 centerValue={priorityTotal}
-                centerLabel="ticket"
+                centerLabel="tickets"
               />
             )}
           </DashboardPanel>
         )}
 
-        {/* [Thanh tải] mức sử dụng từng người */}
+        {/* [Load bars] usage level per person */}
         {showWorkload && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.staffLoad}
-            desc={`${availableStaff}/${workload.length} sẵn sàng`}
+            desc={`${availableStaff}/${workload.length} available`}
             className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >
@@ -347,7 +348,7 @@ export default function ManagerDashboardPage() {
                             ? "var(--ok)"
                             : "var(--muted-foreground)",
                         }}
-                        title={w.available ? "Sẵn sàng" : "Bận"}
+                        title={w.available ? "Available" : "Busy"}
                       />
                       <span className="text-xs lg:text-sm font-medium truncate flex-1 min-w-0">
                         {w.name}
@@ -372,11 +373,11 @@ export default function ManagerDashboardPage() {
           </DashboardPanel>
         )}
 
-        {/* [Danh sách] việc cần làm ngay */}
+        {/* [List] items needing immediate action */}
         {showTriage && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.triageQueue}
-            desc={`${queueCount} ticket chờ phân loại`}
+            desc={`${queueCount} tickets awaiting triage`}
             className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >
@@ -411,11 +412,11 @@ export default function ManagerDashboardPage() {
           </DashboardPanel>
         )}
 
-        {/* [Area] xu hướng theo thời gian */}
+        {/* [Area] trend over time */}
         {showTrend && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.newTickets7d}
-            desc="Ticket tạo theo ngày"
+            desc="Tickets created per day"
             className="min-h-[280px]"
           >
             {ticketsLoading ? (
@@ -433,7 +434,7 @@ export default function ManagerDashboardPage() {
                   <XAxis
                     dataKey="date"
                     tickFormatter={(v: string) =>
-                      `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                      `${v.slice(5, 7)}/${v.slice(8, 10)}`
                     }
                     tickLine={false}
                     axisLine={false}

@@ -139,21 +139,21 @@ export const managerTicketService = {
       payload,
     ),
 
-  // Gộp ticket nghi trùng (id) vào ticket đích (targetTicketId).
+  // Merge the suspected-duplicate ticket (id) into the target ticket (targetTicketId).
   merge: (id: string, payload: MergeTicketPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.MERGE(id),
       payload,
     ),
 
-  // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
+  // Trigger an AI re-check (Skipped/Pending tickets).
   reVerify: (id: string) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.RE_VERIFY(id),
     ),
 
-  // Đổi priority + lý do. SLA được BE tính lại (không reset) — có thể breach ngay
-  // trong transaction nếu deadline mới đã qua. FE KHÔNG tự tính deadline.
+  // Change priority + reason. The BE recalculates the SLA (it does not reset it) — it can breach
+  // inside the transaction if the new deadline has already passed. The FE does NOT compute deadlines.
   reprioritize: (id: string, payload: ReprioritizePayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.RE_PRIORITIZE(id),

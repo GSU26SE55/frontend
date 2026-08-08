@@ -44,9 +44,9 @@ import {
 
 const TYPE_OPTIONS = Object.values(NotificationTypeEnum)
   .map((value) => ({ value, label: notificationTypeLabel(value) }))
-  .sort((a, b) => a.label.localeCompare(b.label, "vi"));
+  .sort((a, b) => a.label.localeCompare(b.label, "en"));
 
-// Hằng số dùng chung cho nhánh fallback của useWatch — xem chú thích trong component.
+// Shared constants for the useWatch fallback branch — see the note inside the component.
 const EMPTY_IDS: string[] = [];
 const EMPTY_CHANNELS: NotificationChannelEnum[] = [];
 const EMPTY_VARS: Record<string, string> = {};
@@ -60,18 +60,18 @@ export default function BroadcastNotificationForm() {
   const send = useSendBroadcast();
 
   const [userSearch, setUserSearch] = useState("");
-  // Nhóm nào đang mở xem danh sách người. Là state UI thuần nên để useState, không đưa vào form —
-  // nó không phải dữ liệu gửi đi.
+  // Which groups have their member list expanded. Pure UI state, so it stays in useState and out of
+  // the form — it is not part of the payload.
   const [openGroupIds, setOpenGroupIds] = useState<string[]>([]);
   const debouncedUserSearch = useDebounce(userSearch, 300);
 
-  // Nhóm ít (4 hệ thống + vài nhóm tự tạo) nên lấy một trang lớn là đủ; nếu vượt thì
-  // `totalItems` sẽ lớn hơn số phần tử và cảnh báo bên dưới hiện ra.
+  // There are few groups (4 system ones + a handful of custom ones), so a single large page is
+  // enough; if it overflows, `totalItems` exceeds the item count and the warning below shows up.
   const { data: groupPage } = useNotificationGroups({ pageSize: 100 });
   const groups = groupPage?.items ?? [];
   const hasMoreGroups = (groupPage?.totalItems ?? 0) > groups.length;
 
-  // Tìm người PHÍA SERVER — không lấy `pageSize: 100` rồi lọc ở client.
+  // Search users SERVER-SIDE — don't fetch `pageSize: 100` and filter on the client.
   const { data: accountList, isFetching: isSearchingAccounts } =
     useAdminAccountList({
       pageSize: 20,
@@ -92,19 +92,20 @@ export default function BroadcastNotificationForm() {
     },
   });
 
-  // Dùng useWatch chứ KHÔNG dùng form.watch(): watch() trả về một hàm mà React Compiler không
-  // memo hoá an toàn được, eslint chặn ngay (`react-hooks/incompatible-library`).
+  // Use useWatch, NOT form.watch(): watch() returns a function that the React Compiler can't
+  // safely memoize, and eslint rejects it outright (`react-hooks/incompatible-library`).
   //
-  // Fallback dùng hằng số EMPTY_IDS/EMPTY_CHANNELS chứ KHÔNG viết `?? []`: mảng rỗng viết tại chỗ
-  // là một tham chiếu MỚI mỗi lần render, làm useMemo bên dưới tính lại liên tục và payload xem
-  // trước cũng đổi định danh theo — lãng phí, và đúng thứ react-hooks/exhaustive-deps cảnh báo.
+  // The fallback uses the EMPTY_IDS/EMPTY_CHANNELS constants instead of `?? []`: an inline empty
+  // array is a NEW reference on every render, which makes the useMemo below recompute constantly
+  // and changes the preview payload identity with it — wasteful, and exactly what
+  // react-hooks/exhaustive-deps warns about.
   const groupIds =
     useWatch({ control: form.control, name: "groupIds" }) ?? EMPTY_IDS;
   const userIds =
     useWatch({ control: form.control, name: "userIds" }) ?? EMPTY_IDS;
   const channels =
     useWatch({ control: form.control, name: "channels" }) ?? EMPTY_CHANNELS;
-  // Đếm ký tự trực tiếp — cũng dùng useWatch vì lý do trên.
+  // Live character count — also via useWatch, for the reason above.
   const titleValue = useWatch({ control: form.control, name: "title" }) ?? "";
   const bodyValue = useWatch({ control: form.control, name: "body" }) ?? "";
   const typeValue =
@@ -112,7 +113,7 @@ export default function BroadcastNotificationForm() {
     NotificationTypeEnum.System;
   const useTemplate =
     useWatch({ control: form.control, name: "useTemplate" }) ?? false;
-  // Cùng lý do với EMPTY_IDS: object rỗng viết tại chỗ là tham chiếu mới mỗi lần render.
+  // Same reason as EMPTY_IDS: an inline empty object is a new reference on every render.
   const templateVars =
     useWatch({ control: form.control, name: "templateVars" }) ?? EMPTY_VARS;
 
@@ -132,8 +133,9 @@ export default function BroadcastNotificationForm() {
 
   const onSubmit = async (values: BroadcastFormValues) => {
     try {
-      // Ô để trống bị lược khỏi payload: gửi chuỗi rỗng hay bỏ hẳn khoá đều cho ra chỗ trống lúc
-      // render, nhưng bỏ hẳn thì máy chủ báo đúng "biến chưa có giá trị" thay vì im lặng.
+      // Blank fields are dropped from the payload: sending an empty string or omitting the key both
+      // render as a blank, but omitting it lets the server report "variable has no value" instead
+      // of failing silently.
       const filledVars = Object.entries(values.templateVars).filter(
         ([, v]) => v.trim().length > 0,
       );
@@ -163,7 +165,7 @@ export default function BroadcastNotificationForm() {
       });
       setUserSearch("");
     } catch (error) {
-      // 400 "không có người nhận hợp lệ" đến dưới dạng HttpError ⇒ toast kèm lý do cụ thể.
+      // A 400 "no valid recipients" arrives as an HttpError ⇒ toast with the specific reason.
       handleErrorApi({ error, setError: form.setError });
     }
   };
@@ -172,15 +174,15 @@ export default function BroadcastNotificationForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-      {/* ── Người nhận ─────────────────────────────────────────────────────── */}
+      {/* ── Recipients ─────────────────────────────────────────────────────── */}
       <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
         <div className="flex items-center gap-1.5">
           <Users className="size-4" />
-          <h2 className="text-sm font-medium">Người nhận</h2>
+          <h2 className="text-sm font-medium">Recipients</h2>
         </div>
 
         <div className="space-y-1.5">
-          <Label>Nhóm</Label>
+          <Label>Groups</Label>
           <div className="grid gap-1.5 sm:grid-cols-2">
             {groups.map((g) => {
               const expanded = openGroupIds.includes(g.id);
@@ -190,8 +192,9 @@ export default function BroadcastNotificationForm() {
                   className="self-start rounded-md border border-border bg-background text-xs"
                 >
                   <div className="flex items-center gap-2 px-2.5 py-1.5">
-                    {/* Nút mở/đóng phải nằm NGOÀI <label>: đặt trong thì bấm nó sẽ tick luôn ô
-                        chọn nhóm — người dùng chỉ muốn xem có những ai, chưa chắc muốn chọn. */}
+                    {/* The expand/collapse button must sit OUTSIDE <label>: inside it, clicking it
+                        would also tick the group checkbox — the user only wants to see who is in
+                        the group, not necessarily select it. */}
                     <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
                       <Checkbox
                         checked={groupIds.includes(g.id)}
@@ -223,12 +226,10 @@ export default function BroadcastNotificationForm() {
                       aria-expanded={expanded}
                       aria-label={
                         expanded
-                          ? `Ẩn danh sách người trong nhóm ${g.name}`
-                          : `Xem những ai trong nhóm ${g.name}`
+                          ? `Hide the member list for group ${g.name}`
+                          : `See who is in group ${g.name}`
                       }
-                      title={
-                        expanded ? "Ẩn danh sách" : "Xem những ai trong nhóm"
-                      }
+                      title={expanded ? "Hide list" : "See who is in the group"}
                     >
                       {expanded ? (
                         <ChevronUp className="size-3.5" />
@@ -238,7 +239,7 @@ export default function BroadcastNotificationForm() {
                     </button>
                   </div>
 
-                  {/* Chỉ render khi mở ⇒ chỉ lúc đó mới gọi API. */}
+                  {/* Rendered only when expanded ⇒ the API is called only then. */}
                   {expanded && (
                     <GroupMemberPeek
                       groupId={g.id}
@@ -251,13 +252,13 @@ export default function BroadcastNotificationForm() {
           </div>
           {groups.length === 0 && (
             <p className="text-xs text-muted-foreground">
-              Chưa có nhóm nào. Tạo nhóm ở màn hình “Nhóm nhận thông báo”.
+              No groups yet. Create one on the “Notification groups” screen.
             </p>
           )}
           {hasMoreGroups && (
             <p className="text-xs text-amber-600">
-              Danh sách nhóm bị cắt bớt — dùng màn hình “Nhóm nhận thông báo” để
-              xem đầy đủ.
+              The group list is truncated — use the “Notification groups” screen
+              to see all of them.
             </p>
           )}
           {errors.groupIds && (
@@ -266,7 +267,7 @@ export default function BroadcastNotificationForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label>Thêm người cụ thể (tuỳ chọn)</Label>
+          <Label>Add specific people (optional)</Label>
           {selectedUsers.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {selectedUsers.map((a) => (
@@ -289,7 +290,7 @@ export default function BroadcastNotificationForm() {
             </div>
           )}
           <Input
-            placeholder="Tìm theo tên hoặc email…"
+            placeholder="Search by name or email…"
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
             className="h-8"
@@ -298,11 +299,11 @@ export default function BroadcastNotificationForm() {
             <div className="max-h-36 overflow-y-auto rounded-md border border-border bg-background">
               {isSearchingAccounts ? (
                 <p className="px-3 py-3 text-center text-xs text-muted-foreground">
-                  Đang tìm…
+                  Searching…
                 </p>
               ) : (accountList?.items.length ?? 0) === 0 ? (
                 <p className="px-3 py-3 text-center text-xs text-muted-foreground">
-                  Không tìm thấy tài khoản.
+                  No matching accounts.
                 </p>
               ) : (
                 accountList!.items.map((a) => (
@@ -326,7 +327,7 @@ export default function BroadcastNotificationForm() {
                     </span>
                     {userIds.includes(a.id) && (
                       <Badge variant="secondary" className="text-[10px]">
-                        đã chọn
+                        selected
                       </Badge>
                     )}
                   </button>
@@ -336,21 +337,21 @@ export default function BroadcastNotificationForm() {
           )}
         </div>
 
-        {/* Con số này do BACKEND tính, bằng chính đoạn logic của lần gửi thật — cộng
-            memberCount từng nhóm ở đây sẽ sai khi các nhóm giao nhau. */}
+        {/* This number is computed by the BACKEND, with the same logic as the real send — summing
+            each group's memberCount here would be wrong when groups overlap. */}
         <div className="rounded-md border border-border bg-background px-3 py-2">
           {groupIds.length === 0 && userIds.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Chọn nhóm hoặc người để xem trước số người nhận.
+              Select groups or people to preview the recipient count.
             </p>
           ) : isPreviewing ? (
-            <p className="text-xs text-muted-foreground">Đang tính…</p>
+            <p className="text-xs text-muted-foreground">Calculating…</p>
           ) : preview ? (
             <div className="space-y-0.5 text-xs">
               <p>
-                Sẽ gửi tới{" "}
+                Will send to{" "}
                 <b className="text-sm tabular-nums">{preview.recipientCount}</b>{" "}
-                người
+                people
                 {channels.length > 0 && (
                   <>
                     {" "}
@@ -358,31 +359,31 @@ export default function BroadcastNotificationForm() {
                     <b className="tabular-nums">
                       {preview.notificationCount}
                     </b>{" "}
-                    thông báo ({channels.length} kênh)
+                    notifications ({channels.length} channels)
                   </>
                 )}
               </p>
               {preview.rawCount > preview.recipientCount && (
                 <p className="text-muted-foreground">
-                  Cộng dồn từng nhóm là {preview.rawCount} — các nhóm bạn chọn
-                  có {preview.rawCount - preview.recipientCount} người trùng
-                  nhau, mỗi người chỉ nhận một lần.
+                  Summing each group gives {preview.rawCount} — the groups you
+                  picked share {preview.rawCount - preview.recipientCount}{" "}
+                  people, and each person only receives it once.
                 </p>
               )}
               {preview.skippedUsers > 0 && (
                 <p className="text-amber-600">
-                  {preview.skippedUsers} người được chọn đang ngừng hoạt động —
-                  sẽ không nhận được.
+                  {preview.skippedUsers} selected people are inactive — they
+                  won't receive it.
                 </p>
               )}
               {preview.missingGroups > 0 && (
                 <p className="text-amber-600">
-                  {preview.missingGroups} nhóm không còn tồn tại.
+                  {preview.missingGroups} groups no longer exist.
                 </p>
               )}
               {preview.recipientCount === 0 && (
                 <p className="text-red-500">
-                  Không còn người nhận hợp lệ nào — gửi sẽ bị từ chối.
+                  No valid recipients left — sending will be rejected.
                 </p>
               )}
             </div>
@@ -390,11 +391,11 @@ export default function BroadcastNotificationForm() {
         </div>
       </div>
 
-      {/* ── Nội dung ───────────────────────────────────────────────────────── */}
+      {/* ── Content ────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>
-            Loại <span className="text-red-500">*</span>
+            Type <span className="text-red-500">*</span>
           </Label>
           <Controller
             name="type"
@@ -409,7 +410,7 @@ export default function BroadcastNotificationForm() {
                 onValueChange={(v) => v && field.onChange(Number(v))}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn loại" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {TYPE_OPTIONS.map((o) => (
@@ -428,7 +429,7 @@ export default function BroadcastNotificationForm() {
 
         <div className="space-y-1.5">
           <Label>
-            Kênh gửi <span className="text-red-500">*</span>
+            Channels <span className="text-red-500">*</span>
           </Label>
           <div className="flex flex-wrap gap-3 pt-1.5">
             {CHANNEL_OPTIONS.map((c) => (
@@ -460,14 +461,14 @@ export default function BroadcastNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="bc-title">
-          Tiêu đề <span className="text-red-500">*</span>{" "}
+          Title <span className="text-red-500">*</span>{" "}
           <span className="text-xs font-normal text-muted-foreground">
             ({titleValue.length}/{BROADCAST_TITLE_MAX})
           </span>
         </Label>
         <Input
           id="bc-title"
-          placeholder="VD: Bảo trì hệ thống 22:00 hôm nay"
+          placeholder="e.g. System maintenance tonight at 22:00"
           {...form.register("title")}
         />
         {errors.title && (
@@ -477,7 +478,7 @@ export default function BroadcastNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="bc-body">
-          Nội dung <span className="text-red-500">*</span>{" "}
+          Body <span className="text-red-500">*</span>{" "}
           <span className="text-xs font-normal text-muted-foreground">
             ({bodyValue.length}/{BROADCAST_BODY_MAX})
           </span>
@@ -485,7 +486,7 @@ export default function BroadcastNotificationForm() {
         <Textarea
           id="bc-body"
           rows={4}
-          placeholder="Nội dung thông báo gửi tới người nhận"
+          placeholder="Notification content sent to recipients"
           {...form.register("body")}
         />
         {errors.body && (
@@ -503,10 +504,11 @@ export default function BroadcastNotificationForm() {
             className="mt-0.5"
           />
           <span className="text-sm">
-            Dùng mẫu thông báo có sẵn
+            Use an existing notification template
             <span className="block text-xs font-normal text-muted-foreground">
-              Nội dung dựng từ mẫu của loại đang chọn, mỗi kênh một bản riêng.
-              Tắt thì gửi đúng chữ bạn gõ ở trên.
+              Content is built from the template for the selected type, with a
+              separate version per channel. Turn this off to send exactly what
+              you typed above.
             </span>
           </span>
         </label>
@@ -530,8 +532,9 @@ export default function BroadcastNotificationForm() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Thông báo đi qua đúng đường giao của mọi thông báo khác, nên vẫn tôn
-        trọng tuỳ chọn nhận tin và khung giờ yên tĩnh của từng người.
+        This notification goes through the same delivery path as every other
+        notification, so it still respects each recipient's opt-in preferences
+        and quiet hours.
       </p>
 
       <div className="flex justify-end">
@@ -541,7 +544,7 @@ export default function BroadcastNotificationForm() {
           ) : (
             <Send className="mr-2 size-4" />
           )}
-          Gửi thông báo
+          Send notification
         </Button>
       </div>
     </form>

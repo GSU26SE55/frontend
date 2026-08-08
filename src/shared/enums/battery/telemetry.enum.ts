@@ -1,7 +1,8 @@
-// Telemetry SSE enums — dùng cho LiveReadingDto (kênh realtime sensor-readings/stream).
-// Nguồn: frontend/docs/battery-realtime-description.md §5.3 (sourceType) + §5.4 (sensorSourceCode).
+// Telemetry SSE enums — used by LiveReadingDto (the realtime sensor-readings/stream channel).
+// Source: frontend/docs/battery-realtime-description.md §5.3 (sourceType) + §5.4
+// (sensorSourceCode).
 
-// sourceType: nguồn số đo (LiveReadingDto.sourceType — non-null int).
+// sourceType: where the reading came from (LiveReadingDto.sourceType — non-null int).
 export const SensorSourceTypeEnum = {
   BMS: 1,
   IoTGateway: 2,
@@ -10,7 +11,8 @@ export const SensorSourceTypeEnum = {
 export type SensorSourceTypeEnum =
   (typeof SensorSourceTypeEnum)[keyof typeof SensorSourceTypeEnum];
 
-// sensorSourceCode: phân biệt đa nguồn cùng 1 pin (§5.4). Mặc định dùng `primary`.
+// sensorSourceCode: tells apart multiple sources on the same battery (§5.4).
+// Defaults to `primary`.
 export const SensorSourceCodeEnum = {
   PRIMARY: "primary",
   REDUNDANT: "redundant",

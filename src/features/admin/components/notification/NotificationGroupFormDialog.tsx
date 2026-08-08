@@ -37,7 +37,7 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** null ⇒ chế độ tạo mới; có giá trị ⇒ sửa nhóm đó. */
+  /** null ⇒ create mode; a value ⇒ editing that group. */
   editTarget: NotificationGroupDto | null;
 }
 
@@ -52,8 +52,9 @@ export default function NotificationGroupFormDialog({
 
   const form = useForm<NotificationGroupFormValues>({
     resolver: zodResolver(notificationGroupFormSchema),
-    // Dialog được remount bằng `key` ở phía page mỗi khi đổi mục tiêu, nên defaultValues là đủ —
-    // không cần effect reset (vốn hay gây một nhịp render với dữ liệu của nhóm trước).
+    // The dialog is remounted via `key` on the page side whenever the target changes, so
+    // defaultValues is enough — no reset effect needed (which tends to cause a render tick with
+    // the previous group's data).
     defaultValues: {
       name: editTarget?.name ?? "",
       description: editTarget?.description ?? "",
@@ -70,7 +71,7 @@ export default function NotificationGroupFormDialog({
       else await create.mutateAsync(payload);
       onOpenChange(false);
     } catch (error) {
-      // EntityError → lỗi hiện dưới đúng ô nhập; HttpError (409 trùng tên) → toast.
+      // EntityError → error shown under the right input field; HttpError (409 duplicate name) → toast.
       handleErrorApi({ error, setError: form.setError });
     }
   };
@@ -82,20 +83,24 @@ export default function NotificationGroupFormDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? `Sửa nhóm: ${editTarget.name}` : "Tạo nhóm người nhận"}
+            {isEdit
+              ? `Edit group: ${editTarget.name}`
+              : "Create recipient group"}
           </DialogTitle>
           <DialogDescription>
             {isEdit ? (
               <>
-                Chỉ đổi được tên và mô tả. Muốn đổi cách nhóm chọn thành viên
-                thì tạo nhóm mới — đổi tại chỗ sẽ làm tập người nhận thay đổi
-                hoàn toàn mà không ai nhận ra.
+                Only the name and description can be changed. To change how the
+                group selects members, create a new group instead — changing it
+                in place would completely change the recipient set without
+                anyone noticing.
               </>
             ) : (
               <>
-                Nhóm mới luôn là <b>danh sách tự chọn</b>: bạn thêm/bớt từng
-                người. Nhóm <b>theo vai trò</b> đã có sẵn 4 nhóm hệ thống, tự
-                cập nhật theo tài khoản nên không cần tạo thêm.
+                A new group is always a <b>manually selected list</b>: you
+                add/remove people individually. <b>Role-based</b> groups already
+                exist as 4 system groups that auto-update based on accounts, so
+                you don't need to create more.
               </>
             )}
           </DialogDescription>
@@ -109,14 +114,14 @@ export default function NotificationGroupFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Tên nhóm{" "}
+                    Group name{" "}
                     <span className="text-xs font-normal text-muted-foreground">
                       ({field.value?.length ?? 0}/{GROUP_NAME_MAX})
                     </span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="VD: Trực sự cố cuối tuần"
+                      placeholder="e.g. Weekend incident on-call"
                       autoFocus
                       {...field}
                     />
@@ -132,7 +137,7 @@ export default function NotificationGroupFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Mô tả{" "}
+                    Description{" "}
                     <span className="text-xs font-normal text-muted-foreground">
                       ({field.value?.length ?? 0}/{GROUP_DESCRIPTION_MAX})
                     </span>
@@ -140,7 +145,7 @@ export default function NotificationGroupFormDialog({
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="Nhóm này dùng để làm gì (tuỳ chọn)"
+                      placeholder="What this group is for (optional)"
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -151,7 +156,7 @@ export default function NotificationGroupFormDialog({
             />
 
             <p className="text-xs text-muted-foreground">
-              Tên nhóm không được trùng nhau, không phân biệt hoa-thường.
+              Group names must be unique, case-insensitive.
             </p>
 
             <DialogFooter>
@@ -160,10 +165,14 @@ export default function NotificationGroupFormDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Huỷ
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Tạo nhóm"}
+                {isPending
+                  ? "Saving…"
+                  : isEdit
+                    ? "Save changes"
+                    : "Create group"}
               </Button>
             </DialogFooter>
           </form>

@@ -22,7 +22,7 @@ interface Props {
 function CopyRow({ label, value }: { label: string; value: string }) {
   const copy = () => {
     navigator.clipboard.writeText(value);
-    toast.success(`Đã copy ${label}`);
+    toast.success(`Copied ${label}`);
   };
   return (
     <div className="space-y-1">
@@ -37,7 +37,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-// Hiển thị thông tin nhạy cảm — BE chỉ trả 1 lần (create + rotate-key). Đóng dialog = mất vĩnh viễn.
+// Displays sensitive info — BE only returns it once (create + rotate-key). Closing the dialog = gone forever.
 export default function DeviceKeyRevealDialog({
   open,
   onOpenChange,
@@ -48,10 +48,10 @@ export default function DeviceKeyRevealDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Thông tin bí mật của thiết bị</DialogTitle>
+          <DialogTitle>Device secrets</DialogTitle>
           <DialogDescription className="text-destructive">
-            ⚠️ Các giá trị này chỉ hiển thị MỘT LẦN. Lưu lại trước khi đóng —
-            không thể xem lại.
+            ⚠️ These values are shown ONLY ONCE. Save them before closing — they
+            cannot be viewed again.
           </DialogDescription>
         </DialogHeader>
 
@@ -65,13 +65,14 @@ export default function DeviceKeyRevealDialog({
             <CopyRow label="MQTT Password" value={device.mqttPassword} />
           )}
 
-          {/* BE trả CẢ SÁU trường MQTT cùng rỗng khi bridge chưa bật
-              (`MqttBrokerEndpointProvider` → `MqttBrokerEndpoint.Disabled`), nên xử lý khối này
-              như MỘT đơn vị: hoặc đủ để cấu hình, hoặc nói thẳng là chưa có.
+          {/* BE returns ALL SIX MQTT fields empty together when the bridge isn't enabled
+              (`MqttBrokerEndpointProvider` → `MqttBrokerEndpoint.Disabled`), so this block is
+              handled as ONE unit: either there's enough to configure, or we say plainly there isn't.
 
-              Trước đây host/port render vô điều kiện: ô "Broker Host" trống (React còn cảnh báo
-              `value` prop is null) và ô "Broker Port" hiện đúng chữ "null" do `String(null)` —
-              người vận hành copy nguyên chuỗi đó vào firmware. Đo được trực tiếp trên stack dev. */}
+              Previously host/port rendered unconditionally: the "Broker Host" field was empty (React
+              even warned about `value` prop is null) and the "Broker Port" field showed the literal
+              text "null" from `String(null)` — operators copied that exact string into firmware.
+              Measured directly on the dev stack. */}
           {device.mqttBrokerHost ? (
             <>
               <CopyRow label="MQTT Broker Host" value={device.mqttBrokerHost} />
@@ -79,10 +80,11 @@ export default function DeviceKeyRevealDialog({
                 label="MQTT Broker Port"
                 value={String(device.mqttBrokerPort ?? "")}
               />
-              {/* GH-784 — hai giá trị này tồn tại để KHỎI phải suy đoán: thiếu chúng thì người
-                  cấu hình vẫn đoán TLS theo số cổng, và vẫn gõ tiền tố topic theo deviceCode
-                  nguyên bản chữ hoa — broker so khớp topic phân biệt hoa/thường nên thiết bị bị
-                  từ chối dù credential hoàn toàn đúng. */}
+              {/* GH-784 — these two values exist so no one has to guess: without them, whoever
+                  configures the device would still guess TLS from the port number, and would still
+                  type the topic prefix using the original uppercase deviceCode — the broker matches
+                  topics case-sensitively, so the device gets rejected even with fully correct
+                  credentials. */}
               {device.mqttUseTls !== null && (
                 <CopyRow
                   label="MQTT TLS"
@@ -98,15 +100,15 @@ export default function DeviceKeyRevealDialog({
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              MQTT bridge chưa được bật trên máy chủ, nên chưa có thông tin
-              broker để cấu hình thiết bị. Thiết bị vẫn dùng được API Key ở
-              trên.
+              The MQTT bridge isn't enabled on the server, so there's no broker
+              info to configure the device with yet. The device can still use
+              the API Key above.
             </p>
           )}
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Tôi đã lưu lại</Button>
+          <Button onClick={() => onOpenChange(false)}>I've saved this</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

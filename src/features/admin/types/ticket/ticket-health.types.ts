@@ -1,4 +1,4 @@
-// Health endpoints trả JSON THUẦN (không bọc CommonResponse).
+// Health endpoints return RAW JSON (not wrapped in CommonResponse).
 
 export interface TicketHealthDTO {
   status: string; // "Healthy"

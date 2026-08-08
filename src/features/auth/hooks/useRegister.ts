@@ -6,7 +6,7 @@ import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 export const useRegister = (onOtpSent: (email: string) => void) => {
   return useMutation({
-    // BE không nhận confirmPassword (api-auth.md §/register) — strip trước khi gửi
+    // BE doesn't accept confirmPassword (api-auth.md §/register) — strip it before sending
     mutationFn: (values: RegisterFormValues) => {
       const { fullName, email, password, phoneNumber } = values;
       return authService.register({ fullName, email, password, phoneNumber });
@@ -14,7 +14,7 @@ export const useRegister = (onOtpSent: (email: string) => void) => {
     onSuccess: (response, variables) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? "Đăng ký thất bại");
+        toast.error(res.message ?? "Sign-up failed");
         return;
       }
       toast.success(AUTH_MESSAGES.register.success);

@@ -3,8 +3,9 @@ import { jwtDecode } from "jwt-decode";
 import type { RefreshTokenStatus } from "@/shared/enums/account/account.enum";
 export { UserRole } from "@/shared/enums/account/session.enum";
 
-// Phiên đăng nhập (refresh token) của account — dùng chung admin + auth
-// (GET /api/sessions/me, GET account sessions). Trùng shape ở 2 feature trước đây.
+// An account's login session (refresh token) — shared by admin + auth
+// (GET /api/sessions/me, GET account sessions). This shape used to be
+// duplicated in both features.
 export interface SessionDto {
   id: string;
   issuedAt: string;

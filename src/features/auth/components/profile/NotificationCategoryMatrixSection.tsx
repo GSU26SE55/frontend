@@ -24,24 +24,24 @@ import type {
 import type { NotificationPreferenceDto } from "@/shared/types/notification/notification-preference.types";
 import { MESSAGES } from "@/shared/constants/messages";
 
-// 4 kênh — `global` là khoá tương ứng ở công tắc toàn cục (channels), dùng để
-// disable ô khi kênh đó đã bị tắt ở phần trên (BE: channels luôn thắng dòng nhóm).
+// 4 channels — `global` is the matching key on the global toggle (channels), used to
+// disable the cell when that channel is already off above (BE: channels always win over category rows).
 const CHANNEL_COLUMNS = [
   { key: "pushEnabled", label: "Push" },
   { key: "emailEnabled", label: "Email" },
   { key: "smsEnabled", label: "SMS" },
-  { key: "inAppEnabled", label: "Trong ứng dụng" },
+  { key: "inAppEnabled", label: "In-app" },
 ] as const;
 
 type ChannelKey = (typeof CHANNEL_COLUMNS)[number]["key"];
 
 const CATEGORY_LABEL: Record<NotificationCategoryEnum, string> = {
   [NotificationCategoryEnum.Ticket]: "Ticket",
-  [NotificationCategoryEnum.Sla]: "SLA & chuyển cấp",
-  [NotificationCategoryEnum.Battery]: "Pin & thiết bị IoT",
-  [NotificationCategoryEnum.Environmental]: "Sự cố môi trường",
-  [NotificationCategoryEnum.Chat]: "Trao đổi trên ticket",
-  [NotificationCategoryEnum.Account]: "Tài khoản & hệ thống",
+  [NotificationCategoryEnum.Sla]: "SLA & escalation",
+  [NotificationCategoryEnum.Battery]: "Battery & IoT devices",
+  [NotificationCategoryEnum.Environmental]: "Environmental incidents",
+  [NotificationCategoryEnum.Chat]: "Ticket conversations",
+  [NotificationCategoryEnum.Account]: "Account & system",
 };
 
 function toFormValues(
@@ -58,8 +58,8 @@ function toFormValues(
   };
 }
 
-// Gom type theo nhóm để giải thích "tắt nhóm này thì mất thông báo nào".
-// Dữ liệu lấy từ API, KHÔNG nhân bản bảng ánh xạ ở client.
+// Group types by category to explain "turning off this category loses which notifications".
+// Data comes from the API — the mapping table is NOT duplicated on the client.
 function groupTypesByCategory(
   map: NotificationCategoryMapDto[] | undefined,
 ): Record<number, string[]> {
@@ -94,8 +94,8 @@ export default function NotificationCategoryMatrixSection() {
 
   const onSubmit = async (values: NotificationMatrixFormValues) => {
     const original = data?.categories ?? [];
-    // Vá từng dòng: chỉ gửi nhóm đã đổi. Mỗi dòng vẫn gửi đủ 4 kênh vì BE ghi
-    // field thiếu thành false chứ không giữ giá trị cũ.
+    // Patch per row: only send categories that changed. Each row still sends all 4
+    // channels because the BE writes a missing field as false instead of keeping the old value.
     const changed = values.items.filter((item) => {
       const before = original.find((c) => c.category === item.category);
       if (!before) return true;
@@ -111,9 +111,9 @@ export default function NotificationCategoryMatrixSection() {
       await update.mutateAsync({ items: changed });
       toast.success(MESSAGES.notificationPrefs.matrixSaved);
     } catch (error) {
-      // Form này toàn switch, không có ô text để hiện lỗi field; BE lại trả field
-      // dạng "Items.Category" / "UserId" — không khớp path RHF nào. Không toast
-      // thêm thì EntityError bị nuốt hoàn toàn (handleErrorApi return sớm).
+      // This form is all switches, no text field to show a field error; the BE returns fields
+      // like "Items.Category" / "UserId" that don't match any RHF path. Without this extra
+      // toast, EntityError gets fully swallowed (handleErrorApi returns early).
       if (error instanceof EntityError) {
         toast.error(
           error.errors[0]?.detail ??
@@ -128,7 +128,7 @@ export default function NotificationCategoryMatrixSection() {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Đang tải…
+        <Loader2 className="size-4 animate-spin" /> Loading…
       </div>
     );
   }
@@ -137,10 +137,10 @@ export default function NotificationCategoryMatrixSection() {
     return (
       <div className="space-y-3">
         <p className="text-sm text-red-500">
-          Không tải được tuỳ chọn theo nhóm.
+          Failed to load category preferences.
         </p>
         <Button type="button" variant="outline" onClick={() => refetch()}>
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -149,10 +149,10 @@ export default function NotificationCategoryMatrixSection() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1">
-        <p className="text-[13px] font-semibold">Thông báo theo nhóm</p>
+        <p className="text-[13px] font-semibold">Notifications by category</p>
         <p className="text-xs text-muted-foreground">
-          Tắt riêng từng nhóm mà không mất các nhóm còn lại. Kênh đã tắt ở phần
-          trên vẫn thắng mọi thiết lập tại đây.
+          Turn off individual categories without losing the rest. A channel
+          turned off above still overrides any setting here.
         </p>
       </div>
 
@@ -160,7 +160,7 @@ export default function NotificationCategoryMatrixSection() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              <th className="text-left font-medium px-4 py-2.5">Nhóm</th>
+              <th className="text-left font-medium px-4 py-2.5">Category</th>
               {CHANNEL_COLUMNS.map((col) => {
                 const globalOff = channels ? !channels[col.key] : false;
                 return (
@@ -171,7 +171,7 @@ export default function NotificationCategoryMatrixSection() {
                     {col.label}
                     {globalOff && (
                       <span className="block text-[10px] font-normal text-muted-foreground">
-                        đang tắt
+                        off
                       </span>
                     )}
                   </th>
@@ -182,9 +182,9 @@ export default function NotificationCategoryMatrixSection() {
           <tbody className="divide-y divide-border/60">
             {data.categories.map((cat, index) => {
               const types = typesByCategory[cat.category] ?? [];
-              // isCustomized của lần fetch gần nhất; sau khi user gạt switch mà
-              // chưa lưu thì giá trị form đã khác — vẫn hiện "Kế thừa" cho tới
-              // khi lưu xong (đúng trạng thái server).
+              // isCustomized from the latest fetch; after the user flips a switch without
+              // saving, the form value already differs — still shows "Inherited" until
+              // saved (reflects actual server state).
               const inherited = !cat.isCustomized;
               return (
                 <tr key={cat.category}>
@@ -195,7 +195,7 @@ export default function NotificationCategoryMatrixSection() {
                       </span>
                       {inherited && (
                         <Badge variant="secondary" className="text-[10px]">
-                          Kế thừa
+                          Inherited
                         </Badge>
                       )}
                     </div>
@@ -204,7 +204,7 @@ export default function NotificationCategoryMatrixSection() {
                         className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1"
                         title={types.join(", ")}
                       >
-                        {types.length} loại thông báo
+                        {types.length} notification types
                       </p>
                     )}
                   </td>
@@ -245,7 +245,7 @@ export default function NotificationCategoryMatrixSection() {
           type="submit"
           disabled={update.isPending || data.categories.length === 0}
         >
-          {update.isPending ? "Đang lưu…" : "Lưu tuỳ chọn nhóm"}
+          {update.isPending ? "Saving…" : "Save category preferences"}
         </Button>
       </div>
     </form>

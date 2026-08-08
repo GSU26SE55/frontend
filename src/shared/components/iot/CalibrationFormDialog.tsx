@@ -76,7 +76,7 @@ export default function CalibrationFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Thêm calibration</DialogTitle>
+          <DialogTitle>Add calibration</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -95,7 +95,7 @@ export default function CalibrationFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="unit">Đơn vị *</Label>
+              <Label htmlFor="unit">Unit *</Label>
               <Input id="unit" {...register("unit")} placeholder="V" />
               {errors.unit && (
                 <p className="text-sm text-destructive">
@@ -138,7 +138,7 @@ export default function CalibrationFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="calibratedAt">Ngày calibration *</Label>
+              <Label htmlFor="calibratedAt">Calibration date *</Label>
               <Controller
                 control={control}
                 name="calibratedAt"
@@ -157,7 +157,7 @@ export default function CalibrationFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="expiresAt">Ngày hết hạn</Label>
+              <Label htmlFor="expiresAt">Expiration date</Label>
               <Controller
                 control={control}
                 name="expiresAt"
@@ -179,11 +179,11 @@ export default function CalibrationFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryAssetId">Battery Asset ID (tuỳ chọn)</Label>
+            <Label htmlFor="batteryAssetId">Battery Asset ID (optional)</Label>
             <Input
               id="batteryAssetId"
               {...register("batteryAssetId")}
-              placeholder="Bỏ trống = calibration cấp device"
+              placeholder="Leave blank = device-level calibration"
             />
             {errors.batteryAssetId && (
               <p className="text-sm text-destructive">
@@ -193,7 +193,7 @@ export default function CalibrationFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" {...register("notes")} />
           </div>
 
@@ -203,10 +203,10 @@ export default function CalibrationFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Thêm
+              Add
             </Button>
           </DialogFooter>
         </form>

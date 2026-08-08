@@ -7,8 +7,8 @@ import type {
   SetTopologyPayload,
 } from "@/shared/types/battery/cascade.types";
 
-// getAssetRisk (Admin,Manager,Staff,Customer) + getSiteSummary (Admin,Manager).
-// setTopology chỉ Admin — component gọi qua flag canManageTopology.
+// getAssetRisk (Admin, Manager, Staff, Customer) + getSiteSummary (Admin, Manager).
+// setTopology is Admin only — component calls it via the canManageTopology flag.
 export const cascadeService = {
   getAssetRisk: (id: string) =>
     axiosInstance.get<CommonResponse<CascadeRiskDto>>(

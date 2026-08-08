@@ -12,7 +12,7 @@ export const notificationPreferenceService = {
       ENDPOINTS.NOTIFICATION_PREFERENCES.GET,
     ),
 
-  // PUT upsert — KHÔNG gửi userId (BE lấy từ JWT claim)
+  // PUT upsert — does NOT send userId (BE reads it from the JWT claim)
   update: (payload: UpdateNotificationPreferencePayload) =>
     axiosInstance.put<CommonResponse<NotificationPreferenceDto>>(
       ENDPOINTS.NOTIFICATION_PREFERENCES.UPDATE,

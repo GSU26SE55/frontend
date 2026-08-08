@@ -3,7 +3,7 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { sensorReadingService } from "@/shared/services/battery/sensor-reading.service";
 import type { SensorReadingHistoryParams } from "@/shared/types/battery/sensor-reading-history.types";
 
-// Cursor pagination — không page-number, không totalItems. Dùng cho bảng lịch sử đầy đủ.
+// Cursor pagination — no page-number, no totalItems. Used for the full history table.
 export function useReadingHistory(
   assetId: string,
   params?: Omit<SensorReadingHistoryParams, "cursor">,
@@ -21,8 +21,8 @@ export function useReadingHistory(
   });
 }
 
-// Danh sách N bản ghi gần nhất (không infinite-scroll) — dùng cho panel tóm tắt
-// trong ticket detail (manager/staff). Trước đây nhân bản useManager/StaffReadingHistory.
+// List of the N most recent records (no infinite-scroll) — used for the summary panel
+// in ticket detail (manager/staff). Previously duplicated as useManager/StaffReadingHistory.
 export function useReadingHistoryLatest(
   assetId: string | null | undefined,
   limit = 10,

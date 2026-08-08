@@ -1,23 +1,23 @@
-// Nhãn hành động (button/menu) dùng chung toàn app. Gom về 1 nguồn để:
-// - Chuẩn hóa chính tả (Huỷ→Hủy, Xoá→Xóa — thống nhất Hủy/Xóa).
-// - Đổi wording 1 chỗ áp mọi nơi.
-// Dùng: <Button>{ACTIONS.SAVE}</Button>
+// Action labels (button/menu) shared across the whole app. Kept in one place so:
+// - Wording stays consistent everywhere.
+// - Changing a label once applies it everywhere.
+// Usage: <Button>{ACTIONS.SAVE}</Button>
 
 export const ACTIONS = {
-  SAVE: "Lưu",
-  SAVE_CHANGES: "Lưu thay đổi",
-  DELETE: "Xóa",
-  CANCEL: "Hủy",
-  CONFIRM: "Xác nhận",
-  ADD: "Thêm",
-  ADD_NEW: "Thêm mới",
-  EDIT: "Chỉnh sửa",
-  CREATE: "Tạo mới",
-  CLOSE: "Đóng",
-  BACK: "Quay lại",
-  REJECT: "Từ chối",
-  APPROVE: "Duyệt",
-  REFRESH: "Làm mới",
-  SEND: "Gửi",
-  UPDATE: "Cập nhật",
+  SAVE: "Save",
+  SAVE_CHANGES: "Save changes",
+  DELETE: "Delete",
+  CANCEL: "Cancel",
+  CONFIRM: "Confirm",
+  ADD: "Add",
+  ADD_NEW: "Add new",
+  EDIT: "Edit",
+  CREATE: "Create",
+  CLOSE: "Close",
+  BACK: "Back",
+  REJECT: "Reject",
+  APPROVE: "Approve",
+  REFRESH: "Refresh",
+  SEND: "Send",
+  UPDATE: "Update",
 } as const;

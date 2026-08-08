@@ -11,7 +11,7 @@ export const useVerifyOtp = (onSuccess: () => void) => {
     onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? "OTP không hợp lệ");
+        toast.error(res.message ?? "Invalid verification code");
         return;
       }
       toast.success(AUTH_MESSAGES.otp.verified);

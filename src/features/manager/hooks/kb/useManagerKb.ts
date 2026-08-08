@@ -62,7 +62,7 @@ export function useManagerKbSuggest(ticketId?: string) {
   });
 }
 
-// create/update là form → component xử lý lỗi qua try/catch + setError
+// create/update are forms → the component handles errors via try/catch + setError
 export function useManagerCreateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -86,7 +86,7 @@ export function useManagerUpdateKbArticle() {
       payload: UpdateKbArticlePayload;
     }) => managerKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (article, { id }) => {
-      // BE đưa bài về PendingReview khi thay đổi cần duyệt — nội dung mới chưa hiển thị ngay.
+      // The BE moves the article back to PendingReview when a change needs approval — the new content isn't live yet.
       toast.success(
         article?.status === KbArticleStatusEnum.PendingReview
           ? MANAGER_MESSAGES.kb.updatePending
@@ -98,7 +98,7 @@ export function useManagerUpdateKbArticle() {
   });
 }
 
-// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+// Copy a KB article → create a new one (Draft), returns an action DTO holding the new id.
 export function useManagerDuplicateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -164,7 +164,7 @@ function useManagerKbWorkflow<TVars>(
 export function useManagerApproveKbReview() {
   return useManagerKbWorkflow(
     (id: string) => managerKbService.approveReview(id),
-    "Đã phê duyệt và xuất bản",
+    "Approved and published",
     (id) => id,
   );
 }
@@ -173,7 +173,7 @@ export function useManagerRejectKbReview() {
   return useManagerKbWorkflow(
     (vars: { id: string; payload: RejectReviewPayload }) =>
       managerKbService.rejectReview(vars.id, vars.payload),
-    "Đã từ chối thay đổi",
+    "Changes rejected",
     (vars) => vars.id,
   );
 }
@@ -181,7 +181,7 @@ export function useManagerRejectKbReview() {
 export function useManagerPublishKbArticle() {
   return useManagerKbWorkflow(
     (id: string) => managerKbService.publish(id),
-    "Đã xuất bản bài viết",
+    "Article published",
     (id) => id,
   );
 }
@@ -189,7 +189,7 @@ export function useManagerPublishKbArticle() {
 export function useManagerArchiveKbArticle() {
   return useManagerKbWorkflow(
     (id: string) => managerKbService.archive(id),
-    "Đã lưu trữ bài viết",
+    "Article archived",
     (id) => id,
   );
 }
@@ -198,7 +198,7 @@ export function useManagerRollbackKbArticle() {
   return useManagerKbWorkflow(
     (vars: { id: string; payload: RollbackPayload }) =>
       managerKbService.rollback(vars.id, vars.payload),
-    "Đã hoàn tác phiên bản",
+    "Version rolled back",
     (vars) => vars.id,
   );
 }

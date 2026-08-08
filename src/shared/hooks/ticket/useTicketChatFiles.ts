@@ -7,8 +7,8 @@ import type { TicketAttachmentDTO } from "@/shared/types/ticket/ticket-attachmen
 import { isImageAttachment } from "@/shared/types/ticket/ticket-attachment.types";
 
 /**
- * Toàn bộ file đã gửi qua chat của MỘT ticket.
- * BE lọc sẵn theo quyền: Customer chỉ thấy file từ chat `IsInternal = false`.
+ * All files sent via chat for a SINGLE ticket.
+ * BE already filters by permission: Customer only sees files from `IsInternal = false` chats.
  */
 export function useTicketChatFiles(ticketId?: string) {
   return useQuery({
@@ -23,7 +23,7 @@ export function useTicketChatFiles(ticketId?: string) {
   });
 }
 
-/** Chỉ lấy ảnh — dùng cho picker chèn ảnh vào bài viết. */
+/** Images only — used by the picker for inserting images into an article. */
 export function useTicketChatImages(ticketId?: string) {
   const query = useTicketChatFiles(ticketId);
   return {

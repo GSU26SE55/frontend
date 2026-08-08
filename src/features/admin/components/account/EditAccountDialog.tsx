@@ -75,7 +75,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa tài khoản</DialogTitle>
+          <DialogTitle>Edit account</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           <div className="space-y-1.5">
@@ -89,16 +89,16 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label>
-              Họ và tên <span className="text-red-500">*</span>
+              Full name <span className="text-red-500">*</span>
             </Label>
-            <Input placeholder="Nguyễn Văn A" {...register("fullName")} />
+            <Input placeholder="Nguyen Van A" {...register("fullName")} />
             {errors.fullName && (
               <p className="text-xs text-red-500">{errors.fullName.message}</p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Số điện thoại</Label>
+              <Label>Phone number</Label>
               <Input {...register("phoneNumber")} placeholder="0912345678" />
               {errors.phoneNumber && (
                 <p className="text-xs text-red-500">
@@ -107,7 +107,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Ngày sinh</Label>
+              <Label>Date of birth</Label>
               <Controller
                 control={control}
                 name="dateOfBirth"
@@ -121,15 +121,15 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Địa chỉ</Label>
+            <Label>Address</Label>
             <Input
-              placeholder="Số nhà, đường, phường/xã..."
+              placeholder="Street, ward/commune..."
               {...register("address")}
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -137,7 +137,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Lưu thay đổi
+              Save changes
             </Button>
           </DialogFooter>
         </form>

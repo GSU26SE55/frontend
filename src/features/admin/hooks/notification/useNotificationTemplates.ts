@@ -10,9 +10,9 @@ import type {
   TemplateSampleDataPayload,
 } from "@/features/admin/types/notification/notification-template.types";
 
-// Template gần như tĩnh (chỉ đổi khi seed lại hoặc admin soạn) → cache 5 phút.
-// Trả nguyên khối phân trang của BE (items + totalItems + totalPages + hasNext/Prev) — page cần
-// đủ các trường này cho DataPagination, không tự suy ra từ độ dài mảng được.
+// Templates are nearly static (only change on reseed or when an admin edits) → cache for 5 minutes.
+// Returns BE's full pagination block (items + totalItems + totalPages + hasNext/Prev) — the page
+// needs all these fields for DataPagination, they can't be inferred from array length alone.
 export const useNotificationTemplates = (
   params?: NotificationTemplateListParams,
 ) =>
@@ -23,8 +23,8 @@ export const useNotificationTemplates = (
     staleTime: 5 * 60_000,
   });
 
-// Hợp đồng tên biến là dữ liệu TĨNH suy ra từ code backend — không đổi trong một phiên làm việc,
-// nên cache thẳng `Infinity` thay vì đặt một con số phút tuỳ tiện. Đổi được nó chỉ có deploy mới.
+// The variable-name contract is STATIC data derived from backend code — it doesn't change within
+// a session, so cache it as `Infinity` instead of picking an arbitrary minute count. Only a deploy can change it.
 export const useTemplateVariables = () =>
   useQuery({
     queryKey: QUERY_KEY.admin.notificationTemplates.variables(),
@@ -34,8 +34,8 @@ export const useTemplateVariables = () =>
     gcTime: Infinity,
   });
 
-// Ngược lại, độ phủ đọc từ dữ liệu thật (số thông báo đã sinh + template đang bật) nên phải hết
-// hạn nhanh và được invalidate sau mỗi lần soạn template.
+// Coverage, by contrast, reads from live data (notifications generated + active templates), so it
+// must expire quickly and be invalidated after every template edit.
 export const useTemplateCoverage = () =>
   useQuery({
     queryKey: QUERY_KEY.admin.notificationTemplates.coverage(),
@@ -44,8 +44,8 @@ export const useTemplateCoverage = () =>
     staleTime: 60_000,
   });
 
-// Preview không đổi state server → mutation (không cache), lỗi cú pháp Handlebars
-// trả 400 và được hiển thị ngay trong dialog thay vì toast trôi mất.
+// Preview doesn't change server state → mutation (no cache); a Handlebars syntax
+// error returns 400 and is shown right in the dialog instead of drifting away as a toast.
 export const usePreviewTemplate = () =>
   useMutation({
     mutationFn: ({
@@ -67,12 +67,12 @@ export const useTestSendTemplate = () =>
       payload: TemplateSampleDataPayload;
     }) => notificationTemplateService.testSend(id, payload).then((r) => r.data),
     onSuccess: (res) => {
-      // message BE: "Đã gửi thử tới {email}." — hiện nguyên văn để admin biết địa chỉ nhận.
+      // BE message: "Test sent to {email}." — show it verbatim so the admin knows the recipient address.
       const remaining = res.data?.remainingThisHour;
       toast.success(
-        res.message ?? "Đã gửi thử",
+        res.message ?? "Test sent",
         remaining !== undefined
-          ? { description: `Còn ${remaining} lượt trong giờ này` }
+          ? { description: `${remaining} left this hour` }
           : undefined,
       );
     },
@@ -86,15 +86,15 @@ export const useActivateTemplate = () => {
       notificationTemplateService.activate(id).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationTemplates });
-      toast.success(res.message ?? "Đã kích hoạt phiên bản");
+      toast.success(res.message ?? "Version activated");
     },
     onError: (error) => handleErrorApi({ error }),
   });
 };
 
-// Tạo/sửa dùng trong form ⇒ KHÔNG đặt onError ở đây: component gọi mutateAsync trong try-catch rồi
-// handleErrorApi({ error, setError }) để lỗi từng trường hiện dưới đúng ô nhập. Đặt onError ở hook
-// sẽ nuốt mất lỗi vào toast và ô nhập không bao giờ đỏ.
+// Create/edit are used in a form ⇒ do NOT set onError here: the component calls mutateAsync in try-catch, then
+// handleErrorApi({ error, setError }) so each field's error shows under the right input. Setting onError on the hook
+// would swallow the error into a toast and the input would never turn red.
 export const useCreateTemplate = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -102,7 +102,7 @@ export const useCreateTemplate = () => {
       notificationTemplateService.create(payload).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationTemplates });
-      toast.success(res.message ?? "Đã tạo mẫu thông báo");
+      toast.success(res.message ?? "Notification template created");
     },
   });
 };
@@ -119,12 +119,12 @@ export const useReviseTemplate = () => {
     }) => notificationTemplateService.revise(id, payload).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationTemplates });
-      toast.success(res.message ?? "Đã tạo phiên bản mới");
+      toast.success(res.message ?? "New version created");
     },
   });
 };
 
-// Xoá không có form ⇒ dùng onError để bắn toast trực tiếp (BE trả 409 khi xoá bản đang dùng).
+// Delete has no form ⇒ use onError to fire the toast directly (BE returns 409 when deleting a version still in use).
 export const useDeleteTemplate = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -132,7 +132,7 @@ export const useDeleteTemplate = () => {
       notificationTemplateService.remove(id).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationTemplates });
-      toast.success(res.message ?? "Đã xoá phiên bản");
+      toast.success(res.message ?? "Version deleted");
     },
     onError: (error) => handleErrorApi({ error }),
   });

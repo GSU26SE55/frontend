@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,15 +15,15 @@ import {
 } from "@/shared/constants/notificationLabels";
 
 /**
- * Đối chiếu mẫu đang có với **thông báo thật đã gửi**.
+ * Reconciles the templates we have against the **notifications actually sent**.
  *
- * Vì sao đo theo thông báo thật chứ không theo cấu hình: hai thứ đó từng lệch nhau. Consumer pin
- * gửi qua cả SMS trong khi bảng cấu hình kênh không khai SMS, nên 98 tin SMS đã gửi đi mà không mẫu
- * nào phủ — chỉ dữ liệu thật mới lộ ra khoảng trống đó.
+ * Why measure against real notifications instead of the config: the two have drifted apart before.
+ * The battery consumer was also sending over SMS while the channel config table didn't declare SMS,
+ * so 98 SMS messages went out with no template covering them — only real data exposes that gap.
  *
- * Hai thứ bảng này trả lời:
- *  - Cặp nào đang gửi bằng **chữ ghi cứng trong code** (chưa có mẫu) ⇒ muốn sửa câu chữ phải deploy.
- *  - Mẫu nào đang gọi **biến không tồn tại** ⇒ chỗ đó hiện ra rỗng khi gửi.
+ * Two things this table answers:
+ *  - Which pairs are sending with **hardcoded copy** (no template yet) ⇒ changing the wording needs a deploy.
+ *  - Which templates reference **variables that don't exist** ⇒ those spots render empty when sent.
  */
 export default function TemplateCoveragePanel() {
   const { data, isLoading } = useTemplateCoverage();
@@ -52,27 +57,29 @@ export default function TemplateCoveragePanel() {
           <div>
             <p className="text-sm font-medium">
               {canhBao === 0
-                ? `Đủ mẫu cho cả ${tong} cặp (loại × kênh) đang gửi`
-                : `${canhBao}/${tong} cặp đang gửi cần xử lý`}
+                ? `All ${tong} active pairs (type × channel) have a template`
+                : `${canhBao}/${tong} active pairs need attention`}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {canhBao === 0 ? (
                 <>
-                  Mọi thông báo đang gửi đều lấy nội dung từ mẫu, và không mẫu
-                  nào gọi biến không tồn tại.
+                  Every notification being sent takes its content from a
+                  template, and no template references a variable that doesn't
+                  exist.
                 </>
               ) : (
                 <>
                   {thieuMau.length > 0 && (
                     <>
-                      <b>{thieuMau.length}</b> cặp chưa có mẫu — đang dùng chữ
-                      ghi cứng trong code, sửa câu chữ phải deploy lại.{" "}
+                      <b>{thieuMau.length}</b> pairs have no template — they use
+                      hardcoded copy, so changing the wording needs a
+                      redeploy.{" "}
                     </>
                   )}
                   {mauHong.length > 0 && (
                     <>
-                      <b>{mauHong.length}</b> mẫu gọi biến không tồn tại — chỗ đó
-                      hiện ra rỗng khi gửi.
+                      <b>{mauHong.length}</b> templates reference variables that
+                      don't exist — those spots render empty when sent.
                     </>
                   )}
                 </>
@@ -89,11 +96,11 @@ export default function TemplateCoveragePanel() {
           >
             {expanded ? (
               <>
-                <ChevronUp className="size-3.5" /> Thu gọn
+                <ChevronUp className="size-3.5" /> Collapse
               </>
             ) : (
               <>
-                <ChevronDown className="size-3.5" /> Xem chi tiết
+                <ChevronDown className="size-3.5" /> View details
               </>
             )}
           </Button>
@@ -105,10 +112,10 @@ export default function TemplateCoveragePanel() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
-                <th className="pb-1.5 pr-3 font-medium">Loại thông báo</th>
-                <th className="pb-1.5 pr-3 font-medium">Kênh</th>
-                <th className="pb-1.5 pr-3 font-medium text-right">Đã gửi</th>
-                <th className="pb-1.5 font-medium">Vấn đề</th>
+                <th className="pb-1.5 pr-3 font-medium">Notification type</th>
+                <th className="pb-1.5 pr-3 font-medium">Channel</th>
+                <th className="pb-1.5 pr-3 font-medium text-right">Sent</th>
+                <th className="pb-1.5 font-medium">Issue</th>
               </tr>
             </thead>
             <tbody>
@@ -129,11 +136,11 @@ export default function TemplateCoveragePanel() {
                   <td className="py-1.5">
                     {!r.hasActiveTemplate ? (
                       <Badge variant="outline" className="font-normal">
-                        Chưa có mẫu
+                        No template
                       </Badge>
                     ) : (
                       <span className="text-xs">
-                        Biến không tồn tại:{" "}
+                        Unknown variables:{" "}
                         {r.unknownVariables.map((v, i) => (
                           <span key={v}>
                             {i > 0 && ", "}

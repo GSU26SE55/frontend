@@ -119,12 +119,12 @@ export default function SiteFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Sửa site" : "Tạo site mới"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit site" : "New site"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Tên site *</Label>
+            <Label htmlFor="name">Site name *</Label>
             <Input id="name" {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -132,7 +132,7 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Khách hàng *</Label>
+            <Label htmlFor="customerId">Customer *</Label>
             <Controller
               control={control}
               name="customerId"
@@ -148,8 +148,8 @@ export default function SiteFormDialog({
             />
             {isEdit && (
               <p className="text-xs text-muted-foreground">
-                Không thể đổi khách hàng qua sửa site — dùng chức năng chuyển
-                chủ sở hữu.
+                The customer can't be changed by editing the site — use transfer
+                ownership.
               </p>
             )}
             {errors.customerId && (
@@ -160,7 +160,7 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="installDate">Ngày lắp *</Label>
+            <Label htmlFor="installDate">Install date *</Label>
             <Controller
               control={control}
               name="installDate"
@@ -181,13 +181,13 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="address">Địa chỉ</Label>
+            <Label htmlFor="address">Address</Label>
             <Input id="address" {...register("address")} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="latitude">Vĩ độ</Label>
+              <Label htmlFor="latitude">Latitude</Label>
               <Input
                 id="latitude"
                 type="number"
@@ -201,7 +201,7 @@ export default function SiteFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="longitude">Kinh độ</Label>
+              <Label htmlFor="longitude">Longitude</Label>
               <Input
                 id="longitude"
                 type="number"
@@ -218,14 +218,14 @@ export default function SiteFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="contactPersonName">Người liên hệ</Label>
+              <Label htmlFor="contactPersonName">Contact person</Label>
               <Input
                 id="contactPersonName"
                 {...register("contactPersonName")}
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="contactPersonPhone">SĐT liên hệ</Label>
+              <Label htmlFor="contactPersonPhone">Contact phone</Label>
               <Input
                 id="contactPersonPhone"
                 {...register("contactPersonPhone")}
@@ -239,10 +239,10 @@ export default function SiteFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isEdit ? "Lưu thay đổi" : "Tạo site"}
+              {isEdit ? "Save changes" : "Create site"}
             </Button>
           </DialogFooter>
         </form>

@@ -13,7 +13,7 @@ export const useVerifyResetOtp = (
     onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess || !res.data) {
-        toast.error(res.message ?? "OTP không hợp lệ");
+        toast.error(res.message ?? "Invalid verification code");
         return;
       }
       onSuccess?.(res.data.resetToken, res.data.expiresInSeconds);

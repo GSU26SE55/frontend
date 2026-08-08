@@ -20,8 +20,8 @@ export interface ChartSeries {
 interface ReportTimeSeriesChartProps {
   data: unknown[] | undefined;
   series: ChartSeries[];
-  xKey?: string; // mặc định "date"
-  xFormat?: string; // date-fns pattern, mặc định "dd/MM"
+  xKey?: string; // defaults to "date"
+  xFormat?: string; // date-fns pattern, defaults to "MM/dd"
   isLoading?: boolean;
   emptyText?: string;
 }
@@ -35,14 +35,14 @@ const safeFormat = (value: unknown, pattern: string): string => {
   }
 };
 
-// Line chart cho report time-series (alert-volume, ambient-trend). Series cấu hình động.
+// Line chart for time-series reports (alert-volume, ambient-trend). Series are configured dynamically.
 export function ReportTimeSeriesChart({
   data,
   series,
   xKey = "date",
-  xFormat = "dd/MM",
+  xFormat = "MM/dd",
   isLoading,
-  emptyText = "Không có dữ liệu.",
+  emptyText = "No data.",
 }: ReportTimeSeriesChartProps) {
   if (isLoading) return <Skeleton className="h-75 w-full" />;
 

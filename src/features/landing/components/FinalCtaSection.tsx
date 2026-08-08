@@ -15,9 +15,9 @@ import {
 
 const TRUST_ITEMS = [
   { icon: ShieldCheck, text: "0 SLA breach" },
-  { icon: Zap, text: "Alert trong vài giây" },
-  { icon: Ticket, text: "Ticket tự động từ cảnh báo" },
-  { icon: CheckCircle2, text: "Audit trail đầy đủ" },
+  { icon: Zap, text: "Alerts within seconds" },
+  { icon: Ticket, text: "Tickets raised automatically from alerts" },
+  { icon: CheckCircle2, text: "Complete audit trail" },
 ] as const;
 
 const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
@@ -111,7 +111,7 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
-            Hệ thống đang hoạt động
+            System operational
           </span>
         </div>
 
@@ -121,9 +121,9 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
           style={{ opacity: 0 }}
           className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl leading-[1.08]"
         >
-          Không có cảnh báo nào
+          No alert ever
           <br />
-          <span className="text-emerald-400">bị bỏ sót nữa.</span>
+          <span className="text-emerald-400">slips through again.</span>
         </h2>
 
         {/* Subheadline */}
@@ -132,8 +132,8 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
           style={{ opacity: 0 }}
           className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg"
         >
-          Một console cho SOH, cảnh báo bất thường, work order và SLA — từ phát
-          hiện đến đóng ticket đều có audit trail rõ ràng.
+          One console for SOH, anomaly alerts, work orders and SLAs — every step
+          from detection to closure leaves a clear audit trail.
         </p>
 
         {/* CTA Buttons */}
@@ -147,14 +147,14 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
             onClick={onLogin}
             className="h-12 gap-2 rounded-xl bg-white px-7 font-bold text-slate-950 shadow-lg hover:bg-slate-100 cursor-pointer"
           >
-            Vào hệ thống
+            Enter the system
             <ArrowRight className="size-4" />
           </Button>
           <a
             href="#product"
             className="flex h-12 items-center gap-2 rounded-xl border border-white/15 px-7 text-sm font-semibold text-white/80 transition-colors hover:border-white/30 hover:text-white"
           >
-            Xem sản phẩm
+            See the product
           </a>
         </div>
 
@@ -180,13 +180,13 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
 
         {/* Already have account */}
         <p className="mt-7 text-sm text-slate-500">
-          Đã có tài khoản?{" "}
+          Already have an account?{" "}
           <button
             type="button"
             onClick={onLogin}
             className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
           >
-            Đăng nhập ngay &rarr;
+            Sign in &rarr;
           </button>
         </p>
       </div>

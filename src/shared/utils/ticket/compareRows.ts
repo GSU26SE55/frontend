@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import {
   TicketCategoryEnum,
@@ -7,40 +7,42 @@ import {
 } from "@/shared/enums/ticket/ticket.enum";
 
 const CATEGORY_LABELS: Record<string, string> = {
-  [TicketCategoryEnum.Charging]: "Sạc",
-  [TicketCategoryEnum.Overheat]: "Quá nhiệt",
-  [TicketCategoryEnum.NoPower]: "Mất điện",
-  [TicketCategoryEnum.Performance]: "Hiệu năng",
-  [TicketCategoryEnum.Repair]: "Sửa chữa",
-  [TicketCategoryEnum.Other]: "Khác",
+  [TicketCategoryEnum.Charging]: "Charging",
+  [TicketCategoryEnum.Overheat]: "Overheating",
+  [TicketCategoryEnum.NoPower]: "No power",
+  [TicketCategoryEnum.Performance]: "Performance",
+  [TicketCategoryEnum.Repair]: "Repair",
+  [TicketCategoryEnum.Other]: "Other",
 };
 
 const ORIGIN_LABELS: Record<string, string> = {
-  [TicketOriginEnum.ManualByCustomer]: "Khách hàng tạo",
-  [TicketOriginEnum.AutoFromAlert]: "Tự động từ cảnh báo",
-  [TicketOriginEnum.CreatedByStaff]: "Nhân viên tạo",
-  [TicketOriginEnum.System]: "Hệ thống tạo",
+  [TicketOriginEnum.ManualByCustomer]: "Created by customer",
+  [TicketOriginEnum.AutoFromAlert]: "Automatic from alert",
+  [TicketOriginEnum.CreatedByStaff]: "Created by staff",
+  [TicketOriginEnum.System]: "Created by system",
 };
 
 const EMPTY = "—";
 
 const fmtDate = (v?: string | null) =>
-  v ? format(new Date(v), "dd/MM/yyyy HH:mm", { locale: vi }) : EMPTY;
+  v ? format(new Date(v), "MM/dd/yyyy HH:mm", { locale: enUS }) : EMPTY;
 
 export interface CompareRow {
   label: string;
   source: string;
   target: string;
   isDiff: boolean;
-  /** Khác pin / khác khách hàng → dấu hiệu gộp nhầm, tô đỏ thay vì vàng. */
+  /** Different battery / different customer → a sign of a wrong merge; red instead of amber. */
   isCritical?: boolean;
 }
 
 /**
- * Dựng các dòng đối chiếu giữa ticket nguồn (bị gộp) và ticket đích (giữ lại).
+ * Builds the comparison rows between the source ticket (merged away) and the target ticket
+ * (kept).
  *
- * `customerId` là GUID nên không đọc được — truyền tên khách hàng lấy từ battery asset
- * để hiển thị; việc SO SÁNH vẫn dựa trên `customerId` để không phụ thuộc dữ liệu đã fetch xong.
+ * `customerId` is a GUID and therefore unreadable — pass the customer name taken from the
+ * battery asset for display; the COMPARISON still uses `customerId` so it does not depend on
+ * data having finished fetching.
  */
 export function buildCompareRows(
   source: TicketDTO,
@@ -61,43 +63,39 @@ export function buildCompareRows(
   });
 
   return [
-    row("Mã ticket", source.code, target.code),
+    row("Ticket code", source.code, target.code),
     row(
-      "Pin (serial)",
+      "Battery (serial)",
       source.batterySerialNumber ?? source.batteryAssetId ?? "",
       target.batterySerialNumber ?? target.batteryAssetId ?? "",
       (source.batteryAssetId ?? "") !== (target.batteryAssetId ?? ""),
     ),
     {
-      label: "Khách hàng",
-      // Hiển thị tên (nếu đã tải xong), nhưng so sánh theo customerId — tên có thể
-      // chưa fetch xong hoặc trùng tên giữa 2 khách hàng khác nhau.
+      label: "Customer",
+      // Show the name (once it has loaded), but compare on customerId — the name may not
+      // have finished fetching, and two different customers can share a name.
       source: customerNames?.source || source.customerId || EMPTY,
       target: customerNames?.target || target.customerId || EMPTY,
       isDiff: source.customerId !== target.customerId,
       isCritical: true,
     },
     row(
-      "Danh mục",
+      "Category",
       CATEGORY_LABELS[source.category] ?? source.category,
       CATEGORY_LABELS[target.category] ?? target.category,
     ),
-    // Trạng thái đã hiển thị dạng badge ở 2 thẻ tiêu đề — không lặp raw enum ở đây.
+    // Status already shows as a badge on both header cards — do not repeat the raw enum here.
     row(
-      "Mức ưu tiên",
-      source.priority ?? "Chưa triage",
-      target.priority ?? "Chưa triage",
+      "Priority",
+      source.priority ?? "Not triaged",
+      target.priority ?? "Not triaged",
     ),
     row(
-      "Nguồn tạo",
+      "Origin",
       ORIGIN_LABELS[source.origin] ?? source.origin,
       ORIGIN_LABELS[target.origin] ?? target.origin,
     ),
-    row(
-      "Phát hiện lúc",
-      fmtDate(source.detectedAt),
-      fmtDate(target.detectedAt),
-    ),
-    row("Ngày tạo", fmtDate(source.createdAt), fmtDate(target.createdAt)),
+    row("Detected at", fmtDate(source.detectedAt), fmtDate(target.detectedAt)),
+    row("Created at", fmtDate(source.createdAt), fmtDate(target.createdAt)),
   ];
 }

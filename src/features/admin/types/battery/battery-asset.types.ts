@@ -1,5 +1,5 @@
-// Re-export từ shared — nguồn thật ở shared/types/battery/battery-asset.types.ts.
-// Giữ file này để import admin cũ (schema/form/table/service) không phải đổi path.
+// Re-exported from shared — the real source lives in shared/types/battery/battery-asset.types.ts.
+// This file is kept so existing admin imports (schema/form/table/service) don't have to change paths.
 export {
   ChargingStateEnum,
   WarrantyStatusEnum,

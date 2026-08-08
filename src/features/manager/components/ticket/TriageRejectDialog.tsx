@@ -47,22 +47,23 @@ export default function TriageRejectDialog({ ticketId, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Từ chối ticket (Triage)</DialogTitle>
+          <DialogTitle>Reject ticket (Triage)</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Ticket sẽ chuyển sang <strong>Closed (Rejected)</strong> — dùng
-              khi ticket không hợp lệ (spam, trùng lặp, ngoài scope dịch vụ).
+              The ticket will move to <strong>Closed (Rejected)</strong> — use
+              this when the ticket is invalid (spam, duplicate, out of service
+              scope).
             </p>
             <FormField
               control={form.control}
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do từ chối</FormLabel>
+                  <FormLabel>Rejection reason</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Nhập lý do..." {...field} />
+                    <Textarea placeholder="Enter reason..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -70,10 +71,10 @@ export default function TriageRejectDialog({ ticketId, open, onClose }: Props) {
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Từ chối"}
+                {isPending ? "Processing..." : "Reject"}
               </Button>
             </DialogFooter>
           </form>

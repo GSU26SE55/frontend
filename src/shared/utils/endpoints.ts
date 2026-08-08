@@ -153,6 +153,7 @@ export const ENDPOINTS = {
     // PATCH — user chủ động MỞ notification (bấm push / deep link). Mạnh hơn /read,
     // dùng để đo open-rate thật. Idempotent → gọi lại vẫn 200.
     OPENED: (id: string) => `/api/notifications/${id}/opened`,
+    UNSUBSCRIBE: "/api/notification-unsubscribe",
   },
 
   DEVICE_TOKENS: {
@@ -176,6 +177,9 @@ export const ENDPOINTS = {
     DETAIL: (id: string) => `/api/alerts/${id}`,
     ACKNOWLEDGE: (id: string) => `/api/alerts/${id}/acknowledge`,
     RESOLVE: (id: string) => `/api/alerts/${id}/resolve`,
+    PRESCRIPTION_FEEDBACK: (id: string) =>
+      `/api/alerts/${id}/prescription-feedback`,
+    AI_PRESCRIPTION: (id: string) => `/api/alerts/${id}/ai-prescription`,
   },
 
   AMBIENT: {
@@ -206,6 +210,8 @@ export const ENDPOINTS = {
   // AI — SOH prediction + anomaly classification (BE-AI: SohPredictionBackgroundService populate).
   SOH_PREDICTIONS: {
     LIST: "/api/v1/soh-predictions", // ?batteryAssetId=&from=&to=&pageNumber=&pageSize=
+    LONG: "/api/v1/soh-predictions/long",
+    BATCH: "/api/v1/soh-predictions/batch",
   },
   ANOMALY_CLASSIFICATIONS: {
     LIST: "/api/v1/anomaly-classifications", // ?batteryAssetId=&classification=&from=&to=
@@ -357,6 +363,9 @@ export const ENDPOINTS = {
       `/api/admin/tickets/${tid}/chats/${cid}/closed-override`,
     CHAT_RESTORE: (tid: string, cid: string) =>
       `/api/admin/tickets/${tid}/chats/${cid}/restore`,
+    NOTIFICATION_SETTINGS: {
+      PUSH_TRANSPORT: "/api/admin/notification-settings/push-transport",
+    },
   },
 
   // AuditAggregatorService — cross-service audit read-store (Sprint audit #AUDIT-17).

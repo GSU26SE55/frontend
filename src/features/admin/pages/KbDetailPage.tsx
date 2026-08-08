@@ -72,7 +72,7 @@ export default function KbDetailPage() {
   if (!article) {
     return (
       <div className="p-6 text-center text-muted-foreground">
-        Không tìm thấy bài viết.
+        No matching article.
       </div>
     );
   }
@@ -96,7 +96,7 @@ export default function KbDetailPage() {
               onClick={() => setVerOpen(true)}
             >
               <History className="size-3.5" />
-              Phiên bản
+              Versions
             </Button>
             <Button
               size="sm"
@@ -105,7 +105,7 @@ export default function KbDetailPage() {
               onClick={() => setStatsOpen(true)}
             >
               <BarChart3 className="size-3.5" />
-              Thống kê
+              Stats
             </Button>
             <Button
               size="sm"
@@ -118,7 +118,7 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Sao chép
+              Duplicate
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -138,7 +138,7 @@ export default function KbDetailPage() {
                 onClick={() => publish(article.id)}
               >
                 <Upload className="size-3.5" />
-                Xuất bản
+                Publish
               </Button>
             )}
             {article.status === KbArticleStatusEnum.Published && (
@@ -149,7 +149,7 @@ export default function KbDetailPage() {
                 onClick={() => archive(article.id)}
               >
                 <Archive className="size-3.5" />
-                Lưu trữ
+                Archive
               </Button>
             )}
             <AlertDialog>
@@ -164,14 +164,14 @@ export default function KbDetailPage() {
                 }
               >
                 <Trash2 className="size-3.5" />
-                Xóa
+                Delete
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Xóa bài viết KB?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete KB article?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Bài viết <strong>{article.code}</strong> sẽ bị xóa vĩnh
-                    viễn. Hành động này không thể hoàn tác.
+                    Article <strong>{article.code}</strong> will be permanently
+                    deleted. This action can't be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -184,7 +184,7 @@ export default function KbDetailPage() {
                       })
                     }
                   >
-                    Xóa
+                    Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

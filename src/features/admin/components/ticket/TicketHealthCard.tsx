@@ -69,7 +69,7 @@ export function TicketHealthCard() {
           loading={syncLag.isLoading}
           detail={
             syncLag.data
-              ? `tối đa ${Math.round(syncLag.data.maxLagSeconds)}s`
+              ? `max ${Math.round(syncLag.data.maxLagSeconds)}s`
               : undefined
           }
         />
@@ -79,7 +79,7 @@ export function TicketHealthCard() {
           loading={saga.isLoading}
           detail={
             saga.data
-              ? `${saga.data.failedLast24h} lỗi/24h · ${saga.data.stuckOver15min} kẹt`
+              ? `${saga.data.failedLast24h} failed/24h · ${saga.data.stuckOver15min} stuck`
               : undefined
           }
         />

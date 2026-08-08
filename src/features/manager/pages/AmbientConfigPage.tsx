@@ -5,7 +5,7 @@ export default function AmbientConfigPage() {
   const { data } = useSiteList({ pageSize: 100 });
   return (
     <AmbientConfigView
-      subtitle="Manager · Môi trường site"
+      subtitle="Manager · Site environment"
       sites={data?.items ?? []}
     />
   );

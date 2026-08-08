@@ -32,42 +32,42 @@ import type {
 const CHARGE_COLOR = "var(--chart-1)";
 const DISCHARGE_COLOR = "var(--destructive)";
 
-// Min/max BE trả LUÔN DƯƠNG cho cả 2 chiều (chiều nằm trong tên field) → cùng
-// 1 trục Y dương, không cần xử lý dấu.
+// The BE always returns min/max as POSITIVE for both directions (the direction is in the
+// field name) → shares a single positive Y axis, no sign handling needed.
 const chartConfig = {
-  maxChargeCurrent: { label: "Nạp đỉnh (A)", color: CHARGE_COLOR },
-  minChargeCurrent: { label: "Nạp thấp nhất (A)", color: CHARGE_COLOR },
-  maxDischargeCurrent: { label: "Xả đỉnh (A)", color: DISCHARGE_COLOR },
-  minDischargeCurrent: { label: "Xả thấp nhất (A)", color: DISCHARGE_COLOR },
+  maxChargeCurrent: { label: "Charge peak (A)", color: CHARGE_COLOR },
+  minChargeCurrent: { label: "Charge min (A)", color: CHARGE_COLOR },
+  maxDischargeCurrent: { label: "Discharge peak (A)", color: DISCHARGE_COLOR },
+  minDischargeCurrent: { label: "Discharge min (A)", color: DISCHARGE_COLOR },
 } satisfies ChartConfig;
 
-// ≤ 7 ngày → /aggregate (interval linh hoạt). Dài hơn → /aggregate/hourly
-// (continuous aggregate, bucket 1h cố định, không materialize toàn bộ rows).
+// ≤ 7 days → /aggregate (flexible interval). Longer → /aggregate/hourly
+// (continuous aggregate, fixed 1h bucket, doesn't materialize every row).
 const RANGES = {
   "24h": {
-    label: "24 giờ",
+    label: "24 hours",
     hours: 24,
     interval: "1h" as SensorReadingInterval,
   },
   "7d": {
-    label: "7 ngày",
+    label: "7 days",
     hours: 24 * 7,
     interval: "1h" as SensorReadingInterval,
   },
-  "30d": { label: "30 ngày", days: 30 },
-  "90d": { label: "90 ngày", days: 90 },
+  "30d": { label: "30 days", days: 30 },
+  "90d": { label: "90 days", days: 90 },
 } as const;
 type RangeKey = keyof typeof RANGES;
 
 const isHourlyRange = (r: RangeKey) => "days" in RANGES[r];
 
-// Legend thủ công (không dùng <Legend> của Recharts) để thể hiện được cả nét
-// liền/đứt — 4 series chỉ khác nhau ở màu + kiểu nét, chú thích theo màu là chưa đủ.
+// Manual legend (not Recharts' <Legend>) so it can convey both solid/dashed
+// strokes — the 4 series differ only in color + stroke style, color alone isn't enough.
 const LEGEND = [
-  { color: CHARGE_COLOR, dashed: false, label: "Nạp đỉnh" },
-  { color: CHARGE_COLOR, dashed: true, label: "Nạp thấp nhất" },
-  { color: DISCHARGE_COLOR, dashed: false, label: "Xả đỉnh" },
-  { color: DISCHARGE_COLOR, dashed: true, label: "Xả thấp nhất" },
+  { color: CHARGE_COLOR, dashed: false, label: "Charge peak" },
+  { color: CHARGE_COLOR, dashed: true, label: "Charge min" },
+  { color: DISCHARGE_COLOR, dashed: false, label: "Discharge peak" },
+  { color: DISCHARGE_COLOR, dashed: true, label: "Discharge min" },
 ] as const;
 
 function LegendItem({
@@ -102,8 +102,8 @@ const RANGE_ITEMS = (Object.keys(RANGES) as RangeKey[]).map((k) => ({
   label: RANGES[k].label,
 }));
 
-// Bucket không có mẫu chiều nào → bỏ điểm của chiều đó (null) thay vì vẽ 0,
-// vì 0 nghĩa là "đo được 0A", còn không có mẫu nghĩa là "không biết".
+// A bucket with no samples for a direction → drop that direction's point (null) instead of
+// plotting 0, since 0 means "measured 0A" while no samples means "unknown".
 function buildChartData(items: SensorReadingAggregateDto[] | undefined) {
   return (items ?? []).map((d) => ({
     label: new Date(d.time).toLocaleString("vi-VN", {
@@ -131,7 +131,7 @@ export default function ChargeDischargePeakChart({
   const hourly = isHourlyRange(range);
   const cfg = RANGES[range];
 
-  // Hook không gọi có điều kiện được → vô hiệu hóa bằng assetId rỗng (enabled: !!assetId).
+  // Hooks can't be called conditionally → disable by passing an empty assetId (enabled: !!assetId).
   const shortQuery = useReadingAggregate(hourly ? "" : assetId, {
     hours: "hours" in cfg ? cfg.hours : 24,
     interval: "interval" in cfg ? cfg.interval : "1h",
@@ -147,7 +147,7 @@ export default function ChargeDischargePeakChart({
   return (
     <Card>
       <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-base">Nạp/Xả đỉnh (A)</CardTitle>
+        <CardTitle className="text-base">Charge/discharge peak (A)</CardTitle>
         <Select
           value={range}
           onValueChange={(v) => setRange(v as RangeKey)}
@@ -184,17 +184,17 @@ export default function ChargeDischargePeakChart({
                   strokeDasharray="1 2"
                 />
               </svg>
-              Ngưỡng cảnh báo
+              Alert threshold
             </span>
           )}
         </div>
         {isLoading ? (
           <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">
-            Đang tải...
+            Loading...
           </div>
         ) : chartData.length === 0 ? (
           <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">
-            Chưa có dữ liệu trong khoảng thời gian này
+            No data in this time range
           </div>
         ) : (
           <ChartContainer
@@ -222,8 +222,8 @@ export default function ChargeDischargePeakChart({
                 tickMargin={4}
                 fontSize={10}
               />
-              {/* Ngưỡng cảnh báo admin đặt — KHÔNG phải min/max thực đo.
-                  Nét chấm "1 3" để phân biệt với đường min (nét đứt "3 3" cùng màu). */}
+              {/* Admin-configured alert threshold — NOT the actual measured min/max.
+                  Dotted "1 3" stroke to distinguish it from the min line (dashed "3 3" in the same color). */}
               {threshold?.currentMaxCharge != null && (
                 <ReferenceLine
                   y={threshold.currentMaxCharge}
@@ -231,7 +231,7 @@ export default function ChargeDischargePeakChart({
                   strokeDasharray="1 3"
                   strokeOpacity={0.7}
                   label={{
-                    value: "Ngưỡng nạp",
+                    value: "Charge threshold",
                     position: "insideTopLeft",
                     fontSize: 9,
                     fill: CHARGE_COLOR,
@@ -245,7 +245,7 @@ export default function ChargeDischargePeakChart({
                   strokeDasharray="1 3"
                   strokeOpacity={0.7}
                   label={{
-                    value: "Ngưỡng xả",
+                    value: "Discharge threshold",
                     position: "insideTopLeft",
                     fontSize: 9,
                     fill: DISCHARGE_COLOR,

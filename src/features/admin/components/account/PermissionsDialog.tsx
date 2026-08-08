@@ -74,7 +74,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
     }, {});
   }, [allPerms, search]);
 
-  // ID đang hiển thị (theo bộ lọc) — dùng cho "Chọn tất cả / Bỏ chọn".
+  // IDs currently visible (per the filter) — used by "Select all / Clear".
   const visibleIds = useMemo(
     () => Object.values(grouped).flatMap((perms) => perms.map((p) => p.id)),
     [grouped],
@@ -140,17 +140,17 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
       >
         <DialogContent className="sm:max-w-5xl w-[95vw] flex flex-col max-h-[88vh] gap-3">
           <DialogHeader>
-            <DialogTitle>Phân quyền — {role.name}</DialogTitle>
+            <DialogTitle>Permissions — {role.name}</DialogTitle>
           </DialogHeader>
 
-          {/* Toolbar: search + chọn tất cả / bỏ chọn */}
+          {/* Toolbar: search + select all / clear */}
           <div className="flex flex-col sm:flex-row gap-2 shrink-0">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm permission (code / mô tả)..."
+                placeholder="Search permissions (code / description)..."
                 className="pl-9 h-10"
               />
             </div>
@@ -164,7 +164,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                 disabled={isLoading || visibleIds.length === 0}
               >
                 <CheckCheck className="mr-1.5 size-4" />
-                Chọn tất cả
+                Select all
               </Button>
               <Button
                 type="button"
@@ -175,12 +175,12 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                 disabled={isLoading || visibleIds.length === 0}
               >
                 <X className="mr-1.5 size-4" />
-                Bỏ chọn
+                Clear
               </Button>
             </div>
           </div>
 
-          {/* Permission list — module cards trải ngang nhiều cột */}
+          {/* Permission list — module cards laid out across multiple columns */}
           <div className="flex-1 overflow-y-auto -mr-1 pr-1">
             {isLoading ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -190,7 +190,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
               </div>
             ) : modules.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-10">
-                Không tìm thấy permission nào.
+                No matching permissions.
               </p>
             ) : (
               <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
@@ -206,7 +206,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                       key={module}
                       className="break-inside-avoid mb-3 rounded-lg border border-border bg-card/40 overflow-hidden"
                     >
-                      {/* Module header — toggle cả nhóm */}
+                      {/* Module header — toggles the whole group */}
                       <button
                         type="button"
                         onClick={() => toggleModule(perms)}
@@ -231,7 +231,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                         </span>
                       </button>
 
-                      {/* Permissions — hàng to, dễ bấm */}
+                      {/* Permissions — tall rows, easy to hit */}
                       <div className="p-1.5 space-y-0.5">
                         {perms.map((p) => {
                           const on = checkedIds.has(p.id);
@@ -280,19 +280,19 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
 
           <DialogFooter className="shrink-0 items-center sm:justify-between gap-2">
             <span className="text-xs text-muted-foreground">
-              Đã chọn{" "}
+              Selected{" "}
               <strong className="text-foreground tabular-nums">
                 {checkedIds.size}
               </strong>{" "}
-              / {allPerms.length} quyền
+              / {allPerms.length} permissions
             </span>
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Lưu quyền
+                Save permissions
               </Button>
             </div>
           </DialogFooter>
@@ -306,15 +306,15 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Xóa hết quyền?</DialogTitle>
+            <DialogTitle>Remove all permissions?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Bạn chưa chọn permission nào. Role <strong>{role.name}</strong> sẽ
-            không có bất kỳ quyền gì sau khi lưu. Bạn có chắc không?
+            No permissions are selected. The <strong>{role.name}</strong> role
+            will have no permissions at all after saving. Are you sure?
           </p>
           <div className="flex gap-2 justify-end pt-2">
             <Button variant="outline" onClick={() => setConfirmEmpty(false)}>
-              Quay lại
+              Back
             </Button>
             <Button
               variant="destructive"
@@ -323,7 +323,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                 doSave();
               }}
             >
-              Xóa hết quyền
+              Remove all permissions
             </Button>
           </div>
         </DialogContent>

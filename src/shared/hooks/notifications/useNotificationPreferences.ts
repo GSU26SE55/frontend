@@ -16,8 +16,8 @@ export const useUpdateNotificationPreferences = () => {
     mutationFn: (payload: UpdateNotificationPreferencePayload) =>
       notificationPreferenceService.update(payload),
     onSuccess: () => {
-      // Invalidate key gốc feature — đổi channel toàn cục ảnh hưởng cả matrix
-      // (nhóm isCustomized=false kế thừa từ channels), không chỉ riêng .me().
+      // Invalidate the feature's root key — changing a channel globally affects the matrix too
+      // (groups with isCustomized=false inherit from channels), not just .me().
       qc.invalidateQueries({ queryKey: [KEY.notificationPreferences] });
     },
   });

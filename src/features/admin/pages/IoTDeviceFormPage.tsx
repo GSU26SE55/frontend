@@ -17,7 +17,7 @@ export default function IoTDeviceFormPage() {
 
   const [created, setCreated] = useState<IotDeviceCreatedDto | null>(null);
 
-  // Sau khi đóng dialog reveal → điều hướng tới detail của device vừa tạo.
+  // After closing the reveal dialog → navigate to the detail page of the newly created device.
   const handleSecretsClose = () => {
     const newId = created?.id;
     setCreated(null);
@@ -39,7 +39,7 @@ export default function IoTDeviceFormPage() {
             Admin &middot; IoT Devices
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isEdit ? "Chỉnh sửa thiết bị" : "Tạo thiết bị mới"}
+            {isEdit ? "Edit device" : "Create new device"}
           </h1>
         </div>
       </div>
@@ -52,7 +52,7 @@ export default function IoTDeviceFormPage() {
             ))}
           </div>
         ) : isEdit && !device ? (
-          <p className="text-muted-foreground">Không tìm thấy thiết bị.</p>
+          <p className="text-muted-foreground">Device not found.</p>
         ) : (
           <IoTDeviceForm
             device={isEdit ? device : undefined}

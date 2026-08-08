@@ -15,22 +15,25 @@ interface Props {
   channels: NotificationChannelEnum[];
   title: string;
   body: string;
-  /** Giá trị biến admin đang điền. Khoá là tên biến. */
+  /** Variable values the admin is filling in. The key is the variable name. */
   vars: Record<string, string>;
   onVarChange: (name: string, value: string) => void;
 }
 
 /**
- * Phần "dùng mẫu" của form gửi hàng loạt: ô điền biến + xem trước nội dung **theo từng kênh**.
+ * The "use template" section of the broadcast form: variable input fields + content preview
+ * **per channel**.
  *
- * <b>Vì sao xem trước phải tách theo kênh:</b> mẫu được khoá theo cặp (Loại × Kênh) và bản SMS bị
- * nén ngắn lại vì tính tiền theo đoạn — cùng một lần gửi 3 kênh cho ra 3 nội dung khác nhau. Một ô
- * xem trước duy nhất sẽ nói dối về 2 trong 3 kênh. Đây cũng chính là lý do phải render lúc gửi chứ
- * không "đổ chữ sẵn vào ô soạn".
+ * <b>Why the preview must be split by channel:</b> templates are keyed by the pair (Type ×
+ * Channel), and the SMS version gets compressed shorter since it's billed per segment — a single
+ * send across 3 channels produces 3 different contents. A single shared preview would lie about
+ * 2 of the 3 channels. This is also why it must render at send time rather than "pre-filling the
+ * compose field".
  *
- * <b>Ô điền biến lấy từ đâu:</b> từ chính mẫu của các kênh đang chọn (xem <c>fieldNames</c>), không
- * phải từ toàn bộ khoá payload mà loại đó có thể có. Biến chung (Title/Body/UserId…) do hệ thống tự
- * điền nên không bao giờ xuất hiện — hiện ra chỉ gây rối.
+ * <b>Where the variable fields come from:</b> from the actual templates of the currently selected
+ * channels (see <c>fieldNames</c>), not from the full set of payload keys that type could
+ * potentially have. Common variables (Title/Body/UserId…) are auto-filled by the system, so they
+ * never appear here — showing them would just be confusing.
  */
 export default function BroadcastTemplateSection({
   type,
@@ -42,8 +45,8 @@ export default function BroadcastTemplateSection({
 }: Props) {
   const { data: groups } = useTemplateVariables();
 
-  // Bỏ ô trống khỏi payload: gửi chuỗi rỗng hay bỏ hẳn khoá đều cho ra chỗ trống lúc render, nhưng
-  // bỏ hẳn thì phần "biến chưa có giá trị" ở dưới nói đúng sự thật.
+  // Drop empty fields from the payload: sending an empty string or omitting the key entirely both
+  // render as blank, but omitting it lets the "variable has no value yet" section below tell the truth.
   const payloadJson = useMemo(() => {
     const filled = Object.entries(vars).filter(([, v]) => v.trim().length > 0);
     return filled.length === 0
@@ -62,27 +65,30 @@ export default function BroadcastTemplateSection({
   );
 
   /**
-   * Danh sách ô cần điền = **biến mà mẫu của các kênh đang chọn thật sự gọi tới**, chứ không phải
-   * toàn bộ khoá payload mà loại đó có thể có.
+   * The list of fields to fill = **the variables that the templates of the currently selected
+   * channels actually reference**, not the full set of payload keys that type could have.
    *
-   * Hai thứ này khác nhau đáng kể. Ví dụ loại "Thông báo hệ thống" khai 5 khoá
-   * (`digest`, `count`, `from`, `to`, `notificationIds`) nhưng đó là của **bản tin gom** do máy sinh
-   * — người gửi tay không bao giờ điền, mà mẫu của nó cũng chỉ chuyển tiếp nguyên văn. Bày cả 5 ô
-   * ra chỉ khiến người dùng tưởng mình phải điền gì đó.
+   * These two are meaningfully different. For example the "System notification" type declares 5
+   * keys (`digest`, `count`, `from`, `to`, `notificationIds`), but those belong to a **machine-
+   * generated digest message** — a human sender never fills them in, and its template just passes
+   * them through verbatim. Showing all 5 fields would just make the user think they need to fill
+   * something in.
    *
-   * `missingVariables` từ xem trước chính là "biến mẫu gọi mà chưa có giá trị". Hợp nó với các ô đã
-   * điền để ô không biến mất ngay khi vừa gõ xong.
+   * `missingVariables` from the preview is exactly "variables the template references that have no
+   * value yet". Merge it with the already-filled fields so a field doesn't disappear the instant
+   * you finish typing.
    */
   const fieldNames = useMemo(() => {
     const filled = Object.keys(vars).filter((k) => vars[k]?.trim().length > 0);
 
     if (!preview) {
-      // Chưa có xem trước (lần render đầu) — tạm dùng danh mục để khung không nhảy.
+      // No preview yet (first render) — temporarily use the catalog so the layout doesn't jump.
       return groups?.find((g) => g.type === type)?.payload ?? [];
     }
 
     const needed = new Set<string>(filled);
-    for (const row of preview) row.missingVariables.forEach((v) => needed.add(v));
+    for (const row of preview)
+      row.missingVariables.forEach((v) => needed.add(v));
     return [...needed].sort((a, b) => a.localeCompare(b));
   }, [preview, vars, groups, type]);
 
@@ -91,16 +97,17 @@ export default function BroadcastTemplateSection({
       <div className="flex items-start gap-2">
         <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <p className="text-xs text-muted-foreground">
-          Nội dung sẽ được dựng từ <b>mẫu thông báo</b> của loại đang chọn. Mỗi
-          kênh có mẫu riêng nên nội dung từng kênh có thể khác nhau — bản SMS
-          được nén ngắn lại. Tiêu đề và nội dung bạn gõ ở dưới trở thành{" "}
-          <b>bản dự phòng</b> cho kênh không có mẫu.
+          Content will be built from the <b>notification template</b> of the
+          selected type. Each channel has its own template so content can differ
+          per channel — the SMS version is compressed shorter. The title and
+          body you type below become the <b>fallback</b> for channels without a
+          template.
         </p>
       </div>
 
       {fieldNames.length > 0 ? (
         <div>
-          <p className="mb-2 text-xs font-medium">Điền biến của mẫu</p>
+          <p className="mb-2 text-xs font-medium">Fill in template variables</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {fieldNames.map((name) => (
               <label key={name} className="space-y-1">
@@ -110,7 +117,7 @@ export default function BroadcastTemplateSection({
                 <Input
                   value={vars[name] ?? ""}
                   onChange={(e) => onVarChange(name, e.target.value)}
-                  placeholder="để trống ⇒ hiện ra rỗng"
+                  placeholder="leave blank ⇒ renders empty"
                 />
               </label>
             ))}
@@ -120,25 +127,26 @@ export default function BroadcastTemplateSection({
         <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            Mẫu của loại này không cần biến nào — nội dung dựng sẵn, hoặc chỉ
-            dùng các biến chung do hệ thống tự điền.
+            This type's template doesn't need any variables — its content is
+            pre-built, or it only uses common variables auto-filled by the
+            system.
           </span>
         </div>
       )}
 
       <div>
         <p className="mb-2 text-xs font-medium">
-          Xem trước theo từng kênh{" "}
+          Preview per channel{" "}
           {isFetching && (
             <span className="font-normal text-muted-foreground">
-              — đang dựng…
+              — building…
             </span>
           )}
         </p>
 
         {!preview || preview.length === 0 ? (
           <p className="text-xs text-muted-foreground italic">
-            Chọn kênh gửi để xem trước.
+            Select channels to preview.
           </p>
         ) : (
           <div className="space-y-2">
@@ -153,7 +161,7 @@ export default function BroadcastTemplateSection({
                   </span>
                   {!row.hasTemplate && (
                     <Badge variant="outline" className="font-normal">
-                      Không có mẫu — dùng chữ bạn gõ
+                      No template — using what you typed
                     </Badge>
                   )}
                 </div>
@@ -167,14 +175,14 @@ export default function BroadcastTemplateSection({
                   <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600">
                     <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
                     <span>
-                      Chưa có giá trị:{" "}
+                      No value yet:{" "}
                       {row.missingVariables.map((v, i) => (
                         <span key={v}>
                           {i > 0 && ", "}
                           <code className="font-mono">{`{{${v}}}`}</code>
                         </span>
                       ))}{" "}
-                      — chỗ đó sẽ hiện ra rỗng.
+                      — that spot will render empty.
                     </span>
                   </p>
                 )}
@@ -183,7 +191,8 @@ export default function BroadcastTemplateSection({
                   <p className="mt-1.5 flex items-start gap-1.5 text-xs text-destructive">
                     <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
                     <span>
-                      Mẫu hỏng cú pháp — kênh này sẽ gửi bằng chữ bạn gõ.
+                      Template has a syntax error — this channel will send using
+                      what you typed.
                     </span>
                   </p>
                 )}

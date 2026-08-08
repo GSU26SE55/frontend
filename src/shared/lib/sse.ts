@@ -1,10 +1,10 @@
-// SSE telemetry transport — kênh /api/sensor-readings/stream (text/event-stream).
-// Native EventSource (KHÔNG thêm package). Token qua ?access_token= vì EventSource
-// không set được header Authorization. Base = VITE_API_BASE_URL (gateway, giống axios) —
-// KHÔNG dùng VITE_WS_URL (đó là origin hub SignalR, kênh khác).
+// SSE telemetry transport — channel /api/sensor-readings/stream (text/event-stream).
+// Native EventSource (no extra package). Token via ?access_token= because EventSource
+// can't set the Authorization header. Base = VITE_API_BASE_URL (gateway, same as axios) —
+// does NOT use VITE_WS_URL (that's the SignalR hub origin, a different channel).
 //
-// `openSse` là transport generic (forward raw event), không biết về shape payload →
-// GH-116 reuse cho event `summary` (site scope). Parse shape nằm ở `parseReading`.
+// `openSse` is a generic transport (forwards the raw event), unaware of the payload shape →
+// GH-116 reuses it for the `summary` event (site scope). The parse shape lives in `parseReading`.
 
 import { z } from "zod";
 import Cookies from "js-cookie";
@@ -15,9 +15,9 @@ import type {
   LiveStatsDto,
 } from "@/shared/types/battery/sensor-stream.types";
 
-// Zod cho payload `reading` (cả mỗi item của `summary` — cùng shape §5.3).
-// non-null = required; nullable (bị lược khi null) = .nullish(); sourceType để z.number()
-// (rộng) thay vì literal 1/2/3 → BE thêm giá trị mới không làm drop cả reading.
+// Zod schema for the `reading` payload (also each item of `summary` — same shape §5.3).
+// non-null = required; nullable (omitted when null) = .nullish(); sourceType uses z.number()
+// (broad) instead of literal 1/2/3 → the BE adding a new value won't drop the whole reading.
 export const liveReadingSchema = z.object({
   batteryAssetId: z.string(),
   customerId: z.string(),
@@ -39,7 +39,7 @@ export const liveReadingSchema = z.object({
   sensorSourceCode: z.string().nullish(),
 });
 
-// Parse defensive 1 reading từ raw SSE data string. Lệch shape / JSON hỏng → null (drop, không throw).
+// Defensively parses a reading from a raw SSE data string. Shape mismatch / bad JSON → null (drop, don't throw).
 export function parseReading(data: string): LiveReadingDto | null {
   try {
     const parsed = liveReadingSchema.safeParse(JSON.parse(data));
@@ -49,8 +49,8 @@ export function parseReading(data: string): LiveReadingDto | null {
   }
 }
 
-// Zod cho payload `stats` (§5.3bis) — rolling min/max nạp/xả theo window.
-// min/max nullable (window chưa có mẫu chiều đó) → .nullish() vì null bị lược khỏi JSON.
+// Zod schema for the `stats` payload (§5.3bis) — rolling min/max charge/discharge per window.
+// min/max nullable (window has no sample in that direction yet) → .nullish() since null is omitted from JSON.
 export const liveStatsSchema = z.object({
   batteryAssetId: z.string(),
   customerId: z.string(),
@@ -66,7 +66,7 @@ export const liveStatsSchema = z.object({
   minDischargeCurrent: z.number().nullish(),
 });
 
-// Parse defensive 1 stats từ raw SSE data. Lệch shape / JSON hỏng → null (drop, không throw).
+// Defensively parses stats from raw SSE data. Shape mismatch / bad JSON → null (drop, don't throw).
 export function parseStats(data: string): LiveStatsDto | null {
   try {
     const parsed = liveStatsSchema.safeParse(JSON.parse(data));
@@ -77,13 +77,13 @@ export function parseStats(data: string): LiveStatsDto | null {
 }
 
 export interface SseHandlers {
-  // event = "reading" | "summary" | "stats" | "ping"; data = raw JSON string (chưa parse).
+  // event = "reading" | "summary" | "stats" | "ping"; data = raw JSON string (unparsed).
   onEvent: (event: string, data: string) => void;
   onOpen?: () => void;
   onError?: (es: EventSource) => void;
 }
 
-// Mở SSE cho 1 scope (vd "asset:{id}" | "site:{id}"). Trả EventSource để caller .close().
+// Opens an SSE connection for a scope (e.g. "asset:{id}" | "site:{id}"). Returns the EventSource for the caller to .close().
 export function openSse(scope: string, handlers: SseHandlers): EventSource {
   const token = Cookies.get("accessToken") ?? "";
   const url =

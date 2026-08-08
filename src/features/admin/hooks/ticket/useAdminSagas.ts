@@ -25,7 +25,7 @@ export function useAlertTicketSagaDetail(alertId: string) {
 export function useReprocessSaga() {
   const qc = useQueryClient();
   return useMutation({
-    // Sinh Idempotency-Key mới mỗi lần bấm để chống double-trigger.
+    // Generate a new Idempotency-Key on each click to prevent double-triggering.
     mutationFn: (alertId: string) =>
       adminSagaService.reprocess(alertId, crypto.randomUUID()),
     onSuccess: () => {

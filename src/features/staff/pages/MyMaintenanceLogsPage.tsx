@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +17,9 @@ export default function MyMaintenanceLogsPage() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Lịch sử bảo trì của tôi</h1>
+          <h1 className="text-lg font-semibold">My maintenance history</h1>
           <p className="text-sm text-muted-foreground">
-            Toàn bộ nhật ký bảo trì bạn đã ghi, gom theo ticket.
+            All the maintenance logs you've recorded, grouped by ticket.
           </p>
         </div>
         <RefreshButton
@@ -34,11 +34,11 @@ export default function MyMaintenanceLogsPage() {
         </div>
       ) : isError ? (
         <p className="text-sm text-destructive py-8 text-center">
-          Không tải được lịch sử bảo trì.
+          Couldn't load maintenance history.
         </p>
       ) : groups.length === 0 ? (
         <p className="text-sm text-muted-foreground py-12 text-center">
-          Bạn chưa ghi nhật ký bảo trì nào.
+          You haven't recorded any maintenance logs yet.
         </p>
       ) : (
         <div className="space-y-4">
@@ -58,7 +58,7 @@ export default function MyMaintenanceLogsPage() {
                   size="sm"
                   onClick={() => navigate(`/staff/tickets/${group.ticketId}`)}
                 >
-                  Xem ticket
+                  View ticket
                 </Button>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -70,8 +70,8 @@ export default function MyMaintenanceLogsPage() {
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="outline">{log.logType}</Badge>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(log.startedAt), "dd/MM/yyyy HH:mm", {
-                          locale: vi,
+                        {format(new Date(log.startedAt), "MM/dd/yyyy HH:mm", {
+                          locale: enUS,
                         })}
                       </p>
                     </div>
@@ -80,7 +80,7 @@ export default function MyMaintenanceLogsPage() {
                     )}
                     {log.durationMinutes > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        Thời lượng: {log.durationMinutes} phút
+                        Duration: {log.durationMinutes} min
                       </p>
                     )}
                   </div>

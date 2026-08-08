@@ -5,7 +5,7 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import type { MentionCandidate } from "@/shared/components/chat/MentionTextarea";
 
-// GET /api/tickets/{ticketId}/participants — participant active của ticket.
+// GET /api/tickets/{ticketId}/participants — active participants of the ticket.
 export const useTicketParticipants = (ticketId?: string) =>
   useQuery({
     queryKey: QUERY_KEY.ticketParticipants.list(ticketId ?? ""),
@@ -18,20 +18,21 @@ export const useTicketParticipants = (ticketId?: string) =>
   });
 
 /**
- * Danh sách người có thể @-tag trong composer chat.
+ * List of people who can be @-tagged in the chat composer.
  *
- * Nguồn đúng là participants của ticket — KHÔNG phải tác giả đã chat: người mới
- * được add vào ticket nhưng chưa nhắn gì vẫn phải tag được.
+ * The correct source is the ticket's participants — NOT people who've already chatted: someone
+ * newly added to the ticket but who hasn't sent a message yet must still be taggable.
  *
- * Lọc: CHỈ bỏ chính mình. Cố ý không lọc theo `canPost`/`canViewInternal` —
- * BE (ChatAddCommandHandler) validate mention duy nhất bằng "có phải participant
- * active không", nên lọc chặt hơn sẽ khiến dropdown ẩn mất người mà BE vẫn cho
- * mention. `canPost` là quyền GỬI chat, không liên quan tới việc được nhắc tên
- * (vd Watcher `canPost=false` vẫn cần tag được).
+ * Filter: ONLY excludes the current user. Deliberately not filtered by `canPost`/`canViewInternal` —
+ * BE (ChatAddCommandHandler) validates a mention solely by "is this an active participant",
+ * so a stricter filter here would hide people from the dropdown that BE would still allow to
+ * be mentioned. `canPost` is the permission to SEND chat, unrelated to being mentioned
+ * (e.g. a Watcher with `canPost=false` still needs to be taggable).
  *
- * ⚠️ Lưu ý internal: BE hiện KHÔNG chặn mention người có `canViewInternal=false`
- * trong chat nội bộ — họ sẽ nhận notification về chat không mở được. Hook trả
- * kèm `canViewInternal` để UI cảnh báo; đừng tự ẩn ở FE vì sẽ lệch với BE.
+ * Warning — internal note: BE currently does NOT block mentioning someone with
+ * `canViewInternal=false` in an internal chat — they'll get a notification for a chat they
+ * can't open. The hook returns `canViewInternal` so the UI can warn; don't hide this on the
+ * FE side, it would drift from BE's behavior.
  */
 export const useMentionCandidates = (ticketId?: string): MentionCandidate[] => {
   const { data } = useTicketParticipants(ticketId);

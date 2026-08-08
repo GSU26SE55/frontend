@@ -50,14 +50,14 @@ const DangerZone = () => {
   return (
     <Card className="border-destructive">
       <CardHeader>
-        <CardTitle className="text-destructive">Vùng nguy hiểm</CardTitle>
+        <CardTitle className="text-destructive">Danger zone</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Tải dữ liệu của tôi (GDPR)</p>
+            <p className="text-sm font-medium">Download my data (GDPR)</p>
             <p className="text-xs text-muted-foreground">
-              Xuất toàn bộ dữ liệu tài khoản dưới dạng file JSON
+              Export all account data as a JSON file
             </p>
           </div>
           <Button
@@ -70,31 +70,31 @@ const DangerZone = () => {
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}
-            Tải dữ liệu
+            Download data
           </Button>
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Vô hiệu hóa tài khoản</p>
+            <p className="text-sm font-medium">Deactivate account</p>
             <p className="text-xs text-muted-foreground">
-              Tạm thời vô hiệu hóa tài khoản
+              Temporarily deactivate the account
             </p>
           </div>
           <Button variant="outline" onClick={() => setConfirmDeactivate(true)}>
-            Vô hiệu hóa
+            Deactivate
           </Button>
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Xóa tài khoản</p>
+            <p className="text-sm font-medium">Delete account</p>
             <p className="text-xs text-muted-foreground">
-              Xóa vĩnh viễn tài khoản và tất cả dữ liệu
+              Permanently delete the account and all data
             </p>
           </div>
           <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
-            Xóa tài khoản
+            Delete account
           </Button>
         </div>
 
@@ -104,9 +104,9 @@ const DangerZone = () => {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Vô hiệu hóa tài khoản?</AlertDialogTitle>
+              <AlertDialogTitle>Deactivate account?</AlertDialogTitle>
               <AlertDialogDescription>
-                Bạn có thể kích hoạt lại sau.
+                You can reactivate it later.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -119,7 +119,7 @@ const DangerZone = () => {
                 {isDeactivating && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Xác nhận
+                Confirm
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -128,9 +128,9 @@ const DangerZone = () => {
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xóa tài khoản vĩnh viễn?</AlertDialogTitle>
+              <AlertDialogTitle>Permanently delete account?</AlertDialogTitle>
               <AlertDialogDescription className="text-destructive font-medium">
-                Hành động này không thể hoàn tác.
+                This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -143,7 +143,7 @@ const DangerZone = () => {
                 {isDeleting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Xóa vĩnh viễn
+                Delete permanently
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

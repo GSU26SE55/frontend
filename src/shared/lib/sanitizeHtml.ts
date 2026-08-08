@@ -1,10 +1,10 @@
 import DOMPurify from "dompurify";
 
 /**
- * Làm sạch HTML trước khi render bằng `dangerouslySetInnerHTML`.
+ * Sanitizes HTML before rendering with `dangerouslySetInnerHTML`.
  *
- * BẮT BUỘC dùng cho mọi `contentHtml` của Blog — kể cả nội dung do AI sinh
- * (`origin = AiGeneratedFromKb`): dữ liệu từ BE/LLM không phải nguồn tin cậy.
+ * MUST be used for every Blog `contentHtml` — including AI-generated content
+ * (`origin = AiGeneratedFromKb`): data from the BE/LLM is not a trusted source.
  */
 export function sanitizeHtml(html?: string | null): string {
   if (!html) return "";
@@ -45,7 +45,7 @@ export function sanitizeHtml(html?: string | null): string {
       "span",
       "div",
     ],
-    // data-file-id: ảnh lưu theo fileId, viewer tự nạp blob (xem AuthImageNode)
+    // data-file-id: images stored by fileId, the viewer loads the blob itself (see AuthImageNode)
     ALLOWED_ATTR: [
       "href",
       "target",
@@ -56,17 +56,17 @@ export function sanitizeHtml(html?: string | null): string {
       "class",
       "data-file-id",
     ],
-    // Chặn javascript:, data: (trừ ảnh base64) — tránh XSS qua href/src
+    // Blocks javascript:, data: (except base64 images) — prevents XSS via href/src
     ALLOWED_URI_REGEXP:
       /^(?:https?:|mailto:|tel:|data:image\/(?:png|jpeg|gif|webp);base64,|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   });
 }
 
 /**
- * Lấy text thuần từ HTML — dùng để validate "rỗng" và hiện preview ngắn.
+ * Extracts plain text from HTML — used to validate "empty" and show a short preview.
  *
- * Hàm này được gọi từ zod schema, mà schema có thể chạy ngoài trình duyệt
- * (unit test Node, SSR) → phải có nhánh không phụ thuộc DOM.
+ * This function is called from a zod schema, and the schema can run outside the
+ * browser (Node unit tests, SSR) → must have a branch that doesn't depend on the DOM.
  */
 export function htmlToPlainText(html?: string | null): string {
   if (!html) return "";

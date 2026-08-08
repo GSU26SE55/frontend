@@ -13,11 +13,11 @@ interface TagInputProps {
   className?: string;
 }
 
-/** Nhập nhiều thẻ dạng chip — Enter hoặc dấu phẩy để thêm, Backspace ở ô trống để xóa thẻ cuối. */
+/** Enter multiple tags as chips — Enter or comma to add, Backspace on an empty field to remove the last tag. */
 export function TagInput({
   value,
   onChange,
-  placeholder = "Nhập rồi Enter...",
+  placeholder = "Type then press Enter...",
   maxTags,
   maxTagLength,
   disabled,
@@ -69,7 +69,7 @@ export function TagInput({
             type="button"
             onClick={() => removeAt(i)}
             className="rounded hover:bg-muted-foreground/20"
-            aria-label={`Xóa thẻ ${tag}`}
+            aria-label={`Remove tag ${tag}`}
           >
             <X className="size-3" />
           </button>

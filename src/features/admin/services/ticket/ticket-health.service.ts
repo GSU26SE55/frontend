@@ -6,7 +6,7 @@ import type {
   SagaHealthDTO,
 } from "@/features/admin/types/ticket/ticket-health.types";
 
-// Lưu ý: các endpoint này trả JSON thuần → r.data CHÍNH LÀ DTO (không có .data.data).
+// Note: these endpoints return plain JSON → r.data IS the DTO directly (no .data.data).
 export const ticketHealthService = {
   getHealth: () =>
     axiosInstance

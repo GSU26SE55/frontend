@@ -18,9 +18,9 @@ import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const statusLabel: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Không hoạt động",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 interface BatteryAssetTableProps {
@@ -30,7 +30,7 @@ interface BatteryAssetTableProps {
   sort: ServerSortState;
 }
 
-// Manager — bảng read-only (không CRUD). Click 1 dòng → chi tiết real-time.
+// Manager — read-only table (no CRUD). Click a row → real-time detail.
 export default function BatteryAssetTable({
   items,
   pageNumber,
@@ -63,7 +63,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Loại pin
+            Battery type
           </SortableTableHead>
           <SortableTableHead
             sortKey="customerName"
@@ -71,7 +71,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Khách hàng
+            Customer
           </SortableTableHead>
           <SortableTableHead
             sortKey="siteName"
@@ -87,7 +87,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Trạng thái
+            Status
           </SortableTableHead>
           <SortableTableHead
             sortKey="installDate"
@@ -95,7 +95,7 @@ export default function BatteryAssetTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Ngày lắp
+            Install date
           </SortableTableHead>
         </TableRow>
       </TableHeader>
@@ -134,7 +134,7 @@ export default function BatteryAssetTable({
               colSpan={7}
               className="text-center text-muted-foreground py-8"
             >
-              Không có dữ liệu
+              No data
             </TableCell>
           </TableRow>
         )}

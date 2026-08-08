@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { batteryAssetService } from "@/shared/services/battery/battery-asset.service";
 
-// Snapshot realtime (seed/fallback cho SSE) — polling 30s. Dùng chung 3 role.
+// Realtime snapshot (seed/fallback for SSE) — polling 30s. Shared across all 3 roles.
 export function useBatteryAssetRealtime(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.batteryAssets.realtime(id),

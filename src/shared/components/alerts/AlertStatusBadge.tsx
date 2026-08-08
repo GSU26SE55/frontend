@@ -3,10 +3,10 @@ import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
 import { toneClass, ALERT_STATUS_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<AlertStatusEnum, string> = {
-  [AlertStatusEnum.Open]: "Mở",
-  [AlertStatusEnum.Acknowledged]: "Đã xác nhận",
-  [AlertStatusEnum.Merged]: "Đã gộp",
-  [AlertStatusEnum.Resolved]: "Đã xử lý",
+  [AlertStatusEnum.Open]: "Open",
+  [AlertStatusEnum.Acknowledged]: "Acknowledged",
+  [AlertStatusEnum.Merged]: "Merged",
+  [AlertStatusEnum.Resolved]: "Resolved",
 };
 
 export default function AlertStatusBadge({

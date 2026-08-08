@@ -2,8 +2,8 @@ import type { SiteStatusEnum } from "@/shared/enums/site/site.enum";
 import type { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 export { SiteStatusEnum } from "@/shared/enums/site/site.enum";
 
-// Lightweight option cho site selector dùng trong shared component (ambient/incidents).
-// SiteDto assignable vào SiteOption.
+// Lightweight option for the site selector used in shared components
+// (ambient/incidents). SiteDto is assignable to SiteOption.
 export interface SiteOption {
   id: string;
   name: string;

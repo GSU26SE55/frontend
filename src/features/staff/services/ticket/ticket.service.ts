@@ -53,7 +53,7 @@ export const staffTicketService = {
       { params: { page, pageSize } },
     ),
 
-  // BE không nhận body ở endpoint này — xem ghi chú ở staff-ticket.types.ts.
+  // The BE takes no body on this endpoint — see the note in staff-ticket.types.ts.
   start: (id: string) =>
     axiosInstance.post<TicketActionResponse>(ENDPOINTS.STAFF_TICKETS.START(id)),
 

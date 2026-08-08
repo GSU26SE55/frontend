@@ -1,4 +1,4 @@
-/** Khớp `TicketAttachmentDTO` của TicketService. */
+/** Matches TicketService's `TicketAttachmentDTO`. */
 export interface TicketAttachmentDTO {
   id: string;
   ticketId: string;
@@ -6,7 +6,7 @@ export interface TicketAttachmentDTO {
   uploadedByUserId: string;
   fileId: string;
   fileName: string;
-  /** MIME — lọc ảnh bằng tiền tố "image/". */
+  /** MIME type — images are filtered by the "image/" prefix. */
   contentType: string;
   sizeBytes: number;
   source: string;

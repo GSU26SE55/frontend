@@ -32,16 +32,16 @@ import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
- * Staff = BÀN LÀM VIỆC CÁ NHÂN: ticket được giao, rủi ro SLA, thông báo.
+ * Staff = PERSONAL WORKBENCH: assigned tickets, SLA risk, notifications.
  *
- * KHÔNG hiển thị xu hướng 7 ngày / thống kê toàn hệ thống — Staff hành động
- * trên từng ticket, biểu đồ xu hướng là công cụ quản trị của Manager/Admin.
+ * Does NOT show 7-day trends / system-wide stats — Staff acts on individual
+ * tickets; trend charts are a Manager/Admin management tool.
  *
- * Layout: 1 KHUNG CỐ ĐỊNH, trang không cuộn. Lưới 3 cột × 2 hàng; danh sách
- * ticket và thông báo tự cuộn BÊN TRONG panel.
+ * Layout: 1 FIXED FRAME, the page doesn't scroll. 3-column × 2-row grid; the
+ * ticket list and notifications scroll INSIDE their own panel.
  *
- * Mỗi panel một dạng khác nhau (danh sách thẻ / gauge / donut / bar ngang /
- * dòng thời gian) để phân biệt loại thông tin ngay từ hình dạng.
+ * Each panel uses a different shape (card list / gauge / donut / horizontal
+ * bar / timeline) so the type of information is distinguishable by shape alone.
  */
 
 const statusBarConfig = { value: { label: "Ticket" } } satisfies ChartConfig;
@@ -81,36 +81,40 @@ export default function StaffDashboardPage() {
   const breachedCount = staffStats?.breachedCount ?? 0;
   const resolvedCount = staffStats?.resolvedCount ?? 0;
 
-  // Màu + gauge do SlaGaugePanel lo (dùng chung với Manager), ở đây chỉ cần
-  // chuỗi % cho ô KPI.
+  // Colors + gauge are handled by SlaGaugePanel (shared with Manager); here we only
+  // need the % string for the KPI cell.
   const sla = staffStats?.sla;
   const slaText = sla ? `${sla.compliancePercent}%` : "—";
 
-  // ── Trạng thái ticket — bar ngang (donut đã dùng cho rủi ro SLA, tránh 2 donut) ──
+  // ── Ticket status — horizontal bar (donut is already used for SLA risk, avoid 2 donuts) ──
   const statusCounts = staffStats?.countByStatus ?? {};
   const totalTickets = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const statusBuckets = [
     {
-      name: "Mới/Mở",
+      name: "New/Open",
       value: (statusCounts.New ?? 0) + (statusCounts.Open ?? 0),
       fill: "var(--muted-foreground)",
     },
     {
-      name: "Đang xử lý",
+      name: "In progress",
       value: (statusCounts.Assigned ?? 0) + (statusCounts.InProgress ?? 0),
       fill: "var(--chart-1)",
     },
     {
-      name: "Đang chờ",
+      name: "Waiting",
       value:
         (statusCounts.WaitingCustomer ?? 0) +
         (statusCounts.WaitingParts ?? 0) +
         (statusCounts.WaitingOnsiteSchedule ?? 0),
       fill: "var(--p3)",
     },
-    { name: "Nâng cấp", value: statusCounts.Escalated ?? 0, fill: "var(--p1)" },
     {
-      name: "Hoàn tất",
+      name: "Escalated",
+      value: statusCounts.Escalated ?? 0,
+      fill: "var(--p1)",
+    },
+    {
+      name: "Completed",
       value:
         (statusCounts.Resolved ?? 0) +
         (statusCounts.ClosedPendingRate ?? 0) +
@@ -119,22 +123,22 @@ export default function StaffDashboardPage() {
     },
   ]
     .filter((b) => b.value > 0)
-    .reverse(); // Recharts layout=vertical vẽ phần tử đầu ở DƯỚI cùng
+    .reverse(); // Recharts layout=vertical draws the first element at the BOTTOM
 
   // ── SLA risk donut (B.slaRisk) ──
   const riskData = [
     {
-      name: "An toàn",
+      name: "Healthy",
       value: staffStats?.slaRisk.healthy ?? 0,
       fill: "var(--ok)",
     },
     {
-      name: "Sắp breach",
+      name: "Near breach",
       value: staffStats?.slaRisk.near ?? 0,
       fill: "var(--p3)",
     },
     {
-      name: "Đã breach",
+      name: "Breached",
       value: staffStats?.slaRisk.breached ?? 0,
       fill: "var(--p1)",
     },
@@ -155,10 +159,10 @@ export default function StaffDashboardPage() {
       <div className="flex items-center justify-between gap-4 shrink-0 pb-1">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Staff · Bảng làm việc
+            Staff · Workbench
           </p>
           <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight truncate mt-0.5">
-            Ticket được giao & rủi ro SLA
+            Assigned tickets & SLA risk
           </h1>
         </div>
         <RefreshButton
@@ -168,31 +172,31 @@ export default function StaffDashboardPage() {
             KEY.notifications,
             ["staff", "notifications"],
           ]}
-          label="Làm mới"
+          label="Refresh"
         />
       </div>
 
       {/* ── KPI strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 shrink-0">
         <DashboardKpi
-          label="Đang phụ trách"
+          label="Currently handling"
           value={statsLoading ? "--" : openCount}
           icon={<FileText className="size-4" />}
         />
         <DashboardKpi
-          label="Sắp breach"
+          label="Near breach"
           value={statsLoading ? "--" : nearBreach}
           icon={<Clock className="size-4" />}
           accent={nearBreach > 0 ? "var(--p3)" : undefined}
         />
         <DashboardKpi
-          label="Đã quá hạn"
+          label="Overdue"
           value={statsLoading ? "--" : breachedCount}
           icon={<AlertTriangle className="size-4" />}
           accent={breachedCount > 0 ? "var(--p1)" : undefined}
         />
         <DashboardKpi
-          label="Đã xử lý"
+          label="Resolved"
           value={statsLoading ? "--" : resolvedCount}
           icon={<CheckCircle className="size-4" />}
           accent="var(--ok)"
@@ -204,7 +208,7 @@ export default function StaffDashboardPage() {
           accent={(sla?.breached ?? 0) > 0 ? "var(--p1)" : "var(--ok)"}
         />
         <DashboardKpi
-          label="Thông báo mới"
+          label="New notifications"
           value={unreadLoading ? "--" : unread}
           icon={<Bell className="size-4" />}
           accent={unread > 0 ? "var(--p3)" : undefined}
@@ -213,16 +217,16 @@ export default function StaffDashboardPage() {
 
       {isError && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-2 text-sm text-destructive shrink-0">
-          Không thể tải dữ liệu Staff dashboard.
+          Couldn't load Staff dashboard data.
         </div>
       )}
 
       {/* ── Bento Grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[580px] flex-1">
-        {/* [Danh sách thẻ] bề mặt làm việc chính */}
+        {/* [Card list] main working surface */}
         <DashboardPanel
           title={OVERVIEW_PANELS.staff.priority}
-          desc="Sắp theo % SLA còn lại"
+          desc="Sorted by remaining SLA %"
           className="lg:col-span-2 min-h-[280px]"
           bodyClassName="overflow-y-auto"
         >
@@ -236,11 +240,9 @@ export default function StaffDashboardPage() {
             <div className="h-full grid place-items-center text-center">
               <div>
                 <CheckCircle className="mx-auto size-8 text-primary" />
-                <p className="mt-3 text-sm font-medium">
-                  Không có ticket đang mở
-                </p>
+                <p className="mt-3 text-sm font-medium">No open tickets</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Các ticket được giao sẽ xuất hiện tại đây.
+                  Assigned tickets will show up here.
                 </p>
               </div>
             </div>
@@ -253,7 +255,7 @@ export default function StaffDashboardPage() {
           )}
         </DashboardPanel>
 
-        {/* [Gauge] tỉ lệ tuân thủ SLA cá nhân */}
+        {/* [Gauge] personal SLA compliance rate */}
         <SlaGaugePanel
           title={OVERVIEW_PANELS.staff.personalSla}
           desc="met / (met + breach)"
@@ -262,11 +264,11 @@ export default function StaffDashboardPage() {
           className="min-h-[280px]"
         />
 
-        {/* [Donut] cơ cấu rủi ro trên ticket đang mở */}
+        {/* [Donut] risk breakdown on open tickets */}
         {showRisk && (
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.slaRisk}
-            desc="Trên ticket đang mở"
+            desc="Among open tickets"
             className="min-h-[280px]"
           >
             {statsLoading ? (
@@ -275,17 +277,17 @@ export default function StaffDashboardPage() {
               <DashboardDonut
                 data={riskData}
                 centerValue={openCount}
-                centerLabel="đang mở"
+                centerLabel="open"
               />
             )}
           </DashboardPanel>
         )}
 
-        {/* [Bar ngang] so sánh số lượng theo trạng thái */}
+        {/* [Horizontal bar] count comparison by status */}
         {showStatus && (
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.ticketStatus}
-            desc={`${totalTickets} ticket của tôi`}
+            desc={`${totalTickets} of my tickets`}
             className="min-h-[280px]"
           >
             {statsLoading ? (
@@ -325,11 +327,11 @@ export default function StaffDashboardPage() {
           </DashboardPanel>
         )}
 
-        {/* [Dòng thời gian] thông báo gần đây */}
+        {/* [Timeline] recent notifications */}
         {showNotifs && (
           <DashboardPanel
             title={OVERVIEW_PANELS.staff.recentNotifications}
-            desc={`${unread} chưa đọc`}
+            desc={`${unread} unread`}
             className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >
@@ -342,8 +344,8 @@ export default function StaffDashboardPage() {
             ) : (
               <ol className="space-y-2">
                 {notifications.map((n) => {
-                  // Định nghĩa "chưa đọc" của BE loại CẢ Read LẪN Opened — tự so `!== Read` sẽ
-                  // chấm đậm cả những thông báo user đã bấm mở.
+                  // The BE's "unread" definition excludes BOTH Read AND Opened — comparing
+                  // `!== Read` directly would also bold notifications the user already opened.
                   const isUnread = isUnreadStatus(n.status);
                   return (
                     <li key={n.id} className="flex gap-2.5 items-start py-0.5">

@@ -10,7 +10,7 @@ export const forgotPasswordStep1Schema = z.object({
 });
 
 export const forgotPasswordStep2Schema = z.object({
-  otp: otpField("OTP phải đúng 6 chữ số"),
+  otp: otpField("OTP must be exactly 6 digits"),
 });
 
 export const forgotPasswordStep3Schema = z
@@ -19,7 +19,7 @@ export const forgotPasswordStep3Schema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 

@@ -5,12 +5,12 @@ import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
 
 interface KbPendingReviewNoticeProps {
   article: KbArticleDTO;
-  /** Mở dialog lịch sử phiên bản để xem nội dung bản chờ duyệt. */
+  /** Opens the version history dialog to view the pending-review content. */
   onViewVersions?: () => void;
 }
 
-// Báo cho người xem biết bài viết có bản thay đổi mới đang chờ phê duyệt —
-// nội dung hiển thị bên dưới vẫn là bản đã duyệt gần nhất.
+// Lets the viewer know the article has a new change pending approval —
+// the content displayed below is still the most recently approved version.
 export function KbPendingReviewNotice({
   article,
   onViewVersions,
@@ -20,7 +20,7 @@ export function KbPendingReviewNotice({
     article.reviewRequired;
 
   if (!isPendingReview) {
-    // Bản thay đổi trước đó bị từ chối — cho tác giả biết lý do để sửa lại.
+    // The previous change was rejected — let the author know why so they can fix it.
     if (!article.managerRejectReason) return null;
 
     return (
@@ -28,10 +28,10 @@ export function KbPendingReviewNotice({
         <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
         <div className="space-y-0.5 text-sm">
           <p className="font-medium text-destructive">
-            Thay đổi gần nhất đã bị từ chối
+            The latest change was rejected
           </p>
           <p className="text-muted-foreground">
-            Lý do: {article.managerRejectReason}
+            Reason: {article.managerRejectReason}
           </p>
         </div>
       </div>
@@ -43,12 +43,12 @@ export function KbPendingReviewNotice({
       <Clock className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-500" />
       <div className="min-w-0 flex-1 space-y-0.5 text-sm">
         <p className="font-medium text-amber-700 dark:text-amber-500">
-          Có bản thay đổi mới đang chờ phê duyệt
+          There is a new change pending approval
         </p>
         <p className="text-muted-foreground">
           {article.version > 0
-            ? `Nội dung bên dưới là phiên bản ${article.version} đã duyệt. Bản thay đổi chỉ hiển thị sau khi được phê duyệt.`
-            : "Bài viết chưa có phiên bản nào được duyệt. Nội dung chỉ hiển thị sau khi được phê duyệt."}
+            ? `The content below is the approved version ${article.version}. The change will only show after it's approved.`
+            : "This article has no approved version yet. The content will only show after it's approved."}
         </p>
       </div>
       {onViewVersions && (
@@ -59,7 +59,7 @@ export function KbPendingReviewNotice({
           onClick={onViewVersions}
         >
           <History className="size-3.5" />
-          Xem bản chờ duyệt
+          View pending version
         </Button>
       )}
     </div>

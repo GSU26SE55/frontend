@@ -1,18 +1,16 @@
-// Text empty/error theo khuôn — hàm template nhận tên resource.
-// Gom để mọi list/table dùng chung 1 câu chữ nhất quán.
-// Dùng: <ErrorState message={loadFailed("bài viết")} /> · <EmptyState title={noData("site")} />
+// Templated empty/error text — helper functions that take the resource name.
+// Kept together so every list/table uses the same wording.
+// Usage: <ErrorState message={loadFailed("articles")} /> · <EmptyState title={noData("sites")} />
 
-/** "Không thể tải danh sách {resource}." — dùng cho ErrorState khi query lỗi. */
-export const loadFailed = (resource: string) =>
-  `Không thể tải danh sách ${resource}.`;
+/** "Couldn't load {resource}." — used by ErrorState when a query fails. */
+export const loadFailed = (resource: string) => `Couldn't load ${resource}.`;
 
-/** "Chưa có {resource} nào." — dùng cho EmptyState khi list rỗng. */
-export const noData = (resource: string) => `Chưa có ${resource} nào.`;
+/** "No {resource} yet." — used by EmptyState when the list is empty. */
+export const noData = (resource: string) => `No ${resource} yet.`;
 
-/** "Không tìm thấy {resource} phù hợp." — dùng khi filter/search không ra kết quả. */
-export const notFound = (resource: string) =>
-  `Không tìm thấy ${resource} phù hợp.`;
+/** "No matching {resource}." — used when a filter/search returns nothing. */
+export const notFound = (resource: string) => `No matching ${resource}.`;
 
-/** Câu mặc định khi không rõ resource. */
-export const LOAD_FAILED_DEFAULT = "Không thể tải dữ liệu. Vui lòng thử lại.";
-export const NO_DATA_DEFAULT = "Chưa có dữ liệu.";
+/** Default wording when the resource isn't known. */
+export const LOAD_FAILED_DEFAULT = "Couldn't load data. Please try again.";
+export const NO_DATA_DEFAULT = "No data yet.";

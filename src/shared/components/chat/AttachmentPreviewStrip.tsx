@@ -12,7 +12,7 @@ interface AttachmentPreviewStripProps {
   disabled?: boolean;
 }
 
-/** Dải xem trước ảnh đã chọn, hiển thị phía trên thanh chat — tự xuống dòng khi nhiều ảnh, không giới hạn số lượng. */
+/** Strip that previews selected images, shown above the chat bar — wraps automatically when there are many images, no count limit. */
 export function AttachmentPreviewStrip({
   items,
   onRemove,
@@ -29,14 +29,14 @@ export function AttachmentPreviewStrip({
         >
           <AuthImage
             fileId={att.fileId}
-            alt={att.fileName ?? "Ảnh đính kèm"}
+            alt={att.fileName ?? "Attached image"}
             className="h-full w-full object-cover"
           />
           <button
             type="button"
             onClick={() => onRemove(att.fileId)}
             disabled={disabled}
-            aria-label="Xóa ảnh"
+            aria-label="Remove image"
             className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80 disabled:opacity-50"
           >
             <X size={12} />

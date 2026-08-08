@@ -3,7 +3,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { thresholdService } from "@/features/admin/services/battery/threshold.service";
 import type { UpsertThresholdPayload } from "@/features/admin/types/battery/threshold.types";
 
-// Form-bound mutation: KHÔNG đặt onError ở đây — form tự catch + setError (tránh double toast)
+// Form-bound mutation: do NOT set onError here — the form catches it and calls setError (avoids double toast)
 export function useUpsertThreshold(batteryTypeId: string) {
   const qc = useQueryClient();
   return useMutation({

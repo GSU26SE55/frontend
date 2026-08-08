@@ -4,8 +4,8 @@ import type {
 } from "@/shared/enums/ticket/ticket.enum";
 
 // GET /api/tickets/{ticketId}/participants → CommonResponse<TicketParticipantDto[]>
-// Khớp BE TicketParticipantDTO (TicketService.Application/DTOs/Response/Tickets).
-// BE chỉ trả participant còn active (RemovedAt == null), sắp xếp theo addedAt.
+// Matches the BE's TicketParticipantDTO (TicketService.Application/DTOs/Response/Tickets).
+// The BE returns only active participants (RemovedAt == null), ordered by addedAt.
 export interface TicketParticipantDto {
   id: string;
   ticketId: string;
@@ -13,9 +13,9 @@ export interface TicketParticipantDto {
   displayName: string;
   userRole: ActorRoleEnum;
   participantType: ParticipantTypeEnum;
-  /** Được phép gửi chat trên ticket này. */
+  /** Allowed to post chat messages on this ticket. */
   canPost: boolean;
-  /** Được phép xem/nhận chat nội bộ. */
+  /** Allowed to see and receive internal chat. */
   canViewInternal: boolean;
   addedByUserId: string;
   addedAt: string;

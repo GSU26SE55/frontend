@@ -39,8 +39,8 @@ export function useDeleteIotDevice() {
   });
 }
 
-// rotate-key bỏ revoke + reset issuedAt nhưng KHÔNG đổi Status → invalidate detail để UI
-// refetch DTO mới (nút Revoke hiện lại). Trả IotDeviceCreatedDto để mở DeviceSecretsDialog.
+// rotate-key clears revoke + resets issuedAt but does NOT change Status → invalidate detail so
+// the UI refetches the new DTO (the Revoke button reappears). Returns IotDeviceCreatedDto to open DeviceSecretsDialog.
 export function useRotateIotDeviceKey(id: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -52,7 +52,7 @@ export function useRotateIotDeviceKey(id: string) {
   });
 }
 
-// revoke-key set apiKeyRevokedAt + Status=Disabled → invalidate detail (nút Revoke ẩn).
+// revoke-key sets apiKeyRevokedAt + Status=Disabled → invalidate detail (the Revoke button hides).
 export function useRevokeIotDeviceKey(id: string) {
   const qc = useQueryClient();
   return useMutation({

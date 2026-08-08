@@ -24,9 +24,9 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const DEFAULTS = {
@@ -38,7 +38,7 @@ const DEFAULTS = {
   pageSize: 10,
 };
 
-// Manager — danh sách pin (read-only). Không CRUD (chỉ Admin). Click → chi tiết real-time.
+// Manager — battery list (read-only). No CRUD (Admin only). Click → real-time detail.
 export default function BatteryAssetsPage() {
   const { filters, setFilter, setFilters, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
@@ -65,14 +65,14 @@ export default function BatteryAssetsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Manager &middot; Tài sản pin
+            Manager &middot; Battery assets
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Battery Assets
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} pin &mdash; xem trạng thái &amp;
-            log real-time.
+            {isLoading ? "..." : totalItems} batteries &mdash; view status &amp;
+            real-time logs.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.batteryAssets]} />
@@ -82,7 +82,7 @@ export default function BatteryAssetsPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo serial number..."
+            placeholder="Search by serial number..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -92,7 +92,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.status || null}
           items={[
-            { value: null, label: "Mọi trạng thái" },
+            { value: null, label: "All statuses" },
             ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
               value,
               label,
@@ -101,10 +101,10 @@ export default function BatteryAssetsPage() {
           onValueChange={(v) => setFilter("status", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-36">
-            <SelectValue placeholder="Trạng thái" />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Mọi trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {Object.entries(STATUS_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -115,7 +115,7 @@ export default function BatteryAssetsPage() {
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>

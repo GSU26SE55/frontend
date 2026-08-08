@@ -56,27 +56,31 @@ export default function DataPagination({
   onPageSizeChange,
   pageSizeOptions = PAGE_SIZE_OPTIONS,
 }: DataPaginationProps) {
-  // Trang vượt quá dữ liệu — URL/bookmark cũ, hoặc dữ liệu vừa bị lọc/xoá bớt.
+  // Page beyond the data — a stale URL/bookmark, or data was just filtered/deleted down.
   const outOfRange =
     totalItems > 0 && (pageNumber - 1) * pageSize >= totalItems;
 
-  // Tự kéo về trang cuối CÒN dữ liệu.
+  // Auto-pull back to the last page that STILL has data.
   //
-  // Vì sao cần: BE trả 200 + items rỗng cho trang vượt quá dữ liệu (trước 02/08/2026 nó ném 500 do
-  // tràn int, nên FE chưa bao giờ phải xử lý trạng thái này). Không kéo về thì màn hình tự mâu thuẫn:
-  // tiêu đề "4 loại pin", thanh này "Hiển thị 0 / 4", nhưng bảng lại báo "Chưa có loại pin nào" —
-  // người dùng tưởng mất sạch dữ liệu. Nút "Trước" cũng chỉ lùi 1 trang, từ trang 99 phải bấm 98 lần.
+  // Why this is needed: the BE returns 200 + empty items for a page beyond the data (before
+  // 08/02/2026 it threw a 500 from int overflow, so the FE never had to handle this state
+  // before). Without pulling back, the screen contradicts itself: title says "4 battery types",
+  // this bar says "Showing 0 / 4", but the table says "No battery types yet" — the user thinks
+  // all the data is gone. The "Previous" button also only steps back 1 page at a time, so from
+  // page 99 it'd take 98 clicks.
   //
-  // Không lặp vô hạn: sau khi kéo về, pageNumber = totalPages nên outOfRange thành false. Mọi consumer
-  // của onPageChange đều thực sự cập nhật state (đã rà cả 29 chỗ), nên lần render sau chắc chắn thoát.
+  // No infinite loop: after pulling back, pageNumber = totalPages so outOfRange becomes false.
+  // Every consumer of onPageChange genuinely updates state (all 29 spots have been checked),
+  // so the next render is guaranteed to exit.
   useEffect(() => {
     if (outOfRange) onPageChange(totalPages);
   }, [outOfRange, totalPages, onPageChange]);
 
   if (totalItems === 0) return null;
 
-  // outOfRange chỉ tồn tại trong đúng 1 lần render trước khi effect ở trên kéo về trang cuối.
-  // Vẫn phải xử lý ở đây, nếu không lần render đó in ra chuỗi vô nghĩa kiểu "Hiển thị 76–39 / 39".
+  // outOfRange only exists for exactly 1 render before the effect above pulls back to the last
+  // page. It still needs handling here, otherwise that render prints a nonsensical string like
+  // "Showing 76–39 / 39".
   const from = (pageNumber - 1) * pageSize + 1;
   const to = Math.min(pageNumber * pageSize, totalItems);
   const pageRange = buildPageRange(pageNumber, totalPages);
@@ -86,15 +90,15 @@ export default function DataPagination({
       {/* Left: total */}
       <span className="text-sm text-muted-foreground whitespace-nowrap">
         {outOfRange
-          ? `Hiển thị 0 / ${totalItems}`
-          : `Hiển thị ${from}–${to} / ${totalItems}`}
+          ? `Showing 0 / ${totalItems}`
+          : `Showing ${from}–${to} / ${totalItems}`}
       </span>
 
       {/* Right: page size selector + pagination */}
       <div className="flex items-center gap-2">
         {onPageSizeChange && (
           <>
-            <span className="text-sm text-muted-foreground">Dòng</span>
+            <span className="text-sm text-muted-foreground">Rows</span>
             <Select
               value={String(pageSize)}
               onValueChange={(v) => onPageSizeChange(Number(v))}

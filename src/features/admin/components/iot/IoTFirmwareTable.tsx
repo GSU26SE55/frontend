@@ -37,7 +37,7 @@ function formatBytes(bytes: number): string {
 
 interface Props {
   items: IotFirmwareReleaseDto[];
-  /** Sort server-side — state từ useUrlSort. */
+  /** Sort server-side — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -47,7 +47,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
   const { mutate: publish } = usePublishFirmwareRelease();
   const { mutate: archive } = useArchiveFirmwareRelease();
   const [pending, setPending] = useState<PendingAction>(null);
-  // BE đã sort toàn dataset (SortBy/SortDir) → render items nguyên trạng.
+  // BE already sorted the whole dataset (SortBy/SortDir) → render items as-is.
   const sortKey = sort.sortBy;
   const sortDirection = sort.sortDir;
   const toggleSort = sort.toggleSort;
@@ -56,7 +56,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
     if (!pending) return;
     const opts = {
       onSuccess: () =>
-        toast.success(pending.kind === "publish" ? "Đã publish" : "Đã archive"),
+        toast.success(pending.kind === "publish" ? "Published" : "Archived"),
       onError: (error: unknown) => handleErrorApi({ error }),
     };
     if (pending.kind === "publish") publish(pending.id, opts);
@@ -99,7 +99,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
               direction={sortDirection}
               onSort={toggleSort}
             >
-              Trạng thái
+              Status
             </SortableTableHead>
             <SortableTableHead
               sortKey="artifactSizeBytes"
@@ -107,7 +107,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
               direction={sortDirection}
               onSort={toggleSort}
             >
-              Kích thước
+              Size
             </SortableTableHead>
             <SortableTableHead
               sortKey="createdAt"
@@ -115,7 +115,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
               direction={sortDirection}
               onSort={toggleSort}
             >
-              Ngày tạo
+              Created
             </SortableTableHead>
             <TableHead className="text-right">
               {TABLE_COLUMNS.actions}
@@ -129,7 +129,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
                 {item.version}
                 {item.isRequired && (
                   <Badge variant="destructive" className="ml-2">
-                    Bắt buộc
+                    Required
                   </Badge>
                 )}
               </TableCell>
@@ -202,7 +202,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
                 colSpan={7}
                 className="text-center text-muted-foreground py-8"
               >
-                Chưa có firmware release
+                No firmware releases yet
               </TableCell>
             </TableRow>
           )}
@@ -217,8 +217,8 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
         }
         description={
           pending?.kind === "publish"
-            ? "Release sẽ khả dụng để đặt làm target OTA cho device."
-            : "Release sẽ không thể đặt làm target nữa (rollback/EOL)."
+            ? "The release will become available to set as the OTA target for devices."
+            : "The release can no longer be set as a target (rollback/EOL)."
         }
         actionLabel={pending?.kind === "publish" ? "Publish" : "Archive"}
         destructive={pending?.kind === "archive"}

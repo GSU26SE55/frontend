@@ -1,5 +1,5 @@
-// GH-106 — shape của GET /api/auth/me/permissions (CommonResponse<MyPermissionsDto>).
-// PermissionDto dùng chung — nguồn thật ở shared.
+// GH-106 — shape of GET /api/auth/me/permissions (CommonResponse<MyPermissionsDto>).
+// PermissionDto is shared — the real source lives in shared.
 import type { PermissionDto } from "@/shared/types/account/permission.types";
 export type { PermissionDto } from "@/shared/types/account/permission.types";
 

@@ -40,15 +40,15 @@ import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Paused",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const WARRANTY_LABELS: Record<WarrantyStatusEnum, string> = {
-  [WarrantyStatusEnum.ACTIVE]: "Còn bảo hành",
-  [WarrantyStatusEnum.EXPIRED]: "Hết bảo hành",
-  [WarrantyStatusEnum.VOID]: "Vô hiệu",
+  [WarrantyStatusEnum.ACTIVE]: "Under warranty",
+  [WarrantyStatusEnum.EXPIRED]: "Warranty expired",
+  [WarrantyStatusEnum.VOID]: "Void",
 };
 
 const toNumOrNull = (val?: string): number | undefined => {
@@ -62,8 +62,8 @@ interface BatteryAssetFormProps {
   onOpenChange: (open: boolean) => void;
   editData?: BatteryAssetDto | null;
   /**
-   * Mở form từ trang chi tiết site → site điền sẵn và khoá lại, người dùng
-   * không phải tự chọn (và không chọn nhầm sang site khác).
+   * Opening the form from the site detail page → the site is prefilled and locked,
+   * so the user doesn't have to pick it (and can't pick the wrong site).
    */
   lockedSiteId?: string;
 }
@@ -123,7 +123,7 @@ export default function BatteryAssetForm({
           status: editData.status,
         });
       } else {
-        // Tạo mới từ trang site → điền sẵn site đang mở.
+        // Creating from the site page → prefill the site currently open.
         reset(lockedSiteId ? { siteId: lockedSiteId } : {});
       }
     }
@@ -147,7 +147,7 @@ export default function BatteryAssetForm({
 
     try {
       if (isEdit) {
-        // Gửi kèm status + warrantyStatus để KHÔNG reset về Active (BE update default Active nếu thiếu)
+        // Send status + warrantyStatus so they are NOT reset to Active (BE update defaults to Active when missing)
         await updateAsset({
           ...payload,
           warrantyStatus: data.warrantyStatus,
@@ -172,7 +172,7 @@ export default function BatteryAssetForm({
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Sửa battery asset" : "Tạo battery asset mới"}
+            {isEdit ? "Edit battery asset" : "Create battery asset"}
           </DialogTitle>
         </DialogHeader>
 
@@ -182,7 +182,7 @@ export default function BatteryAssetForm({
             <Input
               id="serialNumber"
               {...register("serialNumber")}
-              placeholder="VD: BAT-001"
+              placeholder="e.g. BAT-001"
             />
             {errors.serialNumber && (
               <p className="text-sm text-destructive">
@@ -192,7 +192,7 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryTypeId">Loại pin *</Label>
+            <Label htmlFor="batteryTypeId">Battery type *</Label>
             <Controller
               control={control}
               name="batteryTypeId"
@@ -202,9 +202,9 @@ export default function BatteryAssetForm({
                   options={batteryTypeOptions}
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder="-- Chọn loại pin --"
-                  searchPlaceholder="Tìm theo tên loại pin..."
-                  emptyText="Không tìm thấy loại pin"
+                  placeholder="-- Select a battery type --"
+                  searchPlaceholder="Search by battery type name..."
+                  emptyText="No matching battery types"
                 />
               )}
             />
@@ -216,7 +216,7 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Khách hàng *</Label>
+            <Label htmlFor="customerId">Customer *</Label>
             <Controller
               control={control}
               name="customerId"
@@ -238,8 +238,8 @@ export default function BatteryAssetForm({
 
           <div className="space-y-1">
             <Label htmlFor="siteId">Site</Label>
-            {/* Mở từ trang site → khoá trigger. Giá trị vẫn nằm trong form state
-                (Controller) nên submit vẫn gửi siteId dù trigger bị disabled. */}
+            {/* Opened from the site page → lock the trigger. The value still lives in form
+                state (Controller), so submit sends siteId even while the trigger is disabled. */}
             <Controller
               control={control}
               name="siteId"
@@ -255,8 +255,8 @@ export default function BatteryAssetForm({
                   onValueChange={(value) => field.onChange(value ?? "")}
                   disabled={!!lockedSiteId}
                 >
-                  {/* disabled mặc định opacity-50 làm mờ cả chevron → giữ
-                      opacity-100 và chỉ làm dịu màu chữ cho rõ là đang khoá. */}
+                  {/* The default disabled opacity-50 dims the chevron too → keep
+                      opacity-100 and only mute the text color to show it's locked. */}
                   <SelectTrigger
                     id="siteId"
                     className={cn(
@@ -265,7 +265,7 @@ export default function BatteryAssetForm({
                         "disabled:opacity-100 disabled:text-muted-foreground",
                     )}
                   >
-                    <SelectValue placeholder="-- Chưa gán site --" />
+                    <SelectValue placeholder="-- No site assigned --" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {sitesData?.items.map((s) => (
@@ -279,11 +279,11 @@ export default function BatteryAssetForm({
             />
             {lockedSiteId ? (
               <p className="text-xs text-muted-foreground">
-                Pin sẽ được gán vào site đang mở.
+                The battery will be assigned to the site currently open.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Để trống nếu pin chưa lắp vào site nào.
+                Leave empty if the battery isn't installed at a site yet.
               </p>
             )}
             {errors.siteId && (
@@ -295,7 +295,7 @@ export default function BatteryAssetForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="installDate">Ngày lắp đặt *</Label>
+              <Label htmlFor="installDate">Install date *</Label>
               <Controller
                 control={control}
                 name="installDate"
@@ -315,7 +315,7 @@ export default function BatteryAssetForm({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="warrantyEndDate">Hết bảo hành</Label>
+              <Label htmlFor="warrantyEndDate">Warranty end</Label>
               <Controller
                 control={control}
                 name="warrantyEndDate"
@@ -332,13 +332,13 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="location">Vị trí</Label>
+            <Label htmlFor="location">Location</Label>
             <Input id="location" {...register("location")} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="latitude">Vĩ độ</Label>
+              <Label htmlFor="latitude">Latitude</Label>
               <Input
                 id="latitude"
                 type="number"
@@ -347,7 +347,7 @@ export default function BatteryAssetForm({
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="longitude">Kinh độ</Label>
+              <Label htmlFor="longitude">Longitude</Label>
               <Input
                 id="longitude"
                 type="number"
@@ -360,7 +360,7 @@ export default function BatteryAssetForm({
           {isEdit && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="status">Trạng thái</Label>
+                <Label htmlFor="status">Status</Label>
                 <select
                   id="status"
                   {...register("status", { valueAsNumber: true })}
@@ -374,7 +374,7 @@ export default function BatteryAssetForm({
                 </select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="warrantyStatus">Bảo hành</Label>
+                <Label htmlFor="warrantyStatus">Warranty</Label>
                 <select
                   id="warrantyStatus"
                   {...register("warrantyStatus", { valueAsNumber: true })}
@@ -391,7 +391,7 @@ export default function BatteryAssetForm({
           )}
 
           <div className="space-y-1">
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Input id="notes" {...register("notes")} />
           </div>
 
@@ -401,10 +401,10 @@ export default function BatteryAssetForm({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isEdit ? "Lưu thay đổi" : "Tạo mới"}
+              {isEdit ? "Save changes" : "Create"}
             </Button>
           </DialogFooter>
         </form>

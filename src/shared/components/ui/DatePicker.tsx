@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format, parse, isValid } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,24 +23,24 @@ function parseDateValue(value: string | undefined | null): Date | undefined {
 
 interface DatePickerProps {
   id?: string;
-  /** Ngày dạng "yyyy-MM-dd" (khớp value native <input type="date"> cũ). */
+  /** Date as "yyyy-MM-dd" (matches the native <input type="date"> value it replaced). */
   value?: string | null;
   onChange: (value: string | undefined) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** Chặn chọn ngày < min (dạng "yyyy-MM-dd"). */
+  /** Blocks selecting a date < min (as "yyyy-MM-dd"). */
   min?: string;
-  /** Chặn chọn ngày > max (dạng "yyyy-MM-dd"). */
+  /** Blocks selecting a date > max (as "yyyy-MM-dd"). */
   max?: string;
 }
 
-/** Thay thế <Input type="date"> — value/onChange giữ nguyên dạng chuỗi "yyyy-MM-dd" để không đổi schema/state chỗ dùng. */
+/** Replaces <Input type="date"> — value/onChange keep the "yyyy-MM-dd" string format so the schema/state at call sites doesn't change. */
 export function DatePicker({
   id,
   value,
   onChange,
-  placeholder = "Chọn ngày",
+  placeholder = "Select date",
   disabled,
   className,
   min,
@@ -69,12 +69,12 @@ export function DatePicker({
         }
       >
         <CalendarIcon className="size-3.5" />
-        {selected ? format(selected, "dd/MM/yyyy") : placeholder}
+        {selected ? format(selected, "MM/dd/yyyy") : placeholder}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          locale={vi}
+          locale={enUS}
           selected={selected}
           defaultMonth={selected}
           disabled={[
@@ -101,24 +101,24 @@ function parseDateTimeValue(
 
 interface DateTimePickerProps {
   id?: string;
-  /** Ngày giờ dạng "yyyy-MM-ddTHH:mm" (khớp value native <input type="datetime-local"> cũ). */
+  /** Date-time as "yyyy-MM-ddTHH:mm" (matches the native <input type="datetime-local"> value it replaced). */
   value?: string;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** Chặn chọn thời điểm < min. */
+  /** Blocks selecting a moment < min. */
   min?: Date;
-  /** Chặn chọn thời điểm > max (vd: `new Date()` — không cho chọn tương lai). */
+  /** Blocks selecting a moment > max (e.g. `new Date()` — disallows selecting the future). */
   max?: Date;
 }
 
-/** Thay thế <Input type="datetime-local"> — value/onChange giữ nguyên dạng chuỗi "yyyy-MM-ddTHH:mm". */
+/** Replaces <Input type="datetime-local"> — value/onChange keep the "yyyy-MM-ddTHH:mm" string format. */
 export function DateTimePicker({
   id,
   value,
   onChange,
-  placeholder = "Chọn ngày giờ",
+  placeholder = "Select date & time",
   disabled,
   className,
   min,
@@ -163,12 +163,12 @@ export function DateTimePicker({
         }
       >
         <CalendarIcon className="size-3.5" />
-        {selected ? format(selected, "dd/MM/yyyy HH:mm") : placeholder}
+        {selected ? format(selected, "MM/dd/yyyy HH:mm") : placeholder}
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          locale={vi}
+          locale={enUS}
           selected={selected}
           defaultMonth={selected}
           disabled={[

@@ -5,20 +5,20 @@ import { AuthImageView } from "./AuthImageView";
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     authImage: {
-      /** Chèn ảnh đã upload — lưu fileId, KHÔNG lưu blob/base64 vào HTML. */
+      /** Inserts an uploaded image — stores fileId, does NOT store a blob/base64 in the HTML. */
       setAuthImage: (attrs: { fileId: string; alt?: string }) => ReturnType;
     };
   }
 }
 
 /**
- * Ảnh trong rich text, lưu dưới dạng `<img data-file-id="...">`.
+ * Image inside rich text, stored as `<img data-file-id="...">`.
  *
- * Vì file trong hệ thống cần Bearer token, `<img src="/api/files/{id}/download">`
- * đặt thẳng vào HTML sẽ trả 401. Node này chỉ lưu `fileId` vào HTML; lúc hiển thị
- * mới tải blob qua axios rồi gán `src` (giống `AuthImage`).
+ * Since files in the system require a Bearer token, an `<img src="/api/files/{id}/download">`
+ * placed directly in the HTML would get a 401. This node only stores `fileId` in the
+ * HTML; the blob is loaded via axios and assigned to `src` at render time (same as `AuthImage`).
  *
- * KHÔNG dùng base64: nội dung sẽ phình vào mọi response list/detail.
+ * Does NOT use base64: the content would bloat every list/detail response.
  */
 export const AuthImageNode = Node.create({
   name: "authImage",
@@ -47,7 +47,7 @@ export const AuthImageNode = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    // src để trống — viewer tự nạp blob theo data-file-id
+    // src left empty — the viewer loads the blob from data-file-id itself
     return ["img", mergeAttributes(HTMLAttributes)];
   },
 

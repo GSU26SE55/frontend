@@ -2,21 +2,22 @@ import { useState } from "react";
 import type { SortDirection } from "@/shared/hooks/useSortableData";
 
 export interface ServerSortState {
-  /** Cột đang sort (whitelist per-endpoint của BE). null = dùng default của BE. */
+  /** Column currently sorted (per-endpoint whitelist from the BE). null = use BE default. */
   sortBy: string | null;
   sortDir: SortDirection;
-  /** Toggle theo header click: asc → desc → clear (về default BE). */
+  /** Toggle on header click: asc → desc → clear (back to BE default). */
   toggleSort: (key: string) => void;
-  /** Set trực tiếp key + direction — dùng cho UI dạng Select (không có state "clear" giữa chừng như toggleSort). */
+  /** Set key + direction directly — used for Select-style UI (no in-between "clear" state like toggleSort). */
   setSort: (key: string | null, dir: SortDirection) => void;
 }
 
 /**
- * State sort cho bảng sort **server-side** (BE nhận `SortBy`/`SortDir`).
- * Khác `useSortableData`: KHÔNG tự sort mảng — chỉ giữ state để gửi lên API,
- * BE trả về `items` đã sort toàn dataset trước khi phân trang.
+ * Sort state for **server-side** sorted tables (BE receives `SortBy`/`SortDir`).
+ * Unlike `useSortableData`: does NOT sort the array itself — only holds state to
+ * send to the API; the BE returns `items` already sorted across the full dataset
+ * before pagination.
  *
- * Toggle 3 trạng thái giữ đúng UX cũ: lần 1 → asc, lần 2 → desc, lần 3 → clear.
+ * The 3-state toggle preserves the old UX: 1st click → asc, 2nd → desc, 3rd → clear.
  */
 export function useServerSort(
   initialKey: string | null = null,

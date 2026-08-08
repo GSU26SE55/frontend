@@ -66,7 +66,7 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
       >
         <div className="max-w-sm space-y-3">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Email mới</Label>
+            <Label className="text-xs text-muted-foreground">New email</Label>
             <Input
               type="email"
               className="h-8 text-sm"
@@ -80,7 +80,7 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
           </div>
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
-              Mật khẩu hiện tại
+              Current password
             </Label>
             <Input
               type="password"
@@ -104,7 +104,7 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
             {isSendingEmail && (
               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
             )}
-            Gửi OTP xác nhận
+            Send confirmation OTP
           </Button>
         </div>
       </form>
@@ -112,10 +112,10 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
       <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-3">
         <div className="max-w-sm space-y-3">
           <p className="text-xs text-muted-foreground">
-            Nhập mã OTP đã gửi đến email mới của bạn.
+            Enter the OTP sent to your new email.
           </p>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Mã OTP</Label>
+            <Label className="text-xs text-muted-foreground">OTP code</Label>
             <Input
               maxLength={6}
               className="h-8 text-sm tracking-widest"
@@ -135,13 +135,13 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
             size="sm"
             onClick={() => setStep(1)}
           >
-            Quay lại
+            Back
           </Button>
           <Button type="submit" size="sm" disabled={isConfirming}>
             {isConfirming && (
               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
             )}
-            Xác nhận
+            Confirm
           </Button>
         </div>
       </form>
@@ -152,7 +152,7 @@ const ChangeEmailForm = ({ bare }: ChangeEmailFormProps = {}) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Đổi email</CardTitle>
+        <CardTitle>Change email</CardTitle>
       </CardHeader>
       <CardContent>{content}</CardContent>
     </Card>

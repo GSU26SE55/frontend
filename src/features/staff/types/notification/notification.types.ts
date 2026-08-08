@@ -5,8 +5,8 @@ export {
   isUnreadStatus,
 } from "@/shared/enums/notification/notification.enum";
 
-// NotificationDto trùng shape với shared → dùng chung, không định nghĩa lại.
+// NotificationDto has the same shape as the shared one → reuse it rather than redefining it.
 export type { NotificationDto } from "@/shared/types/notification/notification.types";
 
-// StaffNotificationsParams ≡ NotificationsParams (shared) → alias, giữ tên cũ để không đổi call-site.
+// StaffNotificationsParams ≡ NotificationsParams (shared) → aliased, keeping the old name so call sites stay unchanged.
 export type { NotificationsParams as StaffNotificationsParams } from "@/shared/types/notification/notification.types";

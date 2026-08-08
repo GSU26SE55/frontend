@@ -18,17 +18,18 @@ const GoogleCallbackPage = () => {
   const [searchParams] = useSearchParams();
   const setSession = useSessionStore((s) => s.setSession);
   const queryClient = useQueryClient();
-  // Authorization code của Google chỉ dùng được 1 lần. StrictMode (dev) chạy effect 2 lần
-  // → lần 2 gọi lại code đã tiêu thụ → BE trả lỗi → rơi vào catch → điều hướng nhầm /login,
-  // ghi đè kết quả đúng của lần 1. Ref guard đảm bảo run() chỉ chạy đúng 1 lần.
+  // Google's authorization code can only be used once. StrictMode (dev) runs the effect twice
+  // → the 2nd run reuses the already-consumed code → BE returns an error → falls into catch →
+  // wrongly navigates to /login, overwriting the correct result from the 1st run. The ref guard
+  // ensures run() executes exactly once.
   const hasRun = useRef(false);
 
   useEffect(() => {
     if (hasRun.current) return;
     hasRun.current = true;
 
-    // GH-295: Google redirect về đây với ?code&state. FE gọi GET /api/auth/google/callback
-    // qua axios → BE trả JSON LoginResultDto (data.tokens.*). Google login bypass 2FA.
+    // GH-295: Google redirects here with ?code&state. FE calls GET /api/auth/google/callback
+    // via axios → BE returns JSON LoginResultDto (data.tokens.*). Google login bypasses 2FA.
     const run = async () => {
       try {
         const code = searchParams.get("code");
@@ -45,7 +46,7 @@ const GoogleCallbackPage = () => {
         const user = decodeToken(tokens.accessToken);
 
         if (user.role === UserRole.CUSTOMER) {
-          // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
+          // CUSTOMER doesn't use the web app — don't keep the session, navigate to the app-usage guide page
           clearTokens();
           navigate("/use-mobile-app", { replace: true });
           return;

@@ -11,11 +11,11 @@ import {
 
 export interface SearchableSelectOption {
   value: string;
-  /** Chuỗi hiện trên trigger khi option được chọn. */
+  /** String shown on the trigger when the option is selected. */
   label: string;
-  /** Nội dung hiện trong dropdown — mặc định dùng `label`. */
+  /** Content shown in the dropdown — defaults to `label`. */
   display?: React.ReactNode;
-  /** Chuỗi dùng để lọc khi gõ — mặc định dùng `label`. */
+  /** String used for filtering while typing — defaults to `label`. */
   keywords?: string;
 }
 
@@ -31,17 +31,17 @@ interface SearchableSelectProps {
 }
 
 /**
- * Select có ô tìm kiếm. Lọc client-side trên danh sách đã load — không gọi lại
- * API mỗi lần gõ, nên chỉ hợp với list đã fetch sẵn (pageSize 100).
+ * Select with a search box. Filters client-side over the already-loaded list — it doesn't
+ * call the API on every keystroke, so it only suits a list that's already been fetched (pageSize 100).
  */
 export default function SearchableSelect({
   id,
   options,
   value,
   onChange,
-  placeholder = "-- Chọn --",
-  searchPlaceholder = "Tìm kiếm...",
-  emptyText = "Không tìm thấy kết quả",
+  placeholder = "-- Select --",
+  searchPlaceholder = "Search...",
+  emptyText = "No results",
   disabled,
 }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
@@ -64,8 +64,8 @@ export default function SearchableSelect({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      {/* base-ui dùng `render` (không phải `asChild` như Radix) — dùng sai thì
-          Button thành con của trigger và mất luôn w-full. */}
+      {/* base-ui uses `render` (not `asChild` like Radix) — get it wrong and the
+          Button becomes a child of the trigger and loses w-full. */}
       <PopoverTrigger
         render={
           <Button
@@ -78,21 +78,21 @@ export default function SearchableSelect({
             className={cn(
               "w-full justify-between font-normal",
               !selected && "text-muted-foreground",
-              // disabled mặc định opacity-50 làm mờ cả chevron.
+              // disabled defaults to opacity-50, which also fades the chevron.
               disabled && "disabled:opacity-100 disabled:text-muted-foreground",
             )}
           >
             <span className="truncate">
-              {/* Giá trị nằm ngoài danh sách đã load → vẫn hiện raw value thay
-                  vì báo "chưa chọn". */}
+              {/* Value falls outside the loaded list → still show the raw value
+                  instead of reporting "not selected". */}
               {selected?.label ?? (value || placeholder)}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         }
       />
-      {/* --anchor-width = bề ngang trigger (base-ui). Radix là
-          --radix-popover-trigger-width — biến đó không tồn tại ở đây. */}
+      {/* --anchor-width = trigger width (base-ui). Radix uses
+          --radix-popover-trigger-width — that variable doesn't exist here. */}
       <PopoverContent className="w-(--anchor-width) gap-0 p-0" align="start">
         <div className="border-b p-2">
           <Input

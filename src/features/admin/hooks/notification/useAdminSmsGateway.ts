@@ -34,7 +34,7 @@ export const useAdminRevokeSmsDevice = () => {
       adminSmsGatewayService.revokeDevice(id).then((r) => r.data.data),
     onSuccess: (deviceCode) => {
       qc.invalidateQueries({ queryKey: KEY.admin.smsGateway });
-      toast.success(`Đã thu hồi ${deviceCode}`);
+      toast.success(`Revoked ${deviceCode}`);
     },
     onError: (error) => handleErrorApi({ error }),
   });

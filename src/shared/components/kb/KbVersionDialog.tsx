@@ -28,12 +28,12 @@ export function KbVersionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[94vw] !max-w-[94vw] p-0 overflow-hidden">
-        {/* ── Side-by-side layout: inner div owns the height ── */}
+        {/* ── Side-by-side layout: inner div owns the height ─── */}
         <div className="flex flex-col" style={{ height: "88vh" }}>
           {/* Header */}
           <div className="flex items-center gap-2 border-b border-border px-5 py-3 shrink-0">
             <DialogTitle className="text-base font-semibold">
-              Lịch sử phiên bản
+              Version history
             </DialogTitle>
           </div>
           {/* Body: left list + right diff */}
@@ -51,7 +51,7 @@ export function KbVersionDialog({
                 <KbDiffViewer diff={diff} />
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  Chọn 2 phiên bản rồi bấm So sánh
+                  Select 2 versions then click Compare
                 </div>
               )}
             </div>

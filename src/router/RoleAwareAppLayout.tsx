@@ -1,8 +1,9 @@
-// Wrapper chọn nav config theo role runtime — dùng cho route KHÔNG gắn 1 role cụ thể
-// tại config-time (vd /settings, mọi role vào được).
+// Wrapper that picks the nav config by role at runtime — used for routes that are NOT
+// tied to one specific role at config-time (e.g. /settings, reachable by every role).
 //
-// Đặt ở router/ (ngoài shared) nên được phép import cả 3 feature — giữ AppLayout ở tầng
-// shared thành pure component, không phá rule "shared không import features".
+// Placed in router/ (outside shared) so it's allowed to import all 3 features — this keeps
+// AppLayout in the shared layer as a pure component, without breaking the "shared doesn't
+// import features" rule.
 
 import AppLayout from "@/shared/components/layout/AppLayout";
 import { useSessionStore } from "@/shared/stores/sessionStore";

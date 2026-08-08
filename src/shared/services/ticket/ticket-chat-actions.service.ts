@@ -13,8 +13,8 @@ import type {
 import { fileStorageService } from "@/shared/services/file/file-storage.service";
 import { FilePurposeEnum } from "@/shared/types/file/file-storage.types";
 
-// Edit/Delete/Mark-read/Translate/Voice cho ticket chat — dùng chung staff & manager.
-// Cùng endpoint /api/tickets/{id}/chats mà staff/manager đã gọi để list/add comment.
+// Edit/Delete/Mark-read/Translate/Voice for ticket chat — shared by staff & manager.
+// Same endpoint /api/tickets/{id}/chats that staff/manager already call to list/add comments.
 export const ticketChatActionsService = {
   update: (ticketId: string, chatId: string, payload: UpdateChatPayload) =>
     axiosInstance.put<CommonResponse<void>>(
@@ -26,8 +26,8 @@ export const ticketChatActionsService = {
       ENDPOINTS.TICKETS.CHAT_DETAIL(ticketId, chatId),
       { data: reason ? { reason } : undefined },
     ),
-  // Số chat CHƯA ĐỌC của chính user trong 1 ticket (badge tab "Bình luận").
-  // BE loại chat do chính mình viết + lọc chat internal theo quyền.
+  // Number of UNREAD chats for the current user in 1 ticket (the "Comments" tab badge).
+  // The BE excludes chats written by the user themself + filters internal chats by permission.
   getUnreadCount: (ticketId: string) =>
     axiosInstance.get<CommonResponse<number>>(
       ENDPOINTS.TICKETS.CHAT_UNREAD_COUNT(ticketId),
@@ -44,9 +44,9 @@ export const ticketChatActionsService = {
       null,
       { params: { to: targetLanguage } },
     ),
-  // Voice chat (2 bước): 1) upload file audio lên FileStorage → lấy metadata,
-  // 2) POST metadata (ChatAttachmentInput) xuống /chats/voice → BE tạo chat placeholder
-  // rồi transcribe async. Endpoint KHÔNG còn nhận multipart audio trực tiếp.
+  // Voice chat (2 steps): 1) upload the audio file to FileStorage → get metadata,
+  // 2) POST the metadata (ChatAttachmentInput) to /chats/voice → BE creates a chat placeholder
+  // then transcribes async. The endpoint no longer accepts multipart audio directly.
   transcribeVoice: async (ticketId: string, audioFile: File) => {
     const upload = await fileStorageService.uploadFile({
       file: audioFile,
@@ -54,17 +54,18 @@ export const ticketChatActionsService = {
     });
     const meta = upload.data.data;
     if (!meta?.fileId) {
-      throw new Error("Upload audio thất bại — vui lòng ghi âm và gửi lại.");
+      throw new Error("Audio upload failed — please record again and resend.");
     }
-    // Body khớp ChatVoiceTranscribeCommand của BE (Swagger). `url` là BẮT BUỘC ở validate của BE,
-    // nhưng chỉ được lưu làm metadata trên TicketAttachment.Url — bản thân việc transcribe thì
-    // VoiceTranscriptionRequestedConsumer tải audio qua gRPC nội bộ theo `fileId`, không đụng tới
-    // chuỗi này.
+    // Body matches the BE's ChatVoiceTranscribeCommand (Swagger). `url` is REQUIRED by the
+    // BE's validation, but is only stored as metadata on TicketAttachment.Url — the actual
+    // transcription is done by VoiceTranscriptionRequestedConsumer, which fetches the audio
+    // over internal gRPC by `fileId`, not through this string.
     //
-    // GH-788 — vì thế KHÔNG được chặn khi publicUrl null. Bucket đối tượng là private nên
-    // PublicBaseUrl để rỗng ở mọi môi trường ⇒ publicUrl luôn null ⇒ bản cũ ném lỗi ngay tại đây
-    // và tính năng ghi âm không bao giờ chạy được. Rơi về đường tải có kiểm quyền, đúng quy ước
-    // mobile đang dùng cho attachment thường.
+    // GH-788 — so this must NOT be blocked when publicUrl is null. The object bucket is
+    // private and PublicBaseUrl is left empty in every environment ⇒ publicUrl is always
+    // null ⇒ the old code threw right here and the voice recording feature never worked at
+    // all. Falling back to the permission-checked download path, matching the convention
+    // mobile already uses for regular attachments.
     return axiosInstance.post<CommonResponse<ChatVoiceActionDTO>>(
       ENDPOINTS.TICKETS.CHAT_VOICE(ticketId),
       {
@@ -76,16 +77,16 @@ export const ticketChatActionsService = {
       },
     );
   },
-  // Retry transcribe cho chat thoại đã Failed — không upload lại, BE dùng audio cũ.
-  // 202 Accepted; không body.
+  // Retry transcribe for a voice chat that already Failed — no re-upload, the BE reuses the old audio.
+  // 202 Accepted; no body.
   retryVoice: (ticketId: string, chatId: string) =>
     axiosInstance.post<CommonResponse<void>>(
       ENDPOINTS.TICKETS.CHAT_VOICE_RETRY(ticketId, chatId),
       null,
     ),
 
-  // ── GH-133 Nhóm C ──────────────────────────────────────────────────────
-  // C2 (AI) — Staff/Manager/Admin. Gemini 429 → BE trả isSuccess:false (không throw).
+  // ── GH-133 Group C ─────────────────────────────────────────────────────
+  // C2 (AI) — Staff/Manager/Admin. Gemini 429 → BE returns isSuccess:false (doesn't throw).
   suggest: (ticketId: string, payload: ChatSuggestPayload) =>
     axiosInstance.post<CommonResponse<ChatSuggestDTO>>(
       ENDPOINTS.TICKETS.CHAT_SUGGEST(ticketId),
@@ -96,8 +97,8 @@ export const ticketChatActionsService = {
       ENDPOINTS.TICKETS.CHAT_SUMMARIZE(ticketId),
       null,
     ),
-  // C3 — download attachment: 200 (url) · 202 (đang scan) · 451 (nhiễm virus).
-  // Trả nguyên AxiosResponse để hook đọc status; 451 (4xx) axios sẽ throw → hook catch.
+  // C3 — download attachment: 200 (url) · 202 (scanning) · 451 (infected).
+  // Returns the raw AxiosResponse so the hook can read the status; 451 (4xx) axios will throw → hook catches it.
   downloadAttachment: (
     ticketId: string,
     chatId: string,

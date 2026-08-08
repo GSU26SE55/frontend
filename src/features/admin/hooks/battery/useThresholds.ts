@@ -1,4 +1,4 @@
-// Re-export từ shared — nguồn thật ở shared/hooks/battery/useThresholds.ts.
+// Re-export from shared — real source at shared/hooks/battery/useThresholds.ts.
 export {
   useThresholds,
   useThresholdByType,

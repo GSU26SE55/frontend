@@ -19,7 +19,7 @@ import type {
 } from "@/shared/types/dashboard/analytics.types";
 
 export const analyticsService = {
-  // Dashboard stats — không hỗ trợ export (không có ?format).
+  // Dashboard stats — doesn't support export (no ?format).
   getDashboardStats: (params?: DashboardStatsParams) =>
     axiosInstance.get<CommonResponse<BatteryDashboardStatsDto>>(
       ENDPOINTS.BATTERY_DASHBOARD.STATS,
@@ -62,7 +62,7 @@ export const analyticsService = {
     ),
 
   // ── Export (blob) ───────────────────────────────────────────────────────
-  // BE trả file khi có ?format=csv|xlsx. Dùng chung cho mọi report.
+  // BE returns a file when ?format=csv|xlsx is present. Shared across all reports.
   exportReport: (
     endpoint: string,
     format: ReportFormat,

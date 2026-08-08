@@ -10,18 +10,24 @@ import {
   BROADCAST_BODY_MAX,
 } from "@/features/admin/types/notification/notification-group.types";
 
-// Giới hạn độ dài khớp cột DB và khớp ValidateAsync của BE — kiểm ở FE để lỗi hiện ngay lúc gõ,
-// nhưng BE vẫn kiểm lại vì client nào cũng có thể bỏ qua tầng này.
+// Length limits match the DB columns and the BE's ValidateAsync — checked on the FE so errors show
+// while typing, but the BE still re-checks since any client could skip this layer.
 export const notificationGroupFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Tên nhóm không được trống.")
-    .max(GROUP_NAME_MAX, `Tên nhóm tối đa ${GROUP_NAME_MAX} ký tự.`),
+    .min(1, "Group name is required")
+    .max(
+      GROUP_NAME_MAX,
+      `Group name must be at most ${GROUP_NAME_MAX} characters`,
+    ),
   description: z
     .string()
     .trim()
-    .max(GROUP_DESCRIPTION_MAX, `Mô tả tối đa ${GROUP_DESCRIPTION_MAX} ký tự.`)
+    .max(
+      GROUP_DESCRIPTION_MAX,
+      `Description must be at most ${GROUP_DESCRIPTION_MAX} characters`,
+    )
     .optional(),
 });
 
@@ -29,39 +35,45 @@ export type NotificationGroupFormValues = z.infer<
   typeof notificationGroupFormSchema
 >;
 
-// Gửi hàng loạt. KHÔNG kiểm "nhóm có ai không" ở đây — số người nhận phụ thuộc trạng thái tài
-// khoản ở thời điểm gửi, chỉ backend biết; nó trả 400 kèm lý do cụ thể khi tập rỗng.
+// Bulk send. Does NOT check "does the group have anyone" here — recipient count depends on account
+// status at send time, which only the backend knows; it returns 400 with a specific reason when the set is empty.
 export const broadcastFormSchema = z
   .object({
-    // Zod v4: tham số thứ hai nhận `{ message }`, KHÔNG còn `errorMap` như v3.
+    // Zod v4: the second parameter takes `{ message }`, no more `errorMap` like in v3.
     type: z.nativeEnum(NotificationTypeEnum, {
-      message: "Chọn loại thông báo.",
+      message: "Select a notification type",
     }),
     channels: z
       .array(z.nativeEnum(NotificationChannelEnum))
-      .min(1, "Chọn ít nhất một kênh gửi."),
+      .min(1, "Select at least one channel"),
     title: z
       .string()
       .trim()
-      .min(1, "Tiêu đề không được trống.")
-      .max(BROADCAST_TITLE_MAX, `Tiêu đề tối đa ${BROADCAST_TITLE_MAX} ký tự.`),
+      .min(1, "Title is required")
+      .max(
+        BROADCAST_TITLE_MAX,
+        `Title must be at most ${BROADCAST_TITLE_MAX} characters`,
+      ),
     body: z
       .string()
       .trim()
-      .min(1, "Nội dung không được trống.")
-      .max(BROADCAST_BODY_MAX, `Nội dung tối đa ${BROADCAST_BODY_MAX} ký tự.`),
+      .min(1, "Body is required")
+      .max(
+        BROADCAST_BODY_MAX,
+        `Body must be at most ${BROADCAST_BODY_MAX} characters`,
+      ),
     groupIds: z.array(z.string()),
     userIds: z.array(z.string()),
-    // 03/08/2026 — render nội dung qua mẫu thông báo thay vì dùng thẳng title/body.
+    // 03/08/2026 — render content through a notification template instead of using title/body directly.
     useTemplate: z.boolean(),
-    // Giá trị các biến của mẫu. Khoá là tên biến, giá trị là chữ admin điền; ô để trống được lược
-    // bỏ khi dựng payload nên biến đó render ra rỗng — đúng như khi gửi thật.
+    // Template variable values. Key is the variable name, value is what the admin typed; blank fields are
+    // stripped when building the payload so that variable renders empty — matching what actually gets sent.
     templateVars: z.record(z.string(), z.string()),
   })
-  // Phải chọn ít nhất một nhóm HOẶC một người. Gắn lỗi vào `groupIds` để nó hiện ngay dưới ô
-  // chọn nhóm — lỗi ở cấp form sẽ nằm lạc chỗ và người dùng không biết sửa đâu.
+  // Must select at least one group OR one user. Attach the error to `groupIds` so it shows right under the
+  // group picker — a form-level error would be misplaced and users wouldn't know what to fix.
   .refine((v) => v.groupIds.length > 0 || v.userIds.length > 0, {
-    message: "Chọn ít nhất một nhóm hoặc một người nhận.",
+    message: "Select at least one group or recipient",
     path: ["groupIds"],
   });
 

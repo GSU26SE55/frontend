@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ShieldCheck,
   History,
@@ -14,6 +14,7 @@ import {
   BellRing,
   Bell,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -30,55 +31,9 @@ import NotificationPreferencesSection from "@/features/auth/components/profile/N
 import NotificationCategoryMatrixSection from "@/features/auth/components/profile/NotificationCategoryMatrixSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
-
-// ── Menu ──────────────────────────────────────────────────────────────────────
-const MENU = [
-  {
-    key: "profile",
-    label: "Hồ sơ cá nhân",
-    icon: User,
-    desc: "Thông tin cá nhân và ảnh đại diện",
-  },
-  {
-    key: "credentials",
-    label: "Mật khẩu & Email",
-    icon: KeyRound,
-    desc: "Cập nhật mật khẩu và địa chỉ email đăng nhập",
-  },
-  {
-    key: "security",
-    label: "Bảo mật",
-    icon: ShieldCheck,
-    desc: "Xác thực 2 lớp, số điện thoại và liên kết bên ngoài",
-  },
-  {
-    key: "devices",
-    label: "Thiết bị thông báo",
-    icon: BellRing,
-    desc: "Quản lý thiết bị nhận thông báo đẩy (push)",
-  },
-  {
-    key: "notifications",
-    label: "Tùy chọn thông báo",
-    icon: Bell,
-    desc: "Bật/tắt kênh thông báo, khung giờ yên tĩnh và múi giờ",
-  },
-  {
-    key: "history",
-    label: "Lịch sử đăng nhập",
-    icon: History,
-    desc: "Xem các phiên đăng nhập gần đây",
-  },
-  {
-    key: "danger",
-    label: "Danger Zone",
-    icon: Trash2,
-    desc: "Vô hiệu hóa hoặc xóa tài khoản",
-    danger: true,
-  },
-] as const;
-
-type MenuKey = (typeof MENU)[number]["key"];
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { UserRole } from "@/shared/types/account/session.types";
+import PushTransportSettingsForm from "@/shared/components/notification/PushTransportSettingsForm";
 
 // ── Security row ─────────────────────────────────────────────────────────────
 function SecurityRow({
@@ -143,10 +98,81 @@ function StatusBadge({
 // ── Main ──────────────────────────────────────────────────────────────────────
 const AccountSettingsPage = () => {
   const { data: account } = useCurrentUser();
-  const [active, setActive] = useState<MenuKey>("profile");
+  const [active, setActive] = useState<string>("profile");
   const [credSub, setCredSub] = useState<"password" | "email" | null>(null);
 
-  const current = MENU.find((m) => m.key === active)!;
+  const user = useSessionStore((s) => s.user);
+  const isAdmin = user?.role === UserRole.ADMIN;
+
+  const menuItems = useMemo(() => {
+    const items: {
+      key: string;
+      label: string;
+      icon: LucideIcon;
+      desc: string;
+      danger?: boolean;
+    }[] = [
+      {
+        key: "profile",
+        label: "Profile",
+        icon: User,
+        desc: "Personal information and avatar",
+      },
+      {
+        key: "credentials",
+        label: "Password & Email",
+        icon: KeyRound,
+        desc: "Update your password and login email address",
+      },
+      {
+        key: "security",
+        label: "Security",
+        icon: ShieldCheck,
+        desc: "Two-factor authentication, phone number, and external links",
+      },
+      {
+        key: "devices",
+        label: "Notification devices",
+        icon: BellRing,
+        desc: "Manage devices registered for push notifications",
+      },
+      {
+        key: "notifications",
+        label: "Notification preferences",
+        icon: Bell,
+        desc: "Toggle notification channels, quiet hours, and time zone",
+      },
+    ];
+
+    if (isAdmin) {
+      items.push({
+        key: "systemNotifications",
+        label: "System Push Settings",
+        icon: Settings,
+        desc: "Configure system-wide push notification strategy",
+      });
+    }
+
+    items.push(
+      {
+        key: "history",
+        label: "Login history",
+        icon: History,
+        desc: "View recent login sessions",
+      },
+      {
+        key: "danger",
+        label: "Danger Zone",
+        icon: Trash2,
+        desc: "Deactivate or delete the account",
+        danger: true,
+      },
+    );
+
+    return items;
+  }, [isAdmin]);
+
+  const current = menuItems.find((m) => m.key === active)!;
 
   return (
     <div className="p-6 space-y-5 max-w-275 mx-auto">
@@ -154,13 +180,13 @@ const AccountSettingsPage = () => {
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           <Settings className="inline size-3 mr-1 -mt-0.5" />
-          Cài đặt
+          Settings
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Cài đặt tài khoản
+          Account settings
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Quản lý thông tin và bảo mật tài khoản của bạn.
+          Manage your account information and security.
         </p>
       </div>
 
@@ -168,7 +194,7 @@ const AccountSettingsPage = () => {
       <Card className="min-h-130 gap-0 overflow-hidden rounded-xl py-0 md:flex-row">
         {/* ── Nav ── */}
         <nav className="w-full shrink-0 border-b border-border bg-muted/30 px-2 py-3 md:w-52 md:border-b-0 md:border-r">
-          {MENU.map((item) => {
+          {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
             return (
@@ -222,12 +248,12 @@ const AccountSettingsPage = () => {
 
               {/* Panel body */}
               <div className="px-6 pb-6 pt-5">
-                {/* Mật khẩu & Email — chọn action rồi hiện form */}
+                {/* Password & Email — choose an action then show the form */}
                 {active === "credentials" &&
                   (credSub === null ? (
                     <div className="flex flex-col items-center justify-center min-h-85 gap-6">
                       <p className="text-sm text-muted-foreground">
-                        Chọn thao tác bạn muốn thực hiện
+                        Choose the action you want to perform
                       </p>
                       <div className="flex gap-4">
                         <button
@@ -241,9 +267,11 @@ const AccountSettingsPage = () => {
                             />
                           </div>
                           <div className="text-center space-y-1">
-                            <p className="text-sm font-medium">Đổi mật khẩu</p>
+                            <p className="text-sm font-medium">
+                              Change password
+                            </p>
                             <p className="text-xs text-muted-foreground">
-                              Cập nhật mật khẩu hiện tại
+                              Update your current password
                             </p>
                           </div>
                         </button>
@@ -258,9 +286,9 @@ const AccountSettingsPage = () => {
                             />
                           </div>
                           <div className="text-center space-y-1">
-                            <p className="text-sm font-medium">Đổi email</p>
+                            <p className="text-sm font-medium">Change email</p>
                             <p className="text-xs text-muted-foreground">
-                              Thay đổi địa chỉ email
+                              Change your email address
                             </p>
                           </div>
                         </button>
@@ -274,19 +302,19 @@ const AccountSettingsPage = () => {
                           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
                         >
                           <ChevronRight size={12} className="rotate-180" />
-                          Quay lại
+                          Back
                         </button>
                         {credSub === "password" ? (
                           <>
                             <p className="text-[13px] font-semibold mb-4">
-                              Đổi mật khẩu
+                              Change password
                             </p>
                             <ChangePasswordForm bare />
                           </>
                         ) : (
                           <>
                             <p className="text-[13px] font-semibold mb-4">
-                              Đổi địa chỉ email
+                              Change email address
                             </p>
                             <ChangeEmailForm bare />
                           </>
@@ -295,18 +323,18 @@ const AccountSettingsPage = () => {
                     </div>
                   ))}
 
-                {/* Bảo mật */}
+                {/* Security */}
                 {active === "security" && (
                   <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
                     <SecurityRow
                       icon={Phone}
-                      title="Số điện thoại"
-                      description="Xác thực số điện thoại để bảo vệ tài khoản"
+                      title="Phone number"
+                      description="Verify your phone number to protect your account"
                       statusBadge={
                         <StatusBadge
                           ok={!!account?.phoneConfirmed}
-                          labelOk="Đã xác thực"
-                          labelNo="Chưa xác thực"
+                          labelOk="Verified"
+                          labelNo="Not verified"
                         />
                       }
                     >
@@ -315,13 +343,13 @@ const AccountSettingsPage = () => {
 
                     <SecurityRow
                       icon={Lock}
-                      title="Xác thực 2 lớp (2FA)"
-                      description="Thêm lớp bảo mật bằng ứng dụng xác thực"
+                      title="Two-factor authentication (2FA)"
+                      description="Add a security layer using an authenticator app"
                       statusBadge={
                         <StatusBadge
                           ok={!!account?.twoFactorEnabled}
-                          labelOk="Đang bật"
-                          labelNo="Chưa bật"
+                          labelOk="Enabled"
+                          labelNo="Disabled"
                         />
                       }
                       action={
@@ -334,8 +362,8 @@ const AccountSettingsPage = () => {
 
                     <SecurityRow
                       icon={Link2}
-                      title="Liên kết Google"
-                      description="Đăng nhập nhanh bằng tài khoản Google"
+                      title="Google link"
+                      description="Sign in quickly using your Google account"
                       action={
                         <GoogleLinkSection
                           isLinked={!!account?.isGoogleLinked}
@@ -346,15 +374,15 @@ const AccountSettingsPage = () => {
 
                     <SecurityRow
                       icon={MonitorSmartphone}
-                      title="Thiết bị tin cậy"
-                      description="Thiết bị được bỏ qua xác thực 2FA trong 30 ngày"
+                      title="Trusted devices"
+                      description="Devices exempt from 2FA verification for 30 days"
                     >
                       <TrustedDevicesSection />
                     </SecurityRow>
                   </div>
                 )}
 
-                {/* Thiết bị thông báo (push device tokens) */}
+                {/* Notification devices (push device tokens) */}
                 {active === "devices" && <DeviceTokensSection />}
 
                 {active === "notifications" && (
@@ -364,7 +392,13 @@ const AccountSettingsPage = () => {
                   </div>
                 )}
 
-                {/* Lịch sử — fills remaining height, table scrolls, pagination fixed */}
+                {active === "systemNotifications" && (
+                  <div className="space-y-8">
+                    <PushTransportSettingsForm />
+                  </div>
+                )}
+
+                {/* History — fills remaining height, table scrolls, pagination fixed */}
                 {active === "history" && <LoginHistoryTable />}
 
                 {/* Danger Zone */}

@@ -3,18 +3,18 @@ import * as outbox from "@/shared/lib/chatOutbox";
 import type { AddCommentPayload } from "@/shared/types/ticket/ticket.types";
 
 /**
- * Đọc + thao tác hàng đợi tin nhắn chờ gửi của 1 ticket.
+ * Reads + operates on the pending message queue for a ticket's outbox.
  *
- * - `pending`: danh sách tin đang chờ (queued/sending/failed) — thread render
- *   thành bubble optimistic với dòng trạng thái ("Đang gửi…" / "Thử lại" đỏ).
- * - `enqueue`: composer gọi khi bấm gửi (không await BE).
- * - `retry`: bấm dòng "Thử lại" đỏ → gửi lại đúng tin đó.
- * - `discard`: bỏ hẳn 1 tin khỏi hàng đợi.
+ * - `pending`: list of messages waiting (queued/sending/failed) — the thread renders these
+ *   as optimistic bubbles with a status line ("Sending…" / red "Retry").
+ * - `enqueue`: called by the composer on send (doesn't await BE).
+ * - `retry`: tapping the red "Retry" line → resends that exact message.
+ * - `discard`: drops a message from the queue entirely.
  *
- * Việc gọi BE do useChatOutboxWorker đảm nhiệm (tuần tự + backoff).
+ * The actual BE call is handled by useChatOutboxWorker (sequential + backoff).
  */
 export function useChatOutbox(ticketId: string) {
-  // Đồng bộ với tab khác qua storage event — đăng ký 1 lần.
+  // Syncs with other tabs via the storage event — registered once.
   useEffect(() => {
     window.addEventListener("storage", outbox.onStorageEvent);
     return () => window.removeEventListener("storage", outbox.onStorageEvent);

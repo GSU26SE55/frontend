@@ -8,21 +8,21 @@ import type {
 } from "@/shared/types/notification/notification-matrix.types";
 
 export const notificationMatrixService = {
-  // GET — luôn trả đủ 6 nhóm, nhóm chưa tuỳ chỉnh có isCustomized = false.
+  // GET — always returns all 6 groups; a group that hasn't been customized has isCustomized = false.
   getMatrix: () =>
     axiosInstance.get<CommonResponse<NotificationPreferenceMatrixDto>>(
       ENDPOINTS.NOTIFICATION_PREFERENCES.MATRIX,
     ),
 
-  // PUT — vá từng dòng: chỉ nhóm có trong items bị đổi, nhóm còn lại giữ nguyên.
-  // Response trả về ma trận ĐẦY ĐỦ sau khi cập nhật.
+  // PUT — patches row by row: only groups present in items get changed, the rest stay as-is.
+  // Response returns the FULL matrix after the update.
   updateMatrix: (payload: UpdateNotificationMatrixPayload) =>
     axiosInstance.put<CommonResponse<NotificationPreferenceMatrixDto>>(
       ENDPOINTS.NOTIFICATION_PREFERENCES.MATRIX,
       payload,
     ),
 
-  // GET — bảng tra cứu NotificationType → nhóm (số phần tử do BE quyết định).
+  // GET — lookup table for NotificationType → group (element count is decided by the BE).
   getCategories: () =>
     axiosInstance.get<CommonResponse<NotificationCategoryMapDto[]>>(
       ENDPOINTS.NOTIFICATION_PREFERENCES.CATEGORIES,

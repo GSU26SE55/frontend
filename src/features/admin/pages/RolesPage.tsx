@@ -70,8 +70,8 @@ const STATUS_VARIANT: Record<
   number,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  [RoleStatusEnum.Active]: { label: "Hoạt động", variant: "default" },
-  [RoleStatusEnum.Inactive]: { label: "Tắt", variant: "outline" },
+  [RoleStatusEnum.Active]: { label: "Active", variant: "default" },
+  [RoleStatusEnum.Inactive]: { label: "Inactive", variant: "outline" },
   [RoleStatusEnum.Deprecated]: { label: "Deprecated", variant: "secondary" },
 };
 
@@ -128,7 +128,7 @@ export default function RolesPage() {
 
   const handleDelete = (role: RoleDto) => {
     deleteRole(role.id, {
-      onSuccess: () => toast.success(`Đã xóa role ${role.name}`),
+      onSuccess: () => toast.success(`Role ${role.name} deleted`),
       onError: (err) => handleErrorApi({ error: err }),
     });
     close();
@@ -139,20 +139,20 @@ export default function RolesPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Người dùng
+            Admin &middot; Users
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Vai trò & Quyền hạn
+            Roles & Permissions
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : total} vai trò &mdash; quản lý phân quyền truy
-            cập hệ thống.
+            {isLoading ? "..." : total} roles &mdash; manage system access
+            permissions.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.admin.roles]} />
           <Button size="sm" onClick={() => setDialog({ type: "create" })}>
-            <Plus className="size-3.5" /> Tạo vai trò
+            <Plus className="size-3.5" /> Create role
           </Button>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function RolesPage() {
           <Input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Tìm theo tên role..."
+            placeholder="Search by role name..."
             className="pl-8"
           />
         </div>
@@ -171,21 +171,21 @@ export default function RolesPage() {
         <Select
           value={roleType}
           items={[
-            { value: RoleTypeFilter.All, label: "Tất cả" },
-            { value: RoleTypeFilter.System, label: "Mặc định" },
-            { value: RoleTypeFilter.Custom, label: "Tùy chỉnh" },
+            { value: RoleTypeFilter.All, label: "All" },
+            { value: RoleTypeFilter.System, label: "Default" },
+            { value: RoleTypeFilter.Custom, label: "Custom" },
           ]}
           onValueChange={(v) =>
             setRoleType((v as RoleTypeFilter) ?? RoleTypeFilter.All)
           }
         >
           <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="Loại role" />
+            <SelectValue placeholder="Role type" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={RoleTypeFilter.All}>Tất cả</SelectItem>
-            <SelectItem value={RoleTypeFilter.System}>Mặc định</SelectItem>
-            <SelectItem value={RoleTypeFilter.Custom}>Tùy chỉnh</SelectItem>
+            <SelectItem value={RoleTypeFilter.All}>All</SelectItem>
+            <SelectItem value={RoleTypeFilter.System}>Default</SelectItem>
+            <SelectItem value={RoleTypeFilter.Custom}>Custom</SelectItem>
           </SelectContent>
         </Select>
 
@@ -198,7 +198,7 @@ export default function RolesPage() {
               setRoleType(RoleTypeFilter.All);
             }}
           >
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -224,7 +224,7 @@ export default function RolesPage() {
                 <TableHead>Role</TableHead>
                 <TableHead>{TABLE_COLUMNS.source}</TableHead>
                 <TableHead>{TABLE_COLUMNS.status}</TableHead>
-                <TableHead>Ngày tạo</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead className="text-right">
                   {TABLE_COLUMNS.actions}
                 </TableHead>
@@ -263,7 +263,7 @@ export default function RolesPage() {
                       <Badge
                         variant={role.isSystemRole ? "secondary" : "outline"}
                       >
-                        {role.isSystemRole ? "Mặc định" : "Tùy chỉnh"}
+                        {role.isSystemRole ? "Default" : "Custom"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -289,17 +289,17 @@ export default function RolesPage() {
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "edit", role })}
                           >
-                            Chỉnh sửa
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "status", role })}
                           >
-                            Đổi trạng thái
+                            Change status
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "perms", role })}
                           >
-                            Quản lý quyền
+                            Manage permissions
                           </DropdownMenuItem>
                           {!role.isSystemRole && (
                             <>
@@ -310,7 +310,7 @@ export default function RolesPage() {
                                   setDialog({ type: "delete", role })
                                 }
                               >
-                                Xóa role
+                                Delete role
                               </DropdownMenuItem>
                             </>
                           )}
@@ -343,12 +343,13 @@ export default function RolesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa role?</AlertDialogTitle>
+            <AlertDialogTitle>Delete role?</AlertDialogTitle>
             <AlertDialogDescription>
               {dialog.type === "delete" && (
                 <>
-                  Bạn có chắc muốn xóa role <strong>{dialog.role.name}</strong>?
-                  Hành động này không thể hoàn tác.
+                  Are you sure you want to delete role{" "}
+                  <strong>{dialog.role.name}</strong>? This action cannot be
+                  undone.
                 </>
               )}
             </AlertDialogDescription>
@@ -363,7 +364,7 @@ export default function RolesPage() {
               }
             >
               {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

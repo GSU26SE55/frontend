@@ -4,9 +4,9 @@ import { KEY } from "@/shared/utils/queryKeys";
 import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
 
 /**
- * Danh sách Staff cho dialog gán.
- * - Truyền `ticketPriority` → BE lọc sẵn Staff đủ tier cho Primary Handler (GH-693).
- * - Không truyền → toàn bộ Staff (dùng cho Supporter, không check tier).
+ * Staff list for the assign dialog.
+ * - Pass `ticketPriority` → the BE pre-filters Staff with a high enough tier for Primary Handler (GH-693).
+ * - Omit it → all Staff (used for Supporters, no tier check).
  */
 export const useStaffAssignmentList = (ticketPriority?: TicketPriorityEnum) => {
   return useQuery({
