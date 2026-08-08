@@ -1,5 +1,6 @@
-// IoT Device Management enums — Nhóm 11 BatteryService.
-// Dùng ≥ 2 feature (admin + staff + manager) → đặt ở shared. Pattern `as const` (int values từ BE).
+// IoT Device Management enums — BatteryService Group 11.
+// Used by ≥ 2 features (admin + staff + manager) → lives in shared. `as const` pattern
+// (int values from the BE).
 
 export const IotDeviceStatusEnum = {
   Pending: 1,
@@ -11,7 +12,7 @@ export const IotDeviceStatusEnum = {
 export type IotDeviceStatusEnum =
   (typeof IotDeviceStatusEnum)[keyof typeof IotDeviceStatusEnum];
 
-// [Flags] bitmask — 1 API key per-device có thể mang nhiều scope đồng thời.
+// [Flags] bitmask — a single per-device API key can carry several scopes at once.
 export const IotApiKeyScopeEnum = {
   None: 0,
   SensorIngest: 1,
@@ -19,10 +20,11 @@ export const IotApiKeyScopeEnum = {
   EnvironmentalIngest: 4,
   FirmwareCheck: 8,
   // GH-785 — 15 = SensorIngest | DeviceHeartbeat | EnvironmentalIngest | FirmwareCheck (1+2+4+8).
-  // Trước đây là 11 (thiếu EnvironmentalIngest=4), khớp giá trị cũ của BE. Firmware ESP32 mang sẵn
-  // cảm biến môi trường và gửi lên ngay từ lần khởi động đầu, nên bộ mặc định thiếu quyền đó khiến
-  // chính dữ liệu thiết bị có sẵn bị chặn 403. Thiết bị tạo qua màn hình Admin cũng dính y hệt nếu
-  // hằng số này không đi cùng BE.
+  // This used to be 11 (missing EnvironmentalIngest=4), matching the BE's old value. The ESP32
+  // firmware ships with environmental sensors and starts pushing readings on its very first boot,
+  // so a default set missing that scope got the device's own data blocked with a 403. Devices
+  // created from the Admin screen hit exactly the same problem whenever this constant drifts
+  // from the BE.
   EdgeDeviceDefault: 15,
 } as const;
 export type IotApiKeyScopeEnum =
@@ -35,8 +37,9 @@ export const IotFirmwareChannelEnum = {
 export type IotFirmwareChannelEnum =
   (typeof IotFirmwareChannelEnum)[keyof typeof IotFirmwareChannelEnum];
 
-// Bitmask helpers cho ApiKeyScopesField (render checkbox per flag).
-// Chỉ thao tác trên các flag nguyên tử (1/2/4/8) — bỏ qua None(0) và bundle EdgeDeviceDefault(11).
+// Bitmask helpers for ApiKeyScopesField (renders a checkbox per flag).
+// Only operates on the atomic flags (1/2/4/8) — skips None(0) and the EdgeDeviceDefault(11)
+// bundle.
 export const IOT_API_KEY_SCOPE_FLAGS = [
   IotApiKeyScopeEnum.SensorIngest,
   IotApiKeyScopeEnum.DeviceHeartbeat,
@@ -52,7 +55,8 @@ export function toggleScope(value: number, flag: number): number {
   return hasScope(value, flag) ? value & ~flag : value | flag;
 }
 
-// Command `type` là string tự do ở BE — gợi ý các loại phổ biến cho dropdown (+ cho phép nhập custom).
+// Command `type` is a free-form string on the BE — these are the common types suggested in
+// the dropdown (custom entries are still allowed).
 export const IOT_COMMAND_TYPES = [
   "reboot",
   "ota",

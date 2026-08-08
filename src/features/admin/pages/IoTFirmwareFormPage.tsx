@@ -48,7 +48,7 @@ export default function IoTFirmwareFormPage() {
 
   const onSubmit = async (data: UploadFirmwareForm) => {
     try {
-      // 2-step: upload .bin → tạo release. Hook tự chạy tuần tự.
+      // 2-step: upload .bin → create the release. The hook runs both in sequence.
       await createRelease({
         file: data.file,
         version: data.version,
@@ -81,7 +81,7 @@ export default function IoTFirmwareFormPage() {
             Admin &middot; IoT Firmware
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Tạo firmware release
+            Create firmware release
           </h1>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function IoTFirmwareFormPage() {
       <Card className="p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
           <div className="space-y-1">
-            <Label htmlFor="file">File firmware (.bin) *</Label>
+            <Label htmlFor="file">Firmware file (.bin) *</Label>
             <Input
               id="file"
               type="file"
@@ -101,7 +101,7 @@ export default function IoTFirmwareFormPage() {
               }
             />
             <p className="text-xs text-muted-foreground">
-              Tối đa 50MB. Backend tự tính SHA-256.
+              Up to 50MB. The backend computes the SHA-256 itself.
             </p>
             {errors.file && (
               <p className="text-sm text-destructive">{errors.file.message}</p>
@@ -199,7 +199,7 @@ export default function IoTFirmwareFormPage() {
                     checked={!!field.value}
                     onCheckedChange={(c) => field.onChange(c === true)}
                   />
-                  <span>Force update (bắt buộc)</span>
+                  <span>Force update (required)</span>
                 </label>
               )}
             />
@@ -212,7 +212,7 @@ export default function IoTFirmwareFormPage() {
                     checked={!!field.value}
                     onCheckedChange={(c) => field.onChange(c === true)}
                   />
-                  <span>Publish ngay sau khi tạo</span>
+                  <span>Publish immediately after creating</span>
                 </label>
               )}
             />
@@ -224,10 +224,10 @@ export default function IoTFirmwareFormPage() {
               variant="outline"
               onClick={() => navigate("/admin/iot-firmware")}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Tạo release
+              Create release
             </Button>
           </div>
         </form>

@@ -6,7 +6,7 @@ const WAVEFORM_INTERVAL_MS = 80;
 interface UseVoiceRecorderResult {
   isRecording: boolean;
   elapsedSeconds: number;
-  /** BAR_COUNT giá trị 0-1 — biên độ mic theo thời gian thực, cập nhật mỗi ~80ms */
+  /** BAR_COUNT values 0-1 — real-time mic amplitude, updated every ~80ms */
   waveform: number[];
   start: () => Promise<void>;
   stop: () => Promise<File | null>;
@@ -25,12 +25,12 @@ const EXT_BY_MIME: Record<string, string> = {
 const SILENT_WAVEFORM = Array<number>(BAR_COUNT).fill(0);
 
 /**
- * Ghi âm qua MediaRecorder. BE (ChatVoiceTranscribeCommand) so khớp ContentType
- * CHÍNH XÁC với whitelist (audio/webm, audio/mp4, ...) — nhưng MediaRecorder.mimeType
- * thường kèm hậu tố codec (vd "audio/webm;codecs=opus"), phải cắt bỏ trước khi tạo File.
+ * Records audio via MediaRecorder. BE (ChatVoiceTranscribeCommand) matches ContentType
+ * EXACTLY against a whitelist (audio/webm, audio/mp4, ...) — but MediaRecorder.mimeType
+ * usually includes a codec suffix (e.g. "audio/webm;codecs=opus"), which must be stripped before creating the File.
  *
- * Waveform lấy qua Web Audio API (AnalyserNode) trên cùng stream mic — chỉ để
- * hiển thị UI (giống hiệu ứng sóng khi nói của Gemini), không ảnh hưởng file ghi âm.
+ * The waveform is captured via the Web Audio API (AnalyserNode) on the same mic stream — purely for
+ * UI display (like Gemini's speaking wave effect), it doesn't affect the recorded file.
  */
 export function useVoiceRecorder(): UseVoiceRecorderResult {
   const [isRecording, setIsRecording] = useState(false);
@@ -63,7 +63,7 @@ export function useVoiceRecorder(): UseVoiceRecorderResult {
 
   const start = useCallback(async () => {
     if (typeof MediaRecorder === "undefined") {
-      throw new Error("Trình duyệt không hỗ trợ ghi âm.");
+      throw new Error("This browser doesn't support audio recording.");
     }
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     streamRef.current = stream;
@@ -78,7 +78,7 @@ export function useVoiceRecorder(): UseVoiceRecorderResult {
     setElapsedSeconds(0);
     timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
 
-    // Waveform hiển thị — lỗi ở đây (vd trình duyệt cũ) không nên chặn ghi âm.
+    // Waveform display — an error here (e.g. older browser) shouldn't block recording.
     try {
       const audioCtx = new AudioContext();
       audioCtxRef.current = audioCtx;
@@ -100,7 +100,7 @@ export function useVoiceRecorder(): UseVoiceRecorderResult {
         setWaveform(bars);
       }, WAVEFORM_INTERVAL_MS);
     } catch {
-      // Không hỗ trợ AudioContext — vẫn ghi âm bình thường, chỉ mất hiệu ứng sóng.
+      // AudioContext not supported — recording still works normally, just no wave effect.
     }
   }, []);
 

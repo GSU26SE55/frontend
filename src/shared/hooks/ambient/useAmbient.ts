@@ -9,7 +9,7 @@ import type {
 } from "@/shared/types/ambient/ambient.types";
 import { MESSAGES } from "@/shared/constants/messages";
 
-// Ambient history — chart/timeline, tần suất theo giờ: staleTime 5 phút.
+// Ambient history — chart/timeline, hourly frequency: staleTime 5 minutes.
 export const useAmbientHistory = (params: AmbientHistoryParams) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.history(params.siteId, params),
@@ -18,8 +18,8 @@ export const useAmbientHistory = (params: AmbientHistoryParams) =>
     staleTime: 5 * 60_000,
   });
 
-// Ambient latest — dashboard widget: staleTime 1 phút.
-// retry:false — site chưa có reading trả 404 (kỳ vọng), không cần retry.
+// Ambient latest — dashboard widget: staleTime 1 minute.
+// retry:false — a site with no reading yet returns 404 (expected), no need to retry.
 export const useAmbientLatest = (siteId: string) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.latest(siteId),
@@ -37,8 +37,8 @@ export const useAmbientThresholdList = (params?: AmbientThresholdListParams) =>
     staleTime: 10 * 60_000,
   });
 
-// Threshold theo site — config UI: staleTime 10 phút.
-// retry:false — site chưa cấu hình trả 404 (kỳ vọng) → form ở chế độ tạo mới.
+// Threshold by site — config UI: staleTime 10 minutes.
+// retry:false — an unconfigured site returns 404 (expected) → form falls back to create mode.
 export const useAmbientThresholdBySite = (siteId: string) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.thresholdBySite(siteId),
@@ -49,7 +49,7 @@ export const useAmbientThresholdBySite = (siteId: string) =>
     retry: false,
   });
 
-// Form mutation — component xử lý error qua try-catch + handleErrorApi({error,setError}).
+// Form mutation — component handles the error via try-catch + handleErrorApi({error,setError}).
 export const useUpsertAmbientThreshold = () => {
   const qc = useQueryClient();
   return useMutation({

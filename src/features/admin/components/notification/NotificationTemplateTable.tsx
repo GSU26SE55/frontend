@@ -51,7 +51,7 @@ export default function NotificationTemplateTable({
   if (templates.length === 0) {
     return (
       <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-        Không có mẫu nào khớp bộ lọc.
+        No templates match the filter.
       </p>
     );
   }
@@ -61,11 +61,11 @@ export default function NotificationTemplateTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/40 text-left">
-            <th className="px-4 py-2.5 font-medium">Loại</th>
-            <th className="px-3 py-2.5 font-medium">Kênh</th>
-            <th className="px-3 py-2.5 font-medium text-center">Phiên bản</th>
-            <th className="px-3 py-2.5 font-medium">Tiêu đề</th>
-            <th className="px-3 py-2.5 font-medium">Cập nhật</th>
+            <th className="px-4 py-2.5 font-medium">Type</th>
+            <th className="px-3 py-2.5 font-medium">Channel</th>
+            <th className="px-3 py-2.5 font-medium text-center">Version</th>
+            <th className="px-3 py-2.5 font-medium">Title</th>
+            <th className="px-3 py-2.5 font-medium">Updated</th>
             <th className="px-3 py-2.5 font-medium text-right">
               {TABLE_COLUMNS.actions}
             </th>
@@ -75,11 +75,12 @@ export default function NotificationTemplateTable({
           {templates.map((t) => (
             <tr
               key={t.id}
-              // Bản cũ làm mờ đi: danh sách trộn lẫn mọi phiên bản, không phân biệt thì admin dễ
-              // tưởng mình đang sửa bản đang chạy trong khi thực ra là một bản đã bị thay thế.
+              // Older versions are dimmed: the list mixes all versions together, and without this
+              // distinction an admin could easily think they're editing the live version when it's
+              // actually one that's been superseded.
               className={`hover:bg-muted/30 ${t.isActive ? "" : "text-muted-foreground"}`}
             >
-              {/* BE trả số; nhãn tiếng Việt do FE quy định (notificationLabels.ts). */}
+              {/* BE returns a number; the English label is defined by FE (notificationLabels.ts). */}
               <td className="px-4 py-2.5 font-medium whitespace-nowrap">
                 {notificationTypeLabel(t.type)}
               </td>
@@ -89,7 +90,7 @@ export default function NotificationTemplateTable({
               <td className="px-3 py-2.5 text-center whitespace-nowrap">
                 <span className="tabular-nums">v{t.version}</span>
                 {t.isActive && (
-                  <Badge className="ml-2 text-[10px]">Đang dùng</Badge>
+                  <Badge className="ml-2 text-[10px]">Active</Badge>
                 )}
               </td>
               <td className="px-3 py-2.5 max-w-70">
@@ -100,7 +101,7 @@ export default function NotificationTemplateTable({
               <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground text-xs">
                 {format(
                   new Date(t.updatedAt ?? t.createdAt),
-                  "dd/MM/yyyy HH:mm",
+                  "MM/dd/yyyy HH:mm",
                 )}
               </td>
               <td className="px-3 py-2.5 text-right">
@@ -114,24 +115,25 @@ export default function NotificationTemplateTable({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-36">
                     <DropdownMenuItem onClick={() => onPreview(t)}>
-                      Xem trước
+                      Preview
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(t)}>
-                      Chỉnh sửa
+                      Edit
                     </DropdownMenuItem>
 
-                    {/* Chỉ bản chưa active mới có gì để kích hoạt (quay lui phiên bản). */}
+                    {/* Only inactive versions have anything to activate (rolling back a version). */}
                     {!t.isActive && (
                       <DropdownMenuItem
                         disabled={activatingId === t.id}
                         onClick={() => onActivate(t)}
                       >
-                        {activatingId === t.id ? "Đang bật…" : "Kích hoạt"}
+                        {activatingId === t.id ? "Activating…" : "Activate"}
                       </DropdownMenuItem>
                     )}
 
-                    {/* Bản đang dùng KHÔNG cho xoá — BE cũng chặn (409). Ẩn nút thay vì để bấm rồi
-                        báo lỗi: mất bản đang dùng thì dispatcher rơi về chuỗi hardcode, im lặng. */}
+                    {/* The active version CANNOT be deleted — BE also blocks it (409). Hide the
+                        button instead of letting it be clicked and error: losing the active version
+                        would make the dispatcher silently fall back to a hardcoded string. */}
                     {!t.isActive && (
                       <>
                         <DropdownMenuSeparator />
@@ -140,7 +142,7 @@ export default function NotificationTemplateTable({
                           disabled={deletingId === t.id}
                           onClick={() => onDelete(t)}
                         >
-                          {deletingId === t.id ? "Đang xoá…" : "Xoá"}
+                          {deletingId === t.id ? "Deleting…" : "Delete"}
                         </DropdownMenuItem>
                       </>
                     )}

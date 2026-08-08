@@ -21,15 +21,15 @@ interface AnalyticsFilterBarProps {
   onChange: (next: AnalyticsFilter) => void;
 }
 
-const ALL_SITES = "Tất cả sites";
+const ALL_SITES = "All sites";
 
 const GRANULARITY_LABEL: Record<ReportGranularityEnum, string> = {
-  [ReportGranularityEnum.Day]: "Ngày",
-  [ReportGranularityEnum.Week]: "Tuần",
-  [ReportGranularityEnum.Month]: "Tháng",
+  [ReportGranularityEnum.Day]: "Day",
+  [ReportGranularityEnum.Week]: "Week",
+  [ReportGranularityEnum.Month]: "Month",
 };
 
-// Filter bar chung: Site + Date range (from/to) + Granularity. Controlled qua props.
+// Shared filter bar: Site + Date range (from/to) + Granularity. Controlled via props.
 export function AnalyticsFilterBar({
   sites,
   filter,
@@ -50,15 +50,15 @@ export function AnalyticsFilterBar({
             })
           }
           items={[
-            { value: ALL_SITES, label: "Toàn hệ thống" },
+            { value: ALL_SITES, label: "All sites" },
             ...sites.map((s) => ({ value: s.id, label: s.name })),
           ]}
         >
           <SelectTrigger className="w-52" size="sm">
-            <SelectValue placeholder="Chọn site" />
+            <SelectValue placeholder="Select a site" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_SITES}>Toàn hệ thống</SelectItem>
+            <SelectItem value={ALL_SITES}>All sites</SelectItem>
             {sites.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.name}
@@ -69,7 +69,7 @@ export function AnalyticsFilterBar({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label className="text-[11px] text-muted-foreground">Từ ngày</Label>
+        <Label className="text-[11px] text-muted-foreground">From date</Label>
         <DatePicker
           className="w-40"
           value={filter.from}
@@ -79,7 +79,7 @@ export function AnalyticsFilterBar({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label className="text-[11px] text-muted-foreground">Đến ngày</Label>
+        <Label className="text-[11px] text-muted-foreground">To date</Label>
         <DatePicker
           className="w-40"
           value={filter.to}
@@ -119,7 +119,7 @@ export function AnalyticsFilterBar({
 
       {invalidRange && (
         <p className="text-[11px] text-destructive w-full">
-          "Từ ngày" phải trước "Đến ngày".
+          "From date" must be before "To date".
         </p>
       )}
     </div>

@@ -11,8 +11,8 @@ import type {
   UpsertThresholdPayload,
 } from "@/shared/types/battery/threshold.types";
 
-// getByType (read) dùng cho Admin/Manager tô màu ngưỡng telemetry (BE chặn Staff).
-// getList/upsert chỉ Admin dùng — giữ chung 1 service.
+// getByType (read) is used by Admin/Manager to color telemetry against thresholds (BE blocks Staff).
+// getList/upsert is Admin only — kept in the same service.
 export const thresholdService = {
   getList: (params?: ThresholdListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<ThresholdConfigDto>>>(

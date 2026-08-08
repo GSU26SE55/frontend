@@ -11,12 +11,12 @@ import { ReportFormat } from "@/shared/enums/dashboard/report.enum";
 
 interface ReportExportMenuProps {
   endpoint: string;
-  filename: string; // không kèm đuôi mở rộng
+  filename: string; // no file extension included
   params?: Record<string, unknown>;
   disabled?: boolean;
 }
 
-// Nút Export + dropdown chọn CSV/XLSX. BE trả file qua ?format=, hook tải blob về máy.
+// Export button + dropdown to pick CSV/XLSX. The BE returns the file via ?format=, the hook downloads the blob.
 export function ReportExportMenu({
   endpoint,
   filename,

@@ -36,18 +36,20 @@ export {
 // --- DTOs ---
 
 /**
- * #697 — 1 dòng phân công Staff trên ticket. BE đã lọc bản ghi soft-deleted.
- * Đúng 1 phần tử role=PrimaryHandler, 0..N phần tử role=Supporter.
+ * #697 — one Staff assignment row on a ticket. The BE already filters out
+ * soft-deleted records. Exactly one entry with role=PrimaryHandler, and
+ * 0..N entries with role=Supporter.
  */
 export interface TicketAssignmentDTO {
   staffId: string;
   role: TicketAssignmentRoleEnum;
   /**
-   * Tên nhân viên — BE lấy từ StaffAccount đã sync sang TicketService.
-   * Null khi chưa sync kịp → hiển thị fallback `staffId`.
+   * Staff member's name — the BE reads it from the StaffAccount synced into
+   * TicketService. Null when the sync hasn't caught up → fall back to `staffId`.
    *
-   * Nhờ field này mà MỌI role đọc được tên; trước đây phải gọi thêm
-   * `/api/staff` (chỉ Admin/Manager) nên Staff không hiện được ai phụ trách.
+   * This field is what lets EVERY role read the name; previously it took an extra
+   * call to `/api/staff` (Admin/Manager only), so Staff could not see who was
+   * handling the ticket.
    */
   staffName?: string | null;
 }
@@ -68,21 +70,25 @@ export interface SlaTimerDTO {
 export interface TicketDTO {
   id: string;
   code: string;
-  /** Pin chính (legacy — pin đầu tiên). Dùng batteryAssetIds cho danh sách đầy đủ. */
+  /** Primary battery (legacy — the first one). Use batteryAssetIds for the full list. */
   batteryAssetId?: string | null;
-  /** Danh sách ID pin gắn ticket (ticket có thể gắn nhiều pin). BE trả từ TicketBatteryAssets. */
+  /**
+   * IDs of the batteries attached to the ticket (a ticket can cover several).
+   * The BE returns them from TicketBatteryAssets.
+   */
   batteryAssetIds?: string[];
   customerId: string;
   /**
-   * #697 — thay cho `assignedStaffId` (đã bỏ ở BE). Dùng
+   * #697 — replaces `assignedStaffId` (dropped on the BE). Use
    * `getPrimaryHandler()` / `getSupporters()` (shared/utils/ticket/assignments)
-   * thay vì tự lọc ở từng chỗ.
+   * instead of filtering by hand at each call site.
    */
   assignments: TicketAssignmentDTO[];
   title: string;
   category: TicketCategoryEnum;
-  // BE trả null khi ticket chưa triage (state New/Open) — priority/impact/urgency
-  // được gán tại bước triage. Guard null trước khi render badge.
+  // The BE returns null while the ticket hasn't been triaged (state New/Open) —
+  // priority/impact/urgency are assigned during triage. Guard against null before
+  // rendering the badge.
   priority: TicketPriorityEnum | null;
   impactScope: ImpactScopeEnum | null;
   urgencyLevel: UrgencyLevelEnum | null;
@@ -90,38 +96,41 @@ export interface TicketDTO {
   origin: TicketOriginEnum;
   reopenCount: number;
   isIncident: boolean;
-  /** BE tính sẵn theo user hiện tại — dùng chấm badge chat chưa đọc trên danh sách. */
+  /**
+   * Precomputed by the BE for the current user — drives the unread-chat dot on
+   * the list.
+   */
   hasUnreadChat: boolean;
   createdAt: string;
   updatedAt?: string | null;
   slaTimer: SlaTimerDTO | null;
 
-  // ── Ticket thủ công: giờ phát hiện + serial pin (snapshot) + AI verify + merge ──
+  // ── Manual ticket: detection time + battery serial (snapshot) + AI verify + merge ──
   /**
-   * GH-866 — MỘT mốc thời gian Customer phát hiện sự cố (ISO-8601 UTC), thay cho
-   * cặp `incidentDetectedFrom`/`To` đã bị BE xoá. Khác `createdAt`.
-   * Null với ticket sinh tự động từ Alert.
+   * GH-866 — a SINGLE timestamp for when the Customer noticed the incident
+   * (ISO-8601 UTC), replacing the `incidentDetectedFrom`/`To` pair the BE removed.
+   * Distinct from `createdAt`. Null for tickets generated automatically from an Alert.
    */
   detectedAt?: string | null;
-  /** Serial pin (snapshot lúc tạo) — hiển thị không cần gọi thêm API. */
+  /** Battery serial (snapshot at creation) — displayed without an extra API call. */
   batterySerialNumber?: string | null;
-  /** Trạng thái AI verify thật/rác (human-in-the-loop). */
+  /** AI verdict on whether the ticket is genuine or junk (human-in-the-loop). */
   aiVerifyStatus?: TicketVerifyStatusEnum | null;
-  /** Điểm hợp lệ [0..1] từ AI. */
+  /** Validity score [0..1] from the AI. */
   aiVerifyScore?: number | null;
-  /** Lý do AI đưa ra verdict (cho Manager đọc). */
+  /** The AI's reasoning behind the verdict (for the Manager to read). */
   aiVerifyReason?: string | null;
-  /** Ticket bị nghi trùng với ticket này (cùng pin/chủ, còn mở). */
+  /** Ticket this one is suspected of duplicating (same battery/owner, still open). */
   suspectedDuplicateOfTicketId?: string | null;
-  /** Lý do nghi trùng. */
+  /** Why it is suspected of being a duplicate. */
   duplicateReason?: string | null;
-  /** Set khi Manager đã gộp ticket này vào ticket khác (ẩn khỏi queue). */
+  /** Set once a Manager merged this ticket into another one (hidden from the queue). */
   mergedIntoTicketId?: string | null;
-  /** Lý do đóng đặc biệt — set cùng `mergedIntoTicketId` khi Manager gộp ticket. */
+  /** Special close reason — set alongside `mergedIntoTicketId` on a Manager merge. */
   closeReason?: TicketCloseReasonEnum | null;
 }
 
-/** Payload gộp ticket (Manager) — gộp ticket hiện tại vào ticket đích. */
+/** Merge payload (Manager) — merges the current ticket into the target ticket. */
 export interface MergeTicketPayload {
   targetTicketId: string;
 }
@@ -149,17 +158,21 @@ export interface TicketCommentDTO {
   isInternal: boolean;
   attachmentFileIds?: string[] | null;
   createdAt: string;
-  // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
+  // Already returned on the same GET .../chats response (TicketChatDTO) — it just
+  // wasn't typed before.
   editCount?: number;
   updatedAt?: string | null;
   /**
-   * User hiện tại đã đọc tin này chưa. BE set ở GET /chats (list + cursor); tin do chính
-   * mình gửi luôn true. Realtime ChatAdded KHÔNG kèm → undefined = "chưa biết", đừng coi
-   * undefined là chưa đọc (sẽ vẽ nhầm mốc "Tin nhắn chưa đọc").
+   * Whether the current user has read this message. The BE sets it on GET /chats
+   * (list + cursor); messages you sent yourself are always true. The realtime
+   * ChatAdded event does NOT include it → undefined means "unknown", so don't treat
+   * undefined as unread (it would draw the "Unread messages" divider in the wrong
+   * place).
    */
   isRead?: boolean;
-  // Chat thoại (tạo qua POST /chats/voice): Pending/Processing = đang transcribe (body tạm rỗng),
-  // Completed = body đã có transcript, Failed = lỗi → cho phép retry. null với chat text thường.
+  // Voice chat (created via POST /chats/voice): Pending/Processing = transcribing (body is
+  // temporarily empty), Completed = body holds the transcript, Failed = error → allow retry.
+  // null for ordinary text chat.
   voiceTranscriptionStatus?: VoiceTranscriptionStatusEnum | null;
 }
 
@@ -182,7 +195,7 @@ export interface MaintenanceLogDTO {
   createdAt: string;
 }
 
-// GET /api/staff/tickets/maintenance-logs/me — log cá nhân gom theo ticket.
+// GET /api/staff/tickets/maintenance-logs/me — your own logs, grouped by ticket.
 export interface StaffMaintenanceLogGroupDTO {
   ticketId: string;
   ticketCode: string;
@@ -207,13 +220,14 @@ export interface TicketDetailDTO extends TicketDTO {
   originAlertId?: string | null;
   activities?: TicketActivityDTO[] | null;
   /**
-   * BE trả `chats` (TicketChatDTO[]) — KHÔNG còn `comments`.
-   * `TicketCommentsController` đã bị xoá; `TicketCommentDTO` ở file này chính là
-   * shape của TicketChatDTO (giữ tên cũ để không phải đổi toàn bộ call site).
+   * The BE returns `chats` (TicketChatDTO[]) — there is NO `comments` any more.
+   * `TicketCommentsController` was deleted; the `TicketCommentDTO` in this file is
+   * exactly the shape of TicketChatDTO (the old name is kept so we don't have to
+   * touch every call site).
    */
   chats?: TicketCommentDTO[] | null;
   maintenanceLogs?: MaintenanceLogDTO[] | null;
-  // BE trả mảng FileId (string[]), KHÔNG phải mảng TicketAttachmentDTO.
+  // The BE returns an array of FileIds (string[]), NOT an array of TicketAttachmentDTO.
   attachmentFileIds?: string[] | null;
 }
 
@@ -273,8 +287,9 @@ export interface TriagePayload {
 
 /**
  * #697 — POST /api/admin/tickets/{id}/assign.
- * Primary phải active + available + đủ skill tier theo priority (không đạt → 403).
- * Supporter KHÔNG bị check tier, nhưng không được trùng Primary và không trùng nhau.
+ * The Primary must be active, available, and meet the skill tier required by the
+ * priority (otherwise → 403). Supporters are NOT tier-checked, but they must not
+ * duplicate the Primary or each other.
  */
 export interface AssignPayload {
   primaryHandlerStaffId: string;
@@ -284,8 +299,8 @@ export interface AssignPayload {
 
 /**
  * #697 — POST /api/admin/tickets/{id}/reassign.
- * Primary hiện tại tự động hạ thành Supporter; KHÔNG gửi lại danh sách supporter.
- * SLA timer không reset.
+ * The current Primary is automatically demoted to Supporter; do NOT resend the
+ * supporter list. The SLA timer is not reset.
  */
 export interface ReassignPayload {
   newPrimaryHandlerStaffId: string;
@@ -296,8 +311,9 @@ export interface RejectPayload {
   reason: string;
 }
 
-// Tách riêng khỏi RejectPayload — gắn 1-1 với TicketTriageRejectCommand
-// (luồng Open|Escalated → ClosedRejected), khác RejectPayload (Resolved → InProgress).
+// Kept separate from RejectPayload — it maps 1-1 to TicketTriageRejectCommand
+// (the Open|Escalated → ClosedRejected flow), unlike RejectPayload
+// (Resolved → InProgress).
 export interface TriageRejectPayload {
   reason: string;
 }
@@ -307,10 +323,14 @@ export interface EscalatePayload {
   note?: string;
 }
 
-// POST /api/admin/tickets/{id}/re-prioritize — Manager đổi priority kèm lý do.
-// KHÔNG gửi managerId/managerName/ticketId: BE lấy identity từ JWT, ticket id từ URL.
+// POST /api/admin/tickets/{id}/re-prioritize — Manager changes the priority with a reason.
+// Do NOT send managerId/managerName/ticketId: the BE takes the identity from the JWT and
+// the ticket id from the URL.
 export interface ReprioritizePayload {
-  priority: TicketPriorityEnum;
+  // The BE derives the priority from the Impact × Urgency matrix (User Guide §3.9) —
+  // the client never sends priority directly.
+  impact: ImpactScopeEnum;
+  urgency: UrgencyLevelEnum;
   reason: string;
 }
 
@@ -321,7 +341,8 @@ export interface CommentAttachmentInput {
   sizeBytes?: number;
 }
 
-// @-mention gửi lên BE (POST /chats field `mentions`) — khớp record ChatMentionInput.
+// @-mention sent to the BE (POST /chats, field `mentions`) — matches the
+// ChatMentionInput record.
 export interface CommentMentionInput {
   userId: string;
   displayName: string;

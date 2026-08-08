@@ -54,14 +54,14 @@ export default function IoTFirmwareReleasesPage() {
             Firmware Releases
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} release &mdash; quản lý OTA
+            {isLoading ? "..." : totalItems} releases &mdash; manage OTA
             firmware.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.iotFirmware]} />
           <Button size="sm" onClick={() => navigate("/admin/iot-firmware/new")}>
-            <Plus className="size-3.5" /> Tạo release
+            <Plus className="size-3.5" /> Create release
           </Button>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function IoTFirmwareReleasesPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Lọc theo hardware revision..."
+            placeholder="Filter by hardware revision..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -83,11 +83,11 @@ export default function IoTFirmwareReleasesPage() {
               setFilter("publishedOnly", checked === true || undefined)
             }
           />
-          <span className="text-muted-foreground">Chỉ đã publish</span>
+          <span className="text-muted-foreground">Published only</span>
         </label>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -102,7 +102,7 @@ export default function IoTFirmwareReleasesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <HardDrive className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có firmware release nào.</span>
+            <span className="text-sm">No firmware releases yet.</span>
           </div>
         ) : (
           <IoTFirmwareTable items={items} sort={sort} />

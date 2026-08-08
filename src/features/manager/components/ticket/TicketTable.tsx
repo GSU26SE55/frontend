@@ -7,6 +7,10 @@ import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import {
+  TicketStatusEnum,
+  TicketOriginEnum,
+} from "@/shared/enums/ticket/ticket.enum";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -16,22 +20,29 @@ interface Props {
   isLoading: boolean;
   showTriage?: boolean;
   onTriage?: (ticket: TicketDTO) => void;
+  /**
+   * Auto tickets (Open + AutoFromAlert) can't be triaged — the BE only allows New → Open.
+   * What's needed for them is reviewing the priority already assigned by AI, so the queue
+   * calls this callback instead of onTriage. Not passed → the action column is hidden for
+   * auto tickets.
+   */
+  onReprioritize?: (ticket: TicketDTO) => void;
   pageNumber?: number;
   pageSize?: number;
   /**
-   * Sort server-side — state từ useUrlSort. Chỉ phần list (AdminTicketListParams)
-   * truyền; queue (AdminTicketQueueParams không có sort) bỏ qua → sort tĩnh.
+   * Server-side sort — state from useUrlSort. Only passed by the list view
+   * (AdminTicketListParams); the queue (AdminTicketQueueParams has no sort) skips it → static sort.
    */
   sort?: ServerSortState;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
-  Charging: "Sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
-  Repair: "Sửa chữa",
-  Other: "Khác",
+  Charging: "Charging",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
+  Repair: "Repair",
+  Other: "Other",
 };
 
 export default function TicketTable({
@@ -39,6 +50,7 @@ export default function TicketTable({
   isLoading,
   showTriage,
   onTriage,
+  onReprioritize,
   pageNumber = 1,
   pageSize = 0,
   sort,
@@ -58,7 +70,7 @@ export default function TicketTable({
   if (!tickets.length) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground">
-        Không có ticket nào
+        No tickets
       </div>
     );
   }
@@ -66,7 +78,7 @@ export default function TicketTable({
   const columns: ColumnDef<TicketDTO>[] = [
     {
       id: "code",
-      header: "Mã",
+      header: "Code",
       sortKey: "code",
       sortValue: (t) => t.code,
       cellClassName: "font-mono text-xs",
@@ -74,7 +86,7 @@ export default function TicketTable({
     },
     {
       id: "title",
-      header: "Tiêu đề",
+      header: "Title",
       sortKey: "title",
       sortValue: (t) => t.title,
       cellClassName: "max-w-xs font-medium",
@@ -84,19 +96,19 @@ export default function TicketTable({
             {t.title}
           </span>
           <div className="mt-0.5 flex flex-wrap items-center gap-1">
-            {/* AI verify — chỉ ticket manual, ẩn khi hợp lệ (hideWhenOk). */}
+            {/* AI verify — manual tickets only, hidden when valid (hideWhenOk). */}
             <TicketVerifyBadge
               status={t.aiVerifyStatus}
               origin={t.origin}
               hideWhenOk
             />
-            {/* Nghi trùng với ticket đang mở. */}
+            {/* Suspected duplicate of an open ticket. */}
             {t.suspectedDuplicateOfTicketId && (
               <Badge
                 variant="outline"
                 className="border-amber-200 bg-amber-50 text-amber-700"
               >
-                Nghi trùng
+                Suspected duplicate
               </Badge>
             )}
           </div>
@@ -105,7 +117,7 @@ export default function TicketTable({
     },
     {
       id: "status",
-      header: "Trạng thái",
+      header: "Status",
       sortKey: "status",
       sortValue: (t) => t.status,
       cell: (t) => <TicketStatusBadge status={t.status} />,
@@ -115,11 +127,28 @@ export default function TicketTable({
       header: "Priority",
       sortKey: "priority",
       sortValue: (t) => t.priority ?? "",
-      cell: (t) => <TicketPriorityBadge priority={t.priority} />,
+      // Auto tickets not yet assigned to Staff: priority is inferred by AI from the anomaly
+      // category and hasn't gone through a reviewer. Flag it so Manager doesn't mistake it
+      // for a priority someone has already signed off on.
+      cell: (t) => (
+        <div className="flex flex-wrap items-center gap-1">
+          <TicketPriorityBadge priority={t.priority} />
+          {t.origin === TicketOriginEnum.AutoFromAlert &&
+            t.status === TicketStatusEnum.Open && (
+              <Badge
+                variant="outline"
+                className="border-violet-200 bg-violet-50 text-violet-700"
+                title="Priority suggested by AI from the alert — not yet approved by Manager"
+              >
+                AI suggested
+              </Badge>
+            )}
+        </div>
+      ),
     },
     {
       id: "category",
-      header: "Loại",
+      header: "Category",
       sortKey: "category",
       sortValue: (t) => CATEGORY_LABEL[t.category] ?? t.category,
       cellClassName: "text-sm text-muted-foreground",
@@ -133,7 +162,7 @@ export default function TicketTable({
     },
     {
       id: "createdAt",
-      header: "Tạo lúc",
+      header: "Created",
       sortKey: "createdAt",
       sortValue: (t) => new Date(t.createdAt).getTime(),
       cellClassName: "text-xs text-muted-foreground",
@@ -146,14 +175,26 @@ export default function TicketTable({
       id: "triage",
       header: "",
       stopRowClick: true,
-      cell: (t) => (
-        <button
-          className="rounded border px-2 py-1 text-xs hover:bg-muted"
-          onClick={() => onTriage?.(t)}
-        >
-          Triage
-        </button>
-      ),
+      // Two ticket types share the same queue but need different actions:
+      // New → triage (assign Impact/Urgency for the first time). Open+AutoFromAlert →
+      // priority already assigned by AI, only needs review; clicking Triage here would
+      // get a 403 from the BE since there's no Open→Open rule.
+      cell: (t) =>
+        t.status === TicketStatusEnum.New ? (
+          <button
+            className="rounded border px-2 py-1 text-xs hover:bg-muted"
+            onClick={() => onTriage?.(t)}
+          >
+            Triage
+          </button>
+        ) : onReprioritize ? (
+          <button
+            className="rounded border px-2 py-1 text-xs hover:bg-muted"
+            onClick={() => onReprioritize(t)}
+          >
+            Review priority
+          </button>
+        ) : null,
     });
   }
 

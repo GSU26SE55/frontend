@@ -11,45 +11,59 @@ import type {
 import { NotificationChannelEnum } from "@/shared/enums/notification/notification.enum";
 
 export const notificationService = {
-  // Mặc định chỉ lấy channel InApp. BE ghi 1 record/channel (InApp + Push) cho mỗi
-  // sự kiện ⇒ nếu không lọc, list hiện trùng 2 dòng (record Push chỉ để đẩy device,
-  // không thuộc danh sách in-app). Caller vẫn override channel được nếu cần.
+  // Defaults to the InApp channel only. The BE writes 1 record/channel (InApp + Push) per
+  // event ⇒ without filtering, the list shows 2 duplicate rows (the Push record is only for
+  // pushing to the device, it doesn't belong in the in-app list). Caller can still override
+  // the channel if needed.
   getList: (params: NotificationsParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<NotificationDto>>>(
       ENDPOINTS.NOTIFICATIONS.LIST,
       { params: { channel: NotificationChannelEnum.InApp, ...params } },
     ),
 
-  // GET chi tiết 1 noti (màn hình hộp thư). BE không lọc channel ở endpoint này nên
-  // mở được cả record giao nhận Push/Email/Sms, không chỉ feed InApp.
+  // GET detail of 1 notification (inbox screen). The BE doesn't filter by channel on this
+  // endpoint, so it can also open Push/Email/Sms delivery records, not just the InApp feed.
   getById: (id: string) =>
     axiosInstance.get<CommonResponse<NotificationDto>>(
       ENDPOINTS.NOTIFICATIONS.DETAIL(id),
     ),
 
-  // PATCH — body rỗng. data = id của notification vừa mark.
+  // PATCH — empty body. data = id of the notification just marked.
   markRead: (id: string) =>
     axiosInstance.patch<CommonResponse<string>>(
       ENDPOINTS.NOTIFICATIONS.MARK_READ(id),
     ),
 
-  // PATCH — body rỗng. User chủ động MỞ notification (bấm deep link): BE set
-  // Status = Opened và ReadAt ??= now, nên không cần gọi kèm markRead.
-  // Idempotent: đã Opened rồi vẫn trả 200.
+  // PATCH — empty body. User actively OPENS the notification (taps the deep link): BE sets
+  // Status = Opened and ReadAt ??= now, so there's no need to also call markRead.
+  // Idempotent: still returns 200 even if already Opened.
   markOpened: (id: string) =>
     axiosInstance.patch<CommonResponse<string>>(
       ENDPOINTS.NOTIFICATIONS.OPENED(id),
     ),
 
-  // POST — body rỗng. data = số notification đã được mark.
+  // POST — empty body. data = number of notifications marked.
   markAllRead: () =>
     axiosInstance.post<CommonResponse<number>>(
       ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ,
     ),
 
-  // GET — data = số notification chưa đọc (badge).
+  // GET — data = number of unread notifications (badge).
   getUnreadCount: () =>
     axiosInstance.get<CommonResponse<number>>(
       ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT,
+    ),
+
+  getUnsubscribe: (token: string) =>
+    axiosInstance.get<CommonResponse<string>>(
+      ENDPOINTS.NOTIFICATIONS.UNSUBSCRIBE,
+      { params: { token } },
+    ),
+
+  unsubscribe: (token: string) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.NOTIFICATIONS.UNSUBSCRIBE,
+      null,
+      { params: { token } },
     ),
 };

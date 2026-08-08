@@ -21,24 +21,24 @@ import {
 import { ChatAiIntentEnum } from "@/shared/enums/ticket/chat.enum";
 
 const INTENT_LABEL: Record<ChatAiIntentEnum, string> = {
-  RequestInfo: "Yêu cầu thêm thông tin",
-  TechnicalAnswer: "Trả lời kỹ thuật",
-  Resolution: "Đề xuất giải pháp",
-  FollowUp: "Theo dõi tiến độ",
+  RequestInfo: "Request more information",
+  TechnicalAnswer: "Technical answer",
+  Resolution: "Suggest a resolution",
+  FollowUp: "Follow up on progress",
 };
 
 interface Props {
   ticketId: string;
-  /** GH-133 — gợi ý sau khi lấy được đổ ra bong bóng cuối luồng chat (parent render). */
+  /** GH-133 — suggestions, once fetched, are rendered as a bubble at the end of the chat thread (parent render). */
   onSuggestions?: (suggestions: string[]) => void;
 }
 
 /**
- * GH-133 C2 — thanh công cụ AI cho chat thread (Staff/Manager/Admin).
- * Gợi ý (suggest) · Tóm tắt (summarize).
- * GH-866 — BE đã xóa sentiment-check và export-pdf, không khôi phục.
- * Gợi ý trả về được đẩy lên parent (onSuggestions) để hiển thị dạng bong bóng
- * cuối luồng chat — bấm chọn sẽ đổ vào ô nhập rồi user tự gửi.
+ * GH-133 C2 — AI toolbar for the chat thread (Staff/Manager/Admin).
+ * Suggest · Summarize.
+ * GH-866 — the BE removed sentiment-check and export-pdf; not restoring them.
+ * Returned suggestions are pushed up to the parent (onSuggestions) to render as a bubble
+ * at the end of the chat thread — clicking one fills the input box for the user to send.
  */
 export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
   const suggestM = useSuggestChat();
@@ -51,12 +51,12 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
     try {
       const res = await suggestM.mutateAsync({ ticketId, payload: { intent } });
       if (!res.isSuccess || !res.data) {
-        toast.error(res.message ?? "AI không tạo được gợi ý.");
+        toast.error(res.message ?? "AI couldn't generate suggestions.");
         return;
       }
       onSuggestions?.(res.data.suggestions);
     } catch {
-      /* hook onError đã toast */
+      /* hook's onError already toasts */
     }
   };
 
@@ -64,13 +64,13 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
     try {
       const res = await summarizeM.mutateAsync({ ticketId });
       if (!res.isSuccess || !res.data) {
-        toast.error(res.message ?? "AI không tóm tắt được.");
+        toast.error(res.message ?? "AI couldn't summarize the thread.");
         return;
       }
       setSummary(res.data.summary);
       setSummaryOpen(true);
     } catch {
-      /* hook onError đã toast */
+      /* hook's onError already toasts */
     }
   };
 
@@ -87,7 +87,7 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
           ) : (
             <Sparkles className="size-3.5" />
           )}
-          Gợi ý AI
+          AI Suggest
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {(Object.keys(INTENT_LABEL) as ChatAiIntentEnum[]).map((intent) => (
@@ -115,14 +115,14 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
         ) : (
           <TextIcon className="size-3.5" />
         )}
-        Tóm tắt
+        Summarize
       </Button>
 
-      {/* Dialog tóm tắt */}
+      {/* Summary dialog */}
       <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tóm tắt thread (AI)</DialogTitle>
+            <DialogTitle>Thread summary (AI)</DialogTitle>
           </DialogHeader>
           <p className="text-sm whitespace-pre-wrap break-words">{summary}</p>
         </DialogContent>

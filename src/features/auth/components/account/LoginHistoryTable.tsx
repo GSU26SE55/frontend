@@ -19,14 +19,14 @@ import type { SortDirection } from "@/shared/hooks/useSortableData";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const RESULT_LABEL: Record<LoginAttemptResult, string> = {
-  [LoginAttemptResult.Success]: "Thành công",
-  [LoginAttemptResult.WrongPassword]: "Sai mật khẩu",
-  [LoginAttemptResult.AccountNotFound]: "Không tìm thấy",
-  [LoginAttemptResult.AccountLocked]: "Bị khóa",
-  [LoginAttemptResult.AccountSuspended]: "Tạm dừng",
-  [LoginAttemptResult.AccountBanned]: "Bị cấm",
-  [LoginAttemptResult.AccountInactive]: "Không hoạt động",
-  [LoginAttemptResult.AccountNotVerified]: "Chưa xác minh",
+  [LoginAttemptResult.Success]: "Success",
+  [LoginAttemptResult.WrongPassword]: "Wrong password",
+  [LoginAttemptResult.AccountNotFound]: "No results",
+  [LoginAttemptResult.AccountLocked]: "Locked",
+  [LoginAttemptResult.AccountSuspended]: "Suspended",
+  [LoginAttemptResult.AccountBanned]: "Banned",
+  [LoginAttemptResult.AccountInactive]: "Inactive",
+  [LoginAttemptResult.AccountNotVerified]: "Not verified",
 };
 
 const PAGE_SIZE = 10;
@@ -36,7 +36,7 @@ const LoginHistoryTable = () => {
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
 
-  // Server-side sort: toggle asc → desc → clear, reset về trang 1 khi đổi sort.
+  // Server-side sort: toggle asc → desc → clear, reset to page 1 when sort changes.
   const toggleSort = (key: string) => {
     if (sortBy !== key) {
       setSortBy(key);
@@ -59,7 +59,7 @@ const LoginHistoryTable = () => {
 
   const items = data?.items ?? [];
   const totalPages = Math.max(data?.totalPages ?? 1, 1);
-  // BE đã sort toàn dataset (SortBy/SortDir) → render items nguyên trạng.
+  // BE already sorts the full dataset (SortBy/SortDir) → render items as-is.
   const sortKey = sortBy;
   const sortDirection = sortDir;
 
@@ -80,7 +80,7 @@ const LoginHistoryTable = () => {
                 onSort={toggleSort}
                 className="w-1/4 text-xs font-semibold"
               >
-                Thời gian
+                Time
               </SortableTableHead>
               <SortableTableHead
                 sortKey="result"
@@ -89,7 +89,7 @@ const LoginHistoryTable = () => {
                 onSort={toggleSort}
                 className="w-1/4 text-xs font-semibold"
               >
-                Kết quả
+                Result
               </SortableTableHead>
               <SortableTableHead
                 sortKey="method"
@@ -98,7 +98,7 @@ const LoginHistoryTable = () => {
                 onSort={toggleSort}
                 className="w-1/4 text-xs font-semibold"
               >
-                Phương thức
+                Method
               </SortableTableHead>
               <SortableTableHead
                 sortKey="ipAddress"
@@ -107,7 +107,7 @@ const LoginHistoryTable = () => {
                 onSort={toggleSort}
                 className="w-1/4 text-xs font-semibold"
               >
-                Địa chỉ IP
+                IP address
               </SortableTableHead>
             </TableRow>
           </TableHeader>
@@ -137,7 +137,7 @@ const LoginHistoryTable = () => {
                 <TableCell colSpan={5}>
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
                     <Monitor size={28} className="opacity-30" />
-                    <p className="text-sm">Chưa có lịch sử đăng nhập</p>
+                    <p className="text-sm">No login history yet</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -148,7 +148,7 @@ const LoginHistoryTable = () => {
                     {(page - 1) * PAGE_SIZE + index + 1}
                   </TableCell>
                   <TableCell className="tabular-nums text-xs text-muted-foreground">
-                    {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm")}
+                    {format(new Date(item.createdAt), "MM/dd/yyyy HH:mm")}
                   </TableCell>
                   <TableCell>
                     <Badge

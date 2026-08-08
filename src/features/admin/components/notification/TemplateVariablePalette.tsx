@@ -4,22 +4,24 @@ import { useTemplateVariables } from "@/features/admin/hooks/notification/useNot
 import type { NotificationTypeEnum } from "@/shared/enums/notification/notification.enum";
 
 interface Props {
-  /** Loại thông báo đang soạn — quyết định bộ biến nào hợp lệ. */
+  /** The notification type being composed — decides which set of variables is valid. */
   type: NotificationTypeEnum;
-  /** Các biến người soạn đã gõ, lấy từ nội dung đang nhập. */
+  /** Variables the author has typed, taken from the content currently being entered. */
   typedNames: string[];
-  /** Chèn `{{tên}}` vào ô đang soạn. */
+  /** Insert `{{name}}` into the field being composed. */
   onInsert: (name: string) => void;
 }
 
 /**
- * Bảng biến hợp lệ cho một loại thông báo, kèm cảnh báo biến gõ sai — hiện **ngay lúc gõ**.
+ * The palette of valid variables for a notification type, plus a warning for mistyped variables —
+ * shown **as you type**.
  *
- * Vì sao cần: template gọi biến không tồn tại thì Handlebars render ra **chuỗi rỗng chứ không báo
- * lỗi**. Trước 03/08/2026 người soạn phải tự đoán tên khoá, và đoán sai thì không có gì báo — bộ
- * template của dự án từng chạy nhiều tháng với `{{ticketCode}}` trong khi consumer ghi khoá `code`,
- * `{{serialNumber}}` trong khi consumer ghi `assetSerialNumber`. Backend nay trả 400 khi lưu, nhưng
- * chặn được ở đây thì người soạn không phải bấm lưu mới biết mình gõ sai.
+ * Why it's needed: when a template references a variable that doesn't exist, Handlebars renders an
+ * **empty string rather than reporting an error**. Before 08/03/2026 authors had to guess key names,
+ * and a wrong guess produced no signal — this project's template set ran for months with
+ * `{{ticketCode}}` while the consumer wrote the key `code`, and `{{serialNumber}}` while the consumer
+ * wrote `assetSerialNumber`. The backend now returns 400 on save, but catching it here means the
+ * author doesn't have to hit save to find out they mistyped.
  */
 export default function TemplateVariablePalette({
   type,
@@ -33,8 +35,8 @@ export default function TemplateVariablePalette({
     [groups, type],
   );
 
-  // So khớp không phân biệt hoa thường — model bên backend dựng bằng OrdinalIgnoreCase, nên
-  // {{Code}} và {{code}} đều tra được.
+  // Case-insensitive matching — the backend model is built with OrdinalIgnoreCase, so both
+  // {{Code}} and {{code}} resolve.
   const allowedLower = useMemo(() => {
     if (!group) return null;
     return new Set(
@@ -50,13 +52,13 @@ export default function TemplateVariablePalette({
   if (isLoading) {
     return (
       <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
-        <p className="text-xs text-muted-foreground">Đang tải danh sách biến…</p>
+        <p className="text-xs text-muted-foreground">Loading variables…</p>
       </div>
     );
   }
 
-  // Không lấy được danh mục (mất mạng, 403) — im lặng bỏ qua còn hơn chặn người soạn lưu bài.
-  // Backend vẫn là chốt chặn cuối, nên bỏ qua ở đây không làm lọt template hỏng vào DB.
+  // Couldn't fetch the catalog (network loss, 403) — silently skip rather than blocking the author
+  // from saving. The backend is still the final gate, so skipping here won't let a broken template into the DB.
   if (!group) return null;
 
   const chip =
@@ -66,13 +68,14 @@ export default function TemplateVariablePalette({
   return (
     <div className="space-y-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
       <p className="text-xs text-muted-foreground">
-        Bấm để chèn biến vào ô đang soạn. Chỉ những biến dưới đây mới có giá trị
-        lúc gửi thật — biến khác sẽ hiện ra rỗng.
+        Click to insert a variable into the field being composed. Only the
+        variables below have a value at actual send time — any other variable
+        will render empty.
       </p>
 
       {group.payload.length > 0 ? (
         <div>
-          <p className="mb-1 text-xs font-medium">Dữ liệu của loại này</p>
+          <p className="mb-1 text-xs font-medium">Data for this type</p>
           <div className="flex flex-wrap gap-1.5">
             {group.payload.map((name) => (
               <button
@@ -88,16 +91,16 @@ export default function TemplateVariablePalette({
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">
-          Loại thông báo này không kèm dữ liệu riêng — chỉ dùng được các biến
-          chung bên dưới.
+          This notification type doesn't come with its own data — only the
+          common variables below are available.
         </p>
       )}
 
       <div>
         <p className="mb-1 text-xs font-medium">
-          Biến chung{" "}
+          Common variables{" "}
           <span className="font-normal text-muted-foreground">
-            (loại nào cũng có)
+            (available for every type)
           </span>
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -118,14 +121,15 @@ export default function TemplateVariablePalette({
         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" />
           <p className="text-xs text-destructive">
-            Biến không tồn tại:{" "}
+            Unknown variable:{" "}
             {unknown.map((n, i) => (
               <span key={n}>
                 {i > 0 && ", "}
                 <code className="font-mono">{`{{${n}}}`}</code>
               </span>
             ))}
-            . Chỗ này sẽ hiện ra rỗng khi gửi thật, và máy chủ sẽ từ chối lưu.
+            . This will render empty at actual send time, and the server will
+            refuse to save it.
           </p>
         </div>
       )}

@@ -19,7 +19,7 @@ export const deviceTokenService = {
       payload,
     ),
 
-  // DELETE mang body { token } → truyền qua config.data
+  // DELETE carries body { token } → pass it via config.data
   unregister: (payload: UnregisterDeviceTokenPayload) =>
     axiosInstance.delete<CommonResponse<string>>(
       ENDPOINTS.DEVICE_TOKENS.UNREGISTER,

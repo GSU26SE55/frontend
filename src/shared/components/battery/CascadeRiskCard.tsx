@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,20 +13,20 @@ import type {
 import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
 
 const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
-  Low: "Thấp",
-  Medium: "Trung bình",
-  High: "Cao",
+  Low: "Low",
+  Medium: "Medium",
+  High: "High",
 };
 
 const TOPOLOGY_LABEL: Record<ElectricalTopologyName, string> = {
-  Independent: "Độc lập",
-  SeriesString: "Nối tiếp (Series)",
-  ParallelBank: "Song song (Parallel)",
-  SeriesParallel: "Hỗn hợp (Series-Parallel)",
+  Independent: "Independent",
+  SeriesString: "Series",
+  ParallelBank: "Parallel",
+  SeriesParallel: "Series-Parallel",
 };
 
-// Fallback an toàn: nếu BE trả giá trị ngoài enum (vd số thay vì string name)
-// thì hiển thị chính giá trị thô thay vì render trống im lặng.
+// Safe fallback: if the BE returns a value outside the enum (e.g. a number instead
+// of the string name), show the raw value instead of silently rendering nothing.
 const levelStyle = (lvl: CascadeRiskLevelName) =>
   toneClass(CASCADE_RISK_TONE[lvl] ?? "muted");
 const levelLabel = (lvl: CascadeRiskLevelName) =>
@@ -36,8 +36,8 @@ const topologyLabel = (t: ElectricalTopologyName) =>
 
 interface CascadeRiskCardProps {
   assetId: string;
-  // Admin bơm SetTopologyDialog + nút mở qua đây. Manager/Staff không có quyền →
-  // không truyền → không hiện nút "Set topology". BE chặn POST /topology cho non-admin.
+  // Admin injects SetTopologyDialog + the button that opens it here. Manager/Staff have
+  // no permission → don't pass it → the "Set topology" button doesn't show. BE blocks POST /topology for non-admins.
   topologyAction?: (ctx: {
     currentTopology?: ElectricalTopologyName;
     isLoading: boolean;
@@ -56,7 +56,7 @@ export default function CascadeRiskCard({
         <div className="flex items-center gap-2">
           <ShieldAlert size={16} className="text-muted-foreground" />
           <h3 className="text-base font-semibold tracking-tight">
-            Rủi ro lan truyền
+            Cascade risk
           </h3>
         </div>
         {topologyAction?.({
@@ -72,7 +72,7 @@ export default function CascadeRiskCard({
         </div>
       ) : !data ? (
         <p className="text-sm text-muted-foreground">
-          Chưa có dữ liệu cascade risk.
+          No cascade risk data yet.
         </p>
       ) : (
         <div className="space-y-3">
@@ -88,21 +88,21 @@ export default function CascadeRiskCard({
             </Badge>
           </div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <dt className="text-muted-foreground">Cách đấu nối</dt>
+            <dt className="text-muted-foreground">Wiring topology</dt>
             <dd className="text-right font-medium">
               {topologyLabel(data.electricalTopology)}
             </dd>
-            <dt className="text-muted-foreground">Cập nhật gần nhất</dt>
+            <dt className="text-muted-foreground">Last updated</dt>
             <dd className="text-right font-medium">
               {data.cascadeRiskUpdatedAt
                 ? format(
                     new Date(data.cascadeRiskUpdatedAt),
-                    "dd/MM/yyyy HH:mm",
+                    "MM/dd/yyyy HH:mm",
                     {
-                      locale: vi,
+                      locale: enUS,
                     },
                   )
-                : "Chưa tính"}
+                : "Not computed yet"}
             </dd>
           </dl>
         </div>

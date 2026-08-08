@@ -53,15 +53,15 @@
   --p3-soft: #fef9c3; /* yellow-100 */
   --info: #2563eb; /* blue-600 */
   --info-soft: #dbeafe; /* blue-100 */
-  --muted-status: #64748b; /* slate-500 — status trung tính (draft/inactive) */
+  --muted-status: #64748b; /* slate-500 — neutral status (draft/inactive) */
   --muted-status-soft: #f1f5f9; /* slate-100 */
 
-  /* SLA state — map lại token semantic (không đẻ màu mới) */
+  /* SLA state — maps back onto the semantic tokens (no new colors) */
   --sla-ok: var(--ok);
   --sla-caution: var(--p3);
   --sla-warning: var(--p1);
 
-  /* Diff (GitHub-style) — hệ màu riêng cho code/text diff */
+  /* Diff (GitHub-style) — its own color set for code/text diffs */
   --diff-add: #116329;
   --diff-add-soft: #e6ffec;
   --diff-del: #cf222e;
@@ -124,7 +124,7 @@
   --muted-status: #94a3b8; /* slate-400 */
   --muted-status-soft: rgb(100 116 139 / 0.16);
 
-  /* SLA — kế thừa token semantic (đã có bản dark ở trên) */
+  /* SLA — inherits the semantic tokens (a dark variant is already defined above) */
   --sla-ok: var(--ok);
   --sla-caution: var(--p3);
   --sla-warning: var(--p1);
@@ -221,12 +221,18 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  section[id],
+  main[id] {
+    scroll-margin-top: 4.5rem;
   }
 }
 
-/* sr-only — bản shadcn/tailwind.css preset thiếu `clip: rect(0,0,0,0)` nên phần tử
-   ẩn vẫn chiếm chỗ layout (vd PaginationEllipsis "More pages"), làm <html> dài ra
-   → sinh scrollbar thứ 2. Override lại bản chuẩn để phần tử ẩn không ảnh hưởng layout. */
+/* sr-only — the shadcn/tailwind.css preset's version is missing `clip: rect(0,0,0,0)`,
+   so hidden elements still take up layout space (e.g. PaginationEllipsis "More pages"),
+   making <html> taller → a second scrollbar appears. Override with the standard version
+   so hidden elements don't affect layout. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -269,7 +275,43 @@
   animation: dot-pulse 1.4s ease-in-out infinite;
 }
 
-/* Typing indicator dot — khớp y hệt mobile (opacity 0.3↔1, chu kỳ 1s) */
+/* Incident ticket card — a continuously pulsing red border.
+   Only border-color + box-shadow are animated (not opacity on the whole element like
+   animate-pulse), so the text inside stays readable. 1.8s cadence: slow enough not to
+   strain the eyes when a grid has many cards pulsing at once. */
+@keyframes incident-border-pulse {
+  0%,
+  100% {
+    border-color: var(--destructive);
+    box-shadow:
+      0 0 0 0 color-mix(in oklab, var(--destructive) 55%, transparent),
+      0 0 12px 0 color-mix(in oklab, var(--destructive) 30%, transparent);
+  }
+  50% {
+    /* Down to 25% — a wide swing makes the pulse clearly readable; at 60% the two
+       phases look too similar and the border reads as static. */
+    border-color: color-mix(in oklab, var(--destructive) 25%, transparent);
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--destructive) 0%, transparent),
+      0 0 0 0 color-mix(in oklab, var(--destructive) 0%, transparent);
+  }
+}
+.incident-pulse {
+  /* 2px border — Card's default 1px is too thin, the red washes out while pulsing. */
+  border-width: 2px;
+  animation: incident-border-pulse 1.6s ease-in-out infinite;
+}
+
+/* When the user enables "reduce motion" at the OS level → keep the red border static,
+   still conveying urgency without the pulsing effect. */
+@media (prefers-reduced-motion: reduce) {
+  .incident-pulse {
+    animation: none;
+    border-color: var(--destructive);
+  }
+}
+
+/* Typing indicator dot — matches mobile exactly (opacity 0.3↔1, 1s cycle) */
 @keyframes typing-dot {
   0%,
   100% {
@@ -298,9 +340,8 @@
   animation: fade-up 0.28s ease both;
 }
 
-/* Page enter — fade khi vào 1 trang (dùng ở wrapper trang). Không dịch
-   chuyển vị trí (translateY) — tránh cảm giác nội dung "xê dịch" mỗi lần
-   chuyển route. */
+/* Page enter — fade when entering a page (used on the page wrapper). No position
+   shift (translateY) — avoids a "jumping" feeling on every route change. */
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -313,7 +354,7 @@
   animation: page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Fade-in thuần (không dịch chuyển) — cho panel/nội dung phụ */
+/* Plain fade-in (no movement) — for secondary panels/content */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -375,8 +416,8 @@
   }
 }
 
-/* Tôn trọng người dùng nhạy chuyển động — tắt mọi animation lặp vô hạn
-   (dot nhấp nháy, shimmer skeleton, spinner, fade-up) + transition. */
+/* Respect motion-sensitive users — disable every infinitely-looping animation
+   (pulsing dots, shimmer skeleton, spinner, fade-up) + transitions. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -388,9 +429,9 @@
   }
 }
 
-/* Nội dung rich text (Tiptap) — Blog + Knowledge Base.
-   Tailwind preflight reset hết style mặc định của h2/ul/blockquote…,
-   nên phải khai báo lại, nếu không nội dung soạn ra sẽ hiển thị trần. */
+/* Rich text content (Tiptap) — Blog + Knowledge Base.
+   Tailwind preflight resets the default styles for h2/ul/blockquote/etc.,
+   so they must be redeclared here, or authored content renders unstyled. */
 .rich-content > * + * {
   margin-top: 0.75em;
 }

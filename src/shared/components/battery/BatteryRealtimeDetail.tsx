@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Battery } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,31 +23,31 @@ import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCa
 import { useSensorStream } from "@/shared/hooks/ticket/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<
   BatteryStatusEnum,
   { label: string; dot: string; badge: string }
 > = {
   [BatteryStatusEnum.Active]: {
-    label: "Hoạt động",
+    label: "Active",
     dot: "bg-emerald-500",
     badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
   [BatteryStatusEnum.Inactive]: {
-    label: "Không hoạt động",
+    label: "Inactive",
     dot: "bg-muted-foreground",
     badge: "bg-muted text-muted-foreground border-border",
   },
   [BatteryStatusEnum.Decommissioned]: {
-    label: "Ngừng sử dụng",
+    label: "Decommissioned",
     dot: "bg-red-500",
     badge: "bg-red-50 text-red-600 border-red-200",
   },
 };
 
 const fmtDate = (s: string) =>
-  format(new Date(s), "dd/MM/yyyy", { locale: vi });
+  format(new Date(s), "MM/dd/yyyy", { locale: enUS });
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -62,17 +62,17 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 interface BatteryRealtimeDetailProps {
   assetId: string;
-  // Admin bơm nút CRUD (Sửa/Transfer/Xóa) + dialog qua slot này. Manager/Staff bỏ trống.
+  // Admin injects CRUD buttons (Edit/Transfer/Delete) + dialog through this slot. Manager/Staff leave it empty.
   headerActions?: ReactNode;
-  // Admin bơm SetTopologyDialog + nút mở qua slot này (POST /topology chỉ Admin).
+  // Admin injects SetTopologyDialog + the button that opens it through this slot (POST /topology is Admin-only).
   topologyAction?: (ctx: {
     currentTopology?: ElectricalTopologyName;
     isLoading: boolean;
   }) => ReactNode;
 }
 
-// Trang chi tiết real-time battery (read-only core) — dùng chung admin/manager/staff.
-// CRUD/topology chỉ Admin, bơm qua slot headerActions/topologyAction.
+// Real-time battery detail page (read-only core) — shared by admin/manager/staff.
+// CRUD/topology is Admin-only, injected through the headerActions/topologyAction slots.
 export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
@@ -83,9 +83,9 @@ export default function BatteryRealtimeDetail({
   const { data: asset, isLoading } = useBatteryAsset(id);
   const { data: rt } = useBatteryAssetRealtime(id);
   const stream = useSensorStream(id ? `asset:${id}` : null);
-  // Ưu tiên live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
+  // Prefer live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
   const live = stream.reading ?? rt ?? null;
-  // Ngưỡng cảnh báo telemetry theo BatteryType — Admin/Manager/Staff đều đọc được.
+  // Telemetry alert threshold by BatteryType — readable by Admin/Manager/Staff alike.
   const { data: threshold } = useThresholdByType(asset?.batteryTypeId ?? "");
 
   // Loading skeleton
@@ -106,9 +106,9 @@ export default function BatteryRealtimeDetail({
     return (
       <div className="p-6 flex flex-col items-center gap-3 text-muted-foreground pt-20">
         <Battery className="size-8 opacity-30" />
-        <span className="text-sm">Không tìm thấy battery asset.</span>
+        <span className="text-sm">Battery asset not found.</span>
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft size={14} /> Quay lại
+          <ArrowLeft size={14} /> Back
         </Button>
       </div>
     );
@@ -118,7 +118,7 @@ export default function BatteryRealtimeDetail({
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
-      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div className="px-6 py-3 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <Button
@@ -145,7 +145,7 @@ export default function BatteryRealtimeDetail({
               </span>
               {rt && rt.activeAlerts > 0 && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
-                  {rt.activeAlerts} cảnh báo
+                  {rt.activeAlerts} alerts
                 </span>
               )}
             </div>
@@ -161,7 +161,7 @@ export default function BatteryRealtimeDetail({
         </div>
       </div>
 
-      {/* ── Main panel ──────────────────────────────────────────────────────── */}
+      {/* ── Main panel ──────────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 px-6 pb-6">
         <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
           {/* Left sidebar */}
@@ -169,17 +169,17 @@ export default function BatteryRealtimeDetail({
             {/* Info */}
             <div className="px-4 pt-4 pb-3">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Thông tin
+                Information
               </p>
               <div className="divide-y divide-border/50">
-                <InfoRow label="Khách hàng" value={asset.customerName} />
+                <InfoRow label="Customer" value={asset.customerName} />
                 <InfoRow label="Site" value={asset.siteName} />
                 <InfoRow
-                  label="Ngày lắp đặt"
+                  label="Install date"
                   value={asset.installDate ? fmtDate(asset.installDate) : null}
                 />
                 <InfoRow
-                  label="Hết bảo hành"
+                  label="Warranty end"
                   value={
                     asset.warrantyEndDate
                       ? fmtDate(asset.warrantyEndDate)
@@ -187,7 +187,7 @@ export default function BatteryRealtimeDetail({
                   }
                 />
                 <InfoRow
-                  label="Đọc cuối"
+                  label="Last reading"
                   value={
                     asset.lastSensorReadingAt
                       ? new Date(asset.lastSensorReadingAt).toLocaleString(
@@ -201,7 +201,7 @@ export default function BatteryRealtimeDetail({
 
             <Separator />
 
-            {/* Realtime — live SSE (~5s), seed/fallback từ rt (polling 30s) */}
+            {/* Realtime — live SSE (~5s), seed/fallback from rt (polling 30s) */}
             <LiveTelemetryCard
               data={live}
               status={stream.status}
@@ -223,11 +223,11 @@ export default function BatteryRealtimeDetail({
             <Tabs defaultValue="chart" className="h-full gap-0">
               <div className="px-5 py-3 border-b border-border shrink-0">
                 <TabsList>
-                  <TabsTrigger value="chart">Biểu đồ</TabsTrigger>
-                  <TabsTrigger value="peak">Nạp/Xả đỉnh</TabsTrigger>
-                  <TabsTrigger value="history">Lịch sử cảm biến</TabsTrigger>
-                  <TabsTrigger value="cascade">Rủi ro lan truyền</TabsTrigger>
-                  <TabsTrigger value="ai">AI dự đoán</TabsTrigger>
+                  <TabsTrigger value="chart">Chart</TabsTrigger>
+                  <TabsTrigger value="peak">Charge/discharge peak</TabsTrigger>
+                  <TabsTrigger value="history">Sensor history</TabsTrigger>
+                  <TabsTrigger value="cascade">Cascade risk</TabsTrigger>
+                  <TabsTrigger value="ai">AI prediction</TabsTrigger>
                 </TabsList>
               </div>
               <TabsContent

@@ -1,5 +1,5 @@
-// Khớp BE TicketStatusEnum (13 giá trị). KHÔNG có 'Approved' — đó là
-// ActivityActionEnum.Approved (hành động Manager duyệt), không phải trạng thái ticket.
+// Mirrors the BE's TicketStatusEnum (13 values). There is NO 'Approved' — that is
+// ActivityActionEnum.Approved (the Manager's approve action), not a ticket status.
 export const TicketStatusEnum = {
   New: "New",
   Open: "Open",
@@ -41,42 +41,42 @@ export const TicketOriginEnum = {
   ManualByCustomer: "ManualByCustomer",
   AutoFromAlert: "AutoFromAlert",
   CreatedByStaff: "CreatedByStaff",
-  // Hệ thống tự tạo, không từ 1 alert cụ thể (cascade risk High, sự cố môi trường Critical).
-  // Ticket loại này có batteryAssetId = "" khi ở cấp site.
+  // Created by the system, not from one specific alert (High cascade risk, Critical
+  // environmental incident). Tickets of this kind have batteryAssetId = "" at site level.
   System: "System",
 } as const;
 export type TicketOriginEnum =
   (typeof TicketOriginEnum)[keyof typeof TicketOriginEnum];
 
-// AI verify ticket thủ công (thật/rác) — human-in-the-loop, AI chỉ gắn nhãn.
-// BE serialize enum ra STRING (JsonStringEnumConverter) → dùng string value.
+// AI ticket verification (genuine/spam) — human-in-the-loop; the AI only labels.
+// The BE serializes the enum as a STRING (JsonStringEnumConverter) → use string values.
 export const TicketVerifyStatusEnum = {
-  Pending: "Pending", // chưa verify (consumer async chưa xử lý)
-  Legitimate: "Legitimate", // AI đánh giá hợp lệ
-  Suspicious: "Suspicious", // AI nghi rác — Manager xem trước
-  Skipped: "Skipped", // không verify được (AI down) — vẫn hợp lệ
+  Pending: "Pending", // not verified yet (the async consumer hasn't run)
+  Legitimate: "Legitimate", // the AI judged it valid
+  Suspicious: "Suspicious", // the AI suspects spam — a Manager reviews it first
+  Skipped: "Skipped", // couldn't be verified (AI down) — still treated as valid
 } as const;
 export type TicketVerifyStatusEnum =
   (typeof TicketVerifyStatusEnum)[keyof typeof TicketVerifyStatusEnum];
 
-// Lý do đóng đặc biệt — hiện BE chỉ có 1 giá trị.
+// Special close reasons — the BE currently has only one value.
 export const TicketCloseReasonEnum = {
-  MergedDuplicate: "MergedDuplicate", // đóng do được gộp vào ticket khác
+  MergedDuplicate: "MergedDuplicate", // closed because it was merged into another ticket
 } as const;
 export type TicketCloseReasonEnum =
   (typeof TicketCloseReasonEnum)[keyof typeof TicketCloseReasonEnum];
 
 export const TicketVerifyStatusLabel: Record<TicketVerifyStatusEnum, string> = {
-  [TicketVerifyStatusEnum.Pending]: "Đang kiểm tra",
-  [TicketVerifyStatusEnum.Legitimate]: "Hợp lệ",
-  [TicketVerifyStatusEnum.Suspicious]: "Nghi ngờ",
-  [TicketVerifyStatusEnum.Skipped]: "Bỏ qua kiểm tra",
+  [TicketVerifyStatusEnum.Pending]: "Checking",
+  [TicketVerifyStatusEnum.Legitimate]: "Valid",
+  [TicketVerifyStatusEnum.Suspicious]: "Suspicious",
+  [TicketVerifyStatusEnum.Skipped]: "Check skipped",
 };
 
-// #697 — 1 ticket có 1 PrimaryHandler + N Supporter (thay cho assignedStaffId cũ).
+// #697 — a ticket has 1 PrimaryHandler + N Supporters (replacing the old assignedStaffId).
 export const TicketAssignmentRoleEnum = {
-  PrimaryHandler: "PrimaryHandler", // người chịu trách nhiệm chính, tính vào My Tickets/KPI
-  Supporter: "Supporter", // hỗ trợ, chỉ được vào chat nội bộ — KHÔNG tính workload
+  PrimaryHandler: "PrimaryHandler", // owns the ticket; counts toward My Tickets/KPI
+  Supporter: "Supporter", // assists, internal chat access only — does NOT count toward workload
 } as const;
 export type TicketAssignmentRoleEnum =
   (typeof TicketAssignmentRoleEnum)[keyof typeof TicketAssignmentRoleEnum];
@@ -85,8 +85,8 @@ export const TicketAssignmentRoleLabel: Record<
   TicketAssignmentRoleEnum,
   string
 > = {
-  [TicketAssignmentRoleEnum.PrimaryHandler]: "Phụ trách chính",
-  [TicketAssignmentRoleEnum.Supporter]: "Hỗ trợ",
+  [TicketAssignmentRoleEnum.PrimaryHandler]: "Primary handler",
+  [TicketAssignmentRoleEnum.Supporter]: "Supporter",
 };
 
 export const ImpactScopeEnum = {
@@ -179,7 +179,7 @@ export const ActorRoleEnum = {
 } as const;
 export type ActorRoleEnum = (typeof ActorRoleEnum)[keyof typeof ActorRoleEnum];
 
-// Vai trò tham gia ticket — GET /api/tickets/{id}/participants.
+// Participation roles on a ticket — GET /api/tickets/{id}/participants.
 export const ParticipantTypeEnum = {
   Owner: "Owner",
   PrimaryAssignee: "PrimaryAssignee",

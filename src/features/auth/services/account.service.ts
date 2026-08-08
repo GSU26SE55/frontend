@@ -48,7 +48,7 @@ export const accountService = {
       payload,
     ),
 
-  // GH-295: 2FA enroll flow 2 bước
+  // GH-295: two-step 2FA enroll flow
   initTwoFactor: () =>
     axiosInstance.post<CommonResponse<Init2faResponseData>>(
       ENDPOINTS.ACCOUNTS.ME.TWO_FA_INIT,
@@ -93,20 +93,20 @@ export const accountService = {
       { params },
     ),
 
-  // #AUTH-51: cross-device 2FA — Device A request (body rỗng) → secret + token + QR uri
+  // #AUTH-51: cross-device 2FA — Device A request (empty body) → secret + token + QR uri
   requestCrossDevice2fa: () =>
     axiosInstance.post<CommonResponse<CrossDeviceRequestResponseData>>(
       ENDPOINTS.AUTH.TWO_FA_CROSS_DEVICE_REQUEST,
     ),
 
-  // #AUTH-51: Device B confirm với token (email link) + TOTP → bật 2FA
+  // #AUTH-51: Device B confirms with the token (email link) + TOTP → enables 2FA
   confirmCrossDevice2fa: (payload: CrossDeviceConfirmPayload) =>
     axiosInstance.post<CommonResponse<string>>(
       ENDPOINTS.AUTH.TWO_FA_CROSS_DEVICE_CONFIRM,
       payload,
     ),
 
-  // #AUTH-62: GDPR export — BE trả CommonResponse<AccountDataExportDto> (JSON body).
+  // #AUTH-62: GDPR export — the BE returns CommonResponse<AccountDataExportDto> (JSON body).
   exportMyData: () =>
     axiosInstance.get<CommonResponse<AccountDataExportDto>>(
       ENDPOINTS.ACCOUNTS.ME.EXPORT,

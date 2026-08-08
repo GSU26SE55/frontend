@@ -13,7 +13,7 @@ interface RefreshButtonProps extends VariantProps<typeof buttonVariants> {
 
 export function RefreshButton({
   queryKeys,
-  label = "Làm mới",
+  label = "Refresh",
   className,
   variant = "outline",
   size = "sm",

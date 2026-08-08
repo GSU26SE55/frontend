@@ -35,10 +35,10 @@ import {
 import { useUpdateMaintenanceLog } from "@/features/staff/hooks/ticket/useStaffTicketMutations";
 
 const LOG_TYPE_LABELS: Record<string, string> = {
-  [MaintenanceLogTypeEnum.RemoteSupport]: "Hỗ trợ từ xa",
-  [MaintenanceLogTypeEnum.OnSite]: "Đến tại chỗ",
-  [MaintenanceLogTypeEnum.PartReplacement]: "Thay linh kiện",
-  [MaintenanceLogTypeEnum.Inspection]: "Kiểm tra định kỳ",
+  [MaintenanceLogTypeEnum.RemoteSupport]: "Remote support",
+  [MaintenanceLogTypeEnum.OnSite]: "On-site visit",
+  [MaintenanceLogTypeEnum.PartReplacement]: "Part replacement",
+  [MaintenanceLogTypeEnum.Inspection]: "Routine inspection",
 };
 
 interface Props {
@@ -68,7 +68,7 @@ export function EditMaintenanceLogDialog({
     },
   });
 
-  // Reset form mỗi khi mở dialog cho một log khác.
+  // Reset the form every time the dialog opens for a different log.
   useEffect(() => {
     if (open) {
       form.reset({
@@ -90,7 +90,7 @@ export function EditMaintenanceLogDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Sửa nhật ký bảo trì</DialogTitle>
+          <DialogTitle>Edit maintenance log</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -99,7 +99,7 @@ export function EditMaintenanceLogDialog({
               name="logType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Loại nhật ký</FormLabel>
+                  <FormLabel>Log type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -110,7 +110,7 @@ export function EditMaintenanceLogDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn loại" />
+                        <SelectValue placeholder="Select a type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -131,8 +131,7 @@ export function EditMaintenanceLogDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Tóm tắt công việc{" "}
-                    <span className="text-destructive">*</span>
+                    Work summary <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea rows={3} {...field} />
@@ -146,7 +145,7 @@ export function EditMaintenanceLogDialog({
               name="diagnosisDetails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chi tiết chẩn đoán</FormLabel>
+                  <FormLabel>Diagnosis details</FormLabel>
                   <FormControl>
                     <Textarea rows={2} {...field} />
                   </FormControl>
@@ -159,7 +158,7 @@ export function EditMaintenanceLogDialog({
               name="actionsTaken"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Hành động đã thực hiện</FormLabel>
+                  <FormLabel>Actions taken</FormLabel>
                   <FormControl>
                     <Textarea rows={2} {...field} />
                   </FormControl>
@@ -172,7 +171,7 @@ export function EditMaintenanceLogDialog({
               name="durationMinutes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Thời lượng (phút)</FormLabel>
+                  <FormLabel>Duration (minutes)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -200,7 +199,7 @@ export function EditMaintenanceLogDialog({
               name="resolutionNote"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú kết quả</FormLabel>
+                  <FormLabel>Resolution note</FormLabel>
                   <FormControl>
                     <Textarea rows={2} {...field} />
                   </FormControl>
@@ -215,10 +214,10 @@ export function EditMaintenanceLogDialog({
                 onClick={onClose}
                 disabled={isPending}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang lưu..." : "Lưu thay đổi"}
+                {isPending ? "Saving..." : "Save changes"}
               </Button>
             </DialogFooter>
           </form>

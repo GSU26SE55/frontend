@@ -1,8 +1,8 @@
-// State của AlertTicketSagaStateMachine (BE trả string qua `currentState`).
-// MassTransit lưu state dạng string — không phải enum số như các enum BE khác.
-// Nguồn: TicketService.Infrastructure/Sagas/AlertTicketSagaStateMachine.cs
+// States of AlertTicketSagaStateMachine (BE returns a string via `currentState`).
+// MassTransit stores state as a string — not a numeric enum like the other BE enums.
+// Source: TicketService.Infrastructure/Sagas/AlertTicketSagaStateMachine.cs
 // Lifecycle: Initial → TicketRequested → TicketProvisioned → AlertLinkRequested → Completed.
-// Failed là terminal — bất kỳ stage nào bị reject hoặc hết retry.
+// Failed is terminal — any stage that is rejected or runs out of retries.
 export const SagaStateEnum = {
   Initial: "Initial",
   TicketRequested: "TicketRequested",
@@ -14,14 +14,14 @@ export const SagaStateEnum = {
 export type SagaStateEnum = (typeof SagaStateEnum)[keyof typeof SagaStateEnum];
 
 export const SAGA_STATE_LABELS: Record<SagaStateEnum, string> = {
-  [SagaStateEnum.Initial]: "Khởi tạo",
-  [SagaStateEnum.TicketRequested]: "Đang tạo ticket",
-  [SagaStateEnum.TicketProvisioned]: "Đã tạo ticket",
-  [SagaStateEnum.AlertLinkRequested]: "Đang liên kết cảnh báo",
-  [SagaStateEnum.Completed]: "Hoàn tất",
-  [SagaStateEnum.Failed]: "Thất bại",
+  [SagaStateEnum.Initial]: "Initializing",
+  [SagaStateEnum.TicketRequested]: "Creating ticket",
+  [SagaStateEnum.TicketProvisioned]: "Ticket created",
+  [SagaStateEnum.AlertLinkRequested]: "Linking alert",
+  [SagaStateEnum.Completed]: "Completed",
+  [SagaStateEnum.Failed]: "Failed",
 };
 
-// State lạ (BE thêm state mới mà FE chưa cập nhật) → hiện nguyên chuỗi thay vì rỗng.
+// Unknown state (BE added a new state the FE hasn't caught up with) → show the raw string instead of blank.
 export const sagaStateLabel = (s: string) =>
   SAGA_STATE_LABELS[s as SagaStateEnum] ?? s;

@@ -11,10 +11,10 @@ import type {
 } from "@/shared/types/chat/chat.types";
 import { MESSAGES } from "@/shared/constants/messages";
 
-// Edit/Delete/Mark-read cho ticket chat — dùng chung staff & manager.
-// Invalidate tickets.chats song song với realtime (useTicketCommentsRealtime đã
-// invalidate cùng key khi nhận ChatEdited/ChatDeleted) — tránh flash dữ liệu cũ
-// cho chính người thao tác nếu round-trip SignalR chậm hơn response mutation.
+// Edit/Delete/Mark-read for ticket chat — shared by staff & manager.
+// Invalidates tickets.chats in parallel with realtime (useTicketCommentsRealtime already
+// invalidates the same key on receiving ChatEdited/ChatDeleted) — avoids flashing stale data
+// to the acting user themselves if the SignalR round-trip is slower than the mutation response.
 export function useUpdateTicketChat() {
   const qc = useQueryClient();
   return useMutation({
@@ -55,10 +55,10 @@ export function useDeleteTicketChat() {
 }
 
 /**
- * Số chat chưa đọc của chính user trong 1 ticket — badge tab "Bình luận".
+ * Number of unread chats for the current user on a ticket — badge on the "Comments" tab.
  *
- * staleTime 0 + realtime: `useTicketCommentsRealtime` invalidate key này khi có
- * ChatAdded/Deleted nên badge tăng/giảm ngay, không cần polling.
+ * staleTime 0 + realtime: `useTicketCommentsRealtime` invalidates this key on
+ * ChatAdded/Deleted, so the badge updates immediately without polling.
  */
 export function useTicketChatUnreadCount(ticketId: string) {
   return useQuery({
@@ -82,7 +82,7 @@ export function useMarkTicketChatsRead() {
       ticketId: string;
       payload: ChatMarkReadPayload;
     }) => ticketChatActionsService.markRead(ticketId, payload),
-    // Đọc xong → badge phải tụt ngay, nếu không user mở tab mà số vẫn treo.
+    // Once read → the badge must drop immediately, otherwise the user opens the tab but the count still shows stale.
     onSuccess: (_, { ticketId }) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
@@ -92,9 +92,9 @@ export function useMarkTicketChatsRead() {
   });
 }
 
-// Không invalidate/cache theo query key — kết quả dịch được caller (TicketCommentThread)
-// giữ cục bộ theo từng chatId để cho phép toggle gốc/dịch không cần gọi lại BE
-// (BE cũng đã cache theo (chatId, targetLanguage) ở tầng DB).
+// Not invalidated/cached by query key — the caller (TicketCommentThread) holds the translation
+// result locally per chatId, letting the original/translated toggle skip a BE call
+// (BE also caches by (chatId, targetLanguage) at the DB layer).
 export function useTranslateTicketChat() {
   return useMutation({
     mutationFn: ({
@@ -113,9 +113,9 @@ export function useTranslateTicketChat() {
   });
 }
 
-// Gửi tin nhắn thoại: upload audio lên FileStorage rồi POST metadata xuống /chats/voice
-// (service lo cả 2 bước). BE tạo chat placeholder + transcribe async → invalidate để thấy
-// bubble mới ngay (trạng thái Pending), transcript tự cập nhật sau qua realtime/refetch.
+// Sends a voice message: uploads audio to FileStorage then POSTs metadata to /chats/voice
+// (the service handles both steps). BE creates a chat placeholder + transcribes async → invalidate
+// to show the new bubble right away (Pending state), the transcript updates later via realtime/refetch.
 export function useTranscribeVoiceChat() {
   const qc = useQueryClient();
   return useMutation({
@@ -133,8 +133,8 @@ export function useTranscribeVoiceChat() {
   });
 }
 
-// Retry transcribe chat thoại đã Failed (BE trả 202, đưa status về Pending).
-// Invalidate để badge/bubble phản ánh Pending ngay; transcript cập nhật sau.
+// Retries transcribing a voice chat that Failed (BE returns 202, sets status back to Pending).
+// Invalidates so the badge/bubble reflects Pending right away; the transcript updates later.
 export function useRetryVoiceChat() {
   const qc = useQueryClient();
   return useMutation({
@@ -148,9 +148,9 @@ export function useRetryVoiceChat() {
   });
 }
 
-// ── GH-133 Nhóm C — AI chats + download attachment ─────────────────────────
-// C2 (AI). Trả nguyên CommonResponse để caller phân biệt isSuccess=false
-// (Gemini 429 → BE trả isSuccess:false + message, HTTP vẫn 200) với suggestions thật.
+// ── GH-133 Group C — AI chats + download attachment ────────────────────────
+// C2 (AI). Returns the raw CommonResponse so the caller can distinguish isSuccess=false
+// (Gemini 429 → BE returns isSuccess:false + message, HTTP still 200) from real suggestions.
 export function useSuggestChat() {
   return useMutation({
     mutationFn: ({
@@ -173,7 +173,7 @@ export function useSummarizeChat() {
   });
 }
 
-// C3 — download attachment: 200 (mở url) · 202 (đang scan) · 451 (nhiễm virus).
+// C3 — download attachment: 200 (opens the url) · 202 (still scanning) · 451 (infected).
 export function useDownloadChatAttachment() {
   return useMutation({
     mutationFn: ({

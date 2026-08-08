@@ -44,21 +44,21 @@ import {
 
 const ALL = "__all__";
 
-// 02/08/2026 — BE lọc theo giá trị SỐ của enum; option hiện nhãn tiếng Việt, value là số.
-// Sắp theo bảng chữ cái tiếng Việt để dropdown 34 mục còn tra được bằng mắt.
+// 08/02/2026 — BE filters by the enum's NUMERIC value; the option shows an English label, the value is a number.
+// Sorted alphabetically so the 34-item dropdown can still be scanned visually.
 const TYPE_OPTIONS = Object.values(NotificationTypeEnum)
   .map((value) => ({ value, label: notificationTypeLabel(value) }))
-  .sort((a, b) => a.label.localeCompare(b.label, "vi"));
+  .sort((a, b) => a.label.localeCompare(b.label, "en"));
 
 const CHANNEL_OPTIONS = Object.values(NotificationChannelEnum).map((value) => ({
   value,
   label: notificationChannelLabel(value),
 }));
 
-// Chuỗi rỗng = không lọc. useUrlFilters xoá key rỗng khỏi URL và TỰ đưa pageNumber về 1 mỗi khi
-// đổi filter — nhờ vậy không bao giờ rơi vào cảnh "đang ở trang 9, lọc còn 2 trang, bảng trống".
+// Empty string = no filter. useUrlFilters strips empty keys from the URL and AUTOMATICALLY resets
+// pageNumber to 1 whenever a filter changes — this avoids ever landing on "page 9, filter now has 2 pages, table empty".
 //
-// type/channel để kiểu chuỗi ở tầng URL (query param vốn là chuỗi), chuyển sang số khi gọi API.
+// type/channel stay as strings at the URL layer (query params are inherently strings), converted to numbers when calling the API.
 const DEFAULTS = {
   type: "",
   channel: "",
@@ -67,17 +67,17 @@ const DEFAULTS = {
 };
 
 const FILTER_DEFS = [
-  { key: "type", label: "Loại", options: TYPE_OPTIONS },
-  { key: "channel", label: "Kênh", options: CHANNEL_OPTIONS },
+  { key: "type", label: "Type", options: TYPE_OPTIONS },
+  { key: "channel", label: "Channel", options: CHANNEL_OPTIONS },
 ] as const;
 
 export default function NotificationTemplatesPage() {
   const { filters, setFilter } = useUrlFilters(DEFAULTS);
   const [previewTarget, setPreviewTarget] =
     useState<NotificationTemplateDto | null>(null);
-  // `null` = đóng; `{ target: null }` = mở ở chế độ tạo mới; `{ target: t }` = sửa mẫu t.
-  // Gói trong object để phân biệt "đang đóng" với "đang mở để tạo mới" — hai trạng thái này mà
-  // cùng biểu diễn bằng null thì dialog tạo mới không bao giờ mở được.
+  // `null` = closed; `{ target: null }` = open in create mode; `{ target: t }` = edit template t.
+  // Wrapped in an object to distinguish "closed" from "open to create" — if both states were
+  // represented by null, the create dialog could never open.
   const [formState, setFormState] = useState<{
     target: NotificationTemplateDto | null;
   } | null>(null);
@@ -86,7 +86,7 @@ export default function NotificationTemplatesPage() {
 
   const params = useMemo(
     () => ({
-      // URL giữ chuỗi, API nhận số — Number("") = 0 nên phải kiểm tra rỗng trước.
+      // URL keeps a string, the API expects a number — Number("") = 0, so check for empty first.
       type: filters.type
         ? (Number(filters.type) as NotificationTypeEnum)
         : undefined,
@@ -112,20 +112,21 @@ export default function NotificationTemplatesPage() {
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             <FileText className="inline size-3 mr-1 -mt-0.5" />
-            Thông báo
+            Notifications
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Mẫu thông báo
+            Notification templates
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Soạn, xem trước, gửi thử và quay lui phiên bản. Sửa nội dung sẽ tạo
-            phiên bản mới; mỗi cặp (loại × kênh) chỉ có đúng một bản đang dùng.
+            Draft, preview, test-send, and roll back versions. Editing content
+            creates a new version; each (type × channel) pair has exactly one
+            version in use.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton queryKeys={[KEY.admin.notificationTemplates]} />
           <Button size="sm" onClick={() => setFormState({ target: null })}>
-            <Plus className="size-3.5" /> Tạo mẫu
+            <Plus className="size-3.5" /> Create template
           </Button>
         </div>
       </div>
@@ -139,12 +140,12 @@ export default function NotificationTemplatesPage() {
               <span className="text-xs text-muted-foreground">{f.label}</span>
               <Select
                 value={filters[f.key] || ALL}
-                // Select trả null khi bỏ chọn → quy về chuỗi rỗng (không lọc).
+                // Select returns null when deselected → normalize to an empty string (no filter).
                 onValueChange={(v) =>
                   setFilter(f.key, !v || v === ALL ? "" : v)
                 }
                 items={[
-                  { value: ALL, label: "Tất cả" },
+                  { value: ALL, label: "All" },
                   ...f.options.map((o) => ({
                     value: String(o.value),
                     label: o.label,
@@ -155,7 +156,7 @@ export default function NotificationTemplatesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
-                  <SelectItem value={ALL}>Tất cả</SelectItem>
+                  <SelectItem value={ALL}>All</SelectItem>
                   {f.options.map((o) => (
                     <SelectItem key={o.value} value={String(o.value)}>
                       {o.label}
@@ -190,15 +191,15 @@ export default function NotificationTemplatesPage() {
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
 
-      {/* key = id → đổi template thì remount, state preview/quota tự sạch. */}
+      {/* key = id → remounts when the template changes, so preview/quota state resets automatically. */}
       <NotificationTemplatePreviewDialog
         key={previewTarget?.id}
         template={previewTarget}
         onClose={() => setPreviewTarget(null)}
       />
 
-      {/* key theo mục tiêu → remount để defaultValues của form luôn khớp mẫu đang mở,
-          khỏi cần effect reset (vốn gây một nhịp render mang dữ liệu của mẫu trước). */}
+      {/* key on the target → remounts so the form's defaultValues always match the open template,
+          avoiding a reset effect (which would otherwise cause one render carrying the previous template's data). */}
       {formState && (
         <NotificationTemplateFormDialog
           key={formState.target?.id ?? "create"}
@@ -214,16 +215,16 @@ export default function NotificationTemplatesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá phiên bản này?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this version?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget && (
                 <>
-                  Xoá <strong>v{deleteTarget.version}</strong> của mẫu{" "}
+                  Delete <strong>v{deleteTarget.version}</strong> of template{" "}
                   <strong>
                     {notificationTypeLabel(deleteTarget.type)} ·{" "}
                     {notificationChannelLabel(deleteTarget.channel)}
                   </strong>
-                  . Bản đang dùng không bị ảnh hưởng.
+                  . The version currently in use is not affected.
                 </>
               )}
             </AlertDialogDescription>
@@ -237,7 +238,7 @@ export default function NotificationTemplatesPage() {
                 setDeleteTarget(null);
               }}
             >
-              Xoá
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

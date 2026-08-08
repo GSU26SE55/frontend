@@ -55,10 +55,10 @@ const ForgotPasswordForm = ({ onSuccess }: ForgotPasswordFormProps) => {
         {isPending ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
-            Đang gửi…
+            Sending…
           </>
         ) : (
-          "Gửi mã OTP"
+          "Send OTP"
         )}
       </Button>
     </form>

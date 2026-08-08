@@ -68,7 +68,7 @@ export function useAdminKbUsageStats(id: string) {
   });
 }
 
-// create/update là form → component xử lý lỗi qua try/catch + setError
+// create/update are used in a form → the component handles errors via try/catch + setError
 export function useCreateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -92,7 +92,7 @@ export function useUpdateKbArticle() {
       payload: UpdateKbArticlePayload;
     }) => adminKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (article, { id }) => {
-      // BE đưa bài về PendingReview khi thay đổi cần duyệt — nội dung mới chưa hiển thị ngay.
+      // BE moves the article to PendingReview when the change needs approval — the new content isn't shown yet.
       toast.success(
         article?.status === KbArticleStatusEnum.PendingReview
           ? ADMIN_MESSAGES.kb.updatePending
@@ -104,7 +104,7 @@ export function useUpdateKbArticle() {
   });
 }
 
-// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+// Duplicate a KB article → creates a new version (Draft), returns an action DTO with the new version's id.
 export function useDuplicateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -182,7 +182,7 @@ function useKbWorkflow<TVars>(
 export function useApproveKbReview() {
   return useKbWorkflow(
     (id: string) => adminKbService.approveReview(id),
-    "Đã phê duyệt và xuất bản",
+    "Approved and published",
     (id) => id,
   );
 }
@@ -191,7 +191,7 @@ export function useRejectKbReview() {
   return useKbWorkflow(
     (vars: { id: string; payload: RejectReviewPayload }) =>
       adminKbService.rejectReview(vars.id, vars.payload),
-    "Đã từ chối thay đổi",
+    "Change rejected",
     (vars) => vars.id,
   );
 }
@@ -199,7 +199,7 @@ export function useRejectKbReview() {
 export function usePublishKbArticle() {
   return useKbWorkflow(
     (id: string) => adminKbService.publish(id),
-    "Đã xuất bản bài viết",
+    "Article published",
     (id) => id,
   );
 }
@@ -207,7 +207,7 @@ export function usePublishKbArticle() {
 export function useArchiveKbArticle() {
   return useKbWorkflow(
     (id: string) => adminKbService.archive(id),
-    "Đã lưu trữ bài viết",
+    "Article archived",
     (id) => id,
   );
 }
@@ -216,7 +216,7 @@ export function useRollbackKbArticle() {
   return useKbWorkflow(
     (vars: { id: string; payload: RollbackPayload }) =>
       adminKbService.rollback(vars.id, vars.payload),
-    "Đã hoàn tác phiên bản",
+    "Version reverted",
     (vars) => vars.id,
   );
 }

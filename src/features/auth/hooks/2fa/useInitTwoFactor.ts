@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { accountService } from "@/features/auth/services/account.service";
 
-// GH-295: bước 1 enroll 2FA — sinh secret + QR + pendingToken (CHƯA activate)
+// GH-295: 2FA enrollment step 1 — generate secret + QR + pendingToken (NOT yet activated)
 export const useInitTwoFactor = () =>
   useMutation({
     mutationFn: () => accountService.initTwoFactor(),

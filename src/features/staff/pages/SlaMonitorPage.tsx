@@ -22,14 +22,14 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 export default function SlaMonitorPage() {
   const navigate = useNavigate();
-  // E — filter + sort server-side (thay lọc client trên 1 trang cap 100).
+  // E — filter + sort server-side (replaces client-side filtering on a 100-item capped page).
   const { data, isLoading, isError, refetch, isFetching } = useStaffTickets({
     pageNumber: 1,
     pageSize: 100,
     slaOpen: true,
     sortBy: "slaRemaining",
   });
-  // B — KPI đếm chính xác toàn bộ (không phụ thuộc trang).
+  // B — KPI counts the full total accurately (independent of the current page).
   const { data: staffStats, isLoading: statsLoading } =
     useStaffTicketDashboardStats();
 
@@ -48,7 +48,7 @@ export default function SlaMonitorPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">SLA Monitor</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Theo dõi SLA của các ticket đang được giao cho bạn.
+            Track SLA for the tickets assigned to you.
           </p>
         </div>
         <Button
@@ -60,19 +60,19 @@ export default function SlaMonitorPage() {
           <TimerReset
             className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
           />
-          Làm mới
+          Refresh
         </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard
-          label="Đang theo dõi"
+          label="Monitoring"
           value={statsLoading ? "--" : monitoredCount}
           sub="tickets"
           icon={<Clock className="size-4" />}
         />
         <KpiCard
-          label="Sắp breach"
+          label="Near breach"
           value={statsLoading ? "--" : nearBreach}
           sub="<= 25%"
           icon={<AlertTriangle className="size-4" />}
@@ -80,7 +80,7 @@ export default function SlaMonitorPage() {
           iconColor="text-amber-600 dark:text-amber-300"
         />
         <KpiCard
-          label="Đã breach"
+          label="Breached"
           value={statsLoading ? "--" : breachedCount}
           sub="tickets"
           icon={<AlertTriangle className="size-4" />}
@@ -88,7 +88,7 @@ export default function SlaMonitorPage() {
           iconColor="text-destructive"
         />
         <KpiCard
-          label="Tạm dừng"
+          label="Paused"
           value={statsLoading ? "--" : pausedCount}
           sub="tickets"
           icon={<CheckCircle className="size-4" />}
@@ -102,8 +102,8 @@ export default function SlaMonitorPage() {
           <CardTitle>Ticket SLA</CardTitle>
           {monitoredCount > monitoredTickets.length && (
             <p className="text-xs text-muted-foreground">
-              Hiển thị {monitoredTickets.length}/{monitoredCount} ticket — gần
-              breach nhất trước.
+              Showing {monitoredTickets.length}/{monitoredCount} tickets —
+              closest to breach first.
             </p>
           )}
         </CardHeader>
@@ -115,11 +115,11 @@ export default function SlaMonitorPage() {
           </div>
         ) : isError ? (
           <CardContent className="py-10 text-center text-destructive">
-            Không thể tải dữ liệu SLA.
+            Couldn't load SLA data.
           </CardContent>
         ) : monitoredTickets.length === 0 ? (
           <CardContent className="py-10 text-center text-muted-foreground">
-            Không có ticket nào đang chạy SLA.
+            No tickets currently running an SLA.
           </CardContent>
         ) : (
           <Table>
@@ -130,10 +130,10 @@ export default function SlaMonitorPage() {
                 </TableHead>
                 <TableHead>{TABLE_COLUMNS.ticket}</TableHead>
                 <TableHead>{TABLE_COLUMNS.status}</TableHead>
-                <TableHead>Ưu tiên</TableHead>
+                <TableHead>Priority</TableHead>
                 <TableHead>{TABLE_COLUMNS.sla}</TableHead>
-                <TableHead>Hạn xử lý</TableHead>
-                <TableHead className="text-right">Chi tiết</TableHead>
+                <TableHead>Due</TableHead>
+                <TableHead className="text-right">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,7 +170,7 @@ export default function SlaMonitorPage() {
                       size="sm"
                       onClick={() => navigate(`/staff/tickets/${ticket.id}`)}
                     >
-                      Mở
+                      Open
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -182,9 +182,9 @@ export default function SlaMonitorPage() {
 
       <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
         <Badge variant="destructive">Breached</Badge>
-        <span>Ticket quá hạn SLA.</span>
+        <span>Ticket is past its SLA deadline.</span>
         <Badge variant="outline">Warning</Badge>
-        <span>Ticket còn tối đa 25% thời gian SLA.</span>
+        <span>Ticket has at most 25% of its SLA time left.</span>
       </div>
     </div>
   );

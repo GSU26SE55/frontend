@@ -18,9 +18,9 @@ import type {
   NotificationBatchListParams,
 } from "@/features/admin/types/notification/notification-group.types";
 
-// Nhóm đổi không thường xuyên, nhưng `memberCount` phụ thuộc trạng thái tài khoản (đồng bộ từ
-// AuthService qua message bus) nên KHÔNG cache lâu như template — 1 phút là đủ để không nháy
-// liên tục mà vẫn kịp thấy người mới được kích hoạt.
+// Groups don't change often, but `memberCount` depends on account status (synced from
+// AuthService via the message bus), so it should NOT be cached as long as templates — 1 minute is
+// enough to avoid constant flicker while still seeing newly activated members promptly.
 export const useNotificationGroups = (params?: NotificationGroupListParams) =>
   useQuery({
     queryKey: QUERY_KEY.admin.notificationGroups.list(params),
@@ -50,10 +50,10 @@ export const useCreateNotificationGroup = () => {
       notificationGroupService.create(payload).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationGroups });
-      toast.success(res.message ?? "Đã tạo nhóm.");
+      toast.success(res.message ?? "Group created.");
     },
-    // KHÔNG bắt onError ở đây: form dùng try-catch + handleErrorApi({ error, setError }) để lỗi
-    // 409 trùng tên hiện ngay dưới ô nhập thay vì trôi qua dưới dạng toast.
+    // Do NOT catch onError here: the form uses try-catch + handleErrorApi({ error, setError }) so
+    // a 409 duplicate-name error shows right under the input instead of drifting by as a toast.
   });
 };
 
@@ -69,7 +69,7 @@ export const useUpdateNotificationGroup = () => {
     }) => notificationGroupService.update(id, payload).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationGroups });
-      toast.success(res.message ?? "Đã cập nhật nhóm.");
+      toast.success(res.message ?? "Group updated.");
     },
   });
 };
@@ -81,9 +81,9 @@ export const useDeleteNotificationGroup = () => {
       notificationGroupService.remove(id).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationGroups });
-      toast.success(res.message ?? "Đã xoá nhóm.");
+      toast.success(res.message ?? "Group deleted.");
     },
-    // Không có form → toast trực tiếp (quy ước fe.md).
+    // No form → toast directly (fe.md convention).
     onError: (error) => handleErrorApi({ error }),
   });
 };
@@ -100,12 +100,12 @@ export const useAddGroupMembers = () => {
     }) => notificationGroupService.addMembers(id, payload).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationGroups });
-      // Message của BE đã nói rõ bao nhiêu người bị bỏ qua và vì sao — hiện nguyên văn, vì
-      // "đã thêm" chung chung sẽ khiến admin tưởng nhóm đã đủ người rồi gửi thiếu.
+      // BE's message already states how many people were skipped and why — show it verbatim, since
+      // a generic "added" would make the admin think the group is fully staffed and send short.
       const skipped =
         (res.data?.alreadyMembers ?? 0) + (res.data?.unknownAccounts ?? 0);
-      if (skipped > 0) toast.warning(res.message ?? "Đã thêm thành viên.");
-      else toast.success(res.message ?? "Đã thêm thành viên.");
+      if (skipped > 0) toast.warning(res.message ?? "Members added.");
+      else toast.success(res.message ?? "Members added.");
     },
     onError: (error) => handleErrorApi({ error }),
   });
@@ -118,21 +118,21 @@ export const useRemoveGroupMember = () => {
       notificationGroupService.removeMember(id, userId).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationGroups });
-      toast.success(res.message ?? "Đã bỏ khỏi nhóm.");
+      toast.success(res.message ?? "Removed from group.");
     },
     onError: (error) => handleErrorApi({ error }),
   });
 };
 
-// ── Gửi hàng loạt ────────────────────────────────────────────────────────────────────────────
+// ── Broadcast send ────────────────────────────────────────────────────────────────────────────
 
 /**
- * Xem trước số người nhận. Là `useQuery` chứ không phải mutation vì kết quả chỉ phụ thuộc lựa
- * chọn hiện tại — đổi nhóm là truy vấn lại, và React Query tự huỷ lượt cũ nên không có chuyện
- * kết quả về trễ ghi đè con số mới.
+ * Preview the recipient count. This is a `useQuery`, not a mutation, because the result only
+ * depends on the current selection — changing the group re-queries, and React Query cancels the
+ * stale request automatically so a late response can never overwrite a newer count.
  *
- * `enabled` khi chưa chọn gì thì tắt hẳn: gọi API với danh sách rỗng chỉ tốn một lượt đi về để
- * nhận lại số 0.
+ * `enabled` turns fully off when nothing is selected: calling the API with an empty list would
+ * just spend a round trip to get back a 0.
  */
 export const useBroadcastPreview = (
   payload: BroadcastPreviewPayload,
@@ -147,11 +147,11 @@ export const useBroadcastPreview = (
   });
 
 /**
- * Xem trước NỘI DUNG theo từng kênh khi bật "dùng mẫu".
+ * Preview the CONTENT per channel when "use template" is enabled.
  *
- * Khác `useBroadcastPreview` (chỉ đếm người nhận): hook này trả về chữ mà mỗi kênh sẽ hiện. Phải
- * tách theo kênh vì mẫu khoá theo (Loại × Kênh) và bản SMS được nén ngắn riêng — một ô xem trước
- * duy nhất sẽ nói dối về các kênh còn lại.
+ * Unlike `useBroadcastPreview` (which only counts recipients): this hook returns the actual text
+ * each channel will show. Must be split by channel because templates are keyed by (Type × Channel)
+ * and the SMS version is compressed separately — a single preview box would lie about the other channels.
  */
 export const useBroadcastTemplatePreview = (
   payload: BroadcastTemplatePreviewPayload,
@@ -174,9 +174,9 @@ export const useSendBroadcast = () => {
       notificationBroadcastService.send(payload).then((r) => r.data),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: KEY.admin.notificationBatches });
-      // KEY.notifications là chuỗi (khác các KEY.admin.* vốn là mảng) — bọc lại cho đúng kiểu.
+      // KEY.notifications is a string (unlike the KEY.admin.* keys, which are arrays) — wrap it to match the type.
       qc.invalidateQueries({ queryKey: [KEY.notifications] });
-      toast.success(res.message ?? "Đã gửi thông báo.");
+      toast.success(res.message ?? "Notification sent.");
     },
   });
 };
@@ -189,8 +189,8 @@ export const useNotificationBatches = (params?: NotificationBatchListParams) =>
     staleTime: 30_000,
   });
 
-// Thống kê đã gửi/đã đọc thay đổi theo thời gian khi worker giao dần và người nhận mở ra, nên
-// coi là luôn cũ và làm mới mỗi 15 giây trong lúc dialog còn mở.
+// Sent/read stats change over time as the worker delivers gradually and recipients open them, so
+// treat it as always stale and refresh every 15 seconds while the dialog stays open.
 export const useNotificationBatchDetail = (id: string | undefined) =>
   useQuery({
     queryKey: QUERY_KEY.admin.notificationBatches.detail(id ?? ""),

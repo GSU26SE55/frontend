@@ -26,51 +26,51 @@ import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import type { SensorReadingInterval } from "@/shared/types/battery/sensor-reading-history.types";
 import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
 
-// Mỗi metric 1 mini chart riêng — đơn vị (V/A/°C/%) khác nhau quá xa nếu
-// gộp chung 1 trục Y sẽ làm đường Điện áp gần như phẳng đáy, Dòng điện bị nén.
-// Tách riêng để mỗi trục tự scale theo data của chính nó.
+// Each metric gets its own mini chart — the units (V/A/°C/%) differ too much to share
+// a single Y axis: Voltage would look nearly flat while Current gets squashed.
+// Splitting them lets each axis auto-scale to its own data.
 const METRICS = [
-  { key: "avgVoltage", label: "Điện áp", unit: "V", color: "var(--chart-1)" },
-  { key: "avgCurrent", label: "Dòng điện", unit: "A", color: "var(--chart-5)" },
+  { key: "avgVoltage", label: "Voltage", unit: "V", color: "var(--chart-1)" },
+  { key: "avgCurrent", label: "Current", unit: "A", color: "var(--chart-5)" },
   {
     key: "avgTemperature",
-    label: "Nhiệt độ",
+    label: "Temperature",
     unit: "°C",
     color: "var(--chart-2)",
   },
   { key: "avgSocPercent", label: "SOC", unit: "%", color: "var(--chart-3)" },
 ] as const;
 
-const CHARGE_COLOR = "var(--chart-1)"; // dòng điện dương — đang sạc
-const DISCHARGE_COLOR = "var(--destructive)"; // dòng điện âm — đang xả
-const DANGER_ZONE_COLOR = "var(--destructive)"; // vùng ngoài ngưỡng an toàn
+const CHARGE_COLOR = "var(--chart-1)"; // positive current — charging
+const DISCHARGE_COLOR = "var(--destructive)"; // negative current — discharging
+const DANGER_ZONE_COLOR = "var(--destructive)"; // zone outside the safe threshold
 
 const chartConfig = METRICS.reduce<ChartConfig>((acc, m) => {
   acc[m.key] = { label: `${m.label} (${m.unit})`, color: m.color };
   return acc;
 }, {}) satisfies ChartConfig;
 
-// Range lớn → dùng /aggregate (TimescaleDB time_bucket), không dùng /history.
+// Large ranges → use /aggregate (TimescaleDB time_bucket), not /history.
 const RANGES = {
   "1h": {
     hours: 1,
     interval: "1m" as SensorReadingInterval,
-    label: "1 giờ",
+    label: "1 hour",
   },
   "24h": {
     hours: 24,
     interval: "1h" as SensorReadingInterval,
-    label: "24 giờ",
+    label: "24 hours",
   },
   "7d": {
     hours: 24 * 7,
     interval: "1h" as SensorReadingInterval,
-    label: "7 ngày",
+    label: "7 days",
   },
   "30d": {
     hours: 24 * 30,
     interval: "1d" as SensorReadingInterval,
-    label: "30 ngày",
+    label: "30 days",
   },
 };
 type RangeKey = keyof typeof RANGES;
@@ -95,11 +95,11 @@ function numericValues(
     .filter((v): v is number => typeof v === "number");
 }
 
-// Cảm biến IoT thỉnh thoảng bắn 1 điểm nhiễu/spike bất thường (giả lập hoặc lỗi
-// đọc). Nếu tính domain trực tiếp từ min/max thô, 1 điểm nhiễu đó kéo giãn cả
-// trục Y làm toàn bộ chart bẹp dí. Lọc outlier bằng IQR (Tukey fence 1.5x)
-// trước khi tính domain — điểm nhiễu vẫn được vẽ (bị cắt ở mép chart) nhưng
-// không phá scale của các điểm còn lại.
+// The IoT sensor occasionally emits a noisy/abnormal spike (simulated or a read
+// error). Computing the domain directly from raw min/max lets that one spike
+// stretch the whole Y axis flat. Filter outliers with IQR (1.5x Tukey fence)
+// before computing the domain — the noisy point is still plotted (clipped at
+// the chart edge) but doesn't distort the scale for the rest of the points.
 function dropOutliers(values: number[]): number[] {
   if (values.length < 4) return values;
   const sorted = [...values].sort((a, b) => a - b);
@@ -123,11 +123,11 @@ function computeAutoDomain(values: number[]): [number, number] {
   return [min - pad, max + pad];
 }
 
-// Domain neo theo vùng an toàn với tỉ lệ giãn CỐ ĐỊNH (25% độ rộng vùng an
-// toàn mỗi bên) thay vì co theo min/max dữ liệu thô — nếu không, khi dữ liệu
-// dao động sát ngưỡng, vùng đỏ có thể phình to chiếm gần nửa chart trông rất
-// mất cân đối. Chỉ giãn thêm khi dữ liệu (đã lọc outlier) thực sự vượt xa
-// khung này, để không cắt mất phần vượt ngưỡng đáng kể.
+// The domain is anchored to the safe zone with a FIXED expansion ratio (25% of the safe
+// zone's width on each side) rather than shrinking to the raw data min/max — otherwise,
+// when the data hovers near the threshold, the red zone can balloon to nearly half the
+// chart and look very unbalanced. Only expand further when the (outlier-filtered) data
+// genuinely goes well beyond this frame, so a meaningful breach isn't clipped off.
 function computeSafeZoneDomain(
   values: number[],
   safeRange: { min: number; max: number },
@@ -151,10 +151,11 @@ function formatAxisNumber(value: number): string {
   return Number(value.toFixed(decimals)).toLocaleString("vi-VN");
 }
 
-// Recipe chuẩn của Recharts để tô 2 màu khác nhau trên cùng 1 Area tại điểm
-// cắt y=0 (dương/sạc vs âm/xả) — offset là vị trí % (0-1) của điểm y=0 trong
-// domain ĐÃ RENDER (low/high sau khi tính robust ở computeDomain), không phải
-// min/max thô — nếu không điểm cắt màu sẽ lệch khỏi vị trí y=0 thật trên trục.
+// Standard Recharts recipe for painting 2 different colors on a single Area at the
+// y=0 crossing (positive/charge vs negative/discharge) — the offset is the % position
+// (0-1) of the y=0 point within the RENDERED domain (low/high after the robust
+// computeDomain), not the raw min/max — otherwise the color split would drift away
+// from the real y=0 position on the axis.
 function zeroCrossingOffset(low: number, high: number): number {
   if (high <= 0) return 0;
   if (low >= 0) return 1;
@@ -216,14 +217,14 @@ function MetricMiniChart({
                 className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: CHARGE_COLOR }}
               />
-              Sạc
+              Charge
             </span>
             <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
               <span
                 className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: DISCHARGE_COLOR }}
               />
-              Xả (A)
+              Discharge (A)
             </span>
           </div>
         ) : (
@@ -237,7 +238,7 @@ function MetricMiniChart({
         )}
         {dangerZone && (
           <span className="text-[10px] text-muted-foreground/70 shrink-0">
-            An toàn: {dangerZone.min}–{dangerZone.max}
+            Safe: {dangerZone.min}–{dangerZone.max}
             {metric.unit}
           </span>
         )}
@@ -355,7 +356,7 @@ function ChartBody({
       <div
         className={`${containerClassName} flex items-center justify-center text-sm text-muted-foreground`}
       >
-        Đang tải...
+        Loading...
       </div>
     );
   }
@@ -364,7 +365,7 @@ function ChartBody({
       <div
         className={`${containerClassName} flex items-center justify-center text-sm text-muted-foreground`}
       >
-        Chưa có dữ liệu trong khoảng thời gian này
+        No data in this time range
       </div>
     );
   }
@@ -376,7 +377,7 @@ function ChartBody({
     <div className={`${containerClassName} flex flex-col`}>
       {isSparse && (
         <p className="text-[11px] text-muted-foreground text-center pb-1 shrink-0">
-          Đang thu thập dữ liệu — hiển thị {chartData.length} điểm đo gần nhất
+          Collecting data — showing the {chartData.length} most recent readings
         </p>
       )}
       <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -459,7 +460,7 @@ export default function SensorChart({
     return (
       <div className="flex flex-col h-full px-5 py-4">
         <div className="flex items-center justify-between mb-4 shrink-0">
-          <span className="text-sm font-medium">Biểu đồ cảm biến</span>
+          <span className="text-sm font-medium">Sensor chart</span>
           {rangeSelect}
         </div>
         <div className="flex-1 min-h-0">
@@ -477,7 +478,7 @@ export default function SensorChart({
   return (
     <Card>
       <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-base">Biểu đồ cảm biến</CardTitle>
+        <CardTitle className="text-base">Sensor chart</CardTitle>
         {rangeSelect}
       </CardHeader>
       <CardContent>

@@ -1,36 +1,38 @@
-// Bóc danh sách biến {{...}} ra khỏi template Handlebars, để dựng form nhập dữ liệu mẫu thay vì
-// bắt admin gõ JSON tay.
+// Extracts the list of {{...}} variables from a Handlebars template, to build a sample-data input
+// form instead of making the admin type raw JSON by hand.
 //
-// Vì sao cần: mỗi mẫu dùng một bộ biến khác nhau (ticket có code/priority, pin có
-// assetSerialNumber/thresholdValue…). Trước đây ô nhập là JSON thô kèm gợi ý CỐ ĐỊNH dùng chung cho
-// cả 82 mẫu, mà admin không có cách nào nhìn ra vì bảng chỉ hiện tiêu đề, không hiện thân mẫu.
+// Why this is needed: each template uses a different set of variables (a ticket has code/priority,
+// a battery has assetSerialNumber/thresholdValue…). Previously the input was raw JSON with a FIXED
+// hint shared across all 82 templates, and the admin had no way to tell because the table only
+// showed the title, not the template body.
 //
-// ⚠️ 03/08/2026 — hàm này chỉ bóc tên biến người soạn ĐÃ GÕ, nó KHÔNG biết tên nào hợp lệ.
-// Danh sách hợp lệ lấy từ `GET /api/admin/notification-templates/variables` và được đối chiếu ở
-// `TemplateVariablePalette`. Phân biệt này quan trọng: bộ mẫu cũ từng gõ `{{ticketCode}}` trong khi
-// consumer ghi khoá `code`, và `{{serialNumber}}` trong khi consumer ghi `assetSerialNumber` —
-// Handlebars render biến lạ ra RỖNG chứ không báo lỗi nên không ai phát hiện suốt nhiều tháng.
+// ⚠️ 03/08/2026 — this function only extracts the variable names the author ACTUALLY TYPED; it does
+// NOT know which names are valid. The valid list comes from
+// `GET /api/admin/notification-templates/variables` and is cross-checked in `TemplateVariablePalette`.
+// This distinction matters: the old template set once typed `{{ticketCode}}` while the consumer wrote
+// key `code`, and `{{serialNumber}}` while the consumer wrote `assetSerialNumber` —
+// Handlebars renders an unknown variable as EMPTY rather than erroring, so nobody noticed for months.
 
-// {{var}} · {{{var}}} (in không escape) · {{ var }} (có khoảng trắng thừa).
-// [^{}]* để không nuốt nhầm sang token kế tiếp.
+// {{var}} · {{{var}}} (unescaped output) · {{ var }} (extra whitespace).
+// [^{}]* so it doesn't accidentally swallow into the next token.
 const HANDLEBARS_TOKEN = /\{\{\{?([^{}]*)\}\}\}?/g;
 
-// Ký tự mở đầu của cú pháp KHÔNG phải biến điền được:
-//   #  mở block {{#if}}     /  đóng block {{/if}}   ^  block đảo {{^x}}
-//   !  chú thích            >  partial              &  in không escape
-//   @  biến do runtime cấp {{@index}} — không đến từ dữ liệu mẫu
+// Leading characters of syntax that is NOT a fillable variable:
+//   #  opens a block {{#if}}     /  closes a block {{/if}}   ^  inverted block {{^x}}
+//   !  comment                   >  partial                  &  unescaped output
+//   @  runtime-provided variable {{@index}} — not from sample data
 const NON_VARIABLE_PREFIXES = new Set(["#", "/", "^", "!", ">", "&", "@"]);
 
-// Từ khoá Handlebars, không phải biến.
+// Handlebars keywords, not variables.
 const RESERVED_KEYWORDS = new Set(["else", "this"]);
 
 /**
- * Trả về tên các biến theo THỨ TỰ XUẤT HIỆN LẦN ĐẦU, đã khử trùng lặp.
+ * Returns variable names in FIRST-APPEARANCE ORDER, deduplicated.
  *
- * Giới hạn có chủ đích: bỏ qua lời gọi helper có tham số (`{{formatDate x}}`) vì không tách được
- * đâu là biến cần điền. Bộ template hiện tại (82 mẫu, 39 biến) không dùng helper, block, hay
- * triple-brace nào — đã quét toàn bộ DB ngày 02/08/2026. Hàm vẫn xử lý các dạng đó để khi ai thêm
- * mẫu mới thì form không hiện ra rác.
+ * Intentional limitation: skips helper calls with arguments (`{{formatDate x}}`) since we can't
+ * tell which part is the variable to fill in. The current template set (82 templates, 39 variables)
+ * uses no helpers, blocks, or triple-braces — the entire DB was scanned on 02/08/2026. The function
+ * still handles those forms so that if someone adds a new template, the form won't show garbage.
  */
 export function extractPlaceholders(
   ...templates: (string | null | undefined)[]
@@ -46,7 +48,7 @@ export function extractPlaceholders(
 
       if (!name) continue;
       if (NON_VARIABLE_PREFIXES.has(name[0])) continue;
-      // Còn khoảng trắng bên trong ⇒ lời gọi helper, không phải một biến đơn.
+      // Whitespace remaining inside ⇒ a helper call, not a plain variable.
       if (/\s/.test(name)) continue;
       if (RESERVED_KEYWORDS.has(name)) continue;
       if (seen.has(name)) continue;
@@ -60,8 +62,9 @@ export function extractPlaceholders(
 }
 
 /**
- * Nối `{{tên}}` vào cuối nội dung đang soạn — dùng cho nút bấm-để-chèn ở bảng biến hợp lệ.
- * Tự thêm một khoảng trắng khi nối vào cuối câu đang dở, để token không dính vào chữ trước đó.
+ * Appends `{{name}}` to the end of the content being composed — used for the click-to-insert
+ * button in the valid-variables table. Auto-adds a space when appending to the end of an unfinished
+ * sentence, so the token doesn't stick to the preceding text.
  */
 export function insertPlaceholder(current: string, name: string): string {
   const token = `{{${name}}}`;
@@ -70,8 +73,8 @@ export function insertPlaceholder(current: string, name: string): string {
 }
 
 /**
- * Đưa một giá trị bất kỳ trong JSON về chuỗi hiển thị được trong ô input, dùng khi chuyển từ chế độ
- * JSON sang chế độ form. `null`/`undefined` → rỗng (đồng nghĩa "không truyền").
+ * Converts an arbitrary JSON value to a string displayable in an input field, used when switching
+ * from JSON mode to form mode. `null`/`undefined` → empty (meaning "not provided").
  */
 export function toInputValue(value: unknown): string {
   if (value === null || value === undefined) return "";

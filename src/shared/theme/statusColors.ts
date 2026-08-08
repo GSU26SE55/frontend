@@ -1,11 +1,11 @@
-// Nguồn DUY NHẤT map trạng thái → màu semantic, quanh token CSS trong index.css
-// (--ok/--info/--p1/--p2/--p3/--muted-status, đều có bản dark). Trước đây màu
-// status hardcode rải rác (shadcn variant / bg-emerald / hex) lệch nhau giữa
-// admin/manager/staff — file này thay thế.
+// The SINGLE source that maps status → semantic color, built around the CSS tokens in
+// index.css (--ok/--info/--p1/--p2/--p3/--muted-status, each with a dark variant). Status
+// colors used to be hardcoded all over the place (shadcn variant / bg-emerald / hex) and
+// drifted out of sync between admin/manager/staff — this file replaces that.
 //
-// Dùng:
-//   className={toneClass(TICKET_STATUS_TONE[status])}   // badge nền-soft chữ-đậm
-//   const { fg, bg, border } = toneVars(tone)           // khi cần inline style
+// Usage:
+//   className={toneClass(TICKET_STATUS_TONE[status])}   // soft-bg, bold-text badge
+//   const { fg, bg, border } = toneVars(tone)           // when an inline style is needed
 
 import {
   TicketStatusEnum,
@@ -27,10 +27,10 @@ import {
   BlogPostOriginEnum,
 } from "@/shared/enums/blog/blog.enum";
 
-// 6 tông màu semantic — khớp token trong index.css.
+// 6 semantic color tones — match the tokens in index.css.
 export type StatusTone = "ok" | "info" | "p3" | "p2" | "p1" | "muted";
 
-/** className badge nền-soft + chữ/viền đậm theo tông. Tự đúng dark mode qua token. */
+/** Soft-bg badge className + bold text/border for the tone. Dark mode handled automatically via tokens. */
 export function toneClass(tone: StatusTone): string {
   switch (tone) {
     case "ok":
@@ -49,7 +49,7 @@ export function toneClass(tone: StatusTone): string {
   }
 }
 
-/** Class nền mờ (~15%) + chữ đậm — cho pill/tag (nhạt hơn badge soft). */
+/** Faint bg class (~15%) + bold text — for pills/tags (lighter than the soft badge). */
 export function toneFill(tone: StatusTone): string {
   switch (tone) {
     case "ok":
@@ -68,7 +68,7 @@ export function toneFill(tone: StatusTone): string {
   }
 }
 
-/** Chỉ class chữ theo tông — khi cần tô màu text (số/nhãn), không có nền. */
+/** Text-only class for the tone — when coloring text (numbers/labels) with no background. */
 export function toneText(tone: StatusTone): string {
   switch (tone) {
     case "ok":
@@ -87,7 +87,7 @@ export function toneText(tone: StatusTone): string {
   }
 }
 
-/** Class nền đặc theo tông — cho status-dot (chấm tròn), không phải badge soft. */
+/** Solid bg class for the tone — for a status dot, not the soft badge. */
 export function toneDot(tone: StatusTone): string {
   switch (tone) {
     case "ok":
@@ -106,7 +106,7 @@ export function toneDot(tone: StatusTone): string {
   }
 }
 
-/** Biến CSS thô cho inline style (khi cần backgroundColor/color/borderColor riêng). */
+/** Raw CSS variables for inline style (when backgroundColor/color/borderColor is needed directly). */
 export function toneVars(tone: StatusTone): {
   fg: string;
   bg: string;
@@ -116,7 +116,7 @@ export function toneVars(tone: StatusTone): {
   return { fg: `var(--${t})`, bg: `var(--${t}-soft)`, border: `var(--${t})` };
 }
 
-// ── Maps per enum (fallback ngoài map → "muted") ─────────────────────────────
+// ── Maps per enum (fallback outside the map → "muted") ───────────────────────
 
 export const TICKET_STATUS_TONE: Record<TicketStatusEnum, StatusTone> = {
   [TicketStatusEnum.New]: "info",
@@ -147,7 +147,7 @@ export const SLA_TIMER_TONE: Record<SlaTimerStatusEnum, StatusTone> = {
   [SlaTimerStatusEnum.Breached]: "p1",
 };
 
-// Dùng cho AlertSeverityBadge VÀ BatteryAuditLogTable (cùng thang Info/Warning/Critical).
+// Used by AlertSeverityBadge AND BatteryAuditLogTable (same Info/Warning/Critical scale).
 export const ALERT_SEVERITY_TONE: Record<AlertSeverityEnum, StatusTone> = {
   [AlertSeverityEnum.Info]: "info",
   [AlertSeverityEnum.Warning]: "p2",
@@ -219,21 +219,21 @@ export const NOTIFICATION_STATUS_TONE: Record<number, StatusTone> = {
   [NotificationStatusEnum.Sent]: "info",
   [NotificationStatusEnum.Failed]: "p1",
   [NotificationStatusEnum.Read]: "muted",
-  // Sprint 6.3 NOTI3-14 — Delivered/Opened thiếu ở đây từ lúc ra đời nên rơi về "muted",
-  // trông hệt như đã đọc. GH-792 thêm Processing.
+  // Sprint 6.3 NOTI3-14 — Delivered/Opened have been missing here since this was created, so
+  // they fell back to "muted" and looked exactly like already-read. GH-792 adds Processing.
   [NotificationStatusEnum.Delivered]: "ok",
   [NotificationStatusEnum.Opened]: "muted",
   [NotificationStatusEnum.Processing]: "p3",
 };
 
-// Cascade risk (BE trả string-name "Low"/"Medium"/"High").
+// Cascade risk (BE returns string-name "Low"/"Medium"/"High").
 export const CASCADE_RISK_TONE: Record<string, StatusTone> = {
   Low: "ok",
   Medium: "p2",
   High: "p1",
 };
 
-// Alert→Ticket saga state (MassTransit trả string-name, không phải enum số).
+// Alert→Ticket saga state (MassTransit returns string-name, not a numeric enum).
 export const SAGA_STATE_TONE: Record<string, StatusTone> = {
   Initial: "muted",
   TicketRequested: "info",
@@ -243,7 +243,7 @@ export const SAGA_STATE_TONE: Record<string, StatusTone> = {
   Failed: "p1",
 };
 
-/** Health score 0-100 → tông (dùng cho SiteDashboardCard). */
+/** Health score 0-100 → tone (used by SiteDashboardCard). */
 export function healthScoreTone(score: number): StatusTone {
   if (score >= 80) return "ok";
   if (score >= 50) return "p3";

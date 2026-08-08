@@ -10,11 +10,11 @@ interface RichContentViewProps {
 }
 
 /**
- * Render nội dung HTML (Blog `contentHtml`, KB `content`).
+ * Renders HTML content (Blog `contentHtml`, KB `content`).
  *
- * - LUÔN đi qua `sanitizeHtml` — nội dung có thể do AI sinh, không tin được.
- * - Ảnh lưu dạng `<img data-file-id="...">` (xem `AuthImageNode`): file cần Bearer
- *   token nên `src` phải nạp bằng axios rồi gán object URL, không đặt thẳng URL API.
+ * - ALWAYS goes through `sanitizeHtml` — the content may be AI-generated, so it isn't trusted.
+ * - Images are stored as `<img data-file-id="...">` (see `AuthImageNode`): the file needs a Bearer
+ *   token, so `src` must be loaded via axios and assigned an object URL rather than the raw API URL.
  */
 export function RichContentView({ html, className }: RichContentViewProps) {
   const clean = useMemo(() => sanitizeHtml(html), [html]);
@@ -43,7 +43,7 @@ export function RichContentView({ html, className }: RichContentViewProps) {
           img.src = url;
         })
         .catch(() => {
-          if (active) img.alt = "Không tải được ảnh";
+          if (active) img.alt = "Failed to load image";
         });
     });
 
@@ -55,7 +55,7 @@ export function RichContentView({ html, className }: RichContentViewProps) {
 
   if (!clean) {
     return (
-      <p className="text-muted-foreground text-sm italic">Chưa có nội dung.</p>
+      <p className="text-muted-foreground text-sm italic">No content yet.</p>
     );
   }
 

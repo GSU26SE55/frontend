@@ -1,26 +1,26 @@
-// Toast message riêng của feature manager. Toast dùng chung → shared/constants/messages.
+// Toast messages specific to the manager feature. Shared toasts → shared/constants/messages.
 
 export const MANAGER_MESSAGES = {
   ticket: {
-    triaged: "Triage ticket thành công",
-    rejectedAtTriage: "Đã từ chối ticket ở bước Triage",
-    staffAssigned: "Gán Staff thành công",
-    staffReassigned: "Điều chuyển Staff thành công",
-    resultApproved: "Phê duyệt kết quả thành công",
-    resultRejected: "Từ chối kết quả — ticket quay về In Progress",
-    escalated: "Ticket đã được chuyển cấp",
-    markedIncident: "Ticket đã được đánh dấu là Incident",
-    commentAdded: "Đã thêm bình luận",
-    reprioritized: "Đã đổi mức ưu tiên ticket",
-    // BE tự escalate khi priority mới vượt tier của Staff đang xử lý.
+    triaged: "Ticket triaged",
+    rejectedAtTriage: "Ticket rejected at triage",
+    staffAssigned: "Staff assigned",
+    staffReassigned: "Staff reassigned",
+    resultApproved: "Resolution approved",
+    resultRejected: "Resolution rejected — ticket back to In Progress",
+    escalated: "Ticket escalated",
+    markedIncident: "Ticket marked as Incident",
+    commentAdded: "Comment added",
+    reprioritized: "Ticket priority changed",
+    // The BE escalates automatically when the new priority exceeds the tier of the Staff handling it.
     reprioritizedWithEscalation:
-      "Đã đổi mức ưu tiên — hệ thống tự chuyển cấp vì Staff hiện tại không đủ tier",
+      "Priority changed — auto-escalated because the current Staff isn't high enough tier",
   },
   kb: {
-    created: "Đã tạo bài viết KB",
-    updated: "Đã cập nhật bài viết",
-    updatePending: "Đã gửi thay đổi — chờ phê duyệt để hiển thị",
-    duplicated: "Đã sao chép bài viết — mở bản mới để chỉnh sửa",
-    markedHelpful: "Đã đánh dấu hữu ích",
+    created: "KB article created",
+    updated: "Article updated",
+    updatePending: "Changes submitted — awaiting approval to go live",
+    duplicated: "Article duplicated — open the copy to edit it",
+    markedHelpful: "Marked as helpful",
   },
 } as const;

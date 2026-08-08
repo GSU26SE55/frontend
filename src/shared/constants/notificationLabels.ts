@@ -9,53 +9,54 @@ import {
   NotificationStatusEnum,
 } from "@/shared/enums/notification/notification.enum";
 
-// Nhãn tiếng Việt cho enum notification.
+// Display labels for the notification enums.
 //
-// Vì sao nằm ở FE: từ 02/08/2026 BE trả `type`/`channel` dạng SỐ thay vì tên enum. Trước đó BE trả
-// tên enum tiếng Anh ("SlaBreached", "Email") và FE dán thẳng lên màn hình — sai với một hệ thống
-// tiếng Việt. Việc dịch là chuyện hiển thị, thuộc về FE; BE chỉ trả dữ liệu.
+// Why these live on the FE: since 2026-08-02 the BE returns `type`/`channel` as NUMBERS instead of
+// enum names. Before that the BE returned the enum name ("SlaBreached", "Email") and the FE pasted
+// it straight onto the screen. Turning a value into readable text is a presentation concern and
+// belongs to the FE; the BE only returns data.
 //
-// `Record<Enum, string>` cố ý KHÔNG dùng Partial: thêm một giá trị enum mới mà quên nhãn thì
-// TypeScript báo lỗi ngay lúc build, thay vì lặng lẽ hiện "#34" trên giao diện.
+// `Record<Enum, string>` deliberately does NOT use Partial: adding a new enum value and forgetting
+// its label becomes a TypeScript error at build time, instead of silently showing "#34" in the UI.
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationTypeEnum, string> = {
-  [NotificationTypeEnum.TicketCreated]: "Ticket mới",
-  [NotificationTypeEnum.TicketAssigned]: "Giao ticket",
-  [NotificationTypeEnum.TicketStatusChanged]: "Đổi trạng thái ticket",
-  [NotificationTypeEnum.TicketResolved]: "Đã xử lý xong",
-  [NotificationTypeEnum.TicketClosed]: "Đóng ticket",
-  [NotificationTypeEnum.TicketEscalated]: "Leo thang ticket",
-  [NotificationTypeEnum.SlaWarning]: "Cảnh báo sắp vỡ SLA",
-  [NotificationTypeEnum.SlaBreached]: "Vỡ SLA",
-  [NotificationTypeEnum.BatteryAnomalyDetected]:
-    "Bất thường pin (nghiêm trọng)",
-  [NotificationTypeEnum.EnvironmentalIncidentDetected]: "Sự cố môi trường",
+  [NotificationTypeEnum.TicketCreated]: "New ticket",
+  [NotificationTypeEnum.TicketAssigned]: "Ticket assigned",
+  [NotificationTypeEnum.TicketStatusChanged]: "Ticket status changed",
+  [NotificationTypeEnum.TicketResolved]: "Resolved",
+  [NotificationTypeEnum.TicketClosed]: "Ticket closed",
+  [NotificationTypeEnum.TicketEscalated]: "Ticket escalated",
+  [NotificationTypeEnum.SlaWarning]: "SLA breach warning",
+  [NotificationTypeEnum.SlaBreached]: "SLA breached",
+  [NotificationTypeEnum.BatteryAnomalyDetected]: "Battery anomaly (critical)",
+  [NotificationTypeEnum.EnvironmentalIncidentDetected]:
+    "Environmental incident",
   [NotificationTypeEnum.EnvironmentalIncidentResolved]:
-    "Sự cố môi trường đã xử lý",
-  [NotificationTypeEnum.AccountActivated]: "Kích hoạt tài khoản",
-  [NotificationTypeEnum.IncidentDeclared]: "Công bố sự cố lớn",
-  [NotificationTypeEnum.CascadeRiskHigh]: "Nguy cơ lan truyền cao",
+    "Environmental incident resolved",
+  [NotificationTypeEnum.AccountActivated]: "Account activated",
+  [NotificationTypeEnum.IncidentDeclared]: "Major incident declared",
+  [NotificationTypeEnum.CascadeRiskHigh]: "High cascade risk",
   [NotificationTypeEnum.BatteryAlertEscalationPending]:
-    "Cảnh báo pin chờ leo thang",
-  [NotificationTypeEnum.AlertTicketSagaFailed]: "Saga cảnh báo–ticket lỗi",
-  [NotificationTypeEnum.IotDeviceWentOffline]: "Thiết bị IoT mất kết nối",
-  [NotificationTypeEnum.ChatCreated]: "Tin nhắn mới",
-  [NotificationTypeEnum.ChatMentioned]: "Được nhắc tên",
-  [NotificationTypeEnum.ChatReacted]: "Bày tỏ cảm xúc",
-  [NotificationTypeEnum.ParticipantAdded]: "Thêm người tham gia",
-  [NotificationTypeEnum.ParticipantRemoved]: "Gỡ người tham gia",
-  [NotificationTypeEnum.ParticipantRoleChanged]: "Đổi vai trò tham gia",
-  [NotificationTypeEnum.BlogGenerationCompleted]: "Tạo bài blog xong",
-  [NotificationTypeEnum.BlogGenerationFailed]: "Tạo bài blog lỗi",
-  [NotificationTypeEnum.ChatEscalatedToAdmin]: "Chat leo thang lên Admin",
-  [NotificationTypeEnum.TicketApproved]: "Duyệt kết quả xử lý",
-  [NotificationTypeEnum.TicketRejected]: "Từ chối kết quả xử lý",
-  [NotificationTypeEnum.TicketReopened]: "Mở lại ticket",
-  [NotificationTypeEnum.TicketRatingRequested]: "Yêu cầu đánh giá",
-  [NotificationTypeEnum.BatteryAnomalyWarning]: "Bất thường pin (cảnh báo)",
-  [NotificationTypeEnum.BatteryAnomalyInfo]: "Bất thường pin (thông tin)",
-  [NotificationTypeEnum.TicketMerged]: "Ticket đã được gộp",
-  [NotificationTypeEnum.System]: "Thông báo hệ thống",
+    "Battery alert pending escalation",
+  [NotificationTypeEnum.AlertTicketSagaFailed]: "Alert–ticket saga failed",
+  [NotificationTypeEnum.IotDeviceWentOffline]: "IoT device went offline",
+  [NotificationTypeEnum.ChatCreated]: "New message",
+  [NotificationTypeEnum.ChatMentioned]: "You were mentioned",
+  [NotificationTypeEnum.ChatReacted]: "New reaction",
+  [NotificationTypeEnum.ParticipantAdded]: "Participant added",
+  [NotificationTypeEnum.ParticipantRemoved]: "Participant removed",
+  [NotificationTypeEnum.ParticipantRoleChanged]: "Participant role changed",
+  [NotificationTypeEnum.BlogGenerationCompleted]: "Blog post generated",
+  [NotificationTypeEnum.BlogGenerationFailed]: "Blog generation failed",
+  [NotificationTypeEnum.ChatEscalatedToAdmin]: "Chat escalated to Admin",
+  [NotificationTypeEnum.TicketApproved]: "Resolution approved",
+  [NotificationTypeEnum.TicketRejected]: "Resolution rejected",
+  [NotificationTypeEnum.TicketReopened]: "Ticket reopened",
+  [NotificationTypeEnum.TicketRatingRequested]: "Rating requested",
+  [NotificationTypeEnum.BatteryAnomalyWarning]: "Battery anomaly (warning)",
+  [NotificationTypeEnum.BatteryAnomalyInfo]: "Battery anomaly (info)",
+  [NotificationTypeEnum.TicketMerged]: "Ticket merged",
+  [NotificationTypeEnum.System]: "System notification",
 };
 
 export const NOTIFICATION_CHANNEL_LABELS: Record<
@@ -65,61 +66,61 @@ export const NOTIFICATION_CHANNEL_LABELS: Record<
   [NotificationChannelEnum.Push]: "Push",
   [NotificationChannelEnum.Email]: "Email",
   [NotificationChannelEnum.Sms]: "SMS",
-  [NotificationChannelEnum.InApp]: "Trong ứng dụng",
+  [NotificationChannelEnum.InApp]: "In-app",
 };
 
-// Fallback "#số" thay vì chuỗi rỗng: BE thêm enum mới mà FE chưa cập nhật thì vẫn nhìn ra được
-// giá trị nào đang thiếu nhãn, không phải mở DevTools mới biết.
+// The "#number" fallback instead of an empty string: if the BE adds a new enum value the FE hasn't
+// caught up with, you can still see which value is missing a label without opening DevTools.
 export const notificationTypeLabel = (t: NotificationTypeEnum) =>
   NOTIFICATION_TYPE_LABELS[t] ?? `#${t}`;
 
 export const notificationChannelLabel = (c: NotificationChannelEnum) =>
   NOTIFICATION_CHANNEL_LABELS[c] ?? `#${c}`;
 
-// Trạng thái giao nhận — hiện ở pane chi tiết hộp thư.
-// Pending/Processing/Sent/Delivered là các chặng của một lần gửi, còn Read/Opened là hành vi
-// người nhận; diễn đạt theo góc người dùng chứ không bê nguyên tên kỹ thuật của BE.
+// Delivery status — shown in the inbox detail pane.
+// Pending/Processing/Sent/Delivered are stages of a single send, while Read/Opened are recipient
+// behaviour; worded from the user's point of view rather than copying the BE's technical names.
 export const NOTIFICATION_STATUS_LABELS: Record<
   NotificationStatusEnum,
   string
 > = {
-  [NotificationStatusEnum.Pending]: "Chờ gửi",
-  [NotificationStatusEnum.Processing]: "Đang gửi",
-  [NotificationStatusEnum.Sent]: "Đã gửi",
-  [NotificationStatusEnum.Delivered]: "Đã tới thiết bị",
-  [NotificationStatusEnum.Failed]: "Gửi lỗi",
-  [NotificationStatusEnum.Read]: "Đã đọc",
-  [NotificationStatusEnum.Opened]: "Đã mở",
+  [NotificationStatusEnum.Pending]: "Queued",
+  [NotificationStatusEnum.Processing]: "Sending",
+  [NotificationStatusEnum.Sent]: "Sent",
+  [NotificationStatusEnum.Delivered]: "Delivered to device",
+  [NotificationStatusEnum.Failed]: "Failed to send",
+  [NotificationStatusEnum.Read]: "Read",
+  [NotificationStatusEnum.Opened]: "Opened",
 };
 
 export const notificationStatusLabel = (s: NotificationStatusEnum) =>
   NOTIFICATION_STATUS_LABELS[s] ?? `#${s}`;
 
-// ── Sprint 6.4 — nhóm người nhận và lần gửi hàng loạt ────────────────────────────────────────
+// ── Sprint 6.4 — recipient groups and bulk sends ─────────────────────────────────────────────
 
 export const NOTIFICATION_GROUP_KIND_LABELS: Record<
   NotificationGroupKindEnum,
   string
 > = {
-  [NotificationGroupKindEnum.Static]: "Danh sách tự chọn",
-  [NotificationGroupKindEnum.Role]: "Theo vai trò",
+  [NotificationGroupKindEnum.Static]: "Hand-picked list",
+  [NotificationGroupKindEnum.Role]: "By role",
 };
 
 export const NOTIFICATION_BATCH_SOURCE_LABELS: Record<
   NotificationBatchSourceEnum,
   string
 > = {
-  [NotificationBatchSourceEnum.Event]: "Tự động từ sự kiện",
-  [NotificationBatchSourceEnum.Manual]: "Người dùng gửi",
+  [NotificationBatchSourceEnum.Event]: "Automatic from event",
+  [NotificationBatchSourceEnum.Manual]: "Sent by user",
 };
 
 export const NOTIFICATION_BATCH_STATUS_LABELS: Record<
   NotificationBatchStatusEnum,
   string
 > = {
-  [NotificationBatchStatusEnum.Pending]: "Đang chờ",
-  [NotificationBatchStatusEnum.FannedOut]: "Đã phát",
-  [NotificationBatchStatusEnum.Failed]: "Thất bại",
+  [NotificationBatchStatusEnum.Pending]: "Pending",
+  [NotificationBatchStatusEnum.FannedOut]: "Fanned out",
+  [NotificationBatchStatusEnum.Failed]: "Failed",
 };
 
 export const notificationGroupKindLabel = (k: NotificationGroupKindEnum) =>

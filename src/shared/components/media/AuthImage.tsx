@@ -10,11 +10,13 @@ interface AuthImageProps {
 }
 
 /**
- * Tải ảnh từ FileStorageService qua axios (interceptor tự gắn Bearer) rồi hiển thị
- * bằng object URL. Dùng cho ảnh cần auth — `<img src>` thường không gửi được token.
+ * Loads an image from FileStorageService via axios (interceptor auto-attaches Bearer)
+ * and displays it via an object URL. Used for images that require auth — a plain
+ * `<img src>` usually can't send the token.
  */
-// File vừa upload xong có thể chưa sẵn sàng để tải về ngay (BE xử lý/lưu trễ) — thử lại
-// vài lần trước khi báo lỗi, tránh thumbnail bị treo lỗi oan vì trễ tạm thời.
+// A file that just finished uploading may not be ready to download immediately (BE
+// processing/save delay) — retry a few times before reporting an error, so the
+// thumbnail doesn't wrongly show broken from a temporary delay.
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 800;
 
@@ -62,7 +64,7 @@ export default function AuthImage({ fileId, alt, className }: AuthImageProps) {
       <div
         className={`flex items-center justify-center bg-muted text-xs text-muted-foreground ${className ?? ""}`}
       >
-        Không tải được ảnh
+        Failed to load image
       </div>
     );
   }

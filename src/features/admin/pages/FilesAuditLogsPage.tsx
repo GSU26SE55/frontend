@@ -10,15 +10,15 @@ import AuditLogFilterBar, {
 } from "@/features/admin/components/account/AuditLogFilterBar";
 import { FileAuditActionCode } from "@/features/admin/enums/file-audit.enum";
 
-// YYYY-MM-DD → UTC range (BE filter từ/đến).
+// YYYY-MM-DD → UTC range (BE filter from/to).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
 const toUtcEnd = (d?: string) => (d ? `${d}T23:59:59Z` : undefined);
 
-// Range hợp lệ → mới gọi API (chặn from > to trước khi gọi).
+// Only call the API when the range is valid (blocks from > to before calling).
 const rangeValid = (f: AuditLogFilterValues) =>
   !(f.dateFrom && f.dateTo && f.dateFrom > f.dateTo);
 
-// GH-133 C5 — audit truy cập file GDPR (FileStorageService, Admin only).
+// GH-133 C5 — GDPR file access audit (FileStorageService, Admin only).
 export default function FilesAuditLogsPage() {
   const [filters, setFilters] = useState<AuditLogFilterValues>({});
   const [pageNumber, setPageNumber] = useState(1);
@@ -53,13 +53,13 @@ export default function FilesAuditLogsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin · Hệ thống
+            Admin · System
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Audit Logs — Truy cập File
+            Audit Logs — File Access
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tra cứu forensic truy cập file (GDPR / điều tra rò rỉ dữ liệu).
+            Forensic lookup of file access (GDPR / data leak investigation).
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.fileAuditLogs]} />

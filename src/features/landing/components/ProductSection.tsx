@@ -140,7 +140,7 @@ const ProductSection = () => {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
           <div data-anim="header" className="max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
-              Gói sản phẩm
+              Product packages
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
               Our energy system, simplified.

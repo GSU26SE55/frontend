@@ -15,7 +15,7 @@ import type {
 } from "@/shared/enums/kb/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 
-// ── DTOs (khớp contract BE — enum status/category dạng STRING) ──
+// ── DTOs (match the BE contract — status/category enums come as STRINGs) ──
 
 export interface KbArticleDTO {
   id: string;
@@ -26,7 +26,7 @@ export interface KbArticleDTO {
   tags: string[];
   status: KbArticleStatusEnum;
   isInternalOnly: boolean;
-  /** Bài viết mẫu — dùng làm khung cho bài mới qua copy-template. */
+  /** Template article — used as the skeleton for a new article via copy-template. */
   isTemplate: boolean;
   version: number;
   viewCount: number;
@@ -39,14 +39,14 @@ export interface KbArticleDTO {
   updatedAt?: string | null;
 }
 
-// List item (GET /api/knowledge-base) — KHÔNG có tags/content
+// List item (GET /api/knowledge-base) — does NOT carry tags/content
 export interface KbArticleSummaryDTO {
   id: string;
   code: string;
   title: string;
   category: TicketCategoryEnum;
   status: KbArticleStatusEnum;
-  /** Bài viết mẫu — dùng để hiện badge trong list. */
+  /** Template article — drives the badge shown in the list. */
   isTemplate: boolean;
   viewCount: number;
   helpfulCount: number;
@@ -54,7 +54,7 @@ export interface KbArticleSummaryDTO {
   createdAt: string;
 }
 
-// Version (status dạng STRING — BE bật JsonStringEnumConverter)
+// Version (status comes as a STRING — the BE enables JsonStringEnumConverter)
 export interface KbArticleVersionDTO {
   id: string;
   articleId: string;
@@ -101,7 +101,7 @@ export interface TicketKbReferenceDTO {
   createdAt: string;
 }
 
-// GET /api/knowledge-base/{id}/usage-stats — thống kê theo KbReferenceTypeEnum.
+// GET /api/knowledge-base/{id}/usage-stats — stats broken down by KbReferenceTypeEnum.
 export interface KbUsageByTypeDTO {
   consultedDuringResolve: number;
   providedToCustomer: number;
@@ -124,7 +124,10 @@ export interface CreateKbArticlePayload {
   content: string;
   tags?: string[];
   isInternalOnly: boolean;
-  /** Đánh dấu bài là mẫu để Staff dùng copy-template. BE mặc định false. */
+  /**
+   * Mark the article as a template so Staff can copy-template it.
+   * Defaults to false on the BE.
+   */
   isTemplate?: boolean;
 }
 
@@ -153,9 +156,9 @@ export interface KbArticleListParams {
   pageNumber?: number;
   pageSize?: number;
   q?: string;
-  category?: number; // int — BE filter nhận số
+  category?: number; // int — the BE filter takes a number
   status?: KbArticleStatusEnum;
-  tag?: string; // 1 tag/lần
+  tag?: string; // one tag at a time
   sortBy?: string;
   sortDir?: string;
 }
@@ -165,7 +168,7 @@ export interface KbCompareParams {
   toVersionId?: string;
 }
 
-// Suggest API trả DTO riêng (không có category/status)
+// The suggest API returns its own DTO (no category/status)
 export interface KbSuggestItemDTO {
   id: string;
   code: string;
@@ -173,7 +176,10 @@ export interface KbSuggestItemDTO {
   content: string;
   helpfulCount: number;
   viewCount: number;
-  /** GH-132 (G) — bài nội bộ: không được gán với referenceType ProvidedToCustomer. */
+  /**
+   * GH-132 (G) — internal-only article: must not be attached with
+   * referenceType ProvidedToCustomer.
+   */
   isInternalOnly: boolean;
 }
 

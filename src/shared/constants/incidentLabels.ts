@@ -4,12 +4,12 @@ export const INCIDENT_TYPE_LABELS: Record<
   EnvironmentalIncidentTypeEnum,
   string
 > = {
-  [EnvironmentalIncidentTypeEnum.Smoke]: "Khói",
-  [EnvironmentalIncidentTypeEnum.FireDetected]: "Cháy",
-  [EnvironmentalIncidentTypeEnum.GasLeak]: "Rò rỉ khí",
-  [EnvironmentalIncidentTypeEnum.Flood]: "Ngập nước",
-  [EnvironmentalIncidentTypeEnum.OverheatHazard]: "Nguy cơ quá nhiệt",
-  [EnvironmentalIncidentTypeEnum.Other]: "Khác",
+  [EnvironmentalIncidentTypeEnum.Smoke]: "Smoke",
+  [EnvironmentalIncidentTypeEnum.FireDetected]: "Fire",
+  [EnvironmentalIncidentTypeEnum.GasLeak]: "Gas leak",
+  [EnvironmentalIncidentTypeEnum.Flood]: "Flooding",
+  [EnvironmentalIncidentTypeEnum.OverheatHazard]: "Overheating hazard",
+  [EnvironmentalIncidentTypeEnum.Other]: "Other",
 };
 
 export const incidentTypeLabel = (t: EnvironmentalIncidentTypeEnum) =>

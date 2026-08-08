@@ -53,17 +53,17 @@ const REF_TYPE_BADGE: Record<RefType, string> = {
 
 const REF_TYPE_DESC: Record<RefType, string> = {
   [KbReferenceTypeEnum.ConsultedDuringResolve]:
-    "Bài này được tham khảo trong lúc xử lý ticket.",
+    "This article was consulted while working on the ticket.",
   [KbReferenceTypeEnum.ProvidedToCustomer]:
-    "Bài này đã được gửi/share trực tiếp cho khách hàng.",
+    "This article was sent/shared directly with the customer.",
   [KbReferenceTypeEnum.GeneratedAfterResolve]:
-    "Bài này được tạo mới hoặc cập nhật từ kinh nghiệm xử lý ticket này.",
+    "This article was created or updated from the experience of resolving this ticket.",
 };
 
 interface TicketKbReferencesPanelProps {
   ticketId: string;
   defaultCategory?: TicketCategoryEnum;
-  /** Ticket ở Resolved — chỉ ghi nhận 2 type after-resolve (khớp BE guard H). */
+  /** Ticket is Resolved — only records the 2 after-resolve types (matches BE guard H). */
   afterResolveOnly?: boolean;
 }
 
@@ -110,7 +110,7 @@ export default function TicketKbReferencesPanel({
   );
   const [note, setNote] = useState("");
 
-  // H — ở Resolved BE chỉ cho 2 type after-resolve; ẩn ConsultedDuringResolve.
+  // H — at Resolved the BE only allows the 2 after-resolve types; hide ConsultedDuringResolve.
   const refTypeOptions: RefType[] = afterResolveOnly
     ? [
         KbReferenceTypeEnum.ProvidedToCustomer,
@@ -118,9 +118,9 @@ export default function TicketKbReferencesPanel({
       ]
     : REF_TYPE_ORDER;
 
-  // Consulted không hợp lệ ở Resolved (BE 422). Dùng effective refType (derive,
-  // không reset state trong effect) — nếu state còn Consulted khi chuyển sang
-  // Resolved thì add/hiển thị như GeneratedAfterResolve.
+  // Consulted isn't valid at Resolved (BE 422). Use an effective refType (derived,
+  // not reset via state in an effect) — if state still holds Consulted when moving
+  // to Resolved, add/display it as GeneratedAfterResolve.
   const effectiveRefType: RefType =
     afterResolveOnly && refType === KbReferenceTypeEnum.ConsultedDuringResolve
       ? KbReferenceTypeEnum.GeneratedAfterResolve
@@ -165,7 +165,7 @@ export default function TicketKbReferencesPanel({
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
-          Bài viết KB liên quan
+          Related KB articles
           {totalRefs > 0 && (
             <span className="ml-1.5 text-xs font-normal text-muted-foreground">
               ({totalRefs})
@@ -183,7 +183,7 @@ export default function TicketKbReferencesPanel({
               })
             }
           >
-            <FilePlus2 className="size-3.5" /> Tạo bài viết mới
+            <FilePlus2 className="size-3.5" /> New article
           </Button>
           <Button
             size="sm"
@@ -196,7 +196,7 @@ export default function TicketKbReferencesPanel({
             ) : (
               <Plus className="size-3.5" />
             )}
-            {showAdd ? "Đóng" : "Gắn bài viết"}
+            {showAdd ? "Close" : "Attach article"}
           </Button>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function TicketKbReferencesPanel({
           <div className="flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" />
             <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-              Gợi ý cho ticket này
+              Suggested for this ticket
             </h4>
           </div>
           <div className="space-y-1.5">
@@ -224,7 +224,7 @@ export default function TicketKbReferencesPanel({
                     <span
                       className={`ml-1.5 rounded px-1 py-0.5 text-[9.5px] font-medium ${toneFill("muted")}`}
                     >
-                      Nội bộ
+                      Internal
                     </span>
                   )}
                 </div>
@@ -235,7 +235,7 @@ export default function TicketKbReferencesPanel({
                   disabled={adding || afterResolveOnly}
                   title={
                     afterResolveOnly
-                      ? "Ticket đã Resolved — chỉ ghi nhận bài sau xử lý"
+                      ? "Ticket is Resolved — only after-resolve articles can be recorded"
                       : undefined
                   }
                   onClick={() =>
@@ -245,7 +245,7 @@ export default function TicketKbReferencesPanel({
                     })
                   }
                 >
-                  <Plus className="size-3" /> Gắn
+                  <Plus className="size-3" /> Attach
                 </Button>
               </div>
             ))}
@@ -273,7 +273,7 @@ export default function TicketKbReferencesPanel({
 
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-medium text-muted-foreground">
-                    Loại tham chiếu
+                    Reference type
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {refTypeOptions.map((t) => {
@@ -299,7 +299,7 @@ export default function TicketKbReferencesPanel({
                 </div>
 
                 <Input
-                  placeholder="Ghi chú (tùy chọn)..."
+                  placeholder="Notes (optional)..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
@@ -310,14 +310,14 @@ export default function TicketKbReferencesPanel({
                     variant="ghost"
                     onClick={() => setShowAdd(false)}
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button
                     size="sm"
                     disabled={selectedIds.length === 0 || adding}
                     onClick={handleAdd}
                   >
-                    Thêm {selectedIds.length > 0 && `(${selectedIds.length})`}
+                    Add {selectedIds.length > 0 && `(${selectedIds.length})`}
                   </Button>
                 </div>
               </CardContent>
@@ -330,7 +330,7 @@ export default function TicketKbReferencesPanel({
         <div className="rounded-lg border border-dashed py-10 px-4 text-center">
           <BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground mb-3">
-            Chưa có bài viết KB nào được gắn vào ticket này.
+            No KB articles attached to this ticket yet.
           </p>
           <Button
             size="sm"
@@ -338,7 +338,7 @@ export default function TicketKbReferencesPanel({
             className="gap-1.5"
             onClick={() => setShowAdd(true)}
           >
-            <Plus className="size-3.5" /> Gán bài hướng dẫn
+            <Plus className="size-3.5" /> Attach a guide
           </Button>
         </div>
       )}
@@ -395,7 +395,7 @@ export default function TicketKbReferencesPanel({
                             onClick={() =>
                               navigate(`/manager/kb/${ref.kbArticleId}`)
                             }
-                            title="Xem bài viết"
+                            title="View article"
                           >
                             <ExternalLink className="size-3.5" />
                           </Button>
@@ -404,7 +404,7 @@ export default function TicketKbReferencesPanel({
                             size="icon"
                             className="size-7 text-destructive"
                             onClick={() => removeRef(ref.id)}
-                            title="Gỡ"
+                            title="Remove"
                           >
                             <Trash2 className="size-3.5" />
                           </Button>

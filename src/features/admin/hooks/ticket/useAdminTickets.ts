@@ -48,7 +48,7 @@ export function useAdminTicketMaintenanceLogs(id: string) {
   });
 }
 
-// GET /api/tickets/{ticketId}/chats — dùng chung endpoint với staff/manager.
+// GET /api/tickets/{ticketId}/chats — shares the endpoint with staff/manager.
 export function useAdminTicketComments(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.tickets.chats(id),
@@ -92,7 +92,7 @@ export function useDeclareIncident() {
   });
 }
 
-/** Manager gộp ticket nghi trùng (id) vào ticket đích (targetTicketId). */
+/** Manager merges a suspected-duplicate ticket (id) into the target ticket (targetTicketId). */
 export function useMergeTicket() {
   const queryClient = useQueryClient();
 
@@ -105,8 +105,8 @@ export function useMergeTicket() {
       targetTicketId: string;
     }) => adminTicketService.merge(id, { targetTicketId }),
     onSuccess: (_, { id, targetTicketId }) => {
-      toast.success("Đã gộp ticket");
-      // Ticket bị gộp + ticket đích + list/queue đều đổi trạng thái.
+      toast.success("Ticket merged");
+      // The merged ticket + target ticket + list/queue all change state.
       queryClient.invalidateQueries({ queryKey: QUERY_KEY.tickets.detail(id) });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.tickets.detail(targetTicketId),

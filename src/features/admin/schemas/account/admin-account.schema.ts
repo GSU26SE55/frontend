@@ -12,7 +12,7 @@ export const inviteAccountSchema = z.object({
   email: emailField,
   fullName: fullNameField,
   phoneNumber: optionalPhoneField,
-  roleId: z.string().min(1, "Cần chọn role"),
+  roleId: z.string().min(1, "Select a role"),
 });
 
 export const createAccountSchema = z
@@ -24,10 +24,10 @@ export const createAccountSchema = z
     phoneNumber: optionalPhoneField,
     dateOfBirth: birthDateField,
     address: z.string().optional(),
-    roleId: z.string().min(1, "Cần chọn role"),
+    roleId: z.string().min(1, "Select a role"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 

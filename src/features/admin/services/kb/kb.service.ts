@@ -21,7 +21,7 @@ import type {
   RollbackPayload,
 } from "@/shared/types/kb/kb.types";
 
-// Map params FE → query BE (Status enum string → int)
+// Map FE params → BE query (Status enum string → int)
 function toListQuery(params?: KbArticleListParams) {
   if (!params) return undefined;
   return {
@@ -40,7 +40,7 @@ function toListQuery(params?: KbArticleListParams) {
 }
 
 export const adminKbService = {
-  // ── Read (mọi role đã đăng nhập) ──
+  // ── Read (any logged-in role) ──
   getList: (params?: KbArticleListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<KbArticleSummaryDTO>>>(
       ENDPOINTS.KNOWLEDGE_BASE.LIST,
@@ -93,7 +93,7 @@ export const adminKbService = {
         },
       },
     ),
-  // Sao chép bài KB có sẵn → tạo bản mới (title "_copy", Draft), trả Id.
+  // Duplicate an existing KB article → create a new version (title "_copy", Draft), returns Id.
   duplicate: (id: string) =>
     axiosInstance.post<CommonResponse<KbArticleActionDTO>>(
       ENDPOINTS.KB_INTERNAL.DUPLICATE(id),

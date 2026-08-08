@@ -89,7 +89,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Tạo tài khoản mới</DialogTitle>
+          <DialogTitle>Create account</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           <div className="grid grid-cols-2 gap-3">
@@ -108,9 +108,9 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Họ và tên <span className="text-red-500">*</span>
+                Full name <span className="text-red-500">*</span>
               </Label>
-              <Input placeholder="Nguyễn Văn A" {...register("fullName")} />
+              <Input placeholder="John Doe" {...register("fullName")} />
               {errors.fullName && (
                 <p className="text-xs text-red-500">
                   {errors.fullName.message}
@@ -119,13 +119,13 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>
-                Mật khẩu <span className="text-red-500">*</span>
+                Password <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Input
                   type={showPw ? "text" : "password"}
                   className="pr-10"
-                  placeholder="Nhập mật khẩu"
+                  placeholder="Enter password"
                   {...register("password")}
                 />
                 <button
@@ -148,13 +148,13 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>
-                Xác nhận mật khẩu <span className="text-red-500">*</span>
+                Confirm password <span className="text-red-500">*</span>
               </Label>
               <div className="relative">
                 <Input
                   type={showConfirm ? "text" : "password"}
                   className="pr-10"
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder="Re-enter password"
                   {...register("confirmPassword")}
                 />
                 <button
@@ -176,7 +176,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Số điện thoại</Label>
+              <Label>Phone number</Label>
               <Input {...register("phoneNumber")} placeholder="0912345678" />
               {errors.phoneNumber && (
                 <p className="text-xs text-red-500">
@@ -185,7 +185,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Ngày sinh</Label>
+              <Label>Date of birth</Label>
               <Controller
                 control={control}
                 name="dateOfBirth"
@@ -198,9 +198,9 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Địa chỉ</Label>
+              <Label>Address</Label>
               <Input
-                placeholder="Số nhà, đường, phường/xã..."
+                placeholder="Street number, street, ward..."
                 {...register("address")}
               />
             </div>
@@ -218,7 +218,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn role" />
+                      <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent alignItemWithTrigger={false}>
                       {roles.map((r) => (
@@ -237,7 +237,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -245,7 +245,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Tạo tài khoản
+              Create account
             </Button>
           </DialogFooter>
         </form>

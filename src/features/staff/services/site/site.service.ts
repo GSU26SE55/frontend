@@ -7,7 +7,7 @@ import type {
 import type { SiteDto, SiteFilterParams } from "@/shared/types/site/site.types";
 
 export const staffSiteService = {
-  // Chỉ getList — Staff cần chọn SiteId khi report sự cố môi trường thủ công.
+  // getList only — Staff need to pick a SiteId when manually reporting an environmental incident.
   getList: (params?: SiteFilterParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<SiteDto>>>(
       ENDPOINTS.SITES.LIST,

@@ -7,6 +7,8 @@ import type {
 import type {
   AlertDto,
   AlertListParams,
+  AiPrescriptionDto,
+  SubmitPrescriptionFeedbackCommand,
 } from "@/shared/types/alerts/alert.types";
 
 export const alertService = {
@@ -21,4 +23,18 @@ export const alertService = {
     axiosInstance.patch<CommonResponse<null>>(ENDPOINTS.ALERTS.ACKNOWLEDGE(id)),
   resolve: (id: string) =>
     axiosInstance.patch<CommonResponse<null>>(ENDPOINTS.ALERTS.RESOLVE(id)),
+  regenerateAiPrescription: (id: string, agentic = false) =>
+    axiosInstance.post<CommonResponse<AiPrescriptionDto>>(
+      ENDPOINTS.ALERTS.AI_PRESCRIPTION(id),
+      null,
+      { params: { agentic } },
+    ),
+  submitPrescriptionFeedback: (
+    id: string,
+    command: SubmitPrescriptionFeedbackCommand,
+  ) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.ALERTS.PRESCRIPTION_FEEDBACK(id),
+      command,
+    ),
 };

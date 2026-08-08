@@ -7,9 +7,9 @@ import {
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 
 /**
- * #697 — AppLayout của Manager kèm badge số ticket chờ duyệt trên mục "Hàng chờ".
- * Nav config vẫn tĩnh (MANAGER_NAV); badge được bơm vào runtime từ `totalItems`
- * của GET /api/admin/tickets/queue (pageSize=1 — chỉ cần số tổng, không tải list).
+ * #697 — Manager's AppLayout with a badge showing the pending ticket count on the "Queue" item.
+ * Nav config stays static (MANAGER_NAV); the badge is injected at runtime from `totalItems`
+ * returned by GET /api/admin/tickets/queue (pageSize=1 — only the total count is needed, not the list).
  */
 export default function ManagerAppLayout() {
   const { data: queuePage } = useAdminTicketQueue({ pageSize: 1 });

@@ -1,5 +1,5 @@
-// Tier kỹ năng của Staff — khớp StaffSkillTierEnum bên BE (AuthService + TicketService).
-// Giá trị số 1..3, so sánh được bằng >= để check "từ tier X trở lên".
+// Staff skill tier — mirrors StaffSkillTierEnum on the BE (AuthService + TicketService).
+// Numeric values 1..3, comparable with >= to check "tier X or above".
 
 export const StaffSkillTierEnum = {
   Generalist: 1,
@@ -9,15 +9,16 @@ export const StaffSkillTierEnum = {
 export type StaffSkillTierEnum =
   (typeof StaffSkillTierEnum)[keyof typeof StaffSkillTierEnum];
 
-// Đặt label khớp nguyên văn message 403 của BE (AssignmentRoleHelper.GetTierRequirementMessage)
-// để Manager đối chiếu được UI với lỗi khi có sự cố.
+// The labels match the BE's 403 message verbatim
+// (AssignmentRoleHelper.GetTierRequirementMessage) so a Manager can line the UI up
+// with the error when something goes wrong.
 export const StaffSkillTierLabel: Record<number, string> = {
   [StaffSkillTierEnum.Generalist]: "Generalist (Tier 1)",
   [StaffSkillTierEnum.ModuleSpecialist]: "ModuleSpecialist (Tier 2)",
   [StaffSkillTierEnum.SeniorSpecialist]: "SeniorSpecialist (Tier 3)",
 };
 
-/** Nhãn ngắn cho badge cạnh tên staff. */
+/** Short label for the badge next to a staff member's name. */
 export const StaffSkillTierShortLabel: Record<number, string> = {
   [StaffSkillTierEnum.Generalist]: "Tier 1",
   [StaffSkillTierEnum.ModuleSpecialist]: "Tier 2",

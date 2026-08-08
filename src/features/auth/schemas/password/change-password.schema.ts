@@ -3,7 +3,7 @@ import { passwordFieldBounded } from "@/shared/schemas/common.schema";
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
+    currentPassword: z.string().min(1, "Current password is required"),
     newPassword: passwordFieldBounded,
     confirmPassword: z.string(),
   })
@@ -11,7 +11,7 @@ export const changePasswordSchema = z
     if (confirmPassword !== newPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Mật khẩu xác nhận không khớp",
+        message: "Passwords do not match",
         path: ["confirmPassword"],
       });
     }

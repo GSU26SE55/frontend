@@ -4,17 +4,17 @@ import { RoleStatusEnum } from "@/features/admin/types/account/admin.types";
 export const createRoleSchema = z.object({
   name: z
     .string()
-    .min(2, "Tên role tối thiểu 2 ký tự")
-    .max(50, "Tối đa 50 ký tự"),
-  description: z.string().max(200, "Tối đa 200 ký tự").optional(),
+    .min(2, "Role name must be at least 2 characters")
+    .max(50, "Must be at most 50 characters"),
+  description: z.string().max(200, "Must be at most 200 characters").optional(),
 });
 
 export const editRoleSchema = z.object({
   name: z
     .string()
-    .min(2, "Tên role tối thiểu 2 ký tự")
-    .max(50, "Tối đa 50 ký tự"),
-  description: z.string().max(200, "Tối đa 200 ký tự").optional(),
+    .min(2, "Role name must be at least 2 characters")
+    .max(50, "Must be at most 50 characters"),
+  description: z.string().max(200, "Must be at most 200 characters").optional(),
 });
 
 export const changeRoleStatusSchema = z.object({

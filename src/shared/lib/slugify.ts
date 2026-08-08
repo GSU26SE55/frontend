@@ -1,15 +1,15 @@
 /**
- * Sinh slug URL-friendly từ tiêu đề tiếng Việt.
+ * Generates a URL-friendly slug from a Vietnamese title.
  * "Pin không sạc được" → "pin-khong-sac-duoc"
  */
 export function slugify(input: string): string {
   return input
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // bỏ dấu thanh
+    .replace(/[̀-ͯ]/g, "") // strip tone marks
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-") // ký tự lạ → gạch ngang
-    .replace(/^-+|-+$/g, "") // bỏ gạch thừa 2 đầu
-    .slice(0, 300); // BE giới hạn 300 ký tự
+    .replace(/[^a-z0-9]+/g, "-") // unrecognized characters → hyphen
+    .replace(/^-+|-+$/g, "") // trim leading/trailing hyphens
+    .slice(0, 300); // BE limits to 300 characters
 }

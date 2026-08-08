@@ -23,9 +23,9 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 interface ImagePickerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Chèn ảnh vào nội dung — nhận fileId đã có trên server. */
+  /** Inserts the image into the content — receives a fileId already on the server. */
   onPick: (fileId: string, alt?: string) => void;
-  /** Có giá trị → bật tab "Ảnh từ chat" của ticket này. */
+  /** Has a value → enables the "Images from chat" tab for this ticket. */
   ticketId?: string;
 }
 
@@ -45,11 +45,11 @@ export function ImagePickerDialog({
   const upload = async (files: File[]) => {
     for (const file of files) {
       if (!IMAGE_MIME.test(file.type)) {
-        toast.error(`"${file.name}" không phải ảnh hợp lệ (png/jpg/gif/webp)`);
+        toast.error(`"${file.name}" is not a valid image (png/jpg/gif/webp)`);
         continue;
       }
       if (file.size > MAX_IMAGE_BYTES) {
-        toast.error(`"${file.name}" vượt quá 5MB`);
+        toast.error(`"${file.name}" exceeds 5MB`);
         continue;
       }
       try {
@@ -63,7 +63,7 @@ export function ImagePickerDialog({
         onPick(fileId, file.name);
         onOpenChange(false);
       } catch {
-        toast.error(`Tải "${file.name}" thất bại`);
+        toast.error(`Failed to upload "${file.name}"`);
       }
     }
   };
@@ -72,21 +72,21 @@ export function ImagePickerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Chèn ảnh</DialogTitle>
+          <DialogTitle>Insert image</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue={ticketId ? "chat" : "upload"}>
           <TabsList className="w-full">
             {ticketId && (
               <TabsTrigger value="chat" className="flex-1">
-                Ảnh từ chat
+                Images from chat
               </TabsTrigger>
             )}
             <TabsTrigger value="upload" className="flex-1">
-              Tải lên
+              Upload
             </TabsTrigger>
             <TabsTrigger value="camera" className="flex-1">
-              Chụp ảnh
+              Take photo
             </TabsTrigger>
           </TabsList>
 
@@ -100,7 +100,7 @@ export function ImagePickerDialog({
                 </div>
               ) : !chatImages || chatImages.length === 0 ? (
                 <p className="text-muted-foreground py-8 text-center text-sm">
-                  Đoạn chat này chưa có ảnh nào.
+                  This chat has no images yet.
                 </p>
               ) : (
                 <div className="grid max-h-[50vh] grid-cols-3 gap-2 overflow-auto">
@@ -110,7 +110,7 @@ export function ImagePickerDialog({
                       type="button"
                       title={img.fileName}
                       onClick={() => {
-                        // Ảnh đã có trên server — chèn thẳng fileId, không upload lại
+                        // Image already on the server — insert the fileId directly, no re-upload
                         onPick(img.fileId, img.fileName);
                         onOpenChange(false);
                       }}
@@ -151,9 +151,9 @@ export function ImagePickerDialog({
               ) : (
                 <Upload className="text-muted-foreground size-6" />
               )}
-              <p className="text-sm">Kéo thả ảnh vào đây</p>
+              <p className="text-sm">Drag and drop images here</p>
               <p className="text-muted-foreground text-xs">
-                PNG, JPG, GIF, WEBP — tối đa 5MB
+                PNG, JPG, GIF, WEBP — max 5MB
               </p>
               <Button
                 type="button"
@@ -162,7 +162,7 @@ export function ImagePickerDialog({
                 disabled={uploading}
                 onClick={() => fileInputRef.current?.click()}
               >
-                Chọn từ máy
+                Choose from device
               </Button>
               <input
                 ref={fileInputRef}

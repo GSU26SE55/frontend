@@ -1,4 +1,4 @@
-// Re-export từ shared — nguồn thật ở shared/hooks/battery/useAiPredictions.ts.
+// Re-exported from shared — the real source is shared/hooks/battery/useAiPredictions.ts.
 export {
   useSohPredictions,
   useAnomalyClassifications,

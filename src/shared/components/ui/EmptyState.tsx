@@ -2,24 +2,24 @@ import { Inbox, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EmptyStateProps {
-  /** Icon minh hoạ. Mặc định Inbox. */
+  /** Illustration icon. Defaults to Inbox. */
   icon?: LucideIcon;
-  /** Dòng chính. Mặc định: chưa có dữ liệu. */
+  /** Main line. Default: no data yet. */
   title?: string;
-  /** Mô tả phụ (tuỳ chọn). */
+  /** Secondary description (optional). */
   description?: string;
-  /** CTA (vd "Xóa bộ lọc" / "Tạo mới"). Không truyền → ẩn nút. */
+  /** CTA (e.g. "Clear filters" / "Create new"). Omit → hides the button. */
   action?: { label: string; onClick: () => void };
   className?: string;
 }
 
 /**
- * Empty state dùng chung — icon + text + CTA tuỳ chọn.
- * Thống nhất thay cho các "Không có… / Chưa có…" tự viết inline mỗi trang.
+ * Shared empty state — icon + text + optional CTA.
+ * Unifies the ad-hoc "No… / Not yet…" strings written inline on every page.
  */
 export function EmptyState({
   icon: Icon = Inbox,
-  title = "Chưa có dữ liệu",
+  title = "No data yet",
   description,
   action,
   className,

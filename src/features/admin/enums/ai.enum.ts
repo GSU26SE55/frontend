@@ -1,4 +1,4 @@
-// Re-export từ shared — nguồn thật ở shared/enums/battery/ai.enum.ts.
+// Re-exported from shared — source of truth is shared/enums/battery/ai.enum.ts.
 export {
   AnomalyClassificationEnum,
   AnomalyClassificationLabel,

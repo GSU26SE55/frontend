@@ -9,7 +9,7 @@ import type {
   FileAuditLogParams,
 } from "@/features/admin/types/file/file-audit.types";
 
-// GH-133 C5 — audit truy cập file GDPR (FileStorageService, Admin only).
+// GH-133 C5 — GDPR file access audit (FileStorageService, Admin only).
 export const fileAuditLogsService = {
   getLogs: (params?: FileAuditLogParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<FileAuditLogDto>>>(

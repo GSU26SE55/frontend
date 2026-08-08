@@ -30,17 +30,17 @@ import {
   KbCategoryLabel,
 } from "@/shared/enums/kb/kb.enum";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
-import { noData } from "@/shared/constants/emptyStates";
+import { noData, notFound } from "@/shared/constants/emptyStates";
 
 const NONE_SORT = "__none__";
 
 const SORT_ITEMS = [
-  { value: "code", label: "Mã" },
-  { value: "title", label: "Tiêu đề" },
-  { value: "category", label: "Danh mục" },
-  { value: "status", label: "Trạng thái" },
-  { value: "viewCount", label: "Lượt xem" },
-  { value: "helpfulCount", label: "Hữu ích" },
+  { value: "code", label: "Code" },
+  { value: "title", label: "Title" },
+  { value: "category", label: "Category" },
+  { value: "status", label: "Status" },
+  { value: "viewCount", label: "Views" },
+  { value: "helpfulCount", label: "Helpful" },
 ];
 
 interface KbArticleTableProps {
@@ -53,12 +53,12 @@ interface KbArticleTableProps {
   onDelete?: (article: KbArticleSummaryDTO) => void;
   onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
   onEdit?: (article: KbArticleSummaryDTO) => void;
-  /** Sao chép row này → tạo bài mới tương tự (mở trang create điền sẵn). */
+  /** Copy this row → create a similar new article (opens the create page pre-filled). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
-  /** Sinh blog bằng AI — BE chỉ nhận bài Published (409 nếu khác). */
+  /** Generate blog with AI — BE only accepts Published articles (409 otherwise). */
   onGenerateBlog?: (article: KbArticleSummaryDTO) => void;
   basePath?: string;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Sort server-side — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -94,11 +94,11 @@ export default function KbArticleTable({
       <div className="py-16 text-center flex flex-col items-center gap-3">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">
-          {hasFilter ? "Không khớp với bộ lọc hiện tại" : noData("bài viết")}
+          {hasFilter ? notFound("articles") : noData("articles")}
         </p>
         {hasFilter && onResetFilter && (
           <Button size="sm" variant="outline" onClick={onResetFilter}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -108,19 +108,19 @@ export default function KbArticleTable({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-end gap-2 px-1">
-        <span className="text-xs text-muted-foreground">Sắp xếp</span>
+        <span className="text-xs text-muted-foreground">Sort</span>
         <Select
           value={sort.sortBy ?? NONE_SORT}
           onValueChange={(v) =>
             sort.setSort(v && v !== NONE_SORT ? v : null, sort.sortDir)
           }
-          items={[{ value: NONE_SORT, label: "Mặc định" }, ...SORT_ITEMS]}
+          items={[{ value: NONE_SORT, label: "Default" }, ...SORT_ITEMS]}
         >
           <SelectTrigger size="sm" className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent align="end">
-            <SelectItem value={NONE_SORT}>Mặc định</SelectItem>
+            <SelectItem value={NONE_SORT}>Default</SelectItem>
             {SORT_ITEMS.map((s) => (
               <SelectItem key={s.value} value={s.value}>
                 {s.label}
@@ -136,7 +136,7 @@ export default function KbArticleTable({
             sort.sortBy &&
             sort.setSort(sort.sortBy, sort.sortDir === "asc" ? "desc" : "asc")
           }
-          title={sort.sortDir === "desc" ? "Giảm dần" : "Tăng dần"}
+          title={sort.sortDir === "desc" ? "Descending" : "Ascending"}
         >
           <ArrowUpDown className="size-3.5" />
         </Button>
@@ -174,17 +174,17 @@ export default function KbArticleTable({
                           : navigate(`${basePath}/${article.id}/edit`)
                       }
                     >
-                      Chỉnh sửa
+                      Edit
                     </DropdownMenuItem>
                     {onCopy && (
                       <DropdownMenuItem onClick={() => onCopy(article)}>
-                        Sao chép
+                        Copy
                       </DropdownMenuItem>
                     )}
                     {article.status === KbArticleStatusEnum.Draft &&
                       onPublish && (
                         <DropdownMenuItem onClick={() => onPublish(article)}>
-                          Xuất bản
+                          Publish
                         </DropdownMenuItem>
                       )}
                     {article.status === KbArticleStatusEnum.Published &&
@@ -192,13 +192,13 @@ export default function KbArticleTable({
                         <DropdownMenuItem
                           onClick={() => onGenerateBlog(article)}
                         >
-                          Tạo blog bằng AI
+                          Generate blog with AI
                         </DropdownMenuItem>
                       )}
                     {article.status === KbArticleStatusEnum.Published &&
                       onArchive && (
                         <DropdownMenuItem onClick={() => onArchive(article)}>
-                          Lưu trữ
+                          Archive
                         </DropdownMenuItem>
                       )}
                     {onDelete && (
@@ -208,7 +208,7 @@ export default function KbArticleTable({
                           className="text-destructive"
                           onClick={() => onDelete(article)}
                         >
-                          Xóa
+                          Delete
                         </DropdownMenuItem>
                       </>
                     )}

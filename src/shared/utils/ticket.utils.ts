@@ -8,7 +8,7 @@ const TERMINAL_STATUSES = new Set<string>([
   TicketStatusEnum.ClosedRejected,
 ]);
 
-/** Ticket đang "mở" — chưa kết thúc vòng đời. */
+/** Ticket is still "open" — it has not reached the end of its lifecycle. */
 export function isOpenTicket(t: TicketDTO): boolean {
   return !TERMINAL_STATUSES.has(t.status);
 }

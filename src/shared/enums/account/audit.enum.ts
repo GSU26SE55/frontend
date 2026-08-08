@@ -1,8 +1,9 @@
-// Audit — Severity & ActionCategory dùng chung CROSS-SERVICE (api-audit.md §67/§76).
-// BE serialize dạng string name → enum string-valued. Đối chiếu exact-match, phân biệt hoa-thường.
+// Audit — Severity & ActionCategory are shared CROSS-SERVICE (api-audit.md §67/§76).
+// The BE serializes them as string names → string-valued enums. Compare by exact,
+// case-sensitive match.
 
-// LoginAttemptResult — dùng chung admin (audit) + auth (login history).
-// Nâng lên shared để 2 feature không import chéo nhau.
+// LoginAttemptResult — shared by admin (audit) + auth (login history).
+// Promoted to shared so the two features don't import from each other.
 export const LoginAttemptResult = {
   Success: 1,
   WrongPassword: 2,
@@ -24,7 +25,7 @@ export const AuditSeverity = {
 } as const;
 export type AuditSeverity = (typeof AuditSeverity)[keyof typeof AuditSeverity];
 
-// 9 category cố định cross-service (api-audit.md §76).
+// 9 fixed cross-service categories (api-audit.md §76).
 export const AuditActionCategory = {
   Authentication: "Authentication",
   Authorization: "Authorization",

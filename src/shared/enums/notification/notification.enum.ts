@@ -11,11 +11,12 @@ export const NotificationTypeEnum = {
   EnvironmentalIncidentDetected: 10,
   EnvironmentalIncidentResolved: 11,
   AccountActivated: 12,
-  // 13 = AdminInvite — ĐÃ GỠ 03/08/2026 cùng backend, cố ý để trống số này.
-  // Thư mời quản trị đi thẳng AuthService → EmailService, KHÔNG qua NotificationService: không
-  // consumer nào ghi, không dòng notifications nào mang type 13. Không dùng lại số 13.
+  // 13 = AdminInvite — REMOVED on 03/08/2026 alongside the backend; this number is deliberately
+  // left empty. Admin invites go straight from AuthService → EmailService and NOT through
+  // NotificationService: no consumer writes them and no notification row carries type 13.
+  // Do not reuse 13.
   IncidentDeclared: 14,
-  // Cascade risk ≥ 0.7 trên 1 pin (BatteryCascadeRiskHighEvent) → notify Manager/Admin.
+  // Cascade risk ≥ 0.7 on a battery (BatteryCascadeRiskHighEvent) → notify Manager/Admin.
   CascadeRiskHigh: 15,
   BatteryAlertEscalationPending: 16,
   AlertTicketSagaFailed: 17,
@@ -35,15 +36,16 @@ export const NotificationTypeEnum = {
   TicketRatingRequested: 31,
   BatteryAnomalyWarning: 32,
   BatteryAnomalyInfo: 33,
-  // 03/08/2026 — BE đã tách `TicketMerged` khỏi 27 sang 34 (hoàn tất GH-83), nên nay mirror được.
-  // Trước đó BE khai `TicketMerged = 27` TRÙNG `ChatEscalatedToAdmin` ⇒ map value→tên ambiguous
-  // nên FE từng cố ý bỏ trống. Notification này báo Customer khi ticket của họ bị gộp.
-  // KHÔNG dùng lại 27 cho bất kỳ loại nào.
+  // 03/08/2026 — the BE moved `TicketMerged` off 27 to 34 (completing GH-83), so the FE can
+  // finally mirror it. Before that the BE declared `TicketMerged = 27`, CLASHING with
+  // `ChatEscalatedToAdmin`, which made the value→name mapping ambiguous, so the FE deliberately
+  // left it out. This notification tells a Customer their ticket was merged.
+  // Do NOT reuse 27 for any type.
   TicketMerged: 34,
   System: 99,
 } as const;
-// ⚠️ Số lấy theo BE `NotificationTypeEnum.cs`. Nhóm Sprint 6.2 nằm ở 27–33 (không phải 25–31):
-// module Blog GH-671 chiếm 25/26 nên đẩy toàn bộ nhóm sau lên 2 bậc.
+// ⚠️ The numbers follow the BE's `NotificationTypeEnum.cs`. The Sprint 6.2 group sits at 27–33
+// (not 25–31): the Blog module GH-671 took 25/26 and pushed everything after it up by two.
 export type NotificationTypeEnum =
   (typeof NotificationTypeEnum)[keyof typeof NotificationTypeEnum];
 
@@ -61,25 +63,28 @@ export const NotificationStatusEnum = {
   Sent: 2,
   Failed: 3,
   Read: 4,
-  // Sprint 6.3 NOTI3-14: provider xác nhận đã đẩy tới thiết bị (Expo receipt "ok").
+  // Sprint 6.3 NOTI3-14: the provider confirmed delivery to the device (Expo receipt "ok").
   Delivered: 5,
-  // Sprint 6.3 NOTI3-14: user chủ động mở notification — mạnh hơn Read.
+  // Sprint 6.3 NOTI3-14: the user actively opened the notification — stronger than Read.
   Opened: 6,
-  // GH-792: đã CHIẾM để gửi, chưa biết kết quả. Trạng thái tạm, được ghi và commit TRƯỚC khi gọi
-  // provider để tiến trình chết giữa chừng không làm bản ghi rơi lại hàng đợi và gửi trùng.
-  // Với người dùng nó vẫn thuộc phần "chưa xong" — và vẫn tính là chưa đọc.
+  // GH-792: CLAIMED for sending, outcome not yet known. A transient state, written and committed
+  // BEFORE calling the provider so that a process dying mid-send doesn't drop the row back onto
+  // the queue and send it twice.
+  // To the user it is still part of "not finished" — and still counts as unread.
   Processing: 7,
 } as const;
 export type NotificationStatusEnum =
   (typeof NotificationStatusEnum)[keyof typeof NotificationStatusEnum];
 
-// "Chưa đọc" theo đúng định nghĩa BE (GetUnreadCountQueryHandler): loại CẢ Read LẪN Opened.
-// Dùng helper này ở mọi chỗ FE tự tính unread để không lệch badge do server trả về.
+// "Unread" exactly as the BE defines it (GetUnreadCountQueryHandler): excludes BOTH Read AND
+// Opened. Use this helper everywhere the FE computes unread itself so the badge never drifts
+// from the server's count.
 export const isUnreadStatus = (status: NotificationStatusEnum): boolean =>
   status !== NotificationStatusEnum.Read &&
   status !== NotificationStatusEnum.Opened;
 
-// Nhóm nghiệp vụ của notification (Sprint 6.3 NOTI3-04) — dùng cho ma trận nhóm × kênh.
+// Business category of a notification (Sprint 6.3 NOTI3-04) — used for the category × channel
+// matrix.
 export const NotificationCategoryEnum = {
   Ticket: 1,
   Sla: 2,
@@ -91,8 +96,8 @@ export const NotificationCategoryEnum = {
 export type NotificationCategoryEnum =
   (typeof NotificationCategoryEnum)[keyof typeof NotificationCategoryEnum];
 
-// Tần suất gửi (NotificationPreference per-user) — khai báo để đủ domain,
-// không xuất hiện trên 2 endpoint REST hiện tại.
+// Send frequency (per-user NotificationPreference) — declared for domain completeness;
+// it does not appear on either of the two current REST endpoints.
 export const NotificationFrequencyEnum = {
   Immediate: 1,
   Daily: 2,
@@ -100,7 +105,7 @@ export const NotificationFrequencyEnum = {
 export type NotificationFrequencyEnum =
   (typeof NotificationFrequencyEnum)[keyof typeof NotificationFrequencyEnum];
 
-// Platform của device token — dùng cho các endpoint /api/device-tokens.
+// Device token platform — used by the /api/device-tokens endpoints.
 export const DevicePlatformEnum = {
   Ios: 1,
   Android: 2,

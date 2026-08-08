@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Inbox } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { UserRole } from "@/shared/types/account/session.types";
 import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
+import { notificationDeepLink } from "@/shared/utils/notificationDeepLink";
 import {
   notificationTypeLabel,
   notificationChannelLabel,
@@ -13,15 +13,9 @@ import {
 import { useMarkNotificationOpened } from "@/shared/hooks/notifications/useNotifications";
 import type { NotificationDto } from "@/shared/types/notification/notification.types";
 
-const ROLE_PREFIX: Record<UserRole, string> = {
-  [UserRole.ADMIN]: "admin",
-  [UserRole.MANAGER]: "manager",
-  [UserRole.STAFF]: "staff",
-  [UserRole.CUSTOMER]: "customer",
-};
-
-// PayloadJson là chuỗi JSON tự do do BE nhét vào — hỏng/không phải JSON là chuyện có thể xảy ra
-// (record cũ, consumer ghi sai). Parse lỗi thì trả null để pane vẫn render, không làm trắng trang.
+// PayloadJson is a free-form JSON string set by the BE — malformed/non-JSON content can happen
+// (old records, a consumer writing it wrong). On parse failure, return null so the pane still
+// renders instead of showing a blank page.
 function prettyPayload(raw?: string | null): string | null {
   if (!raw) return null;
   try {
@@ -57,7 +51,7 @@ export default function NotificationDetailPane({
         role="status"
         className="h-full flex items-center justify-center text-xs text-muted-foreground"
       >
-        Đang tải…
+        Loading…
       </div>
     );
   }
@@ -66,22 +60,18 @@ export default function NotificationDetailPane({
     return (
       <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
         <Inbox size={28} strokeWidth={1.5} />
-        <p className="text-xs">Chọn một thông báo để xem chi tiết</p>
+        <p className="text-xs">Select a notification to view details</p>
       </div>
     );
   }
 
   const n = notification;
-  const prefix = user ? ROLE_PREFIX[user.role] : "";
-  const deepLink =
-    n.entityType === "Ticket" && n.entityId && prefix
-      ? `/${prefix}/tickets/${n.entityId}`
-      : null;
+  const deepLink = notificationDeepLink(n, user?.role);
   const payload = prettyPayload(n.payloadJson);
 
-  // Bấm "Mở nội dung" mới là Opened thật (user chủ động xem nội dung gốc). Chỉ xem
-  // trong pane thì đã được đánh dấu Read ở trang cha rồi — giữ đúng ranh giới BE tách
-  // /read với /opened để open-rate không bị thổi lên.
+  // Clicking "Open content" is the real Opened event (user actively views the original
+  // content). Just viewing it in the pane already gets marked Read by the parent page —
+  // keep the BE's boundary between /read and /opened so the open-rate isn't inflated.
   const handleOpen = () => {
     if (!deepLink) return;
     if (isUnreadStatus(n.status)) markOpened.mutate(n.id);
@@ -90,67 +80,71 @@ export default function NotificationDetailPane({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="px-5 py-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
-            {notificationTypeLabel(n.type)}
-          </span>
-          {isUnreadStatus(n.status) && (
-            <span
-              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
-              style={{ backgroundColor: "var(--p1)" }}
-            >
-              Chưa đọc
+      {/* The open-content button sits in the header, aligned right of the title — the pane's
+          main action shouldn't be buried in the body, requiring a scroll to find on long bodies. */}
+      <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+              {notificationTypeLabel(n.type)}
             </span>
-          )}
+            {isUnreadStatus(n.status) && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary text-primary-foreground">
+                Unread
+              </span>
+            )}
+          </div>
+          <h2 className="text-[15px] font-semibold text-foreground">
+            {n.title}
+          </h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {format(new Date(n.createdAt), "HH:mm — EEEE, MM/dd/yyyy", {
+              locale: enUS,
+            })}
+          </p>
         </div>
-        <h2 className="text-[15px] font-semibold text-foreground">{n.title}</h2>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          {format(new Date(n.createdAt), "HH:mm — EEEE, dd/MM/yyyy", {
-            locale: vi,
-          })}
-        </p>
+
+        {deepLink && (
+          // Use the primary token instead of var(--p1): --p1 is the Critical-level red of the
+          // alert system, so using it here would make a normal navigation button look dangerous.
+          <button
+            onClick={handleOpen}
+            disabled={markOpened.isPending}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            <ExternalLink size={13} />
+            Open content
+          </button>
+        )}
       </div>
 
       <div className="px-5 py-4">
         <p className="text-[13px] leading-relaxed text-foreground whitespace-pre-wrap">
           {n.body}
         </p>
-
-        {deepLink && (
-          <button
-            onClick={handleOpen}
-            disabled={markOpened.isPending}
-            className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium text-white disabled:opacity-50"
-            style={{ backgroundColor: "var(--p1)" }}
-          >
-            <ExternalLink size={13} />
-            Mở nội dung liên quan
-          </button>
-        )}
       </div>
 
       <div className="px-5 py-3 border-t border-border">
         <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          Thông tin
+          Info
         </h3>
-        <Row label="Kênh" value={notificationChannelLabel(n.channel)} />
-        <Row label="Trạng thái" value={notificationStatusLabel(n.status)} />
+        <Row label="Channel" value={notificationChannelLabel(n.channel)} />
+        <Row label="Status" value={notificationStatusLabel(n.status)} />
         {n.sentAt && (
           <Row
-            label="Đã gửi lúc"
-            value={format(new Date(n.sentAt), "HH:mm dd/MM/yyyy")}
+            label="Sent at"
+            value={format(new Date(n.sentAt), "HH:mm MM/dd/yyyy")}
           />
         )}
         {n.readAt && (
           <Row
-            label="Đã đọc lúc"
-            value={format(new Date(n.readAt), "HH:mm dd/MM/yyyy")}
+            label="Read at"
+            value={format(new Date(n.readAt), "HH:mm MM/dd/yyyy")}
           />
         )}
         {n.entityType && (
           <Row
-            label="Đối tượng"
+            label="Entity"
             value={
               <span className="break-all">
                 {n.entityType}
@@ -164,7 +158,7 @@ export default function NotificationDetailPane({
       {payload && (
         <details className="px-5 py-3 border-t border-border">
           <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide cursor-pointer">
-            Dữ liệu kèm theo
+            Attached data
           </summary>
           <pre className="mt-2 p-2.5 rounded-md bg-muted text-[11px] overflow-x-auto whitespace-pre-wrap break-all">
             {payload}

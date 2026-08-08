@@ -23,11 +23,11 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 
 const STATUS_LABELS: Record<IotDeviceStatusEnum, string> = {
-  [IotDeviceStatusEnum.Pending]: "Chờ provision",
-  [IotDeviceStatusEnum.Active]: "Hoạt động",
+  [IotDeviceStatusEnum.Pending]: "Pending provision",
+  [IotDeviceStatusEnum.Active]: "Active",
   [IotDeviceStatusEnum.Offline]: "Offline",
-  [IotDeviceStatusEnum.Disabled]: "Vô hiệu hóa",
-  [IotDeviceStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [IotDeviceStatusEnum.Disabled]: "Disabled",
+  [IotDeviceStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const DEFAULTS = {
@@ -73,14 +73,14 @@ export default function IoTDevicesPage() {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">IoT Devices</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} thiết bị &mdash; quản lý edge
-            device.
+            {isLoading ? "..." : totalItems} devices &mdash; manage edge
+            devices.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.iotDevices]} />
           <Button size="sm" onClick={() => navigate("/admin/iot-devices/new")}>
-            <Plus className="size-3.5" /> Tạo mới
+            <Plus className="size-3.5" /> Create new
           </Button>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function IoTDevicesPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo device code / tên..."
+            placeholder="Search by device code / name..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -100,7 +100,7 @@ export default function IoTDevicesPage() {
           value={filters.siteId || null}
           onValueChange={(v) => setFilter("siteId", v || undefined)}
           items={[
-            { value: null, label: "Tất cả site" },
+            { value: null, label: "All sites" },
             ...(sitesData?.items.map((s) => ({
               value: s.id,
               label: s.name,
@@ -111,7 +111,7 @@ export default function IoTDevicesPage() {
             <SelectValue placeholder="Site" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả site</SelectItem>
+            <SelectItem value={null}>All sites</SelectItem>
             {sitesData?.items.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.name}
@@ -124,7 +124,7 @@ export default function IoTDevicesPage() {
           value={filters.status || null}
           onValueChange={(v) => setFilter("status", v || undefined)}
           items={[
-            { value: null, label: "Mọi trạng thái" },
+            { value: null, label: "All statuses" },
             ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
               value,
               label,
@@ -132,10 +132,10 @@ export default function IoTDevicesPage() {
           ]}
         >
           <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="Trạng thái" />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Mọi trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {Object.entries(STATUS_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -146,7 +146,7 @@ export default function IoTDevicesPage() {
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -161,7 +161,7 @@ export default function IoTDevicesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <Cpu className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có thiết bị IoT nào.</span>
+            <span className="text-sm">No IoT devices yet.</span>
           </div>
         ) : (
           <IoTDeviceTable

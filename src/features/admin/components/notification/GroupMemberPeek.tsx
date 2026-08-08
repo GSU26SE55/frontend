@@ -3,26 +3,28 @@ import { useNotificationGroupMembers } from "@/features/admin/hooks/notification
 
 interface Props {
   groupId: string;
-  /** Số người nhận thực tế của nhóm — dùng để nói ra phần bị cắt khi danh sách dài. */
+  /** Actual recipient count for the group — used to call out the truncated portion when the list is long. */
   memberCount: number;
 }
 
-/** Đủ để soát một nhóm bình thường mà không kéo cả nghìn dòng cho một ô xem nhanh. */
+/** Enough to skim a normal-sized group without pulling thousands of rows for a quick peek. */
 const PEEK_PAGE_SIZE = 50;
 
 /**
- * Danh sách người trong một nhóm, hiện ngay dưới ô chọn nhóm ở form gửi hàng loạt.
+ * List of people in a group, shown right below the group selector in the broadcast form.
  *
- * <b>Vì sao cần:</b> trước đây ô chọn nhóm chỉ hiện tên và một con số. Admin sắp gửi cho "Toàn bộ
- * Khách hàng" không có cách nào biết 2 người đó là ai nếu không mở sang màn hình khác — mà gửi
- * thông báo là việc không thu hồi được.
+ * <b>Why this is needed:</b> previously the group selector only showed a name and a count. An admin
+ * about to send to "All Customers" had no way to know who those 2 people were without opening
+ * another screen — and sending a notification can't be undone.
  *
- * <b>Vì sao chỉ tải khi mở:</b> component chỉ được render khi người dùng bấm mở, nên
- * <c>useNotificationGroupMembers</c> cũng chỉ gọi API lúc đó. Mở sẵn cả 5 nhóm là 5 lượt gọi thừa.
+ * <b>Why it only loads when opened:</b> the component only renders when the user clicks to open it,
+ * so <c>useNotificationGroupMembers</c> only calls the API at that point too. Pre-loading all 5
+ * groups would be 5 wasted API calls.
  *
- * <b>Vì sao vẫn hiện người đã ngừng hoạt động:</b> họ còn trong nhóm nhưng KHÔNG nhận thông báo —
- * đó chính là lý do số dòng ở đây có thể nhiều hơn con số người nhận bên cạnh tên nhóm. Ẩn đi thì
- * admin không hiểu vì sao hai số lệch nhau, và cũng không biết để dọn.
+ * <b>Why inactive people still show up:</b> they're still in the group but do NOT receive
+ * notifications — that's exactly why the row count here can be higher than the recipient count next
+ * to the group name. Hiding them would leave the admin confused about why the two numbers don't
+ * match, with no way to clean it up.
  */
 export default function GroupMemberPeek({ groupId, memberCount }: Props) {
   const { data, isLoading, isError } = useNotificationGroupMembers(groupId, {
@@ -34,7 +36,7 @@ export default function GroupMemberPeek({ groupId, memberCount }: Props) {
     return (
       <p className="flex items-center gap-1.5 px-2.5 pb-2 text-xs text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
-        Đang tải danh sách…
+        Loading list…
       </p>
     );
   }
@@ -42,7 +44,7 @@ export default function GroupMemberPeek({ groupId, memberCount }: Props) {
   if (isError) {
     return (
       <p className="px-2.5 pb-2 text-xs text-destructive">
-        Không tải được danh sách người trong nhóm.
+        Couldn't load the group's member list.
       </p>
     );
   }
@@ -52,7 +54,7 @@ export default function GroupMemberPeek({ groupId, memberCount }: Props) {
   if (members.length === 0) {
     return (
       <p className="px-2.5 pb-2 text-xs text-muted-foreground italic">
-        Nhóm chưa có ai.
+        This group has no members yet.
       </p>
     );
   }
@@ -74,9 +76,7 @@ export default function GroupMemberPeek({ groupId, memberCount }: Props) {
             <span className="truncate font-medium">{m.fullName}</span>
             <span className="truncate text-muted-foreground">{m.email}</span>
             {!m.isActive && (
-              <span className="shrink-0 text-muted-foreground">
-                · ngừng hoạt động
-              </span>
+              <span className="shrink-0 text-muted-foreground">· inactive</span>
             )}
           </li>
         ))}
@@ -84,16 +84,16 @@ export default function GroupMemberPeek({ groupId, memberCount }: Props) {
 
       {inactiveCount > 0 && (
         <p className="mt-1 text-xs text-muted-foreground">
-          {inactiveCount} người đang ngừng hoạt động sẽ <b>không</b> nhận thông
-          báo — đó là lý do con số bên cạnh tên nhóm ({memberCount}) nhỏ hơn số
-          dòng ở đây.
+          {inactiveCount} inactive members will <b>not</b> receive notifications
+          — that's why the count next to the group name ({memberCount}) is lower
+          than the number of rows here.
         </p>
       )}
 
       {hidden > 0 && (
         <p className="mt-1 text-xs text-amber-600">
-          Còn {hidden} người nữa chưa hiện — mở màn hình “Nhóm nhận thông báo” để
-          xem đủ.
+          {hidden} more not shown here — open the "Notification recipient
+          groups" screen to see them all.
         </p>
       )}
     </div>

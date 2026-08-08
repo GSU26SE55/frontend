@@ -19,14 +19,14 @@ import type {
 } from "@/shared/types/blog/blog.types";
 
 interface BlogEditorPanelProps {
-  /** Có giá trị = chế độ sửa; undefined = tạo mới. */
+  /** Has a value = edit mode; undefined = create new. */
   existing?: BlogPostDTO;
   templates?: BlogTemplateDTO[];
-  /** Trả về Promise để panel bắt lỗi và map xuống field. */
+  /** Return a Promise so the panel can catch errors and map them to fields. */
   onSubmit: (values: BlogPostFormValues) => Promise<unknown>;
   onCancel?: () => void;
   isPending?: boolean;
-  /** false khi bài đang Generating / đã Archived. */
+  /** false while the post is Generating / already Archived. */
   editable?: boolean;
 }
 
@@ -62,7 +62,7 @@ export function BlogEditorPanel({
 
   const title = useWatch({ control, name: "title" });
 
-  // Nạp dữ liệu khi vào chế độ sửa
+  // Load data when entering edit mode
   useEffect(() => {
     if (!existing) return;
     reset({
@@ -72,11 +72,11 @@ export function BlogEditorPanel({
       contentHtml: existing.contentHtml,
       changeNote: "",
     });
-    // Không cần setSlugTouched ở đây: effect sinh slug đã bỏ qua khi isEdit,
-    // mà isEdit = !!existing nên vừa có dữ liệu là slug thôi bám theo title.
+    // No need to setSlugTouched here: the slug-generation effect already skips when isEdit,
+    // and isEdit = !!existing, so as soon as data loads the slug stops following the title.
   }, [existing, reset]);
 
-  // Tạo mới: slug bám theo title cho tới khi user tự sửa slug
+  // Create new: slug follows the title until the user edits the slug themselves
   useEffect(() => {
     if (isEdit || slugTouched) return;
     setValue("slug", slugify(title ?? ""));
@@ -87,8 +87,8 @@ export function BlogEditorPanel({
     if (tpl) setValue("contentHtml", tpl.contentHtml);
   };
 
-  // Form → try/catch + setError (KHÔNG dùng onError của mutation).
-  // EntityError → lỗi dưới input; HttpError (vd 409 slug trùng) → toast.
+  // Form → try/catch + setError (do NOT use the mutation's onError).
+  // EntityError → error under the input; HttpError (e.g. 409 duplicate slug) → toast.
   const submit = async (values: BlogPostFormValues) => {
     try {
       await onSubmit(values);
@@ -100,12 +100,12 @@ export function BlogEditorPanel({
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="blog-title">Tiêu đề</Label>
+        <Label htmlFor="blog-title">Title</Label>
         <Input
           id="blog-title"
           {...register("title")}
           disabled={!editable}
-          placeholder="Tiêu đề bài viết"
+          placeholder="Post title"
         />
         {errors.title && (
           <p className="text-destructive text-xs">{errors.title.message}</p>
@@ -118,7 +118,7 @@ export function BlogEditorPanel({
           id="blog-slug"
           {...register("slug", { onChange: () => setSlugTouched(true) })}
           disabled={!editable}
-          placeholder="duong-dan-bai-viet"
+          placeholder="post-url-slug"
         />
         {errors.slug && (
           <p className="text-destructive text-xs">{errors.slug.message}</p>
@@ -126,13 +126,13 @@ export function BlogEditorPanel({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="blog-summary">Tóm tắt</Label>
+        <Label htmlFor="blog-summary">Summary</Label>
         <Textarea
           id="blog-summary"
           rows={3}
           {...register("summary")}
           disabled={!editable}
-          placeholder="Mô tả ngắn hiển thị ở danh sách"
+          placeholder="Short description shown in the list"
         />
         {errors.summary && (
           <p className="text-destructive text-xs">{errors.summary.message}</p>
@@ -141,7 +141,7 @@ export function BlogEditorPanel({
 
       {!isEdit && templates && templates.length > 0 && (
         <div className="space-y-1.5">
-          <Label htmlFor="blog-template">Áp dụng mẫu (tùy chọn)</Label>
+          <Label htmlFor="blog-template">Apply template (optional)</Label>
           <select
             id="blog-template"
             disabled={!editable}
@@ -149,7 +149,7 @@ export function BlogEditorPanel({
             onChange={(e) => applyTemplate(e.target.value)}
             className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
           >
-            <option value="">— Không dùng mẫu —</option>
+            <option value="">— No template —</option>
             {templates
               .filter((t) => t.isActive)
               .map((t) => (
@@ -162,7 +162,7 @@ export function BlogEditorPanel({
       )}
 
       <div className="space-y-1.5">
-        <Label>Nội dung</Label>
+        <Label>Content</Label>
         <Controller
           control={control}
           name="contentHtml"
@@ -183,12 +183,12 @@ export function BlogEditorPanel({
 
       {isEdit && (
         <div className="space-y-1.5">
-          <Label htmlFor="blog-change-note">Ghi chú thay đổi</Label>
+          <Label htmlFor="blog-change-note">Change note</Label>
           <Input
             id="blog-change-note"
             {...register("changeNote")}
             disabled={!editable}
-            placeholder="Mô tả ngắn thay đổi lần này (lưu vào lịch sử)"
+            placeholder="Short description of this change (saved to history)"
           />
         </div>
       )}
@@ -196,11 +196,11 @@ export function BlogEditorPanel({
       <div className="flex justify-end gap-2">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>
-            Hủy
+            Cancel
           </Button>
         )}
         <Button type="submit" disabled={isPending || !editable}>
-          {isEdit ? "Lưu thay đổi" : "Tạo bài viết"}
+          {isEdit ? "Save changes" : "Create post"}
         </Button>
       </div>
     </form>

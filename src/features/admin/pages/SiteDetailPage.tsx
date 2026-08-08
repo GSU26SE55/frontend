@@ -45,9 +45,9 @@ import { KEY } from "@/shared/utils/queryKeys";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Suspended",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 type ConfirmState = { type: "none" } | { type: "delete" } | { type: "restore" };
@@ -96,9 +96,9 @@ export default function SiteDetailPage() {
       <div className="p-6 max-w-360 mx-auto">
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
-          <span className="text-sm">Không tìm thấy site.</span>
+          <span className="text-sm">Site not found.</span>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-3.5" /> Quay lại
+            <ArrowLeft className="size-3.5" /> Back
           </Button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function SiteDetailPage() {
           className="-ml-2 mb-2"
           onClick={() => navigate(-1)}
         >
-          <ArrowLeft className="size-3.5" /> Quay lại
+          <ArrowLeft className="size-3.5" /> Back
         </Button>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -133,13 +133,13 @@ export default function SiteDetailPage() {
             <RefreshButton queryKeys={[KEY.sites]} size="icon" />
             {isDecommissioned ? (
               <>
-                <Badge variant="destructive">Da ngung</Badge>
+                <Badge variant="destructive">Decommissioned</Badge>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setConfirm({ type: "restore" })}
                 >
-                  Khôi phục
+                  Restore
                 </Button>
               </>
             ) : (
@@ -149,14 +149,14 @@ export default function SiteDetailPage() {
                   size="sm"
                   onClick={() => setEditOpen(true)}
                 >
-                  Sửa
+                  Edit
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setConfirm({ type: "delete" })}
                 >
-                  Xóa
+                  Delete
                 </Button>
               </>
             )}
@@ -170,14 +170,14 @@ export default function SiteDetailPage() {
         <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
       </div>
 
-      {/* Pin + Môi trường */}
+      {/* Battery + Environment */}
       <Tabs defaultValue="assets">
         <TabsList>
           <TabsTrigger value="assets">
-            <Battery className="size-3.5" /> Danh sách pin
+            <Battery className="size-3.5" /> Battery list
           </TabsTrigger>
           <TabsTrigger value="ambient">
-            <Thermometer className="size-3.5" /> Môi trường
+            <Thermometer className="size-3.5" /> Environment
           </TabsTrigger>
         </TabsList>
 
@@ -190,7 +190,7 @@ export default function SiteDetailPage() {
                   : ASSET_STATUS_ALL
               }
               items={[
-                { value: ASSET_STATUS_ALL, label: "Mọi trạng thái" },
+                { value: ASSET_STATUS_ALL, label: "All statuses" },
                 ...Object.entries(ASSET_STATUS_LABELS).map(
                   ([value, label]) => ({
                     value,
@@ -210,10 +210,10 @@ export default function SiteDetailPage() {
               }
             >
               <SelectTrigger size="sm" className="w-40">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ASSET_STATUS_ALL}>Mọi trạng thái</SelectItem>
+                <SelectItem value={ASSET_STATUS_ALL}>All statuses</SelectItem>
                 {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     {label}
@@ -222,7 +222,7 @@ export default function SiteDetailPage() {
               </SelectContent>
             </Select>
             <Button size="sm" onClick={() => setAssetFormOpen(true)}>
-              <Plus className="size-3.5" /> Thêm pin
+              <Plus className="size-3.5" /> Add battery
             </Button>
           </div>
           <Card>
@@ -254,7 +254,7 @@ export default function SiteDetailPage() {
         editData={site}
       />
 
-      {/* Thêm pin vào site đang mở — siteId điền sẵn, không cho đổi. */}
+      {/* Add a battery to the currently open site — siteId is pre-filled and cannot be changed. */}
       <BatteryAssetForm
         open={assetFormOpen}
         onOpenChange={setAssetFormOpen}
@@ -268,9 +268,9 @@ export default function SiteDetailPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa site?</AlertDialogTitle>
+            <AlertDialogTitle>Delete site?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc muốn xóa site <strong>{site.name}</strong>?
+              Are you sure you want to delete site <strong>{site.name}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -284,7 +284,7 @@ export default function SiteDetailPage() {
                 setConfirm({ type: "none" });
               }}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -297,9 +297,10 @@ export default function SiteDetailPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Khôi phục site?</AlertDialogTitle>
+            <AlertDialogTitle>Restore site?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc muốn khôi phục site <strong>{site.name}</strong>?
+              Are you sure you want to restore site <strong>{site.name}</strong>
+              ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -310,7 +311,7 @@ export default function SiteDetailPage() {
                 setConfirm({ type: "none" });
               }}
             >
-              Khôi phục
+              Restore
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

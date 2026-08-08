@@ -5,35 +5,35 @@ import {
 } from "@/shared/enums/alerts/alert.enum";
 
 export const ANOMALY_TYPE_LABELS: Record<AnomalyTypeEnum, string> = {
-  [AnomalyTypeEnum.Overheat]: "Quá nhiệt",
-  [AnomalyTypeEnum.Overvoltage]: "Quá áp",
-  [AnomalyTypeEnum.Undervoltage]: "Sụt áp",
-  [AnomalyTypeEnum.LowSoc]: "SOC thấp",
-  [AnomalyTypeEnum.RapidDischarge]: "Xả nhanh",
-  [AnomalyTypeEnum.AbnormalCharging]: "Nạp bất thường",
-  [AnomalyTypeEnum.DeviceOffline]: "Mất kết nối",
-  [AnomalyTypeEnum.SohDegradation]: "Suy giảm SOH",
-  [AnomalyTypeEnum.HighAmbientTemp]: "Nhiệt độ môi trường cao",
-  [AnomalyTypeEnum.HighHumidity]: "Độ ẩm cao",
-  [AnomalyTypeEnum.HighTempHumidityCombo]: "Combo nhiệt độ + độ ẩm",
-  [AnomalyTypeEnum.HighInternalResistance]: "Điện trở trong cao",
-  [AnomalyTypeEnum.CellImbalance]: "Mất cân bằng cell",
-  [AnomalyTypeEnum.EnvironmentalIncident]: "Sự cố môi trường",
-  [AnomalyTypeEnum.SensorMismatch]: "Lệch cảm biến",
-  [AnomalyTypeEnum.Undertemp]: "Nhiệt độ thấp",
+  [AnomalyTypeEnum.Overheat]: "Overheating",
+  [AnomalyTypeEnum.Overvoltage]: "Overvoltage",
+  [AnomalyTypeEnum.Undervoltage]: "Undervoltage",
+  [AnomalyTypeEnum.LowSoc]: "Low SOC",
+  [AnomalyTypeEnum.RapidDischarge]: "Rapid discharge",
+  [AnomalyTypeEnum.AbnormalCharging]: "Abnormal charging",
+  [AnomalyTypeEnum.DeviceOffline]: "Connection lost",
+  [AnomalyTypeEnum.SohDegradation]: "SOH degradation",
+  [AnomalyTypeEnum.HighAmbientTemp]: "High ambient temperature",
+  [AnomalyTypeEnum.HighHumidity]: "High humidity",
+  [AnomalyTypeEnum.HighTempHumidityCombo]: "Temperature + humidity combo",
+  [AnomalyTypeEnum.HighInternalResistance]: "High internal resistance",
+  [AnomalyTypeEnum.CellImbalance]: "Cell imbalance",
+  [AnomalyTypeEnum.EnvironmentalIncident]: "Environmental incident",
+  [AnomalyTypeEnum.SensorMismatch]: "Sensor mismatch",
+  [AnomalyTypeEnum.Undertemp]: "Low temperature",
 };
 
 export const ALERT_SEVERITY_LABELS: Record<AlertSeverityEnum, string> = {
-  [AlertSeverityEnum.Info]: "Thông tin",
-  [AlertSeverityEnum.Warning]: "Cảnh báo",
-  [AlertSeverityEnum.Critical]: "Nguy hiểm",
+  [AlertSeverityEnum.Info]: "Info",
+  [AlertSeverityEnum.Warning]: "Warning",
+  [AlertSeverityEnum.Critical]: "Critical",
 };
 
 export const ALERT_STATUS_LABELS: Record<AlertStatusEnum, string> = {
-  [AlertStatusEnum.Open]: "Mở",
-  [AlertStatusEnum.Acknowledged]: "Đã xác nhận",
-  [AlertStatusEnum.Merged]: "Đã gộp",
-  [AlertStatusEnum.Resolved]: "Đã xử lý",
+  [AlertStatusEnum.Open]: "Open",
+  [AlertStatusEnum.Acknowledged]: "Acknowledged",
+  [AlertStatusEnum.Merged]: "Merged",
+  [AlertStatusEnum.Resolved]: "Resolved",
 };
 
 export const anomalyTypeLabel = (t: AnomalyTypeEnum) =>

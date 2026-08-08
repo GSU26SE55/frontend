@@ -37,7 +37,7 @@ export function BlogEditorView({ basePath }: BlogEditorViewProps) {
           summary: values.summary,
           contentHtml: values.contentHtml,
           changeNote: values.changeNote,
-          // Optimistic concurrency — lệch với DB → BE trả 409
+          // Optimistic concurrency — mismatch with DB → BE returns 409
           currentVersion: existing.currentVersion,
         },
       });
@@ -76,17 +76,17 @@ export function BlogEditorView({ basePath }: BlogEditorViewProps) {
           )
         }
       >
-        <ArrowLeft className="size-3.5" /> Quay lại
+        <ArrowLeft className="size-3.5" /> Back
       </Button>
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {isEdit ? "Sửa bài viết" : "Tạo bài viết"}
+          {isEdit ? "Edit post" : "Create post"}
         </h1>
         {isEdit && existing && (
           <p className="text-muted-foreground mt-1 text-sm">
-            Đang sửa phiên bản v{existing.currentVersion}. Lưu thành công sẽ tạo
-            phiên bản mới.
+            Editing version v{existing.currentVersion}. Saving successfully will
+            create a new version.
           </p>
         )}
       </div>

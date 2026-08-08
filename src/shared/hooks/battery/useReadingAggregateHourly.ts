@@ -3,18 +3,18 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { sensorReadingService } from "@/shared/services/battery/sensor-reading.service";
 
 interface UseReadingAggregateHourlyOptions {
-  days: number; // khoảng thời gian lùi từ hiện tại → tính `from` lúc fetch
+  days: number; // lookback window from now → `from` is computed at fetch time
 }
 
-// Bucket 1h cố định (continuous aggregate) — cho range dài (> 7 ngày).
-// Range ngắn + interval linh hoạt (1m/5m/…) → dùng useReadingAggregate.
+// Fixed 1h bucket (continuous aggregate) — for long ranges (> 7 days).
+// Short range + flexible interval (1m/5m/…) → use useReadingAggregate.
 export function useReadingAggregateHourly(
   assetId: string,
   opts: UseReadingAggregateHourlyOptions,
 ) {
   return useQuery({
     queryKey: QUERY_KEY.sensorReadings.aggregateHourly(assetId, opts),
-    // `from` tính trong queryFn (thời điểm fetch) — không gọi Date.now trong render.
+    // `from` is computed inside queryFn (at fetch time) — never call Date.now during render.
     queryFn: () => {
       const from = new Date(
         Date.now() - opts.days * 24 * 3_600_000,
@@ -24,7 +24,7 @@ export function useReadingAggregateHourly(
         .then((r) => r.data.data);
     },
     enabled: !!assetId,
-    // Bucket 1h — refresh chậm hơn /aggregate (materialized view refresh mỗi phút).
+    // 1h bucket — refreshes slower than /aggregate (materialized view refreshes every minute).
     staleTime: 60_000,
   });
 }

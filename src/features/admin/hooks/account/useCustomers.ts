@@ -8,7 +8,7 @@ export function useCustomers(params?: {
   pageSize?: number;
   keyword?: string;
 }) {
-  // roleId của Customer resolve động theo normalizedName — xem useRoleId.
+  // Customer's roleId resolves dynamically by normalizedName — see useRoleId.
   const { data: customerRoleId } = useRoleId("CUSTOMER");
 
   return useQuery({

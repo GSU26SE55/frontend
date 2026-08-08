@@ -40,18 +40,19 @@ import {
 import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
 
 /**
- * Admin = HẠ TẦNG & SỨC KHỎE HỆ THỐNG: sites, pin, kết nối, cảnh báo, sự cố
- * môi trường, sức khỏe service.
+ * Admin = INFRASTRUCTURE & SYSTEM HEALTH: sites, batteries, connectivity, alerts,
+ * environmental incidents, service health.
  *
- * KHÔNG hiển thị SLA / pipeline ticket — đó là bề mặt điều phối của Manager.
- * Admin cần biết "hệ thống có khỏe không", không phải "ticket chạy tới đâu".
+ * Does NOT show SLA / ticket pipeline — that is the Manager's coordination surface.
+ * Admin needs to know "is the system healthy", not "how far along is the ticket".
  *
- * Layout: 1 KHUNG CỐ ĐỊNH, trang không cuộn (`overflow-hidden`). Chiều cao còn
- * lại chia đúng 2 hàng panel bằng `grid-rows-2` + `flex-1 min-h-0`; panel nào
- * là danh sách thì tự cuộn BÊN TRONG, không đẩy trang dài ra.
+ * Layout: ONE FIXED FRAME, the page does not scroll (`overflow-hidden`). The
+ * remaining height is split into exactly 2 panel rows via `grid-rows-2` +
+ * `flex-1 min-h-0`; any panel that is a list scrolls INSIDE itself instead of
+ * stretching the page.
  *
- * Mỗi panel một dạng biểu đồ khác nhau (area / gauge / bar ngang / donut /
- * bảng xếp hạng) để phân biệt được loại thông tin ngay từ hình dạng.
+ * Each panel uses a different chart shape (area / gauge / horizontal bar / donut /
+ * leaderboard) so the kind of information is recognizable from the shape alone.
  */
 
 const alertChartConfig = {
@@ -61,25 +62,25 @@ const alertChartConfig = {
 } satisfies ChartConfig;
 
 const anomalyChartConfig = {
-  value: { label: "Cảnh báo" },
+  value: { label: "Alerts" },
 } satisfies ChartConfig;
 
 const ANOMALY_LABEL: Record<number, string> = {
-  1: "Quá nhiệt",
-  2: "Quá áp",
-  3: "Sụt áp",
-  4: "SOC thấp",
-  5: "Xả nhanh",
-  6: "Sạc bất thường",
-  7: "Mất kết nối",
-  8: "Suy giảm SOH",
-  9: "Nhiệt độ cao",
-  10: "Độ ẩm cao",
-  11: "Nhiệt-ẩm cao",
-  12: "Nội trở cao",
-  13: "Lệch cell",
-  14: "Sự cố MT",
-  15: "Sai lệch sensor",
+  1: "Overheat",
+  2: "Overvoltage",
+  3: "Voltage drop",
+  4: "Low SOC",
+  5: "Fast discharge",
+  6: "Abnormal charging",
+  7: "Connection lost",
+  8: "SOH degradation",
+  9: "High temperature",
+  10: "High humidity",
+  11: "High heat-humidity",
+  12: "High internal resistance",
+  13: "Cell imbalance",
+  14: "Env. incident",
+  15: "Sensor drift",
 };
 
 const ANOMALY_SEVERITY_COLOR: Record<number, string> = {
@@ -101,9 +102,9 @@ const ANOMALY_SEVERITY_COLOR: Record<number, string> = {
 };
 
 const BATTERY_STATUS_META: Record<number, { name: string; fill: string }> = {
-  1: { name: "Hoạt động", fill: "var(--ok)" },
-  2: { name: "Ngưng", fill: "var(--p3)" },
-  3: { name: "Ngừng vận hành", fill: "var(--p1)" },
+  1: { name: "Active", fill: "var(--ok)" },
+  2: { name: "Inactive", fill: "var(--p3)" },
+  3: { name: "Decommissioned", fill: "var(--p1)" },
 };
 
 export default function AdminDashboardPage() {
@@ -112,7 +113,7 @@ export default function AdminDashboardPage() {
   const { data: siteStats, isLoading: siteStatsLoading } =
     useSiteDashboardStats();
 
-  // ── Hạ tầng ──
+  // ── Infrastructure ──
   const totalSites = siteStats?.total ?? 0;
   const totalBatt = stats?.totalAssets ?? 0;
   const offlineBatt = stats?.offlineAssets ?? 0;
@@ -120,7 +121,7 @@ export default function AdminDashboardPage() {
   const criticalOpen = stats?.openAlertsCritical ?? 0;
   const activeIncidents = stats?.openEnvironmentalIncidents ?? 0;
 
-  // ── Tỉ lệ pin còn kết nối — chỉ số "hệ thống có đang thấy được thiết bị không" ──
+  // ── Share of batteries still connected — the "can the system still see the devices" metric ──
   const onlineBatt = Math.max(0, totalBatt - offlineBatt);
   const onlinePct =
     totalBatt > 0 ? Math.round((onlineBatt / totalBatt) * 100) : 0;
@@ -135,11 +136,12 @@ export default function AdminDashboardPage() {
 
   const alertSeries = stats?.alertTrend7Days ?? [];
 
-  // Bar ngang: cắt top 6 và đảo thứ tự để loại nhiều nhất nằm TRÊN CÙNG
-  // (Recharts vẽ category đầu tiên ở dưới với layout vertical).
+  // Horizontal bar: take the top 6 and reverse the order so the most frequent
+  // type sits at the TOP (Recharts draws the first category at the bottom with
+  // a vertical layout).
   const anomalyData = (stats?.openAlertsByType ?? [])
     .map((a) => ({
-      label: ANOMALY_LABEL[a.anomalyType] ?? `Loại ${a.anomalyType}`,
+      label: ANOMALY_LABEL[a.anomalyType] ?? `Type ${a.anomalyType}`,
       value: a.count,
       color: ANOMALY_SEVERITY_COLOR[a.anomalyType] ?? "var(--muted-foreground)",
     }))
@@ -157,7 +159,7 @@ export default function AdminDashboardPage() {
     }))
     .filter((d) => d.value > 0);
 
-  // ── Visibility: panel rỗng ẩn hẳn, không để ô trống trong khung cố định ──
+  // ── Visibility: empty panels are hidden entirely, so no blank cells inside the fixed frame ──
   const showAnomaly = statsLoading || anomalyData.length > 0;
   const showBattStatus = statsLoading || battByStatus.length > 0;
   const showTopAlerting = statsLoading || topAlerting.length > 0;
@@ -168,11 +170,11 @@ export default function AdminDashboardPage() {
       <div className="flex justify-end shrink-0">
         <RefreshButton
           queryKeys={[KEY.siteDashboard, KEY.batteryDashboard]}
-          label="Đồng bộ"
+          label="Sync"
         />
       </div>
 
-      {/* ── KPI strip — bấm được, nhảy thẳng tới trang tương ứng ── */}
+      {/* ── KPI strip — clickable, jumps straight to the matching page ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:gap-2.5 shrink-0">
         <DashboardKpi
           label="Sites"
@@ -181,27 +183,27 @@ export default function AdminDashboardPage() {
           to="/admin/sites"
         />
         <DashboardKpi
-          label="Pin hoạt động"
-          value={statsLoading ? "--" : activeBatt}
+          label="Batteries online"
+          value={statsLoading ? "--" : onlineBatt}
           icon={<BatteryCharging className="size-4" />}
           to="/admin/battery-assets"
         />
         <DashboardKpi
-          label="Pin offline"
+          label="Batteries offline"
           value={statsLoading ? "--" : offlineBatt}
           icon={<WifiOff className="size-4" />}
           accent={offlineBatt > 0 ? "var(--p3)" : undefined}
           to="/admin/iot-devices"
         />
         <DashboardKpi
-          label="Cảnh báo mở"
+          label="Open alerts"
           value={statsLoading ? "--" : openAlerts}
           icon={<BellRing className="size-4" />}
           accent={criticalOpen > 0 ? "var(--p1)" : undefined}
           to="/admin/alerts"
         />
         <DashboardKpi
-          label="Sự cố môi trường"
+          label="Environmental incidents"
           value={statsLoading ? "--" : activeIncidents}
           icon={<ShieldAlert className="size-4" />}
           accent={activeIncidents > 0 ? "var(--p1)" : undefined}
@@ -209,17 +211,17 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* ── Sức khỏe service (dải mỏng) ── */}
+      {/* ── Service health (thin strip) ── */}
       <div className="shrink-0">
         <TicketHealthCard />
       </div>
 
       {/* ── Bento Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 lg:gap-3 flex-1 min-h-0">
-        {/* [Area] xu hướng theo thời gian */}
+        {/* [Area] trend over time */}
         <DashboardPanel
           title={OVERVIEW_PANELS.admin.alerts7d}
-          desc="Theo mức độ nghiêm trọng"
+          desc="By severity"
           className="lg:col-span-2 min-h-[180px] lg:min-h-0"
         >
           {statsLoading ? (
@@ -237,14 +239,14 @@ export default function AdminDashboardPage() {
                 <XAxis
                   dataKey="date"
                   tickFormatter={(v: string) =>
-                    `${v.slice(8, 10)}/${v.slice(5, 7)}`
+                    `${v.slice(5, 7)}/${v.slice(8, 10)}`
                   }
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
                   tick={{ fontSize: 12 }}
                 />
-                {/* width 38 cắt mất số từ 3 chữ số (đếm cảnh báo lên hàng trăm). */}
+                {/* width 38 clips 3-digit numbers (alert counts reach the hundreds). */}
                 <YAxis
                   width={38}
                   tickLine={false}
@@ -294,10 +296,10 @@ export default function AdminDashboardPage() {
           )}
         </DashboardPanel>
 
-        {/* [Gauge] một tỉ lệ duy nhất */}
+        {/* [Gauge] a single ratio */}
         <DashboardPanel
-          title="Pin còn kết nối"
-          desc={`${onlineBatt}/${totalBatt} thiết bị gửi dữ liệu`}
+          title="Batteries connected"
+          desc={`${onlineBatt}/${totalBatt} devices reporting data`}
           className="min-h-[180px] lg:min-h-0"
         >
           {statsLoading ? (
@@ -340,11 +342,11 @@ export default function AdminDashboardPage() {
           )}
         </DashboardPanel>
 
-        {/* [Bar ngang] so sánh hạng mục */}
+        {/* [Horizontal bar] category comparison */}
         {showAnomaly && (
           <DashboardPanel
             title={OVERVIEW_PANELS.admin.alertsByType}
-            desc="Top loại · màu theo mức độ"
+            desc="Top types · color by severity"
             className="min-h-[160px] lg:min-h-0"
           >
             {statsLoading ? (
@@ -383,11 +385,11 @@ export default function AdminDashboardPage() {
             )}
           </DashboardPanel>
         )}
-        {/* [Donut] cơ cấu thành phần */}
+        {/* [Donut] composition breakdown */}
         {showBattStatus && (
           <DashboardPanel
             title={OVERVIEW_PANELS.admin.batteryByStatus}
-            desc={`${totalBatt} pin`}
+            desc={`${totalBatt} batteries`}
             className="min-h-[160px] lg:min-h-0"
           >
             {statsLoading ? (
@@ -396,13 +398,13 @@ export default function AdminDashboardPage() {
               <DashboardDonut
                 data={battByStatus}
                 centerValue={totalBatt}
-                centerLabel="pin"
+                centerLabel="batteries"
               />
             )}
           </DashboardPanel>
         )}
 
-        {/* [Bảng xếp hạng] danh sách hành động được */}
+        {/* [Leaderboard] actionable list */}
         {showTopAlerting && (
           <TopAlertingPanel
             title={OVERVIEW_PANELS.admin.topAlerting}

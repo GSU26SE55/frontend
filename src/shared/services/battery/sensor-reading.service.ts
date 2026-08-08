@@ -10,8 +10,8 @@ import type {
   SensorReadingAggregateDto,
 } from "@/shared/types/battery/sensor-reading-history.types";
 
-// Read-only sensor readings — dùng chung admin/manager/staff.
-// BE cho Admin,Manager,Staff,Customer gọi history/aggregate/latest.
+// Read-only sensor readings — shared across admin/manager/staff.
+// BE allows Admin, Manager, Staff, Customer to call history/aggregate/latest.
 export const sensorReadingService = {
   getLatest: (assetId: string) =>
     axiosInstance.get<CommonResponse<SensorReadingDto>>(
@@ -27,7 +27,7 @@ export const sensorReadingService = {
       ENDPOINTS.SENSOR_READINGS.AGGREGATE(assetId),
       { params },
     ),
-  // Bucket 1h cố định — range dài (tháng/năm), query gần O(số bucket).
+  // Fixed 1h bucket — long range (months/years), query is close to O(number of buckets).
   getAggregateHourly: (
     assetId: string,
     params?: SensorReadingAggregateHourlyParams,

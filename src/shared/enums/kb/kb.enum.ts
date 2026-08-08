@@ -1,6 +1,6 @@
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 
-// KB article status — BE serialize enum dạng STRING (JsonStringEnumConverter)
+// KB article status — the BE serializes this enum as a STRING (JsonStringEnumConverter)
 export const KbArticleStatusEnum = {
   Draft: "Draft",
   PendingReview: "PendingReview",
@@ -11,13 +11,13 @@ export type KbArticleStatusEnum =
   (typeof KbArticleStatusEnum)[keyof typeof KbArticleStatusEnum];
 
 export const KbArticleStatusLabel: Record<KbArticleStatusEnum, string> = {
-  [KbArticleStatusEnum.Draft]: "Nháp",
-  [KbArticleStatusEnum.PendingReview]: "Chờ duyệt",
-  [KbArticleStatusEnum.Published]: "Đã xuất bản",
-  [KbArticleStatusEnum.Archived]: "Lưu trữ",
+  [KbArticleStatusEnum.Draft]: "Draft",
+  [KbArticleStatusEnum.PendingReview]: "Pending approval",
+  [KbArticleStatusEnum.Published]: "Published",
+  [KbArticleStatusEnum.Archived]: "Archived",
 };
 
-// Giá trị số tương ứng — dùng khi gửi filter `?Status=` (BE nhận int)
+// Matching numeric values — used when sending the `?Status=` filter (the BE takes an int)
 export const KbArticleStatusCode: Record<KbArticleStatusEnum, number> = {
   [KbArticleStatusEnum.Draft]: 1,
   [KbArticleStatusEnum.PendingReview]: 2,
@@ -25,7 +25,8 @@ export const KbArticleStatusCode: Record<KbArticleStatusEnum, number> = {
   [KbArticleStatusEnum.Archived]: 4,
 };
 
-// Version status — BE serialize dạng STRING (JsonStringEnumConverter, từ 2026-06-22)
+// Version status — the BE serializes this as a STRING (JsonStringEnumConverter,
+// since 2026-06-22)
 export const KbVersionStatusEnum = {
   Pending: "Pending",
   Approved: "Approved",
@@ -36,13 +37,13 @@ export type KbVersionStatusEnum =
   (typeof KbVersionStatusEnum)[keyof typeof KbVersionStatusEnum];
 
 export const KbVersionStatusLabel: Record<KbVersionStatusEnum, string> = {
-  [KbVersionStatusEnum.Pending]: "Chờ duyệt",
-  [KbVersionStatusEnum.Approved]: "Đã duyệt",
-  [KbVersionStatusEnum.Rejected]: "Bị từ chối",
-  [KbVersionStatusEnum.Archived]: "Bản lưu",
+  [KbVersionStatusEnum.Pending]: "Pending approval",
+  [KbVersionStatusEnum.Approved]: "Approved",
+  [KbVersionStatusEnum.Rejected]: "Rejected",
+  [KbVersionStatusEnum.Archived]: "Archived version",
 };
 
-// Reference type — BE serialize dạng STRING
+// Reference type — the BE serializes this as a STRING
 export const KbReferenceTypeEnum = {
   ConsultedDuringResolve: "ConsultedDuringResolve",
   ProvidedToCustomer: "ProvidedToCustomer",
@@ -52,20 +53,21 @@ export type KbReferenceTypeEnum =
   (typeof KbReferenceTypeEnum)[keyof typeof KbReferenceTypeEnum];
 
 export const KbReferenceTypeLabel: Record<KbReferenceTypeEnum, string> = {
-  [KbReferenceTypeEnum.ConsultedDuringResolve]: "Tham khảo khi xử lý",
-  [KbReferenceTypeEnum.ProvidedToCustomer]: "Cung cấp cho khách",
-  [KbReferenceTypeEnum.GeneratedAfterResolve]: "Tạo sau khi xử lý",
+  [KbReferenceTypeEnum.ConsultedDuringResolve]: "Consulted while resolving",
+  [KbReferenceTypeEnum.ProvidedToCustomer]: "Provided to the customer",
+  [KbReferenceTypeEnum.GeneratedAfterResolve]: "Created after resolving",
 };
 
-// ── Category (KB share TicketCategoryEnum) ──
-// Response trả category dạng STRING; filter `?Category=` cần SỐ → dùng KbCategoryCode.
+// ── Category (KB shares TicketCategoryEnum) ──
+// Responses return category as a STRING; the `?Category=` filter needs a NUMBER →
+// use KbCategoryCode.
 export const KbCategoryLabel: Record<TicketCategoryEnum, string> = {
-  [TicketCategoryEnum.Charging]: "Lỗi sạc",
-  [TicketCategoryEnum.Overheat]: "Quá nhiệt",
-  [TicketCategoryEnum.NoPower]: "Không có điện",
-  [TicketCategoryEnum.Performance]: "Hiệu suất kém",
-  [TicketCategoryEnum.Other]: "Khác",
-  [TicketCategoryEnum.Repair]: "Yêu cầu sửa chữa",
+  [TicketCategoryEnum.Charging]: "Charging fault",
+  [TicketCategoryEnum.Overheat]: "Overheating",
+  [TicketCategoryEnum.NoPower]: "No power",
+  [TicketCategoryEnum.Performance]: "Poor performance",
+  [TicketCategoryEnum.Other]: "Other",
+  [TicketCategoryEnum.Repair]: "Repair request",
 };
 
 export const KbCategoryCode: Record<TicketCategoryEnum, number> = {

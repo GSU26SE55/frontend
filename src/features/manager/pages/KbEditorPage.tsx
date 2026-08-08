@@ -36,9 +36,9 @@ export default function KbEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isEdit = !!id;
-  // Soạn bài từ 1 ticket → picker ảnh bật thêm tab "Ảnh từ chat" của ticket đó
+  // Writing an article from a ticket → the image picker adds an extra "Photos from chat" tab for that ticket
   const ticketId = location.state?.ticketId as string | undefined;
-  // Danh mục gợi ý khi tạo từ ticket (category của ticket).
+  // Suggested category when created from a ticket (the ticket's category).
   const initialCategory = location.state?.category as
     | TicketCategoryEnum
     | undefined;
@@ -79,7 +79,7 @@ export default function KbEditorPage() {
 
   const onSubmit = async (values: KbArticleFormValues) => {
     try {
-      // KB luôn nội bộ (Customer xem qua Blog, không xem KB) → isInternalOnly=true.
+      // KB is always internal (Customers view articles via Blog, not KB) → isInternalOnly=true.
       const payload = { ...values, isInternalOnly: true };
       if (isEdit) {
         await update({ id, payload });
@@ -110,7 +110,7 @@ export default function KbEditorPage() {
         size="sm"
         onClick={() => navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")}
       >
-        <ArrowLeft className="size-3.5" /> Quay lại
+        <ArrowLeft className="size-3.5" /> Back
       </Button>
 
       <div>
@@ -118,7 +118,7 @@ export default function KbEditorPage() {
           Manager &middot; Knowledge Base
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {isEdit ? "Chỉnh sửa bài viết" : "Tạo bài viết mới"}
+          {isEdit ? "Edit article" : "New article"}
         </h1>
       </div>
 
@@ -126,12 +126,12 @@ export default function KbEditorPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="kb-title">
-              Tiêu đề <span className="text-destructive">*</span>
+              Title <span className="text-destructive">*</span>
             </Label>
             <Input
               id="kb-title"
               {...register("title")}
-              placeholder="Hướng dẫn xử lý..."
+              placeholder="How to resolve..."
             />
             {errors.title && (
               <p className="text-xs text-destructive">{errors.title.message}</p>
@@ -140,7 +140,7 @@ export default function KbEditorPage() {
 
           <div className="space-y-1.5">
             <Label htmlFor="kb-category">
-              Danh mục <span className="text-destructive">*</span>
+              Category <span className="text-destructive">*</span>
             </Label>
             <Controller
               control={control}
@@ -172,13 +172,13 @@ export default function KbEditorPage() {
             render={({ field }) => (
               <div className="space-y-1.5">
                 <Label>
-                  Thẻ{" "}
+                  Tags{" "}
                   <span className="text-muted-foreground font-normal">
-                    (tối đa 10 thẻ)
+                    (up to 10 tags)
                   </span>
                 </Label>
                 <TagInput
-                  placeholder="quá nhiệt, sạc, BMS..."
+                  placeholder="overheat, charging, BMS..."
                   value={field.value ?? []}
                   onChange={field.onChange}
                   maxTags={10}
@@ -190,7 +190,7 @@ export default function KbEditorPage() {
 
           <div className="space-y-1.5">
             <Label>
-              Nội dung <span className="text-destructive">*</span>
+              Content <span className="text-destructive">*</span>
             </Label>
             <Controller
               control={control}
@@ -213,15 +213,15 @@ export default function KbEditorPage() {
           {isEdit && (
             <div className="space-y-1.5">
               <Label htmlFor="kb-change-description">
-                Mô tả thay đổi{" "}
+                Change description{" "}
                 <span className="text-muted-foreground font-normal">
-                  (tùy chọn)
+                  (optional)
                 </span>
               </Label>
               <Input
                 id="kb-change-description"
                 {...register("changeDescription")}
-                placeholder="Lý do/nội dung chỉnh sửa..."
+                placeholder="Reason/content of the edit..."
               />
             </div>
           )}
@@ -234,17 +234,17 @@ export default function KbEditorPage() {
                 navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")
               }
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={creating || updating}>
               <Save className="size-3.5" />
               {isEdit
                 ? updating
-                  ? "Đang lưu..."
-                  : "Lưu thay đổi"
+                  ? "Saving..."
+                  : "Save changes"
                 : creating
-                  ? "Đang tạo..."
-                  : "Tạo bài viết"}
+                  ? "Creating..."
+                  : "Create article"}
             </Button>
           </div>
         </form>

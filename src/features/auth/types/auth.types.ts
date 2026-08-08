@@ -4,7 +4,7 @@ export interface LoginPayload {
   password: string;
 }
 
-// FE form values — confirmPassword chỉ validate phía FE, KHÔNG gửi lên BE
+// FE form values — confirmPassword is validated on the FE only, it is NOT sent to the BE
 export interface RegisterFormValues {
   fullName: string;
   email: string;
@@ -13,7 +13,7 @@ export interface RegisterFormValues {
   phoneNumber: string;
 }
 
-// API body — BE register KHÔNG nhận confirmPassword (api-auth.md §/register)
+// API body — the BE register endpoint does NOT accept confirmPassword (api-auth.md §/register)
 export interface RegisterPayload {
   fullName: string;
   email: string;
@@ -52,37 +52,37 @@ export interface TokenDto {
 }
 
 export interface TwoFactorChallengeDto {
-  challengeToken: string; // 32 hex, TTL 5 phút (Redis)
-  expiresInSeconds: number; // luôn 300
-  methods: string[]; // luôn ["totp", "backupCode"]
+  challengeToken: string; // 32 hex, TTL 5 minutes (Redis)
+  expiresInSeconds: number; // always 300
+  methods: string[]; // always ["totp", "backupCode"]
 }
 
-// data của login/refresh/google/accept-invite. Case A: tokens set, challenge null.
-// Case B (2FA on, chỉ login): tokens null, challenge set.
+// data of login/refresh/google/accept-invite. Case A: tokens set, challenge null.
+// Case B (2FA on, login only): tokens null, challenge set.
 export interface LoginResultData {
   tokens: TokenDto | null;
   challenge: TwoFactorChallengeDto | null;
   requiresTwoFactor: boolean;
 }
 
-// Bước 2 của 2FA login (POST /api/auth/login/verify-2fa)
-// Khớp BE Verify2FALoginCommand: isSmsCode (#AUTH-58) mutex với isBackupCode;
-// trustDevice + trustDeviceLabel (#AUTH-48) chỉ áp dụng với TOTP/SMS path.
+// Step 2 of the 2FA login (POST /api/auth/login/verify-2fa)
+// Matches the BE Verify2FALoginCommand: isSmsCode (#AUTH-58) is mutually exclusive with isBackupCode;
+// trustDevice + trustDeviceLabel (#AUTH-48) apply to the TOTP/SMS path only.
 export interface Verify2faLoginPayload {
   challengeToken: string;
   code: string;
   isBackupCode: boolean;
-  isSmsCode?: boolean; // true ⇒ code là OTP nhận qua SMS (fallback)
-  trustDevice?: boolean; // true ⇒ skip 2FA từ device này 30 ngày
-  trustDeviceLabel?: string; // label friendly (max 120), optional
+  isSmsCode?: boolean; // true ⇒ the code is an OTP received over SMS (fallback)
+  trustDevice?: boolean; // true ⇒ skip 2FA from this device for 30 days
+  trustDeviceLabel?: string; // friendly label (max 120), optional
 }
 
-// #AUTH-58: POST /api/auth/login/2fa/sms — gửi OTP SMS fallback (header X-Challenge-Token)
+// #AUTH-58: POST /api/auth/login/2fa/sms — send the SMS OTP fallback (X-Challenge-Token header)
 export interface Sms2faPayload {
   challengeToken: string;
 }
 
-// #AUTH-50: khôi phục account đã soft-delete (window 90 ngày)
+// #AUTH-50: restore a soft-deleted account (90-day window)
 export interface ReactivateRequestPayload {
   email: string;
 }
@@ -91,15 +91,15 @@ export interface ReactivateVerifyPayload {
   otp: string;
 }
 
-// Key sessionStorage giữ challengeToken giữa /login → /login/2fa (TTL 5 phút server-side)
+// sessionStorage key holding the challengeToken between /login → /login/2fa (server-side TTL 5 minutes)
 export const CHALLENGE_TOKEN_KEY = "login_2fa_challenge";
 
 export interface VerifyResetOtpResponseData {
   resetToken: string;
-  expiresInSeconds: number; // TTL resetToken (api-auth.md: 900s) — dùng động, không hardcode
+  expiresInSeconds: number; // resetToken TTL (api-auth.md: 900s) — use it dynamically, do not hardcode
 }
 
-// SessionDto dùng chung — nguồn thật ở shared.
+// SessionDto is shared — the real source lives in shared.
 export type { SessionDto } from "@/shared/types/account/session.types";
 
 export interface UpdateProfilePayload {
@@ -124,7 +124,7 @@ export interface AcceptInviteFormValues {
   confirmPassword: string;
 }
 
-// BE validate cross-field password === confirmPassword → 422 (api-auth.md §/accept-invite)
+// The BE cross-field validates password === confirmPassword → 422 (api-auth.md §/accept-invite)
 export interface AcceptInvitePayload {
   invitationToken: string;
   password: string;

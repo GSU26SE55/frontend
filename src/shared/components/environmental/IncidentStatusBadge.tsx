@@ -3,10 +3,10 @@ import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environme
 import { toneClass, INCIDENT_STATUS_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<EnvironmentalIncidentStatusEnum, string> = {
-  [EnvironmentalIncidentStatusEnum.Open]: "Mở",
-  [EnvironmentalIncidentStatusEnum.Acknowledged]: "Đã xác nhận",
-  [EnvironmentalIncidentStatusEnum.Resolved]: "Đã xử lý",
-  [EnvironmentalIncidentStatusEnum.FalseAlarm]: "Báo động giả",
+  [EnvironmentalIncidentStatusEnum.Open]: "Open",
+  [EnvironmentalIncidentStatusEnum.Acknowledged]: "Acknowledged",
+  [EnvironmentalIncidentStatusEnum.Resolved]: "Resolved",
+  [EnvironmentalIncidentStatusEnum.FalseAlarm]: "False alarm",
 };
 
 export default function IncidentStatusBadge({

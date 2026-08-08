@@ -29,7 +29,7 @@ const dash = (v: string | number | null | undefined) =>
 const fmtDate = (v: string | null) => {
   if (!v) return "—";
   try {
-    return format(parseISO(v), "dd/MM/yyyy");
+    return format(parseISO(v), "MM/dd/yyyy");
   } catch {
     return v;
   }
@@ -45,7 +45,7 @@ const TAB = {
   ambient: "ambient",
 } as const;
 
-// Header mỗi tab: tiêu đề + nút Export.
+// Each tab's header: title + Export button.
 function TabHeader({
   title,
   endpoint,
@@ -72,11 +72,11 @@ function TabHeader({
   );
 }
 
-// 7 reports dạng tabs. Mỗi tab lazy-load (enabled khi active) để không bắn 7 API cùng lúc.
+// 7 reports as tabs. Each tab lazy-loads (enabled when active) so we don't fire 7 API calls at once.
 export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
   const [active, setActive] = useState<string>(TAB.health);
 
-  // Params dẫn xuất từ filter chung.
+  // Params derived from the shared filter.
   const tsParams = {
     from: filter.from,
     to: filter.to,
@@ -102,19 +102,19 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
   const healthCols: ReportColumn<BatteryHealthByTypeRow>[] = [
     {
       key: "name",
-      header: "Loại pin",
+      header: "Battery type",
       align: "left",
       render: (r) => dash(r.name),
     },
     {
       key: "total",
-      header: "Tổng asset",
+      header: "Total assets",
       align: "right",
       render: (r) => r.totalAssets,
     },
     {
       key: "alerts",
-      header: "Có cảnh báo",
+      header: "Has alerts",
       align: "right",
       render: (r) => r.withActiveAlerts,
     },
@@ -129,13 +129,13 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
   const anomalyCols: ReportColumn<TopAnomalyRow>[] = [
     {
       key: "type",
-      header: "Loại anomaly",
+      header: "Anomaly type",
       align: "left",
       render: (r) => r.anomalyType,
     },
     {
       key: "count",
-      header: "Số lượng",
+      header: "Count",
       align: "right",
       render: (r) => r.count,
     },
@@ -156,7 +156,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
     },
     {
       key: "age",
-      header: "Tuổi (ngày)",
+      header: "Age (days)",
       align: "right",
       render: (r) => r.ageDays,
     },
@@ -168,7 +168,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
     },
     {
       key: "alerts",
-      header: "Tổng cảnh báo",
+      header: "Total alerts",
       align: "right",
       render: (r) => r.alertsTotal,
     },
@@ -183,19 +183,19 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
     },
     {
       key: "end",
-      header: "Hết bảo hành",
+      header: "Warranty end",
       align: "right",
       render: (r) => fmtDate(r.warrantyEndDate),
     },
     {
       key: "days",
-      header: "Còn lại (ngày)",
+      header: "Remaining (days)",
       align: "right",
       render: (r) => dash(r.daysRemaining),
     },
     {
       key: "customer",
-      header: "Khách hàng",
+      header: "Customer",
       align: "left",
       render: (r) => r.customerId,
     },
@@ -204,39 +204,39 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
   const envCols: ReportColumn<EnvironmentalIncidentRow>[] = [
     {
       key: "type",
-      header: "Loại sự cố",
+      header: "Incident type",
       align: "left",
       render: (r) => r.incidentType,
     },
     {
       key: "severity",
-      header: "Mức độ",
+      header: "Severity",
       align: "left",
       render: (r) => r.severity,
     },
     {
       key: "detected",
-      header: "Phát hiện",
+      header: "Detected",
       align: "right",
       render: (r) => fmtDate(r.detectedAt),
     },
     {
       key: "resolved",
-      header: "Xử lý xong",
+      header: "Resolved",
       align: "right",
       render: (r) => fmtDate(r.resolvedAt),
     },
     {
       key: "duration",
-      header: "Thời lượng (h)",
+      header: "Duration (h)",
       align: "right",
       render: (r) => dash(r.durationHours),
     },
     {
       key: "false",
-      header: "Báo động giả",
+      header: "False alarm",
       align: "left",
-      render: (r) => (r.wasFalseAlarm ? "Có" : "Không"),
+      render: (r) => (r.wasFalseAlarm ? "Yes" : "No"),
     },
   ];
 
@@ -247,18 +247,18 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
       className="bg-card rounded-xl border border-border p-5 lg:p-6 shadow-xs"
     >
       <TabsList className="flex-wrap h-auto gap-1 p-1">
-        <TabsTrigger value={TAB.health}>Sức khỏe theo loại</TabsTrigger>
-        <TabsTrigger value={TAB.alertVolume}>Số lượng cảnh báo</TabsTrigger>
+        <TabsTrigger value={TAB.health}>Health by type</TabsTrigger>
+        <TabsTrigger value={TAB.alertVolume}>Alert volume</TabsTrigger>
         <TabsTrigger value={TAB.anomalies}>Top anomaly</TabsTrigger>
-        <TabsTrigger value={TAB.lifecycle}>Vòng đời asset</TabsTrigger>
-        <TabsTrigger value={TAB.warranty}>Sắp hết bảo hành</TabsTrigger>
-        <TabsTrigger value={TAB.env}>Sự cố môi trường</TabsTrigger>
-        <TabsTrigger value={TAB.ambient}>Xu hướng môi trường</TabsTrigger>
+        <TabsTrigger value={TAB.lifecycle}>Asset lifecycle</TabsTrigger>
+        <TabsTrigger value={TAB.warranty}>Warranty expiring</TabsTrigger>
+        <TabsTrigger value={TAB.env}>Environmental incidents</TabsTrigger>
+        <TabsTrigger value={TAB.ambient}>Environmental trend</TabsTrigger>
       </TabsList>
 
       <TabsContent value={TAB.health} className="mt-4">
         <TabHeader
-          title="Sức khỏe pin theo loại"
+          title="Battery health by type"
           endpoint={ENDPOINTS.REPORTS.BATTERY_HEALTH_BY_TYPE}
           filename="battery-health-by-type"
         />
@@ -272,7 +272,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
 
       <TabsContent value={TAB.alertVolume} className="mt-4">
         <TabHeader
-          title="Số lượng cảnh báo theo thời gian"
+          title="Alert volume over time"
           endpoint={ENDPOINTS.REPORTS.ALERT_VOLUME}
           filename="alert-volume"
           params={tsParams}
@@ -282,14 +282,14 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
           isLoading={alertVolQ.isLoading}
           xKey="date"
           series={[
-            { key: "count", label: "Số cảnh báo", color: "var(--chart-1)" },
+            { key: "count", label: "Alert count", color: "var(--chart-1)" },
           ]}
         />
       </TabsContent>
 
       <TabsContent value={TAB.anomalies} className="mt-4">
         <TabHeader
-          title="Top loại anomaly"
+          title="Top anomaly types"
           endpoint={ENDPOINTS.REPORTS.TOP_ANOMALIES}
           filename="top-anomalies"
           params={anomalyParams}
@@ -304,7 +304,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
 
       <TabsContent value={TAB.lifecycle} className="mt-4">
         <TabHeader
-          title="Vòng đời asset"
+          title="Asset lifecycle"
           endpoint={ENDPOINTS.REPORTS.ASSET_LIFECYCLE}
           filename="asset-lifecycle"
         />
@@ -318,7 +318,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
 
       <TabsContent value={TAB.warranty} className="mt-4">
         <TabHeader
-          title="Asset sắp hết bảo hành"
+          title="Assets with warranty expiring soon"
           endpoint={ENDPOINTS.REPORTS.WARRANTY_EXPIRING}
           filename="warranty-expiring"
         />
@@ -332,7 +332,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
 
       <TabsContent value={TAB.env} className="mt-4">
         <TabHeader
-          title="Sự cố môi trường"
+          title="Environmental incidents"
           endpoint={ENDPOINTS.REPORTS.ENVIRONMENTAL_INCIDENTS}
           filename="environmental-incidents"
           params={envParams}
@@ -347,7 +347,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
 
       <TabsContent value={TAB.ambient} className="mt-4">
         <TabHeader
-          title="Xu hướng môi trường theo site"
+          title="Environmental trend by site"
           endpoint={ENDPOINTS.REPORTS.AMBIENT_TREND}
           filename="ambient-trend"
           params={ambientParams}
@@ -355,7 +355,7 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
         />
         {!filter.siteId ? (
           <p className="text-sm text-muted-foreground py-16 text-center">
-            Chọn 1 site ở filter để xem xu hướng môi trường.
+            Select a site in the filter to view the environmental trend.
           </p>
         ) : (
           <ReportTimeSeriesChart
@@ -363,18 +363,18 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
             isLoading={ambientQ.isLoading}
             xKey="date"
             series={[
-              { key: "avgTemp", label: "TB (°C)", color: "var(--chart-2)" },
+              { key: "avgTemp", label: "Avg (°C)", color: "var(--chart-2)" },
               { key: "maxTemp", label: "Max (°C)", color: "var(--p1)" },
               { key: "minTemp", label: "Min (°C)", color: "var(--chart-4)" },
               {
                 key: "humidityAvg",
-                label: "Độ ẩm (%)",
+                label: "Humidity (%)",
                 color: "var(--chart-3)",
                 connectNulls: true,
               },
               {
                 key: "irradianceAvg",
-                label: "Bức xạ",
+                label: "Irradiance",
                 color: "var(--chart-5)",
                 connectNulls: true,
               },

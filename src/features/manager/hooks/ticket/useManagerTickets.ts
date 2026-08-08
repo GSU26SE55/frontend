@@ -64,8 +64,8 @@ export const useTicketMaintenanceLogs = (id: string) =>
     staleTime: 30_000,
   });
 
-// GET /api/tickets/{ticketId}/comments — query riêng để realtime invalidate.
-// staleTime cao + KHÔNG refetchInterval: comment mới đến qua SignalR push (S4).
+// GET /api/tickets/{ticketId}/comments — a separate query so realtime can invalidate it.
+// High staleTime + NO refetchInterval: new comments arrive via SignalR push (S4).
 export const useTicketComments = (id: string) =>
   useQuery({
     queryKey: QUERY_KEY.tickets.chats(id),
@@ -116,7 +116,7 @@ export const useAssignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffAssigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
-      // #697 — Primary → PrimaryAssignee, Supporter → Collaborator trong chat.
+      // #697 — Primary → PrimaryAssignee, Supporter → Collaborator in chat.
       qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -132,7 +132,7 @@ export const useReassignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffReassigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
-      // #697 — Primary cũ → PreviousAssignee + Supporter, Primary mới → PrimaryAssignee.
+      // #697 — old Primary → PreviousAssignee + Supporter, new Primary → PrimaryAssignee.
       qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketParticipants.history(id),
@@ -184,12 +184,12 @@ export const useEscalateTicket = (id: string) => {
 };
 
 /**
- * Đổi mức ưu tiên ticket (Manager). SLA do BE tính lại — FE chỉ refetch.
+ * Change a ticket's priority (Manager). The BE recalculates the SLA — the FE only refetches.
  *
- * BE có side-effect: nếu priority mới vượt tier của Staff đang xử lý thì ticket bị
- * tự escalate + hạ primary handler. Phát hiện qua `data.status === Escalated`
- * (KHÔNG dùng `warnings` — handler re-prioritize không set field đó), khi đó phải
- * invalidate cả participants vì assignee đã đổi.
+ * The BE has a side effect: if the new priority exceeds the tier of the Staff handling it, the
+ * ticket is auto-escalated and the primary handler is demoted. Detect this via
+ * `data.status === Escalated` (do NOT use `warnings` — the re-prioritize handler doesn't set that
+ * field); when it happens, participants must be invalidated too because the assignee changed.
  */
 export const useReprioritizeTicket = (id: string) => {
   const qc = useQueryClient();
@@ -212,9 +212,9 @@ export const useReprioritizeTicket = (id: string) => {
         qc.invalidateQueries({ queryKey: [KEY.ticketParticipants] });
       }
     },
-    // KHÔNG gọi handleErrorApi ở đây — đây là mutation của form, lỗi phải đi qua
-    // try-catch + setError ở dialog để EntityError map được xuống input. Hook chỉ
-    // lo refetch: 409 nghĩa là state ticket đã đổi ở nơi khác, không auto-retry.
+    // Do NOT call handleErrorApi here — this is a form mutation, so errors must go through
+    // try-catch + setError in the dialog for EntityError to map down to the inputs. The hook only
+    // handles refetching: a 409 means the ticket state changed elsewhere, so don't auto-retry.
     onError: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
     },
@@ -235,14 +235,14 @@ export const useDeclareIncident = (id: string) => {
   });
 };
 
-/** Manager gộp ticket nghi trùng (id) vào ticket đích. */
+/** Manager merges the suspected-duplicate ticket (id) into the target ticket. */
 export const useMergeTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (targetTicketId: string) =>
       managerTicketService.merge(id, { targetTicketId }),
     onSuccess: () => {
-      toast.success("Đã gộp ticket");
+      toast.success("Ticket merged");
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
@@ -251,13 +251,15 @@ export const useMergeTicket = (id: string) => {
   });
 };
 
-/** Manager kích hoạt AI kiểm tra lại (ticket Skipped/Pending). */
+/** Manager triggers an AI re-check (Skipped/Pending tickets). */
 export const useReVerifyTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => managerTicketService.reVerify(id),
     onSuccess: () => {
-      toast.success("Đã yêu cầu AI kiểm tra lại — chờ vài giây rồi làm mới.");
+      toast.success(
+        "AI re-check requested — wait a few seconds, then refresh.",
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -275,12 +277,12 @@ export const useAddComment = () => {
       payload: AddCommentPayload;
     }) => managerTicketService.addComment(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      // Không toast success — gửi qua chat outbox, trạng thái hiển thị dưới bubble.
+      // No success toast — it's sent through the chat outbox, and the status shows under the bubble.
       qc.invalidateQueries({
         queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
       });
-      // Comment panel dùng query riêng (tickets.chats) — invalidate để
-      // tác giả thấy ngay comment của mình (không chờ realtime broadcast).
+      // The comment panel uses its own query (tickets.chats) — invalidate it so the
+      // author sees their own comment right away (without waiting for the realtime broadcast).
       qc.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chats(ticketId),
       });

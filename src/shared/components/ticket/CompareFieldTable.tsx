@@ -12,7 +12,7 @@ export default function CompareFieldTable({ rows }: Props) {
       <table className="w-full text-sm">
         <tbody>
           {rows.map((r) => {
-            // Chỉ tô đỏ khi trường quan trọng VÀ thực sự lệch nhau.
+            // Only highlight red when the field is critical AND actually differs.
             const critical = r.isCritical && r.isDiff;
             return (
               <tr

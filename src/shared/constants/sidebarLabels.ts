@@ -1,32 +1,34 @@
-// Label/title sidebar dùng CHUNG cho ≥2 role — 1 nguồn để đổi tên chỉ sửa 1 chỗ.
-// Label/title đặc thù 1 role đặt ở features/{role}/config/{role}Nav.ts (không ở đây).
-// Panel bên trong trang Tổng quan là OVERVIEW_PANELS (overviewPanels.ts) — khác thứ này.
+// Sidebar labels/titles SHARED by ≥2 roles — one source so a rename touches one spot.
+// Labels/titles specific to a single role live in features/{role}/config/{role}Nav.ts.
+// Panels inside the Overview page are OVERVIEW_PANELS (overviewPanels.ts) — not these.
 
-// Tên app hiển thị ở header sidebar.
+// App name shown in the sidebar header.
 export const APP_NAME = "Solar Battery Management";
 
-// Label menu item dùng ở ≥2 role.
+// Menu item labels used by ≥2 roles.
 export const SIDEBAR_LABELS = {
-  overview: "Tổng quan",
+  overview: "Overview",
   analytics: "Analytics",
   sites: "Battery & Site",
   tickets: "Tickets",
   knowledgeBase: "Knowledge Base",
   blog: "Blog",
-  batteryAlerts: "Cảnh báo pin",
-  envIncidents: "Sự cố môi trường",
-  ambient: "Môi trường site",
-  inbox: "Hộp thư",
-  settings: "Cài đặt",
+  batteryAlerts: "Battery alerts",
+  envIncidents: "Environmental incidents",
+  ambient: "Site environment",
+  inbox: "Inbox",
+  settings: "Settings",
 } as const;
 
-// Path hộp thư — dùng chung mọi role (không có prefix /admin|/manager|/staff).
-// AppLayout so khớp path này để gắn badge số chưa đọc, nên 3 nav config và AppLayout
-// phải cùng tham chiếu một hằng: sửa path ở một nơi mà quên nơi kia thì badge im lặng biến mất.
+// Inbox path — shared by every role (no /admin|/manager|/staff prefix).
+// AppLayout matches this path to attach the unread badge, so the 3 nav configs and
+// AppLayout must reference the same constant: change the path in one place but not
+// the other and the badge silently disappears.
 export const INBOX_PATH = "/notifications";
 
-// Title nhóm section dùng ở ≥2 role (chỉ "Hệ thống" trùng cả 3 role).
-// Title section đặc thù ("Hạ tầng pin"/"Quản lý"/"Báo cáo"…) nằm trong {role}Nav.ts.
+// Section group titles used by ≥2 roles (only "System" is shared by all 3).
+// Role-specific section titles ("Battery infrastructure"/"Management"/"Reports"…)
+// live in {role}Nav.ts.
 export const SIDEBAR_SECTION_TITLES = {
-  system: "Hệ thống",
+  system: "System",
 } as const;

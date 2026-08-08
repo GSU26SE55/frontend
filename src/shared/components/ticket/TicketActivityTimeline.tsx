@@ -9,8 +9,8 @@ const ROLE_LABEL: Record<ActorRoleEnum, string> = {
   Admin: "Admin",
   Manager: "Manager",
   Staff: "Staff",
-  Customer: "Khách hàng",
-  System: "Hệ thống",
+  Customer: "Customer",
+  System: "System",
 };
 
 interface Props {
@@ -18,19 +18,17 @@ interface Props {
 }
 
 /**
- * Timeline hoạt động của ticket — DÙNG CHUNG cho Manager và Staff.
+ * Ticket activity timeline — SHARED by Manager and Staff.
  *
- * Trước đây mỗi feature có một bản riêng (`manager/.../TicketActivityTimeline` và
- * `staff/.../TicketTimeline`) render cùng dữ liệu nhưng khác cách xếp dòng, nên cùng một
- * ticket lại nhìn khác nhau tuỳ role. Quyền thao tác vẫn nằm ở trang chi tiết của từng
- * role — component này chỉ hiển thị, không chứa action nào.
+ * Previously each feature had its own copy (`manager/.../TicketActivityTimeline` and
+ * `staff/.../TicketTimeline`) rendering the same data but laid out differently, so the same
+ * ticket looked different depending on role. Action permissions still live in each role's
+ * detail page — this component only displays, it contains no actions.
  */
 export default function TicketActivityTimeline({ activities }: Props) {
   if (!activities.length) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Chưa có lịch sử hoạt động.
-      </p>
+      <p className="text-sm text-muted-foreground">No activity history yet.</p>
     );
   }
 

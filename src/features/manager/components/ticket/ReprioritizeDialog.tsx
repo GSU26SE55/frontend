@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -30,26 +30,45 @@ import {
   reprioritizeSchema,
   type ReprioritizeFormValues,
 } from "@/features/manager/schemas/ticket/ticket.schema";
-import { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
+import {
+  ImpactScopeEnum,
+  UrgencyLevelEnum,
+  TicketPriorityEnum,
+} from "@/shared/types/ticket/ticket.types";
 import { useReprioritizeTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
+import { computePriority } from "@/shared/utils/ticket/priorityMatrix";
 
 const PRIORITY_LABEL: Record<TicketPriorityEnum, string> = {
-  P1Critical: "P1 — Nghiêm trọng (SLA 4h)",
-  P2High: "P2 — Cao (SLA 24h)",
-  P3Normal: "P3 — Tiêu chuẩn (SLA 72h)",
+  P1Critical: "P1 — Critical (SLA 4h)",
+  P2High: "P2 — High (SLA 24h)",
+  P3Normal: "P3 — Standard (SLA 72h)",
+};
+
+const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
+  SingleAsset: "Single Asset — one battery only",
+  Site: "Site — an entire site",
+  MultiSite: "Multi Site — multiple sites",
+};
+
+const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
+  Low: "Low — handle on regular schedule",
+  Medium: "Medium — needs prompt handling",
+  High: "High — needs immediate handling",
 };
 
 interface Props {
   ticketId: string;
-  /** Priority hiện tại — preselect để Manager thấy mình đang đổi từ đâu. */
-  currentPriority?: TicketPriorityEnum | null;
+  /** Current Impact/Urgency — preselected so the Manager sees what they're editing from. */
+  currentImpact?: ImpactScopeEnum | null;
+  currentUrgency?: UrgencyLevelEnum | null;
   open: boolean;
   onClose: () => void;
 }
 
 export default function ReprioritizeDialog({
   ticketId,
-  currentPriority,
+  currentImpact,
+  currentUrgency,
   open,
   onClose,
 }: Props) {
@@ -57,8 +76,20 @@ export default function ReprioritizeDialog({
 
   const form = useForm<ReprioritizeFormValues>({
     resolver: zodResolver(reprioritizeSchema),
-    defaultValues: { priority: currentPriority ?? undefined, reason: "" },
+    defaultValues: {
+      impact: currentImpact ?? undefined,
+      urgency: currentUrgency ?? undefined,
+      reason: "",
+    },
   });
+
+  // Preview the priority as soon as both fields are selected — the BE is still the
+  // source of truth for the actual computation. useWatch replaces form.watch(): watch()
+  // returns a function that can't be memoized, so the React Compiler skips optimizing
+  // the whole component.
+  const impact = useWatch({ control: form.control, name: "impact" });
+  const urgency = useWatch({ control: form.control, name: "urgency" });
+  const computed = computePriority(impact, urgency);
 
   const onSubmit = async (values: ReprioritizeFormValues) => {
     try {
@@ -66,9 +97,10 @@ export default function ReprioritizeDialog({
       form.reset();
       onClose();
     } catch (error) {
-      // EntityError (400 + listErrors) → lỗi hiện dưới đúng input; HttpError (404/409)
-      // → toast. Không để hook tự handle: handleErrorApi không có setError sẽ nuốt
-      // EntityError im lặng, user submit sai mà không thấy gì.
+      // EntityError (400 + listErrors) → error shows under the right input; HttpError
+      // (404/409) → toast. Don't let the hook handle this automatically: handleErrorApi
+      // without setError silently swallows EntityError, leaving the user's bad submit
+      // with no visible feedback.
       handleErrorApi({ error, setError: form.setError });
     }
   };
@@ -77,37 +109,38 @@ export default function ReprioritizeDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Đổi mức ưu tiên</DialogTitle>
+          <DialogTitle>Change priority</DialogTitle>
           <DialogDescription>
-            SLA được tính lại theo mức mới nhưng không reset thời gian đã trôi —
-            nếu hạn mới đã qua, ticket bị đánh dấu vi phạm ngay.
+            Priority is computed from impact scope and urgency level. It can
+            only be changed while the ticket hasn't been assigned to a staff
+            member — once assigned, use escalation to add resources instead.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="priority"
+              name="impact"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mức ưu tiên mới *</FormLabel>
+                  <FormLabel>Impact scope *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    items={Object.values(TicketPriorityEnum).map((v) => ({
+                    items={Object.values(ImpactScopeEnum).map((v) => ({
                       value: v,
-                      label: PRIORITY_LABEL[v],
+                      label: IMPACT_LABEL[v],
                     }))}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn mức ưu tiên" />
+                        <SelectValue placeholder="Select impact scope" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
-                      {Object.values(TicketPriorityEnum).map((v) => (
+                      {Object.values(ImpactScopeEnum).map((v) => (
                         <SelectItem key={v} value={v}>
-                          {PRIORITY_LABEL[v]}
+                          {IMPACT_LABEL[v]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -119,13 +152,51 @@ export default function ReprioritizeDialog({
 
             <FormField
               control={form.control}
+              name="urgency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Urgency level *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    items={Object.values(UrgencyLevelEnum).map((v) => ({
+                      value: v,
+                      label: URGENCY_LABEL[v],
+                    }))}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select urgency level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent alignItemWithTrigger={false}>
+                      {Object.values(UrgencyLevelEnum).map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {URGENCY_LABEL[v]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {computed && (
+              <p className="rounded-md bg-muted px-3 py-2 text-sm">
+                Computed priority: <strong>{PRIORITY_LABEL[computed]}</strong>
+              </p>
+            )}
+
+            <FormField
+              control={form.control}
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do đổi *</FormLabel>
+                  <FormLabel>Reason for change *</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Vì sao cần đổi mức ưu tiên..."
+                      placeholder="Why the priority needs to change..."
                       maxLength={1000}
                       {...field}
                     />
@@ -137,10 +208,10 @@ export default function ReprioritizeDialog({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Đổi mức ưu tiên"}
+                {isPending ? "Processing..." : "Change priority"}
               </Button>
             </DialogFooter>
           </form>

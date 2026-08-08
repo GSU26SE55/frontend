@@ -5,17 +5,17 @@ import type {
 
 // Notification template admin (Sprint 6.3 NOTI3-12) — /api/admin/notification-templates.
 //
-// 02/08/2026 — hai thay đổi hợp đồng:
-//  1. type/channel BE trả về dạng SỐ (trước là TÊN enum tiếng Anh). FE tự ánh xạ sang nhãn
-//     tiếng Việt qua shared/constants/notificationLabels.ts.
-//  2. Bỏ hẳn `locale` — hệ thống tiếng Việt only, cột đã bị drop khỏi DB.
+// 02/08/2026 — two contract changes:
+//  1. type/channel are now returned by BE as NUMBERS (previously English enum NAMES). FE maps them
+//     to display labels via shared/constants/notificationLabels.ts.
+//  2. `locale` removed entirely — Vietnamese-only system, the column has been dropped from the DB.
 
 export interface NotificationTemplateDto {
   id: string;
   type: NotificationTypeEnum;
   channel: NotificationChannelEnum;
-  version: number; // số phiên bản trong cùng cặp (Type × Channel)
-  isActive: boolean; // bản dispatcher đang dùng — mỗi cặp chỉ có đúng 1
+  version: number; // version number within the same pair (Type × Channel)
+  isActive: boolean; // the version currently used by the dispatcher — each pair has exactly 1
   titleTemplate: string;
   bodyTemplate: string;
   createdAt: string;
@@ -23,22 +23,22 @@ export interface NotificationTemplateDto {
 }
 
 export interface NotificationTemplateListParams {
-  // BE nhận cả số lẫn tên enum; FE gửi số cho khớp với kiểu dữ liệu đang dùng.
+  // BE accepts both numeric and enum name; FE sends the number to match the type currently in use.
   type?: NotificationTypeEnum;
   channel?: NotificationChannelEnum;
-  // true ⇒ chỉ lấy bản đang dùng của mỗi cặp, ẩn lịch sử phiên bản.
+  // true ⇒ only fetch the active version of each pair, hiding version history.
   activeOnly?: boolean;
-  // BE phân trang (PaginationRequest): pageNumber <= 0 → 1; pageSize ngoài 1..100 → 10 hoặc 100.
+  // BE pagination (PaginationRequest): pageNumber <= 0 → 1; pageSize outside 1..100 → 10 or 100.
   pageNumber?: number;
   pageSize?: number;
 }
 
-// Giới hạn khớp cột DB (title_template 500, body_template 4000) và khớp luôn ValidateAsync của BE —
-// để lỗi hiện ngay lúc gõ thay vì đợi server trả 400.
+// Limits match the DB column (title_template 500, body_template 4000) and also match BE's
+// ValidateAsync — so the error shows up right while typing instead of waiting for a 400 from the server.
 export const TEMPLATE_TITLE_MAX = 500;
 export const TEMPLATE_BODY_MAX = 4000;
 
-// Tạo template ĐẦU TIÊN cho một cặp (type × channel) chưa có. Cặp đã có ⇒ BE trả 409.
+// Creates the FIRST template for a (type × channel) pair that doesn't exist yet. Existing pair ⇒ BE returns 409.
 export interface CreateNotificationTemplatePayload {
   type: NotificationTypeEnum;
   channel: NotificationChannelEnum;
@@ -46,14 +46,15 @@ export interface CreateNotificationTemplatePayload {
   bodyTemplate: string;
 }
 
-// Sửa = sinh PHIÊN BẢN MỚI rồi bật lên, không ghi đè bản cũ.
-// Cố ý không có type/channel: BE lấy từ bản gốc để không ai đổi cặp và phá chuỗi phiên bản.
+// Editing = generates a NEW VERSION then activates it, does not overwrite the old version.
+// Intentionally has no type/channel: BE takes it from the original version so no one can change
+// the pair and break the version chain.
 export interface ReviseNotificationTemplatePayload {
   titleTemplate: string;
   bodyTemplate: string;
 }
 
-// preview + test-send dùng chung body. Không gửi ⇒ render với model rỗng.
+// preview + test-send share the same body. Not sending ⇒ renders with an empty model.
 export interface TemplateSampleDataPayload {
   sampleData?: Record<string, unknown>;
 }
@@ -62,30 +63,31 @@ export interface TemplatePreviewDto {
   type: NotificationTypeEnum;
   channel: NotificationChannelEnum;
   version: number;
-  title: string; // đã render
-  body: string; // đã render
+  title: string; // already rendered
+  body: string; // already rendered
 }
 
-// Địa chỉ nhận LUÔN là admin đang đăng nhập (BE lấy từ JWT) — FE không gửi email.
+// Recipient address is ALWAYS the currently logged-in admin (BE takes it from JWT) — FE does not send an email.
 export interface TemplateTestSendDto {
-  remainingThisHour: number; // max(0, 5 - đã dùng)
+  remainingThisHour: number; // max(0, 5 - used so far)
 }
 
-// ── 03/08/2026: hợp đồng tên biến ────────────────────────────────────────────────────────────
+// ── 03/08/2026: variable naming contract ────────────────────────────────────────────────────────
 //
-// Template gọi biến bằng `{{tenBien}}`, và tên đó phải khớp ĐÚNG khoá mà consumer ghi vào
-// payload — không phải một tên nghe hợp lý. Handlebars gặp biến lạ thì render ra chuỗi rỗng chứ
-// KHÔNG báo lỗi, nên template sai tên vẫn lưu được, vẫn gửi được, chỉ có người nhận là đọc phải
-// câu cụt. Bộ template của dự án từng chạy nhiều tháng với `{{ticketCode}}` trong khi consumer
-// ghi khoá `code`, và `{{serialNumber}}` trong khi consumer ghi `assetSerialNumber`.
+// A template references a variable as `{{variableName}}`, and that name must match EXACTLY the key
+// the consumer writes into the payload — not just a name that sounds reasonable. Handlebars renders
+// an unknown variable as an empty string rather than raising an error, so a template with a wrong
+// name still saves fine, still sends fine — only the recipient ends up reading a truncated sentence.
+// This project's template set once ran for months with `{{ticketCode}}` while the consumer wrote the
+// key `code`, and `{{serialNumber}}` while the consumer wrote `assetSerialNumber`.
 
 export interface TemplateVariableGroupDto {
   type: NotificationTypeEnum;
-  /** Tên enum phía BE — dùng khi cần đối chiếu, nhãn hiển thị vẫn lấy từ notificationLabels. */
+  /** BE-side enum name — used for cross-referencing; the display label still comes from notificationLabels. */
   typeName: string;
-  /** Sáu biến luôn có, giống nhau ở mọi loại: Title, Body, EntityType, EntityId, UserId, CreatedAt. */
+  /** Six variables always present, the same across every type: Title, Body, EntityType, EntityId, UserId, CreatedAt. */
   builtin: string[];
-  /** Khoá riêng của loại này. **Rỗng** ⇒ consumer không ghi payload, chỉ dùng được `builtin`. */
+  /** Keys specific to this type. **Empty** ⇒ the consumer writes no payload, only `builtin` is usable. */
   payload: string[];
 }
 
@@ -93,10 +95,10 @@ export interface TemplateCoverageDto {
   type: NotificationTypeEnum;
   typeName: string;
   channel: NotificationChannelEnum;
-  /** Số dòng thông báo đã sinh cho cặp này — thước đo mức độ đáng quan tâm. */
+  /** Number of notification rows generated for this pair — a measure of how much it matters. */
   notificationCount: number;
-  /** `false` ⇒ mọi thông báo của cặp này đang dùng chuỗi hardcode trong consumer. */
+  /** `false` ⇒ every notification for this pair is currently using a hardcoded string in the consumer. */
   hasActiveTemplate: boolean;
-  /** Biến template đang dùng nhưng không có trong dữ liệu ⇒ render ra rỗng. Rỗng là tốt. */
+  /** Template variables in use but absent from the data ⇒ renders empty. Empty is fine. */
   unknownVariables: string[];
 }

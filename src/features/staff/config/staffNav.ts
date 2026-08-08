@@ -1,6 +1,6 @@
-// Nav config sidebar cho role STAFF.
-// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
-// Label/title đặc thù chỉ staff dùng → giữ inline ở đây.
+// Sidebar nav config for the STAFF role.
+// Labels/titles shared by 2+ roles → imported from shared/constants/sidebarLabels.
+// Labels/titles only staff uses → kept inline here.
 
 import {
   Newspaper,
@@ -31,11 +31,11 @@ export const STAFF_NAV: NavSection[] = [
         path: "/staff/dashboard",
         icon: LayoutDashboard,
       },
-      // Route dùng chung mọi role (không có prefix /staff) — BE đã lọc theo UserId trong JWT.
+      // Route shared by every role (no /staff prefix) — the BE already filters by the UserId in the JWT.
       { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
       {
-        label: "Lịch sử bảo trì",
+        label: "Maintenance history",
         path: "/staff/maintenance-logs",
         icon: Wrench,
       },
@@ -51,14 +51,14 @@ export const STAFF_NAV: NavSection[] = [
       },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
       {
-        label: "Calibration thiết bị",
+        label: "Device calibration",
         path: "/staff/iot-calibrations",
         icon: SlidersHorizontal,
       },
     ],
   },
   {
-    title: "Báo cáo",
+    title: "Reports",
     collapsible: true,
     defaultOpen: true,
     items: [

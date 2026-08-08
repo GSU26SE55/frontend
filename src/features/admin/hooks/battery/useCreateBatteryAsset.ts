@@ -10,7 +10,7 @@ export function useCreateBatteryAsset() {
       batteryAssetService.create(payload).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.batteryAssets] });
-      // Pin gán vào site → danh sách pin + dashboard của site detail phải load lại.
+      // Battery assigned to a site → the site detail's battery list + dashboard must reload.
       qc.invalidateQueries({ queryKey: [KEY.sites] });
     },
   });

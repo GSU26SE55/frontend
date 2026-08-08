@@ -20,7 +20,7 @@ export const triageSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["priorityOverrideReason"],
-        message: "Cần nhập lý do khi override priority",
+        message: "A reason is required when overriding priority",
       });
     }
   });
@@ -30,8 +30,8 @@ export type TriageFormValues = z.infer<typeof triageSchema>;
 // #697 — 1 Primary Handler + N Supporter (TicketAssignCommand).
 export const assignSchema = z
   .object({
-    primaryHandlerStaffId: z.string().uuid("ID Staff không hợp lệ"),
-    // Staff phụ (Collaborator trong chat) — hỗ trợ, không tính workload/KPI.
+    primaryHandlerStaffId: z.string().uuid("Invalid Staff ID"),
+    // Supporting Staff (Collaborators in chat) — they assist, but don't count toward workload/KPI.
     supporterStaffIds: z.array(z.string().uuid()),
     notes: z.string().optional(),
   })
@@ -40,40 +40,40 @@ export const assignSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["supporterStaffIds"],
-        message: "Staff phụ trách chính không được nằm trong danh sách hỗ trợ",
+        message: "The primary handler can't also be in the supporter list",
       });
     }
     if (new Set(val.supporterStaffIds).size !== val.supporterStaffIds.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["supporterStaffIds"],
-        message: "Danh sách Staff hỗ trợ bị trùng",
+        message: "The supporter list contains duplicates",
       });
     }
   });
 
 export type AssignFormValues = z.infer<typeof assignSchema>;
 
-// #697 — Primary hiện tại tự động hạ thành Supporter, không gửi lại supporter list.
+// #697 — the current Primary is automatically demoted to Supporter; don't resend the supporter list.
 export const reassignSchema = z.object({
-  newPrimaryHandlerStaffId: z.string().uuid("ID Staff không hợp lệ"),
-  // BE required (TicketReassignCommand) — rỗng → 400.
-  reason: z.string().min(1, "Lý do điều chuyển không được để trống"),
+  newPrimaryHandlerStaffId: z.string().uuid("Invalid Staff ID"),
+  // Required by the BE (TicketReassignCommand) — empty → 400.
+  reason: z.string().min(1, "Reassignment reason is required"),
 });
 
 export type ReassignFormValues = z.infer<typeof reassignSchema>;
 
 export const rejectSchema = z.object({
-  // BE required (TicketRejectCommand) — rỗng → 400.
-  reason: z.string().min(1, "Lý do từ chối không được để trống"),
+  // Required by the BE (TicketRejectCommand) — empty → 400.
+  reason: z.string().min(1, "Rejection reason is required"),
 });
 
 export type RejectFormValues = z.infer<typeof rejectSchema>;
 
 export const triageRejectSchema = z.object({
-  // BE required (TicketTriageRejectCommand) — Open|Escalated → ClosedRejected.
-  // Rỗng → 400 (Field "Reason"). Không reuse rejectSchema (1-1 với 1 BE command).
-  reason: z.string().min(1, "Lý do từ chối không được để trống"),
+  // Required by the BE (TicketTriageRejectCommand) — Open|Escalated → ClosedRejected.
+  // Empty → 400 (Field "Reason"). Don't reuse rejectSchema (one schema maps 1-1 to one BE command).
+  reason: z.string().min(1, "Rejection reason is required"),
 });
 
 export type TriageRejectFormValues = z.infer<typeof triageRejectSchema>;
@@ -85,26 +85,29 @@ export const escalateSchema = z.object({
 
 export type EscalateFormValues = z.infer<typeof escalateSchema>;
 
-// TicketReprioritizeCommand — reason bắt buộc, BE giới hạn 1000 ký tự.
+// TicketReprioritizeCommand — reason is required, and the BE caps it at 1000 characters.
+// Send Impact + Urgency and NOT priority: User Guide §3.9 states that priority is derived
+// from the Impact × Urgency matrix rather than entered directly. The BE recalculates it.
 export const reprioritizeSchema = z.object({
-  priority: z.nativeEnum(TicketPriorityEnum),
+  impact: z.nativeEnum(ImpactScopeEnum),
+  urgency: z.nativeEnum(UrgencyLevelEnum),
   reason: z
     .string()
     .trim()
-    .min(1, "Lý do đổi mức ưu tiên không được để trống")
-    .max(1000, "Lý do tối đa 1000 ký tự"),
+    .min(1, "A reason for the priority change is required")
+    .max(1000, "Reason must be at most 1000 characters"),
 });
 
 export type ReprioritizeFormValues = z.infer<typeof reprioritizeSchema>;
 
 export const declareIncidentSchema = z.object({
-  // BE required (TicketDeclareIncidentCommand) — rỗng/whitespace → 400.
-  incidentDescription: z.string().min(1, "Mô tả sự cố không được để trống"),
+  // Required by the BE (TicketDeclareIncidentCommand) — empty/whitespace → 400.
+  incidentDescription: z.string().min(1, "Incident description is required"),
 });
 
 export type DeclareIncidentFormValues = z.infer<typeof declareIncidentSchema>;
 
-// addCommentSchema dùng chung — nguồn thật ở shared (trùng admin/manager/staff).
+// Shared addCommentSchema — the real source lives in shared (identical across admin/manager/staff).
 export {
   addCommentSchema,
   type AddCommentFormValues,

@@ -24,16 +24,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Meta dùng chung cho timeline hoạt động ticket (admin/manager/staff):
-// label tiếng Việt + màu + icon theo NHÓM ngữ nghĩa, để phân biệt loại nhanh
-// bằng màu thay vì đọc tên enum thô ("Chatted", "ChatFlagged"...).
+// Shared metadata for the ticket activity timeline (admin/manager/staff):
+// label + color + icon grouped by semantic MEANING, so the type can be told apart quickly
+// by color instead of reading the raw enum name ("Chatted", "ChatFlagged"...).
 //
-// Nhóm màu (token semantic, đúng dark mode):
-//   ok   (xanh lá) — hoàn thành / phê duyệt tích cực
-//   p1   (đỏ)      — nghiêm trọng: breach, incident, từ chối, cờ spam
-//   p2   (cam)     — cảnh báo / chuyển cấp / mở lại
-//   info (xanh dương) — thao tác thông tin: tạo, đổi trạng thái, gán, bình luận
-//   muted (xám)   — SLA tạm dừng / hệ thống
+// Color groups (semantic tokens, correct in dark mode):
+//   ok   (green)  — completed / positive approval
+//   p1   (red)    — critical: breach, incident, rejection, spam flag
+//   p2   (orange) — warning / escalation / reopen
+//   info (blue)   — informational actions: create, status change, assign, comment
+//   muted (gray)  — SLA paused / system
 
 type ActivityTone = "ok" | "p1" | "p2" | "info" | "muted";
 
@@ -58,60 +58,60 @@ const TONE_STYLE: Record<
   },
 };
 
-// Key là string vì BE có action ngoài enum FE (Chatted, ChatFlagged, ChatEdited…).
+// Key is a string because the BE has actions outside the FE enum (Chatted, ChatFlagged, ChatEdited…).
 const ACTIVITY_META: Record<string, ActivityMeta> = {
-  Created: { label: "Tạo ticket", tone: "info", icon: Plus },
-  StatusChanged: { label: "Đổi trạng thái", tone: "info", icon: RefreshCw },
-  PriorityAssigned: { label: "Gán mức ưu tiên", tone: "info", icon: Flag },
-  StaffAssigned: { label: "Gán nhân viên", tone: "info", icon: UserPlus },
+  Created: { label: "Ticket created", tone: "info", icon: Plus },
+  StatusChanged: { label: "Status changed", tone: "info", icon: RefreshCw },
+  PriorityAssigned: { label: "Priority assigned", tone: "info", icon: Flag },
+  StaffAssigned: { label: "Staff assigned", tone: "info", icon: UserPlus },
   StaffReassigned: {
-    label: "Điều chuyển nhân viên",
+    label: "Staff reassigned",
     tone: "info",
     icon: Users,
   },
-  Commented: { label: "Bình luận", tone: "info", icon: MessageSquare },
-  Chatted: { label: "Bình luận", tone: "info", icon: MessageSquare },
-  ChatEdited: { label: "Sửa bình luận", tone: "info", icon: MessageSquare },
-  ChatDeleted: { label: "Xóa bình luận", tone: "muted", icon: MessageSquare },
+  Commented: { label: "Comment", tone: "info", icon: MessageSquare },
+  Chatted: { label: "Comment", tone: "info", icon: MessageSquare },
+  ChatEdited: { label: "Comment edited", tone: "info", icon: MessageSquare },
+  ChatDeleted: { label: "Comment deleted", tone: "muted", icon: MessageSquare },
   ChatFlagged: {
-    label: "Bình luận bị gắn cờ",
+    label: "Comment flagged",
     tone: "p1",
     icon: ShieldAlert,
   },
   MaintenanceLogged: {
-    label: "Ghi nhật ký bảo trì",
+    label: "Maintenance logged",
     tone: "info",
     icon: Wrench,
   },
-  AttachmentAdded: { label: "Đính kèm tệp", tone: "info", icon: Paperclip },
-  SlaPaused: { label: "Tạm dừng SLA", tone: "muted", icon: PauseCircle },
-  SlaResumed: { label: "Tiếp tục SLA", tone: "info", icon: PlayCircle },
-  SlaWarning: { label: "Cảnh báo SLA", tone: "p2", icon: AlertTriangle },
-  SlaBreached: { label: "Vi phạm SLA", tone: "p1", icon: TimerOff },
+  AttachmentAdded: { label: "Attachment added", tone: "info", icon: Paperclip },
+  SlaPaused: { label: "SLA paused", tone: "muted", icon: PauseCircle },
+  SlaResumed: { label: "SLA resumed", tone: "info", icon: PlayCircle },
+  SlaWarning: { label: "SLA warning", tone: "p2", icon: AlertTriangle },
+  SlaBreached: { label: "SLA breached", tone: "p1", icon: TimerOff },
   EscalationRequested: {
-    label: "Yêu cầu chuyển cấp",
+    label: "Escalation requested",
     tone: "p2",
     icon: ArrowUpCircle,
   },
-  Escalated: { label: "Đã chuyển cấp", tone: "p2", icon: ArrowUpCircle },
-  IncidentDeclared: { label: "Khai báo sự cố", tone: "p1", icon: Siren },
-  Resolved: { label: "Báo hoàn thành", tone: "ok", icon: CheckCircle2 },
-  Approved: { label: "Phê duyệt", tone: "ok", icon: BadgeCheck },
-  TriageApproved: { label: "Duyệt phân loại", tone: "ok", icon: BadgeCheck },
-  Rejected: { label: "Từ chối", tone: "p1", icon: XCircle },
-  Rated: { label: "Khách đánh giá", tone: "info", icon: Star },
-  Reopened: { label: "Mở lại ticket", tone: "p2", icon: RotateCcw },
-  AutoClosed: { label: "Tự động đóng", tone: "muted", icon: Lock },
+  Escalated: { label: "Escalated", tone: "p2", icon: ArrowUpCircle },
+  IncidentDeclared: { label: "Incident declared", tone: "p1", icon: Siren },
+  Resolved: { label: "Resolution reported", tone: "ok", icon: CheckCircle2 },
+  Approved: { label: "Approved", tone: "ok", icon: BadgeCheck },
+  TriageApproved: { label: "Triage approved", tone: "ok", icon: BadgeCheck },
+  Rejected: { label: "Rejected", tone: "p1", icon: XCircle },
+  Rated: { label: "Customer rated", tone: "info", icon: Star },
+  Reopened: { label: "Ticket reopened", tone: "p2", icon: RotateCcw },
+  AutoClosed: { label: "Auto-closed", tone: "muted", icon: Lock },
   ResolvedByEscalatedStaff: {
-    label: "Giải quyết sau chuyển cấp",
+    label: "Resolved after escalation",
     tone: "ok",
     icon: CheckCircle2,
   },
-  Closed: { label: "Đã đóng ticket", tone: "muted", icon: Lock },
+  Closed: { label: "Ticket closed", tone: "muted", icon: Lock },
 };
 
 const FALLBACK: ActivityMeta = {
-  label: "Hoạt động",
+  label: "Activity",
   tone: "muted",
   icon: Settings,
 };

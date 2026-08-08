@@ -53,18 +53,18 @@ export default function SmsGatewayPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Hệ thống
+            Admin &middot; System
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">SMS Gateway</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : devices.length} thiết bị &mdash; quản lý
-            gateway gửi SMS.
+            {isLoading ? "..." : devices.length} devices &mdash; manage the
+            SMS-sending gateway.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.admin.smsGateway]} />
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-3.5" /> Thêm thiết bị
+            <Plus className="size-3.5" /> Add device
           </Button>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function SmsGatewayPage() {
             checked={includeRevoked}
             onCheckedChange={(checked) => setIncludeRevoked(checked === true)}
           />
-          <span className="text-muted-foreground">Hiện đã thu hồi</span>
+          <span className="text-muted-foreground">Show revoked</span>
         </label>
       </div>
 
@@ -89,7 +89,7 @@ export default function SmsGatewayPage() {
         ) : devices.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <MessageSquare className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có thiết bị nào.</span>
+            <span className="text-sm">No devices yet.</span>
           </div>
         ) : (
           <SmsDeviceTable data={devices} onRevoke={setRevokeTarget} />
@@ -114,13 +114,13 @@ export default function SmsGatewayPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Thu hồi thiết bị?</AlertDialogTitle>
+            <AlertDialogTitle>Revoke device?</AlertDialogTitle>
             <AlertDialogDescription>
               {revokeTarget && (
                 <>
-                  Thu hồi <strong>{revokeTarget.deviceName}</strong> (
-                  {revokeTarget.deviceCode})? Thiết bị sẽ không gửi được SMS
-                  nữa. Hành động này không thể hoàn tác.
+                  Revoke <strong>{revokeTarget.deviceName}</strong> (
+                  {revokeTarget.deviceCode})? The device will no longer be able
+                  to send SMS. This action cannot be undone.
                 </>
               )}
             </AlertDialogDescription>
@@ -131,7 +131,7 @@ export default function SmsGatewayPage() {
               onClick={handleConfirmRevoke}
               disabled={revoking}
             >
-              Thu hồi
+              Revoke
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

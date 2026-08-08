@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { trustedDeviceService } from "@/features/auth/services/trusted-device/trusted-device.service";
 import { KEY } from "@/shared/utils/queryKeys";
 
-// #AUTH-48: revoke toàn bộ trusted devices (idempotent)
+// #AUTH-48: revoke all trusted devices (idempotent)
 export const useRevokeAllTrustedDevices = () => {
   const queryClient = useQueryClient();
 

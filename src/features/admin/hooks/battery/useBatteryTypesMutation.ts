@@ -7,7 +7,7 @@ import type {
   UpdateBatteryTypePayload,
 } from "@/features/admin/types/battery/battery-type.types";
 
-// Form-bound mutation: KHÔNG đặt onError ở đây — form tự catch + setError (tránh double toast)
+// Form-bound mutation: do NOT set onError here — the form catches it itself + setError (avoids a double toast)
 export function useCreateBatteryType() {
   const qc = useQueryClient();
   return useMutation({

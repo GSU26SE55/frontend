@@ -19,7 +19,7 @@ import type { PaginationResponse } from "@/shared/types/api.types";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import type { SortDirection } from "@/shared/hooks/useSortableData";
 
-// YYYY-MM-DD → UTC range (BE filter từ/đến).
+// YYYY-MM-DD → UTC range (BE filter from/to).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
 const toUtcEnd = (d?: string) => (d ? `${d}T23:59:59Z` : undefined);
 
@@ -109,7 +109,7 @@ function useAuditTabState() {
     setPageNumber(1);
   };
 
-  // Server-side sort: toggle asc → desc → clear, reset về trang 1 khi đổi sort.
+  // Server-side sort: toggle asc → desc → clear, reset to page 1 when the sort changes.
   const toggleSort = (key: string) => {
     if (sortBy !== key) {
       setSortBy(key);
@@ -143,7 +143,7 @@ function useAuditTabState() {
   };
 }
 
-// Range hợp lệ → mới gọi API (chặn 422 from > to trước khi gọi).
+// Only call the API when the range is valid (blocks a 422 for from > to before calling).
 const rangeValid = (f: AuditLogFilterValues) =>
   !(f.dateFrom && f.dateTo && f.dateFrom > f.dateTo);
 
@@ -223,13 +223,13 @@ export default function BatteryAuditLogsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin · Hệ thống
+            Admin · System
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Audit Logs — Pin & Cảnh báo
+            Audit Logs — Battery & Alerts
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Tra cứu forensic thao tác trên Pin và Cảnh báo (fallback
+            Forensic lookup of battery and alert operations (fallback
             resilience).
           </p>
         </div>
@@ -240,8 +240,8 @@ export default function BatteryAuditLogsPage() {
 
       <Tabs defaultValue="battery">
         <TabsList>
-          <TabsTrigger value="battery">Pin (Battery)</TabsTrigger>
-          <TabsTrigger value="alert">Cảnh báo (Alert)</TabsTrigger>
+          <TabsTrigger value="battery">Battery</TabsTrigger>
+          <TabsTrigger value="alert">Alert</TabsTrigger>
         </TabsList>
         <TabsContent value="battery" className="mt-4">
           <BatteryAuditTab />

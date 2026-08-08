@@ -33,7 +33,7 @@ export default function NotificationGroupTable({
   if (isLoading) {
     return (
       <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-        Đang tải…
+        Loading…
       </p>
     );
   }
@@ -41,7 +41,7 @@ export default function NotificationGroupTable({
   if (groups.length === 0) {
     return (
       <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-        Chưa có nhóm nào khớp bộ lọc.
+        No groups match the filter.
       </p>
     );
   }
@@ -50,10 +50,10 @@ export default function NotificationGroupTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Tên nhóm</TableHead>
-          <TableHead className="w-40">Cách chọn thành viên</TableHead>
-          <TableHead className="w-32 text-right">Người nhận</TableHead>
-          <TableHead className="w-44 text-right">Thao tác</TableHead>
+          <TableHead>Group name</TableHead>
+          <TableHead className="w-40">Member selection</TableHead>
+          <TableHead className="w-32 text-right">Recipients</TableHead>
+          <TableHead className="w-44 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -67,7 +67,7 @@ export default function NotificationGroupTable({
                   {g.isSystem && (
                     <Badge variant="secondary" className="gap-1 text-[10px]">
                       <Lock className="size-2.5" />
-                      hệ thống
+                      system
                     </Badge>
                   )}
                 </div>
@@ -93,7 +93,7 @@ export default function NotificationGroupTable({
                   {g.memberCount}
                 </span>
                 <span className="ml-1 text-xs text-muted-foreground">
-                  người
+                  members
                 </span>
               </TableCell>
               <TableCell className="text-right">
@@ -102,19 +102,19 @@ export default function NotificationGroupTable({
                     size="sm"
                     variant="ghost"
                     onClick={() => onMembers(g)}
-                    title={isRole ? "Xem thành viên" : "Quản lý thành viên"}
+                    title={isRole ? "View members" : "Manage members"}
                   >
                     <Users className="size-3.5" />
                   </Button>
-                  {/* Nhóm hệ thống: BE trả 409 nếu cố sửa/xoá. Ẩn nút để không mời người dùng
-                      bấm vào thứ chắc chắn thất bại. */}
+                  {/* System groups: BE returns 409 if you try to edit/delete them. Hide the button
+                      so users aren't invited to click something guaranteed to fail. */}
                   {!g.isSystem && (
                     <>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => onEdit(g)}
-                        title="Sửa"
+                        title="Edit"
                       >
                         <Pencil className="size-3.5" />
                       </Button>
@@ -123,7 +123,7 @@ export default function NotificationGroupTable({
                         variant="ghost"
                         className="text-destructive"
                         onClick={() => onDelete(g)}
-                        title="Xoá"
+                        title="Delete"
                       >
                         <Trash2 className="size-3.5" />
                       </Button>

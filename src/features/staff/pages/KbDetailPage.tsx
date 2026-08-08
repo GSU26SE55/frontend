@@ -38,7 +38,7 @@ export default function KbDetailPage() {
   if (!article) {
     return (
       <div className="p-6 text-center text-muted-foreground">
-        Không tìm thấy bài viết.
+        No matching article.
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default function KbDetailPage() {
               onClick={() => setVerOpen(true)}
             >
               <History className="size-3.5" />
-              Phiên bản
+              Versions
             </Button>
             <Button
               size="sm"
@@ -75,7 +75,7 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Sao chép
+              Duplicate
             </Button>
           </>
         }

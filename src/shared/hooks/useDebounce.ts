@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
 /**
- * Debounce một giá trị — chỉ trả về giá trị mới sau khi ngừng thay đổi `delay` ms.
- * Dùng cho search input để tránh call API mỗi keystroke.
+ * Debounces a value — only returns the new value after it stops changing for `delay` ms.
+ * Used for search inputs to avoid calling the API on every keystroke.
  */
 export function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);

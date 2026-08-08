@@ -77,7 +77,7 @@ function PaginationPrevious({
       {...props}
     >
       <ChevronLeftIcon className="size-4" />
-      <span>Trước</span>
+      <span>Previous</span>
     </PaginationLink>
   );
 }
@@ -93,7 +93,7 @@ function PaginationNext({
       className={cn("gap-1 px-2.5", className)}
       {...props}
     >
-      <span>Tiếp</span>
+      <span>Next</span>
       <ChevronRightIcon className="size-4" />
     </PaginationLink>
   );

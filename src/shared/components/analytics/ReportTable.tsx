@@ -23,12 +23,12 @@ interface ReportTableProps<T> {
   rowKey: (row: T, index: number) => string;
 }
 
-// Bảng generic cho report dạng tabular. Tự xử lý loading / empty.
+// Generic table for tabular reports. Handles loading / empty states itself.
 export function ReportTable<T>({
   columns,
   rows,
   isLoading,
-  emptyText = "Không có dữ liệu.",
+  emptyText = "No data.",
   rowKey,
 }: ReportTableProps<T>) {
   if (isLoading) {

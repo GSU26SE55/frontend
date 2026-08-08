@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CheckCheck, Inbox } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   useNotificationsInfinite,
   useNotificationDetail,
@@ -18,8 +18,9 @@ import { cn } from "@/lib/utils";
 const PAGE_SIZE = 20;
 
 export default function NotificationInboxPage() {
-  // Id noti đang chọn nằm ở URL (?id=) chứ không chỉ trong state: F5 hoặc gửi link cho
-  // người khác vẫn mở đúng thông báo đó, và nút back của trình duyệt hoạt động như mong đợi.
+  // The selected notification id lives in the URL (?id=) rather than only in state: an F5
+  // refresh or sharing the link still opens the right notification, and the browser back
+  // button behaves as expected.
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("id");
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -43,22 +44,23 @@ export default function NotificationInboxPage() {
     [data],
   );
 
-  // Detail lấy từ endpoint riêng, nhưng mục đã có trong list thì dùng luôn làm bản
-  // hiển thị tạm → click là thấy ngay, không nháy "Đang tải…" giữa các lần chọn.
+  // Detail comes from its own endpoint, but if the item is already in the list it's used
+  // as a temporary render → clicking shows something instantly, no "Loading…" flash between
+  // selections.
   const { data: detail, isLoading: detailLoading } =
     useNotificationDetail(selectedId);
   const fallback = items.find((n) => n.id === selectedId);
   const selected = detail ?? fallback;
 
-  // Cuộn vô hạn bằng IntersectionObserver trên phần tử canh cuối danh sách.
+  // Infinite scroll via IntersectionObserver on a sentinel element at the end of the list.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !hasNextPage) return;
     const io = new IntersectionObserver(
       (entries) => {
-        // isFetchingNextPage đọc qua closure của effect này; effect chạy lại mỗi khi cờ
-        // đổi nên giá trị luôn mới — không cần ref.
+        // isFetchingNextPage is read through this effect's closure; the effect re-runs
+        // whenever the flag changes so the value is always fresh — no ref needed.
         if (entries[0]?.isIntersecting && !isFetchingNextPage) fetchNextPage();
       },
       { rootMargin: "200px" },
@@ -68,21 +70,45 @@ export default function NotificationInboxPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleSelect = (id: string, unread: boolean) => {
-    // replace: true — chọn qua lại giữa các noti không nên nhồi mỗi lần một entry vào
-    // history, nếu không bấm back phải bấm hàng chục lần mới thoát được trang.
+    // replace: true — switching between notifications shouldn't push a new entry onto
+    // history each time, otherwise back would need dozens of presses to leave the page.
     setSearchParams({ id }, { replace: true });
     if (unread) markRead.mutate(id);
   };
+
+  // Arriving via deep link (?id= from the bell dropdown, or an F5/shared link) doesn't go
+  // through handleSelect, so the notification previously stayed unread even though its
+  // detail was already open. Mark it read exactly once per id.
+  const autoReadRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selectedId || !selected) return;
+    if (autoReadRef.current === selectedId) return;
+    if (!isUnreadStatus(selected.status)) return;
+    autoReadRef.current = selectedId;
+    markRead.mutate(selectedId);
+    // markRead is a stable mutation across renders, deliberately left out of deps so
+    // marking follows the selected id instead of re-running whenever the mutation
+    // reference changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, selected]);
+
+  // Scroll the selected item into view. Arriving from the bell, the item may be far down
+  // the list (or not loaded yet) — without scrolling, the right side would show a detail
+  // while the left side looks like nothing is selected.
+  const selectedRowRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    selectedRowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [selectedId, items.length]);
 
   return (
     <div className="p-4 md:p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Hộp thư</h1>
+          <h1 className="text-lg font-semibold text-foreground">Inbox</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             {unreadCount > 0
-              ? `${unreadCount} thông báo chưa đọc`
-              : "Bạn đã đọc hết thông báo"}
+              ? `${unreadCount} unread notifications`
+              : "You've read all notifications"}
           </p>
         </div>
         {unreadCount > 0 && (
@@ -92,19 +118,19 @@ export default function NotificationInboxPage() {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-[12px] hover:bg-muted transition-colors disabled:opacity-50"
           >
             <CheckCheck size={13} />
-            Đánh dấu tất cả đã đọc
+            Mark all as read
           </button>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-11rem)]">
-        {/* Trái: danh sách cuộn vô hạn */}
+        {/* Left: infinite-scrolling list */}
         <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden">
           <div className="flex gap-1 p-2 border-b border-border">
             {(
               [
-                ["Tất cả", false],
-                ["Chưa đọc", true],
+                ["All", false],
+                ["Unread", true],
               ] as const
             ).map(([label, value]) => (
               <button
@@ -128,15 +154,15 @@ export default function NotificationInboxPage() {
                 role="status"
                 className="px-4 py-8 text-center text-xs text-muted-foreground"
               >
-                Đang tải…
+                Loading…
               </div>
             ) : items.length === 0 ? (
               <div className="px-4 py-10 flex flex-col items-center gap-2 text-muted-foreground">
                 <Inbox size={24} strokeWidth={1.5} />
                 <p className="text-xs">
                   {unreadOnly
-                    ? "Không có thông báo chưa đọc"
-                    : "Chưa có thông báo"}
+                    ? "No unread notifications"
+                    : "No notifications yet"}
                 </p>
               </div>
             ) : (
@@ -146,15 +172,17 @@ export default function NotificationInboxPage() {
                   return (
                     <button
                       key={n.id}
+                      ref={n.id === selectedId ? selectedRowRef : undefined}
                       onClick={() => handleSelect(n.id, unread)}
                       aria-current={n.id === selectedId}
                       className={cn(
-                        // border-l-2 luôn có (trong suốt khi đã đọc) để chữ không bị xê dịch
-                        // 2px mỗi lần một mục chuyển sang đã đọc.
+                        // border-l-2 is always present (transparent once read) so the text
+                        // doesn't shift 2px each time an item becomes read.
                         "w-full text-left px-3.5 py-2.5 border-b border-border last:border-b-0 border-l-2 border-l-transparent hover:bg-muted transition-colors",
                         n.id === selectedId && "bg-muted",
-                        // Chưa đọc: vạch màu bên trái + nền đậm hơn. Giữ cả hai kể cả khi
-                        // đang được chọn — trước đây bg của mục chọn nuốt mất dấu chưa đọc.
+                        // Unread: colored left bar + a stronger background. Keep both even
+                        // when selected — previously the selected item's bg swallowed the
+                        // unread marker.
                         unread && "border-l-primary",
                         unread && n.id !== selectedId && "bg-primary/10",
                       )}
@@ -183,7 +211,7 @@ export default function NotificationInboxPage() {
                             <span className="text-[10px] text-muted-foreground shrink-0">
                               {formatDistanceToNow(new Date(n.createdAt), {
                                 addSuffix: true,
-                                locale: vi,
+                                locale: enUS,
                               })}
                             </span>
                           </div>
@@ -217,12 +245,12 @@ export default function NotificationInboxPage() {
                     role="status"
                     className="px-4 py-3 text-center text-[11px] text-muted-foreground"
                   >
-                    Đang tải thêm…
+                    Loading more…
                   </div>
                 )}
                 {!hasNextPage && items.length > 0 && (
                   <div className="px-4 py-3 text-center text-[11px] text-muted-foreground">
-                    Đã hiển thị toàn bộ thông báo
+                    All notifications shown
                   </div>
                 )}
               </>
@@ -230,12 +258,12 @@ export default function NotificationInboxPage() {
           </div>
         </div>
 
-        {/* Phải: chi tiết */}
+        {/* Right: detail */}
         <div className="border border-border rounded-xl bg-card overflow-hidden">
           <NotificationDetailPane
             notification={selected}
-            // Chỉ hiện trạng thái tải khi CHƯA có gì để vẽ; đã có bản từ list thì
-            // vẽ luôn trong lúc request nền chạy.
+            // Only show a loading state when there's NOTHING to render yet; if a version
+            // from the list already exists, render it while the background request runs.
             isLoading={detailLoading && !selected}
           />
         </div>

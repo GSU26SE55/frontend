@@ -46,14 +46,12 @@ export default function ManagerSiteListPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Manager &middot; Tài sản
+            Manager &middot; Assets
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Danh sách Site
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Site List</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} site &mdash; quản lý site khách
-            hàng.
+            {isLoading ? "..." : totalItems} sites &mdash; manage customer
+            sites.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.sites]} />
@@ -63,7 +61,7 @@ export default function ManagerSiteListPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo tên site..."
+            placeholder="Search by site name..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -71,7 +69,7 @@ export default function ManagerSiteListPage() {
         </div>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>

@@ -7,9 +7,11 @@ import type { StaffFeedbackEnum } from "@/shared/enums/battery/ai.enum";
 import type {
   SohPredictionListParams,
   AnomalyClassificationListParams,
+  GetLongSohParams,
+  GetBatchPredictionParams,
 } from "@/shared/types/battery/ai.types";
 
-/** BE-AI — lịch sử SOH prediction của 1 pin (chart). */
+/** BE-AI — SOH prediction history for a single battery (chart). */
 export function useSohPredictions(params: SohPredictionListParams) {
   return useQuery({
     queryKey: QUERY_KEY.sohPredictions.list(params.batteryAssetId, params),
@@ -18,7 +20,26 @@ export function useSohPredictions(params: SohPredictionListParams) {
   });
 }
 
-/** BE-AI — danh sách classification (Normal/Degrading/Failed) của 1 pin + feedback. */
+/** BE-AI — long SOH prediction for a single battery. */
+export function useSohPredictionsLong(params: GetLongSohParams) {
+  return useQuery({
+    queryKey: QUERY_KEY.sohPredictions.long(params.batteryAssetId, params),
+    queryFn: () =>
+      aiService.getSohPredictionsLong(params).then((r) => r.data.data),
+    enabled: !!params.batteryAssetId,
+  });
+}
+
+/** BE-AI — batch SOH predictions for active batteries. */
+export function useSohPredictionsBatch(params: GetBatchPredictionParams) {
+  return useQuery({
+    queryKey: QUERY_KEY.sohPredictions.batch(params),
+    queryFn: () =>
+      aiService.getSohPredictionsBatch(params).then((r) => r.data.data),
+  });
+}
+
+/** BE-AI — classification list (Normal/Degrading/Failed) for a single battery + feedback. */
 export function useAnomalyClassifications(
   params: AnomalyClassificationListParams,
 ) {
@@ -33,7 +54,7 @@ export function useAnomalyClassifications(
   });
 }
 
-/** BE-AI — Staff gửi feedback "AI phân loại đúng không?". */
+/** BE-AI — Staff submits feedback on "was the AI classification correct?". */
 export function useSubmitClassificationFeedback() {
   const qc = useQueryClient();
   return useMutation({
@@ -46,7 +67,7 @@ export function useSubmitClassificationFeedback() {
     }) => aiService.submitFeedback(id, feedback).then((r) => r.data.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.anomalyClassifications] });
-      toast.success("Đã ghi nhận đánh giá AI");
+      toast.success("AI feedback recorded");
     },
     onError: (error) => handleErrorApi({ error }),
   });

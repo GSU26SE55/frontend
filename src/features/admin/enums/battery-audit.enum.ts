@@ -1,5 +1,5 @@
-// Action code cho audit log Pin & Cảnh báo (battery-specific) — docs/api-battery.md §Audit (2774, 2790).
-// Dùng làm option cho filter `action` (dropdown closed-set, KHÔNG free-text — BE exact-match case-sensitive).
+// Action codes for the Battery & Alert audit log (battery-specific) — docs/api-battery.md §Audit (2774, 2790).
+// Used as options for the `action` filter (closed-set dropdown, NOT free-text — BE exact-match case-sensitive).
 
 export const BatteryAuditActionCode = {
   BatteryCreated: "BatteryCreated",

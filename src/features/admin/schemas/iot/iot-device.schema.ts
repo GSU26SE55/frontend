@@ -1,51 +1,63 @@
 import { z } from "zod";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 
-// apiKeyScopes là bitmask — combo (vd 1|2=3) KHÔNG phải member enum nên dùng z.number, không nativeEnum.
+// apiKeyScopes is a bitmask — a combo (e.g. 1|2=3) is NOT an enum member, so we use z.number instead of nativeEnum.
 const apiKeyScopes = z
   .number()
   .int()
-  .refine((v) => v !== 0, "Cần chọn ít nhất 1 scope")
+  .refine((v) => v !== 0, "Select at least 1 scope")
   .optional();
 
 export const createIotDeviceSchema = z.object({
   deviceCode: z
     .string()
-    .min(3, "Tối thiểu 3 ký tự")
-    .max(64, "Tối đa 64 ký tự")
-    .regex(/^[A-Z0-9-]+$/, "Chỉ chữ hoa, số và dấu gạch ngang"),
-  displayName: z.string().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
-  siteId: z.string().uuid("Cần chọn site"),
-  hardwareRevision: z.string().max(64, "Tối đa 64 ký tự").optional(),
+    .min(3, "Must be at least 3 characters")
+    .max(64, "Must be at most 64 characters")
+    .regex(/^[A-Z0-9-]+$/, "Only uppercase letters, digits, and hyphens"),
+  displayName: z
+    .string()
+    .min(1, "Required")
+    .max(200, "Must be at most 200 characters"),
+  siteId: z.string().uuid("Select a site"),
+  hardwareRevision: z
+    .string()
+    .max(64, "Must be at most 64 characters")
+    .optional(),
   apiKeyScopes,
   heartbeatIntervalSeconds: z
     .number()
     .int()
-    .min(10, "Tối thiểu 10 giây")
-    .max(3600, "Tối đa 3600 giây")
+    .min(10, "Must be at least 10 seconds")
+    .max(3600, "Must be at most 3600 seconds")
     .optional(),
-  notes: z.string().max(1000, "Tối đa 1000 ký tự").optional(),
+  notes: z.string().max(1000, "Must be at most 1000 characters").optional(),
 });
 
 export const updateIotDeviceSchema = z.object({
-  displayName: z.string().min(1, "Bắt buộc").max(200, "Tối đa 200 ký tự"),
-  siteId: z.string().uuid("Cần chọn site"),
-  hardwareRevision: z.string().max(64, "Tối đa 64 ký tự").optional(),
+  displayName: z
+    .string()
+    .min(1, "Required")
+    .max(200, "Must be at most 200 characters"),
+  siteId: z.string().uuid("Select a site"),
+  hardwareRevision: z
+    .string()
+    .max(64, "Must be at most 64 characters")
+    .optional(),
   status: z.nativeEnum(IotDeviceStatusEnum),
   apiKeyScopes,
   heartbeatIntervalSeconds: z
     .number()
     .int()
-    .min(10, "Tối thiểu 10 giây")
-    .max(3600, "Tối đa 3600 giây")
+    .min(10, "Must be at least 10 seconds")
+    .max(3600, "Must be at most 3600 seconds")
     .optional(),
   targetFirmwareReleaseId: z.string().uuid().optional(),
-  notes: z.string().max(1000, "Tối đa 1000 ký tự").optional(),
+  notes: z.string().max(1000, "Must be at most 1000 characters").optional(),
 });
 
-// Command `type` tự do; `params` là string JSON ở form → JSON.parse khi submit (parse fail → setError).
+// Command `type` is free-form; `params` is a JSON string in the form → JSON.parse on submit (parse failure → setError).
 export const deviceCommandSchema = z.object({
-  type: z.string().min(1, "Bắt buộc"),
+  type: z.string().min(1, "Required"),
   params: z.string().optional(),
   cmdId: z.string().optional(),
 });

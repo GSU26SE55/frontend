@@ -84,7 +84,7 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
 
         {/* Right: Badge + Login */}
         <div className="flex items-center justify-end gap-3">
-          {/* "AI-Powered" badge — visible trên đủ lớn */}
+          {/* "AI-Powered" badge — shown on large enough screens */}
           {/* <span
             data-anim="header-item"
             className={cn(
@@ -110,7 +110,7 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
             )}
           >
             <LockKeyhole className="size-3.5" />
-            Đăng nhập
+            Sign in
           </Button>
         </div>
       </div>

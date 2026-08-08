@@ -5,7 +5,7 @@ import {
   TicketOriginEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 
-// Ticket đã kết thúc → không cho gộp vào (chỉ gộp vào ticket còn xử lý được).
+// Ticket already closed out → can't merge into it (only merge into a ticket still being worked).
 const CLOSED_STATUSES: TicketStatusEnum[] = [
   TicketStatusEnum.Closed,
   TicketStatusEnum.ClosedRejected,
@@ -14,9 +14,9 @@ const CLOSED_STATUSES: TicketStatusEnum[] = [
 ];
 
 /**
- * Ưu tiên khi cả nguồn lẫn đích cùng New: ticket do AI/hệ thống sinh làm ĐÍCH
- * (giữ lại), ticket Customer gửi làm NGUỒN (gộp đi) — ticket auto gắn sẵn dữ liệu
- * cảm biến/alert nên giữ nó mất ít ngữ cảnh hơn.
+ * Preference when both source and target are New: the AI/system-generated ticket becomes
+ * the TARGET (kept), the Customer-submitted ticket becomes the SOURCE (merged away) — the
+ * auto ticket already carries sensor/alert data, so keeping it loses less context.
  */
 const AUTO_ORIGINS: TicketOriginEnum[] = [
   TicketOriginEnum.AutoFromAlert,
@@ -24,15 +24,15 @@ const AUTO_ORIGINS: TicketOriginEnum[] = [
 ];
 
 /**
- * Ứng viên ticket ĐÍCH để gộp vào. Ticket nguồn luôn là ticket đang mở (đã gate
- * `status === New` ở trang chi tiết), nên ở đây chỉ lọc phía đích:
+ * Candidate TARGET tickets to merge into. The source ticket is always the one currently open
+ * (already gated to `status === New` on the detail page), so this only filters the target side:
  *
- * - Khác ticket nguồn, chưa bị gộp, chưa kết thúc.
- * - KHÔNG nhận ticket New khác làm đích, TRỪ KHI nó do AI/hệ thống sinh: hai ticket
- *   cùng chưa triage thì không có cái nào "chính" để giữ lại, riêng ticket auto thì
- *   ưu tiên giữ theo quy tắc trên.
+ * - Different from the source ticket, not already merged, not closed out.
+ * - Does NOT accept another New ticket as target, UNLESS it's AI/system-generated: two tickets
+ *   that are both untriaged have no "primary" one to keep, whereas an auto ticket is preferred
+ *   per the rule above.
  *
- * Thứ tự: ticket AI nghi trùng lên đầu, rồi tới các ticket auto-origin.
+ * Order: the ticket AI flagged as a likely duplicate first, then the other auto-origin tickets.
  */
 export function useMergeCandidates(
   tickets: TicketDTO[] | undefined,
@@ -44,7 +44,7 @@ export function useMergeCandidates(
       if (t.id === sourceTicketId) return false;
       if (t.mergedIntoTicketId) return false;
       if (CLOSED_STATUSES.includes(t.status)) return false;
-      // Đích còn New chỉ hợp lệ khi là ticket auto — xem doc-comment trên.
+      // A target still in New is only valid when it's an auto ticket — see the doc comment above.
       if (t.status === TicketStatusEnum.New) {
         return AUTO_ORIGINS.includes(t.origin);
       }

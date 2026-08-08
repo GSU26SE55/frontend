@@ -51,7 +51,7 @@ export default function NotificationBatchesPage() {
 
   const params = useMemo(
     () => ({
-      // URL giữ chuỗi, API nhận số — Number("") = 0 nên phải kiểm rỗng trước.
+      // URL keeps a string, the API expects a number — Number("") = 0, so check for empty first.
       source: filters.source
         ? (Number(filters.source) as NotificationBatchSourceEnum)
         : undefined,
@@ -70,12 +70,14 @@ export default function NotificationBatchesPage() {
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             <History className="inline size-3 mr-1 -mt-0.5" />
-            Thông báo
+            Notifications
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Lịch sử gửi</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Send history
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Mỗi dòng là <b>một lần gửi</b>, dù tới bao nhiêu người. Bấm vào để
-            xem đã giao được bao nhiêu và bao nhiêu người đã đọc.
+            Each row is <b>one send</b>, regardless of how many recipients.
+            Click a row to see how many were delivered and how many were read.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.notificationBatches]} />
@@ -86,7 +88,7 @@ export default function NotificationBatchesPage() {
           <Select
             value={filters.source || ALL}
             items={[
-              { value: ALL, label: "Tất cả nguồn" },
+              { value: ALL, label: "All sources" },
               ...SOURCE_OPTIONS.map((o) => ({
                 value: String(o.value),
                 label: o.label,
@@ -98,7 +100,7 @@ export default function NotificationBatchesPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
-              <SelectItem value={ALL}>Tất cả nguồn</SelectItem>
+              <SelectItem value={ALL}>All sources</SelectItem>
               {SOURCE_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={String(o.value)}>
                   {o.label}
@@ -110,28 +112,27 @@ export default function NotificationBatchesPage() {
 
         {isLoading ? (
           <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-            Đang tải…
+            Loading…
           </p>
         ) : batches.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              Chưa có lần gửi nào.
-            </p>
-            {/* Nói rõ giới hạn thay vì để người dùng tưởng mất dữ liệu. */}
+            <p className="text-sm text-muted-foreground">No sends yet.</p>
+            {/* State the limitation clearly instead of letting users think data was lost. */}
             <p className="mt-1 text-xs text-muted-foreground">
-              Màn hình này chỉ hiển thị các lần gửi từ khi tính năng được bật —
-              thông báo cũ hơn không mang thông tin để gom lại thành lần gửi.
+              This screen only shows sends made since this feature was enabled —
+              older notifications don't carry the info needed to group them into
+              a send.
             </p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nội dung</TableHead>
-                <TableHead className="w-40">Nguồn</TableHead>
-                <TableHead className="w-28 text-right">Người nhận</TableHead>
-                <TableHead className="w-24 text-right">Số dòng</TableHead>
-                <TableHead className="w-40">Thời điểm</TableHead>
+                <TableHead>Content</TableHead>
+                <TableHead className="w-40">Source</TableHead>
+                <TableHead className="w-28 text-right">Recipients</TableHead>
+                <TableHead className="w-24 text-right">Rows</TableHead>
+                <TableHead className="w-40">Time</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

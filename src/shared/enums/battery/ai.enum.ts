@@ -1,5 +1,5 @@
-// BE-AI — enum khớp BE (AnomalyClassificationEnum, StaffFeedbackEnum). Pattern `as const`.
-// Dùng chung admin/manager/staff → đặt ở shared/enums/battery.
+// BE-AI — enums mirroring the BE (AnomalyClassificationEnum, StaffFeedbackEnum).
+// `as const` pattern. Shared by admin/manager/staff → lives in shared/enums/battery.
 
 export const AnomalyClassificationEnum = {
   Normal: 1,
@@ -13,9 +13,9 @@ export const AnomalyClassificationLabel: Record<
   AnomalyClassificationEnum,
   string
 > = {
-  [AnomalyClassificationEnum.Normal]: "Bình thường",
-  [AnomalyClassificationEnum.Degrading]: "Đang suy giảm",
-  [AnomalyClassificationEnum.Failed]: "Hỏng / EOL",
+  [AnomalyClassificationEnum.Normal]: "Normal",
+  [AnomalyClassificationEnum.Degrading]: "Degrading",
+  [AnomalyClassificationEnum.Failed]: "Failed / EOL",
 };
 
 export const StaffFeedbackEnum = {
@@ -27,7 +27,7 @@ export type StaffFeedbackEnum =
   (typeof StaffFeedbackEnum)[keyof typeof StaffFeedbackEnum];
 
 export const StaffFeedbackLabel: Record<StaffFeedbackEnum, string> = {
-  [StaffFeedbackEnum.Correct]: "AI đúng",
-  [StaffFeedbackEnum.FalsePositive]: "Báo nhầm (thực tế bình thường)",
-  [StaffFeedbackEnum.FalseNegative]: "Bỏ sót bất thường",
+  [StaffFeedbackEnum.Correct]: "AI was right",
+  [StaffFeedbackEnum.FalsePositive]: "False alarm (actually normal)",
+  [StaffFeedbackEnum.FalseNegative]: "Missed anomaly",
 };

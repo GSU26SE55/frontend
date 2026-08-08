@@ -58,13 +58,13 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** null ⇒ chế độ tạo mới; có giá trị ⇒ sửa (sinh phiên bản mới của chính cặp đó). */
+  /** null ⇒ create mode; a value ⇒ edit (generates a new version of that same pair). */
   editTarget: NotificationTemplateDto | null;
 }
 
 const TYPE_OPTIONS = Object.values(NotificationTypeEnum)
   .map((value) => ({ value, label: notificationTypeLabel(value) }))
-  .sort((a, b) => a.label.localeCompare(b.label, "vi"));
+  .sort((a, b) => a.label.localeCompare(b.label, "en"));
 
 const CHANNEL_OPTIONS = Object.values(NotificationChannelEnum).map((value) => ({
   value,
@@ -82,8 +82,9 @@ export default function NotificationTemplateFormDialog({
 
   const form = useForm<NotificationTemplateFormValues>({
     resolver: zodResolver(notificationTemplateFormSchema),
-    // Dialog được remount bằng `key` ở phía page mỗi khi đổi mục tiêu, nên defaultValues là đủ —
-    // không cần effect reset (vốn hay gây một nhịp render với dữ liệu của mẫu trước).
+    // The dialog is remounted via `key` on the page side whenever the target changes, so
+    // defaultValues is enough — no reset effect needed (which tends to cause a render tick with
+    // the previous template's data).
     defaultValues: {
       type: editTarget?.type ?? NotificationTypeEnum.TicketCreated,
       channel: editTarget?.channel ?? NotificationChannelEnum.InApp,
@@ -92,11 +93,12 @@ export default function NotificationTemplateFormDialog({
     },
   });
 
-  // Danh sách biến bóc từ nội dung ĐANG GÕ — người soạn thấy ngay mình vừa khai báo biến nào,
-  // không phải lưu xong rồi mở lại xem trước mới biết.
+  // List of variables extracted from the content being typed RIGHT NOW — the author sees
+  // immediately which variables they just declared, instead of having to save and reopen the
+  // preview to find out.
   //
-  // Dùng useWatch chứ KHÔNG dùng form.watch(): watch() trả về một hàm mà React Compiler không
-  // memo hoá an toàn được, eslint chặn ngay (`react-hooks/incompatible-library`).
+  // Use useWatch, NOT form.watch(): watch() returns a function that the React Compiler can't
+  // safely memoize, and eslint blocks it immediately (`react-hooks/incompatible-library`).
   const title =
     useWatch({ control: form.control, name: "titleTemplate" }) ?? "";
   const body = useWatch({ control: form.control, name: "bodyTemplate" }) ?? "";
@@ -105,13 +107,13 @@ export default function NotificationTemplateFormDialog({
     [title, body],
   );
 
-  // Loại quyết định bộ biến nào hợp lệ; ở chế độ sửa thì ô chọn bị khoá nên giá trị này cố định.
+  // Type determines which set of variables is valid; in edit mode the selector is locked, so this value is fixed.
   const selectedType =
     useWatch({ control: form.control, name: "type" }) ??
     NotificationTypeEnum.TicketCreated;
 
-  // Bấm một biến thì chèn vào ô vừa soạn dở, không phải luôn luôn một ô cố định. Mặc định là thân
-  // vì đó là chỗ đặt phần lớn biến.
+  // Clicking a variable inserts it into whichever field was last being edited, not always a fixed
+  // field. Defaults to the body since that's where most variables go.
   const [lastFocused, setLastFocused] = useState<
     "titleTemplate" | "bodyTemplate"
   >("bodyTemplate");
@@ -139,7 +141,7 @@ export default function NotificationTemplateFormDialog({
       }
       onOpenChange(false);
     } catch (error) {
-      // EntityError → lỗi hiện dưới đúng ô nhập; HttpError (409 trùng cặp, 400 cú pháp) → toast.
+      // EntityError → error shown under the right input field; HttpError (409 duplicate pair, 400 syntax error) → toast.
       handleErrorApi({ error, setError: form.setError });
     }
   };
@@ -152,20 +154,21 @@ export default function NotificationTemplateFormDialog({
         <DialogHeader>
           <DialogTitle>
             {isEdit
-              ? `Sửa mẫu: ${notificationTypeLabel(editTarget.type)} · ${notificationChannelLabel(editTarget.channel)}`
-              : "Tạo mẫu thông báo"}
+              ? `Edit template: ${notificationTypeLabel(editTarget.type)} · ${notificationChannelLabel(editTarget.channel)}`
+              : "Create notification template"}
           </DialogTitle>
           <DialogDescription>
             {isEdit ? (
               <>
-                Sửa sẽ tạo <b>phiên bản {editTarget.version + 1}</b> và bật lên;
-                bản v{editTarget.version} được giữ lại để quay lui. Không đổi
-                được loại và kênh — muốn khác thì tạo mẫu mới.
+                Editing creates <b>version {editTarget.version + 1}</b> and
+                activates it; v{editTarget.version} is kept so you can roll
+                back. Type and channel can't be changed — create a new template
+                if you need different ones.
               </>
             ) : (
               <>
-                Mỗi cặp (loại × kênh) chỉ có một mẫu. Cặp đã có mẫu thì dùng
-                chức năng sửa để tạo phiên bản mới.
+                Each pair (type × channel) has only one template. If a pair
+                already has one, use edit to create a new version.
               </>
             )}
           </DialogDescription>
@@ -179,7 +182,7 @@ export default function NotificationTemplateFormDialog({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Loại thông báo</FormLabel>
+                    <FormLabel>Notification type</FormLabel>
                     <Select
                       value={String(field.value)}
                       onValueChange={(v) => v && field.onChange(Number(v))}
@@ -212,7 +215,7 @@ export default function NotificationTemplateFormDialog({
                 name="channel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kênh gửi</FormLabel>
+                    <FormLabel>Channel</FormLabel>
                     <Select
                       value={String(field.value)}
                       onValueChange={(v) => v && field.onChange(Number(v))}
@@ -247,14 +250,14 @@ export default function NotificationTemplateFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Tiêu đề{" "}
+                    Title{" "}
                     <span className="text-xs font-normal text-muted-foreground">
                       ({field.value?.length ?? 0}/{TEMPLATE_TITLE_MAX})
                     </span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="VD: Ticket mới {{code}}"
+                      placeholder="e.g. New ticket {{code}}"
                       {...field}
                       onFocus={() => setLastFocused("titleTemplate")}
                     />
@@ -270,7 +273,7 @@ export default function NotificationTemplateFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Nội dung{" "}
+                    Body{" "}
                     <span className="text-xs font-normal text-muted-foreground">
                       ({field.value?.length ?? 0}/{TEMPLATE_BODY_MAX})
                     </span>
@@ -278,7 +281,7 @@ export default function NotificationTemplateFormDialog({
                   <FormControl>
                     <Textarea
                       rows={5}
-                      placeholder="VD: Ticket {{code}} vừa được tạo, mức ưu tiên {{priority}}."
+                      placeholder="e.g. Ticket {{code}} was just created, priority {{priority}}."
                       {...field}
                       onFocus={() => setLastFocused("bodyTemplate")}
                     />
@@ -300,14 +303,14 @@ export default function NotificationTemplateFormDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Huỷ
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending
-                  ? "Đang lưu…"
+                  ? "Saving…"
                   : isEdit
-                    ? `Tạo phiên bản ${editTarget.version + 1}`
-                    : "Tạo mẫu"}
+                    ? `Create version ${editTarget.version + 1}`
+                    : "Create template"}
               </Button>
             </DialogFooter>
           </form>

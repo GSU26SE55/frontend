@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   EllipsisVertical,
   Globe,
@@ -61,12 +61,12 @@ const ROLE_LABEL: Record<ActorRoleEnum, string> = {
   Admin: "Admin",
   Manager: "Manager",
   Staff: "Staff",
-  Customer: "Khách hàng",
-  System: "Hệ thống",
+  Customer: "Customer",
+  System: "System",
 };
 
-// Mirror BE ChatOptions.EditWindowMinutes (15) — chỉ dùng để gợi ý UI, BE luôn
-// là nguồn xác thực cuối cùng.
+// Mirror BE ChatOptions.EditWindowMinutes (15) — used for UI hinting only, the BE is
+// always the final source of truth.
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 const LANGUAGE_OPTIONS = [
@@ -86,22 +86,23 @@ function initials(name: string) {
 
 interface CommentBubbleContentProps {
   comment: TicketCommentDTO;
-  /** Body đã tính (gốc hoặc bản dịch) — dùng làm nội dung bubble/transcript. */
+  /** Computed body (original or translated) — used as the bubble/transcript content. */
   displayBody: string;
   isOwn: boolean;
   canShowActions: boolean;
   actionsMenu: React.ReactNode;
-  /** GH-133 C3 — bật nút download attachment (chat-attachment endpoint) khi có ticketId. */
+  /** GH-133 C3 — enables the attachment download button (chat-attachment endpoint) when ticketId is present. */
   ticketId?: string;
 }
 
 /**
- * Nội dung 1 bình luận (chế độ xem, không phải đang sửa): quyết định render tin nhắn thoại
- * (kiểu Zalo) hay bubble text + ảnh đính kèm thường.
+ * Content of 1 comment (view mode, not editing): decides whether to render a voice message
+ * (Zalo-style) or a normal text bubble + attached images.
  *
- * Voice message (BE tạo từ /chats/voice): body = transcript + đúng 1 attachment là file audio.
- * Hook hỏi metadata để chốt contentType audio; đồng thời lọc bỏ fileId không phải GUID
- * (URL rác/legacy) — nguyên nhân 404 khi ghép /api/files/{fullUrl}/download.
+ * Voice message (BE creates via /chats/voice): body = transcript + exactly 1 attachment that's
+ * an audio file. The hook queries metadata to confirm the audio contentType; it also filters
+ * out fileIds that aren't GUIDs (stale/legacy URLs) — the cause of 404s when building
+ * /api/files/{fullUrl}/download.
  */
 function CommentBubbleContent({
   comment,
@@ -114,9 +115,10 @@ function CommentBubbleContent({
   const fileIds = (comment.attachmentFileIds ?? []).filter(isFileId);
   const hasBody = !!comment.body?.trim();
   const voiceStatus = comment.voiceTranscriptionStatus ?? null;
-  // Chat thoại: BE gắn voiceTranscriptionStatus. Trước đây (transcribe đồng bộ) chỉ có
-  // body + 1 attachment audio nên phải hỏi metadata; luồng async có thể body rỗng
-  // (Pending/Processing/Failed) — vẫn là voice khi có status HOẶC (có body + 1 audio).
+  // Voice chat: the BE attaches voiceTranscriptionStatus. Previously (synchronous transcribe)
+  // it only had body + 1 audio attachment so metadata had to be queried; the async flow can
+  // have an empty body (Pending/Processing/Failed) — still voice when status is present OR
+  // (has body + 1 audio).
   const voiceCandidateId =
     fileIds.length === 1 && (voiceStatus !== null || hasBody)
       ? fileIds[0]
@@ -159,7 +161,7 @@ function CommentBubbleContent({
               )}
             >
               <Loader2 className="h-3 w-3 animate-spin" />
-              Đang chuyển giọng nói thành văn bản…
+              Transcribing voice to text…
             </p>
           )}
           {isFailed && (
@@ -169,7 +171,7 @@ function CommentBubbleContent({
                 statusHint,
               )}
             >
-              <span>Không chuyển được giọng nói thành văn bản.</span>
+              <span>Couldn't transcribe voice to text.</span>
               {ticketId && (
                 <button
                   type="button"
@@ -182,7 +184,7 @@ function CommentBubbleContent({
                   ) : (
                     <RotateCw className="h-3 w-3" />
                   )}
-                  Thử lại
+                  Retry
                 </button>
               )}
             </div>
@@ -230,51 +232,45 @@ export type ChatTab = "public" | "internal";
 interface TicketCommentThreadProps {
   comments: TicketCommentDTO[];
   currentUserId?: string | null;
-  /** Controlled tab — nếu truyền, bình luận mới sẽ gửi theo tab này (page điều khiển). */
+  /** Controlled tab — if passed, new comments send under this tab (page controls it). */
   activeTab?: ChatTab;
   onTabChange?: (tab: ChatTab) => void;
-  /** = checkPermission(user, P.CHAT_EDIT_ANY) — sửa tin của người khác */
-  canEditAny?: boolean;
-  /** = checkPermission(user, P.CHAT_DELETE_ANY) — xóa tin của người khác */
-  canDeleteAny?: boolean;
-  /** Ticket đã Closed — khóa toàn bộ sửa/xóa (BE enforce tương tự) */
+  /** Ticket is Closed — locks all edit/delete (BE enforces the same) */
   ticketClosed?: boolean;
-  /** GH-133 C2 — ticketId để gọi AI endpoint (bắt buộc nếu bật aiEnabled) */
+  /** GH-133 C2 — ticketId to call the AI endpoint (required if aiEnabled is on) */
   ticketId?: string;
-  /** GH-133 C2 — hiện thanh AI (suggest/summarize). Page tự gate role. */
+  /** GH-133 C2 — shows the AI bar (suggest/summarize). Page gates the role itself. */
   aiEnabled?: boolean;
-  /** Khi chọn 1 gợi ý AI, page có thể đổ nội dung xuống composer riêng theo role. */
+  /** When an AI suggestion is picked, the page can push the content down into its own composer per role. */
   onSelectSuggestion?: (text: string) => void;
   onEdit?: (chat: TicketCommentDTO, body: string) => void;
   onDelete?: (chat: TicketCommentDTO) => void;
   editPending?: boolean;
   deletePending?: boolean;
-  /** Housekeeping — báo đã đọc các chat đang hiển thị (không có unread badge để wire) */
+  /** Housekeeping — reports the currently displayed chats as read (no unread badge to wire up) */
   onMarkRead?: (chatIds: string[]) => void;
-  /** Mọi role đều được dịch (BE không giới hạn quyền) — có prop này là hiện menu dịch */
+  /** Every role can translate (BE doesn't restrict this) — passing this prop shows the translate menu */
   onTranslate?: (
     chat: TicketCommentDTO,
     targetLanguage: string,
   ) => Promise<{ translatedBody: string; targetLanguage: string } | undefined>;
-  /** GH-133 C4 — Admin override sửa/xóa chat khi ticket đã Closed (chỉ Admin truyền cả 2). */
+  /** GH-133 C4 — Admin override edit/delete chat when the ticket is Closed (only Admin passes both). */
   onOverrideEdit?: (chat: TicketCommentDTO) => void;
   onOverrideDelete?: (chat: TicketCommentDTO) => void;
-  /** Tin đang chờ gửi (outbox) — render bubble optimistic ở cuối luồng, lọc theo tab. */
+  /** Messages waiting to send (outbox) — renders an optimistic bubble at the end of the stream, filtered by tab. */
   pendingMessages?: OutboxMessage[];
-  /** Bấm dòng "Thử lại" đỏ dưới tin lỗi → gửi lại đúng tin đó. */
+  /** Clicking the red "Retry" line under a failed message → resends that exact message. */
   onRetryPending?: (tempId: string) => void;
-  /** Bỏ hẳn 1 tin lỗi khỏi hàng đợi. */
+  /** Discards a failed message from the queue entirely. */
   onDiscardPending?: (tempId: string) => void;
 }
 
-/** Khung chat dạng bong bóng — TÁCH 2 tab: Công khai (khách thấy) & Nội bộ (chỉ nhân viên). */
+/** Bubble-style chat frame — SPLIT into 2 tabs: Public (customer-visible) & Internal (staff-only). */
 export function TicketCommentThread({
   comments,
   currentUserId,
   activeTab,
   onTabChange,
-  canEditAny = false,
-  canDeleteAny = false,
   ticketClosed = false,
   ticketId,
   aiEnabled = false,
@@ -298,15 +294,15 @@ export function TicketCommentThread({
     onTabChange?.(t);
   };
 
-  // GH-133 — gợi ý AI hiển thị dạng bong bóng cuối luồng chat (phía người chat).
-  // Bấm chọn → đổ vào ô nhập nhưng KHÔNG xóa (user có thể đổi option khác);
-  // chỉ xóa khi user đã gửi tin nhắn thành công (số tin của chính mình tăng).
+  // GH-133 — AI suggestions render as bubbles at the end of the chat stream (chatter's side).
+  // Clicking one → fills the input but does NOT clear it (user can switch to another option);
+  // only cleared once the user successfully sends a message (their own message count goes up).
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const pickSuggestion = (text: string) => {
     onSelectSuggestion?.(text);
   };
 
-  // Cũ lên trên, mới nhất ở dưới cùng — chuẩn giao diện chat.
+  // Oldest on top, newest at the bottom — standard chat UI convention.
   const sorted = useMemo(
     () =>
       [...comments].sort(
@@ -322,18 +318,20 @@ export function TicketCommentThread({
     [sorted, tab],
   );
 
-  // Mốc "Tin nhắn chưa đọc" — chốt id tin CŨ NHẤT chưa đọc ở lần đầu có dữ liệu rồi giữ
-  // nguyên suốt phiên. onMarkRead bên dưới đánh dấu đã đọc ngay khi mở tab ⇒ nếu tính lại
-  // theo data mới thì vạch vừa hiện đã biến mất, người dùng không kịp thấy đọc từ đâu.
-  // Chốt bằng state + "adjust during render" (pattern chính thức của React cho state phái
-  // sinh từ props): chỉ set khi tab đổi hoặc lần đầu có isRead, nên không lặp vô hạn.
+  // "Unread messages" marker — locks in the OLDEST unread message's id the first time data
+  // arrives, then keeps it for the whole session. onMarkRead below marks messages as read the
+  // moment the tab opens ⇒ if recomputed against fresh data, the divider that just appeared
+  // would vanish before the user gets to see where "unread" started. Locked via state +
+  // "adjust during render" (React's official pattern for state derived from props): only sets
+  // when the tab changes or the first time isRead is available, so it doesn't loop forever.
   const [unreadAnchor, setUnreadAnchor] = useState<{
     tab: ChatTab;
     id: string | null;
   } | null>(null);
 
-  // Chỉ chốt khi BE đã trả isRead cho ít nhất 1 tin — realtime ChatAdded không kèm field
-  // này, chốt sớm sẽ ra "không có mốc" dù đang thực sự có tin chưa đọc.
+  // Only lock in once the BE has returned isRead for at least 1 message — the realtime
+  // ChatAdded event doesn't include this field, locking in too early would give "no marker"
+  // even when there really are unread messages.
   if (
     unreadAnchor?.tab !== tab &&
     visible.some((c) => c.isRead !== undefined)
@@ -352,7 +350,7 @@ export function TicketCommentThread({
     return idx < 0 ? 0 : visible.length - idx;
   }, [visible, unreadAnchorId]);
 
-  // Tin đang chờ gửi (outbox) thuộc tab hiện tại — bubble optimistic cuối luồng.
+  // Messages waiting to send (outbox) belonging to the current tab — optimistic bubble at the end of the stream.
   const pendingForTab = useMemo(
     () =>
       pendingMessages.filter((m) =>
@@ -374,8 +372,9 @@ export function TicketCommentThread({
     const el = bottomRef.current;
     if (!el) return;
 
-    // Còn tin chưa đọc → cuộn tới vạch thay vì xuống đáy, để đọc từ tin cũ nhất chưa đọc.
-    // Chỉ làm MỘT lần mỗi phiên; các lần scroll sau (tin mới, ảnh load xong) vẫn về đáy.
+    // Unread messages remain → scroll to the divider instead of the bottom, so reading starts
+    // from the oldest unread message. Done only ONCE per session; later scrolls (new message,
+    // image finished loading) still go to the bottom.
     if (unreadDividerRef.current && !jumpedToUnreadRef.current) {
       jumpedToUnreadRef.current = true;
       isFirstScrollRef.current = false;
@@ -386,7 +385,7 @@ export function TicketCommentThread({
       return;
     }
 
-    // Tìm tổ tiên có thanh cuộn dọc (overflowY is auto/scroll)
+    // Find the nearest scrollable ancestor (overflowY is auto/scroll)
     let parent = el.parentElement;
     while (parent) {
       const style = window.getComputedStyle(parent);
@@ -408,10 +407,10 @@ export function TicketCommentThread({
       });
     };
 
-    // Thực hiện cuộn ngay lập tức
+    // Scroll immediately
     performScroll();
 
-    // Thực hiện lại sau các khoảng trễ để chờ layout / ảnh / audio player vẽ xong hoàn toàn
+    // Redo after delays to wait for layout / image / audio player to finish rendering
     const t1 = setTimeout(performScroll, 50);
     const t2 = setTimeout(performScroll, 150);
     const t3 = setTimeout(performScroll, 300);
@@ -441,8 +440,8 @@ export function TicketCommentThread({
     null,
   );
 
-  // "now" lấy qua state cập nhật định kỳ — tránh gọi Date.now() (impure) trực
-  // tiếp trong quá trình render khi tính withinEditWindow cho từng comment.
+  // "now" comes from state updated on an interval — avoids calling Date.now() (impure)
+  // directly during render when computing withinEditWindow for each comment.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 30_000);
@@ -452,7 +451,7 @@ export function TicketCommentThread({
   const isOwnComment = (c: TicketCommentDTO) =>
     !!currentUserId && c.authorUserId === currentUserId;
 
-  // Xóa gợi ý AI khi user đã gửi tin (số tin của chính mình tăng lên).
+  // Clear AI suggestions once the user has sent a message (their own message count goes up).
   const ownCount = useMemo(
     () =>
       currentUserId
@@ -490,8 +489,8 @@ export function TicketCommentThread({
     setDeleteTarget(null);
   };
 
-  // Bản dịch giữ cục bộ theo chatId — cho phép toggle gốc/dịch không cần gọi
-  // lại BE (BE đã cache theo (chatId, targetLanguage) ở tầng DB).
+  // Translations kept locally by chatId — allows toggling original/translated without
+  // calling the BE again (the BE already caches by (chatId, targetLanguage) at the DB layer).
   const [translations, setTranslations] = useState<
     Record<string, { lang: string; text: string }>
   >({});
@@ -533,17 +532,17 @@ export function TicketCommentThread({
 
   return (
     <div className="flex flex-col">
-      {/* Tab tách Công khai / Nội bộ — dính đầu khi cuộn, nền che kín tin nhắn phía sau */}
+      {/* Public / Internal tab split — sticks to the top on scroll, background covers messages underneath */}
       <div className="sticky -top-6 z-20 -mx-6 -mt-6 bg-background px-6 pt-6 flex items-center gap-1 border-b border-border pb-2 shrink-0">
         <Tabs value={tab} onValueChange={(v) => setTab(v as ChatTab)}>
           <TabsList>
             <TabsTrigger value="public">
               <Globe className="size-3.5" />
-              Công khai
+              Public
             </TabsTrigger>
             <TabsTrigger value="internal">
               <Lock className="size-3.5" />
-              Nội bộ
+              Internal
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -554,11 +553,11 @@ export function TicketCommentThread({
         )}
       </div>
 
-      {/* Ghi chú ngữ cảnh tab đang xem */}
+      {/* Contextual note for the current tab */}
       <p className="text-[11px] text-muted-foreground px-1 pt-2 pb-1 shrink-0">
         {tab === "public"
-          ? "Bình luận công khai — khách hàng có thể xem."
-          : "Bình luận nội bộ — chỉ nhân viên xử lý ticket xem được."}
+          ? "Public comments — visible to the customer."
+          : "Internal comments — visible only to staff working the ticket."}
       </p>
 
       {visible.length === 0 &&
@@ -566,8 +565,8 @@ export function TicketCommentThread({
       pendingForTab.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
           {tab === "public"
-            ? "Chưa có bình luận công khai."
-            : "Chưa có bình luận nội bộ."}
+            ? "No public comments yet."
+            : "No internal comments yet."}
         </p>
       ) : (
         <div className="space-y-3 pt-2 pr-2">
@@ -576,13 +575,18 @@ export function TicketCommentThread({
             const name =
               c.authorDisplayName ?? ROLE_LABEL[c.authorRole] ?? c.authorRole;
             const authorWindowOk = isOwn && withinEditWindow(c);
-            const canEditThis = !ticketClosed && (authorWindowOk || canEditAny);
-            const canDeleteThis = !ticketClosed && (isOwn || canDeleteAny);
+            // Only the author can edit/delete their own message — a higher role does NOT
+            // override this. Matches the BE's ChatAuthorizationService.CanEditChat/CanDeleteChat
+            // exactly: those two functions accept actorPermissions but never read it, they only
+            // compare AuthorUserId. Previously the FE gated the button on chat.edit.any/
+            // chat.delete.any ⇒ Admin clicking it always got a 403.
+            const canEditThis = !ticketClosed && authorWindowOk;
+            const canDeleteThis = !ticketClosed && isOwn;
             const isEditing = editingId === c.id;
             const translation = translations[c.id];
             const showingOriginal = !translation || showOriginalIds.has(c.id);
             const displayBody = showingOriginal ? c.body : translation.text;
-            // C4 — Admin override chỉ khi ticket Closed và page có truyền handler.
+            // C4 — Admin override only when the ticket is Closed and the page passes the handler.
             const canOverride =
               ticketClosed && !!onOverrideEdit && !!onOverrideDelete;
             const canShowActions =
@@ -598,8 +602,8 @@ export function TicketCommentThread({
                     <div className="h-px flex-1 bg-destructive" />
                     <span className="rounded-full bg-destructive px-2.5 py-0.5 text-[11px] font-bold text-white">
                       {unreadCount > 1
-                        ? `${unreadCount} tin nhắn chưa đọc`
-                        : "Tin nhắn chưa đọc"}
+                        ? `${unreadCount} unread messages`
+                        : "Unread message"}
                     </span>
                     <div className="h-px flex-1 bg-destructive" />
                   </div>
@@ -630,7 +634,7 @@ export function TicketCommentThread({
                           className="text-[10px] h-4 px-1.5 gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-300"
                         >
                           <Lock className="size-2.5" />
-                          Nội bộ
+                          Internal
                         </Badge>
                       )}
                     </div>
@@ -650,14 +654,14 @@ export function TicketCommentThread({
                             variant="ghost"
                             onClick={cancelEdit}
                           >
-                            Hủy
+                            Cancel
                           </Button>
                           <Button
                             size="sm"
                             disabled={editPending || !editBody.trim()}
                             onClick={() => saveEdit(c)}
                           >
-                            Lưu
+                            Save
                           </Button>
                         </div>
                       </div>
@@ -701,8 +705,8 @@ export function TicketCommentThread({
                         className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1 mt-0.5"
                       >
                         {showingOriginal
-                          ? `Xem bản dịch (${LANGUAGE_LABEL[translation.lang] ?? translation.lang})`
-                          : "Xem bản gốc"}
+                          ? `View translation (${LANGUAGE_LABEL[translation.lang] ?? translation.lang})`
+                          : "View original"}
                       </button>
                     )}
                     <Tooltip>
@@ -711,16 +715,16 @@ export function TicketCommentThread({
                           <span className="text-[10px] text-muted-foreground px-1 mt-0.5 cursor-default" />
                         }
                       >
-                        {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
-                          locale: vi,
+                        {format(new Date(c.createdAt), "MM/dd/yyyy HH:mm", {
+                          locale: enUS,
                         })}
-                        {!!c.editCount && c.editCount > 0 && " · đã chỉnh sửa"}
+                        {!!c.editCount && c.editCount > 0 && " · edited"}
                       </TooltipTrigger>
                       <TooltipContent>
                         {format(
                           new Date(c.createdAt),
-                          "EEEE, dd/MM/yyyy HH:mm:ss",
-                          { locale: vi },
+                          "EEEE, MM/dd/yyyy HH:mm:ss",
+                          { locale: enUS },
                         )}
                       </TooltipContent>
                     </Tooltip>
@@ -744,7 +748,7 @@ export function TicketCommentThread({
               <div className="flex max-w-[85%] flex-col items-end gap-1.5">
                 <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground px-1">
                   <Sparkles className="size-3" />
-                  Gợi ý trả lời (AI) — bấm để chèn vào ô nhập
+                  Reply suggestions (AI) — click to insert into the input
                 </span>
                 {aiSuggestions.map((s, i) => (
                   <button
@@ -761,7 +765,7 @@ export function TicketCommentThread({
                   onClick={() => setAiSuggestions([])}
                   className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1"
                 >
-                  Bỏ qua gợi ý
+                  Dismiss suggestions
                 </button>
               </div>
             </div>
@@ -779,9 +783,9 @@ export function TicketCommentThread({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa bình luận?</AlertDialogTitle>
+            <AlertDialogTitle>Delete comment?</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -791,7 +795,7 @@ export function TicketCommentThread({
               disabled={deletePending}
               onClick={confirmDelete}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -844,7 +848,7 @@ function CommentActionsMenu({
         {canTranslate && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              {translating ? "Đang dịch..." : "Dịch sang"}
+              {translating ? "Translating..." : "Translate to"}
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               {LANGUAGE_OPTIONS.map((l) => (
@@ -861,17 +865,17 @@ function CommentActionsMenu({
         )}
         {canDelete && (
           <DropdownMenuItem variant="destructive" onClick={onDelete}>
-            Xóa
+            Delete
           </DropdownMenuItem>
         )}
         {canOverride && (
           <DropdownMenuItem onClick={onOverrideEdit}>
-            Sửa (override)
+            Edit (override)
           </DropdownMenuItem>
         )}
         {canOverride && (
           <DropdownMenuItem variant="destructive" onClick={onOverrideDelete}>
-            Xóa (override)
+            Delete (override)
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
@@ -880,10 +884,10 @@ function CommentActionsMenu({
 }
 
 /**
- * Bubble tin nhắn đang chờ gửi (outbox) — TRÔNG Y HỆT bubble của chính mình
- * (xanh, bên phải). Chỉ khác dòng dưới cùng: thay timestamp bằng trạng thái.
- *  - queued/sending: "Đang gửi…" (xám) — vẫn hiển thị vậy trong lúc retry ngầm.
- *  - failed (hết timeout): "⚠ Gửi lỗi · Nhấn để thử lại" (đỏ) — bấm gửi lại tin đó.
+ * Bubble for a message waiting to send (outbox) — LOOKS IDENTICAL to one's own bubble
+ * (blue, right side). The only difference is the bottom line: status instead of timestamp.
+ *  - queued/sending: "Sending…" (gray) — still shown this way during a silent retry.
+ *  - failed (timed out): "⚠ Send failed · Tap to retry" (red) — click to resend that message.
  */
 function PendingBubble({
   message,
@@ -904,13 +908,13 @@ function PendingBubble({
         </div>
         {attachCount > 0 && (
           <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
-            {attachCount} tệp đính kèm
+            {attachCount} attachments
           </span>
         )}
         {failed ? (
           <span className="flex items-center gap-1.5 px-1 mt-0.5">
-            {/* Có failReason = BE từ chối vì nội dung (vd trùng tin) → gửi lại
-                cũng hỏng, nêu lý do thay vì mời user bấm thử lại vô ích. */}
+            {/* Has failReason = the BE rejected it due to content (e.g. duplicate message) →
+                resending would fail too, so state the reason instead of prompting a pointless retry. */}
             {message.failReason ? (
               <span className="text-[10px] text-destructive">
                 ⚠ {message.failReason}
@@ -921,7 +925,7 @@ function PendingBubble({
                 onClick={() => onRetry?.(message.tempId)}
                 className="text-[10px] text-destructive hover:underline"
               >
-                ⚠ Gửi lỗi · Nhấn để thử lại
+                ⚠ Send failed · Tap to retry
               </button>
             )}
             <button
@@ -929,12 +933,12 @@ function PendingBubble({
               onClick={() => onDiscard?.(message.tempId)}
               className="text-[10px] text-muted-foreground hover:underline"
             >
-              Bỏ
+              Discard
             </button>
           </span>
         ) : (
           <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
-            Đang gửi…
+            Sending…
           </span>
         )}
       </div>

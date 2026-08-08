@@ -9,15 +9,29 @@ import type {
   AnomalyClassificationDto,
   SohPredictionListParams,
   AnomalyClassificationListParams,
+  LongSohDto,
+  BatchPredictionDto,
+  GetLongSohParams,
+  GetBatchPredictionParams,
 } from "@/shared/types/battery/ai.types";
 import type { StaffFeedbackEnum } from "@/shared/enums/battery/ai.enum";
 
 // BE-AI — read SOH predictions + anomaly classifications + submit feedback.
-// BE cho Admin,Manager,Staff. Dùng chung 3 role.
+// BE allows Admin, Manager, Staff. Shared across all 3 roles.
 export const aiService = {
   getSohPredictions: (params: SohPredictionListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<SohPredictionDto>>>(
       ENDPOINTS.SOH_PREDICTIONS.LIST,
+      { params },
+    ),
+  getSohPredictionsLong: (params: GetLongSohParams) =>
+    axiosInstance.get<CommonResponse<LongSohDto>>(
+      ENDPOINTS.SOH_PREDICTIONS.LONG,
+      { params },
+    ),
+  getSohPredictionsBatch: (params: GetBatchPredictionParams) =>
+    axiosInstance.get<CommonResponse<BatchPredictionDto>>(
+      ENDPOINTS.SOH_PREDICTIONS.BATCH,
       { params },
     ),
   getAnomalyClassifications: (params: AnomalyClassificationListParams) =>

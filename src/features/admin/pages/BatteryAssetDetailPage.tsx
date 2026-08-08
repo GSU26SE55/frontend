@@ -22,8 +22,8 @@ import SetTopologyDialog from "@/features/admin/components/iot/SetTopologyDialog
 import BatteryRealtimeDetail from "@/shared/components/battery/BatteryRealtimeDetail";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
-// Admin — trang chi tiết battery đầy đủ: dùng shared BatteryRealtimeDetail (read-only core)
-// + bơm CRUD admin (Sửa/Transfer/Xóa) qua headerActions và SetTopologyDialog qua topologyAction.
+// Admin — full battery detail page: uses the shared BatteryRealtimeDetail (read-only core)
+// + injects admin CRUD (Edit/Transfer/Delete) via headerActions and SetTopologyDialog via topologyAction.
 export default function BatteryAssetDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -32,9 +32,9 @@ export default function BatteryAssetDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
 
-  // Cần asset cho dialog Edit/Transfer (cùng cache key với shared → không double-fetch).
+  // Need the asset for the Edit/Transfer dialogs (same cache key as shared → no double-fetch).
   const { data: asset } = useBatteryAsset(id);
-  // Topology hiện tại cho SetTopologyDialog (cùng cache key với CascadeRiskCard trong shared).
+  // Current topology for SetTopologyDialog (same cache key as CascadeRiskCard in shared).
   const { data: cascade } = useCascadeRisk(id);
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
@@ -58,7 +58,7 @@ export default function BatteryAssetDetailPage() {
               size="sm"
               onClick={() => setEditOpen(true)}
             >
-              <Pencil size={13} /> Sửa
+              <Pencil size={13} /> Edit
             </Button>
             <Button
               variant="outline"
@@ -72,7 +72,7 @@ export default function BatteryAssetDetailPage() {
               size="sm"
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 size={13} /> Xóa
+              <Trash2 size={13} /> Delete
             </Button>
           </>
         }
@@ -89,7 +89,7 @@ export default function BatteryAssetDetailPage() {
         )}
       />
 
-      {/* ── Dialogs (Admin only) ─────────────────────────────────────────────── */}
+      {/* -- Dialogs (Admin only) -- */}
       {asset && (
         <>
           <BatteryAssetForm
@@ -106,16 +106,17 @@ export default function BatteryAssetDetailPage() {
           <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Xóa battery asset?</AlertDialogTitle>
+                <AlertDialogTitle>Delete battery asset?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Bạn có chắc muốn xóa <strong>{asset.serialNumber}</strong>?
-                  Hành động này không thể hoàn tác.
+                  Are you sure you want to delete{" "}
+                  <strong>{asset.serialNumber}</strong>? This action cannot be
+                  undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel />
                 <AlertDialogAction variant="destructive" onClick={handleDelete}>
-                  Xóa
+                  Delete
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

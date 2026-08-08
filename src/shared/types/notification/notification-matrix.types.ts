@@ -1,11 +1,11 @@
-// Ma trận tuỳ chọn thông báo theo nhóm × kênh (Sprint 6.3 NOTI3-04).
-// Shape khớp BE: NotificationService DTOs/Response/Preference/NotificationPreferenceMatrixDto.cs
+// Notification preference matrix, category × channel (Sprint 6.3 NOTI3-04).
+// Shape matches the BE: NotificationService DTOs/Response/Preference/NotificationPreferenceMatrixDto.cs
 import type { NotificationCategoryEnum } from "@/shared/enums/notification/notification.enum";
 export { NotificationCategoryEnum } from "@/shared/enums/notification/notification.enum";
 import type { NotificationPreferenceDto } from "@/shared/types/notification/notification-preference.types";
 
-// 1 dòng nhóm trong ma trận. isCustomized = false ⇒ 4 giá trị kênh là kế thừa từ
-// công tắc toàn cục (channels), user chưa đặt tường minh.
+// One category row in the matrix. isCustomized = false ⇒ the four channel values are
+// inherited from the global switches (channels); the user has not set them explicitly.
 export interface NotificationCategoryPreferenceDto {
   category: NotificationCategoryEnum;
   categoryName: string;
@@ -16,14 +16,16 @@ export interface NotificationCategoryPreferenceDto {
   isCustomized: boolean;
 }
 
-// GET /api/notification-preferences/matrix — categories LUÔN đủ 6 phần tử, sort theo enum 1→6.
+// GET /api/notification-preferences/matrix — categories ALWAYS has all 6 entries,
+// sorted by enum 1→6.
 export interface NotificationPreferenceMatrixDto {
-  channels: NotificationPreferenceDto; // công tắc toàn cục — vẫn thắng mọi dòng nhóm
+  channels: NotificationPreferenceDto; // global switches — still win over every category row
   categories: NotificationCategoryPreferenceDto[];
 }
 
-// PUT /api/notification-preferences/matrix — VÁ TỪNG DÒNG: chỉ gửi nhóm cần đổi,
-// nhưng mỗi dòng phải đủ 4 kênh (BE nhận thiếu field = false, không giữ giá trị cũ).
+// PUT /api/notification-preferences/matrix — PATCH ROW BY ROW: send only the categories
+// being changed, but every row must carry all 4 channels (the BE reads a missing field as
+// false rather than keeping the previous value).
 export interface NotificationCategoryPreferenceItem {
   category: NotificationCategoryEnum;
   pushEnabled: boolean;
@@ -35,8 +37,8 @@ export interface UpdateNotificationMatrixPayload {
   items: NotificationCategoryPreferenceItem[];
 }
 
-// GET /api/notification-preferences/categories — bảng tra cứu type → nhóm.
-// Số phần tử lấy theo BE (NotificationCategoryMap.All), KHÔNG hardcode.
+// GET /api/notification-preferences/categories — lookup table, type → category.
+// Take the entry count from the BE (NotificationCategoryMap.All), do NOT hardcode it.
 export interface NotificationCategoryMapDto {
   type: string;
   typeValue: number;

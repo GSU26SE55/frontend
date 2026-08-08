@@ -23,7 +23,7 @@ export function useExpiringCalibrations(within?: number) {
   });
 }
 
-// Lookup deviceCode → device. enabled chỉ khi có code (Staff submit input).
+// Lookup deviceCode → device. Enabled only when a code is present (Staff submits input).
 export function useDeviceByCode(deviceCode: string | undefined) {
   return useQuery({
     queryKey: QUERY_KEY.iotDevices.byCode(deviceCode ?? ""),
@@ -32,6 +32,6 @@ export function useDeviceByCode(deviceCode: string | undefined) {
         .lookupDeviceByCode(deviceCode!)
         .then((r) => r.data.data),
     enabled: !!deviceCode,
-    retry: false, // 404 = không tìm thấy → không retry
+    retry: false, // 404 = not found → don't retry
   });
 }

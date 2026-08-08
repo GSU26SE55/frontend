@@ -17,16 +17,16 @@ interface Props {
 }
 
 /**
- * Combobox multi-select (chip + input inline + dropdown ✓) — chọn Staff phụ (Collaborator).
- * Gõ để lọc, click item để toggle (giữ nguyên trong list kèm ✓), × để bỏ chip. Chỉ UI.
+ * Multi-select combobox (chip + inline input + dropdown ✓) — pick supporting Staff (Collaborator).
+ * Type to filter, click an item to toggle (stays in the list with a ✓), × to remove a chip. UI only.
  */
 export default function StaffMultiSelect({
   options,
   value,
   onChange,
   disabled = false,
-  placeholder = "Thêm nhân viên hỗ trợ...",
-  emptyText = "Không có nhân viên khả dụng",
+  placeholder = "Add supporting staff...",
+  emptyText = "No staff available",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -51,7 +51,9 @@ export default function StaffMultiSelect({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
+    return q
+      ? options.filter((o) => o.label.toLowerCase().includes(q))
+      : options;
   }, [options, query]);
 
   const toggle = (val: string) => {
@@ -63,7 +65,7 @@ export default function StaffMultiSelect({
 
   return (
     <div ref={rootRef} className="relative">
-      {/* Trigger box: chips + input inline */}
+      {/* Trigger box: chips + inline input */}
       <div
         onClick={() => {
           if (disabled) return;
@@ -81,7 +83,7 @@ export default function StaffMultiSelect({
             {o.label}
             <button
               type="button"
-              aria-label={`Bỏ ${o.label}`}
+              aria-label={`Remove ${o.label}`}
               onClick={(e) => {
                 e.stopPropagation();
                 remove(o.value);
@@ -117,7 +119,7 @@ export default function StaffMultiSelect({
         <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
           {filtered.length === 0 && (
             <div className="px-2 py-1.5 text-sm text-muted-foreground">
-              {options.length === 0 ? emptyText : "Không tìm thấy"}
+              {options.length === 0 ? emptyText : "No results"}
             </div>
           )}
           {filtered.map((o) => {

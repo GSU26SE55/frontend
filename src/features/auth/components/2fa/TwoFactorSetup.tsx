@@ -70,7 +70,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
   const { mutate: requestCross, isPending: isRequestingCross } =
     useRequestCrossDevice2fa();
 
-  // countdown TTL của confirm token
+  // countdown TTL of the confirm token
   useEffect(() => {
     if (!crossData || crossRemaining <= 0) return;
     const t = setInterval(() => setCrossRemaining((s) => s - 1), 1000);
@@ -85,14 +85,14 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           setCrossData(data);
           setCrossRemaining(data.expiresInSeconds);
         } else {
-          toast.error(res.data.message ?? "Không thể tạo yêu cầu");
+          toast.error(res.data.message ?? "Could not create request");
         }
       },
       onError: (error) => handleErrorApi({ error }),
     });
   };
 
-  // Device A refresh tay — load lại trạng thái 2FA sau khi Device B confirm
+  // Device A manual refresh — reload 2FA status after Device B confirms
   const handleRefreshStatus = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
     queryClient.invalidateQueries({ queryKey: [KEY.currentUser] });
@@ -108,7 +108,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
     initTwoFa(undefined, {
       onSuccess: (res) => {
         if (res.data.data) setInitData(res.data.data);
-        else toast.error(res.data.message ?? "Không thể khởi tạo 2FA");
+        else toast.error(res.data.message ?? "Could not initialize 2FA");
       },
       onError: (error) => handleErrorApi({ error }),
     });
@@ -127,7 +127,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
             toast.success(AUTH_MESSAGES.twoFactor.enabled);
             queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
           } else {
-            toast.error(res.data.message ?? "Mã không đúng");
+            toast.error(res.data.message ?? "Incorrect code");
           }
         },
         onError: (error) => handleErrorApi({ error }),
@@ -163,7 +163,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
             setBackupCodes(data.backupCodes);
             toast.success(AUTH_MESSAGES.twoFactor.backupRegenerated);
           } else {
-            toast.error(res.data.message ?? "Mã không đúng");
+            toast.error(res.data.message ?? "Incorrect code");
           }
         },
         onError: (error) => handleErrorApi({ error }),
@@ -177,7 +177,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
         <div className="flex gap-2">
           <Button onClick={handleInit} disabled={isIniting} size="sm">
             {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Bật 2FA
+            Enable 2FA
           </Button>
           <Button
             variant="outline"
@@ -188,7 +188,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
             {isRequestingCross && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Qua thiết bị khác
+            Use another device
           </Button>
         </div>
       ) : (
@@ -205,7 +205,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
             size="sm"
             onClick={() => setShowDisable(true)}
           >
-            Tắt 2FA
+            Disable 2FA
           </Button>
         </div>
       )}
@@ -214,11 +214,13 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
 
   const dialogs = (
     <>
-      {/* Enroll wizard — QR + nhập TOTP */}
+      {/* Enroll wizard — scan QR then enter TOTP */}
       <Dialog open={!!initData} onOpenChange={(open) => !open && resetEnroll()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Quét QR rồi nhập mã 6 số</DialogTitle>
+            <DialogTitle>
+              Scan the QR code, then enter the 6-digit code
+            </DialogTitle>
           </DialogHeader>
           {initData && (
             <div className="flex flex-col items-center gap-4">
@@ -227,7 +229,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
                 Secret: {initData.secret}
               </p>
               <div className="w-full space-y-1.5">
-                <Label htmlFor="confirm-code">Mã TOTP</Label>
+                <Label htmlFor="confirm-code">TOTP code</Label>
                 <Input
                   id="confirm-code"
                   inputMode="numeric"
@@ -247,14 +249,14 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
                 {isConfirming && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Xác nhận bật 2FA
+                Confirm enable 2FA
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Backup codes — hiển thị 1 lần (sau confirm hoặc regenerate) */}
+      {/* Backup codes — shown once (after confirm or regenerate) */}
       <Dialog
         open={!!backupCodes}
         onOpenChange={(open) => !open && setBackupCodes(null)}
@@ -264,11 +266,11 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
             <DialogTitle>Backup codes</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-destructive font-medium">
-            ⚠️ Lưu/in 8 mã này ngay — chỉ hiển thị 1 lần.
+            ⚠️ Save/print these 8 codes now — they are shown only once.
           </p>
           {backupCodes && <BackupCodesList codes={backupCodes} />}
           <div className="flex justify-end">
-            <Button onClick={() => setBackupCodes(null)}>Tôi đã lưu</Button>
+            <Button onClick={() => setBackupCodes(null)}>I saved them</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -277,11 +279,11 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
       <Dialog open={showDisable} onOpenChange={setShowDisable}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tắt xác thực 2 lớp?</DialogTitle>
+            <DialogTitle>Disable two-factor authentication?</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="disable-pw">Mật khẩu hiện tại</Label>
+              <Label htmlFor="disable-pw">Current password</Label>
               <Input
                 id="disable-pw"
                 type="password"
@@ -290,7 +292,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="disable-totp">Mã TOTP</Label>
+              <Label htmlFor="disable-totp">TOTP code</Label>
               <Input
                 id="disable-totp"
                 inputMode="numeric"
@@ -304,7 +306,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => setShowDisable(false)}>
-              Hủy
+              Cancel
             </Button>
             <Button
               variant="destructive"
@@ -314,7 +316,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
               }
             >
               {isDisabling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Xác nhận tắt
+              Confirm disable
             </Button>
           </div>
         </DialogContent>
@@ -324,13 +326,13 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
       <Dialog open={showRegen} onOpenChange={setShowRegen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sinh lại backup codes</DialogTitle>
+            <DialogTitle>Regenerate backup codes</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Codes cũ sẽ bị vô hiệu hóa. Nhập mã TOTP để xác nhận.
+            Old codes will be invalidated. Enter the TOTP code to confirm.
           </p>
           <div className="space-y-1.5">
-            <Label htmlFor="regen-totp">Mã TOTP</Label>
+            <Label htmlFor="regen-totp">TOTP code</Label>
             <Input
               id="regen-totp"
               inputMode="numeric"
@@ -341,33 +343,34 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => setShowRegen(false)}>
-              Hủy
+              Cancel
             </Button>
             <Button
               onClick={handleRegen}
               disabled={isRegen || regenTotp.length !== 6}
             >
               {isRegen && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sinh codes mới
+              Generate new codes
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* #AUTH-51: Cross-device setup (Device A) — QR + secret + countdown + refresh tay */}
+      {/* #AUTH-51: Cross-device setup (Device A) — QR + secret + countdown + manual refresh */}
       <Dialog
         open={!!crossData}
         onOpenChange={(open) => !open && setCrossData(null)}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Setup 2FA qua thiết bị khác</DialogTitle>
+            <DialogTitle>Set up 2FA using another device</DialogTitle>
           </DialogHeader>
           {crossData && (
             <div className="flex flex-col items-center gap-4">
               <p className="text-sm text-muted-foreground text-center">
-                Quét QR bằng Authenticator trên điện thoại, hoặc mở link xác
-                nhận vừa gửi tới email của bạn để hoàn tất trên thiết bị thứ 2.
+                Scan the QR code with an Authenticator app on your phone, or
+                open the confirmation link just sent to your email to finish on
+                the second device.
               </p>
               <QRCodeSVG value={crossData.otpAuthUri} size={200} />
               <p className="text-xs text-muted-foreground break-all">
@@ -375,10 +378,10 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
               </p>
               <p className="text-xs font-medium">
                 {crossRemaining > 0
-                  ? `Link hết hạn sau ${Math.floor(crossRemaining / 60)}:${String(
+                  ? `Link expires in ${Math.floor(crossRemaining / 60)}:${String(
                       crossRemaining % 60,
                     ).padStart(2, "0")}`
-                  : "Link đã hết hạn — vui lòng tạo lại."}
+                  : "Link expired — please generate a new one."}
               </p>
               <Button
                 variant="outline"
@@ -386,7 +389,7 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
                 onClick={handleRefreshStatus}
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Tôi đã xác nhận xong — Làm mới trạng thái
+                I've confirmed — Refresh status
               </Button>
             </div>
           )}
@@ -407,17 +410,19 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Xác thực 2 lớp (2FA)</CardTitle>
+        <CardTitle>Two-factor authentication (2FA)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          {isEnabled ? "Xác thực 2 lớp đang bật." : "Chưa bật xác thực 2 lớp."}
+          {isEnabled
+            ? "Two-factor authentication is enabled."
+            : "Two-factor authentication is not enabled."}
         </p>
         {!isEnabled ? (
           <div className="flex gap-2">
             <Button onClick={handleInit} disabled={isIniting}>
               {isIniting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Bật 2FA
+              Enable 2FA
             </Button>
             <Button
               variant="outline"
@@ -427,16 +432,16 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
               {isRequestingCross && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Qua thiết bị khác
+              Use another device
             </Button>
           </div>
         ) : (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowRegen(true)}>
-              Sinh lại backup codes
+              Regenerate backup codes
             </Button>
             <Button variant="destructive" onClick={() => setShowDisable(true)}>
-              Tắt 2FA
+              Disable 2FA
             </Button>
           </div>
         )}

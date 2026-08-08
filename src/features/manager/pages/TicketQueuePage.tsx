@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import TicketTable from "@/features/manager/components/ticket/TicketTable";
 import TriageDialog from "@/features/manager/components/ticket/TriageDialog";
+import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import {
   TicketPriorityEnum,
@@ -22,17 +23,17 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 
 const CATEGORY_LABELS: Record<string, string> = {
-  Maintenance: "Bảo trì",
-  Repair: "Sửa chữa",
-  Inspection: "Kiểm tra",
-  Emergency: "Khẩn cấp",
-  Replacement: "Thay thế",
-  Upgrade: "Nâng cấp",
-  Other: "Khác",
-  Charging: "Lỗi sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
+  Maintenance: "Maintenance",
+  Repair: "Repair",
+  Inspection: "Inspection",
+  Emergency: "Emergency",
+  Replacement: "Replacement",
+  Upgrade: "Upgrade",
+  Other: "Other",
+  Charging: "Charging fault",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
 };
 
 const DEFAULTS = {
@@ -46,6 +47,9 @@ export default function TicketQueuePage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const [triageTarget, setTriageTarget] = useState<TicketDTO | null>(null);
+  // Auto tickets can't be triaged — the corresponding action is reviewing the AI-assigned level.
+  const [reprioritizeTarget, setReprioritizeTarget] =
+    useState<TicketDTO | null>(null);
 
   const { data, isLoading } = useAdminTicketQueue({
     priority: (filters.priority as TicketPriorityEnum) || undefined,
@@ -62,11 +66,12 @@ export default function TicketQueuePage() {
             Manager &middot; Ticket
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Hàng chờ Triage
+            Triage Queue
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; trạng
-            thái Open, P1 ưu tiên trước.
+            {isLoading ? "..." : (data?.totalItems ?? 0)} tickets awaiting a
+            priority decision &mdash; new tickets need triage, AI-created
+            tickets need their suggested level reviewed before assigning Staff.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />
@@ -85,10 +90,10 @@ export default function TicketQueuePage() {
           }
         >
           <SelectTrigger size="sm" className="w-36">
-            <SelectValue placeholder="Tất cả priority" />
+            <SelectValue placeholder="All priorities" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả priority</SelectItem>
+            <SelectItem value={null}>All priorities</SelectItem>
             <SelectItem value={TicketPriorityEnum.P1Critical}>
               P1 Critical
             </SelectItem>
@@ -110,10 +115,10 @@ export default function TicketQueuePage() {
           }
         >
           <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="Tất cả loại" />
+            <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả loại</SelectItem>
+            <SelectItem value={null}>All categories</SelectItem>
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c] ?? c}
@@ -124,7 +129,7 @@ export default function TicketQueuePage() {
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -135,6 +140,7 @@ export default function TicketQueuePage() {
           isLoading={isLoading}
           showTriage
           onTriage={setTriageTarget}
+          onReprioritize={setReprioritizeTarget}
           pageNumber={filters.pageNumber}
           pageSize={filters.pageSize}
         />
@@ -156,6 +162,16 @@ export default function TicketQueuePage() {
           ticketId={triageTarget.id}
           open={!!triageTarget}
           onClose={() => setTriageTarget(null)}
+        />
+      )}
+
+      {reprioritizeTarget && (
+        <ReprioritizeDialog
+          ticketId={reprioritizeTarget.id}
+          currentImpact={reprioritizeTarget.impactScope}
+          currentUrgency={reprioritizeTarget.urgencyLevel}
+          open={!!reprioritizeTarget}
+          onClose={() => setReprioritizeTarget(null)}
         />
       )}
     </div>

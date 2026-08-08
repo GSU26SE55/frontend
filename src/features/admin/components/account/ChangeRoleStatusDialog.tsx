@@ -29,8 +29,8 @@ import type { RoleDto } from "@/features/admin/types/account/admin.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_OPTIONS = [
-  { value: RoleStatusEnum.Active, label: "Hoạt động" },
-  { value: RoleStatusEnum.Inactive, label: "Tắt" },
+  { value: RoleStatusEnum.Active, label: "Active" },
+  { value: RoleStatusEnum.Inactive, label: "Off" },
   { value: RoleStatusEnum.Deprecated, label: "Deprecated" },
 ];
 
@@ -73,7 +73,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
-          <DialogTitle>Đổi trạng thái role</DialogTitle>
+          <DialogTitle>Change role status</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
           <p className="text-sm text-muted-foreground">
@@ -82,7 +82,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
           </p>
           <div className="space-y-1.5">
             <Label>
-              Trạng thái <span className="text-red-500">*</span>
+              Status <span className="text-red-500">*</span>
             </Label>
             <Controller
               name="status"
@@ -97,7 +97,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
                   onValueChange={(v) => field.onChange(Number(v))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder="Select a status" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {STATUS_OPTIONS.map((o) => (
@@ -115,11 +115,11 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Xác nhận
+              Confirm
             </Button>
           </DialogFooter>
         </form>

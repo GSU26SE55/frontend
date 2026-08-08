@@ -3,24 +3,24 @@ import { openSse, parseReading, parseStats } from "@/shared/lib/sse";
 import { SensorSourceCodeEnum } from "@/shared/enums/battery/telemetry.enum";
 import type { SensorStreamState } from "@/shared/types/battery/sensor-stream.types";
 
-// Số lần recreate (đọc lại token) khi stream CLOSED vĩnh viễn — cap để tránh
-// reconnect-loop khi 403 (sai quyền vĩnh viễn). Transient (CONNECTING) để EventSource tự reconnect.
+// Number of recreates (re-reading the token) when the stream is permanently CLOSED — capped to
+// avoid a reconnect loop on 403 (permanent permission failure). Transient (CONNECTING) lets EventSource reconnect itself.
 const MAX_RECREATE = 3;
 
 const initialState = (scope: string | null): SensorStreamState =>
   scope ? { status: "connecting" } : { status: "closed" };
 
 /**
- * Consume SSE telemetry cho 1 scope. Issue GH-114 chỉ dùng nhánh `reading` (scope asset:{id}).
- * Trả `SensorStreamState`. `scope = null` → đóng stream (status "closed").
- * GH-116 sẽ mở rộng cho nhánh `summary` (scope site:{id}) — KHÔNG sửa hành vi asset này.
+ * Consumes SSE telemetry for a scope. Issue GH-114 only uses the `reading` branch (scope asset:{id}).
+ * Returns `SensorStreamState`. `scope = null` → closes the stream (status "closed").
+ * GH-116 will extend this for the `summary` branch (scope site:{id}) — do NOT change this asset behavior.
  */
 export function useSensorStream(scope: string | null): SensorStreamState {
   const [state, setState] = useState<SensorStreamState>(() =>
     initialState(scope),
   );
 
-  // Reset state khi scope đổi — pattern render-phase (React docs), tránh setState trong effect.
+  // Reset state when scope changes — render-phase pattern (React docs), avoids setState in an effect.
   const [prevScope, setPrevScope] = useState(scope);
   if (scope !== prevScope) {
     setPrevScope(scope);
@@ -48,8 +48,8 @@ export function useSensorStream(scope: string | null): SensorStreamState {
           if (cancelled) return;
           if (event === "reading") {
             const reading = parseReading(data);
-            // Đa nguồn 1 pin (§5.4): chỉ giữ primary (hoặc không khai) làm headline,
-            // bỏ qua redundant / external-temp (số liệu một phần).
+            // Multi-source per battery (§5.4): only keep primary (or unspecified) as the
+            // headline reading, ignore redundant / external-temp (partial readings).
             if (
               reading &&
               (reading.sensorSourceCode == null ||
@@ -58,9 +58,9 @@ export function useSensorStream(scope: string | null): SensorStreamState {
               setState((s) => ({ ...s, status: "live", reading }));
             }
           } else if (event === "stats") {
-            // `stats` độc lập với `reading` — không đổi status (stats có thể tới
-            // trước reading đầu tiên). BE chưa deploy → không có event này, card trống.
-            // Key theo `window`: BE đẩy cả "1h" lẫn "today" qua cùng event.
+            // `stats` is independent of `reading` — doesn't change status (stats can arrive
+            // before the first reading). If BE hasn't deployed it yet, this event won't fire, card stays empty.
+            // Keyed by `window`: BE pushes both "1h" and "today" through the same event.
             const stats = parseStats(data);
             if (stats) {
               setState((s) => ({
@@ -79,7 +79,7 @@ export function useSensorStream(scope: string | null): SensorStreamState {
         onError: (es) => {
           if (cancelled) return;
           if (es.readyState === EventSource.CLOSED) {
-            // Permanent (4xx trước khi mở, hoặc token hết hạn → 401). Recreate đọc token mới, có cap.
+            // Permanent (4xx before opening, or token expired → 401). Recreate reads a fresh token, capped.
             if (recreateRef.current < MAX_RECREATE) {
               recreateRef.current += 1;
               setState((s) => ({ ...s, status: "connecting" }));
@@ -93,7 +93,7 @@ export function useSensorStream(scope: string | null): SensorStreamState {
               es.close();
             }
           } else {
-            // CONNECTING (transient) → EventSource tự reconnect, không can thiệp.
+            // CONNECTING (transient) → EventSource reconnects on its own, no intervention needed.
             setState((s) => ({ ...s, status: "connecting" }));
           }
         },

@@ -30,10 +30,12 @@ import {
   type HoldFormValues,
 } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
+// Only "waiting for parts" remains — the other two reasons (waiting on customer,
+// waiting for on-site appointment) were removed from the hold flow. PauseReasonEnum
+// still keeps all 3 values so older tickets in WaitingCustomer/WaitingOnsiteSchedule
+// can still be read; only new selections are blocked.
 const PAUSE_REASON_LABELS: Record<string, string> = {
-  [PauseReasonEnum.WaitingCustomer]: "Chờ khách hàng phản hồi",
-  [PauseReasonEnum.WaitingParts]: "Chờ linh kiện về",
-  [PauseReasonEnum.WaitingOnsiteSchedule]: "Chờ lịch hẹn tại chỗ",
+  [PauseReasonEnum.WaitingParts]: "Waiting for parts",
 };
 
 interface Props {
@@ -56,7 +58,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tạm dừng xử lý</DialogTitle>
+          <DialogTitle>Put on hold</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,7 +68,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Lý do tạm dừng <span className="text-destructive">*</span>
+                    Hold reason <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -77,7 +79,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn lý do" />
+                        <SelectValue placeholder="Select a reason" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -99,10 +101,10 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú</FormLabel>
+                  <FormLabel>Note</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả thêm nếu cần..."
+                      placeholder="Add more detail if needed..."
                       rows={3}
                       {...field}
                     />
@@ -118,10 +120,10 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                 onClick={onClose}
                 disabled={isPending}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Tạm dừng"}
+                {isPending ? "Processing..." : "Put on hold"}
               </Button>
             </DialogFooter>
           </form>

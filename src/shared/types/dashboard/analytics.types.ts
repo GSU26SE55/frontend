@@ -6,7 +6,7 @@ export {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // A. Battery Dashboard stats — GET /api/battery/dashboard/stats
-//    Đặc điểm: enum trả về dạng cặp `int + *Name` (BE map sẵn tên) → hiển thị thẳng *Name.
+//    Note: enums come back as an `int + *Name` pair (the BE maps the name) → render *Name directly.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AssetStatusBucketDto {
@@ -20,7 +20,7 @@ export interface SohBucketDto {
   normal: number; // 80–89%
   warning: number; // 75–79%
   eol: number; // <75%
-  unknown: number; // chưa có reading SOH
+  unknown: number; // no SOH reading yet
 }
 
 export interface AlertSeverityBreakdownDto {
@@ -101,7 +101,7 @@ export interface BatteryDashboardStatsDto {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // B. Report rows — GET /api/reports/*
-//    Đặc điểm: field tên-enum trả về dạng STRING (không phải int) → khai `string`.
+//    Note: enum-name fields come back as STRINGS (not ints) → declare them `string`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface BatteryHealthByTypeRow {
@@ -118,7 +118,7 @@ export interface ReportTimeSeriesPoint {
 }
 
 export interface TopAnomalyRow {
-  anomalyType: string; // tên enum, vd "Overheat"
+  anomalyType: string; // enum name, e.g. "Overheat"
   count: number;
   criticalCount: number;
 }
@@ -141,17 +141,17 @@ export interface WarrantyExpiringRow {
 
 export interface EnvironmentalIncidentRow {
   siteId: string;
-  incidentType: string; // tên enum
-  severity: string; // tên enum
+  incidentType: string; // enum name
+  severity: string; // enum name
   detectedAt: string;
   resolvedAt: string | null;
   durationHours: number | null;
   wasFalseAlarm: boolean;
 }
 
-// ⚠️ KHÁC AmbientTrendHourPointDto (dashboard/stats) — shape hoàn toàn khác.
+// ⚠️ DIFFERENT from AmbientTrendHourPointDto (dashboard/stats) — a completely different shape.
 export interface AmbientTrendPoint {
-  date: string; // DateTime UTC (bucket theo granularity)
+  date: string; // DateTime UTC (bucketed by granularity)
   avgTemp: number;
   maxTemp: number;
   minTemp: number;
@@ -163,7 +163,7 @@ export interface AmbientTrendPoint {
 // C. Filter / query params
 // ─────────────────────────────────────────────────────────────────────────────
 
-// State của filter bar — chia sẻ cho dashboard stats + các report.
+// Filter bar state — shared by the dashboard stats and the reports.
 export interface AnalyticsFilter {
   siteId?: string;
   from?: string; // ISO date
@@ -175,7 +175,7 @@ export interface DashboardStatsParams {
   siteId?: string;
 }
 
-// Report time-series (alert-volume, ambient-trend) — ambient-trend cần siteId.
+// Report time-series (alert-volume, ambient-trend) — ambient-trend requires siteId.
 export interface ReportTimeSeriesParams {
   siteId?: string;
   from?: string;
@@ -186,14 +186,14 @@ export interface ReportTimeSeriesParams {
 export interface TopAnomaliesParams {
   from?: string;
   to?: string;
-  limit?: number; // mặc định 10, tối đa 100
+  limit?: number; // default 10, max 100
 }
 
 export interface WarrantyExpiringParams {
-  within?: string; // vd "90d" hoặc số ngày
+  within?: string; // e.g. "90d" or a number of days
 }
 
-// type: int = EnvironmentalIncidentTypeEnum — Sprint này KHÔNG bind UI (bỏ trống = tất cả).
+// type: int = EnvironmentalIncidentTypeEnum — NOT bound in the UI this sprint (empty = all).
 export interface EnvIncidentReportParams {
   siteId?: string;
   from?: string;

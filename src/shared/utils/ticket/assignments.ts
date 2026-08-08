@@ -1,10 +1,10 @@
-// #697 — đọc phân công Staff trên ticket (thay cho `ticket.assignedStaffId` cũ).
-// BE đã lọc bản ghi soft-deleted nên không cần filter thêm ở FE.
+// #697 — read the staff assignments on a ticket (replaces the old `ticket.assignedStaffId`).
+// The BE already filters out soft-deleted records, so the FE does not filter again.
 
 import { TicketAssignmentRoleEnum } from "@/shared/enums/ticket/ticket.enum";
 import type { TicketAssignmentDTO } from "@/shared/types/ticket/ticket.types";
 
-/** Staff chịu trách nhiệm chính — null khi ticket chưa được gán. */
+/** The staff member in charge — null when the ticket has not been assigned yet. */
 export function getPrimaryHandler(
   assignments: TicketAssignmentDTO[] | undefined | null,
 ): TicketAssignmentDTO | null {
@@ -15,7 +15,7 @@ export function getPrimaryHandler(
   );
 }
 
-/** Staff hỗ trợ (Collaborator trong chat) — không tính vào workload/KPI. */
+/** Supporting staff (collaborators in the chat) — not counted toward workload/KPIs. */
 export function getSupporters(
   assignments: TicketAssignmentDTO[] | undefined | null,
 ): TicketAssignmentDTO[] {
@@ -26,16 +26,16 @@ export function getSupporters(
 }
 
 /**
- * Tên hiển thị của 1 dòng phân công.
- * BE trả sẵn `staffName` (từ StaffAccount đã sync) nên mọi role dùng được —
- * không cần gọi `/api/staff` vốn chỉ mở cho Admin/Manager. Chưa sync kịp thì
- * fallback về staffId để ít nhất còn định danh được.
+ * Display name for one assignment row.
+ * The BE already returns `staffName` (from the synced StaffAccount), so every role can use
+ * it — no need to call `/api/staff`, which is open to Admin/Manager only. When the sync has
+ * not caught up, it falls back to staffId so the row is at least identifiable.
  */
 export function assignmentDisplayName(a: TicketAssignmentDTO): string {
   return a.staffName?.trim() || a.staffId;
 }
 
-/** Tên Primary Handler — null khi ticket chưa được gán. */
+/** Primary handler's name — null when the ticket has not been assigned yet. */
 export function getPrimaryHandlerName(
   assignments: TicketAssignmentDTO[] | undefined | null,
 ): string | null {
@@ -43,7 +43,7 @@ export function getPrimaryHandlerName(
   return primary ? assignmentDisplayName(primary) : null;
 }
 
-/** Tên các Staff hỗ trợ — mảng rỗng khi không có ai. */
+/** Names of the supporting staff — an empty array when there are none. */
 export function getSupporterNames(
   assignments: TicketAssignmentDTO[] | undefined | null,
 ): string[] {

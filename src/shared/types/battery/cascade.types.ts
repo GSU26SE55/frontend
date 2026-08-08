@@ -1,4 +1,4 @@
-// Cascade Risk DTOs — docs/api-battery.md §Nhóm 12.
+// Cascade Risk DTOs — docs/api-battery.md §Group 12.
 import {
   ElectricalTopologyEnum,
   CascadeRiskLevel,
@@ -8,18 +8,18 @@ export {
   CascadeRiskLevel,
 } from "@/shared/enums/battery/cascade.enum";
 
-// BE trả string-name trong response → union các key của enum.
+// The BE returns the string name in responses → union of the enum's keys.
 export type ElectricalTopologyName = keyof typeof ElectricalTopologyEnum; // "Independent" | "SeriesString" | ...
 export type CascadeRiskLevelName = keyof typeof CascadeRiskLevel; // "Low" | "Medium" | "High"
 
 export interface CascadeRiskDto {
   batteryAssetId: string;
   serialNumber: string | null;
-  siteId: string | null; // null nếu asset chưa gán site
+  siteId: string | null; // null if the asset is not assigned to a site
   cascadeRiskScore: number; // 0.0–1.0
   level: CascadeRiskLevelName;
   electricalTopology: ElectricalTopologyName;
-  cascadeRiskUpdatedAt: string | null; // null nếu chưa từng tính
+  cascadeRiskUpdatedAt: string | null; // null if never computed
 }
 
 export interface SiteCascadeRiskSummaryDto {
@@ -28,11 +28,11 @@ export interface SiteCascadeRiskSummaryDto {
   highRiskCount: number;
   mediumRiskCount: number;
   lowRiskCount: number;
-  maxScore: number; // 0 nếu site rỗng
-  highRiskAssets: CascadeRiskDto[]; // sort score desc, có thể rỗng
+  maxScore: number; // 0 if the site is empty
+  highRiskAssets: CascadeRiskDto[]; // sorted by score desc, may be empty
 }
 
-// POST /topology — gửi INT 1..4 (không phải string name).
+// POST /topology — send an INT 1..4 (not the string name).
 export interface SetTopologyPayload {
   electricalTopology: number;
 }

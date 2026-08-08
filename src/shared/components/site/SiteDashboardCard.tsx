@@ -8,9 +8,9 @@ function getHealthColor(score: number): string {
 }
 
 function getHealthLabel(score: number): string {
-  if (score >= 80) return "Tốt";
-  if (score >= 50) return "Cần theo dõi";
-  return "Nguy hiểm";
+  if (score >= 80) return "Good";
+  if (score >= 50) return "Needs monitoring";
+  return "Critical";
 }
 
 interface SiteDashboardCardProps {
@@ -26,27 +26,27 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
   const inactiveCount = Math.max(0, data.totalAssets - data.activeAssets);
 
   const pieData = [
-    { name: "Bình thường", value: activeOnly, color: "#10b981" },
-    { name: "Có cảnh báo", value: alertsCount, color: "#f43f5e" },
-    { name: "Ngừng HĐ", value: inactiveCount, color: "#6b7280" },
+    { name: "Normal", value: activeOnly, color: "#10b981" },
+    { name: "Alert", value: alertsCount, color: "#f43f5e" },
+    { name: "Inactive", value: inactiveCount, color: "#6b7280" },
   ].filter((d) => d.value > 0);
 
   const chartData =
     pieData.length > 0
       ? pieData
-      : [{ name: "Không có pin", value: 1, color: "#e5e7eb" }];
+      : [{ name: "No batteries", value: 1, color: "#e5e7eb" }];
 
   return (
     <Card className="h-full flex flex-col justify-between">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Tổng quan site</CardTitle>
+        <CardTitle className="text-base">Site overview</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-between space-y-3">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-3">
             <div>
               <p className="text-xs text-muted-foreground font-medium">
-                Trạng thái sức khỏe
+                Health status
               </p>
               <div className="flex items-baseline gap-1.5 mt-0.5">
                 <span
@@ -71,7 +71,7 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
             <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
               <div>
                 <span className="text-muted-foreground block text-[11px] font-medium">
-                  Tổng số pin
+                  Total batteries
                 </span>
                 <strong className="text-base font-bold text-foreground">
                   {data.totalAssets}
@@ -79,7 +79,7 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px] font-medium">
-                  Đang hoạt động
+                  Active
                 </span>
                 <strong className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                   {data.activeAssets}
@@ -87,7 +87,7 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px] font-medium">
-                  Cảnh báo mở
+                  Open alerts
                 </span>
                 <strong
                   className={`text-base font-bold ${data.assetsWithActiveAlerts > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600"}`}
@@ -121,8 +121,8 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
                 </Pie>
                 <Tooltip
                   formatter={(value: unknown) => [
-                    `${String(value)} pin`,
-                    "Số lượng",
+                    `${String(value)} batteries`,
+                    "Count",
                   ]}
                   contentStyle={{
                     fontSize: "12px",
@@ -140,7 +140,7 @@ export default function SiteDashboardCard({ data }: SiteDashboardCardProps) {
                 {data.healthScore}%
               </span>
               <span className="text-[10px] text-muted-foreground font-medium">
-                Sức khỏe
+                Health
               </span>
             </div>
           </div>

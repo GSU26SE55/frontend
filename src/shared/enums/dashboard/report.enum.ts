@@ -1,5 +1,5 @@
-// Granularity bucket cho các report time-series (alert-volume, ambient-trend).
-// Mặc định BE = "day" nếu bỏ trống.
+// Granularity bucket for the time-series reports (alert-volume, ambient-trend).
+// The BE defaults to "day" when this is omitted.
 export const ReportGranularityEnum = {
   Day: "day",
   Week: "week",
@@ -8,7 +8,8 @@ export const ReportGranularityEnum = {
 export type ReportGranularityEnum =
   (typeof ReportGranularityEnum)[keyof typeof ReportGranularityEnum];
 
-// Định dạng export file. BE chỉ nhận csv/xlsx — giá trị khác → trả JSON (không có pdf).
+// Export file format. The BE only accepts csv/xlsx — anything else returns JSON
+// (there is no pdf).
 export const ReportFormat = {
   Csv: "csv",
   Xlsx: "xlsx",

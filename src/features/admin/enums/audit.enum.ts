@@ -1,4 +1,4 @@
-// LoginAttemptResult dùng chung — nguồn thật ở shared.
+// LoginAttemptResult is shared — the real source lives in shared.
 export { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
 
 export const AuditActionEnum = {
@@ -24,7 +24,7 @@ export const AuditActionEnum = {
   PHONE_VERIFIED: 26,
   TWO_FACTOR_ENABLED: 40,
   TWO_FACTOR_DISABLED: 41,
-  // GH-295 — nhóm 2FA mới
+  // GH-295 — new 2FA group
   TWO_FACTOR_RESET: 42,
   BACKUP_CODE_REDEEMED: 43,
   BACKUP_CODES_REGENERATED: 44,

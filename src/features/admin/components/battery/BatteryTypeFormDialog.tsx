@@ -48,7 +48,7 @@ const CHEMISTRY_OPTIONS: { value: BatteryChemistryEnum; label: string }[] = [
   { value: BatteryChemistryEnum.NMC, label: "NMC" },
   { value: BatteryChemistryEnum.NCA, label: "NCA" },
   { value: BatteryChemistryEnum.LCO, label: "LCO" },
-  { value: BatteryChemistryEnum.OTHER, label: "Khác" },
+  { value: BatteryChemistryEnum.OTHER, label: "Other" },
 ];
 
 export default function BatteryTypeFormDialog({
@@ -127,13 +127,13 @@ export default function BatteryTypeFormDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Sửa loại pin" : "Tạo loại pin mới"}
+            {isEdit ? "Edit battery type" : "Create battery type"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Tên model *</Label>
+            <Label htmlFor="name">Model name *</Label>
             <Input
               id="name"
               {...register("name")}
@@ -146,7 +146,7 @@ export default function BatteryTypeFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="manufacturer">Nhà sản xuất</Label>
+              <Label htmlFor="manufacturer">Manufacturer</Label>
               <Input id="manufacturer" {...register("manufacturer")} />
               {errors.manufacturer && (
                 <p className="text-sm text-destructive">
@@ -155,7 +155,7 @@ export default function BatteryTypeFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label>Hóa học *</Label>
+              <Label>Chemistry *</Label>
               <Controller
                 name="chemistry"
                 control={control}
@@ -166,7 +166,7 @@ export default function BatteryTypeFormDialog({
                     items={CHEMISTRY_OPTIONS}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn hóa học" />
+                      <SelectValue placeholder="Select chemistry" />
                     </SelectTrigger>
                     <SelectContent>
                       {CHEMISTRY_OPTIONS.map((o) => (
@@ -183,7 +183,7 @@ export default function BatteryTypeFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="nominalCapacityAh">Dung lượng (Ah) *</Label>
+              <Label htmlFor="nominalCapacityAh">Capacity (Ah) *</Label>
               <Input
                 id="nominalCapacityAh"
                 type="number"
@@ -197,7 +197,7 @@ export default function BatteryTypeFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="nominalVoltage">Điện áp (V) *</Label>
+              <Label htmlFor="nominalVoltage">Voltage (V) *</Label>
               <Input
                 id="nominalVoltage"
                 type="number"
@@ -213,7 +213,7 @@ export default function BatteryTypeFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="maxCycleCount">Số chu kỳ tối đa</Label>
+            <Label htmlFor="maxCycleCount">Max cycle count</Label>
             <Input
               id="maxCycleCount"
               type="number"
@@ -231,7 +231,7 @@ export default function BatteryTypeFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="description">Mô tả</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea id="description" rows={3} {...register("description")} />
             {errors.description && (
               <p className="text-sm text-destructive">
@@ -246,10 +246,10 @@ export default function BatteryTypeFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isEdit ? "Lưu thay đổi" : "Tạo loại pin"}
+              {isEdit ? "Save changes" : "Create battery type"}
             </Button>
           </DialogFooter>
         </form>

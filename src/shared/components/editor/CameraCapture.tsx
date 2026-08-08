@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Camera, RefreshCw, X } from "lucide-react";
 
 interface CameraCaptureProps {
-  /** Nhận ảnh đã chụp dưới dạng File để upload. */
+  /** Receives the captured photo as a File for upload. */
   onCapture: (file: File) => void;
   disabled?: boolean;
 }
 
 /**
- * Chụp ảnh bằng webcam: getUserMedia → <video> → vẽ frame ra canvas → File.
+ * Captures a photo via webcam: getUserMedia → <video> → draw the frame to a canvas → File.
  *
- * Repo trước đây chỉ có getUserMedia cho audio (useVoiceRecorder) — đây là
- * đường video đầu tiên, nên tự quản lý stream và dừng track khi unmount để
- * đèn camera không sáng mãi.
+ * The repo previously only had getUserMedia for audio (useVoiceRecorder) — this is
+ * the first video path, so it manages its own stream and stops the track on unmount so
+ * the camera light doesn't stay on forever.
  */
 export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -27,7 +27,7 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
     setActive(false);
   }, []);
 
-  // Dừng camera khi unmount — nếu không, track vẫn chạy và đèn vẫn sáng
+  // Stop the camera on unmount — otherwise the track keeps running and the light stays on
   useEffect(() => stop, [stop]);
 
   const start = async () => {
@@ -39,7 +39,7 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
       });
       streamRef.current = stream;
       setActive(true);
-      // gán sau khi <video> đã render
+      // assign after <video> has rendered
       requestAnimationFrame(() => {
         if (videoRef.current) videoRef.current.srcObject = stream;
       });
@@ -47,10 +47,10 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
       const name = (e as DOMException)?.name;
       setError(
         name === "NotAllowedError"
-          ? "Bạn đã từ chối quyền truy cập camera."
+          ? "You denied camera access."
           : name === "NotFoundError"
-            ? "Không tìm thấy camera trên thiết bị."
-            : "Không mở được camera.",
+            ? "No camera found on this device."
+            : "Couldn't open the camera.",
       );
     }
   };
@@ -84,7 +84,7 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
         <p className="text-destructive text-sm">{error}</p>
         <Button type="button" variant="outline" size="sm" onClick={start}>
           <RefreshCw className="mr-1 size-4" />
-          Thử lại
+          Try again
         </Button>
       </div>
     );
@@ -100,7 +100,7 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
         className="w-full"
       >
         <Camera className="mr-2 size-4" />
-        Mở camera để chụp
+        Open camera to capture
       </Button>
     );
   }
@@ -117,11 +117,11 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
       <div className="flex justify-center gap-2">
         <Button type="button" onClick={shoot}>
           <Camera className="mr-2 size-4" />
-          Chụp
+          Capture
         </Button>
         <Button type="button" variant="outline" onClick={stop}>
           <X className="mr-2 size-4" />
-          Đóng
+          Close
         </Button>
       </div>
     </div>

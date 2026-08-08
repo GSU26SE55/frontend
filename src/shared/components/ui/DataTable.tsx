@@ -15,11 +15,11 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
 
 /**
- * Định nghĩa 1 cột cho DataTable.
- * - `header`: nội dung ô tiêu đề (string hoặc node).
- * - `cell`: render ô dữ liệu từ 1 row (+ index toàn cục cho STT).
- * - `sortKey` + `sortValue`: bật sort cho cột (dùng useSortableData). Bỏ → cột tĩnh.
- * - `headClassName` / `cellClassName`: class riêng cho ô tiêu đề / ô dữ liệu.
+ * Defines 1 column for DataTable.
+ * - `header`: header cell content (string or node).
+ * - `cell`: renders the data cell from 1 row (+ global index for row numbering).
+ * - `sortKey` + `sortValue`: enables sorting for the column (uses useSortableData). Omit → static column.
+ * - `headClassName` / `cellClassName`: dedicated class for the header cell / data cell.
  */
 export interface ColumnDef<T> {
   id: string;
@@ -30,17 +30,17 @@ export interface ColumnDef<T> {
   headClassName?: string;
   cellClassName?: string;
   /**
-   * Ô này chứa nút/menu tương tác → chặn click lan lên hàng (tránh onRowClick).
-   * Đặt true cho cột "Thao tác" khi bảng có onRowClick.
+   * This cell holds an interactive button/menu → blocks the click from bubbling to the row
+   * (avoids onRowClick). Set true for the "Actions" column when the table has onRowClick.
    */
   stopRowClick?: boolean;
   /**
-   * Hành vi khi click vào ô này (tùy chọn — bỏ = ô không click được).
-   * Cho phép mỗi cột chọn kiểu tương tác riêng, độc lập với onRowClick của hàng:
-   *   - Link detail:  onCellClick: (r) => navigate(`/x/${r.id}`)
-   *   - Mở modal:     onCellClick: (r) => setEditing(r)
-   *   - Không gì:     bỏ trống
-   * Tự thêm cursor-pointer + chặn lan click lên hàng.
+   * Click behavior for this cell (optional — omit = cell isn't clickable).
+   * Lets each column choose its own interaction, independent of the row's onRowClick:
+   *   - Link to detail: onCellClick: (r) => navigate(`/x/${r.id}`)
+   *   - Open a modal:   onCellClick: (r) => setEditing(r)
+   *   - Nothing:        leave it out
+   * Automatically adds cursor-pointer + stops the click from bubbling to the row.
    */
   onCellClick?: (row: T) => void;
 }
@@ -49,20 +49,20 @@ interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   rowKey: (row: T) => string;
-  /** Thêm cột STT tự động ở đầu (đánh số theo trang). */
+  /** Auto-adds a row-number column at the start (numbered per page). */
   showIndex?: boolean;
-  /** Cho cột STT: số bắt đầu = (pageNumber-1)*pageSize. Bỏ → đánh số từ 1. */
+  /** For the row-number column: starting number = (pageNumber-1)*pageSize. Omit → numbers from 1. */
   pageNumber?: number;
   pageSize?: number;
-  /** Nội dung khi rỗng. Bỏ → EmptyState mặc định. */
+  /** Content when empty. Omit → default EmptyState. */
   empty?: ReactNode;
-  /** Click vào 1 hàng (vd navigate sang trang detail). Bỏ → hàng không click được. */
+  /** Click on a row (e.g. navigate to a detail page). Omit → row isn't clickable. */
   onRowClick?: (row: T) => void;
   /**
-   * Bật sort **server-side**: truyền state từ `useServerSort`. Khi có prop này,
-   * DataTable KHÔNG tự sort `data` (BE đã sort toàn dataset) — header click chỉ
-   * đổi `sortBy`/`sortDir` để hook refetch. `col.sortKey` phải khớp whitelist BE.
-   * Bỏ prop → giữ sort client-side cũ (useSortableData).
+   * Enables **server-side** sort: pass state from `useServerSort`. With this prop,
+   * DataTable does NOT sort `data` itself (the BE already sorted the whole dataset) — clicking
+   * the header only changes `sortBy`/`sortDir` for the hook to refetch. `col.sortKey` must
+   * match the BE's whitelist. Omit the prop → keeps the old client-side sort (useSortableData).
    */
   serverSort?: ServerSortState;
 }
@@ -78,7 +78,7 @@ export function DataTable<T>({
   onRowClick,
   serverSort,
 }: DataTableProps<T>) {
-  // Map sortKey → sortValue để useSortableData tra cứu (chỉ dùng khi client-sort).
+  // Map sortKey → sortValue for useSortableData to look up (used only for client-sort).
   const sortAccessors = new Map(
     columns.filter((c) => c.sortKey && c.sortValue).map((c) => [c.sortKey!, c]),
   );
@@ -87,8 +87,8 @@ export function DataTable<T>({
     (row, key) => sortAccessors.get(key)?.sortValue?.(row) ?? null,
   );
 
-  // Server-sort: BE đã sort toàn dataset → render data nguyên trạng, header lấy
-  // state từ serverSort. Client-sort (mặc định): dùng useSortableData như cũ.
+  // Server-sort: the BE already sorted the whole dataset → render data as-is, the header
+  // gets its state from serverSort. Client-sort (default): uses useSortableData as before.
   const sorted = serverSort ? data : client.sorted;
   const sortKey = serverSort ? serverSort.sortBy : client.sortKey;
   const sortDirection = serverSort ? serverSort.sortDir : client.sortDirection;
@@ -148,7 +148,7 @@ export function DataTable<T>({
                 </TableCell>
               )}
               {columns.map((col) => {
-                // Cell click riêng (link/modal) HOẶC chỉ chặn lan (cột action).
+                // Cell-specific click (link/modal) OR just blocking the bubble (action column).
                 const handleCellClick =
                   col.onCellClick || col.stopRowClick
                     ? (e: React.MouseEvent) => {

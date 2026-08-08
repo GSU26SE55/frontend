@@ -7,14 +7,14 @@ import type { GatewayDeviceDto } from "@/features/admin/types/ticket/sms-gateway
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
-const ONLINE_THRESHOLD_MS = 10 * 60 * 1000; // 10 phút — theo controller remark BE
+const ONLINE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes — per BE controller remark
 
 const isOnline = (lastSeenAt: string | null) =>
   !!lastSeenAt &&
   Date.now() - new Date(lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
 
 const fmt = (dt: string | null) =>
-  dt ? format(new Date(dt), "dd/MM/yyyy HH:mm") : "—";
+  dt ? format(new Date(dt), "MM/dd/yyyy HH:mm") : "—";
 
 interface SmsDeviceTableProps {
   data: GatewayDeviceDto[];
@@ -25,7 +25,7 @@ function StatusBadge({ device }: { device: GatewayDeviceDto }) {
   if (!device.isActive) {
     return (
       <Badge variant="outline" className={toneClass("p1")}>
-        Đã thu hồi
+        Revoked
       </Badge>
     );
   }
@@ -52,7 +52,7 @@ export default function SmsDeviceTable({
   const columns: ColumnDef<GatewayDeviceDto>[] = [
     {
       id: "deviceName",
-      header: "Thiết bị",
+      header: "Device",
       sortKey: "deviceName",
       sortValue: (d) => d.deviceName,
       cell: (d) => (
@@ -66,7 +66,7 @@ export default function SmsDeviceTable({
     },
     {
       id: "status",
-      header: "Trạng thái",
+      header: "Status",
       sortKey: "status",
       sortValue: (d) => statusSortValue(d),
       cell: (d) => (
@@ -74,7 +74,7 @@ export default function SmsDeviceTable({
           <StatusBadge device={d} />
           {!d.isActive && d.revokedAt && (
             <div className="text-xs text-muted-foreground mt-1">
-              Thu hồi lúc {fmt(d.revokedAt)}
+              Revoked at {fmt(d.revokedAt)}
             </div>
           )}
         </>
@@ -82,7 +82,7 @@ export default function SmsDeviceTable({
     },
     {
       id: "sentToday",
-      header: "Hôm nay",
+      header: "Today",
       sortKey: "sentToday",
       sortValue: (d) => d.sentToday,
       cellClassName: "tabular-nums",
@@ -90,7 +90,7 @@ export default function SmsDeviceTable({
     },
     {
       id: "lastSeenAt",
-      header: "Hoạt động gần nhất",
+      header: "Last active",
       sortKey: "lastSeenAt",
       sortValue: (d) =>
         d.lastSeenAt ? new Date(d.lastSeenAt).getTime() : null,
@@ -107,7 +107,7 @@ export default function SmsDeviceTable({
     },
     {
       id: "createdAt",
-      header: "Tạo lúc",
+      header: "Created",
       sortKey: "createdAt",
       sortValue: (d) => (d.createdAt ? new Date(d.createdAt).getTime() : null),
       cellClassName: "text-muted-foreground",
@@ -126,7 +126,7 @@ export default function SmsDeviceTable({
           disabled={!d.isActive}
           onClick={() => onRevoke(d)}
         >
-          <Ban className="size-3.5" /> Thu hồi
+          <Ban className="size-3.5" /> Revoke
         </Button>
       ),
     },

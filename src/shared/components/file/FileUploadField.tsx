@@ -20,31 +20,32 @@ export interface UploadedAttachment {
 }
 
 interface FileUploadFieldProps {
-  /** Avatar(1) | TicketAttachment(2) | MaintenancePhoto(3) — quyết định whitelist BE. */
+  /** Avatar(1) | TicketAttachment(2) | MaintenancePhoto(3) — determines the BE whitelist. */
   purpose: FilePurposeEnum;
-  /** Controlled: danh sách ảnh đã upload. */
+  /** Controlled: list of already-uploaded images. */
   value: UploadedAttachment[];
   onChange: (next: UploadedAttachment[]) => void;
-  /** Báo cho form biết còn ảnh đang upload để disable submit. */
+  /** Tells the form whether an image is still uploading, to disable submit. */
   onUploadingChange?: (uploading: boolean) => void;
-  /** Số ảnh tối đa (mặc định 5). */
+  /** Max number of images (default 5). */
   max?: number;
   label?: string;
   disabled?: boolean;
-  /** Trigger icon-only tròn (cho thanh chat) thay vì khung dashed có chữ "Thêm". */
+  /** Round icon-only trigger (for the chat bar) instead of a dashed box with an "Add" label. */
   compact?: boolean;
-  /** Khung upload lớn, chiếm hết chiều rộng cột (cho form Ảnh trước / Ảnh sau). */
+  /** Large upload box spanning the full column width (for Before photo / After photo forms). */
   large?: boolean;
-  /** Ẩn thumbnail trong component này — dùng khi consumer tự hiển thị preview ở nơi khác. */
+  /** Hide thumbnails in this component — used when the consumer renders its own preview elsewhere. */
   hideThumbnails?: boolean;
-  /** Danh sách file ID đã tồn tại trong ticket để tái sử dụng */
+  /** File IDs already present in the ticket, available for reuse */
   existingFileIds?: string[];
 }
 
 /**
- * Widget upload ảnh tái dùng. Upload xảy ra ngay khi chọn file (qua `useUploadFile`),
- * form chỉ submit mảng `fileId`. Preview qua `AuthImage` (fetch kèm Bearer). Nút X chỉ
- * bỏ ảnh khỏi danh sách — không xóa khỏi storage (file orphan để cleanup job xử lý).
+ * Reusable image upload widget. Upload happens as soon as a file is picked (via `useUploadFile`),
+ * the form only submits the `fileId` array. Preview goes through `AuthImage` (fetched with Bearer).
+ * The X button only removes the image from the list — it isn't deleted from storage (orphan files
+ * are handled by a cleanup job).
  */
 export default function FileUploadField({
   purpose,
@@ -100,7 +101,7 @@ export default function FileUploadField({
       const targetRemaining = isLibraryOpen ? dialogRemaining : remaining;
       const accepted = files.slice(0, Math.max(0, targetRemaining));
       if (files.length > accepted.length) {
-        toast.error(`Tối đa ${max} ảnh.`);
+        toast.error(`Maximum ${max} images.`);
       }
 
       let current = isLibraryOpen ? [...dialogAttachments] : [...items];
@@ -122,17 +123,15 @@ export default function FileUploadField({
               onChange(current);
             }
           } else {
-            toast.error(res.message || `Tải "${file.name}" thất bại.`);
+            toast.error(res.message || `Failed to upload "${file.name}".`);
           }
         } catch (err) {
           if (err instanceof EntityError) {
-            toast.error(
-              err.errors[0]?.detail ?? `"${file.name}" không hợp lệ.`,
-            );
+            toast.error(err.errors[0]?.detail ?? `"${file.name}" is invalid.`);
           } else if (err instanceof HttpError) {
             toast.error(err.message);
           } else {
-            toast.error(`Tải "${file.name}" thất bại.`);
+            toast.error(`Failed to upload "${file.name}".`);
           }
         } finally {
           bumpUploading(-1);
@@ -143,13 +142,13 @@ export default function FileUploadField({
 
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    e.target.value = ""; // reset để chọn lại cùng 1 file vẫn trigger change
+    e.target.value = ""; // reset so re-selecting the same file still triggers change
     if (files.length === 0) return;
 
     const targetRemaining = isLibraryOpen ? dialogRemaining : remaining;
     const accepted = files.slice(0, Math.max(0, targetRemaining));
     if (files.length > accepted.length) {
-      toast.error(`Tối đa ${max} ảnh.`);
+      toast.error(`Maximum ${max} images.`);
     }
 
     let current = isLibraryOpen ? [...dialogAttachments] : [...items];
@@ -171,15 +170,15 @@ export default function FileUploadField({
             onChange(current);
           }
         } else {
-          toast.error(res.message || `Tải "${file.name}" thất bại.`);
+          toast.error(res.message || `Failed to upload "${file.name}".`);
         }
       } catch (err) {
         if (err instanceof EntityError) {
-          toast.error(err.errors[0]?.detail ?? `"${file.name}" không hợp lệ.`);
+          toast.error(err.errors[0]?.detail ?? `"${file.name}" is invalid.`);
         } else if (err instanceof HttpError) {
           toast.error(err.message);
         } else {
-          toast.error(`Tải "${file.name}" thất bại.`);
+          toast.error(`Failed to upload "${file.name}".`);
         }
       } finally {
         bumpUploading(-1);
@@ -198,7 +197,7 @@ export default function FileUploadField({
     }
 
     if (dialogRemaining <= 0) {
-      toast.error(`Đã đạt giới hạn tối đa ${max} ảnh.`);
+      toast.error(`Reached the maximum of ${max} images.`);
       return;
     }
 
@@ -217,7 +216,7 @@ export default function FileUploadField({
           },
         ]);
       } else {
-        toast.error(res.data.message || "Không thể lấy thông tin tệp tin.");
+        toast.error(res.data.message || "Couldn't retrieve file information.");
       }
     } catch {
       toast.error(MESSAGES.file.loadInfoFailed);
@@ -267,14 +266,14 @@ export default function FileUploadField({
             >
               <AuthImage
                 fileId={att.fileId}
-                alt={att.fileName ?? "Ảnh đính kèm"}
+                alt={att.fileName ?? "Attachment"}
                 className="h-full w-full object-cover"
               />
               <button
                 type="button"
                 onClick={() => handleRemove(att.fileId)}
                 disabled={disabled}
-                aria-label="Xóa ảnh"
+                aria-label="Remove image"
                 className="absolute right-0.5 top-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80 disabled:opacity-50"
               >
                 <X size={10} />
@@ -287,7 +286,7 @@ export default function FileUploadField({
             type="button"
             onClick={handleAddClick}
             disabled={uploading}
-            aria-label="Thêm ảnh"
+            aria-label="Add image"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             {uploading ? (
@@ -314,7 +313,7 @@ export default function FileUploadField({
               <>
                 <ImagePlus size={large ? 24 : 18} />
                 <span className={cn(large ? "text-xs" : "text-[10px]")}>
-                  Thêm
+                  Add
                 </span>
               </>
             )}
@@ -339,16 +338,16 @@ export default function FileUploadField({
       >
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-6">
           <DialogTitle className="text-lg font-semibold text-foreground">
-            Thêm tệp tin đính kèm
+            Add attachment
           </DialogTitle>
           <div className="flex-1 min-h-0 mt-2 flex flex-col">
             <Tabs defaultValue="reuse" className="flex-1 flex flex-col min-h-0">
               <TabsList className="grid w-full grid-cols-2 mb-4 shrink-0">
                 <TabsTrigger value="reuse" className="text-sm font-medium">
-                  Thư viện
+                  Library
                 </TabsTrigger>
                 <TabsTrigger value="upload" className="text-sm font-medium">
-                  Tải lên
+                  Upload
                 </TabsTrigger>
               </TabsList>
 
@@ -360,7 +359,7 @@ export default function FileUploadField({
                   <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <span className="text-sm font-medium mt-2 text-muted-foreground">
-                      Đang tải thông tin tệp...
+                      Loading file information...
                     </span>
                   </div>
                 )}
@@ -384,7 +383,7 @@ export default function FileUploadField({
                       >
                         <AuthImage
                           fileId={fileId}
-                          alt="Ảnh đính kèm"
+                          alt="Attachment"
                           className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                         />
                         {isSelected && (
@@ -408,7 +407,7 @@ export default function FileUploadField({
                 ) && (
                   <div className="mb-4 pb-4 border-b border-border/60">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                      Ảnh đã tải lên (
+                      Uploaded images (
                       {
                         dialogAttachments.filter(
                           (att) => !existingFileIds.includes(att.fileId),
@@ -426,7 +425,7 @@ export default function FileUploadField({
                           >
                             <AuthImage
                               fileId={att.fileId}
-                              alt={att.fileName ?? "Ảnh mới"}
+                              alt={att.fileName ?? "New image"}
                               className="h-full w-full object-cover"
                             />
                             <button
@@ -470,10 +469,10 @@ export default function FileUploadField({
                     )}
                   </div>
                   <p className="text-sm font-medium text-foreground mb-0.5">
-                    Kéo thả tệp tin vào đây hoặc click để duyệt thiết bị
+                    Drag and drop files here or click to browse your device
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Chấp nhận hình ảnh (.png, .jpg, .jpeg) tối đa {max} tệp
+                    Accepts images (.png, .jpg, .jpeg), max {max} files
                   </p>
                 </div>
               </TabsContent>
@@ -488,7 +487,7 @@ export default function FileUploadField({
               disabled={fetchingMetadata || uploading}
               onClick={() => setIsLibraryOpen(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button
               type="button"
@@ -498,7 +497,7 @@ export default function FileUploadField({
               {fetchingMetadata || uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
               ) : null}
-              Xác nhận ({dialogAttachments.length})
+              Confirm ({dialogAttachments.length})
             </Button>
           </div>
         </DialogContent>

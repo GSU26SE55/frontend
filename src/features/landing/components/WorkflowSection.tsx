@@ -20,7 +20,7 @@ const WorkflowSection = () => {
         <Reveal>
           <div className="text-center max-w-3xl mx-auto mb-16">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
-              Quy trình dịch vụ
+              Service workflow
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
               We handle everything - start to finish.

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { dashboardStatsService } from "@/shared/services/dashboard/dashboardStats.service";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 
-// Dashboard snapshot stats — staleTime 1 phút (fe.md). Không realtime.
+// Dashboard snapshot stats — staleTime 1 minute (fe.md). Not realtime.
 
 // A — Ticket stats (Admin/Manager)
 export const useTicketDashboardStats = () =>

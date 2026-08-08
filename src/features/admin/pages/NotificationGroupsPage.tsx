@@ -27,8 +27,8 @@ import NotificationGroupFormDialog from "@/features/admin/components/notificatio
 import NotificationGroupMembersDialog from "@/features/admin/components/notification/NotificationGroupMembersDialog";
 import type { NotificationGroupDto } from "@/features/admin/types/notification/notification-group.types";
 
-// useUrlFilters xoá key rỗng khỏi URL và TỰ đưa pageNumber về 1 mỗi khi đổi filter — nhờ vậy
-// không rơi vào cảnh "đang ở trang 5, lọc còn 1 trang, bảng trống".
+// useUrlFilters strips empty keys from the URL and AUTOMATICALLY resets pageNumber to 1 whenever a
+// filter changes — this avoids the case of "sitting on page 5, filter now has only 1 page, table empty".
 const DEFAULTS = {
   search: "",
   pageNumber: 1,
@@ -40,9 +40,9 @@ export default function NotificationGroupsPage() {
   const [searchInput, setSearchInput] = useState(filters.search);
   const debouncedSearch = useDebounce(searchInput, 300);
 
-  // `null` = đóng; `{ target: null }` = mở để tạo mới; `{ target: g }` = sửa nhóm g.
-  // Gói trong object để phân biệt "đang đóng" với "đang mở để tạo mới" — hai trạng thái này mà
-  // cùng biểu diễn bằng null thì dialog tạo mới không bao giờ mở được.
+  // `null` = closed; `{ target: null }` = open to create; `{ target: g }` = edit group g.
+  // Wrapped in an object to distinguish "closed" from "open to create" — if both states were
+  // represented by null, the create dialog could never open.
   const [formState, setFormState] = useState<{
     target: NotificationGroupDto | null;
   } | null>(null);
@@ -72,21 +72,21 @@ export default function NotificationGroupsPage() {
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             <Users className="inline size-3 mr-1 -mt-0.5" />
-            Thông báo
+            Notifications
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Nhóm nhận thông báo
+            Notification groups
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Gom người nhận thành nhóm để gửi hàng loạt bằng một lệnh. Số người
-            nhận hiển thị đã <b>loại</b> tài khoản ngừng hoạt động.
+            Group recipients together to send in bulk with one command. The
+            recipient count shown already <b>excludes</b> deactivated accounts.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton queryKeys={[KEY.admin.notificationGroups]} />
           <Button onClick={() => setFormState({ target: null })}>
             <Plus className="mr-1 size-4" />
-            Tạo nhóm
+            Create group
           </Button>
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function NotificationGroupsPage() {
       <Card className="rounded-xl overflow-hidden">
         <div className="p-3 border-b border-border">
           <Input
-            placeholder="Tìm theo tên nhóm…"
+            placeholder="Search by group name…"
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value);
@@ -130,7 +130,7 @@ export default function NotificationGroupsPage() {
 
       {formState && (
         <NotificationGroupFormDialog
-          // Remount khi đổi mục tiêu để defaultValues của form được tính lại.
+          // Remount when the target changes so the form's defaultValues are recalculated.
           key={formState.target?.id ?? "create"}
           open
           onOpenChange={(open) => !open && setFormState(null)}
@@ -153,23 +153,23 @@ export default function NotificationGroupsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xoá nhóm này?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this group?</AlertDialogTitle>
             <AlertDialogDescription>
-              Nhóm <b>{deleteTarget?.name}</b> và{" "}
-              <b>{deleteTarget?.memberCount} thành viên</b> sẽ bị xoá.{" "}
-              <b>Lịch sử các lần đã gửi cho nhóm này vẫn được giữ nguyên</b> —
-              xoá nhóm không làm những lần gửi đó biến mất.
+              Group <b>{deleteTarget?.name}</b> and its{" "}
+              <b>{deleteTarget?.memberCount} members</b> will be deleted.{" "}
+              <b>The history of sends made to this group is kept</b> — deleting
+              the group does not remove those sends.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deleteTarget) remove.mutate(deleteTarget.id);
                 setDeleteTarget(null);
               }}
             >
-              Xoá nhóm
+              Delete group
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

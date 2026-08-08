@@ -3,21 +3,21 @@ import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type { CommonResponse } from "@/shared/types/api.types";
 import type { TrustedDeviceDto } from "@/features/auth/types/trusted-device/trusted-device.types";
 
-// #AUTH-48: Trusted Devices. X-Device-Id được attach tự động qua axios interceptor
-// → BE đánh dấu isCurrentDevice cho device đang gọi.
+// #AUTH-48: Trusted Devices. X-Device-Id is attached automatically by the axios interceptor
+// → the BE marks isCurrentDevice for the calling device.
 export const trustedDeviceService = {
   list: () =>
     axiosInstance.get<CommonResponse<TrustedDeviceDto[]>>(
       ENDPOINTS.ACCOUNTS.ME.TRUSTED_DEVICES,
     ),
 
-  // revoke 1 device (idempotent — gọi lại trên device đã revoke vẫn 200)
+  // revoke a single device (idempotent — calling again on an already revoked device still returns 200)
   revokeOne: (id: string) =>
     axiosInstance.delete<CommonResponse<string>>(
       ENDPOINTS.ACCOUNTS.ME.TRUSTED_DEVICE(id),
     ),
 
-  // revoke toàn bộ (data = null, count nằm trong message)
+  // revoke all (data = null, the count is in the message)
   revokeAll: () =>
     axiosInstance.delete<CommonResponse<null>>(
       ENDPOINTS.ACCOUNTS.ME.TRUSTED_DEVICES,

@@ -47,22 +47,22 @@ export default function RejectDialog({ ticketId, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Từ chối kết quả</DialogTitle>
+          <DialogTitle>Reject result</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Ticket sẽ quay về trạng thái <strong>In Progress</strong> để Staff
-              tiếp tục xử lý.
+              The ticket will return to <strong>In Progress</strong> for Staff
+              to continue working on.
             </p>
             <FormField
               control={form.control}
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do từ chối</FormLabel>
+                  <FormLabel>Rejection reason</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Nhập lý do..." {...field} />
+                    <Textarea placeholder="Enter reason..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -70,10 +70,10 @@ export default function RejectDialog({ ticketId, open, onClose }: Props) {
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Từ chối"}
+                {isPending ? "Processing..." : "Reject"}
               </Button>
             </DialogFooter>
           </form>

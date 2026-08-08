@@ -72,20 +72,20 @@ export default function CreateSmsDeviceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Thêm thiết bị gateway</DialogTitle>
+          <DialogTitle>Add gateway device</DialogTitle>
           <DialogDescription>
-            Đăng ký một điện thoại Android (chạy app sms_fowarder) làm máy gửi
-            SMS. API key sẽ hiển thị một lần sau khi tạo.
+            Register an Android phone (running the sms_fowarder app) as an SMS
+            sender. The API key will be shown once after creation.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="deviceName">Tên thiết bị *</Label>
+            <Label htmlFor="deviceName">Device name *</Label>
             <Input
               id="deviceName"
               {...register("deviceName")}
-              placeholder="iPhone Văn phòng tầng 5"
+              placeholder="Phone Office 5th floor"
             />
             {errors.deviceName && (
               <p className="text-sm text-destructive">
@@ -95,7 +95,7 @@ export default function CreateSmsDeviceDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="deviceCode">Mã thiết bị *</Label>
+            <Label htmlFor="deviceCode">Device code *</Label>
             <Input
               id="deviceCode"
               {...register("deviceCode")}
@@ -109,7 +109,7 @@ export default function CreateSmsDeviceDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="dailyLimit">Giới hạn SMS/ngày *</Label>
+            <Label htmlFor="dailyLimit">Daily SMS limit *</Label>
             <Input
               id="dailyLimit"
               type="number"
@@ -129,10 +129,10 @@ export default function CreateSmsDeviceDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Tạo thiết bị
+              Create device
             </Button>
           </DialogFooter>
         </form>

@@ -5,17 +5,17 @@ import Reveal from "@/features/landing/components/Reveal";
 import logoImg from "@/assets/logo.png";
 
 const PRODUCT_LINKS = [
-  { label: "Giám sát pin", href: "#product" },
-  { label: "Cảnh báo bất thường", href: "#product" },
-  { label: "Quản lý SLA", href: "#governance" },
-  { label: "Hỗ trợ kỹ thuật", href: "#workflow" },
+  { label: "Battery monitoring", href: "#product" },
+  { label: "Anomaly alerts", href: "#product" },
+  { label: "SLA management", href: "#governance" },
+  { label: "Technical support", href: "#workflow" },
 ];
 
 const COMPANY_LINKS = [
-  { label: "Về chúng tôi", href: "#" },
-  { label: "Quy trình dịch vụ", href: "#workflow" },
-  { label: "Phân quyền hệ thống", href: "#roles" },
-  { label: "Liên hệ", href: "#" },
+  { label: "About us", href: "#" },
+  { label: "Service workflow", href: "#workflow" },
+  { label: "System roles", href: "#roles" },
+  { label: "Contact", href: "#" },
 ];
 
 const LandingFooter = () => {
@@ -24,11 +24,12 @@ const LandingFooter = () => {
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error("Vui lòng nhập email của bạn!");
+      toast.error("Enter your email address");
       return;
     }
-    toast.success("Đăng ký bản tin thành công!", {
-      description: "Cảm ơn bạn đã quan tâm đến hệ thống quản lý pin mặt trời.",
+    toast.success("Subscribed to the newsletter", {
+      description:
+        "Thanks for your interest in the solar battery management system.",
     });
     setEmail("");
   };
@@ -60,9 +61,9 @@ const LandingFooter = () => {
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Nền tảng AI giám sát và bảo trì pin lithium-ion cho hệ thống năng
-              lượng mặt trời — phục vụ Admin, Manager và Staff trong cùng một
-              console.
+              An AI platform for monitoring and maintaining lithium-ion
+              batteries in solar energy systems — serving Admin, Manager and
+              Staff from a single console.
             </p>
             {/* Status indicator */}
             <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -70,14 +71,14 @@ const LandingFooter = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
               </span>
-              Hệ thống vận hành bình thường
+              All systems operational
             </div>
           </div>
 
           {/* Products */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
-              Tính năng
+              Features
             </h4>
             <ul className="space-y-2.5 text-sm">
               {PRODUCT_LINKS.map((link) => (
@@ -96,7 +97,7 @@ const LandingFooter = () => {
           {/* Company */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
-              Công ty
+              Company
             </h4>
             <ul className="space-y-2.5 text-sm">
               {COMPANY_LINKS.map((link) => (
@@ -115,15 +116,15 @@ const LandingFooter = () => {
           {/* Newsletter */}
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
-              Bản tin
+              Newsletter
             </h4>
             <p className="text-xs text-slate-500 leading-relaxed mb-3">
-              Cập nhật tính năng mới và báo cáo vận hành pin mặt trời.
+              New feature updates and solar battery operations reports.
             </p>
             <form onSubmit={handleSubscribe} className="flex gap-2">
               <input
                 type="email"
-                placeholder="Email của bạn…"
+                placeholder="Your email…"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 min-w-0 rounded-lg bg-white/[0.04] border border-white/[0.1] px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
@@ -131,7 +132,7 @@ const LandingFooter = () => {
               <button
                 type="submit"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-colors duration-200 cursor-pointer"
-                aria-label="Đăng ký bản tin"
+                aria-label="Subscribe to the newsletter"
               >
                 <Send className="size-3.5" />
               </button>
@@ -147,10 +148,10 @@ const LandingFooter = () => {
           </p>
           <div className="flex gap-5">
             <a href="#" className="hover:text-slate-300 transition-colors">
-              Chính sách bảo mật
+              Privacy policy
             </a>
             <a href="#" className="hover:text-slate-300 transition-colors">
-              Điều khoản dịch vụ
+              Terms of service
             </a>
           </div>
         </div>

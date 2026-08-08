@@ -36,7 +36,7 @@ export function useStartTicket(ticketId: string) {
   return useTicketMutation(
     () => staffTicketService.start(ticketId),
     ticketId,
-    "Đã bắt đầu xử lý ticket",
+    "Work started on the ticket",
   );
 }
 
@@ -44,7 +44,7 @@ export function useHoldTicket(ticketId: string) {
   return useTicketMutation(
     (data: HoldTicketRequest) => staffTicketService.hold(ticketId, data),
     ticketId,
-    "Đã tạm dừng ticket",
+    "Ticket put on hold",
   );
 }
 
@@ -52,7 +52,7 @@ export function useResumeTicket(ticketId: string) {
   return useTicketMutation(
     () => staffTicketService.resume(ticketId),
     ticketId,
-    "Đã tiếp tục xử lý ticket",
+    "Work resumed on the ticket",
   );
 }
 
@@ -60,7 +60,7 @@ export function useResolveTicket(ticketId: string) {
   return useTicketMutation(
     (data: ResolveTicketRequest) => staffTicketService.resolve(ticketId, data),
     ticketId,
-    "Đã báo hoàn thành ticket",
+    "Ticket marked as resolved",
   );
 }
 
@@ -69,7 +69,7 @@ export function useEscalateTicket(ticketId: string) {
     (data: EscalateTicketRequest) =>
       staffTicketService.escalateRequest(ticketId, data),
     ticketId,
-    "Đã gửi yêu cầu chuyển cấp",
+    "Escalation request sent",
   );
 }
 
@@ -79,7 +79,7 @@ export function useAddComment(ticketId: string) {
     mutationFn: (data: AddCommentRequest) =>
       staffTicketService.addComment(ticketId, data),
     onSuccess: () => {
-      // Không toast success — gửi qua chat outbox, trạng thái hiển thị dưới bubble.
+      // No success toast — the message goes through the chat outbox and its status shows under the bubble.
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chats(ticketId),
       });

@@ -1,5 +1,5 @@
-// Re-export từ shared — nguồn thật ở shared/enums/battery/battery.enum.ts.
-// Giữ file này để các import admin cũ (schema/form/types) không phải đổi path.
+// Re-exported from shared — source of truth is shared/enums/battery/battery.enum.ts.
+// Kept for backward compatibility so old admin imports (schema/form/types) don't need path changes.
 export {
   WarrantyStatusEnum,
   ChargingStateEnum,

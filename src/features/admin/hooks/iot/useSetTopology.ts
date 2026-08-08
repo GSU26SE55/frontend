@@ -3,7 +3,7 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { cascadeService } from "@/features/admin/services/battery/cascade.service";
 import type { SetTopologyPayload } from "@/shared/types/battery/cascade.types";
 
-// Form-driven (SetTopologyDialog) → KHÔNG đặt onError; dialog xử lý qua try-catch + setError.
+// Form-driven (SetTopologyDialog) → do NOT set onError; the dialog handles it via try-catch + setError.
 export function useSetTopology(assetId: string) {
   const qc = useQueryClient();
   return useMutation({

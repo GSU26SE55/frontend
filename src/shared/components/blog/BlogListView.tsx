@@ -30,20 +30,20 @@ import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const PAGE_SIZE = 10;
 
-// Base UI Select render VALUE thô nếu Root không nhận `items` map value→label.
-// Thiếu prop này thì filter hiện "Draft"/"Published" thay vì nhãn tiếng Việt.
+// Base UI Select renders the raw VALUE if Root doesn't receive an `items` value→label map.
+// Without this prop the filter shows "Draft"/"Published" instead of the display label.
 const STATUS_ITEMS = [
-  { value: null, label: "Mọi trạng thái" },
+  { value: null, label: "All statuses" },
   ...BLOG_STATUS_OPTIONS,
 ];
 const ORIGIN_ITEMS = [
-  { value: null, label: "Mọi nguồn" },
+  { value: null, label: "All origins" },
   ...BLOG_ORIGIN_OPTIONS,
 ];
 
-// Dùng `pageNumber` (giống KB) — `setFilter` chỉ auto-reset về trang 1 cho đúng
-// key này. Trước đây Blog đặt tên `page` nên đổi filter KHÔNG reset trang, và
-// service cũng gửi sai param `Page` khiến BE bỏ qua → phân trang không chạy.
+// Uses `pageNumber` (same as KB) — `setFilter` only auto-resets to page 1 for this exact
+// key. Blog previously used the name `page`, so changing a filter did NOT reset the page,
+// and the service also sent the wrong param `Page`, which the BE ignored → pagination broke.
 const DEFAULTS = {
   keyword: "",
   status: "",
@@ -53,9 +53,9 @@ const DEFAULTS = {
 };
 
 interface BlogListViewProps {
-  /** Tiền tố route của role, vd "/staff". */
+  /** Role route prefix, e.g. "/staff". */
   basePath: string;
-  /** Nhãn breadcrumb, vd "Staff". */
+  /** Breadcrumb label, e.g. "Staff". */
   roleLabel: string;
 }
 
@@ -67,7 +67,7 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
     setFilter("keyword", kw),
   );
 
-  // BE lọc theo `Q` (Title/Summary) — tìm trên TOÀN BỘ bài, không chỉ trang hiện tại.
+  // BE filters by `Q` (Title/Summary) — searches ACROSS ALL posts, not just the current page.
   const { data, isLoading, isError, refetch } = useBlogList({
     status: (filters.status || undefined) as BlogPostStatusEnum | undefined,
     origin: (filters.origin || undefined) as BlogPostOriginEnum | undefined,
@@ -87,13 +87,13 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">Blog</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} bài viết
+            {isLoading ? "..." : (data?.totalItems ?? 0)} posts
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.blog]} />
           <Button size="sm" onClick={() => navigate(`${basePath}/blog/new`)}>
-            <Plus className="size-3.5" /> Tạo bài viết
+            <Plus className="size-3.5" /> Create post
           </Button>
         </div>
       </div>
@@ -102,7 +102,7 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
         <div className="relative w-full sm:max-w-md">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2" />
           <Input
-            placeholder="Tìm theo tiêu đề hoặc tóm tắt…"
+            placeholder="Search by title or summary…"
             value={search.value}
             onChange={search.onChange}
             className="pr-8 pl-8"
@@ -117,7 +117,7 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
                 setFilter("keyword", undefined);
               }}
               className="hover:bg-muted absolute top-1/2 right-2 -translate-y-1/2 rounded p-0.5"
-              aria-label="Xóa từ khóa"
+              aria-label="Clear keyword"
             >
               <X className="text-muted-foreground size-3.5" />
             </button>
@@ -132,10 +132,10 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
           }
         >
           <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Mọi trạng thái" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Mọi trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {BLOG_STATUS_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -152,10 +152,10 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
           }
         >
           <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="Mọi nguồn" />
+            <SelectValue placeholder="All origins" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Mọi nguồn</SelectItem>
+            <SelectItem value={null}>All origins</SelectItem>
             {BLOG_ORIGIN_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -166,13 +166,13 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
 
         {hasActiveFilter && (
           <Button variant="ghost" size="sm" onClick={resetFilters}>
-            Xóa lọc
+            Clear filters
           </Button>
         )}
       </div>
 
       {isError ? (
-        <ErrorState message={loadFailed("bài blog")} onRetry={refetch} />
+        <ErrorState message={loadFailed("blog posts")} onRetry={refetch} />
       ) : isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -182,8 +182,8 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
       ) : items.length === 0 ? (
         <p className="text-muted-foreground py-12 text-center text-sm">
           {filters.keyword
-            ? `Không tìm thấy bài viết nào khớp "${filters.keyword}".`
-            : noData("bài blog")}
+            ? `No posts found matching "${filters.keyword}".`
+            : noData("blog posts")}
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -205,7 +205,7 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
               </p>
               <p className="text-muted-foreground mt-3 border-t border-border/60 pt-2.5 font-mono text-[11px]">
                 /{b.slug} &middot; v{b.currentVersion} &middot;{" "}
-                {format(new Date(b.createdAt), "dd/MM/yyyy")}
+                {format(new Date(b.createdAt), "MM/dd/yyyy")}
               </p>
             </Card>
           ))}

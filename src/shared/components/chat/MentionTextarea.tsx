@@ -10,17 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { MentionInput } from "@/shared/schemas/ticket/ticket-comment.schema";
 
-// Người có thể tag — build từ participant active của ticket (GET .../participants).
+// People who can be tagged — built from the ticket's active participants (GET .../participants).
 export interface MentionCandidate {
   userId: string;
   displayName: string;
   role?: string;
-  /** Xem được chat nội bộ. false + đang soạn chat nội bộ → cảnh báo trong dropdown. */
+  /** Can view internal chat. false + composing an internal chat → warning in the dropdown. */
   canViewInternal?: boolean;
 }
 
-// Regex bắt token @đang-gõ ngay trước con trỏ: "@" + ký tự tên (không xuống dòng, cho phép khoảng trắng đơn giữa từ).
-// Ví dụ "... @Nguyen Va" → group(1) = "Nguyen Va".
+// Regex that captures the @-token currently being typed right before the caret: "@" + name characters (no line breaks, allows a single space between words).
+// E.g. "... @Nguyen Va" → group(1) = "Nguyen Va".
 const MENTION_TOKEN = /(?:^|\s)@([\p{L}\p{N}_ ]{0,30})$/u;
 
 function initials(name: string) {
@@ -41,17 +41,23 @@ interface Props extends Omit<TextareaProps, "onChange" | "value"> {
   value: string;
   onChange: (value: string) => void;
   candidates: MentionCandidate[];
-  /** Đang soạn chat nội bộ — bật cảnh báo với người không xem được internal. */
+  /** Composing an internal chat — enables a warning for people who can't view internal chat. */
   isInternal?: boolean;
-  /** Báo lên form danh sách người đã được tag (để gửi field `mentions`). */
+  /** Reports the list of tagged people up to the form (to send the `mentions` field). */
   onMentionsChange?: (mentions: MentionInput[]) => void;
+  /**
+   * Enter = send, Shift+Enter = newline (chat convention). If not passed, Enter
+   * inserts a newline like a normal textarea. The form itself decides whether
+   * sending is allowed — the callback only reports "the user just pressed Enter".
+   */
+  onSubmitKey?: () => void;
 }
 
 /**
- * Textarea có @-mention: gõ "@" → hiện dropdown lọc theo tên. Chọn 1 người →
- * chèn "@Tên " vào text và ghi nhận {userId, displayName} để gửi kèm BE.
- * BE nhận mention qua field `mentions` (KHÔNG parse "@" từ text), nên FE phải
- * gom danh sách người được chọn tách khỏi body.
+ * Textarea with @-mention: typing "@" → shows a dropdown filtered by name. Picking
+ * a person → inserts "@Name " into the text and records {userId, displayName} to
+ * send to the BE. The BE receives mentions via the `mentions` field (does NOT parse
+ * "@" from the text), so the FE has to collect the picked people separately from the body.
  */
 export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
   function MentionTextarea(
@@ -61,6 +67,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
       candidates,
       isInternal = false,
       onMentionsChange,
+      onSubmitKey,
       className,
       ...rest
     },
@@ -69,9 +76,9 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
     const innerRef = useRef<HTMLTextAreaElement | null>(null);
     useImperativeHandle(ref, () => innerRef.current as HTMLTextAreaElement);
 
-    // Người đã được tag trong tin đang soạn (dedup theo userId).
+    // People already tagged in the message being composed (deduped by userId).
     const [picked, setPicked] = useState<MentionInput[]>([]);
-    // Token "@..." đang gõ; null = không mở dropdown.
+    // The "@..." token currently being typed; null = dropdown closed.
     const [query, setQuery] = useState<string | null>(null);
     const [highlight, setHighlight] = useState(0);
 
@@ -99,7 +106,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
       setQuery(m ? m[1] : null);
       setHighlight(0);
 
-      // Nếu 1 người đã tag bị xóa tên khỏi body thì bỏ khỏi danh sách gửi.
+      // If a tagged person's name is removed from the body, drop them from the send list.
       if (picked.length > 0) {
         const stillThere = picked.filter((p) =>
           text.includes(`@${p.displayName}`),
@@ -113,9 +120,9 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
       const caret = el?.selectionStart ?? value.length;
       const before = value.slice(0, caret);
       const after = value.slice(caret);
-      // Thay token "@query" đang gõ bằng "@Tên " hoàn chỉnh.
+      // Replace the "@query" token being typed with the complete "@Name ".
       const replaced = before.replace(MENTION_TOKEN, (whole, _q, offset) => {
-        const lead = whole.startsWith("@") ? "" : whole[0]; // giữ khoảng trắng dẫn nếu có
+        const lead = whole.startsWith("@") ? "" : whole[0]; // keep the leading whitespace if any
         void offset;
         return `${lead}@${c.displayName} `;
       });
@@ -138,7 +145,24 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!open) return;
+      if (!open) {
+        // Enter = send, Shift/Ctrl/Cmd+Enter = newline.
+        // Skip while typing via IME (isComposing): the input method uses Enter to
+        // commit the word being composed, blocking it here would send half-typed text.
+        if (
+          onSubmitKey &&
+          e.key === "Enter" &&
+          !e.shiftKey &&
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !e.altKey &&
+          !e.nativeEvent.isComposing
+        ) {
+          e.preventDefault();
+          onSubmitKey();
+        }
+        return;
+      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setHighlight((h) => (h + 1) % matches.length);
@@ -158,7 +182,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
         {open && (
           <ul
             role="listbox"
-            aria-label="Gợi ý người để tag"
+            aria-label="People suggestions to tag"
             className="absolute bottom-full z-50 mb-1 max-h-56 w-64 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-md"
           >
             {matches.map((c, i) => (
@@ -185,14 +209,14 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
                     </AvatarFallback>
                   </Avatar>
                   <span className="truncate">{c.displayName}</span>
-                  {/* BE không chặn mention người không xem được chat nội bộ —
-                      cảnh báo để người soạn tự cân nhắc. */}
+                  {/* The BE doesn't block mentioning someone who can't view internal chat —
+                      show a warning so the composer can decide for themselves. */}
                   {isInternal && c.canViewInternal === false && (
                     <span
                       className="shrink-0 text-[10px] text-amber-600 dark:text-amber-400"
-                      title="Người này không xem được chat nội bộ"
+                      title="This person can't view internal chat"
                     >
-                      không xem được
+                      can't view
                     </span>
                   )}
                   {c.role && (
@@ -211,9 +235,14 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
           }}
           value={value}
           onChange={(e) => handleChange(e.target.value)}
-          onKeyDown={handleKeyDown}
           className={className}
           {...rest}
+          // After {...rest}: the component's onKeyDown MUST win, otherwise if the caller
+          // happens to pass onKeyDown, both dropdown navigation and Enter-to-send break.
+          onKeyDown={(e) => {
+            rest.onKeyDown?.(e);
+            if (!e.defaultPrevented) handleKeyDown(e);
+          }}
         />
       </div>
     );

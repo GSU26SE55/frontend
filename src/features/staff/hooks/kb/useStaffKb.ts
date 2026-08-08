@@ -56,7 +56,7 @@ export function useStaffKbSuggest(ticketId?: string) {
   });
 }
 
-// create/update là form → component xử lý lỗi qua try/catch + setError (không onError ở hook)
+// create/update are form submits → the component handles errors via try/catch + setError (no onError on the hook)
 export function useStaffKbCreate() {
   const qc = useQueryClient();
   return useMutation({
@@ -80,7 +80,7 @@ export function useStaffKbUpdate() {
       payload: UpdateKbArticlePayload;
     }) => staffKbService.update(id, payload).then((r) => r.data.data),
     onSuccess: (article, { id }) => {
-      // Staff sửa bài của chính mình được cập nhật thẳng; sửa bài người khác thì phải chờ duyệt.
+      // Staff editing their own article goes live immediately; editing someone else's needs approval first.
       toast.success(
         article?.status === KbArticleStatusEnum.PendingReview
           ? STAFF_MESSAGES.kb.updatePending
@@ -92,7 +92,7 @@ export function useStaffKbUpdate() {
   });
 }
 
-// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+// Duplicate a KB article → creates a new one (Draft) and returns an action DTO with the new id.
 export function useStaffDuplicateKbArticle() {
   const qc = useQueryClient();
   return useMutation({

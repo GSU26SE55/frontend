@@ -13,7 +13,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   user: null,
   isAuthenticated: false,
   setSession: (user) => set({ user, isAuthenticated: true }),
-  // GH-106 — override permissions từ /me/permissions (server-resolved); no-op nếu chưa có user
+  // GH-106 — override permissions from /me/permissions (server-resolved); no-op if there's no user yet
   setPermissions: (permissions) =>
     set((state) =>
       state.user ? { user: { ...state.user, permissions } } : state,

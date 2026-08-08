@@ -32,24 +32,9 @@ import {
 import {
   ImpactScopeEnum,
   UrgencyLevelEnum,
-  TicketPriorityEnum,
 } from "@/shared/types/ticket/ticket.types";
 import { useTriageTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
-
-// Impact × Urgency → Priority matrix
-const PRIORITY_MATRIX: Record<string, Record<string, TicketPriorityEnum>> = {
-  MultiSite: { High: "P1Critical", Medium: "P1Critical", Low: "P1Critical" },
-  Site: { High: "P1Critical", Medium: "P2High", Low: "P3Normal" },
-  SingleAsset: { High: "P2High", Medium: "P3Normal", Low: "P3Normal" },
-};
-
-function computePriority(
-  impact?: string,
-  urgency?: string,
-): TicketPriorityEnum | undefined {
-  if (!impact || !urgency) return undefined;
-  return PRIORITY_MATRIX[impact]?.[urgency];
-}
+import { computePriority } from "@/shared/utils/ticket/priorityMatrix";
 
 interface Props {
   ticketId: string;
@@ -88,7 +73,7 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
               name="impact"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phạm vi ảnh hưởng *</FormLabel>
+                  <FormLabel>Impact scope *</FormLabel>
                   <Select
                     onValueChange={(v) => {
                       field.onChange(v);
@@ -106,7 +91,7 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn phạm vi" />
+                        <SelectValue placeholder="Select scope" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -129,7 +114,7 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
               name="urgency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Độ khẩn cấp *</FormLabel>
+                  <FormLabel>Urgency level *</FormLabel>
                   <Select
                     onValueChange={(v) => {
                       field.onChange(v);
@@ -144,7 +129,7 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn độ khẩn" />
+                        <SelectValue placeholder="Select urgency" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -164,7 +149,7 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
 
             {computed && (
               <p className="text-sm text-muted-foreground">
-                Priority tính được: <strong>{computed}</strong>
+                Computed priority: <strong>{computed}</strong>
               </p>
             )}
 
@@ -173,12 +158,9 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
               name="managerComment"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nhận xét (tuỳ chọn)</FormLabel>
+                  <FormLabel>Comment (optional)</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Nhận xét của Manager..."
-                      {...field}
-                    />
+                    <Textarea placeholder="Manager's comment..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -187,10 +169,10 @@ export default function TriageDialog({ ticketId, open, onClose }: Props) {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Xác nhận Triage"}
+                {isPending ? "Processing..." : "Confirm Triage"}
               </Button>
             </DialogFooter>
           </form>

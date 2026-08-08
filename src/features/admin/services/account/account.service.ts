@@ -7,8 +7,8 @@ import type {
 import type { CustomerDropdownItem } from "@/features/admin/types/battery/battery-asset.types";
 
 export const adminAccountService = {
-  // roleId do caller truyền vào (resolve động qua useRoleId) — KHÔNG hardcode
-  // GUID vì BE seed system role bằng Guid.NewGuid() nên id khác nhau mỗi môi trường.
+  // roleId is passed in by the caller (resolved dynamically via useRoleId) — do NOT hardcode
+  // it's a GUID because BE seeds the system role with Guid.NewGuid(), so the id differs per environment.
   getCustomers: (params: {
     roleId: string;
     pageNumber?: number;

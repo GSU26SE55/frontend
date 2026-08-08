@@ -10,8 +10,9 @@ interface UseSortableDataResult<T> {
 }
 
 /**
- * Sort client-side cho danh sách đang hiển thị (1 trang dữ liệu đã fetch) —
- * không cần đổi API/backend. `getValue` lấy giá trị so sánh theo key hiện tại.
+ * Client-side sort for the currently displayed list (1 page of already-fetched
+ * data) — no need to change the API/backend. `getValue` gets the comparison
+ * value for the current key.
  */
 export function useSortableData<T>(
   data: T[],
@@ -20,9 +21,8 @@ export function useSortableData<T>(
   initialDirection: SortDirection = "asc",
 ): UseSortableDataResult<T> {
   const [sortKey, setSortKey] = useState<string | null>(initialKey);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(
-    initialDirection,
-  );
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>(initialDirection);
 
   const toggleSort = (key: string) => {
     if (sortKey !== key) {
@@ -50,7 +50,7 @@ export function useSortableData<T>(
       if (typeof va === "number" && typeof vb === "number") {
         return (va - vb) * dir;
       }
-      return String(va).localeCompare(String(vb), "vi") * dir;
+      return String(va).localeCompare(String(vb), "en") * dir;
     });
   }, [data, sortKey, sortDirection, getValue]);
 

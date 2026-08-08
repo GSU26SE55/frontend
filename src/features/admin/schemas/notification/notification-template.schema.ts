@@ -8,36 +8,45 @@ import {
   TEMPLATE_BODY_MAX,
 } from "@/features/admin/types/notification/notification-template.types";
 
-// Soạn thảo template. Giới hạn độ dài khớp cột DB và khớp ValidateAsync của BE — kiểm ở FE để lỗi
-// hiện ngay lúc gõ, nhưng BE vẫn kiểm lại vì client nào cũng có thể bỏ qua tầng này.
+// Template composer. Length limits match the DB columns and the BE's ValidateAsync — checked on the
+// FE so errors show while typing, but the BE still re-checks since any client could skip this layer.
 //
-// KHÔNG kiểm cú pháp Handlebars ở đây: muốn kiểm đúng thì phải compile bằng chính engine BE dùng.
-// Đoán bằng regex sẽ vừa bỏ sót vừa báo nhầm; BE trả 400 kèm thông báo cụ thể, để nguyên vậy.
+// Does NOT validate Handlebars syntax here: proper validation would require compiling with the same
+// engine the BE uses. Guessing with regex would both miss cases and false-positive; the BE returns 400
+// with a specific message, so we leave it as is.
 export const notificationTemplateFormSchema = z.object({
-  // Zod v4: tham số thứ hai nhận `{ message }`, KHÔNG còn `errorMap` như v3.
-  type: z.nativeEnum(NotificationTypeEnum, { message: "Chọn loại thông báo." }),
+  // Zod v4: the second parameter takes `{ message }`, no more `errorMap` like in v3.
+  type: z.nativeEnum(NotificationTypeEnum, {
+    message: "Select a notification type",
+  }),
   channel: z.nativeEnum(NotificationChannelEnum, {
-    message: "Chọn kênh gửi.",
+    message: "Select a channel",
   }),
   titleTemplate: z
     .string()
     .trim()
-    .min(1, "Tiêu đề không được trống.")
-    .max(TEMPLATE_TITLE_MAX, `Tiêu đề tối đa ${TEMPLATE_TITLE_MAX} ký tự.`),
+    .min(1, "Title is required")
+    .max(
+      TEMPLATE_TITLE_MAX,
+      `Title must be at most ${TEMPLATE_TITLE_MAX} characters`,
+    ),
   bodyTemplate: z
     .string()
     .trim()
-    .min(1, "Nội dung không được trống.")
-    .max(TEMPLATE_BODY_MAX, `Nội dung tối đa ${TEMPLATE_BODY_MAX} ký tự.`),
+    .min(1, "Body is required")
+    .max(
+      TEMPLATE_BODY_MAX,
+      `Body must be at most ${TEMPLATE_BODY_MAX} characters`,
+    ),
 });
 
 export type NotificationTemplateFormValues = z.infer<
   typeof notificationTemplateFormSchema
 >;
 
-// sampleData nhập dạng JSON thô trong textarea. Rỗng ⇒ render với model rỗng
-// (placeholder không có giá trị sẽ ra chuỗi rỗng — đó là cách phát hiện template
-// gọi sai tên biến).
+// sampleData is entered as raw JSON in a textarea. Empty ⇒ render with an empty model
+// (a placeholder with no value renders as an empty string — that's how we detect a template
+// referencing the wrong variable name).
 export const templateSampleDataSchema = z.object({
   sampleDataJson: z
     .string()
@@ -58,8 +67,7 @@ export const templateSampleDataSchema = z.object({
         }
       },
       {
-        message:
-          'Phải là JSON object hợp lệ, ví dụ: { "ticketCode": "TK-001" }',
+        message: 'Must be a valid JSON object, e.g. { "ticketCode": "TK-001" }',
       },
     ),
 });
@@ -68,7 +76,7 @@ export type TemplateSampleDataFormValues = z.infer<
   typeof templateSampleDataSchema
 >;
 
-// Parse an toàn cho service — gọi sau khi schema đã validate.
+// Safe parse for the service — call after the schema has validated.
 export function parseSampleData(
   json?: string,
 ): Record<string, unknown> | undefined {

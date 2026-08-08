@@ -38,7 +38,7 @@ export const adminSagaService = {
       ENDPOINTS.ADMIN.SAGAS.ALERT_TICKET_DETAIL(alertId),
     ),
 
-  // POST reprocess — Admin only. Header Idempotency-Key bắt buộc (chống double-trigger).
+  // POST reprocess — Admin only. Idempotency-Key header is required (prevents double-trigger).
   reprocess: (alertId: string, idempotencyKey: string) =>
     axiosInstance.post<CommonResponse<SagaReprocessResult>>(
       ENDPOINTS.ADMIN.SAGAS.ALERT_TICKET_REPROCESS(alertId),

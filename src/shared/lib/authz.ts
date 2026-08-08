@@ -5,8 +5,8 @@ import type {
 
 type PermissionType = string & { readonly __brand: "Permission" };
 
-// Source of truth: BE PermissionCodes.cs + PermissionSeed.cs (40 system codes, đã verify GH-106).
-// Code dạng "module.action" lowercase. KHÔNG thêm code không tồn tại trong seed BE.
+// Source of truth: BE PermissionCodes.cs + PermissionSeed.cs (40 system codes, verified in GH-106).
+// Codes are lowercase "module.action". Do NOT add codes that don't exist in the BE seed.
 export const P = {
   // user.*
   USER_VIEW: "user.view" as PermissionType,

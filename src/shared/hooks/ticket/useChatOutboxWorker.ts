@@ -4,7 +4,7 @@ import * as outbox from "@/shared/lib/chatOutbox";
 import type { OutboxMessage } from "@/shared/types/chat/chat.types";
 import type { AddCommentPayload } from "@/shared/types/ticket/ticket.types";
 
-/** Gọi BE thật — feature tự inject (manager/staff service) để không cross-feature. */
+/** Calls the real BE — injected by the feature (manager/staff service) to avoid cross-feature imports. */
 export type ChatSendFn = (
   ticketId: string,
   payload: AddCommentPayload,
@@ -14,32 +14,32 @@ interface Options {
   ticketId: string;
   pending: OutboxMessage[];
   send: ChatSendFn;
-  /** Gọi sau khi 1 tin gửi thành công — dùng để invalidate query chats. */
+  /** Called after a message sends successfully — used to invalidate the chats query. */
   onSent: () => void;
 }
 
-// GH-866 — BE trả mã lỗi trong `message` (ChatAddCommandHandler.Fail), không có
-// field errorCode riêng.
+// GH-866 — BE returns the error code inside `message` (ChatAddCommandHandler.Fail), there's no
+// separate errorCode field.
 const CHAT_SPAM_CHECK_IN_PROGRESS = "CHAT_SPAM_CHECK_IN_PROGRESS";
 const CHAT_DUPLICATE_MESSAGE_LIMIT = "CHAT_DUPLICATE_MESSAGE_LIMIT";
 
-// Mã lỗi BE → câu hiển thị. Các mã này retry cũng vô ích nên nêu rõ lý do.
+// BE error code → display text. These codes make retry pointless, so state the reason plainly.
 function failReasonOf(error: unknown): string | undefined {
   if (!(error instanceof AxiosError)) return undefined;
   if (error.response?.data?.message === CHAT_DUPLICATE_MESSAGE_LIMIT) {
-    return "Bạn đã gửi tin nhắn này quá nhiều lần";
+    return "You've sent this message too many times";
   }
   return undefined;
 }
 
-// Lỗi 4xx (trừ 408/429) là do payload → không retry, fail luôn để user sửa/bỏ.
+// 4xx errors (except 408/429) are caused by the payload → don't retry, fail immediately so the user can fix/discard.
 function isRetriable(error: unknown): boolean {
   if (error instanceof AxiosError) {
     const status = error.response?.status;
     if (status === undefined) return true; // network/timeout → retry
     if (status === 408 || status === 429) return true;
-    // 409 CHAT_SPAM_CHECK_IN_PROGRESS: spam-check của user đang chạy song song —
-    // trạng thái tạm thời, backoff rồi gửi lại. Các 409 khác vẫn fail luôn.
+    // 409 CHAT_SPAM_CHECK_IN_PROGRESS: the user's spam check is running concurrently —
+    // a temporary state, back off then resend. Other 409s still fail immediately.
     if (
       status === 409 &&
       error.response?.data?.message === CHAT_SPAM_CHECK_IN_PROGRESS
@@ -52,15 +52,15 @@ function isRetriable(error: unknown): boolean {
 }
 
 /**
- * Worker gửi outbox tuần tự cho 1 ticket (mount 1 lần ở TicketDetailPage).
+ * Worker that sends the outbox sequentially for a ticket (mounted once in TicketDetailPage).
  *
- * Mỗi lượt chỉ xử lý tin đầu hàng còn "queued" (FIFO — giữ đúng thứ tự gõ):
- *   - quá deadline → "failed" (dừng, chờ user bấm thử lại)
- *   - lỗi retriable → tăng attempt, hẹn lại theo backoff (2s→4s→…→30s)
- *   - lỗi client → "failed" ngay
- *   - thành công → xóa khỏi outbox + onSent()
+ * Each pass only processes the first message still "queued" (FIFO — preserves typing order):
+ *   - past deadline → "failed" (stops, waits for the user to hit retry)
+ *   - retriable error → increments attempt, reschedules with backoff (2s→4s→…→30s)
+ *   - client error → "failed" immediately
+ *   - success → removed from the outbox + onSent()
  *
- * `pending` đổi (do enqueue/retry/patch) sẽ chạy lại effect → kích lượt kế.
+ * When `pending` changes (via enqueue/retry/patch), the effect reruns → triggers the next pass.
  */
 export function useChatOutboxWorker({
   ticketId,
@@ -70,7 +70,7 @@ export function useChatOutboxWorker({
 }: Options) {
   const busyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Giữ ref mới nhất để timeout callback không dùng closure cũ.
+  // Keeps the latest ref so the timeout callback doesn't use a stale closure.
   const sendRef = useRef(send);
   const onSentRef = useRef(onSent);
   useEffect(() => {
@@ -94,7 +94,7 @@ export function useChatOutboxWorker({
 
       if (Date.now() > next.deadline) {
         outbox.patch(ticketId, next.tempId, { status: "failed" });
-        return; // effect chạy lại → xử lý tin kế
+        return; // effect reruns → processes the next message
       }
 
       busyRef.current = true;
@@ -112,17 +112,17 @@ export function useChatOutboxWorker({
             failReason: failReasonOf(error),
           });
         } else {
-          // Trả về "queued" và hẹn thử lại sau backoff.
+          // Revert to "queued" and schedule a retry after the backoff.
           outbox.patch(ticketId, next.tempId, { status: "queued", attempt });
           clearTimer();
           timerRef.current = setTimeout(() => {
             busyRef.current = false;
             void tick();
           }, outbox.backoffDelay(attempt));
-          return; // giữ busy tới khi timer chạy lại
+          return; // stay busy until the timer fires again
         }
       } finally {
-        // Với nhánh thành công/failed/deadline: giải phóng để xử lý tin kế.
+        // For the success/failed/deadline branches: release so the next message can be processed.
         if (!timerRef.current) busyRef.current = false;
       }
       void tick();
@@ -130,6 +130,6 @@ export function useChatOutboxWorker({
 
     void tick();
     return clearTimer;
-    // pending là dependency: mọi enqueue/retry/patch đều re-trigger vòng gửi.
+    // pending is a dependency: every enqueue/retry/patch re-triggers the send loop.
   }, [ticketId, pending]);
 }

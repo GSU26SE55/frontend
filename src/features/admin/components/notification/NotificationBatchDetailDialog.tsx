@@ -55,16 +55,16 @@ export default function NotificationBatchDetailDialog({
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Chi tiết lần gửi</DialogTitle>
+          <DialogTitle>Send details</DialogTitle>
           <DialogDescription>
-            Thống kê tự làm mới mỗi 15 giây trong lúc cửa sổ này còn mở — worker
-            giao dần nên các con số còn thay đổi.
+            Stats refresh every 15 seconds while this window stays open — the
+            worker delivers gradually, so the numbers keep changing.
           </DialogDescription>
         </DialogHeader>
 
         {isLoading || !data ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Đang tải…
+            Loading…
           </p>
         ) : (
           <div className="space-y-4">
@@ -92,15 +92,16 @@ export default function NotificationBatchDetailDialog({
             </div>
 
             <div>
-              <p className="mb-1.5 text-xs font-medium">Đã gửi tới</p>
+              <p className="mb-1.5 text-xs font-medium">Sent to</p>
               <div className="flex flex-wrap gap-1">
                 {data.targets.map((t, i) => (
                   <Badge key={i} variant="secondary" className="text-[10px]">
                     {t.targetKind === NotificationBatchTargetKindEnum.Group
-                      ? // Nhóm đã xoá vẫn hiện KÈM TÊN — backend cố ý không lọc dòng đã xoá mềm.
-                        // Nhánh fallback chỉ chạm tới nếu dòng nhóm bị xoá CỨNG khỏi DB.
-                        (t.groupName ?? "Nhóm không còn tồn tại")
-                      : "Cá nhân được chọn"}
+                      ? // Deleted groups still show WITH THEIR NAME — the backend deliberately
+                        // does not filter out soft-deleted rows. The fallback branch is only
+                        // reached if the group row was HARD-deleted from the DB.
+                        (t.groupName ?? "Group no longer exists")
+                      : "Selected individuals"}
                   </Badge>
                 ))}
                 {data.targets.length === 0 && (
@@ -110,19 +111,19 @@ export default function NotificationBatchDetailDialog({
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <Stat label="Người nhận" value={data.distinctRecipients} />
-              <Stat label="Tổng dòng" value={data.totalRows} />
-              <Stat label="Đang chờ giao" value={data.pendingCount} />
-              <Stat label="Đã giao" value={data.sentCount} tone="ok" />
-              <Stat label="Đã đọc" value={data.readCount} tone="ok" />
-              <Stat label="Thất bại" value={data.failedCount} tone="bad" />
+              <Stat label="Recipients" value={data.distinctRecipients} />
+              <Stat label="Total rows" value={data.totalRows} />
+              <Stat label="Queued" value={data.pendingCount} />
+              <Stat label="Delivered" value={data.sentCount} tone="ok" />
+              <Stat label="Read" value={data.readCount} tone="ok" />
+              <Stat label="Failed" value={data.failedCount} tone="bad" />
             </div>
 
             {data.failedCount > 0 && (
               <p className="text-xs text-muted-foreground">
-                Dòng thất bại thường do người nhận đã tắt kênh đó trong tuỳ
-                chọn, hoặc thiếu email / số điện thoại / thiết bị đã đăng ký
-                push.
+                Failed rows are usually caused by the recipient turning that
+                channel off in their preferences, or by a missing email / phone
+                number / push-registered device.
               </p>
             )}
           </div>

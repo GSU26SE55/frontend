@@ -2,12 +2,13 @@ import EnvironmentalIncidentsView from "@/shared/components/environmental/Enviro
 import { useSiteList } from "@/features/staff/hooks/site/useSites";
 
 export default function EnvironmentalIncidentsPage() {
-  // Site list để Staff chọn SiteId khi report thủ công. Cần BE mở GET /api/sites
-  // cho role Staff — chưa deploy thì query lỗi → sites undefined → nút report tự ẩn.
+  // Site list so Staff can choose a SiteId when reporting manually. Requires the BE
+  // to open GET /api/sites for the Staff role — if not deployed yet, the query fails
+  // → sites is undefined → the report button auto-hides.
   const { data } = useSiteList({ pageSize: 100 });
   return (
     <EnvironmentalIncidentsView
-      subtitle="Staff · Sự cố môi trường"
+      subtitle="Staff · Environmental incidents"
       sites={data?.items}
     />
   );

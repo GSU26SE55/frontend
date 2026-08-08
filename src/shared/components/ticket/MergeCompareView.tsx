@@ -33,13 +33,13 @@ import type {
 } from "@/shared/types/ticket/ticket.types";
 
 export interface MergeCompareViewProps {
-  /** Ticket sẽ bị gộp (đóng lại). */
+  /** Ticket that will be merged (closed). */
   source: TicketDetailDTO | undefined;
   isLoadingSource: boolean;
-  /** Ticket đích đang chọn (giữ lại) — undefined khi chưa chọn. */
+  /** Currently selected target ticket (kept) — undefined when not yet chosen. */
   target: TicketDetailDTO | undefined;
   isLoadingTarget: boolean;
-  /** Danh sách ticket thô để lọc ứng viên. */
+  /** Raw ticket list used to filter candidates. */
   tickets: TicketDTO[] | undefined;
   isLoadingTickets: boolean;
   targetId: string;
@@ -50,11 +50,12 @@ export interface MergeCompareViewProps {
 }
 
 /**
- * Trang so sánh 2 ticket trước khi gộp. Gộp là thao tác KHÔNG hoàn tác được
- * (ticket nguồn đóng vĩnh viễn) nên Manager phải đối chiếu đủ dữ kiện trước khi xác nhận.
+ * Page comparing 2 tickets before merging. Merging is an operation that CANNOT be undone
+ * (the source ticket closes permanently), so the Manager must review all the facts before
+ * confirming.
  *
- * Component thuần UI — data đến qua props để `shared/` không phụ thuộc `features/`
- * (admin và manager có hook riêng, cùng dùng lại view này).
+ * Pure UI component — data arrives via props so `shared/` doesn't depend on `features/`
+ * (admin and manager have their own hooks, both reusing this view).
  */
 export default function MergeCompareView({
   source,
@@ -77,21 +78,21 @@ export default function MergeCompareView({
     source?.suspectedDuplicateOfTicketId,
   );
 
-  // Ticket đang chọn PHẢI có mặt trong danh sách, nếu không Select không tra được
-  // label từ value và sẽ hiển thị thẳng GUID ra trigger.
+  // The currently selected ticket MUST be present in the list, otherwise Select can't
+  // resolve a label from the value and will show the raw GUID in the trigger.
   //
-  // Vì sao thiếu: useMergeCandidates loại ticket status=New không thuộc AUTO_ORIGINS,
-  // nhưng targetId lại được set sẵn từ suspectedDuplicateOfTicketId (AI gợi ý) —
-  // gợi ý đó có thể trỏ tới đúng loại ticket vừa bị loại. Danh sách cũng rỗng trong
-  // lúc `tickets` còn đang tải.
+  // Why it can be missing: useMergeCandidates excludes status=New tickets that aren't in
+  // AUTO_ORIGINS, but targetId can be preset from suspectedDuplicateOfTicketId (an AI
+  // suggestion) — that suggestion may point to exactly the kind of ticket just excluded.
+  // The list is also empty while `tickets` is still loading.
   const options = useMemo(() => {
     if (!targetId || candidates.some((t) => t.id === targetId))
       return candidates;
     return target ? [target, ...candidates] : candidates;
   }, [candidates, targetId, target]);
 
-  // Ticket chỉ có customerId (GUID) — tên khách hàng lấy từ battery asset.
-  // Hook tự disable khi thiếu id, và 2 ticket cùng pin sẽ dùng chung cache.
+  // A ticket only has customerId (a GUID) — the customer name comes from the battery asset.
+  // The hook auto-disables when the id is missing, and 2 tickets on the same battery share cache.
   const { data: sourceAsset } = useBatteryAsset(source?.batteryAssetId);
   const { data: targetAsset } = useBatteryAsset(target?.batteryAssetId);
 
@@ -121,22 +122,22 @@ export default function MergeCompareView({
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeftIcon className="size-4" />
-          Quay lại
+          Back
         </Button>
         <div>
           <h1 className="text-lg font-semibold">
-            So sánh trước khi gộp ticket
+            Compare before merging tickets
           </h1>
           <p className="text-sm text-muted-foreground">
-            Đối chiếu kỹ 2 ticket — thao tác gộp không thể hoàn tác.
+            Review both tickets carefully — merging cannot be undone.
           </p>
         </div>
       </div>
 
-      {/* ── Chọn ticket đích ───────────────────────────────────────────── */}
+      {/* ── Select target ticket ───────────────────────────────────────── */}
       <Card>
         <CardContent className="space-y-2 pt-6">
-          <Label>Chọn ticket đích (được giữ lại)</Label>
+          <Label>Select target ticket (will be kept)</Label>
           <Select
             value={targetId || undefined}
             onValueChange={(v) => onTargetIdChange(v ?? "")}
@@ -150,8 +151,8 @@ export default function MergeCompareView({
                 className="min-w-0 truncate"
                 placeholder={
                   isLoadingTickets
-                    ? "Đang tải ticket…"
-                    : "Chọn ticket để gộp vào…"
+                    ? "Loading tickets…"
+                    : "Select a ticket to merge into…"
                 }
               />
             </SelectTrigger>
@@ -166,7 +167,8 @@ export default function MergeCompareView({
           </Select>
           {source.suspectedDuplicateOfTicketId && (
             <p className="text-xs text-amber-600">
-              ⭐ AI gợi ý: ticket nghi trùng đã được chọn sẵn.
+              ⭐ AI suggestion: the suspected duplicate ticket has been
+              pre-selected.
             </p>
           )}
         </CardContent>
@@ -175,35 +177,35 @@ export default function MergeCompareView({
       {!targetId ? (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Chọn một ticket đích ở trên để bắt đầu so sánh.
+            Select a target ticket above to start comparing.
           </CardContent>
         </Card>
       ) : isLoadingTarget || !target ? (
         <Skeleton className="h-96 w-full" />
       ) : (
         <>
-          {/* ── Cảnh báo gộp nhầm (chỉ cảnh báo, không chặn) ───────────── */}
+          {/* ── Warning for a possibly wrong merge (warning only, doesn't block) ───────── */}
           {hasCriticalDiff && (
             <div className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
               <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
               <div>
                 <p className="font-medium text-destructive">
-                  Cảnh báo: 2 ticket có dấu hiệu KHÔNG cùng một sự cố
+                  Warning: these 2 tickets appear to NOT be the same incident
                 </p>
                 <ul className="mt-1 list-inside list-disc text-muted-foreground">
-                  {diffBattery && <li>Khác cục pin</li>}
-                  {diffCustomer && <li>Khác khách hàng</li>}
+                  {diffBattery && <li>Different battery</li>}
+                  {diffCustomer && <li>Different customer</li>}
                 </ul>
               </div>
             </div>
           )}
 
-          {/* ── Tiêu đề 2 cột ──────────────────────────────────────────── */}
+          {/* ── 2-column headers ──────────────────────────────────────── */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Card className="border-muted-foreground/30">
               <CardHeader className="pb-3">
                 <p className="text-xs font-medium text-muted-foreground">
-                  SẼ BỊ GỘP (đóng lại)
+                  WILL BE MERGED (closed)
                 </p>
                 <CardTitle className="flex flex-wrap items-center gap-2 text-base">
                   {source.code}
@@ -214,7 +216,7 @@ export default function MergeCompareView({
             </Card>
             <Card className="border-primary/40">
               <CardHeader className="pb-3">
-                <p className="text-xs font-medium text-primary">ĐƯỢC GIỮ LẠI</p>
+                <p className="text-xs font-medium text-primary">WILL BE KEPT</p>
                 <CardTitle className="flex flex-wrap items-center gap-2 text-base">
                   {target.code}
                   <TicketStatusBadge status={target.status} />
@@ -224,46 +226,48 @@ export default function MergeCompareView({
             </Card>
           </div>
 
-          {/* ── 1. Bảng đối chiếu trường cơ bản ────────────────────────── */}
+          {/* ── 1. Basic field comparison table ─────────────────────────── */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Đối chiếu thông tin</CardTitle>
+              <CardTitle className="text-sm">Field comparison</CardTitle>
             </CardHeader>
             <CardContent>
               <CompareFieldTable rows={rows} />
             </CardContent>
           </Card>
 
-          {/* ── 2. Nhận định AI ────────────────────────────────────────── */}
+          {/* ── 2. AI assessment ─────────────────────────────────────────── */}
           {(source.duplicateReason ||
             source.aiVerifyReason ||
             target.aiVerifyReason) && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Nhận định của AI</CardTitle>
+                <CardTitle className="text-sm">AI assessment</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 {source.duplicateReason && (
                   <div className="rounded-md bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/20 dark:text-amber-200">
-                    <p className="text-xs font-medium">Lý do nghi trùng</p>
+                    <p className="text-xs font-medium">
+                      Suspected duplicate reason
+                    </p>
                     <p className="mt-0.5">{source.duplicateReason}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">
-                      {source.code} — AI kiểm tra
+                      {source.code} — AI check
                     </p>
                     <p className="mt-0.5">
-                      {source.aiVerifyReason ?? "Không có nhận định."}
+                      {source.aiVerifyReason ?? "No assessment."}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">
-                      {target.code} — AI kiểm tra
+                      {target.code} — AI check
                     </p>
                     <p className="mt-0.5">
-                      {target.aiVerifyReason ?? "Không có nhận định."}
+                      {target.aiVerifyReason ?? "No assessment."}
                     </p>
                   </div>
                 </div>
@@ -271,10 +275,10 @@ export default function MergeCompareView({
             </Card>
           )}
 
-          {/* ── 3. Mô tả đầy đủ ────────────────────────────────────────── */}
+          {/* ── 3. Full description ─────────────────────────────────────── */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Mô tả sự cố</CardTitle>
+              <CardTitle className="text-sm">Incident description</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
               <div>
@@ -282,7 +286,7 @@ export default function MergeCompareView({
                   {source.code}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap">
-                  {source.description || "Không có mô tả."}
+                  {source.description || "No description."}
                 </p>
               </div>
               <div>
@@ -290,17 +294,17 @@ export default function MergeCompareView({
                   {target.code}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap">
-                  {target.description || "Không có mô tả."}
+                  {target.description || "No description."}
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* ── 4. Bằng chứng cảm biến ─────────────────────────────────── */}
+          {/* ── 4. Sensor evidence ─────────────────────────────────────── */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">
-                Bằng chứng cảm biến (±15 phút quanh lúc phát hiện)
+                Sensor evidence (±15 minutes around detection)
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -317,13 +321,13 @@ export default function MergeCompareView({
             </CardContent>
           </Card>
 
-          {/* ── Xác nhận ───────────────────────────────────────────────── */}
+          {/* ── Confirm ────────────────────────────────────────────────── */}
           <div className="flex flex-wrap items-center justify-end gap-2 pb-4">
             <Button variant="outline" onClick={onBack}>
-              Hủy
+              Cancel
             </Button>
             <Button onClick={() => setConfirmOpen(true)} disabled={isMerging}>
-              Gộp {source.code}
+              Merge {source.code}
               <ArrowRightIcon className="size-4" />
               {target.code}
             </Button>
@@ -332,25 +336,25 @@ export default function MergeCompareView({
           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Xác nhận gộp ticket?</AlertDialogTitle>
+                <AlertDialogTitle>Confirm ticket merge?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Ticket <strong>{source.code}</strong> sẽ bị{" "}
-                  <strong>đóng vĩnh viễn</strong> và gộp vào{" "}
-                  <strong>{target.code}</strong>. Thao tác này không thể hoàn
-                  tác.
+                  Ticket <strong>{source.code}</strong> will be{" "}
+                  <strong>closed permanently</strong> and merged into{" "}
+                  <strong>{target.code}</strong>. This action cannot be undone.
                   {hasCriticalDiff && (
                     <>
                       {" "}
-                      Lưu ý: 2 ticket này {diffBattery && "khác cục pin"}
-                      {diffBattery && diffCustomer && " và "}
-                      {diffCustomer && "khác khách hàng"}.
+                      Note: these tickets are{" "}
+                      {diffBattery && "on different batteries"}
+                      {diffBattery && diffCustomer && " and "}
+                      {diffCustomer && "for different customers"}.
                     </>
                   )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setConfirmOpen(false)}>
-                  Hủy
+                  Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
                   variant={hasCriticalDiff ? "destructive" : "default"}
@@ -360,7 +364,7 @@ export default function MergeCompareView({
                     onMerge();
                   }}
                 >
-                  {isMerging ? "Đang gộp…" : "Gộp ticket"}
+                  {isMerging ? "Merging…" : "Merge ticket"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

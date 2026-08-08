@@ -39,9 +39,9 @@ const TYPE_OPTIONS = [
 ];
 
 const SEVERITY_OPTIONS: { value: AlertSeverityEnum; label: string }[] = [
-  { value: AlertSeverityEnum.Info, label: "Thông tin" },
-  { value: AlertSeverityEnum.Warning, label: "Cảnh báo" },
-  { value: AlertSeverityEnum.Critical, label: "Nguy hiểm" },
+  { value: AlertSeverityEnum.Info, label: "Info" },
+  { value: AlertSeverityEnum.Warning, label: "Warning" },
+  { value: AlertSeverityEnum.Critical, label: "Critical" },
 ];
 
 export default function ManualIncidentDialog({
@@ -86,10 +86,10 @@ export default function ManualIncidentDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Report sự cố môi trường</DialogTitle>
+          <DialogTitle>Report environmental incident</DialogTitle>
           <DialogDescription>
-            Dùng khi phát hiện sự cố tại site mà không có cảm biến tự động
-            (cháy, khói, ngập...).
+            Use this when an incident is detected at a site without automatic
+            sensors (fire, smoke, flood...).
           </DialogDescription>
         </DialogHeader>
 
@@ -106,7 +106,7 @@ export default function ManualIncidentDialog({
                   items={sites.map((s) => ({ value: s.id, label: s.name }))}
                 >
                   <SelectTrigger id="siteId">
-                    <SelectValue placeholder="Chọn site" />
+                    <SelectValue placeholder="Select site" />
                   </SelectTrigger>
                   <SelectContent>
                     {sites.map((s) => (
@@ -126,7 +126,7 @@ export default function ManualIncidentDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="incidentType">Loại sự cố *</Label>
+            <Label htmlFor="incidentType">Incident type *</Label>
             <Controller
               control={control}
               name="incidentType"
@@ -140,7 +140,7 @@ export default function ManualIncidentDialog({
                   }))}
                 >
                   <SelectTrigger id="incidentType">
-                    <SelectValue placeholder="Chọn loại" />
+                    <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     {TYPE_OPTIONS.map((t) => (
@@ -160,7 +160,7 @@ export default function ManualIncidentDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="severity">Mức độ *</Label>
+            <Label htmlFor="severity">Severity *</Label>
             <Controller
               control={control}
               name="severity"
@@ -174,7 +174,7 @@ export default function ManualIncidentDialog({
                   }))}
                 >
                   <SelectTrigger id="severity">
-                    <SelectValue placeholder="Chọn mức độ" />
+                    <SelectValue placeholder="Select severity" />
                   </SelectTrigger>
                   <SelectContent>
                     {SEVERITY_OPTIONS.map((s) => (
@@ -194,11 +194,11 @@ export default function ManualIncidentDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
               rows={3}
-              placeholder="Mô tả tình huống quan sát được..."
+              placeholder="Describe what was observed..."
               {...register("notes")}
             />
             {errors.notes && (
@@ -208,7 +208,7 @@ export default function ManualIncidentDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={close}>
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               Report

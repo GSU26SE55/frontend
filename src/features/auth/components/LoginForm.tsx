@@ -42,10 +42,10 @@ const LoginForm = () => {
     <div className="space-y-5">
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Đăng nhập
+          Log in
         </h1>
         <p className="text-sm text-slate-500">
-          Nhập email và mật khẩu của bạn để tiếp tục
+          Enter your email and password to continue
         </p>
       </div>
 
@@ -75,13 +75,13 @@ const LoginForm = () => {
               htmlFor="password"
               className="text-sm font-medium text-slate-700"
             >
-              Mật khẩu
+              Password
             </Label>
             <Link
               to="/forgot-password"
               className="text-xs text-slate-400 hover:text-emerald-600 transition-colors"
             >
-              Quên mật khẩu?
+              Forgot password?
             </Link>
           </div>
           <div className="relative">
@@ -95,7 +95,7 @@ const LoginForm = () => {
             />
             <button
               type="button"
-              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               onClick={() => setShowPassword((v) => !v)}
             >
@@ -120,10 +120,10 @@ const LoginForm = () => {
           {isPending ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Đang đăng nhập…
+              Logging in…
             </>
           ) : (
-            "Đăng nhập"
+            "Log in"
           )}
         </Button>
 
@@ -133,7 +133,7 @@ const LoginForm = () => {
             <span className="w-full border-t border-slate-200" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white px-3 text-xs text-slate-400">hoặc</span>
+            <span className="bg-white px-3 text-xs text-slate-400">or</span>
           </div>
         </div>
 
@@ -166,26 +166,26 @@ const LoginForm = () => {
               fill="#EA4335"
             />
           </svg>
-          Đăng nhập với Google
+          Log in with Google
         </Button>
 
         <p className="text-center text-sm text-slate-500">
-          Chưa có tài khoản?{" "}
+          Don't have an account?{" "}
           <Link
             to="/register"
             className="font-semibold text-emerald-600 hover:text-emerald-700 underline-offset-4 hover:underline"
           >
-            Đăng ký
+            Sign up
           </Link>
         </p>
 
         <p className="text-center text-sm text-slate-400">
-          Tài khoản đã bị xóa?{" "}
+          Account deleted?{" "}
           <Link
             to="/reactivate"
             className="font-medium text-slate-500 hover:text-emerald-600 underline-offset-4 hover:underline"
           >
-            Khôi phục tài khoản
+            Restore account
           </Link>
         </p>
       </form>

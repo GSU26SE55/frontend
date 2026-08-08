@@ -1,15 +1,15 @@
-// Sensor Readings — time-series data (TimescaleDB). KHÔNG extend AuditableEntity.
-// Docs: docs/api-battery.md §Nhóm 4.
-// Nguồn dùng chung admin/manager/staff (trước đây nhân bản ở mỗi feature).
+// Sensor Readings — time-series data (TimescaleDB). Does NOT extend AuditableEntity.
+// Docs: docs/api-battery.md §Group 4.
+// Single source shared by admin/manager/staff (previously duplicated in each feature).
 
 export interface SensorReadingDto {
-  time: string; // ISO 8601 UTC — partition key TimescaleDB
+  time: string; // ISO 8601 UTC — TimescaleDB partition key
   batteryAssetId: string;
   voltage: number; // V
-  current: number; // A — âm = đang xả
+  current: number; // A — negative = discharging
   temperature: number; // °C
   socPercent: number; // 0–100
-  cycleCount: number | null; // null nếu BMS không report
+  cycleCount: number | null; // null if the BMS does not report it
   sourceDeviceId: string | null;
 }
 
@@ -24,17 +24,20 @@ export interface SensorReadingHistoryParams {
   from?: string; // UTC
   to?: string; // UTC
   limit?: number; // 1–1000, default 100
-  cursor?: string; // timestamp record cuối trang trước; BE lấy record có time < cursor
-  // Server-side sort (Hướng B): sortBy=time → cursor bình thường; sortBy khác time
-  // → BẮT BUỘC from+to, BE sort toàn [from,to], nextCursor=null + hasMore=false.
+  // timestamp of the last record on the previous page; the BE returns records
+  // with time < cursor
+  cursor?: string;
+  // Server-side sort (Approach B): sortBy=time → normal cursor; any sortBy other
+  // than time → from+to are REQUIRED, the BE sorts the whole [from,to] range,
+  // nextCursor=null + hasMore=false.
   sortBy?: SensorReadingSortKey;
   sortDir?: string; // asc | desc (default desc)
 }
 
-// Cursor pagination — KHÔNG có totalItems (time-series, count full quá tốn)
+// Cursor pagination — NO totalItems (time-series, a full count is too expensive)
 export interface SensorReadingHistoryResponseDto {
-  items: SensorReadingDto[]; // sort time giảm dần
-  nextCursor: string | null; // null nếu hết data
+  items: SensorReadingDto[]; // sorted by time descending
+  nextCursor: string | null; // null when there is no more data
   hasMore: boolean;
 }
 
@@ -46,23 +49,24 @@ export interface SensorReadingAggregateParams {
   interval?: SensorReadingInterval; // default "1h"
 }
 
-// Bucket 1h cố định (TimescaleDB continuous aggregate) — dùng cho range dài (tháng/năm).
-// Range ngắn (≤ 7 ngày) + interval linh hoạt → dùng SensorReadingAggregateParams.
+// Fixed 1h buckets (TimescaleDB continuous aggregate) — for long ranges (months/years).
+// Short ranges (≤ 7 days) with a flexible interval → use SensorReadingAggregateParams.
 export interface SensorReadingAggregateHourlyParams {
   from?: string; // UTC
   to?: string; // UTC
 }
 
-// Dùng chung cho /aggregate và /aggregate/hourly — cùng shape.
-// Quy ước min/max nạp/xả: LUÔN trả giá trị DƯƠNG cho cả 2 chiều (chiều nằm trong tên
-// field) → FE không xử lý dấu. null = bucket chưa có mẫu chiều đó.
+// Shared by /aggregate and /aggregate/hourly — same shape.
+// Charge/discharge min/max convention: ALWAYS returns a POSITIVE value for both
+// directions (the direction is in the field name) → the FE never handles signs.
+// null = the bucket has no sample in that direction.
 export interface SensorReadingAggregateDto {
-  time: string; // điểm bắt đầu bucket (UTC) — field "time", không phải "bucket"
+  time: string; // bucket start (UTC) — the field is "time", not "bucket"
   avgVoltage: number;
   avgCurrent: number;
   avgTemperature: number;
   avgSocPercent: number;
-  avgSohPercent: number | null; // null nếu bucket không có reading nào có SOH
+  avgSohPercent: number | null; // null if no reading in the bucket carries SOH
   minVoltage: number | null;
   maxVoltage: number | null;
   minTemperature: number | null;

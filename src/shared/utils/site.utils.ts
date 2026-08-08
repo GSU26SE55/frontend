@@ -1,7 +1,7 @@
-// Helper sức khỏe site (client-side) — dùng cho danh sách/at-risk site ở dashboard.
-// Aggregate KPI (activeCount/avgHealth/atRiskCount) lấy từ /api/sites/dashboard/stats.
+// Client-side site health helpers — used by the dashboard's site list / at-risk list.
+// The aggregate KPIs (activeCount/avgHealth/atRiskCount) come from /api/sites/dashboard/stats.
 
-/** Health % của 1 site = activeBatteryAssetCount / batteryAssetCount × 100. */
+/** Health % of one site = activeBatteryAssetCount / batteryAssetCount × 100. */
 export function siteHealth(s: {
   batteryAssetCount: number;
   activeBatteryAssetCount: number;
@@ -11,7 +11,7 @@ export function siteHealth(s: {
     : 100;
 }
 
-/** Màu theo health %: >=80 ok · >=60 p3 · còn lại p1 */
+/** Color by health %: >=80 ok · >=60 p3 · anything else p1 */
 export function healthColor(h: number): string {
   return h >= 80 ? "var(--ok)" : h >= 60 ? "var(--p3)" : "var(--p1)";
 }

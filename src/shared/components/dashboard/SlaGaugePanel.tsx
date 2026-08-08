@@ -6,10 +6,11 @@ import {
 import { slaComplianceColor } from "@/shared/lib/sla";
 
 /**
- * Gauge tuân thủ SLA + 3 ô Met / Running / Breach.
+ * SLA compliance gauge + 3 cells: Met / Running / Breach.
  *
- * Trước đây khối này được copy nguyên văn ở CẢ BA dashboard (admin/manager/staff)
- * — kể cả thang màu — nên sửa ngưỡng ở 1 chỗ là lệch 2 chỗ còn lại. Gom về đây.
+ * This block used to be copy-pasted verbatim across ALL THREE dashboards
+ * (admin/manager/staff) — including the color scale — so changing a threshold in
+ * one place caused the other two to drift. Consolidated here.
  */
 
 export interface SlaSummary {
@@ -30,7 +31,10 @@ function FooterCell({
 }) {
   return (
     <div className="rounded-lg bg-muted/40 py-2 px-1">
-      <p className="text-base lg:text-lg font-bold tabular-nums" style={{ color }}>
+      <p
+        className="text-base lg:text-lg font-bold tabular-nums"
+        style={{ color }}
+      >
         {value}
       </p>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -65,11 +69,7 @@ export function SlaGaugePanel({
           color={slaComplianceColor(sla?.compliancePercent)}
           footer={
             <div className="grid grid-cols-3 gap-2 text-center">
-              <FooterCell
-                value={sla?.met ?? 0}
-                label="Met"
-                color="var(--ok)"
-              />
+              <FooterCell value={sla?.met ?? 0} label="Met" color="var(--ok)" />
               <FooterCell value={sla?.running ?? 0} label="Running" />
               <FooterCell
                 value={sla?.breached ?? 0}
