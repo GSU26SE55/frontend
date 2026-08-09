@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Wrench,
   SlidersHorizontal,
+  HardDrive,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
@@ -54,6 +55,12 @@ export const STAFF_NAV: NavSection[] = [
         label: "Device calibration",
         path: "/staff/iot-calibrations",
         icon: SlidersHorizontal,
+      },
+      // IOT3-68 — đặt CẠNH calibration: cùng một người, cùng một lúc, cùng một thiết bị.
+      {
+        label: "Thiết bị IoT",
+        path: "/staff/iot-devices",
+        icon: HardDrive,
       },
     ],
   },

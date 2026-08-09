@@ -44,6 +44,8 @@ import IoTFirmwareReleasesPage from "@/features/admin/pages/IoTFirmwareReleasesP
 import IoTFirmwareFormPage from "@/features/admin/pages/IoTFirmwareFormPage";
 import ManagerCalibrationsExpiringPage from "@/features/manager/pages/CalibrationsExpiringPage";
 import StaffIoTCalibrationsPage from "@/features/staff/pages/IoTCalibrationsPage";
+import StaffIoTDevicesPage from "@/features/staff/pages/IoTDevicesPage";
+import StaffIoTDeviceDetailPage from "@/features/staff/pages/IoTDeviceDetailPage";
 import AccountsPage from "@/features/admin/pages/AccountsPage";
 import RolesPage from "@/features/admin/pages/RolesPage";
 import AdminTicketListPage from "@/features/admin/pages/AdminTicketListPage";
@@ -307,6 +309,12 @@ const router = createBrowserRouter([
               {
                 path: "iot-calibrations",
                 element: <StaffIoTCalibrationsPage />,
+              },
+              // IOT3-66/67
+              { path: "iot-devices", element: <StaffIoTDevicesPage /> },
+              {
+                path: "iot-devices/:id",
+                element: <StaffIoTDeviceDetailPage />,
               },
               { path: "alerts", element: <StaffAlertsPage /> },
               { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },

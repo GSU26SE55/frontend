@@ -8,6 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
 import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
+import {
+  fromCreatedDto,
+  fromDetailDto,
+  type DeviceSecrets,
+} from "@/features/admin/components/iot/deviceSecrets";
 import DeviceCommandDialog from "@/features/admin/components/iot/DeviceCommandDialog";
 import ConfirmActionDialog from "@/features/admin/components/common/ConfirmActionDialog";
 import CalibrationTable from "@/shared/components/iot/CalibrationTable";
@@ -15,12 +20,12 @@ import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog
 import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
 import {
   useRotateIotDeviceKey,
+  useRotateIotDeviceMqtt,
   useRevokeIotDeviceKey,
 } from "@/features/admin/hooks/iot/useIotDeviceMutations";
 import { useIotCalibrations } from "@/shared/hooks/iot/useIotCalibrations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
-import type { IotDeviceCreatedDto } from "@/shared/types/iot/iot.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -88,12 +93,15 @@ export default function IoTDeviceDetailPage() {
   const { data: calibrations } = useIotCalibrations(id);
 
   const { mutate: rotateKey } = useRotateIotDeviceKey(id);
+  const { mutate: rotateMqtt } = useRotateIotDeviceMqtt(id);
   const { mutate: revokeKey } = useRevokeIotDeviceKey(id);
 
-  const [revealed, setRevealed] = useState<IotDeviceCreatedDto | null>(null);
+  const [revealed, setRevealed] = useState<DeviceSecrets | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
   const [calibrationOpen, setCalibrationOpen] = useState(false);
-  const [confirm, setConfirm] = useState<"rotate" | "revoke" | null>(null);
+  const [confirm, setConfirm] = useState<
+    "rotate" | "rotate-mqtt" | "revoke" | null
+  >(null);
 
   if (isLoading) {
     return (
@@ -157,6 +165,24 @@ export default function IoTDeviceDetailPage() {
               onClick={() => setCommandOpen(true)}
             >
               Send command
+            </Button>
+          )}
+          {/* IOT3-73 — mở lại dialog từ dữ liệu ĐANG CÓ, không gọi thêm request nào:
+              `useIotDevice` đã nạp `GET /{id}`, và từ IOT3-70/71 endpoint đó trả đủ QR + MQTT. */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRevealed(fromDetailDto(device))}
+          >
+            Xem lại thông tin
+          </Button>
+          {!isDecommissioned && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirm("rotate-mqtt")}
+            >
+              Xoay khoá MQTT
             </Button>
           )}
           {!isDecommissioned && (
@@ -270,6 +296,7 @@ export default function IoTDeviceDetailPage() {
         open={commandOpen}
         onOpenChange={setCommandOpen}
         deviceId={id}
+        deviceStatus={device.status}
       />
       <CalibrationFormDialog
         open={calibrationOpen}
@@ -277,17 +304,37 @@ export default function IoTDeviceDetailPage() {
         deviceId={id}
       />
 
+      {/* IOT3-76 — hai lệnh xoay khoá, HAI cảnh báo hoàn toàn khác nhau.
+          Dùng chung một lời cảnh báo là hoặc doạ quá (admin ngại xoay khi nghi bị lộ), hoặc
+          nói nhẹ quá (admin xoay apiKey rồi mới biết phải ra hiện trường). */}
+      <ConfirmActionDialog
+        open={confirm === "rotate-mqtt"}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title="Xoay khoá MQTT?"
+        description="Chỉ đổi username/mật khẩu MQTT. API key GIỮ NGUYÊN, nên thiết bị tự gọi /provision lấy mật khẩu mới — KHÔNG cần ra hiện trường. Trong lúc chờ, thiết bị tạm mất đường MQTT nhưng vẫn gửi dữ liệu qua HTTPS."
+        actionLabel="Xoay khoá MQTT"
+        onConfirm={() => {
+          setConfirm(null);
+          rotateMqtt(undefined, {
+            onSuccess: (res) => {
+              if (res.data) setRevealed(fromCreatedDto(res.data));
+              toast.success("Đã xoay khoá MQTT. Thiết bị sẽ tự re-provision.");
+            },
+            onError: (error) => handleErrorApi({ error }),
+          });
+        }}
+      />
       <ConfirmActionDialog
         open={confirm === "rotate"}
         onOpenChange={(o) => !o && setConfirm(null)}
         title="Rotate API key?"
-        description="Generates a new key and clears the revoke, but does NOT change the status. The old key stops working immediately. The new secrets are shown only once."
+        description="Đổi CẢ API key LẪN khoá MQTT. Thiết bị mất cả hai đường và KHÔNG tự lành được — bắt buộc mang cáp ra hiện trường nạp lại API key. Chỉ nghi bị lộ API key mới dùng lệnh này; nếu chỉ cần đổi khoá MQTT thì dùng Xoay khoá MQTT."
         actionLabel="Rotate"
         onConfirm={() => {
           setConfirm(null);
           rotateKey(undefined, {
             onSuccess: (res) => {
-              if (res.data) setRevealed(res.data);
+              if (res.data) setRevealed(fromCreatedDto(res.data));
               toast.success(ADMIN_MESSAGES.iot.keyRotated);
             },
             onError: (error) => handleErrorApi({ error }),

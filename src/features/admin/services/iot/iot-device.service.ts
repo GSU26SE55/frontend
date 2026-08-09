@@ -46,6 +46,13 @@ export const iotDeviceService = {
     axiosInstance.post<CommonResponse<IotDeviceCreatedDto>>(
       ENDPOINTS.IOT_DEVICES.ROTATE_KEY(id),
     ),
+  // IOT3-32/76 — xoay RIÊNG credential MQTT. apiKey còn nguyên ⇒ thiết bị tự lấy mật khẩu mới
+  // qua /provision. Khác hẳn `rotateKey`, vốn buộc phải ra hiện trường nạp lại apiKey.
+  rotateMqtt: (id: string) =>
+    axiosInstance.post<CommonResponse<IotDeviceCreatedDto>>(
+      ENDPOINTS.IOT_DEVICES.ROTATE_MQTT(id),
+    ),
+
   revokeKey: (id: string) =>
     axiosInstance.post<CommonResponse<null>>(
       ENDPOINTS.IOT_DEVICES.REVOKE_KEY(id),

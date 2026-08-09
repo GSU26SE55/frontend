@@ -457,9 +457,16 @@ export const ENDPOINTS = {
     ROTATE_KEY: (id: string) => `/api/admin/iot-devices/${id}/rotate-key`,
     REVOKE_KEY: (id: string) => `/api/admin/iot-devices/${id}/revoke-key`,
     COMMAND: (id: string) => `/api/admin/iot-devices/${id}/command`,
+    // IOT3-32 — xoay RIÊNG credential MQTT. Khác ROTATE_KEY ở chỗ apiKey còn nguyên, nên thiết
+    // bị tự lấy mật khẩu mới qua /provision — KHÔNG phải ra hiện trường.
+    ROTATE_MQTT: (id: string) => `/api/admin/iot-devices/${id}/rotate-mqtt`,
     // Lookup deviceCode → deviceId (Admin/Manager/Staff) — cầu nối cho Staff calibration.
     BY_CODE: (deviceCode: string) =>
       `/api/iot-devices/by-code/${encodeURIComponent(deviceCode)}`,
+    // IOT3-57 — danh sách cho Admin/Manager/Staff. KHÔNG trả apiKey/mqttPassword.
+    STAFF_LIST: "/api/iot-devices",
+    // IOT3-58 — lịch sử heartbeat, phân trang theo CON TRỎ (không offset).
+    HEARTBEATS: (deviceId: string) => `/api/iot-devices/${deviceId}/heartbeats`,
   },
 
   IOT_CALIBRATIONS: {
