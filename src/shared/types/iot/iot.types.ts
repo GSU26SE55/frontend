@@ -45,6 +45,54 @@ export interface IotDeviceDetailDto extends IotDeviceDto {
   // only the SHA-256 hash and cannot be backfilled) → use rotate-key to mint a new
   // key and store the plaintext.
   apiKey: string | null;
+
+  // ── IOT3-70 ────────────────────────────────────────────────
+  // Bảy trường dưới biến `GET /{id}` thành nguồn XEM LẠI ĐƯỢC của mọi thứ cần để đưa một thiết
+  // bị vào hoạt động. Trước đây chỉ `POST` (lúc tạo) mới trả QR + thông tin MQTT, nên mất tab
+  // trình duyệt là mất luôn — phải xoay khoá, tức phải mang cáp ra tận nơi nạp lại một thiết bị
+  // đang chạy tốt.
+  //
+  // ⚠️ `mqttPassword` null với thiết bị tạo TRƯỚC IOT3-25 (chưa lưu plaintext) — khi đó dùng
+  // `rotate-mqtt`, thiết bị tự lành qua re-provision, KHÔNG cần ra hiện trường.
+  provisioningQrCode: string | null;
+  mqttUsername: string | null;
+  mqttPassword: string | null;
+  mqttBrokerHost: string | null;
+  mqttBrokerPort: number | null;
+  mqttUseTls: boolean | null;
+  mqttTopicPrefix: string | null;
+}
+
+// ── IOT3-58: heartbeat ────────────────────────────────────────
+export interface IotDeviceHeartbeatDto {
+  time: string;
+  firmwareVersion: string | null;
+  /** Sóng WiFi (dBm). Luôn ÂM: −50 mạnh, −90 gần như không dùng được. */
+  rssiDbm: number | null;
+  freeMemoryPercent: number | null;
+  uptimeSeconds: number | null;
+  /** Bản ghi còn kẹt trong hàng đợi cục bộ vì chưa đẩy lên được. */
+  queuedReadingCount: number | null;
+  deviceTimestamp: string | null;
+  clockSkewSeconds: number | null;
+}
+
+/**
+ * Phân trang theo CON TRỎ — `iot_device_heartbeats` là hypertable hàng triệu dòng, offset buộc
+ * quét lại từ đầu mỗi trang. `totalCount` LUÔN null; dùng `hasMore`.
+ */
+export interface IotDeviceHeartbeatListDto {
+  items: IotDeviceHeartbeatDto[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  totalCount: number | null;
+}
+
+export interface HeartbeatListParams {
+  from?: string;
+  to?: string;
+  limit?: number;
+  cursor?: string;
 }
 
 // Returned on create and rotate-key — secrets are returned only once.

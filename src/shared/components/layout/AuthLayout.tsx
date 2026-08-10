@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo.webp";
+import { AuthCardSkeleton } from "./LayoutSkeleton";
 import { useAuthContext } from "@/shared/context/authContext";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { redirectByRole } from "@/shared/types/account/session.types";
@@ -44,7 +46,11 @@ const AuthLayout = () => {
         key={location.pathname}
         className="page-enter relative z-10 w-full max-w-105 rounded-2xl border border-border bg-card p-8 shadow-sm"
       >
-        <Outlet />
+        {/* Auth pages are code-split. The card box is rendered here, so only its contents
+            are skeletonized and the card keeps its size while the page chunk loads. */}
+        <Suspense fallback={<AuthCardSkeleton />}>
+          <Outlet />
+        </Suspense>
       </div>
 
       <p className="relative z-10 mt-8 text-xs text-muted-foreground">

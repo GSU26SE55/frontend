@@ -381,6 +381,12 @@ export const QUERY_KEY = {
     detail: (id: string) => [KEY.iotDevices, "detail", id] as const,
     byCode: (deviceCode: string) =>
       [KEY.iotDevices, "by-code", deviceCode] as const,
+    // IOT3-66/67 — đường Staff (`/api/iot-devices`), TÁCH khỏi `list` của admin
+    // (`/api/admin/iot-devices`): hai endpoint khác nhau, hai hình dạng dữ liệu khác nhau,
+    // dùng chung key là cache của bên này trả cho bên kia.
+    staffList: (params?: object) => [KEY.iotDevices, "staff-list", params] as const,
+    heartbeats: (deviceId: string, params?: object) =>
+      [KEY.iotDevices, "heartbeats", deviceId, params] as const,
   },
   iotCalibrations: {
     list: (deviceId: string, params?: object) =>

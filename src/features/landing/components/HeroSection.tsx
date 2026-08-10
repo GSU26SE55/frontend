@@ -20,7 +20,7 @@ import {
 } from "@/features/landing/landing.constants";
 import type { HeroDemoId } from "@/features/landing/types/landing.types";
 import { prefersReducedMotion } from "@/features/landing/lib/animation";
-import heroImage from "@/assets/hero1.jpg";
+import heroImage from "@/assets/hero1.webp";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -561,6 +561,10 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
             alt="Solar battery operations overview"
             className="absolute inset-0 h-full w-full object-cover object-bottom"
             loading="eager"
+            // This is the LCP element and it competes with the JavaScript bundle for
+            // bandwidth on a cold load; the hint tells the browser to fetch it first.
+            fetchPriority="high"
+            decoding="async"
           />
           <div
             aria-hidden

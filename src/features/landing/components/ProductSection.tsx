@@ -5,9 +5,9 @@ import {
   createCleanupBag,
   prefersReducedMotion,
 } from "@/features/landing/lib/animation";
-import solarOnlyImg from "@/assets/solar_only.png";
-import solarBatteryImg from "@/assets/solar_battery.png";
-import solarMonitoringImg from "@/assets/solar_monitoring.png";
+import solarOnlyImg from "@/assets/solar_only.webp";
+import solarBatteryImg from "@/assets/solar_battery.webp";
+import solarMonitoringImg from "@/assets/solar_monitoring.webp";
 
 const PRODUCT_ITEMS = [
   {
@@ -176,6 +176,7 @@ const ProductSection = () => {
                     alt={item.title}
                     className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
+                    decoding="async"
                   />
 
                   {isMonitoring && (
@@ -187,6 +188,8 @@ const ProductSection = () => {
                         src={solarMonitoringImg}
                         alt="Gateway Controller"
                         className="h-full w-full object-contain"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   )}

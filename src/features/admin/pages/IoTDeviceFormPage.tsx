@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceForm from "@/features/admin/components/iot/IoTDeviceForm";
 import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
+import { fromCreatedDto } from "@/features/admin/components/iot/deviceSecrets";
 import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
 import type { IotDeviceCreatedDto } from "@/shared/types/iot/iot.types";
 
@@ -66,7 +67,7 @@ export default function IoTDeviceFormPage() {
       <DeviceKeyRevealDialog
         open={!!created}
         onOpenChange={(o) => !o && handleSecretsClose()}
-        device={created}
+        device={created ? fromCreatedDto(created) : null}
       />
     </div>
   );

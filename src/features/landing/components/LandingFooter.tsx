@@ -2,7 +2,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import Reveal from "@/features/landing/components/Reveal";
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo.webp";
 
 const PRODUCT_LINKS = [
   { label: "Battery monitoring", href: "#product" },
@@ -54,6 +54,8 @@ const LandingFooter = () => {
                   src={logoImg}
                   alt="Sunaria Logo"
                   className="h-5 w-auto object-contain brightness-0 invert"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <span className="font-bold text-base tracking-tight text-white">
