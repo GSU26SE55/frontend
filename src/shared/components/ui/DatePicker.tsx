@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format, parse, isValid } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
@@ -35,12 +35,14 @@ interface DatePickerProps {
   max?: string;
 }
 
-/** Replaces <Input type="date"> — value/onChange keep the "yyyy-MM-dd" string format so the schema/state at call sites doesn't change. */
+const TYPED_DATE_FORMAT = "MM/dd/yyyy";
+
+/** Replaces <Input type="date"> — value/onChange keep the "yyyy-MM-dd" string format so the schema/state at call sites doesn't change. Supports both typing "MM/dd/yyyy" directly and picking from the calendar popover. */
 export function DatePicker({
   id,
   value,
   onChange,
-  placeholder = "Select date",
+  placeholder = "MM/DD/YYYY",
   disabled,
   className,
   min,
@@ -51,26 +53,63 @@ export function DatePicker({
   const minDate = parseDateValue(min);
   const maxDate = parseDateValue(max);
 
+  const [text, setText] = useState(
+    selected ? format(selected, TYPED_DATE_FORMAT) : "",
+  );
+  const isTypingRef = useRef(false);
+  // Keep the typed text in sync when the value changes from outside (calendar pick, form reset/prefill) —
+  // skipped while the user is actively typing so a not-yet-valid partial date isn't overwritten mid-keystroke.
+  useEffect(() => {
+    if (isTypingRef.current) return;
+    setText(selected ? format(selected, TYPED_DATE_FORMAT) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const commitTyped = (raw: string) => {
+    isTypingRef.current = true;
+    setText(raw);
+    if (!raw) {
+      onChange(undefined);
+      return;
+    }
+    const parsed = parse(raw, TYPED_DATE_FORMAT, new Date());
+    if (isValid(parsed)) {
+      if (minDate && parsed < minDate) return;
+      if (maxDate && parsed > maxDate) return;
+      onChange(format(parsed, DATE_FORMAT));
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            id={id}
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            className={cn(
-              "w-full justify-start font-normal",
-              !selected && "text-muted-foreground",
-              className,
-            )}
-          />
-        }
-      >
-        <CalendarIcon className="size-3.5" />
-        {selected ? format(selected, "MM/dd/yyyy") : placeholder}
-      </PopoverTrigger>
+      <div className={cn("relative flex items-center", className)}>
+        <Input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          disabled={disabled}
+          placeholder={placeholder}
+          value={text}
+          onChange={(e) => commitTyped(e.target.value)}
+          onBlur={() => {
+            isTypingRef.current = false;
+          }}
+          className="pr-9"
+        />
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={disabled}
+              className="absolute right-1 text-muted-foreground"
+            />
+          }
+        >
+          <CalendarIcon className="size-3.5" />
+        </PopoverTrigger>
+      </div>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
@@ -83,6 +122,7 @@ export function DatePicker({
           ]}
           onSelect={(date) => {
             onChange(date ? format(date, DATE_FORMAT) : undefined);
+            setText(date ? format(date, TYPED_DATE_FORMAT) : "");
             setOpen(false);
           }}
         />
@@ -113,12 +153,14 @@ interface DateTimePickerProps {
   max?: Date;
 }
 
-/** Replaces <Input type="datetime-local"> — value/onChange keep the "yyyy-MM-ddTHH:mm" string format. */
+const TYPED_DATETIME_FORMAT = "MM/dd/yyyy HH:mm";
+
+/** Replaces <Input type="datetime-local"> — value/onChange keep the "yyyy-MM-ddTHH:mm" string format. Supports both typing "MM/dd/yyyy HH:mm" directly and picking from the calendar popover. */
 export function DateTimePicker({
   id,
   value,
   onChange,
-  placeholder = "Select date & time",
+  placeholder = "MM/DD/YYYY HH:mm",
   disabled,
   className,
   min,
@@ -127,6 +169,16 @@ export function DateTimePicker({
   const [open, setOpen] = useState(false);
   const selected = parseDateTimeValue(value);
   const timeValue = selected ? format(selected, "HH:mm") : "";
+
+  const [text, setText] = useState(
+    selected ? format(selected, TYPED_DATETIME_FORMAT) : "",
+  );
+  const isTypingRef = useRef(false);
+  useEffect(() => {
+    if (isTypingRef.current) return;
+    setText(selected ? format(selected, TYPED_DATETIME_FORMAT) : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const clamp = (date: Date): Date => {
     if (min && date < min) return new Date(min);
@@ -137,34 +189,61 @@ export function DateTimePicker({
   const commit = (date: Date | undefined, time: string) => {
     if (!date) {
       onChange("");
+      setText("");
       return;
     }
     const [hours, minutes] = time ? time.split(":").map(Number) : [0, 0];
     const next = new Date(date);
     next.setHours(hours ?? 0, minutes ?? 0, 0, 0);
-    onChange(format(clamp(next), DATETIME_FORMAT));
+    const clamped = clamp(next);
+    onChange(format(clamped, DATETIME_FORMAT));
+    setText(format(clamped, TYPED_DATETIME_FORMAT));
+  };
+
+  const commitTyped = (raw: string) => {
+    isTypingRef.current = true;
+    setText(raw);
+    if (!raw) {
+      onChange("");
+      return;
+    }
+    const parsed = parse(raw, TYPED_DATETIME_FORMAT, new Date());
+    if (isValid(parsed)) {
+      if (min && parsed < min) return;
+      if (max && parsed > max) return;
+      onChange(format(parsed, DATETIME_FORMAT));
+    }
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            id={id}
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            className={cn(
-              "w-full justify-start font-normal",
-              !selected && "text-muted-foreground",
-              className,
-            )}
-          />
-        }
-      >
-        <CalendarIcon className="size-3.5" />
-        {selected ? format(selected, "MM/dd/yyyy HH:mm") : placeholder}
-      </PopoverTrigger>
+      <div className={cn("relative flex items-center", className)}>
+        <Input
+          id={id}
+          type="text"
+          disabled={disabled}
+          placeholder={placeholder}
+          value={text}
+          onChange={(e) => commitTyped(e.target.value)}
+          onBlur={() => {
+            isTypingRef.current = false;
+          }}
+          className="pr-9"
+        />
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={disabled}
+              className="absolute right-1 text-muted-foreground"
+            />
+          }
+        >
+          <CalendarIcon className="size-3.5" />
+        </PopoverTrigger>
+      </div>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"

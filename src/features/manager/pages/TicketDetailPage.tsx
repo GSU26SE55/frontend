@@ -391,11 +391,11 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="info">Info</TabsTrigger>
                 {/* `group` so ChatUnreadBadge hides itself automatically when this tab is active. */}
                 <TabsTrigger value="comments" className="group">
-                  Comments
+                  Chat
                   <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="kb">KB Articles</TabsTrigger>
+                <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>
             </div>
 
