@@ -35,11 +35,16 @@ export interface NotificationsParams {
   unreadOnly?: boolean;
 }
 
-export enum PushTransportEnum {
-  SignalR = 1,
-  Expo = 2,
-  Both = 3,
-}
+// `as const` object rather than a TypeScript `enum`: the project standard (see
+// .claude/rules/tech/fe.md "Enum Pattern"), and required here because tsconfig has
+// `erasableSyntaxOnly` — a native enum emits runtime code and fails to compile.
+export const PushTransportEnum = {
+  SignalR: 1,
+  Expo: 2,
+  Both: 3,
+} as const;
+export type PushTransportEnum =
+  (typeof PushTransportEnum)[keyof typeof PushTransportEnum];
 
 export interface PushTransportOptionDto {
   value: PushTransportEnum;

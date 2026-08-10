@@ -101,6 +101,12 @@ export const ENDPOINTS = {
       `/api/tickets/${tid}/participants/leave`,
     PARTICIPANTS_HISTORY: (tid: string) =>
       `/api/tickets/${tid}/participants/history`,
+    // AI-ranked suggestions for a ticket. Added here because commit 51bd9ec shipped
+    // suggestion.service.ts referencing these two keys without defining them, which broke
+    // `tsc -b`. Paths follow the BE route convention (lowercase, kebab-case) — confirm them
+    // against the TicketService controller before relying on the response.
+    STAFF_SUGGESTIONS: (id: string) => `/api/tickets/${id}/staff-suggestions`,
+    KB_SUGGESTIONS: (id: string) => `/api/tickets/${id}/kb-suggestions`,
   },
 
   // #696 — CHAT_TEMPLATES đã bị xóa khỏi BE (/api/chat-templates,

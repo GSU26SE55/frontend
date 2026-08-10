@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
@@ -60,7 +60,14 @@ const App = () => (
       >
         <AuthProvider>
           <TooltipProvider>
-            <RouterProvider router={router} />
+            {/* Safety net: routes and layouts are code-split, and React throws if a
+                component suspends with no boundary above it. Every route already has a
+                closer boundary that renders a real placeholder, so this one should never
+                be seen — hence fallback={null}, which also leaves the index.html splash
+                (z-index 9999) visible underneath rather than flashing a second loader. */}
+            <Suspense fallback={null}>
+              <RouterProvider router={router} />
+            </Suspense>
             <ThemedToaster />
             <DismissSplash />
           </TooltipProvider>

@@ -21,6 +21,54 @@ interface Props {
   device: DeviceSecrets | null;
   /** Mật khẩu AP của trang cấu hình tại chỗ — in lên nhãn cùng QR. */
   setupApPassword?: string;
+  setupPortalUser?: string;
+  setupPortalPassword?: string;
+}
+
+const localSetupImportUrl =
+  import.meta.env.VITE_IOT_SETUP_URL?.trim() ||
+  "http://192.168.4.1:8080/import";
+const deviceApiUrl = import.meta.env.VITE_IOT_DEVICE_API_URL?.trim() || "";
+const deviceMqttHost = import.meta.env.VITE_IOT_MQTT_HOST?.trim() || "";
+const configuredMqttPort = Number(import.meta.env.VITE_IOT_MQTT_PORT || 0);
+
+/** Convert the backend's canonical iot:// payload into a URL a phone camera can open. */
+function buildScannableProvisioningUrl(
+  payload: string,
+  device: DeviceSecrets,
+): string {
+  try {
+    const source = new URL(payload);
+    const deviceCode = source.searchParams.get("dc");
+    const apiKey = source.searchParams.get("key");
+    if (
+      source.protocol !== "iot:" ||
+      source.hostname !== "provision" ||
+      !deviceCode ||
+      !apiKey
+    ) {
+      return payload;
+    }
+
+    const target = new URL(localSetupImportUrl);
+    target.searchParams.set("dc", deviceCode);
+    target.searchParams.set("key", apiKey);
+    // Identity alone is not enough: an ESP moved to another router must not
+    // keep using an IP address from an older network. The deployment supplies
+    // a stable DNS/mDNS API endpoint, and the portal persists it with the QR.
+    if (deviceApiUrl) target.searchParams.set("api", deviceApiUrl);
+
+    const mqttHost = deviceMqttHost || device.mqttBrokerHost;
+    const mqttPort = configuredMqttPort || device.mqttBrokerPort;
+    if (mqttHost) target.searchParams.set("mh", mqttHost);
+    if (mqttPort) target.searchParams.set("mp", String(mqttPort));
+    if (device.mqttUseTls != null) {
+      target.searchParams.set("mt", device.mqttUseTls ? "1" : "0");
+    }
+    return target.toString();
+  } catch {
+    return payload;
+  }
 }
 
 function CopyRow({ label, value }: { label: string; value: string }) {
@@ -45,11 +93,17 @@ export default function DeviceKeyRevealDialog({
   open,
   onOpenChange,
   device,
-  setupApPassword = "solar-setup-2026",
+  setupApPassword = "12345678",
+  setupPortalUser = "admin",
+  setupPortalPassword = "12345678",
 }: Props) {
   const labelRef = useRef<HTMLDivElement>(null);
 
   if (!device) return null;
+
+  const scannableProvisioningUrl = device.provisioningQrCode
+    ? buildScannableProvisioningUrl(device.provisioningQrCode, device)
+    : null;
 
   /**
    * IOT3-75 — in nhãn 50×30 mm.
@@ -66,10 +120,13 @@ export default function DeviceKeyRevealDialog({
     if (!html) return;
     const w = window.open("", "_blank", "width=420,height=320");
     if (!w) {
-      toast.error("Trình duyệt đã chặn cửa sổ in. Hãy cho phép pop-up rồi thử lại.");
+      toast.error(
+        "Trình duyệt đã chặn cửa sổ in. Hãy cho phép pop-up rồi thử lại.",
+      );
       return;
     }
-    w.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8">
+    w.document
+      .write(`<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <title>Nhãn ${device.deviceCode}</title>
 <style>
   /* Khổ nhãn thật — đặt ở @page thì máy in nhãn mới không tự co về A4. */
@@ -108,14 +165,15 @@ export default function DeviceKeyRevealDialog({
             hiện trường nạp lại một thiết bị vốn đang chạy tốt.
           */}
           <DialogDescription>
-            Xem lại được bất cứ lúc nào qua nút <b>Xem lại thông tin</b> trong danh sách thiết
-            bị — trừ <b>mật khẩu MQTT</b> của các thiết bị tạo trước bản cập nhật này.
+            Xem lại được bất cứ lúc nào qua nút <b>Xem lại thông tin</b> trong
+            danh sách thiết bị — trừ <b>mật khẩu MQTT</b> của các thiết bị tạo
+            trước bản cập nhật này.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 md:grid-cols-[auto_1fr]">
           {/* ---- IOT3-72: QR THÀNH HÌNH ---- */}
-          {device.provisioningQrCode ? (
+          {scannableProvisioningUrl ? (
             <div className="flex flex-col items-center gap-2">
               <div className="rounded-lg border bg-white p-3">
                 {/*
@@ -123,18 +181,49 @@ export default function DeviceKeyRevealDialog({
                   KHÔNG quét được, mà quét chính là lý do nó tồn tại.
                   level="M": chịu được ~15% hỏng bề mặt, đủ cho nhãn dán trong tủ pin bụi bặm.
                 */}
-                <QRCodeSVG value={device.provisioningQrCode} size={200} level="M" />
+                <QRCodeSVG
+                  value={scannableProvisioningUrl}
+                  size={240}
+                  level="M"
+                />
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={printLabel}>
+              <ol className="max-w-60 list-inside list-decimal space-y-1 text-left text-xs text-muted-foreground">
+                <li>
+                  Kết nối điện thoại vào Wi-Fi <b>SolarGW-xxxx</b>.
+                </li>
+                <li>
+                  Mở <b>192.168.4.1:8080</b>, đăng nhập portal và chọn Wi-Fi
+                  2.4 GHz của khách.
+                </li>
+                <li>
+                  Bấm <b>Mở camera / chọn ảnh QR</b>, rồi đưa trọn mã này vào ảnh.
+                </li>
+                <li>
+                  Web tự nhận QR; ESP32 lưu cấu hình, khởi động lại và chuyển
+                  trạng thái Active.
+                </li>
+              </ol>
+              <p className="max-w-60 text-center text-[11px] leading-relaxed text-muted-foreground">
+                Không cần cài APK. Khi khách đổi nhà hoặc đổi router, chỉ kết
+                nối lại SolarGW và nhập Wi-Fi mới; mã IoT được giữ nguyên nên
+                không cần quét QR lần nữa.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={printLabel}
+              >
                 <Printer className="size-3.5" />
                 In nhãn 50×30 mm
               </Button>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground max-w-56">
-              Thiết bị này được tạo trước khi hệ thống lưu API key dạng đọc lại được, nên không
-              dựng lại được mã QR. Dùng <b>Xoay API key</b> để cấp khoá mới — nhưng nhớ rằng thao
-              tác đó bắt buộc phải nạp lại thiết bị tại chỗ.
+              Thiết bị này được tạo trước khi hệ thống lưu API key dạng đọc lại
+              được, nên không dựng lại được mã QR. Dùng <b>Xoay API key</b> để
+              cấp khoá mới — nhưng nhớ rằng thao tác đó bắt buộc phải nạp lại
+              thiết bị tại chỗ.
             </div>
           )}
 
@@ -146,8 +235,11 @@ export default function DeviceKeyRevealDialog({
                 Chưa lưu API key dạng đọc lại được cho thiết bị này.
               </p>
             )}
-            {device.provisioningQrCode && (
-              <CopyRow label="Chuỗi QR" value={device.provisioningQrCode} />
+            {scannableProvisioningUrl && (
+              <CopyRow
+                label="URL cài đặt trong QR"
+                value={scannableProvisioningUrl}
+              />
             )}
 
             {/*
@@ -167,12 +259,17 @@ export default function DeviceKeyRevealDialog({
                   <CopyRow label="MQTT Password" value={device.mqttPassword} />
                 ) : (
                   <p className="text-sm text-amber-600">
-                    Mật khẩu MQTT của thiết bị này không đọc lại được (tạo trước bản cập nhật).
-                    Dùng <b>Xoay khoá MQTT</b> — thiết bị tự lấy mật khẩu mới qua
-                    <code className="mx-1">/provision</code>, không cần ra hiện trường.
+                    Mật khẩu MQTT của thiết bị này không đọc lại được (tạo trước
+                    bản cập nhật). Dùng <b>Xoay khoá MQTT</b> — thiết bị tự lấy
+                    mật khẩu mới qua
+                    <code className="mx-1">/provision</code>, không cần ra hiện
+                    trường.
                   </p>
                 )}
-                <CopyRow label="MQTT Broker Host" value={device.mqttBrokerHost!} />
+                <CopyRow
+                  label="MQTT Broker Host"
+                  value={device.mqttBrokerHost!}
+                />
                 <CopyRow
                   label="MQTT Broker Port"
                   value={String(device.mqttBrokerPort ?? "")}
@@ -188,13 +285,17 @@ export default function DeviceKeyRevealDialog({
                   />
                 )}
                 {device.mqttTopicPrefix && (
-                  <CopyRow label="MQTT Topic Prefix" value={device.mqttTopicPrefix} />
+                  <CopyRow
+                    label="MQTT Topic Prefix"
+                    value={device.mqttTopicPrefix}
+                  />
                 )}
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
-                MQTT bridge chưa được bật trên máy chủ, nên chưa có thông tin broker để cấu hình
-                thiết bị. Thiết bị vẫn dùng được API Key ở trên.
+                MQTT bridge chưa được bật trên máy chủ, nên chưa có thông tin
+                broker để cấu hình thiết bị. Thiết bị vẫn dùng được API Key ở
+                trên.
               </p>
             )}
           </div>
@@ -205,8 +306,12 @@ export default function DeviceKeyRevealDialog({
           <div ref={labelRef}>
             <div className="label">
               <div className="qr">
-                {device.provisioningQrCode && (
-                  <QRCodeSVG value={device.provisioningQrCode} size={128} level="M" />
+                {scannableProvisioningUrl && (
+                  <QRCodeSVG
+                    value={scannableProvisioningUrl}
+                    size={128}
+                    level="M"
+                  />
                 )}
               </div>
               <div className="info">
@@ -215,7 +320,10 @@ export default function DeviceKeyRevealDialog({
                 {/* Tên + mật khẩu AP cấu hình: đúng thứ kỹ thuật viên cần khi khách đổi WiFi
                     và không có mạng để tra cứu. */}
                 <div className="row">Setup AP: SolarGW-xxxx</div>
-                <div className="row">Mật khẩu: {setupApPassword}</div>
+                <div className="row">AP pass: {setupApPassword}</div>
+                <div className="row">
+                  Portal: {setupPortalUser} / {setupPortalPassword}
+                </div>
               </div>
             </div>
           </div>

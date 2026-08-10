@@ -84,6 +84,7 @@ export default function BatteryAssetForm({
     register,
     handleSubmit,
     setError,
+    setValue,
     reset,
     control,
     formState: { errors, isSubmitting },
@@ -92,6 +93,8 @@ export default function BatteryAssetForm({
   });
 
   const installDate = useWatch({ control, name: "installDate" });
+  const customerId = useWatch({ control, name: "customerId" });
+  const siteId = useWatch({ control, name: "siteId" });
 
   const batteryTypeOptions = useMemo(
     () =>
@@ -99,6 +102,34 @@ export default function BatteryAssetForm({
       [],
     [batteryTypesData],
   );
+
+  const sites = useMemo(() => sitesData?.items ?? [], [sitesData]);
+  const selectedSite = useMemo(
+    () => sites.find((site) => site.id === siteId),
+    [siteId, sites],
+  );
+  const visibleSites = useMemo(
+    () =>
+      sites.filter(
+        (site) =>
+          !customerId || site.customerId === customerId || site.id === siteId,
+      ),
+    [customerId, siteId, sites],
+  );
+  const customerOptions = useMemo(() => {
+    const customers = [...(customersData?.items ?? [])];
+    if (
+      selectedSite &&
+      !customers.some((customer) => customer.id === selectedSite.customerId)
+    ) {
+      customers.push({
+        id: selectedSite.customerId,
+        fullName: selectedSite.customerName,
+        email: "Owner of selected site",
+      });
+    }
+    return customers;
+  }, [customersData, selectedSite]);
 
   const { mutateAsync: createAsset } = useCreateBatteryAsset();
   const { mutateAsync: updateAsset } = useUpdateBatteryAsset(
@@ -129,11 +160,22 @@ export default function BatteryAssetForm({
     }
   }, [open, editData, reset, lockedSiteId]);
 
+  useEffect(() => {
+    if (!open || editData || !lockedSiteId) return;
+    const lockedSite = sites.find((site) => site.id === lockedSiteId);
+    if (lockedSite) {
+      setValue("customerId", lockedSite.customerId, { shouldValidate: true });
+    }
+  }, [editData, lockedSiteId, open, setValue, sites]);
+
   const onSubmit = async (data: BatteryAssetFormValues) => {
+    // A Site has exactly one owner. Derive CustomerId from the selected Site so a
+    // stale UI selection can never send a mismatched Customer/Site pair.
+    const site = sites.find((item) => item.id === data.siteId);
     const payload = {
       serialNumber: data.serialNumber,
       batteryTypeId: data.batteryTypeId,
-      customerId: data.customerId,
+      customerId: site?.customerId ?? data.customerId,
       siteId: data.siteId || undefined,
       installDate: new Date(data.installDate).toISOString(),
       warrantyEndDate: data.warrantyEndDate
@@ -223,9 +265,14 @@ export default function BatteryAssetForm({
               render={({ field }) => (
                 <CustomerCombobox
                   id="customerId"
-                  customers={customersData?.items ?? []}
+                  customers={customerOptions}
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    if (selectedSite && selectedSite.customerId !== value) {
+                      setValue("siteId", "", { shouldValidate: true });
+                    }
+                  }}
                 />
               )}
             />
@@ -247,12 +294,20 @@ export default function BatteryAssetForm({
                 <Select
                   value={field.value || null}
                   items={
-                    sitesData?.items.map((s) => ({
+                    visibleSites.map((s) => ({
                       value: s.id,
                       label: s.name,
-                    })) ?? []
+                    }))
                   }
-                  onValueChange={(value) => field.onChange(value ?? "")}
+                  onValueChange={(value) => {
+                    field.onChange(value ?? "");
+                    const site = sites.find((item) => item.id === value);
+                    if (site) {
+                      setValue("customerId", site.customerId, {
+                        shouldValidate: true,
+                      });
+                    }
+                  }}
                   disabled={!!lockedSiteId}
                 >
                   {/* The default disabled opacity-50 dims the chevron too → keep
@@ -268,7 +323,7 @@ export default function BatteryAssetForm({
                     <SelectValue placeholder="-- No site assigned --" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
-                    {sitesData?.items.map((s) => (
+                    {visibleSites.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
                       </SelectItem>
