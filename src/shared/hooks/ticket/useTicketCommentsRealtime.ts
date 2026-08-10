@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import {
   createTicketCommentConnection,
-  HubConnectionState,
+  isConnected,
   type HubConnection,
 } from "@/shared/lib/signalr";
 
@@ -37,8 +37,6 @@ export function useTicketCommentsRealtime(
 
   useEffect(() => {
     if (!ticketId) return;
-    const conn = createTicketCommentConnection();
-    connRef.current = conn;
     let cancelled = false;
     const timers = typingTimers.current;
 
@@ -56,45 +54,57 @@ export function useTicketCommentsRealtime(
       }
     };
 
-    conn.on("ChatAdded", invalidateChatList);
-    conn.on("ChatEdited", invalidateChatList);
-    conn.on("ChatDeleted", invalidateChatList);
+    // The hub client is loaded on demand (see shared/lib/signalr.ts), so the connection is
+    // created asynchronously. Cleanup waits on `ready`, which also preserves the original
+    // invariant: never call stop() while start() is still pending, or SignalR throws
+    // "Failed to start the HttpConnection before stop() was called" (StrictMode double mount).
+    let conn: HubConnection | null = null;
 
-    // ReactionChanged payload: { chatId, reactions } — BE sends the full aggregate along with it.
-    // Write straight into the cache (no refetch) → other clients update instantly, zero extra requests.
-    conn.on(
-      "ReactionChanged",
-      (payload: { chatId: string; reactions?: unknown }) => {
-        if (!payload?.chatId) return;
-        const key = QUERY_KEY.tickets.chatReactions(ticketId, payload.chatId);
-        if (payload.reactions) {
-          qc.setQueryData(key, payload.reactions);
-        } else {
-          qc.invalidateQueries({ queryKey: key });
-        }
-      },
-    );
+    const ready = createTicketCommentConnection()
+      .then((c) => {
+        // A fast unmount can settle this after cleanup has already run — don't connect then.
+        if (cancelled) return;
+        conn = c;
+        connRef.current = c;
 
-    conn.on(
-      "UserTyping",
-      (_ticketId: string, userId: string, displayName: string) => {
-        setTypingNames((prev) =>
-          prev.includes(displayName) ? prev : [...prev, displayName],
+        c.on("ChatAdded", invalidateChatList);
+        c.on("ChatEdited", invalidateChatList);
+        c.on("ChatDeleted", invalidateChatList);
+
+        // ReactionChanged payload: { chatId, reactions } — BE sends the full aggregate along with it.
+        // Write straight into the cache (no refetch) → other clients update instantly, zero extra requests.
+        c.on(
+          "ReactionChanged",
+          (payload: { chatId: string; reactions?: unknown }) => {
+            if (!payload?.chatId) return;
+            const key = QUERY_KEY.tickets.chatReactions(
+              ticketId,
+              payload.chatId,
+            );
+            if (payload.reactions) {
+              qc.setQueryData(key, payload.reactions);
+            } else {
+              qc.invalidateQueries({ queryKey: key });
+            }
+          },
         );
-        clearTimeout(timers[userId]);
-        timers[userId] = setTimeout(() => {
-          setTypingNames((prev) => prev.filter((n) => n !== displayName));
-        }, 3000);
-      },
-    );
 
-    // Keep the start() promise so cleanup WAITS for it to settle before calling stop(). Calling
-    // stop() while start() is still pending → SignalR throws "Failed to start the HttpConnection
-    // before stop() was called" (seen with StrictMode's double mount / fast remounts).
-    const startPromise = conn
-      .start()
-      .then(() => {
-        if (!cancelled) return conn.invoke("JoinTicket", ticketId);
+        c.on(
+          "UserTyping",
+          (_ticketId: string, userId: string, displayName: string) => {
+            setTypingNames((prev) =>
+              prev.includes(displayName) ? prev : [...prev, displayName],
+            );
+            clearTimeout(timers[userId]);
+            timers[userId] = setTimeout(() => {
+              setTypingNames((prev) => prev.filter((n) => n !== displayName));
+            }, 3000);
+          },
+        );
+
+        return c.start().then(() => {
+          if (!cancelled) return c.invoke("JoinTicket", ticketId);
+        });
       })
       .catch(() => {
         // realtime unavailable → ignore, the query still works normally
@@ -103,24 +113,25 @@ export function useTicketCommentsRealtime(
     return () => {
       cancelled = true;
       Object.values(timers).forEach(clearTimeout);
-      // Remove handlers BEFORE stopping — guards against a stray event firing into a connection
-      // mid-teardown (StrictMode double mount / rebuild) causing a duplicate invalidate.
-      conn.off("ChatAdded");
-      conn.off("ChatEdited");
-      conn.off("ChatDeleted");
-      conn.off("ReactionChanged");
-      conn.off("UserTyping");
       // WAIT for start() to finish before leave + stop — avoids stop-before-start.
-      void startPromise.finally(() => {
-        if (conn.state === HubConnectionState.Connected) {
-          conn
-            .invoke("LeaveTicket", ticketId)
+      void ready.finally(() => {
+        const c = conn;
+        if (!c) return;
+        // Remove handlers BEFORE stopping — guards against a stray event firing into a connection
+        // mid-teardown (StrictMode double mount / rebuild) causing a duplicate invalidate.
+        c.off("ChatAdded");
+        c.off("ChatEdited");
+        c.off("ChatDeleted");
+        c.off("ReactionChanged");
+        c.off("UserTyping");
+        if (isConnected(c)) {
+          c.invoke("LeaveTicket", ticketId)
             .catch(() => {})
             .finally(() => {
-              conn.stop().catch(() => {});
+              c.stop().catch(() => {});
             });
         } else {
-          conn.stop().catch(() => {});
+          c.stop().catch(() => {});
         }
       });
       connRef.current = null;
@@ -130,7 +141,9 @@ export function useTicketCommentsRealtime(
 
   const sendTyping = useCallback(() => {
     const conn = connRef.current;
-    if (conn && conn.state === HubConnectionState.Connected) {
+    // Null while the hub module is still downloading — the typing ping is dropped, the same
+    // no-op that already happened whenever the connection was merely "Connecting".
+    if (conn && isConnected(conn)) {
       conn.invoke("Typing", ticketId).catch(() => {});
     }
   }, [ticketId]);

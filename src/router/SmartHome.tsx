@@ -1,14 +1,14 @@
+import { lazy, Suspense } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuthContext } from "@/shared/context/authContext";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { redirectByRole } from "@/shared/types/account/session.types";
-import LandingPage from "@/features/landing/pages/LandingPage";
+import PageLoader from "@/shared/components/layout/PageLoader";
 
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="size-8 animate-spin rounded-full border-b-2 border-primary" />
-  </div>
-);
+// Code-split: the landing page drags in anime.js and every landing image, none of which an
+// authenticated user hitting "/" (and being redirected straight to their role home) will ever
+// need. SmartHome itself stays eager — it is a few lines and only reads the session store.
+const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"));
 
 const SmartHome = () => {
   const { isHydrating } = useAuthContext();
@@ -18,7 +18,11 @@ const SmartHome = () => {
   if (isHydrating) return <PageLoader />;
   if (isAuthenticated && user)
     return <Navigate to={redirectByRole(user.role)} replace />;
-  return <LandingPage />;
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <LandingPage />
+    </Suspense>
+  );
 };
 
 export default SmartHome;

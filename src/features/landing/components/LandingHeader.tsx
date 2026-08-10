@@ -5,7 +5,7 @@ import { prefersReducedMotion } from "@/features/landing/lib/animation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/features/landing/landing.constants";
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo.webp";
 
 type LandingHeaderProps = {
   scrolled: boolean;

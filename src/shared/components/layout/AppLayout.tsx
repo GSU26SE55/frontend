@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
@@ -14,6 +14,7 @@ import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/account/session.types";
 import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 import NotificationBell from "./NotificationBell";
+import { PageSkeleton } from "./LayoutSkeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -157,7 +158,12 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
           {/* key by route → the page-enter animation replays on every navigation.
               h-full + min-h-0 preserve the flex layout of full-height pages. */}
           <div key={location.pathname} className="page-enter h-full min-h-0">
-            <Outlet />
+            {/* Route pages are code-split (React.lazy in src/router/index.tsx). Keeping the
+                boundary inside <main> means the sidebar and topbar stay painted while a page
+                chunk downloads — the layout never unmounts, so no flicker on navigation. */}
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

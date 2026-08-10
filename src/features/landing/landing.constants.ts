@@ -26,17 +26,6 @@ import type {
   TicketRow,
   WorkflowItem,
 } from "@/features/landing/types/landing.types";
-import solarOnlyImg from "@/assets/solar_only.png";
-import solarBatteryImg from "@/assets/solar_battery.png";
-import solarMonitoringImg from "@/assets/solar_monitoring.png";
-
-export type ProductOption = {
-  image: string;
-  title: string;
-  desc: string;
-  features: readonly string[];
-};
-
 export const NAV_ITEMS: readonly NavItem[] = [
   { label: "Product", href: "#product" },
   { label: "Workflow", href: "#workflow" },
@@ -165,27 +154,6 @@ export const TICKET_ROWS: readonly TicketRow[] = [
     owner: "Minh Tran",
     sla: "18h 21m",
     status: "Assigned",
-  },
-];
-
-export const PRODUCT_OPTIONS: readonly ProductOption[] = [
-  {
-    image: solarOnlyImg,
-    title: "Solar Only",
-    desc: "Power your home, offset utility costs and join the clean energy movement.",
-    features: ["Max solar efficiency", "Permit and utility approval"],
-  },
-  {
-    image: solarBatteryImg,
-    title: "Solar + Battery",
-    desc: "Store energy for backup power during outages, avoid peak electricity rates and manage energy flow.",
-    features: ["Full backup energy storage", "Avoid peak utility rates"],
-  },
-  {
-    image: solarMonitoringImg,
-    title: "Solar + Battery + Monitoring",
-    desc: "Comprehensive home energy control. Monitor consumption, battery health, and grid export in real-time.",
-    features: ["Real-time energy tracking", "Predictive health alerts"],
   },
 ];
 

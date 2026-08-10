@@ -52,7 +52,25 @@ export function useRotateIotDeviceKey(id: string) {
   });
 }
 
-// revoke-key sets apiKeyRevokedAt + Status=Disabled → invalidate detail (the Revoke button hides).
+/**
+ * IOT3-76 — xoay RIÊNG credential MQTT.
+ *
+ * Điểm khác `useRotateIotDeviceKey` là toàn bộ giá trị của lệnh này: apiKey KHÔNG đổi, nên thiết
+ * bị vẫn gọi được `/provision` và tự nhận mật khẩu MQTT mới. Xoay apiKey thì thiết bị mất cả hai
+ * đường và bắt buộc phải mang cáp ra tận nơi.
+ */
+export function useRotateIotDeviceMqtt(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => iotDeviceService.rotateMqtt(id).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.iotDevices.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.iotDevices.list() });
+    },
+  });
+}
+
+// revoke-key set apiKeyRevokedAt + Status=Disabled → invalidate detail (nút Revoke ẩn).
 export function useRevokeIotDeviceKey(id: string) {
   const qc = useQueryClient();
   return useMutation({

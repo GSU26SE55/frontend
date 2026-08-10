@@ -38,4 +38,15 @@ export default defineConfig([
     },
   },
   ...featureIsolation,
+  {
+    // The route table declares ~90 `const SomePage = lazy(() => import(...))` bindings so each
+    // page ships as its own chunk. react-refresh reads those as component declarations sitting
+    // beside a non-component export (the router object) and flags every one. The warning does
+    // not apply here: this module exports a route table, never a component, so Fast Refresh has
+    // nothing to preserve. Editing a page still hot-reloads through that page's own module.
+    files: ["src/router/index.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 ]);
