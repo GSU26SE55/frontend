@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Battery } from "lucide-react";
+import { ArrowLeft, Battery, HeartPulse, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -11,17 +11,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { useBatteryAssetRealtime } from "@/shared/hooks/battery/useBatteryAssetRealtime";
+import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
-import CascadeRiskCard from "@/shared/components/battery/CascadeRiskCard";
 import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
-import type { ElectricalTopologyName } from "@/shared/types/battery/cascade.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/ticket/useSensorStream";
 import { KEY } from "@/shared/utils/queryKeys";
+import {
+  healthScoreTone,
+  toneVars,
+  CASCADE_RISK_TONE,
+} from "@/shared/theme/statusColors";
 
 // ── Config ────────────────────────────────────────────────────────────────
 
@@ -60,23 +64,83 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+// SOH is the single most meaningful "is this battery still healthy" number (it IS
+// current/nominal capacity expressed as a %), so it gets top billing above Information
+// instead of being buried as one more stat tile among Voltage/Current/Temperature/SOC.
+function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
+  if (sohPercent == null) {
+    return (
+      <div className="px-4 pt-4 pb-3 flex items-center gap-2 text-muted-foreground">
+        <HeartPulse size={16} />
+        <span className="text-xs">SOH not available yet</span>
+      </div>
+    );
+  }
+  const tone = healthScoreTone(sohPercent);
+  const { fg, bg } = toneVars(tone);
+  return (
+    <div className="px-4 pt-4 pb-3">
+      <div
+        className="rounded-lg p-3 flex items-center gap-3"
+        style={{ backgroundColor: bg }}
+      >
+        <div
+          className="size-9 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: fg }}
+        >
+          <HeartPulse size={16} className="text-white" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1 leading-none">
+            <span
+              className="text-2xl font-bold tabular-nums"
+              style={{ color: fg }}
+            >
+              {sohPercent.toFixed(0)}
+            </span>
+            <span className="text-xs font-medium" style={{ color: fg }}>
+              %
+            </span>
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            State of Health
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Cascade risk is a critical safety signal — kept as a header badge (next to
+// Active/alerts) so it can't be missed by scrolling past a sidebar card.
+function CascadeRiskBadge({ assetId }: { assetId: string }) {
+  const { data } = useCascadeRisk(assetId);
+  if (!data) return null;
+  const tone = CASCADE_RISK_TONE[data.level] ?? "muted";
+  const { fg, bg } = toneVars(tone);
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border"
+      style={{ color: fg, backgroundColor: bg, borderColor: fg }}
+      title={`Cascade risk score ${data.cascadeRiskScore.toFixed(2)}`}
+    >
+      <ShieldAlert size={12} />
+      Cascade risk: {data.level}
+    </span>
+  );
+}
+
 interface BatteryRealtimeDetailProps {
   assetId: string;
-  // Admin injects CRUD buttons (Edit/Transfer/Delete) + dialog through this slot. Manager/Staff leave it empty.
+  // Admin injects CRUD buttons (Edit/Transfer/Delete/Set topology) + dialogs through this slot. Manager/Staff leave it empty.
   headerActions?: ReactNode;
-  // Admin injects SetTopologyDialog + the button that opens it through this slot (POST /topology is Admin-only).
-  topologyAction?: (ctx: {
-    currentTopology?: ElectricalTopologyName;
-    isLoading: boolean;
-  }) => ReactNode;
 }
 
 // Real-time battery detail page (read-only core) — shared by admin/manager/staff.
-// CRUD/topology is Admin-only, injected through the headerActions/topologyAction slots.
+// CRUD/topology is Admin-only, injected through the headerActions slot.
 export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
-  topologyAction,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
 
@@ -148,6 +212,7 @@ export default function BatteryRealtimeDetail({
                   {rt.activeAlerts} alerts
                 </span>
               )}
+              <CascadeRiskBadge assetId={id} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {asset.batteryTypeName}
@@ -166,6 +231,11 @@ export default function BatteryRealtimeDetail({
         <div className="flex h-full border border-border rounded-xl overflow-hidden bg-card">
           {/* Left sidebar */}
           <div className="w-65 shrink-0 border-r border-border flex flex-col overflow-y-auto">
+            {/* SOH — the single most important health indicator, shown first and prominently */}
+            <SohHighlight sohPercent={live?.sohPercent} />
+
+            <Separator />
+
             {/* Info */}
             <div className="px-4 pt-4 pb-3">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -226,7 +296,6 @@ export default function BatteryRealtimeDetail({
                   <TabsTrigger value="chart">Chart</TabsTrigger>
                   <TabsTrigger value="peak">Charge/discharge peak</TabsTrigger>
                   <TabsTrigger value="history">Sensor history</TabsTrigger>
-                  <TabsTrigger value="cascade">Cascade risk</TabsTrigger>
                   <TabsTrigger value="ai">AI prediction</TabsTrigger>
                 </TabsList>
               </div>
@@ -258,12 +327,6 @@ export default function BatteryRealtimeDetail({
                   batteryTypeId={asset?.batteryTypeId}
                   fillHeight
                 />
-              </TabsContent>
-              <TabsContent
-                value="cascade"
-                className="min-h-0 overflow-y-auto m-0 p-5"
-              >
-                <CascadeRiskCard assetId={id} topologyAction={topologyAction} />
               </TabsContent>
               <TabsContent
                 value="ai"

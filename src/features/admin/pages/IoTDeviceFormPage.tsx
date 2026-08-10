@@ -36,7 +36,7 @@ export default function IoTDeviceFormPage() {
         </Button>
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; IoT Devices
+            Admin &middot; Devices
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             {isEdit ? "Edit device" : "Create new device"}

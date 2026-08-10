@@ -258,7 +258,7 @@ export default function AdminTicketDetailPage() {
                 <TabsTrigger value="timeline">Activity history</TabsTrigger>
                 {/* `group` lets ChatUnreadBadge hide itself while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
-                  Comments
+                  Chat
                   <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
               </TabsList>

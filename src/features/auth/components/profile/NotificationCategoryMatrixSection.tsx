@@ -38,7 +38,7 @@ type ChannelKey = (typeof CHANNEL_COLUMNS)[number]["key"];
 const CATEGORY_LABEL: Record<NotificationCategoryEnum, string> = {
   [NotificationCategoryEnum.Ticket]: "Ticket",
   [NotificationCategoryEnum.Sla]: "SLA & escalation",
-  [NotificationCategoryEnum.Battery]: "Battery & IoT devices",
+  [NotificationCategoryEnum.Battery]: "Battery & devices",
   [NotificationCategoryEnum.Environmental]: "Environmental incidents",
   [NotificationCategoryEnum.Chat]: "Ticket conversations",
   [NotificationCategoryEnum.Account]: "Account & system",

@@ -69,9 +69,9 @@ export default function IoTDevicesPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; IoT
+            Admin &middot; Devices
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">IoT Devices</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Devices</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : totalItems} devices &mdash; manage edge
             devices.
@@ -161,7 +161,7 @@ export default function IoTDevicesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <Cpu className="size-8 opacity-30" />
-            <span className="text-sm">No IoT devices yet.</span>
+            <span className="text-sm">No devices yet.</span>
           </div>
         ) : (
           <IoTDeviceTable
