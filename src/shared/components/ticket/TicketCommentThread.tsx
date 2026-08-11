@@ -70,7 +70,7 @@ const ROLE_LABEL: Record<ActorRoleEnum, string> = {
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
 const LANGUAGE_OPTIONS = [
-  { code: "vi", label: "Tiếng Việt" },
+  { code: "vi", label: "Vietnamese" },
   { code: "en", label: "English" },
 ] as const;
 const LANGUAGE_LABEL: Record<string, string> = Object.fromEntries(

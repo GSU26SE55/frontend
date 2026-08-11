@@ -71,7 +71,7 @@ const TYPE_OPTIONS: { value: NotificationTypeEnum; label: string }[] = [
   },
   {
     value: NotificationTypeEnum.IotDeviceWentOffline,
-    label: "IoT Device Went Offline",
+    label: "Device Went Offline",
   },
   { value: NotificationTypeEnum.System, label: "System" },
 ];

@@ -11,19 +11,8 @@ import {
   notificationStatusLabel,
 } from "@/shared/constants/notificationLabels";
 import { useMarkNotificationOpened } from "@/shared/hooks/notifications/useNotifications";
+import { useNotificationEntityName } from "@/shared/hooks/notifications/useNotificationEntityName";
 import type { NotificationDto } from "@/shared/types/notification/notification.types";
-
-// PayloadJson is a free-form JSON string set by the BE — malformed/non-JSON content can happen
-// (old records, a consumer writing it wrong). On parse failure, return null so the pane still
-// renders instead of showing a blank page.
-function prettyPayload(raw?: string | null): string | null {
-  if (!raw) return null;
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
-  }
-}
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -44,6 +33,10 @@ export default function NotificationDetailPane({
   const navigate = useNavigate();
   const { user } = useSessionStore();
   const markOpened = useMarkNotificationOpened();
+  const entityName = useNotificationEntityName(
+    notification?.entityType,
+    notification?.entityId,
+  );
 
   if (isLoading) {
     return (
@@ -67,7 +60,13 @@ export default function NotificationDetailPane({
 
   const n = notification;
   const deepLink = notificationDeepLink(n, user?.role);
-  const payload = prettyPayload(n.payloadJson);
+  // Display-only enhancement: entityId is a known, exact substring, so once its human-readable
+  // name resolves, swap it into the body — old records seeded before the BE fix that composes
+  // the body still had the raw GUID baked in (see BatteryAlertEscalationRequestedConsumer.cs history).
+  const displayBody =
+    entityName && n.entityId
+      ? n.body.split(n.entityId).join(entityName)
+      : n.body;
 
   // Clicking "Open content" is the real Opened event (user actively views the original
   // content). Just viewing it in the pane already gets marked Read by the parent page —
@@ -120,7 +119,7 @@ export default function NotificationDetailPane({
 
       <div className="px-5 py-4">
         <p className="text-[13px] leading-relaxed text-foreground whitespace-pre-wrap">
-          {n.body}
+          {displayBody}
         </p>
       </div>
 
@@ -142,29 +141,16 @@ export default function NotificationDetailPane({
             value={format(new Date(n.readAt), "HH:mm MM/dd/yyyy")}
           />
         )}
-        {n.entityType && (
+        {/* Only shown once the entity name resolves — a raw GUID (entityType has no
+            resolver yet, or the fetch is still loading) isn't useful to the reader;
+            the title/body/"Open content" link already cover getting to the right place. */}
+        {n.entityType && entityName && (
           <Row
             label="Entity"
-            value={
-              <span className="break-all">
-                {n.entityType}
-                {n.entityId ? ` · ${n.entityId}` : ""}
-              </span>
-            }
+            value={<span className="break-all">{entityName}</span>}
           />
         )}
       </div>
-
-      {payload && (
-        <details className="px-5 py-3 border-t border-border">
-          <summary className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide cursor-pointer">
-            Attached data
-          </summary>
-          <pre className="mt-2 p-2.5 rounded-md bg-muted text-[11px] overflow-x-auto whitespace-pre-wrap break-all">
-            {payload}
-          </pre>
-        </details>
-      )}
     </div>
   );
 }

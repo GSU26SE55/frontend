@@ -51,12 +51,6 @@ const WARRANTY_LABELS: Record<WarrantyStatusEnum, string> = {
   [WarrantyStatusEnum.VOID]: "Void",
 };
 
-const toNumOrNull = (val?: string): number | undefined => {
-  if (!val || val === "") return undefined;
-  const n = parseFloat(val);
-  return isNaN(n) ? undefined : n;
-};
-
 interface BatteryAssetFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -93,8 +87,19 @@ export default function BatteryAssetForm({
   });
 
   const installDate = useWatch({ control, name: "installDate" });
-  const customerId = useWatch({ control, name: "customerId" });
   const siteId = useWatch({ control, name: "siteId" });
+
+  // Auto-fill Location from the selected site's address — the battery is physically
+  // at the site, so it shares the site's location instead of a separately typed one.
+  // Only on create (not edit) so we never silently overwrite a location already set on the asset.
+  useEffect(() => {
+    if (isEdit || !siteId) return;
+    const site = sitesData?.items.find((s) => s.id === siteId);
+    if (site?.address) {
+      setValue("location", site.address);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteId, sitesData]);
 
   const batteryTypeOptions = useMemo(
     () =>
@@ -147,8 +152,6 @@ export default function BatteryAssetForm({
           installDate: editData.installDate.slice(0, 10),
           warrantyEndDate: editData.warrantyEndDate?.slice(0, 10) ?? "",
           location: editData.location ?? "",
-          latitude: editData.latitude?.toString() ?? "",
-          longitude: editData.longitude?.toString() ?? "",
           notes: editData.notes ?? "",
           warrantyStatus: editData.warrantyStatus,
           status: editData.status,
@@ -182,8 +185,6 @@ export default function BatteryAssetForm({
         ? new Date(data.warrantyEndDate).toISOString()
         : undefined,
       location: data.location || undefined,
-      latitude: toNumOrNull(data.latitude),
-      longitude: toNumOrNull(data.longitude),
       notes: data.notes || undefined,
     };
 
@@ -389,27 +390,11 @@ export default function BatteryAssetForm({
           <div className="space-y-1">
             <Label htmlFor="location">Location</Label>
             <Input id="location" {...register("location")} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="latitude">Latitude</Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                {...register("latitude")}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="longitude">Longitude</Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                {...register("longitude")}
-              />
-            </div>
+            {!isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Auto-filled from the selected site's address — you can edit it.
+              </p>
+            )}
           </div>
 
           {isEdit && (

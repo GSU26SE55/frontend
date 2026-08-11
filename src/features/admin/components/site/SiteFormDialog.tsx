@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import {
   useUpdateSite,
 } from "@/features/admin/hooks/site/useSites";
 import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
+import { useAdminAccountDetail } from "@/features/admin/hooks/account/useAdminAccounts";
 import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
 import {
   SiteStatusEnum,
@@ -37,12 +38,6 @@ interface SiteFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editData?: SiteDto | null;
 }
-
-const toNumOrNull = (val?: string): number | null | undefined => {
-  if (!val || val === "") return null;
-  const n = parseFloat(val);
-  return isNaN(n) ? null : n;
-};
 
 export default function SiteFormDialog({
   open,
@@ -58,6 +53,7 @@ export default function SiteFormDialog({
     handleSubmit,
     setError,
     reset,
+    setValue,
     control,
     formState: { errors, isSubmitting },
   } = useForm<SiteFormValues>({
@@ -75,8 +71,6 @@ export default function SiteFormDialog({
           name: editData.name,
           customerId: editData.customerId,
           address: editData.address ?? "",
-          latitude: editData.latitude?.toString() ?? "",
-          longitude: editData.longitude?.toString() ?? "",
           installDate: editData.installDate.slice(0, 10),
           status: editData.status,
           contactPersonName: editData.contactPersonName ?? "",
@@ -88,6 +82,19 @@ export default function SiteFormDialog({
     }
   }, [open, editData, reset]);
 
+  // Auto-fill Address from the selected customer's saved address — only on create
+  // (not edit, so we never silently overwrite an address the user already set on the site).
+  const customerId = useWatch({ control, name: "customerId" });
+  const { data: customerDetail } = useAdminAccountDetail(
+    !isEdit ? (customerId ?? "") : "",
+  );
+  useEffect(() => {
+    if (!isEdit && customerDetail?.address) {
+      setValue("address", customerDetail.address);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerDetail]);
+
   const onSubmit = async (data: SiteFormValues) => {
     const payload: SiteCreatePayload = {
       name: data.name,
@@ -95,8 +102,6 @@ export default function SiteFormDialog({
       installDate: data.installDate,
       status: data.status,
       address: data.address || undefined,
-      latitude: toNumOrNull(data.latitude),
-      longitude: toNumOrNull(data.longitude),
       contactPersonName: data.contactPersonName || undefined,
       contactPersonPhone: data.contactPersonPhone || undefined,
     };
@@ -183,37 +188,11 @@ export default function SiteFormDialog({
           <div className="space-y-1">
             <Label htmlFor="address">Address</Label>
             <Input id="address" {...register("address")} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="latitude">Latitude</Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                {...register("latitude")}
-              />
-              {errors.latitude && (
-                <p className="text-sm text-destructive">
-                  {errors.latitude.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="longitude">Longitude</Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                {...register("longitude")}
-              />
-              {errors.longitude && (
-                <p className="text-sm text-destructive">
-                  {errors.longitude.message}
-                </p>
-              )}
-            </div>
+            {!isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Auto-filled from the customer's saved address — you can edit it.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
