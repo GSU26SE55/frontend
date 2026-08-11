@@ -415,6 +415,7 @@ export const ENDPOINTS = {
     REALTIME: (id: string) => `/api/battery-assets/${id}/realtime`,
     CASCADE_RISK: (id: string) => `/api/battery-assets/${id}/cascade-risk`,
     TOPOLOGY: (id: string) => `/api/battery-assets/${id}/topology`,
+    BMS_SWITCH: (id: string) => `/api/battery-assets/${id}/bms-switch`,
     // Write ops live under /api/admin/battery-assets (AdminBatteryAssetsController)
     CREATE: "/api/admin/battery-assets",
     UPDATE: (id: string) => `/api/admin/battery-assets/${id}`,

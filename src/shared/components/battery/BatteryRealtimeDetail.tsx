@@ -69,6 +69,9 @@ interface BatteryRealtimeDetailProps {
     currentTopology?: ElectricalTopologyName;
     isLoading: boolean;
   }) => ReactNode;
+  // Only Admin and Staff pass this safety-critical control. The API performs the
+  // same authorization check, so this route composition is not the security boundary.
+  bmsControl?: ReactNode;
 }
 
 // Real-time battery detail page (read-only core) — shared by admin/manager/staff.
@@ -77,6 +80,7 @@ export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
   topologyAction,
+  bmsControl,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
 
@@ -216,6 +220,7 @@ export default function BatteryRealtimeDetail({
                   : undefined
               }
             />
+            {bmsControl}
           </div>
 
           {/* Right: chart / history tabs */}
