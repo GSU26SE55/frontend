@@ -24,7 +24,7 @@ import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCa
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // Admin — full battery detail page: uses the shared BatteryRealtimeDetail (read-only core)
-// + injects admin CRUD (Edit/Transfer/Delete) via headerActions and SetTopologyDialog via topologyAction.
+// + injects admin CRUD and SetTopologyDialog through headerActions.
 export default function BatteryAssetDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export default function BatteryAssetDetailPage() {
 
   // Need the asset for the Edit/Transfer dialogs (same cache key as shared → no double-fetch).
   const { data: asset } = useBatteryAsset(id);
-  // Current topology for SetTopologyDialog (same cache key as CascadeRiskCard in shared).
+  // Current topology for SetTopologyDialog (same cache key as the header's CascadeRiskBadge in shared).
   const { data: cascade } = useCascadeRisk(id);
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
@@ -54,6 +54,14 @@ export default function BatteryAssetDetailPage() {
         assetId={id}
         headerActions={
           <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setTopologyOpen(true)}
+            >
+              <Settings2 size={14} />
+              Set topology
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -77,17 +85,6 @@ export default function BatteryAssetDetailPage() {
             </Button>
           </>
         }
-        topologyAction={({ isLoading }) => (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setTopologyOpen(true)}
-            disabled={isLoading}
-          >
-            <Settings2 size={14} />
-            Set topology
-          </Button>
-        )}
         bmsControl={<BmsSwitchControlCard assetId={id} />}
       />
 
