@@ -34,7 +34,7 @@ const AuthLayout = () => {
       />
 
       <div className="relative z-10 mb-7 flex flex-col items-center gap-2">
-        <img src={logoImg} alt="Sunaria" className="h-16 w-16 object-contain" />
+        <img src={logoImg} alt="Solars" className="h-16 w-16 object-contain" />
         <div className="text-center">
           <p className="text-sm font-bold tracking-tight text-foreground">
             Solar Battery Management

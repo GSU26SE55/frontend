@@ -76,7 +76,7 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
           >
             <img
               src={logoImg}
-              alt="Sunaria Logo"
+              alt="Solars Logo"
               className="h-full w-auto object-contain transition-all duration-300"
             />
           </a>

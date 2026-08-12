@@ -210,7 +210,7 @@ const ProductSection = () => {
                     className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100 text-xs"
                   >
                     <div>
-                      <span className="block font-semibold tracking-wider text-slate-400 uppercase">
+                      <span className="block font-semibold tracking-wider text-slate-600 uppercase">
                         Metric:
                       </span>
                       <span className="block mt-1.5 font-medium text-slate-700 leading-normal">
@@ -218,7 +218,7 @@ const ProductSection = () => {
                       </span>
                     </div>
                     <div>
-                      <span className="block font-semibold tracking-wider text-slate-400 uppercase">
+                      <span className="block font-semibold tracking-wider text-slate-600 uppercase">
                         Ideal for:
                       </span>
                       <span className="block mt-1.5 font-medium text-slate-700 leading-normal">

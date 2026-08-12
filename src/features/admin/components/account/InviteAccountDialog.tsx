@@ -89,7 +89,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
             <Input
               id="invite-email"
               type="email"
-              placeholder="user@sunaria.vn"
+              placeholder="user@solars.vn"
               {...register("email")}
             />
             {errors.email && (

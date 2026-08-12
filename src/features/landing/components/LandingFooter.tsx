@@ -52,14 +52,14 @@ const LandingFooter = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/[0.06] border border-white/[0.1]">
                 <img
                   src={logoImg}
-                  alt="Sunaria Logo"
+                  alt="Solars Logo"
                   className="h-5 w-auto object-contain brightness-0 invert"
                   loading="lazy"
                   decoding="async"
                 />
               </div>
               <span className="font-bold text-base tracking-tight text-white">
-                Sunaria
+                Solars Battery Management
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
@@ -79,9 +79,9 @@ const LandingFooter = () => {
 
           {/* Products */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
               Features
-            </h4>
+            </h3>
             <ul className="space-y-2.5 text-sm">
               {PRODUCT_LINKS.map((link) => (
                 <li key={link.label}>
@@ -98,9 +98,9 @@ const LandingFooter = () => {
 
           {/* Company */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
               Company
-            </h4>
+            </h3>
             <ul className="space-y-2.5 text-sm">
               {COMPANY_LINKS.map((link) => (
                 <li key={link.label}>
@@ -117,9 +117,9 @@ const LandingFooter = () => {
 
           {/* Newsletter */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-4">
               Newsletter
-            </h4>
+            </h3>
             <p className="text-xs text-slate-500 leading-relaxed mb-3">
               New feature updates and solar battery operations reports.
             </p>
@@ -145,7 +145,7 @@ const LandingFooter = () => {
         {/* Bottom bar */}
         <div className="border-t border-white/[0.06] pt-7 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-3">
           <p>
-            © 2026 Sunaria · Solar Battery Maintenance Management System. All
+            © 2026 Solars · Solar Battery Maintenance Management System. All
             rights reserved.
           </p>
           <div className="flex gap-5">
