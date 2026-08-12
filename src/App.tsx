@@ -3,10 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { ThemeProvider, useTheme } from "next-themes";
 import { Toaster } from "sonner";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AuthProvider } from "@/shared/context/authContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { env } from "@/config/env";
 import router from "@/router";
 
 const queryClient = new QueryClient({
@@ -50,31 +48,33 @@ function DismissSplash() {
 }
 
 const App = () => (
-  <GoogleOAuthProvider clientId={env.VITE_GOOGLE_CLIENT_ID}>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <AuthProvider>
-          <TooltipProvider>
-            {/* Safety net: routes and layouts are code-split, and React throws if a
-                component suspends with no boundary above it. Every route already has a
-                closer boundary that renders a real placeholder, so this one should never
-                be seen — hence fallback={null}, which also leaves the index.html splash
-                (z-index 9999) visible underneath rather than flashing a second loader. */}
-            <Suspense fallback={null}>
-              <RouterProvider router={router} />
-            </Suspense>
-            <ThemedToaster />
-            <DismissSplash />
-          </TooltipProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  </GoogleOAuthProvider>
+  // GoogleOAuthProvider is intentionally NOT here: mounting it app-wide loads the
+  // ~96 KiB accounts.google.com/gsi/client script on every page — including the public
+  // landing page, which has no Google button. It now wraps only the one place that
+  // renders <GoogleLogin> (GoogleLinkSection on the profile page).
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <AuthProvider>
+        <TooltipProvider>
+          {/* Safety net: routes and layouts are code-split, and React throws if a
+              component suspends with no boundary above it. Every route already has a
+              closer boundary that renders a real placeholder, so this one should never
+              be seen — hence fallback={null}, which also leaves the index.html splash
+              (z-index 9999) visible underneath rather than flashing a second loader. */}
+          <Suspense fallback={null}>
+            <RouterProvider router={router} />
+          </Suspense>
+          <ThemedToaster />
+          <DismissSplash />
+        </TooltipProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
 );
 
 export default App;

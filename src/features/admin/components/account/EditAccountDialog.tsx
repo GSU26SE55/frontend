@@ -84,7 +84,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
               value={account.email}
               disabled
               className="bg-muted"
-              placeholder="user@sunaria.vn"
+              placeholder="user@solars.vn"
             />
           </div>
           <div className="space-y-1.5">

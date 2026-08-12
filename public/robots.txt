@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+# Authenticated SPA areas — no public content to index (all return the app shell).
+Disallow: /admin
+Disallow: /manager
+Disallow: /staff
+
+Sitemap: https://solars.io.vn/sitemap.xml
