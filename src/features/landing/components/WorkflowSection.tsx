@@ -1,9 +1,9 @@
 import Reveal from "@/features/landing/components/Reveal";
 import { WORKFLOW } from "@/features/landing/landing.constants";
-import workflow1Img from "@/assets/workflow_1.png";
-import workflow2Img from "@/assets/workflow_2.png";
-import workflow3Img from "@/assets/workflow_3.png";
-import workflow4Img from "@/assets/workflow_4.png";
+import workflow1Img from "@/assets/workflow_1.webp";
+import workflow2Img from "@/assets/workflow_2.webp";
+import workflow3Img from "@/assets/workflow_3.webp";
+import workflow4Img from "@/assets/workflow_4.webp";
 
 const WORKFLOW_IMAGES = [
   workflow1Img,
@@ -20,7 +20,7 @@ const WorkflowSection = () => {
         <Reveal>
           <div className="text-center max-w-3xl mx-auto mb-16">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
-              Quy trình dịch vụ
+              Service workflow
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
               We handle everything - start to finish.
@@ -45,6 +45,7 @@ const WorkflowSection = () => {
                     alt={item.title}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-80"
                     loading="lazy"
+                    decoding="async"
                   />
 
                   {/* Dark gradient overlay for typography readability */}

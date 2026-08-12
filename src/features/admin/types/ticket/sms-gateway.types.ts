@@ -1,4 +1,4 @@
-// SMS Gateway (admin) — DTOs + payloads. Field names verify từ BE `GatewayDeviceDto` record.
+// SMS Gateway (admin) — DTOs + payloads. Field names verified against the BE `GatewayDeviceDto` record.
 
 export interface GatewayDeviceDto {
   id: string;
@@ -9,18 +9,18 @@ export interface GatewayDeviceDto {
   dailyLimit: number;
   sentToday: number;
   sentTodayDate: string | null; // DateOnly → "yyyy-MM-dd"
-  lastSeenAt: string | null; // dùng tính badge online (< 10 phút)
+  lastSeenAt: string | null; // used to compute the online badge (< 10 minutes)
   lastSeenIp: string | null;
   createdAt: string;
 }
 
-// Response của POST /devices — chứa apiKey plaintext HIỂN THỊ 1 LẦN DUY NHẤT.
+// Response of POST /devices — contains the plaintext apiKey, DISPLAYED ONLY ONCE.
 export type CreateGatewayDeviceResponseDto = Pick<
   GatewayDeviceDto,
   "id" | "deviceCode"
 > & { apiKey: string };
 
-// FE LUÔN gửi dailyLimit (default 100) — BE chặn < 1 và là non-nullable int.
+// FE ALWAYS sends dailyLimit (default 100) — BE rejects < 1 and it's a non-nullable int.
 export type CreateGatewayDevicePayload = Pick<
   GatewayDeviceDto,
   "deviceName" | "deviceCode" | "dailyLimit"

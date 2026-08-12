@@ -6,14 +6,16 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   AdminTicketListParams,
   AdminTicketQueueParams,
-  TriagePayload,
   TriageRejectPayload,
   AssignPayload,
   ReassignPayload,
   RejectPayload,
   EscalatePayload,
   AddCommentPayload,
+  ReprioritizePayload,
 } from "@/shared/types/ticket/ticket.types";
+import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
+import { KEY } from "@/shared/utils/queryKeys";
 import { MANAGER_MESSAGES } from "@/features/manager/constants/messages";
 
 export const useAdminTicketList = (params?: AdminTicketListParams) =>
@@ -29,18 +31,6 @@ export const useAdminTicketQueue = (params?: AdminTicketQueueParams) =>
     queryKey: QUERY_KEY.manager.tickets.queue(params),
     queryFn: () =>
       managerTicketService.getQueue(params).then((r) => r.data.data),
-    staleTime: 30_000,
-  });
-
-/**
- * #697 — badge số ticket chờ duyệt (Manager/Admin). Chỉ trả số, không có items:
- * vẫn phải dùng `useAdminTicketQueue` cho danh sách.
- */
-export const useAdminTicketQueueCount = () =>
-  useQuery({
-    queryKey: QUERY_KEY.manager.tickets.queueCount(),
-    queryFn: () =>
-      managerTicketService.getQueueCount().then((r) => r.data.data ?? 0),
     staleTime: 30_000,
   });
 
@@ -73,8 +63,8 @@ export const useTicketMaintenanceLogs = (id: string) =>
     staleTime: 30_000,
   });
 
-// GET /api/tickets/{ticketId}/comments — query riêng để realtime invalidate.
-// staleTime cao + KHÔNG refetchInterval: comment mới đến qua SignalR push (S4).
+// GET /api/tickets/{ticketId}/comments — a separate query so realtime can invalidate it.
+// High staleTime + NO refetchInterval: new comments arrive via SignalR push (S4).
 export const useTicketComments = (id: string) =>
   useQuery({
     queryKey: QUERY_KEY.tickets.chats(id),
@@ -86,24 +76,7 @@ export const useTicketComments = (id: string) =>
     staleTime: 60_000,
   });
 
-export const useTriageTicket = (id: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: TriagePayload) =>
-      managerTicketService.triage(id, payload),
-    onSuccess: () => {
-      toast.success(MANAGER_MESSAGES.ticket.triaged);
-      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.manager.tickets.queueCount(),
-      });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
-};
-
+// GH-1176: useTriageTicket removed (triage approval removed).
 export const useTriageRejectTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
@@ -113,9 +86,6 @@ export const useTriageRejectTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.rejectedAtTriage);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.manager.tickets.queueCount(),
-      });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -131,7 +101,7 @@ export const useAssignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffAssigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
-      // #697 — Primary → PrimaryAssignee, Supporter → Collaborator trong chat.
+      // #697 — Primary → PrimaryAssignee, Supporter → Collaborator in chat.
       qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -147,7 +117,7 @@ export const useReassignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffReassigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
-      // #697 — Primary cũ → PreviousAssignee + Supporter, Primary mới → PrimaryAssignee.
+      // #697 — old Primary → PreviousAssignee + Supporter, new Primary → PrimaryAssignee.
       qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
       qc.invalidateQueries({
         queryKey: QUERY_KEY.ticketParticipants.history(id),
@@ -184,17 +154,71 @@ export const useRejectTicket = (id: string) => {
   });
 };
 
-export const useEscalateTicket = (id: string) => {
+// GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests.
+export const useEscalateApproveTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: EscalatePayload) =>
-      managerTicketService.escalate(id, payload),
+      managerTicketService.escalateApprove(id, payload),
     onSuccess: () => {
       toast.success(MANAGER_MESSAGES.ticket.escalated);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
     onError: (error) => handleErrorApi({ error }),
+  });
+};
+
+export const useEscalateRejectTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RejectPayload) =>
+      managerTicketService.escalateReject(id, payload),
+    onSuccess: () => {
+      toast.success(MANAGER_MESSAGES.ticket.escalationRejected);
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+};
+
+/**
+ * Change a ticket's priority (Manager). The BE recalculates the SLA — the FE only refetches.
+ *
+ * The BE has a side effect: if the new priority exceeds the tier of the Staff handling it, the
+ * ticket is auto-escalated and the primary handler is demoted. Detect this via
+ * `data.status === Escalated` (do NOT use `warnings` — the re-prioritize handler doesn't set that
+ * field); when it happens, participants must be invalidated too because the assignee changed.
+ */
+export const useReprioritizeTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ReprioritizePayload) =>
+      managerTicketService.reprioritize(id, payload).then((r) => r.data),
+    onSuccess: (res) => {
+      // GH-1176: auto-escalation now moves to ReAssign, not legacy Escalated status.
+      const autoEscalated = res.data?.status === TicketStatusEnum.ReAssign;
+      toast.success(
+        autoEscalated
+          ? MANAGER_MESSAGES.ticket.reprioritizedWithEscalation
+          : MANAGER_MESSAGES.ticket.reprioritized,
+      );
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.activities(id),
+      });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+      if (autoEscalated) {
+        qc.invalidateQueries({ queryKey: [KEY.ticketParticipants] });
+      }
+    },
+    // Do NOT call handleErrorApi here — this is a form mutation, so errors must go through
+    // try-catch + setError in the dialog for EntityError to map down to the inputs. The hook only
+    // handles refetching: a 409 means the ticket state changed elsewhere, so don't auto-retry.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -212,32 +236,31 @@ export const useDeclareIncident = (id: string) => {
   });
 };
 
-/** Manager gộp ticket nghi trùng (id) vào ticket đích. */
+/** Manager merges the suspected-duplicate ticket (id) into the target ticket. */
 export const useMergeTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (targetTicketId: string) =>
       managerTicketService.merge(id, { targetTicketId }),
     onSuccess: () => {
-      toast.success("Đã gộp ticket");
+      toast.success("Ticket merged");
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.manager.tickets.queueCount(),
-      });
     },
     onError: (error) => handleErrorApi({ error }),
   });
 };
 
-/** Manager kích hoạt AI kiểm tra lại (ticket Skipped/Pending). */
+/** Manager triggers an AI re-check (Skipped/Pending tickets). */
 export const useReVerifyTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => managerTicketService.reVerify(id),
     onSuccess: () => {
-      toast.success("Đã yêu cầu AI kiểm tra lại — chờ vài giây rồi làm mới.");
+      toast.success(
+        "AI re-check requested — wait a few seconds, then refresh.",
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
     },
     onError: (error) => handleErrorApi({ error }),
@@ -255,12 +278,12 @@ export const useAddComment = () => {
       payload: AddCommentPayload;
     }) => managerTicketService.addComment(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      // Không toast success — gửi qua chat outbox, trạng thái hiển thị dưới bubble.
+      // No success toast — it's sent through the chat outbox, and the status shows under the bubble.
       qc.invalidateQueries({
         queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
       });
-      // Comment panel dùng query riêng (tickets.chats) — invalidate để
-      // tác giả thấy ngay comment của mình (không chờ realtime broadcast).
+      // The comment panel uses its own query (tickets.chats) — invalidate it so the
+      // author sees their own comment right away (without waiting for the realtime broadcast).
       qc.invalidateQueries({
         queryKey: QUERY_KEY.tickets.chats(ticketId),
       });

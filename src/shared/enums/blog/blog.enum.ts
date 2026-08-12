@@ -1,4 +1,4 @@
-// Blog post status — BE serialize enum dạng STRING (JsonStringEnumConverter)
+// Blog post status — the BE serializes this enum as a STRING (JsonStringEnumConverter)
 export const BlogPostStatusEnum = {
   Generating: "Generating",
   GenerationFailed: "GenerationFailed",
@@ -10,26 +10,26 @@ export type BlogPostStatusEnum =
   (typeof BlogPostStatusEnum)[keyof typeof BlogPostStatusEnum];
 
 export const BlogPostStatusLabel: Record<BlogPostStatusEnum, string> = {
-  [BlogPostStatusEnum.Generating]: "Đang tạo",
-  [BlogPostStatusEnum.GenerationFailed]: "Tạo thất bại",
-  [BlogPostStatusEnum.Draft]: "Nháp",
-  [BlogPostStatusEnum.Published]: "Đã xuất bản",
-  [BlogPostStatusEnum.Archived]: "Lưu trữ",
+  [BlogPostStatusEnum.Generating]: "Generating",
+  [BlogPostStatusEnum.GenerationFailed]: "Generation failed",
+  [BlogPostStatusEnum.Draft]: "Draft",
+  [BlogPostStatusEnum.Published]: "Published",
+  [BlogPostStatusEnum.Archived]: "Archived",
 };
 
-// Trạng thái kết thúc của luồng generate-from-kb — poll dừng khi gặp 1 trong 2
+// Terminal states of the generate-from-kb flow — polling stops on either of these
 export const BLOG_GENERATION_TERMINAL_STATUSES: BlogPostStatusEnum[] = [
   BlogPostStatusEnum.Draft,
   BlogPostStatusEnum.GenerationFailed,
 ];
 
-// Trạng thái không cho phép chỉnh sửa (BE trả 409 nếu cố PUT)
+// States that can't be edited (the BE returns 409 if you attempt a PUT)
 export const BLOG_NON_EDITABLE_STATUSES: BlogPostStatusEnum[] = [
   BlogPostStatusEnum.Generating,
   BlogPostStatusEnum.Archived,
 ];
 
-// Nguồn gốc bài viết — BE serialize dạng STRING
+// Where the post came from — the BE serializes this as a STRING
 export const BlogPostOriginEnum = {
   Manual: "Manual",
   AiGeneratedFromKb: "AiGeneratedFromKb",
@@ -38,8 +38,8 @@ export type BlogPostOriginEnum =
   (typeof BlogPostOriginEnum)[keyof typeof BlogPostOriginEnum];
 
 export const BlogPostOriginLabel: Record<BlogPostOriginEnum, string> = {
-  [BlogPostOriginEnum.Manual]: "Tạo thủ công",
-  [BlogPostOriginEnum.AiGeneratedFromKb]: "AI tạo từ KB",
+  [BlogPostOriginEnum.Manual]: "Created manually",
+  [BlogPostOriginEnum.AiGeneratedFromKb]: "AI-generated from KB",
 };
 
 export const BLOG_STATUS_OPTIONS = (

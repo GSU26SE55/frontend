@@ -10,7 +10,7 @@ import type {
   WarrantyExpiringParams,
 } from "@/shared/types/dashboard/analytics.types";
 
-// Reports đổi ít → staleTime 5 phút. Mỗi hook nhận `enabled` để lazy-load theo tab active.
+// Reports change infrequently → staleTime 5 min. Each hook accepts `enabled` to lazy-load per active tab.
 const REPORT_STALE = 5 * 60_000;
 
 export const useBatteryHealthByType = (enabled = true) =>
@@ -94,7 +94,7 @@ export const useAmbientTrend = (
 interface ExportReportInput {
   endpoint: string;
   format: ReportFormat;
-  filename: string; // không kèm đuôi mở rộng
+  filename: string; // without extension
   params?: Record<string, unknown>;
 }
 
@@ -109,7 +109,7 @@ const triggerBlobDownload = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-// Tải file report về máy (CSV/XLSX). Lỗi → blob được interceptor parse lại JSON → toast.
+// Downloads the report file (CSV/XLSX). On error → interceptor re-parses the blob as JSON → toast.
 export const useExportReport = () =>
   useMutation({
     mutationFn: async ({

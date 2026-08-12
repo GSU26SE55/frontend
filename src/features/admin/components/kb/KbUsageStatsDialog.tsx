@@ -24,7 +24,7 @@ function StatRow({ label, value }: { label: string; value: number }) {
 }
 
 export function KbUsageStatsDialog({ articleId, open, onClose }: Props) {
-  // Lazy: chỉ fetch khi dialog mở (enabled qua id rỗng khi đóng).
+  // Lazy: only fetch while the dialog is open (gated by passing an empty id when closed).
   const { data, isLoading, isError } = useAdminKbUsageStats(
     open ? articleId : "",
   );
@@ -33,7 +33,7 @@ export function KbUsageStatsDialog({ articleId, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Thống kê sử dụng</DialogTitle>
+          <DialogTitle>Usage stats</DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <div className="space-y-2">
@@ -43,12 +43,12 @@ export function KbUsageStatsDialog({ articleId, open, onClose }: Props) {
           </div>
         ) : isError || !data ? (
           <p className="text-sm text-destructive py-4 text-center">
-            Không tải được thống kê.
+            Couldn't load usage stats.
           </p>
         ) : (
           <div className="space-y-1">
             <div className="flex items-center justify-between py-2 mb-2">
-              <span className="text-sm font-medium">Tổng lượt tham chiếu</span>
+              <span className="text-sm font-medium">Total references</span>
               <span className="text-2xl font-bold tabular-nums">
                 {data.totalReferences}
               </span>

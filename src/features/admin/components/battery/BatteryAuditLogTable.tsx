@@ -1,6 +1,6 @@
 import { ScrollText, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { toneClass } from "@/shared/theme/statusColors";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
-// severity → màu badge (display-only; KHÔNG phải filter). Token semantic.
+// severity → badge color (display-only; NOT a filter). Semantic token.
 const SEVERITY_STYLE: Record<string, string> = {
   Info: toneClass("info"),
   Warning: toneClass("p2"),
@@ -32,9 +32,9 @@ interface BatteryAuditLogTableProps {
   pageNumber: number;
   pageSize: number;
   /**
-   * Sort server-side — state từ useUrlSort. Optional: dùng chung bởi trang
-   * File Audit (endpoint riêng, BE chưa hỗ trợ sort) → không truyền → header
-   * hiển thị nhưng bấm không làm gì (không có active key).
+   * Sort server-side — state from useUrlSort. Optional: shared with the
+   * File Audit page (separate endpoint, BE doesn't support sort yet) → not
+   * passed → header renders but clicking does nothing (no active key).
    */
   sort?: ServerSortState;
 }
@@ -47,8 +47,8 @@ export default function BatteryAuditLogTable({
   pageSize,
   sort,
 }: BatteryAuditLogTableProps) {
-  // BE đã sort toàn dataset (SortBy/SortDir) → render logs nguyên trạng.
-  // Không có sort (File Audit) → header inert (active null, toggle no-op).
+  // BE already sorts the whole dataset (SortBy/SortDir) → render logs as-is.
+  // No sort (File Audit) → header inert (active null, toggle no-op).
   const sortKey = sort?.sortBy ?? null;
   const sortDirection = sort?.sortDir ?? "asc";
   const toggleSort = sort?.toggleSort ?? (() => {});
@@ -68,7 +68,7 @@ export default function BatteryAuditLogTable({
       <div className="py-16 flex flex-col items-center gap-3 text-destructive">
         <ScrollText size={32} className="opacity-40" />
         <span className="text-sm">
-          Không tải được audit log. Kiểm tra lại bộ lọc hoặc thử lại.
+          Failed to load the audit log. Check your filters or try again.
         </span>
       </div>
     );
@@ -78,7 +78,7 @@ export default function BatteryAuditLogTable({
     return (
       <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
         <ScrollText size={32} className="opacity-30" />
-        <span className="text-sm">Không có audit log nào.</span>
+        <span className="text-sm">No audit logs yet.</span>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function BatteryAuditLogTable({
             onSort={toggleSort}
             className="w-44"
           >
-            Thời gian
+            Time
           </SortableTableHead>
           <SortableTableHead
             sortKey="actionCode"
@@ -105,7 +105,7 @@ export default function BatteryAuditLogTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Hành động
+            Action
           </SortableTableHead>
           <SortableTableHead
             sortKey="severity"
@@ -114,7 +114,7 @@ export default function BatteryAuditLogTable({
             onSort={toggleSort}
             className="w-28"
           >
-            Mức độ
+            Severity
           </SortableTableHead>
           <SortableTableHead
             sortKey="targetDisplay"
@@ -122,7 +122,7 @@ export default function BatteryAuditLogTable({
             direction={sortDirection}
             onSort={toggleSort}
           >
-            Đối tượng
+            Target
           </SortableTableHead>
           <SortableTableHead
             sortKey="actorAccountId"
@@ -131,7 +131,7 @@ export default function BatteryAuditLogTable({
             onSort={toggleSort}
             className="w-40"
           >
-            Thực hiện
+            Actor
           </SortableTableHead>
           <SortableTableHead
             sortKey="isSuccess"
@@ -140,7 +140,7 @@ export default function BatteryAuditLogTable({
             onSort={toggleSort}
             className="w-24 justify-center"
           >
-            Kết quả
+            Result
           </SortableTableHead>
         </TableRow>
       </TableHeader>
@@ -154,8 +154,8 @@ export default function BatteryAuditLogTable({
               {(pageNumber - 1) * pageSize + index + 1}
             </TableCell>
             <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
-              {format(new Date(log.occurredAt), "dd/MM/yyyy HH:mm:ss", {
-                locale: vi,
+              {format(new Date(log.occurredAt), "MM/dd/yyyy HH:mm:ss", {
+                locale: enUS,
               })}
             </TableCell>
             <TableCell>
@@ -183,7 +183,7 @@ export default function BatteryAuditLogTable({
               )}
             </TableCell>
             <TableCell className="text-xs font-mono text-muted-foreground truncate">
-              {log.actorAccountId ?? "Hệ thống"}
+              {log.actorAccountId ?? "System"}
             </TableCell>
             <TableCell className="text-center">
               <span

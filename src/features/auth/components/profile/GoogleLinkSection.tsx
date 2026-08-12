@@ -55,7 +55,7 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
           disabled={isUnlinking}
         >
           {isUnlinking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Hủy liên kết
+          Unlink
         </Button>
       )}
     </div>
@@ -66,7 +66,7 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Liên kết Google</CardTitle>
+        <CardTitle>Link Google account</CardTitle>
       </CardHeader>
       <CardContent>{inner}</CardContent>
     </Card>

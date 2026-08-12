@@ -12,7 +12,7 @@ export const useForgotPassword = (onSuccess?: () => void) =>
     onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? "Gửi yêu cầu thất bại");
+        toast.error(res.message ?? "Couldn't send the request");
         return;
       }
       toast.success(AUTH_MESSAGES.otp.sentToEmail);

@@ -11,9 +11,9 @@ import type {
 import { NotificationChannelEnum } from "@/shared/enums/notification/notification.enum";
 
 export const staffNotificationService = {
-  // Mặc định chỉ lấy channel InApp — BE ghi 1 record/channel (InApp + Push) cho mỗi
-  // sự kiện; record Push chỉ để đẩy device, không thuộc danh sách in-app. Không lọc
-  // sẽ hiện trùng 2 dòng. Caller vẫn override channel được nếu cần.
+  // Defaults to the InApp channel only — the BE writes one record per channel (InApp + Push) for
+  // each event; the Push record only drives device delivery and is not part of the in-app list.
+  // Without the filter every event would appear twice. Callers can still override the channel.
   getList: (params: StaffNotificationsParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<NotificationDto>>>(
       ENDPOINTS.NOTIFICATIONS.LIST,

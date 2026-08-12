@@ -41,7 +41,7 @@ interface Props {
   chat: TicketCommentDTO | null;
 }
 
-// GH-133 C4 — Admin sửa/xóa chat trên ticket đã Closed. Bắt buộc overrideReason.
+// GH-133 C4 — Admin edits/deletes chat on a Closed ticket. overrideReason is required.
 export default function AdminClosedOverrideDialog({
   open,
   onOpenChange,
@@ -55,12 +55,12 @@ export default function AdminClosedOverrideDialog({
         <DialogHeader>
           <DialogTitle>
             {mode === "edit"
-              ? "Sửa bình luận (override)"
-              : "Xóa bình luận (override)"}
+              ? "Edit comment (override)"
+              : "Delete comment (override)"}
           </DialogTitle>
           <DialogDescription>
-            Ticket đã đóng — thao tác này vượt giới hạn thường và ghi vào audit.
-            Bắt buộc nhập lý do.
+            This ticket is closed — this action exceeds normal limits and is
+            logged to audit. A reason is required.
           </DialogDescription>
         </DialogHeader>
         {chat &&
@@ -116,7 +116,7 @@ function OverrideEditForm({
           name="body"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nội dung</FormLabel>
+              <FormLabel>Content</FormLabel>
               <FormControl>
                 <Textarea rows={3} {...field} />
               </FormControl>
@@ -129,11 +129,11 @@ function OverrideEditForm({
           name="overrideReason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Lý do override</FormLabel>
+              <FormLabel>Override reason</FormLabel>
               <FormControl>
                 <Textarea
                   rows={2}
-                  placeholder="Ví dụ: sửa lỗi dữ liệu..."
+                  placeholder="e.g. fixing a data error..."
                   {...field}
                 />
               </FormControl>
@@ -143,10 +143,10 @@ function OverrideEditForm({
         />
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onDone}>
-            Hủy
+            Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
-            Lưu
+            Save
           </Button>
         </DialogFooter>
       </form>
@@ -186,11 +186,11 @@ function OverrideDeleteForm({
           name="overrideReason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Lý do override</FormLabel>
+              <FormLabel>Override reason</FormLabel>
               <FormControl>
                 <Textarea
                   rows={2}
-                  placeholder="Ví dụ: nội dung vi phạm..."
+                  placeholder="e.g. content violation..."
                   {...field}
                 />
               </FormControl>
@@ -200,10 +200,10 @@ function OverrideDeleteForm({
         />
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={onDone}>
-            Hủy
+            Cancel
           </Button>
           <Button type="submit" variant="destructive" disabled={isPending}>
-            Xóa
+            Delete
           </Button>
         </DialogFooter>
       </form>

@@ -14,7 +14,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -50,55 +50,55 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 const ACTION_LABELS: Record<string, string> = {
-  LoginSuccess: "Đăng nhập",
-  LoginFailedWrongPassword: "Sai mật khẩu",
-  LoginFailedAccountLocked: "Tài khoản bị khóa",
-  LoginFailedAccountSuspended: "Tài khoản bị suspend",
-  LoginFailedAccountBanned: "Tài khoản bị ban",
-  LoginFailedAccountInactive: "Tài khoản inactive",
-  LoginFailedNotVerified: "Chưa xác thực email",
-  AccountAutoLocked: "Khóa tự động",
-  Logout: "Đăng xuất",
-  GoogleLoginSuccess: "Google đăng nhập",
-  GoogleLoginFailed: "Google đăng nhập thất bại",
-  TokenRefreshed: "Làm mới token",
-  TokenReuseDetected: "Token bất thường",
-  PasswordChanged: "Đổi mật khẩu",
-  PasswordReset: "Reset mật khẩu",
-  OtpVerifySuccess: "Xác thực OTP",
-  OtpVerifyFailed: "Xác thực OTP thất bại",
-  TwoFactorEnabled: "Bật 2FA",
-  TwoFactorDisabled: "Tắt 2FA",
-  TwoFactorReset: "Reset 2FA",
-  BackupCodeRedeemed: "Dùng backup code",
-  BackupCodesRegenerated: "Tạo lại backup code",
+  LoginSuccess: "Login",
+  LoginFailedWrongPassword: "Wrong password",
+  LoginFailedAccountLocked: "Account locked",
+  LoginFailedAccountSuspended: "Account suspended",
+  LoginFailedAccountBanned: "Account banned",
+  LoginFailedAccountInactive: "Account inactive",
+  LoginFailedNotVerified: "Email not verified",
+  AccountAutoLocked: "Auto-locked",
+  Logout: "Logout",
+  GoogleLoginSuccess: "Google login",
+  GoogleLoginFailed: "Google login failed",
+  TokenRefreshed: "Token refreshed",
+  TokenReuseDetected: "Anomalous token",
+  PasswordChanged: "Password changed",
+  PasswordReset: "Password reset",
+  OtpVerifySuccess: "OTP verified",
+  OtpVerifyFailed: "OTP verification failed",
+  TwoFactorEnabled: "2FA enabled",
+  TwoFactorDisabled: "2FA disabled",
+  TwoFactorReset: "2FA reset",
+  BackupCodeRedeemed: "Backup code used",
+  BackupCodesRegenerated: "Backup codes regenerated",
   Admin2faReset: "Admin reset 2FA",
-  LoginWith2fa: "Đăng nhập với 2FA",
-  LoginPending2fa: "Chờ xác thực 2FA",
-  GoogleLinked: "Liên kết Google",
-  GoogleUnlinked: "Hủy liên kết Google",
-  AccountRegistered: "Đăng ký tài khoản",
-  AccountCreatedByAdmin: "Admin tạo tài khoản",
-  AccountUpdated: "Cập nhật tài khoản",
-  AccountStatusChanged: "Đổi trạng thái tài khoản",
-  AccountUnlocked: "Mở khóa tài khoản",
-  AccountDeactivated: "Vô hiệu hóa tài khoản",
-  AccountDeleted: "Xóa tài khoản",
-  AccountInviteSent: "Gửi lời mời",
-  AccountInviteAccepted: "Chấp nhận lời mời",
-  SessionRevoked: "Thu hồi session",
-  AllSessionsRevoked: "Thu hồi tất cả session",
-  AdminForceLogout: "Admin đăng xuất bắt buộc",
-  SessionLimitExceededOldestRevoked: "Quá giới hạn session",
-  RoleAssigned: "Gán role",
-  RoleRevoked: "Xóa role",
-  RoleTemporaryAssigned: "Gán role tạm thời",
-  RoleCreated: "Tạo role",
-  RoleUpdated: "Cập nhật role",
-  RoleStatusChanged: "Đổi trạng thái role",
-  RoleDeleted: "Xóa role",
-  PermissionGranted: "Cấp quyền",
-  PermissionRevoked: "Thu quyền",
+  LoginWith2fa: "Login with 2FA",
+  LoginPending2fa: "Pending 2FA verification",
+  GoogleLinked: "Google linked",
+  GoogleUnlinked: "Google unlinked",
+  AccountRegistered: "Account registered",
+  AccountCreatedByAdmin: "Admin created account",
+  AccountUpdated: "Account updated",
+  AccountStatusChanged: "Account status changed",
+  AccountUnlocked: "Account unlocked",
+  AccountDeactivated: "Account deactivated",
+  AccountDeleted: "Account deleted",
+  AccountInviteSent: "Invite sent",
+  AccountInviteAccepted: "Invite accepted",
+  SessionRevoked: "Session revoked",
+  AllSessionsRevoked: "All sessions revoked",
+  AdminForceLogout: "Admin forced logout",
+  SessionLimitExceededOldestRevoked: "Session limit exceeded",
+  RoleAssigned: "Role assigned",
+  RoleRevoked: "Role revoked",
+  RoleTemporaryAssigned: "Temporary role assigned",
+  RoleCreated: "Role created",
+  RoleUpdated: "Role updated",
+  RoleStatusChanged: "Role status changed",
+  RoleDeleted: "Role deleted",
+  PermissionGranted: "Permission granted",
+  PermissionRevoked: "Permission revoked",
 };
 
 type ActionCategory =
@@ -172,20 +172,20 @@ const CATEGORY_STYLE: Record<ActionCategory, string> = {
 
 const CATEGORY_LABEL: Record<ActionCategory, string> = {
   auth: "Auth",
-  account: "Tài khoản",
+  account: "Account",
   session: "Session",
-  role: "Phân quyền",
-  security: "Bảo mật",
-  other: "Khác",
+  role: "Permissions",
+  security: "Security",
+  other: "Other",
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const fmt = (dt: string) =>
-  format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: vi });
+  format(new Date(dt), "MM/dd/yyyy HH:mm:ss", { locale: enUS });
 
 const fmtFull = (dt: string) =>
-  format(new Date(dt), "EEEE, dd/MM/yyyy 'lúc' HH:mm:ss", { locale: vi });
+  format(new Date(dt), "EEEE, MM/dd/yyyy 'at' HH:mm:ss", { locale: enUS });
 
 function parseMetadata(raw?: string): Record<string, string> | null {
   if (!raw) return null;
@@ -281,7 +281,7 @@ function AuditLogDetail({
               ) : (
                 <XCircle size={11} />
               )}
-              {log.isSuccess ? "Thành công" : "Thất bại"}
+              {log.isSuccess ? "Success" : "Failed"}
             </span>
           </div>
         </DrawerHeader>
@@ -290,12 +290,12 @@ function AuditLogDetail({
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Thông tin chung
+              General information
             </h3>
             <div className="space-y-3">
               <DetailRow
                 icon={Clock}
-                label="Thời gian"
+                label="Time"
                 value={fmtFull(log.createdAt)}
               />
               <DetailRow icon={Hash} label="Log ID" value={log.id} mono />
@@ -314,13 +314,13 @@ function AuditLogDetail({
 
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Tài khoản
+              Account
             </h3>
             <div className="space-y-3">
               {log.targetEmail && (
                 <DetailRow
                   icon={User}
-                  label="Tài khoản bị ảnh hưởng"
+                  label="Affected account"
                   value={log.targetEmail}
                 />
               )}
@@ -335,7 +335,7 @@ function AuditLogDetail({
               {log.actorAccountId && (
                 <DetailRow
                   icon={User}
-                  label="Thực hiện bởi (Actor ID)"
+                  label="Performed by (Actor ID)"
                   value={log.actorAccountId}
                   mono
                 />
@@ -347,13 +347,13 @@ function AuditLogDetail({
 
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Thiết bị & Mạng
+              Device & Network
             </h3>
             <div className="space-y-3">
               {log.ipAddress && (
                 <DetailRow
                   icon={Globe}
-                  label="Địa chỉ IP"
+                  label="IP address"
                   value={log.ipAddress}
                   mono
                 />
@@ -369,7 +369,7 @@ function AuditLogDetail({
               {ua && (
                 <DetailRow
                   icon={Monitor}
-                  label="Trình duyệt"
+                  label="Browser"
                   value={
                     <div className="space-y-1">
                       <p className="text-sm">
@@ -390,7 +390,7 @@ function AuditLogDetail({
               <Separator />
               <section className="space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Lý do
+                  Reason
                 </h3>
                 <p className="text-sm">{log.reason}</p>
               </section>
@@ -421,11 +421,11 @@ function AuditLogDetail({
           )}
         </div>
 
-        {/* Footer cố định */}
+        {/* Fixed footer */}
         <DrawerFooter className="border-t border-border">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">
-              Đóng
+              Close
             </Button>
           </DrawerClose>
         </DrawerFooter>
@@ -472,12 +472,12 @@ export default function AuditLogsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin · Hệ thống
+            Admin · System
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()} sự kiện
-            — lịch sử hoạt động trên hệ thống.
+            {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()} events
+            — activity history across the system.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.admin.auditLogs]} />
@@ -487,10 +487,10 @@ export default function AuditLogsPage() {
         <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-semibold tracking-tight">
-              Danh sách audit log
+              Audit log list
             </h2>
             <p className="text-sm text-muted-foreground">
-              Click vào hàng để xem chi tiết đầy đủ.
+              Click a row to see the full detail.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -505,7 +505,7 @@ export default function AuditLogsPage() {
             </div>
             {hasActiveFilter && (
               <Button size="sm" variant="ghost" onClick={resetFilters}>
-                Xóa bộ lọc
+                Clear filters
               </Button>
             )}
           </div>
@@ -520,7 +520,7 @@ export default function AuditLogsPage() {
         ) : filtered.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ScrollText size={32} className="opacity-30" />
-            <span className="text-sm">Không có audit log nào.</span>
+            <span className="text-sm">No audit logs yet.</span>
           </div>
         ) : (
           <Table className="table-fixed">
@@ -529,11 +529,11 @@ export default function AuditLogsPage() {
                 <TableHead className="w-12 text-center">
                   {TABLE_COLUMNS.index}
                 </TableHead>
-                <TableHead className="w-1/5">{TABLE_COLUMNS.time}</TableHead>
-                <TableHead className="w-1/5">Hành động</TableHead>
-                <TableHead className="w-1/5">Kết quả</TableHead>
-                <TableHead className="w-1/5">Tài khoản</TableHead>
-                <TableHead className="w-1/5">IP</TableHead>
+                <TableHead className="w-[18%]">{TABLE_COLUMNS.time}</TableHead>
+                <TableHead className="w-[26%]">Action</TableHead>
+                <TableHead className="w-[12%]">Result</TableHead>
+                <TableHead className="w-[26%]">Account</TableHead>
+                <TableHead className="w-[18%]">IP</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

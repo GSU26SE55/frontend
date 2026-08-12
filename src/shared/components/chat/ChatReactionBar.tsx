@@ -28,7 +28,7 @@ import type {
   ChatReactionsAggregateDto,
 } from "@/shared/types/chat/chat.types";
 
-// Map từ enum → key camelCase của aggregate DTO (BE trả camelCase).
+// Map from enum → camelCase key of the aggregate DTO (BE returns camelCase).
 const GROUP_KEY: Record<ReactionTypeEnum, keyof ChatReactionsAggregateDto> = {
   ThumbsUp: "thumbsUp",
   Acknowledged: "acknowledged",
@@ -41,15 +41,15 @@ interface Props {
   ticketId: string;
   chatId: string;
   currentUserId?: string | null;
-  /** Căn phải cho tin nhắn của mình (isOwn) — khớp layout bubble. */
+  /** Right-align for your own messages (isOwn) — matches the bubble layout. */
   align?: "start" | "end";
 }
 
 /**
- * Hàng reaction gắn dưới TỪNG bubble chat (kiểu Zalo/Slack) — GH-133.
- * - Nút thả cảm xúc: mở menu 5 loại reaction cố định (map từ BE ReactionTypeEnum).
- * - Chip đã thả: hiện emoji + count, click để toggle (thêm/bỏ reaction của mình).
- * Dùng chung admin/manager/staff qua TicketCommentThread.
+ * Reaction row attached under EACH chat bubble (Zalo/Slack style) — GH-133.
+ * - React button: opens a menu of 5 fixed reaction types (mapped from BE ReactionTypeEnum).
+ * - Reacted chip: shows emoji + count, click to toggle (add/remove your own reaction).
+ * Shared across admin/manager/staff via TicketCommentThread.
  */
 export default function ChatReactionBar({
   ticketId,
@@ -61,7 +61,7 @@ export default function ChatReactionBar({
   const addM = useAddReaction();
   const removeM = useRemoveReaction();
 
-  // Các loại reaction đang có ≥1 người thả — kèm cờ mình-đã-thả.
+  // Reaction types that currently have ≥1 person reacting — with an own-reaction flag.
   const active = useMemo(() => {
     if (!aggregate)
       return [] as { type: ReactionTypeEnum; count: number; mine: boolean }[];
@@ -126,7 +126,7 @@ export default function ChatReactionBar({
               size="icon"
               disabled={pending}
               className="size-5 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-              aria-label="Thả cảm xúc"
+              aria-label="React"
             />
           }
         >

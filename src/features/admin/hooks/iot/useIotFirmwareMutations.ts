@@ -4,8 +4,8 @@ import { iotFirmwareService } from "@/features/admin/services/iot/iot-firmware.s
 import { HttpError } from "@/shared/lib/errors";
 import type { UploadFirmwareBinaryPayload } from "@/shared/types/iot/iot.types";
 
-// 2-step trong 1 mutation: upload .bin → lấy artifactUrl/sha256/size → tạo release.
-// upload-binary KHÔNG tạo release nên phải gọi createRelease sau.
+// 2 steps in 1 mutation: upload .bin → get artifactUrl/sha256/size → create release.
+// upload-binary does NOT create a release, so createRelease must be called afterward.
 export function useCreateFirmwareRelease() {
   const qc = useQueryClient();
   return useMutation({
@@ -17,10 +17,7 @@ export function useCreateFirmwareRelease() {
         .then((r) => r.data);
       const artifact = uploaded.data;
       if (!artifact) {
-        throw new HttpError(
-          422,
-          uploaded.message ?? "Upload firmware thất bại",
-        );
+        throw new HttpError(422, uploaded.message ?? "Firmware upload failed");
       }
       return iotFirmwareService
         .createRelease({

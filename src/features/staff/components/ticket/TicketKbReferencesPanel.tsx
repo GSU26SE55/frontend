@@ -20,7 +20,7 @@ import {
   useRemoveTicketKbRef,
 } from "@/features/staff/hooks/ticket/useTicketKbRefs";
 import { staffKbService } from "@/features/staff/services/kb/kb.service";
-import { useStaffKbSuggest } from "@/features/staff/hooks/kb/useStaffKb";
+import { useKbSuggestions } from "@/shared/hooks/useSuggestions";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
@@ -53,19 +53,19 @@ const REF_TYPE_BADGE: Record<RefType, string> = {
 
 const REF_TYPE_DESC: Record<RefType, string> = {
   [KbReferenceTypeEnum.ConsultedDuringResolve]:
-    "Bài này được tham khảo trong lúc xử lý ticket.",
+    "This article was consulted while handling the ticket.",
   [KbReferenceTypeEnum.ProvidedToCustomer]:
-    "Bài này đã được gửi/share trực tiếp cho khách hàng.",
+    "This article was sent/shared directly with the customer.",
   [KbReferenceTypeEnum.GeneratedAfterResolve]:
-    "Bài này được tạo mới hoặc cập nhật từ kinh nghiệm xử lý ticket này.",
+    "This article was created or updated from the experience of handling this ticket.",
 };
 
 interface TicketKbReferencesPanelProps {
   ticketId: string;
   defaultCategory?: TicketCategoryEnum;
-  /** Cho phép gắn bài viết (khớp BE: chặn từ ClosedPendingRate trở đi). */
+  /** Allows attaching articles (matches BE: blocked from ClosedPendingRate onward). */
   canAdd?: boolean;
-  /** Ticket ở Resolved — chỉ ghi nhận 2 type after-resolve (khớp BE guard H). */
+  /** Ticket is Resolved — only the 2 after-resolve types are recorded (matches BE guard H). */
   afterResolveOnly?: boolean;
 }
 
@@ -77,14 +77,24 @@ export default function TicketKbReferencesPanel({
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
-  const { data: suggestions } = useStaffKbSuggest(ticketId);
+  // AI-ranked suggestions — with a match score + reason, replacing the earlier
+  // keyword-match list (which couldn't explain why an article was suggested).
+  // topN=3: suggestions are meant for a quick read-then-decide; a long list dilutes
+  // that — a technician who needs a different article can still use the "Attach
+  // article" button to search manually.
+  const { data: aiSuggest, isLoading: loadingSuggest } = useKbSuggestions(
+    ticketId,
+    { topN: 3 },
+  );
   const { mutate: addRef, isPending: adding } = useAddTicketKbRef(ticketId);
   const { mutate: removeRef } = useRemoveTicketKbRef(ticketId);
 
   const suggested = useMemo(() => {
     const attachedIds = new Set((refs ?? []).map((r) => r.kbArticleId));
-    return (suggestions ?? []).filter((s) => !attachedIds.has(s.id));
-  }, [suggestions, refs]);
+    return (aiSuggest?.items ?? []).filter(
+      (s) => !attachedIds.has(s.kbArticleId),
+    );
+  }, [aiSuggest, refs]);
 
   const searchArticles = useCallback(
     ({ q, category }: KbArticleSearchParams) =>
@@ -113,7 +123,7 @@ export default function TicketKbReferencesPanel({
   );
   const [note, setNote] = useState("");
 
-  // H — ở Resolved BE chỉ cho 2 type after-resolve; ẩn ConsultedDuringResolve.
+  // H — at Resolved the BE only allows the 2 after-resolve types; hide ConsultedDuringResolve.
   const refTypeOptions: RefType[] = afterResolveOnly
     ? [
         KbReferenceTypeEnum.ProvidedToCustomer,
@@ -121,9 +131,9 @@ export default function TicketKbReferencesPanel({
       ]
     : REF_TYPE_ORDER;
 
-  // Consulted không hợp lệ ở Resolved (BE 422). Dùng effective refType (derive,
-  // không reset state trong effect) — nếu state còn Consulted khi chuyển sang
-  // Resolved thì add/hiển thị như GeneratedAfterResolve.
+  // Consulted is invalid at Resolved (BE 422). Uses an effective refType (derived,
+  // not reset via state in an effect) — if state is still Consulted when the ticket
+  // moves to Resolved, add/display falls back to GeneratedAfterResolve.
   const effectiveRefType: RefType =
     afterResolveOnly && refType === KbReferenceTypeEnum.ConsultedDuringResolve
       ? KbReferenceTypeEnum.GeneratedAfterResolve
@@ -168,7 +178,7 @@ export default function TicketKbReferencesPanel({
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
-          Bài viết KB liên quan
+          Related KB articles
           {totalRefs > 0 && (
             <span className="ml-1.5 text-xs font-normal text-muted-foreground">
               ({totalRefs})
@@ -183,7 +193,7 @@ export default function TicketKbReferencesPanel({
             disabled={!canAdd}
             title={
               !canAdd
-                ? "Ticket đã hoàn thành — không thể tạo bài viết"
+                ? "Ticket is already completed — cannot create an article"
                 : undefined
             }
             onClick={() =>
@@ -192,7 +202,7 @@ export default function TicketKbReferencesPanel({
               })
             }
           >
-            <FilePlus2 className="size-3.5" /> Tạo bài viết mới
+            <FilePlus2 className="size-3.5" /> Create new article
           </Button>
           <Button
             size="sm"
@@ -201,7 +211,7 @@ export default function TicketKbReferencesPanel({
             disabled={!canAdd}
             title={
               !canAdd
-                ? "Ticket đã hoàn thành — không thể gắn thêm bài viết"
+                ? "Ticket is already completed — cannot attach more articles"
                 : undefined
             }
             onClick={() => setShowAdd(!showAdd)}
@@ -211,57 +221,101 @@ export default function TicketKbReferencesPanel({
             ) : (
               <Plus className="size-3.5" />
             )}
-            {showAdd ? "Đóng" : "Gắn bài viết"}
+            {showAdd ? "Close" : "Attach article"}
           </Button>
         </div>
       </div>
 
-      {suggested.length > 0 && (
+      {/* Always show this block: even when there's no matching article, it must be
+          stated clearly — hiding it would leave the technician unsure whether AI
+          even searched. */}
+      {(loadingSuggest || aiSuggest !== undefined) && (
         <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" />
             <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-              Gợi ý cho ticket này
+              AI-suggested articles
             </h4>
+            {aiSuggest?.aiAvailable === false && (
+              <span className="ml-auto text-[10px] text-muted-foreground">
+                AI temporarily unavailable
+              </span>
+            )}
           </div>
+
+          {/* Make clear these are SUGGESTIONS, not already-attached articles — avoids
+              the impression that the system auto-attached them to the ticket. */}
+          {suggested.length > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              Articles that may be related to this incident. Click{" "}
+              <span className="font-medium">Attach</span> if you actually used
+              it while resolving — until then it isn't recorded on the ticket.
+            </p>
+          )}
+
+          {loadingSuggest && (
+            <p className="text-[11px] text-muted-foreground">Analyzing...</p>
+          )}
+
+          {/* No matching article — still needs to be stated, with the AI's `note` if
+              present (e.g. "no published articles yet") to explain why. */}
+          {!loadingSuggest && suggested.length === 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              {aiSuggest?.aiAvailable === false
+                ? aiSuggest.note ||
+                  'Couldn\'t get suggestions from AI. You can search manually with the "Attach article" button.'
+                : aiSuggest?.note ||
+                  "No matching KB article to suggest for this ticket."}
+            </p>
+          )}
+
           <div className="space-y-1.5">
-            {suggested.slice(0, 5).map((item) => (
+            {suggested.map((item) => (
               <div
-                key={item.id}
-                className="flex items-center gap-2 rounded-md bg-background px-2.5 py-1.5"
+                key={item.kbArticleId}
+                className="rounded-md bg-background px-2.5 py-2"
               >
-                <div className="min-w-0 flex-1">
-                  <span className="mr-1.5 font-mono text-[11px] text-muted-foreground">
-                    {item.code}
-                  </span>
-                  <span className="truncate text-xs">{item.title}</span>
-                  {item.isInternalOnly && (
-                    <span
-                      className={`ml-1.5 rounded px-1 py-0.5 text-[9.5px] font-medium ${toneFill("muted")}`}
-                    >
-                      Nội bộ
-                    </span>
-                  )}
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        {item.code}
+                      </span>
+                      <span className="text-xs font-medium">{item.title}</span>
+                      <span
+                        className={`rounded px-1 py-0.5 text-[9.5px] font-semibold ${toneFill("muted")}`}
+                      >
+                        {Math.round(item.score * 100)}% match
+                      </span>
+                    </div>
+                    {/* Reason — the basis for the technician to trust the ranking order. */}
+                    {item.reason && (
+                      <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                        {item.reason}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+                    disabled={!canAdd || adding || afterResolveOnly}
+                    title={
+                      afterResolveOnly
+                        ? "Ticket is Resolved — only after-resolve articles are recorded"
+                        : undefined
+                    }
+                    onClick={() =>
+                      addRef({
+                        kbArticleId: item.kbArticleId,
+                        referenceType:
+                          KbReferenceTypeEnum.ConsultedDuringResolve,
+                      })
+                    }
+                  >
+                    <Plus className="size-3" /> Attach
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 shrink-0 gap-1 px-2 text-[11px]"
-                  disabled={!canAdd || adding || afterResolveOnly}
-                  title={
-                    afterResolveOnly
-                      ? "Ticket đã Resolved — chỉ ghi nhận bài sau xử lý"
-                      : undefined
-                  }
-                  onClick={() =>
-                    addRef({
-                      kbArticleId: item.id,
-                      referenceType: KbReferenceTypeEnum.ConsultedDuringResolve,
-                    })
-                  }
-                >
-                  <Plus className="size-3" /> Gắn
-                </Button>
               </div>
             ))}
           </div>
@@ -288,7 +342,7 @@ export default function TicketKbReferencesPanel({
 
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-medium text-muted-foreground">
-                    Loại tham chiếu
+                    Reference type
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {refTypeOptions.map((t) => {
@@ -314,7 +368,7 @@ export default function TicketKbReferencesPanel({
                 </div>
 
                 <Input
-                  placeholder="Ghi chú (tùy chọn)..."
+                  placeholder="Note (optional)..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />
@@ -325,14 +379,14 @@ export default function TicketKbReferencesPanel({
                     variant="ghost"
                     onClick={() => setShowAdd(false)}
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button
                     size="sm"
                     disabled={selectedIds.length === 0 || adding}
                     onClick={handleAdd}
                   >
-                    Thêm {selectedIds.length > 0 && `(${selectedIds.length})`}
+                    Add {selectedIds.length > 0 && `(${selectedIds.length})`}
                   </Button>
                 </div>
               </CardContent>
@@ -345,7 +399,7 @@ export default function TicketKbReferencesPanel({
         <div className="rounded-lg border border-dashed py-10 px-4 text-center">
           <BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground mb-3">
-            Chưa có bài viết KB nào được gắn vào ticket này.
+            No KB article has been attached to this ticket yet.
           </p>
           {canAdd ? (
             <Button
@@ -354,11 +408,12 @@ export default function TicketKbReferencesPanel({
               className="gap-1.5"
               onClick={() => setShowAdd(true)}
             >
-              <Plus className="size-3.5" /> Gán bài hướng dẫn
+              <Plus className="size-3.5" /> Attach a guide article
             </Button>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Cần bắt đầu xử lý ticket trước khi gắn bài viết hướng dẫn.
+              You must start handling the ticket before attaching a guide
+              article.
             </p>
           )}
         </div>
@@ -416,7 +471,7 @@ export default function TicketKbReferencesPanel({
                             onClick={() =>
                               navigate(`/staff/kb/${ref.kbArticleId}`)
                             }
-                            title="Xem bài viết"
+                            title="View article"
                           >
                             <ExternalLink className="size-3.5" />
                           </Button>
@@ -425,7 +480,7 @@ export default function TicketKbReferencesPanel({
                             size="icon"
                             className="size-7 text-destructive"
                             onClick={() => removeRef(ref.id)}
-                            title="Gỡ"
+                            title="Remove"
                           >
                             <Trash2 className="size-3.5" />
                           </Button>

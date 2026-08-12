@@ -51,23 +51,23 @@ export default function DeclareIncidentDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Khai báo Incident</DialogTitle>
+          <DialogTitle>Declare Incident</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Đánh dấu ticket là sự cố nghiêm trọng để ưu tiên xử lý. Hành động
-              này được ghi vào lịch sử và không thể thực hiện lại.
+              Mark this ticket as a major incident to prioritize it. This action
+              is logged to the history and cannot be repeated.
             </p>
             <FormField
               control={form.control}
               name="incidentDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mô tả sự cố</FormLabel>
+                  <FormLabel>Incident description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả ngắn lý do khai báo incident..."
+                      placeholder="Brief reason for declaring this incident..."
                       {...field}
                     />
                   </FormControl>
@@ -77,10 +77,10 @@ export default function DeclareIncidentDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Khai báo Incident"}
+                {isPending ? "Processing..." : "Declare Incident"}
               </Button>
             </DialogFooter>
           </form>

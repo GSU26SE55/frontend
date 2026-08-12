@@ -3,11 +3,11 @@ import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { toneClass, IOT_DEVICE_STATUS_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<IotDeviceStatusEnum, string> = {
-  [IotDeviceStatusEnum.Pending]: "Chờ provision",
-  [IotDeviceStatusEnum.Active]: "Hoạt động",
+  [IotDeviceStatusEnum.Pending]: "Pending provision",
+  [IotDeviceStatusEnum.Active]: "Active",
   [IotDeviceStatusEnum.Offline]: "Offline",
-  [IotDeviceStatusEnum.Disabled]: "Vô hiệu hóa",
-  [IotDeviceStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [IotDeviceStatusEnum.Disabled]: "Disabled",
+  [IotDeviceStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 interface Props {

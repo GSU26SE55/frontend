@@ -3,17 +3,17 @@ import { SiteStatusEnum } from "@/shared/types/site/site.types";
 import { coordField } from "@/shared/schemas/common.schema";
 
 export const siteFormSchema = z.object({
-  name: z.string().min(1, "Bắt buộc").max(200),
-  customerId: z.string().uuid("UUID không hợp lệ"),
+  name: z.string().min(1, "Required").max(200),
+  customerId: z.string().uuid("Select a customer"),
   address: z.string().max(500).optional(),
-  latitude: coordField("Vĩ độ", -90, 90),
-  longitude: coordField("Kinh độ", -180, 180),
+  latitude: coordField("Latitude", -90, 90),
+  longitude: coordField("Longitude", -180, 180),
   installDate: z
     .string()
-    .min(1, "Bắt buộc")
+    .min(1, "Required")
     .refine(
       (v) => new Date(v) <= new Date(),
-      "Ngày lắp đặt không được ở tương lai",
+      "Install date cannot be in the future",
     ),
   status: z.union([
     z.literal(SiteStatusEnum.Active),

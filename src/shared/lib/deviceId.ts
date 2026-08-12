@@ -1,5 +1,5 @@
-// #AUTH-48: Device id ổn định để BE đánh dấu `isCurrentDevice` trong trusted-devices.
-// Đây là device id (KHÔNG phải token) → lưu localStorage hợp lệ, không vi phạm rule token-cookie-only.
+// #AUTH-48: A stable device id so the BE can mark `isCurrentDevice` in trusted-devices.
+// This is a device id (NOT a token) → storing it in localStorage is fine, doesn't violate the token-cookie-only rule.
 const DEVICE_ID_KEY = "device_id";
 
 export const getDeviceId = (): string => {
@@ -11,7 +11,7 @@ export const getDeviceId = (): string => {
     }
     return id;
   } catch {
-    // localStorage không khả dụng (private mode...) → trả uuid tạm, không persist.
+    // localStorage unavailable (private mode, etc.) → return a temporary uuid, not persisted.
     return crypto.randomUUID();
   }
 };

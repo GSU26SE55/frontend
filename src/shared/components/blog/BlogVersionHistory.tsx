@@ -7,7 +7,7 @@ import type { BlogPostVersionDTO } from "@/shared/types/blog/blog.types";
 
 interface BlogVersionHistoryProps {
   versions: BlogPostVersionDTO[];
-  /** ⚠️ Blog compare dùng SỐ version (KB dùng Guid versionId). */
+  /** ⚠️ Blog compare uses the version NUMBER (KB uses Guid versionId). */
   onCompare: (oldVersionNumber: number, newVersionNumber: number) => void;
   isPending?: boolean;
 }
@@ -36,7 +36,7 @@ export function BlogVersionHistory({
   if (versions.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        Chưa có phiên bản nào. Mỗi lần cập nhật bài viết sẽ tạo một phiên bản.
+        No versions yet. Each update to the post creates a new version.
       </p>
     );
   }
@@ -45,7 +45,7 @@ export function BlogVersionHistory({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-muted-foreground text-xs">
-          Chọn 2 phiên bản để so sánh ({selected.length}/2)
+          Select 2 versions to compare ({selected.length}/2)
         </p>
         <Button
           size="sm"
@@ -53,7 +53,7 @@ export function BlogVersionHistory({
           disabled={selected.length !== 2 || isPending}
           onClick={handleCompare}
         >
-          So sánh
+          Compare
         </Button>
       </div>
 
@@ -71,16 +71,16 @@ export function BlogVersionHistory({
               <Checkbox
                 checked={checked}
                 onCheckedChange={() => toggle(v.versionNumber)}
-                aria-label={`Chọn phiên bản ${v.versionNumber}`}
+                aria-label={`Select version ${v.versionNumber}`}
                 className="mt-0.5"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-medium">
-                    Phiên bản {v.versionNumber}
+                    Version {v.versionNumber}
                   </span>
                   <span className="text-muted-foreground text-xs">
-                    {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
+                    {format(new Date(v.createdAt), "MM/dd/yyyy HH:mm")}
                   </span>
                 </div>
                 <p className="truncate text-sm">{v.title}</p>

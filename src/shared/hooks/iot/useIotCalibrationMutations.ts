@@ -9,7 +9,7 @@ export function useCreateCalibration(deviceId: string) {
     mutationFn: (payload: CreateCalibrationPayload) =>
       iotCalibrationService.create(deviceId, payload).then((r) => r.data),
     onSuccess: () => {
-      // BE tự clear Redis iot:calibration:{deviceId}; FE invalidate cả list lẫn expiring.
+      // BE clears Redis iot:calibration:{deviceId} automatically; FE invalidates both the list and expiring queries.
       qc.invalidateQueries({ queryKey: [KEY.iotCalibrations] });
     },
   });

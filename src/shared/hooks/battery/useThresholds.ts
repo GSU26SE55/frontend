@@ -13,7 +13,7 @@ export function useThresholds(params?: ThresholdListParams) {
   });
 }
 
-// getByType — BE cho phép Admin/Manager/Staff đọc.
+// getByType — BE allows Admin/Manager/Staff to read.
 export function useThresholdByType(
   batteryTypeId: string,
   params?: ThresholdByTypeParams,

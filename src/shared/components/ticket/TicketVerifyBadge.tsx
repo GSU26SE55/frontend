@@ -6,15 +6,15 @@ import {
   TicketOriginEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 
-// Badge AI verify ticket thủ công — dùng chung admin/manager/staff.
-// AI verify CHỈ áp dụng cho ticket do Customer tạo thủ công (ManualByCustomer).
-// Ticket [Auto] (từ Alert) / hệ thống / staff → KHÔNG hiện badge (không cần verify thật/rác).
-// Chỉ nổi bật khi Suspicious (nghi rác) hoặc Pending (đang kiểm tra).
+// AI verify badge for manually created tickets — shared across admin/manager/staff.
+// AI verify ONLY applies to tickets manually created by a Customer (ManualByCustomer).
+// [Auto] tickets (from an Alert) / system / staff → NO badge shown (no need to verify legit/spam).
+// Only stands out when Suspicious (suspected spam) or Pending (still checking).
 interface Props {
   status?: TicketVerifyStatusEnum | null;
-  /** Origin ticket — badge chỉ hiện với ManualByCustomer. */
+  /** Ticket origin — badge only shows for ManualByCustomer. */
   origin?: TicketOriginEnum | null;
-  /** Ẩn badge khi hợp lệ/bỏ qua (dùng ở list cho gọn). */
+  /** Hide the badge when legitimate/skipped (used in lists to keep things compact). */
   hideWhenOk?: boolean;
 }
 
@@ -24,7 +24,7 @@ export default function TicketVerifyBadge({
   hideWhenOk,
 }: Props) {
   if (!status) return null;
-  // Chỉ ticket Customer tạo thủ công mới có AI verify — [Auto]/System/Staff ẩn badge.
+  // Only manually Customer-created tickets get AI verify — [Auto]/System/Staff hide the badge.
   if (origin && origin !== TicketOriginEnum.ManualByCustomer) return null;
   if (
     hideWhenOk &&

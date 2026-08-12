@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
+import AddressAutocomplete from "@/shared/components/site/AddressAutocomplete";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   siteFormSchema,
@@ -21,6 +24,9 @@ import {
   useCreateSite,
   useUpdateSite,
 } from "@/features/admin/hooks/site/useSites";
+import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
+import { useAdminAccountDetail } from "@/features/admin/hooks/account/useAdminAccounts";
+import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
 import {
   SiteStatusEnum,
   type SiteDto,
@@ -47,11 +53,15 @@ export default function SiteFormDialog({
 }: SiteFormDialogProps) {
   const isEdit = !!editData;
 
+  const { data: customersData } = useCustomers({ pageSize: 100 });
+
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<SiteFormValues>({
     resolver: zodResolver(siteFormSchema),
@@ -80,6 +90,19 @@ export default function SiteFormDialog({
       }
     }
   }, [open, editData, reset]);
+
+  // Auto-fill Address from the selected customer's saved address — only on create
+  // (not edit, so we never silently overwrite an address the user already set on the site).
+  const customerId = useWatch({ control, name: "customerId" });
+  const { data: customerDetail } = useAdminAccountDetail(
+    !isEdit ? (customerId ?? "") : "",
+  );
+  useEffect(() => {
+    if (!isEdit && customerDetail?.address) {
+      setValue("address", customerDetail.address);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerDetail]);
 
   const onSubmit = async (data: SiteFormValues) => {
     const payload: SiteCreatePayload = {
@@ -112,12 +135,12 @@ export default function SiteFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Sửa site" : "Tạo site mới"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit site" : "New site"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Tên site *</Label>
+            <Label htmlFor="name">Site name *</Label>
             <Input id="name" {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -125,18 +148,24 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Customer ID *</Label>
-            <Input
-              id="customerId"
-              {...register("customerId")}
-              placeholder="UUID"
-              readOnly={isEdit}
-              className={isEdit ? "cursor-not-allowed opacity-60" : undefined}
+            <Label htmlFor="customerId">Customer *</Label>
+            <Controller
+              control={control}
+              name="customerId"
+              render={({ field }) => (
+                <CustomerCombobox
+                  id="customerId"
+                  customers={customersData?.items ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={isEdit}
+                />
+              )}
             />
             {isEdit && (
               <p className="text-xs text-muted-foreground">
-                Không thể đổi khách hàng qua sửa site — dùng chức năng chuyển
-                chủ sở hữu.
+                The customer can't be changed by editing the site — use transfer
+                ownership.
               </p>
             )}
             {errors.customerId && (
@@ -147,8 +176,19 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="installDate">Ngày lắp *</Label>
-            <Input id="installDate" type="date" {...register("installDate")} />
+            <Label htmlFor="installDate">Install date *</Label>
+            <Controller
+              control={control}
+              name="installDate"
+              render={({ field }) => (
+                <DatePicker
+                  id="installDate"
+                  value={field.value}
+                  onChange={(v) => field.onChange(v ?? "")}
+                  max={format(new Date(), "yyyy-MM-dd")}
+                />
+              )}
+            />
             {errors.installDate && (
               <p className="text-sm text-destructive">
                 {errors.installDate.message}
@@ -157,17 +197,45 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="address">Địa chỉ</Label>
-            <Input id="address" {...register("address")} />
+            <Label htmlFor="address">Address</Label>
+            {/* Type an address → pick a suggestion → latitude/longitude auto-fill. */}
+            <Controller
+              control={control}
+              name="address"
+              render={({ field }) => (
+                <AddressAutocomplete
+                  id="address"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onSelect={(r) => {
+                    field.onChange(r.displayName);
+                    setValue("latitude", r.latitude.toString(), {
+                      shouldValidate: true,
+                    });
+                    setValue("longitude", r.longitude.toString(), {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              )}
+            />
+            {!isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Auto-filled from the customer's saved address — you can edit it.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="latitude">Vĩ độ</Label>
+              <Label htmlFor="latitude">Latitude</Label>
+              {/* Filled from the address picker — read-only so it can't drift from the address. */}
               <Input
                 id="latitude"
                 type="number"
                 step="any"
+                readOnly
+                className="bg-muted text-muted-foreground"
                 {...register("latitude")}
               />
               {errors.latitude && (
@@ -177,11 +245,13 @@ export default function SiteFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="longitude">Kinh độ</Label>
+              <Label htmlFor="longitude">Longitude</Label>
               <Input
                 id="longitude"
                 type="number"
                 step="any"
+                readOnly
+                className="bg-muted text-muted-foreground"
                 {...register("longitude")}
               />
               {errors.longitude && (
@@ -194,14 +264,14 @@ export default function SiteFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="contactPersonName">Người liên hệ</Label>
+              <Label htmlFor="contactPersonName">Contact person</Label>
               <Input
                 id="contactPersonName"
                 {...register("contactPersonName")}
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="contactPersonPhone">SĐT liên hệ</Label>
+              <Label htmlFor="contactPersonPhone">Contact phone</Label>
               <Input
                 id="contactPersonPhone"
                 {...register("contactPersonPhone")}
@@ -215,10 +285,10 @@ export default function SiteFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isEdit ? "Lưu thay đổi" : "Tạo site"}
+              {isEdit ? "Save changes" : "Create site"}
             </Button>
           </DialogFooter>
         </form>

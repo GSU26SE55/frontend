@@ -48,7 +48,7 @@ import type { SiteOption } from "@/shared/types/site/site.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
-  [AmbientReadingSourceEnum.IotSensor]: "Cảm biến IoT",
+  [AmbientReadingSourceEnum.IotSensor]: "IoT sensor",
   [AmbientReadingSourceEnum.WeatherApi]: "Weather API",
 };
 
@@ -64,7 +64,7 @@ const fmt = (v?: number | null, unit = "") =>
 const formatDateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
-// ── Site selector (reused in 2 places) ────────────────────────────────────────
+// ── Site selector (reused in 2 places) ─────────────────────────────────
 
 function SiteSelect({
   sites,
@@ -84,7 +84,7 @@ function SiteSelect({
       onValueChange={(v: string | null) => onChange(v ?? "")}
     >
       <SelectTrigger className={className ?? "w-56"}>
-        <SelectValue placeholder="Chọn site..." />
+        <SelectValue placeholder="Select a site..." />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>
         {sites.map((s) => (
@@ -97,9 +97,9 @@ function SiteSelect({
   );
 }
 
-// ── Site-scoped panel ─────────────────────────────────────────────────────────
-// Dùng khi siteId đã xác định (nhúng trong Site detail) → không cần site selector.
-// AmbientConfigView (trang standalone) tái sử dụng đúng panel này sau khi chọn site.
+// ── Site-scoped panel ─────────────────────────────────────────────────────
+// Used when siteId is already known (embedded in Site detail) → no site selector needed.
+// AmbientConfigView (the standalone page) reuses this exact panel after a site is picked.
 
 export function AmbientSitePanel({ siteId }: { siteId: string }) {
   const [configOpen, setConfigOpen] = useState(false);
@@ -110,7 +110,7 @@ export function AmbientSitePanel({ siteId }: { siteId: string }) {
         <LatestStrip siteId={siteId} />
         <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
           <Settings2 size={14} />
-          Cấu hình ngưỡng
+          Configure threshold
         </Button>
       </div>
 
@@ -125,7 +125,7 @@ export function AmbientSitePanel({ siteId }: { siteId: string }) {
   );
 }
 
-// ── Main view ──────────────────────────────────────────────────────────────────
+// ── Main view ─────────────────────────────────────────────────────────────
 
 export default function AmbientConfigView({
   subtitle,
@@ -147,7 +147,7 @@ export default function AmbientConfigView({
             {subtitle}
           </p>
           <h1 className="text-xl font-semibold tracking-tight">
-            Môi trường site
+            Site environment
           </h1>
         </div>
         {/* Controls only visible when a site is already selected */}
@@ -163,7 +163,7 @@ export default function AmbientConfigView({
               onClick={() => setConfigOpen(true)}
             >
               <Settings2 size={14} />
-              Cấu hình ngưỡng
+              Configure threshold
             </Button>
           </div>
         )}
@@ -173,9 +173,9 @@ export default function AmbientConfigView({
         /* ── Empty state — selector centered on page ───────────────────── */
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6 pb-16">
           <div>
-            <p className="text-sm font-medium">Chọn site để bắt đầu</p>
+            <p className="text-sm font-medium">Select a site to get started</p>
             <p className="text-xs text-muted-foreground mt-1.5 max-w-65">
-              Dữ liệu nhiệt độ, độ ẩm và lịch sử đo lường sẽ hiển thị tại đây
+              Temperature, humidity, and reading history will show up here
             </p>
           </div>
           <SiteSelect
@@ -205,7 +205,7 @@ export default function AmbientConfigView({
   );
 }
 
-// ── Latest metric strip ────────────────────────────────────────────────────────
+// ── Latest metric strip ─────────────────────────────────────────────────
 
 function LatestStrip({ siteId }: { siteId: string }) {
   const { data: latest, isLoading, isError } = useAmbientLatest(siteId);
@@ -216,7 +216,7 @@ function LatestStrip({ siteId }: { siteId: string }) {
   if (isError || !latest) {
     return (
       <div className="flex items-center px-4 py-3 border border-border rounded-xl text-sm text-muted-foreground">
-        Chưa có dữ liệu môi trường cho site này.
+        No environmental data for this site yet.
       </div>
     );
   }
@@ -225,19 +225,19 @@ function LatestStrip({ siteId }: { siteId: string }) {
     <div className="inline-flex items-center gap-5 px-5 py-3 border border-border rounded-xl bg-card">
       <MetricItem
         icon={<Thermometer className="size-4 text-orange-500" />}
-        label="Nhiệt độ"
+        label="Temperature"
         value={fmt(latest.ambientTemperature, " °C")}
       />
       <Separator orientation="vertical" className="h-7" />
       <MetricItem
         icon={<Droplets className="size-4 text-blue-500" />}
-        label="Độ ẩm"
+        label="Humidity"
         value={fmt(latest.humidity, " %")}
       />
       <Separator orientation="vertical" className="h-7" />
       <MetricItem
         icon={<Sun className="size-4 text-amber-500" />}
-        label="Bức xạ"
+        label="Irradiance"
         value={fmt(latest.solarIrradiance, " W/m²")}
       />
     </div>
@@ -266,7 +266,7 @@ function MetricItem({
   );
 }
 
-// ── Threshold panel (Drawer) ───────────────────────────────────────────────────
+// ── Threshold panel (Drawer) ────────────────────────────────────────────
 
 function ThresholdPanel({
   siteId,
@@ -282,10 +282,10 @@ function ThresholdPanel({
       <DrawerContent className="sm:max-w-120">
         <DrawerHeader className="border-b border-border">
           <DrawerTitle className="text-base font-semibold">
-            Ngưỡng cảnh báo
+            Alert threshold
           </DrawerTitle>
           <DrawerDescription className="text-xs">
-            Cấu hình ngưỡng giám sát môi trường site
+            Configure the site's environmental monitoring threshold
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -296,7 +296,7 @@ function ThresholdPanel({
   );
 }
 
-// ── Threshold form body ────────────────────────────────────────────────────────
+// ── Threshold form body ──────────────────────────────────────────────────
 
 function ThresholdFormBody({
   siteId,
@@ -374,16 +374,16 @@ function ThresholdFormBody({
 
       <div>
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Nhiệt độ
+          Temperature
         </p>
         <div className="grid grid-cols-2 gap-3">
           <NumField
-            label="Cảnh báo (°C)"
+            label="Warning (°C)"
             error={errors.highAmbientTempWarning?.message}
             {...register("highAmbientTempWarning")}
           />
           <NumField
-            label="Nguy hiểm (°C)"
+            label="Critical (°C)"
             error={errors.highAmbientTempCritical?.message}
             {...register("highAmbientTempCritical")}
           />
@@ -392,16 +392,16 @@ function ThresholdFormBody({
 
       <div>
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Độ ẩm
+          Humidity
         </p>
         <div className="grid grid-cols-2 gap-3">
           <NumField
-            label="Cảnh báo (%)"
+            label="Warning (%)"
             error={errors.highHumidityWarning?.message}
             {...register("highHumidityWarning")}
           />
           <NumField
-            label="Nguy hiểm (%)"
+            label="Critical (%)"
             error={errors.highHumidityCritical?.message}
             {...register("highHumidityCritical")}
           />
@@ -414,12 +414,12 @@ function ThresholdFormBody({
         </p>
         <div className="grid grid-cols-2 gap-3">
           <NumField
-            label="Ngưỡng nhiệt (°C)"
+            label="Temp threshold (°C)"
             error={errors.comboTempThreshold?.message}
             {...register("comboTempThreshold")}
           />
           <NumField
-            label="Ngưỡng ẩm (%)"
+            label="Humidity threshold (%)"
             error={errors.comboHumidityThreshold?.message}
             {...register("comboHumidityThreshold")}
           />
@@ -442,17 +442,17 @@ function ThresholdFormBody({
             )}
           />
           <Label htmlFor="enabled" className="text-sm">
-            Bật giám sát ngưỡng
+            Enable threshold monitoring
           </Label>
         </div>
         <p className="text-xs text-muted-foreground">
-          Bỏ trống một trường = không giám sát metric đó. Combo rule chỉ active
-          khi cả 2 ngưỡng combo có giá trị.
+          Leaving a field blank means that metric isn't monitored. The combo
+          rule only activates when both combo thresholds have a value.
         </p>
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Đang lưu..." : "Lưu cấu hình"}
+        {isSubmitting ? "Saving..." : "Save configuration"}
       </Button>
     </form>
   );
@@ -475,7 +475,7 @@ function NumField({
   );
 }
 
-// ── History table — natural height, no forced fill ─────────────────────────────
+// ── History table — natural height, no forced fill ──────────────────────
 
 function HistoryTable({ siteId }: { siteId: string }) {
   const [pageNumber, setPageNumber] = useState(1);
@@ -490,7 +490,7 @@ function HistoryTable({ siteId }: { siteId: string }) {
   return (
     <div>
       <div className="pb-3">
-        <h2 className="text-sm font-medium">Lịch sử dữ liệu môi trường</h2>
+        <h2 className="text-sm font-medium">Environmental data history</h2>
       </div>
 
       {/* Bordered table — height = content, no empty space */}
@@ -503,7 +503,7 @@ function HistoryTable({ siteId }: { siteId: string }) {
           </div>
         ) : items.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            Chưa có dữ liệu môi trường.
+            No environmental data yet.
           </div>
         ) : (
           <Table className="table-fixed">
@@ -520,10 +520,10 @@ function HistoryTable({ siteId }: { siteId: string }) {
                 <TableHead className="w-12 text-center">
                   {TABLE_COLUMNS.index}
                 </TableHead>
-                <TableHead>Thời điểm</TableHead>
-                <TableHead>Nhiệt độ</TableHead>
-                <TableHead>Độ ẩm</TableHead>
-                <TableHead>Bức xạ</TableHead>
+                <TableHead>Timestamp</TableHead>
+                <TableHead>Temperature</TableHead>
+                <TableHead>Humidity</TableHead>
+                <TableHead>Irradiance</TableHead>
                 <TableHead>{TABLE_COLUMNS.source}</TableHead>
               </TableRow>
             </TableHeader>

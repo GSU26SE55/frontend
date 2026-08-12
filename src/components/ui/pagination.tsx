@@ -77,7 +77,7 @@ function PaginationPrevious({
       {...props}
     >
       <ChevronLeftIcon className="size-4" />
-      <span>Trước</span>
+      <span>Previous</span>
     </PaginationLink>
   );
 }
@@ -93,7 +93,7 @@ function PaginationNext({
       className={cn("gap-1 px-2.5", className)}
       {...props}
     >
-      <span>Tiếp</span>
+      <span>Next</span>
       <ChevronRightIcon className="size-4" />
     </PaginationLink>
   );
@@ -104,7 +104,10 @@ function PaginationEllipsis({ className, ...props }: ComponentProps<"span">) {
     <span
       aria-hidden
       data-slot="pagination-ellipsis"
-      className={cn("flex size-8 items-center justify-center", className)}
+      className={cn(
+        "relative flex size-8 items-center justify-center",
+        className,
+      )}
       {...props}
     >
       <MoreHorizontalIcon className="size-4" />

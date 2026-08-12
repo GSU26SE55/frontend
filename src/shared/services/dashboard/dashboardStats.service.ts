@@ -8,7 +8,7 @@ import type {
   AccountStatsDto,
 } from "@/shared/types/dashboard/dashboardStats.types";
 
-// Snapshot aggregate cho Dashboard — mỗi endpoint 1 call gom KPI, không nhận from/to.
+// Aggregate snapshot for the Dashboard — each endpoint is 1 call that rolls up KPIs, no from/to.
 export const dashboardStatsService = {
   // A — Ticket stats (Admin/Manager)
   getTicketStats: () =>

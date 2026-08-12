@@ -9,14 +9,14 @@ import { getDeviceId } from "@/shared/lib/deviceId";
 import { EntityError, HttpError } from "@/shared/lib/errors";
 import type { ErrorEntity } from "@/shared/types/api.types";
 
-// Mở rộng config chuẩn của axios để mang số lần đã retry — type-safe thay cho `any`.
+// Extend axios's standard config to carry the retry count — type-safe instead of `any`.
 declare module "axios" {
   export interface InternalAxiosRequestConfig {
     _retryCount?: number;
   }
 }
 
-// Shape của body lỗi BE trả về (CommonResponse) — errorCode nằm trong data.
+// Shape of the error body the BE returns (CommonResponse) — errorCode lives in data.
 interface ApiErrorData {
   message?: string;
   data?: { errorCode?: string };
@@ -35,10 +35,11 @@ export const isTokenExpired = (token: string): boolean => {
 };
 
 // SECURITY: non-httpOnly cookie, acceptable for capstone scope
-// accessToken cookie sống 7 ngày như refreshToken — KHÔNG set expires = exp.
-// Nếu cookie hết hạn đúng mốc JWT exp, sau mốc đó browser xoá cookie → request gửi
-// thiếu Bearer → BE trả MISSING_TOKEN → logout oan. Việc token hết hạn được phát hiện
-// qua isTokenExpired (JWT exp) để trigger refresh, không phụ thuộc vào vòng đời cookie.
+// The accessToken cookie lives 7 days, same as refreshToken — do NOT set expires = exp.
+// If the cookie expired exactly at the JWT exp mark, the browser would delete the cookie
+// right after that, so requests would go out missing the Bearer token → BE returns
+// MISSING_TOKEN → an unwarranted logout. Token expiry is instead detected via
+// isTokenExpired (JWT exp) to trigger a refresh, independent of the cookie's lifetime.
 export const saveTokens = (accessToken: string, refreshToken: string) => {
   Cookies.set("accessToken", accessToken, { expires: 7 });
   Cookies.set("refreshToken", refreshToken, { expires: 7 });
@@ -77,7 +78,7 @@ const tryRefresh = async (): Promise<string | null> => {
       { refreshToken },
       { timeout: 10_000 },
     );
-    // GH-295: refresh trả LoginResultDto — token nằm trong data.tokens (challenge luôn null)
+    // GH-295: refresh returns a LoginResultDto — the token lives in data.tokens (challenge is always null)
     if (!res.data?.isSuccess || !res.data.data?.tokens)
       throw new Error("Refresh failed");
     const { accessToken, refreshToken: newRefreshToken } = res.data.data.tokens;
@@ -96,7 +97,7 @@ const tryRefresh = async (): Promise<string | null> => {
 };
 
 axiosInstance.interceptors.request.use(async (config) => {
-  // #AUTH-48: gửi device id cho mọi request (BE chỉ đọc với trusted-devices).
+  // #AUTH-48: send the device id on every request (BE only reads it for trusted-devices).
   config.headers["X-Device-Id"] = getDeviceId();
 
   const accessToken = Cookies.get("accessToken");
@@ -115,22 +116,24 @@ axiosInstance.interceptors.request.use(async (config) => {
 });
 
 const HTTP_ERROR_MESSAGES: Record<number, string> = {
-  400: "Yêu cầu không hợp lệ",
-  401: "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại",
-  403: "Bạn không có quyền thực hiện thao tác này",
-  404: "Không tìm thấy dữ liệu yêu cầu",
-  405: "Phương thức không được hỗ trợ",
-  409: "Dữ liệu bị xung đột, vui lòng kiểm tra lại",
-  422: "Dữ liệu không hợp lệ theo quy tắc nghiệp vụ",
-  429: "Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau",
-  500: "Lỗi máy chủ nội bộ, vui lòng thử lại sau",
-  502: "Cổng kết nối lỗi, vui lòng thử lại sau",
-  503: "Dịch vụ tạm thời không khả dụng, vui lòng thử lại sau",
-  504: "Kết nối máy chủ hết thời gian chờ, vui lòng thử lại sau",
+  400: "Invalid request",
+  401: "Session expired, please log in again",
+  403: "You don't have permission to perform this action",
+  404: "Requested data not found",
+  405: "Method not supported",
+  409: "Data conflict, please check and try again",
+  422: "Data invalid per business rules",
+  429: "You've sent too many requests, please try again later",
+  500: "Internal server error, please try again later",
+  502: "Gateway error, please try again later",
+  503: "Service temporarily unavailable, please try again later",
+  504: "Server connection timed out, please try again later",
 };
 
 const getErrorMessage = (status: number, serverMessage?: string): string =>
-  serverMessage || HTTP_ERROR_MESSAGES[status] || `Đã xảy ra lỗi (${status})`;
+  serverMessage ||
+  HTTP_ERROR_MESSAGES[status] ||
+  `An error occurred (${status})`;
 
 axiosInstance.interceptors.response.use(
   (response) => response,
@@ -139,16 +142,17 @@ axiosInstance.interceptors.response.use(
     const status: number | undefined = error.response?.status;
     let data = error.response?.data;
 
-    // Request dùng responseType: "blob" (AuthImage, downloadFile) — khi lỗi, axios vẫn
-    // ép body thành Blob theo config của request dù BE trả JSON, khiến errorCode/message
-    // luôn đọc ra undefined → 401 TOKEN_EXPIRED bị hiểu nhầm thành token giả mạo và logout
-    // oan thay vì tự refresh. Tự parse lại nếu body blob thực chất là JSON.
+    // Requests using responseType: "blob" (AuthImage, downloadFile) — on error, axios
+    // still forces the body into a Blob per the request config even though the BE
+    // returned JSON, so errorCode/message always read as undefined → 401 TOKEN_EXPIRED
+    // gets mistaken for a forged token and logs the user out instead of refreshing.
+    // Re-parse manually if the blob body is actually JSON.
     const rawData: unknown = error.response?.data;
     if (rawData instanceof Blob && rawData.type.includes("json")) {
       try {
         data = JSON.parse(await rawData.text()) as ApiErrorData;
       } catch {
-        // không parse được — giữ nguyên data dạng Blob, rơi về luồng xử lý mặc định.
+        // Couldn't parse — keep data as a Blob, fall through to the default handling.
       }
     }
 
@@ -156,9 +160,9 @@ axiosInstance.interceptors.response.use(
       const errorCode = data?.data?.errorCode;
       const retryCount: number = originalRequest._retryCount ?? 0;
 
-      // CHỈ TOKEN_EXPIRED mới thử refresh — token còn hợp lệ nhưng hết hạn.
-      // MISSING_TOKEN (không có token), INVALID_SIGNATURE / INVALID_TOKEN (token hỏng/giả mạo)
-      // → refresh vô nghĩa → logout ngay.
+      // ONLY TOKEN_EXPIRED attempts a refresh — the token is otherwise valid but expired.
+      // MISSING_TOKEN (no token), INVALID_SIGNATURE / INVALID_TOKEN (corrupted/forged token)
+      // → refreshing is pointless → logout immediately.
       if (errorCode !== "TOKEN_EXPIRED") {
         logout();
         return Promise.reject(
@@ -166,7 +170,7 @@ axiosInstance.interceptors.response.use(
         );
       }
 
-      // Đã retry 1 lần (refresh xong gọi lại) mà vẫn TOKEN_EXPIRED → logout.
+      // Already retried once (after a refresh) and still TOKEN_EXPIRED → logout.
       if (retryCount >= 1) {
         logout();
         return Promise.reject(
@@ -176,13 +180,13 @@ axiosInstance.interceptors.response.use(
 
       originalRequest._retryCount = retryCount + 1;
       const newToken = await tryRefresh();
-      // tryRefresh thành công → đã saveTokens (cookie) + setSession (zustand) với token mới.
-      // Đệ quy gọi lại request vừa bị missing token với accessToken mới.
+      // tryRefresh succeeded → already saveTokens (cookie) + setSession (zustand) with the new token.
+      // Recursively retry the request that failed with the new accessToken.
       if (newToken) {
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosInstance(originalRequest);
       }
-      // tryRefresh trả null → bên trong đã logout() rồi, chỉ cần reject.
+      // tryRefresh returned null → it already called logout() internally, just reject.
       return Promise.reject(
         new HttpError(401, getErrorMessage(401, data?.message)),
       );
@@ -191,10 +195,10 @@ axiosInstance.interceptors.response.use(
     // 400 / 422 — parse listErrors for form field mapping
     if (status === 400 || status === 422) {
       if (Array.isArray(data?.listErrors) && data.listErrors.length > 0) {
-        // BE trả `field` PascalCase (vd "QuietHoursStart") — RHF register field
-        // camelCase, nên hạ chữ cái đầu để setError() khớp đúng input field.
-        // Guard: nếu key JSON là "Field" (PascalCase) → e.field undefined; giữ nguyên,
-        // không gọi charAt trên undefined (interceptor app-wide → tránh throw).
+        // BE returns `field` in PascalCase (e.g. "QuietHoursStart") — RHF registers fields
+        // in camelCase, so lowercase the first letter so setError() matches the right input field.
+        // Guard: if the JSON key is "Field" (PascalCase) → e.field is undefined; leave it as
+        // is, don't call charAt on undefined (this interceptor is app-wide — avoid throwing).
         const normalized = data.listErrors.map((e) =>
           typeof e.field === "string"
             ? {

@@ -26,9 +26,9 @@ export interface StaffProfileDto {
   department?: string; // Swagger: nullable
   maxConcurrentTickets: number;
   isAvailable: boolean;
-  skillTier: number; // StaffSkillTierEnum 1–3 (api-auth.md §Nhóm 6)
+  skillTier: number; // StaffSkillTierEnum 1–3 (api-auth.md §Group 6)
   notes?: string;
-  skills: StaffSkillDto[] | null; // Swagger: nullable — guard bằng `skills ?? []` khi render
+  skills: StaffSkillDto[] | null; // Swagger: nullable — guard with `skills ?? []` when rendering
 }
 
 export interface AccountDto {
@@ -43,7 +43,8 @@ export interface AccountDto {
   emailConfirmed: boolean;
   phoneConfirmed: boolean;
   twoFactorEnabled: boolean;
-  /** GH-132 (F) — account đã liên kết Google chưa (BE không expose googleId). */
+  /** GH-132 (F) — whether the account is linked to Google (the BE does not
+   * expose googleId). */
   isGoogleLinked?: boolean;
   status: import("@/shared/enums/account/account.enum").AccountStatusEnum;
   lastLoginAt?: string;
@@ -58,7 +59,7 @@ export interface AccountDto {
   displayAvatarUrl?: string;
 }
 
-// Cross-feature: used by admin (Nhóm 6) + auth (GET /api/staff in GH-28)
+// Cross-feature: used by admin (Group 6) + auth (GET /api/staff in GH-28)
 export interface StaffAssignmentProfileDto {
   accountId: string;
   email: string;
@@ -69,14 +70,15 @@ export interface StaffAssignmentProfileDto {
   isAvailable: boolean;
   displayAvatarUrl?: string;
   /**
-   * Tier kỹ năng (StaffSkillTierEnum 1..3) — quyết định staff có được làm
-   * PrimaryHandler của ticket theo priority hay không.
+   * Skill tier (StaffSkillTierEnum 1..3) — decides whether a staff member can
+   * be the PrimaryHandler of a ticket at a given priority.
    *
-   * ⚠️ OPTIONAL vì `GET /api/staff` HIỆN CHƯA trả field này: BE có
-   * `StaffProfile.SkillTier` trong entity/DB nhưng `AccountProfileMapper`
-   * không map ra `StaffAssignmentProfileDto`. Mọi nơi đọc field này phải
-   * fallback an toàn (không chặn Manager khi undefined) — xem
-   * `shared/utils/ticket/staffTier.ts`. Khi BE map field ra, UI tự đầy đủ.
+   * ⚠️ OPTIONAL because `GET /api/staff` does NOT return this field yet: the
+   * BE has `StaffProfile.SkillTier` in the entity/DB but `AccountProfileMapper`
+   * does not map it onto `StaffAssignmentProfileDto`. Every reader of this
+   * field must fall back safely (do not block the Manager when undefined) —
+   * see `shared/utils/ticket/staffTier.ts`. Once the BE maps the field, the UI
+   * fills in on its own.
    */
   skillTier?: number;
   skills: StaffSkillDto[];

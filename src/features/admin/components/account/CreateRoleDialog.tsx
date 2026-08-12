@@ -60,23 +60,23 @@ export default function CreateRoleDialog({ open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Tạo role mới</DialogTitle>
+          <DialogTitle>Create role</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           <div className="space-y-1.5">
             <Label>
-              Tên role <span className="text-red-500">*</span>
+              Role name <span className="text-red-500">*</span>
             </Label>
-            <Input {...register("name")} placeholder="VD: SeniorTechnician" />
+            <Input {...register("name")} placeholder="e.g. SeniorTechnician" />
             {errors.name && (
               <p className="text-xs text-red-500">{errors.name.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>Mô tả</Label>
+            <Label>Description</Label>
             <Input
               {...register("description")}
-              placeholder="Mô tả ngắn về role này"
+              placeholder="Short description of this role"
             />
             {errors.description && (
               <p className="text-xs text-red-500">
@@ -86,11 +86,11 @@ export default function CreateRoleDialog({ open, onClose }: Props) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Tạo role
+              Create role
             </Button>
           </DialogFooter>
         </form>

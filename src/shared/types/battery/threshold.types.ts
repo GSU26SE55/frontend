@@ -1,5 +1,6 @@
-// ThresholdConfig — ngưỡng cảnh báo theo BatteryType. Read dùng chung admin/manager
-// (tô màu telemetry). Upsert payload chỉ admin dùng nhưng giữ chung 1 file type.
+// ThresholdConfig — alert thresholds per BatteryType. Reads are shared by
+// admin/manager (telemetry colouring). The upsert payload is admin-only but kept
+// in the same type file.
 export interface ThresholdConfigDto {
   id: string;
   batteryTypeId: string;

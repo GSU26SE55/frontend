@@ -1,6 +1,6 @@
-// Nav config sidebar cho role MANAGER.
-// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
-// Label/title đặc thù chỉ manager dùng → giữ inline ở đây.
+// Sidebar nav config for the MANAGER role.
+// Labels/titles shared by ≥2 roles → import from shared/constants/sidebarLabels.
+// Labels/titles only manager uses → kept inline here.
 
 import {
   Newspaper,
@@ -8,6 +8,7 @@ import {
   MapPin,
   Settings,
   BellRing,
+  Inbox,
   Ticket,
   Clock,
   BookOpen,
@@ -17,11 +18,12 @@ import {
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
+  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
 
-// #697 — ManagerAppLayout dùng path này để gắn badge số ticket chờ duyệt.
+// #697 — ManagerAppLayout uses this path to attach the pending-ticket count badge.
 export const MANAGER_QUEUE_PATH = "/manager/tickets/queue";
 
 export const MANAGER_NAV: NavSection[] = [
@@ -37,18 +39,20 @@ export const MANAGER_NAV: NavSection[] = [
         path: "/manager/analytics",
         icon: BarChart3,
       },
+      // Route shared by every role (no /manager prefix) — the BE already filters by UserId from the JWT.
+      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {
-    title: "Quản lý",
+    title: "Management",
     collapsible: true,
     defaultOpen: true,
     items: [
-      // Pin truy cập qua Site (Sites → site detail → chi tiết pin).
-      // Route /manager/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
+      // Batteries are reached through Sites (Sites → site detail → battery detail).
+      // The /manager/battery-assets/:id route is kept for deep-links from alerts/tickets.
       { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
       { label: SIDEBAR_LABELS.tickets, path: "/manager/tickets", icon: Ticket },
-      { label: "Hàng chờ", path: MANAGER_QUEUE_PATH, icon: Clock },
+      { label: "Awaiting triage", path: MANAGER_QUEUE_PATH, icon: Clock },
       {
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/manager/kb",
@@ -70,7 +74,7 @@ export const MANAGER_NAV: NavSection[] = [
         icon: ShieldAlert,
       },
       {
-        label: "Calibration sắp hết hạn",
+        label: "Calibrations expiring",
         path: "/manager/iot-calibrations",
         icon: SlidersHorizontal,
       },

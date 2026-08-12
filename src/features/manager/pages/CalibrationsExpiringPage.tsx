@@ -30,20 +30,24 @@ export default function CalibrationsExpiringPage() {
             Manager &middot; IoT
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Calibration sắp hết hạn
+            Calibrations expiring soon
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : items.length} calibration cần recalibrate.
+            {isLoading ? "..." : items.length} calibrations need recalibrating.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.iotCalibrations]} />
       </div>
 
       <div className="flex items-center gap-2">
-        <Label className="text-sm text-muted-foreground">Trong vòng</Label>
+        <Label className="text-sm text-muted-foreground">Within</Label>
         <Select
           value={String(filters.within)}
           onValueChange={(v) => setFilter("within", Number(v))}
+          items={WITHIN_OPTIONS.map((d) => ({
+            value: String(d),
+            label: `${d} days`,
+          }))}
         >
           <SelectTrigger size="sm" className="w-32">
             <SelectValue />
@@ -51,7 +55,7 @@ export default function CalibrationsExpiringPage() {
           <SelectContent alignItemWithTrigger={false}>
             {WITHIN_OPTIONS.map((d) => (
               <SelectItem key={d} value={String(d)}>
-                {d} ngày
+                {d} days
               </SelectItem>
             ))}
           </SelectContent>

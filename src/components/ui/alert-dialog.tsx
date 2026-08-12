@@ -3,6 +3,7 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ACTIONS } from "@/shared/constants/actions";
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -28,7 +29,7 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/60 backdrop-blur-md duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/60 duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className,
       )}
       {...props}
@@ -159,6 +160,7 @@ function AlertDialogCancel({
   className,
   variant = "outline",
   size = "default",
+  children = ACTIONS.CANCEL,
   ...props
 }: AlertDialogPrimitive.Close.Props &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
@@ -168,7 +170,9 @@ function AlertDialogCancel({
       className={cn(className)}
       render={<Button variant={variant} size={size} />}
       {...props}
-    />
+    >
+      {children}
+    </AlertDialogPrimitive.Close>
   );
 }
 

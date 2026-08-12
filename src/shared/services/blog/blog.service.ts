@@ -20,24 +20,28 @@ import type {
   UpdateBlogTemplatePayload,
 } from "@/shared/types/blog/blog.types";
 
-// Map params FE → query BE.
-// ⚠️ Blog dùng `Page` (KB dùng `PageNumber`) — response cả hai đều trả `pageNumber`.
+// Map FE params → BE query.
+// `GetBlogPostListQuery` extends `PaginationRequest` → the correct param is `PageNumber`,
+// same as KB. It used to send `Page`, which the BE couldn't bind, so it always fell back
+// to page 1 (blog pagination effectively didn't work).
 function toListQuery(params?: BlogPostListParams) {
   if (!params) return undefined;
   return {
     Status: params.status,
     Origin: params.origin,
-    Page: params.page,
+    PageNumber: params.page,
     PageSize: params.pageSize,
+    Q: params.q?.trim() || undefined,
   };
 }
 
 /**
- * Service Blog dùng chung cho cả 3 role — KHÔNG chứa logic phân quyền.
- * Quyền gọi endpoint nào do hook per-role quyết định; BE vẫn chặn bằng [Authorize].
+ * Blog service shared across all 3 roles — contains NO authorization logic.
+ * Which endpoints a role can call is decided by the per-role hook; the BE still
+ * enforces this via [Authorize].
  */
 export const blogService = {
-  // ── Public (chỉ bài Published) ──
+  // ── Public (Published posts only) ──
   getPublicList: (params?: BlogPostListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<BlogPostListItemDTO>>>(
       ENDPOINTS.BLOG.LIST,
@@ -47,14 +51,14 @@ export const blogService = {
   getPublicDetail: (id: string) =>
     axiosInstance.get<CommonResponse<BlogPostDTO>>(ENDPOINTS.BLOG.DETAIL(id)),
 
-  // ── Internal (Staff/Manager/Admin — mọi trạng thái) ──
+  // ── Internal (Staff/Manager/Admin — any status) ──
   getList: (params?: BlogPostListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<BlogPostListItemDTO>>>(
       ENDPOINTS.BLOG_INTERNAL.LIST,
       { params: toListQuery(params) },
     ),
 
-  /** Dùng để POLL trạng thái Generating — public detail trả 404 khi chưa publish. */
+  /** Used to POLL the Generating status — public detail returns 404 before it's published. */
   getDetail: (id: string) =>
     axiosInstance.get<CommonResponse<BlogPostDTO>>(
       ENDPOINTS.BLOG_INTERNAL.DETAIL(id),
@@ -66,7 +70,7 @@ export const blogService = {
       payload,
     ),
 
-  /** `currentVersion` phải khớp giá trị trong DB, lệch → 409. */
+  /** `currentVersion` must match the value in the DB — a mismatch returns 409. */
   update: (id: string, payload: UpdateBlogPostPayload) =>
     axiosInstance.put<CommonResponse<BlogPostActionDTO>>(
       ENDPOINTS.BLOG_INTERNAL.UPDATE(id),
@@ -78,7 +82,7 @@ export const blogService = {
       ENDPOINTS.BLOG_INTERNAL.VERSIONS(id),
     ),
 
-  /** ⚠️ Compare dùng SỐ version (KB dùng Guid versionId). */
+  /** ⚠️ Compare uses the version NUMBER (KB uses a Guid versionId). */
   compare: (id: string, params: BlogCompareParams) =>
     axiosInstance.get<CommonResponse<BlogDiffDTO>>(
       ENDPOINTS.BLOG_INTERNAL.COMPARE(id),
@@ -90,7 +94,7 @@ export const blogService = {
       },
     ),
 
-  // ── Blog templates: đọc (Staff+) ──
+  // ── Blog templates: read (Staff+) ──
   getTemplates: (params?: BlogTemplateListParams) =>
     axiosInstance.get<CommonResponse<BlogTemplateDTO[]>>(
       ENDPOINTS.BLOG_INTERNAL.TEMPLATES,
@@ -103,7 +107,7 @@ export const blogService = {
     ),
 
   // ── Workflow (Manager/Admin) ──
-  /** Async — trả 202, bài ở trạng thái Generating. Poll bằng getDetail(). */
+  /** Async — returns 202, post is in the Generating status. Poll with getDetail(). */
   generateFromKb: (kbId: string) =>
     axiosInstance.post<CommonResponse<BlogPostActionDTO>>(
       ENDPOINTS.BLOG_ADMIN.GENERATE_FROM_KB(kbId),
@@ -124,7 +128,7 @@ export const blogService = {
       ENDPOINTS.BLOG_ADMIN.DELETE(id),
     ),
 
-  // ── Blog templates: ghi (chỉ Admin) ──
+  // ── Blog templates: write (Admin only) ──
   createTemplate: (payload: CreateBlogTemplatePayload) =>
     axiosInstance.post<CommonResponse<BlogTemplateDTO>>(
       ENDPOINTS.BLOG_TEMPLATES_ADMIN.CREATE,

@@ -3,9 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardPanel } from "@/shared/components/dashboard/DashboardPanel";
 
 /**
- * Bảng xếp hạng pin có nhiều cảnh báo mở nhất — dùng chung Admin & Manager.
- * Hai role chỉ khác nhau ở ĐÍCH điều hướng, nên nhận `onSelect` thay vì tự
- * navigate. Caller vẫn tự quyết định có render hay không (ẩn khi rỗng).
+ * Ranking table of batteries with the most open alerts — shared between Admin & Manager.
+ * The two roles only differ in the navigation TARGET, so it accepts `onSelect`
+ * instead of navigating itself. The caller still decides whether to render it (hidden when empty).
  */
 
 export interface TopAlertingAsset {
@@ -31,7 +31,7 @@ export function TopAlertingPanel({
   return (
     <DashboardPanel
       title={title}
-      desc="Nhiều cảnh báo mở nhất"
+      desc="Most open alerts"
       className={className}
       bodyClassName="overflow-y-auto"
     >

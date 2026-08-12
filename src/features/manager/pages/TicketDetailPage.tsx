@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,14 +13,16 @@ import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import SlaCountdown from "@/features/manager/components/ticket/SlaCountdown";
-import TriageDialog from "@/features/manager/components/ticket/TriageDialog";
+// GH-1176: TriageDialog (approval) removed.
 import AssignDialog from "@/features/manager/components/ticket/AssignDialog";
 import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog";
 import RejectDialog from "@/features/manager/components/ticket/RejectDialog";
 import TriageRejectDialog from "@/features/manager/components/ticket/TriageRejectDialog";
 import EscalateDialog from "@/features/manager/components/ticket/EscalateDialog";
+import EscalateRejectDialog from "@/features/manager/components/ticket/EscalateRejectDialog";
+import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareIncidentDialog";
-import TicketActivityTimeline from "@/features/manager/components/ticket/TicketActivityTimeline";
+import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
@@ -37,8 +39,8 @@ import {
   useTicketComments,
   useReVerifyTicket,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
-import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
+import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
   useUpdateTicketChat,
   useDeleteTicketChat,
@@ -47,41 +49,43 @@ import {
 } from "@/shared/hooks/ticket/useTicketChatActions";
 import { useChatSender } from "@/shared/hooks/ticket/useChatSender";
 import { managerTicketService } from "@/features/manager/services/ticket/ticket.service";
-import { checkPermission, P } from "@/shared/lib/authz";
 import {
   TicketStatusEnum,
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketCategoryEnum,
-  EscalationReasonEnum,
 } from "@/shared/types/ticket/ticket.types";
 import {
-  getPrimaryHandler,
-  getSupporters,
+  getPrimaryHandlerName,
+  getSupporterNames,
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { slaBarColorClass } from "@/shared/lib/sla";
+import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
+// GH-1176: "triage" (approval) removed; "escalate" (force) removed;
+// "escalate-approve" and "escalate-reject" added for Request-status handling.
 type DialogType =
-  | "triage"
   | "triage-reject"
   | "assign"
   | "reassign"
   | "reject"
-  | "escalate"
+  | "escalate-approve"
+  | "escalate-reject"
+  | "reprioritize"
   | "incident"
   | null;
 
 const CATEGORY_LABEL: Partial<Record<TicketCategoryEnum, string>> = {
-  Charging: "Sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
-  Repair: "Sửa chữa",
-  Other: "Khác",
+  Charging: "Charging",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
+  Repair: "Repair",
+  Other: "Other",
 };
 
 const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
@@ -91,17 +95,9 @@ const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
 };
 
 const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
-  Low: "Thấp",
-  Medium: "Trung bình",
-  High: "Cao",
-};
-
-const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
-  SkillGap: "Thiếu kỹ năng xử lý",
-  PartsRequired: "Cần linh kiện thay thế",
-  SafetyConcern: "Nguy cơ an toàn",
-  SlaBreach: "Vi phạm SLA",
-  CustomerComplaint: "Khách hàng khiếu nại",
+  Low: "Low",
+  Medium: "Medium",
+  High: "High",
 };
 
 function SideInfoRow({
@@ -136,21 +132,11 @@ export default function TicketDetailPage() {
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
   const { data: comments = [] } = useTicketComments(id);
-  const { data: staffList = [] } = useStaffAssignmentList();
 
-  // #697 — assignments thay cho assignedStaffId: 1 PrimaryHandler + N Supporter.
-  // staffId chưa có trong staff list (đã nghỉ/ẩn) → fallback hiện UUID.
-  const { primaryHandlerName, supporterNames } = useMemo(() => {
-    const nameOf = (staffId: string) =>
-      staffList.find((s) => s.accountId === staffId)?.fullName ?? staffId;
-    const primary = getPrimaryHandler(ticket?.assignments);
-    return {
-      primaryHandlerName: primary ? nameOf(primary.staffId) : null,
-      supporterNames: getSupporters(ticket?.assignments).map((a) =>
-        nameOf(a.staffId),
-      ),
-    };
-  }, [ticket?.assignments, staffList]);
+  // The BE already returns `staffName` in assignments (synced from StaffAccount), so there's
+  // no need to look it up via staffList — the helper falls back to staffId when the name is missing.
+  const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
+  const supporterNames = getSupporterNames(ticket?.assignments);
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -174,6 +160,9 @@ export default function TicketDetailPage() {
   const reVerify = useReVerifyTicket(id);
   const user = useSessionStore((s) => s.user);
   const currentUserId = user?.accountId;
+  // People who can be @-tagged: active participants of the ticket (GET .../participants).
+  // Does NOT use chat authors — someone newly added to the ticket who hasn't sent a message yet must still be taggable.
+  const mentionCandidates = useMentionCandidates(id);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
   const { mutate: deleteChat, isPending: deleteChatPending } =
@@ -185,7 +174,7 @@ export default function TicketDetailPage() {
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId: id, chatId: chat.id, targetLanguage });
 
-  // Outbox chat: worker gửi tuần tự + retry; composer enqueue; thread render pending.
+  // Chat outbox: worker sends sequentially with retry; composer enqueues; thread renders pending.
   const {
     pending: pendingChats,
     retry: retryChat,
@@ -196,10 +185,10 @@ export default function TicketDetailPage() {
     return (
       <div className="text-center py-16">
         <p className="text-destructive mb-4">
-          Không tìm thấy ticket hoặc bạn không có quyền truy cập.
+          Ticket not found or you don't have access.
         </p>
         <Button variant="outline" onClick={() => navigate("/manager/tickets")}>
-          Quay lại danh sách
+          Back to list
         </Button>
       </div>
     );
@@ -215,38 +204,27 @@ export default function TicketDetailPage() {
   }
 
   const status = ticket.status;
-  const canTriage = status === TicketStatusEnum.Open;
-  // triage-reject: Open|Escalated → ClosedRejected (BE verified — state machine
-  // cho phép cả 2 source). Tách khỏi canTriage (chỉ Open) vốn dùng cho nút Triage.
-  const canTriageReject = (
-    [TicketStatusEnum.Open, TicketStatusEnum.Escalated] as TicketStatusEnum[]
-  ).includes(status);
-  const canAssign = status === TicketStatusEnum.Approved;
-  const canReassign = (
-    [
-      TicketStatusEnum.Assigned,
-      TicketStatusEnum.InProgress,
-      TicketStatusEnum.Escalated,
-    ] as TicketStatusEnum[]
-  ).includes(status);
-  const canApprove = status === TicketStatusEnum.Resolved;
-  const canReject = status === TicketStatusEnum.Resolved;
-  // Escalate = thêm nhân lực/cấp bậc khi ticket ĐANG được xử lý. Siết allow-list
-  // (thay vì "mọi status trừ Closed") để nút không hiện ở New/Open/Approved/
-  // Resolved/ClosedRejected — nơi escalate vô nghĩa (chưa triage/đã xong).
-  const canEscalate = (
-    [
-      TicketStatusEnum.Assigned,
-      TicketStatusEnum.InProgress,
-      TicketStatusEnum.WaitingCustomer,
-      TicketStatusEnum.WaitingParts,
-      TicketStatusEnum.WaitingOnsiteSchedule,
-      TicketStatusEnum.Escalated,
-    ] as TicketStatusEnum[]
-  ).includes(status);
+  // GH-1176: triage approval removed; only triage-reject (Open→ClosedRejected) remains.
+  const canTriageReject = status === TicketStatusEnum.Open;
+  // GH-1176: assign Open→InProgress (current schedule) or Open→Pending (future schedule).
+  const canAssign = status === TicketStatusEnum.Open;
+  // GH-1176: reassign only from ReAssign status.
+  const canReassign = status === TicketStatusEnum.ReAssign;
+  // GH-1176: approve/reject completion (Completed → Closed / Completed → InProgress).
+  const canApprove = status === TicketStatusEnum.Completed;
+  const canReject = status === TicketStatusEnum.Completed;
+  // GH-1176: Manager approves/rejects Staff escalation request (Request status).
+  const canEscalateApprove = status === TicketStatusEnum.Request;
+  const canEscalateReject = status === TicketStatusEnum.Request;
+  // GH-1176: force escalation endpoint removed; only Staff-requested escalation remains.
+  // canReprioritize: Open only — priority fixed once assigned per User Guide §3.8.
+  const canReprioritize = status === TicketStatusEnum.Open;
   const canDeclareIncident = !ticket.isIncident;
+  // GH-1176: merge source must be Open (previously New, which no longer exists).
+  const canMerge =
+    !ticket.mergedIntoTicketId && status === TicketStatusEnum.Open;
 
-  // comments lấy từ query riêng (useTicketComments) + realtime push (SignalR).
+  // comments come from a separate query (useTicketComments) + realtime push (SignalR).
 
   const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
@@ -274,7 +252,7 @@ export default function TicketDetailPage() {
               )}
               {ticket.isIncident && (
                 <Badge variant="destructive" className="text-xs">
-                  Sự cố
+                  Incident
                 </Badge>
               )}
             </div>
@@ -293,14 +271,9 @@ export default function TicketDetailPage() {
             queryKeys={[KEY.manager.tickets, KEY.tickets]}
             size="icon"
           />
-          {canTriage && (
-            <Button size="sm" onClick={() => setDialog("triage")}>
-              Triage
-            </Button>
-          )}
           {canAssign && (
             <Button size="sm" onClick={() => setDialog("assign")}>
-              Gán Staff
+              Assign Staff
             </Button>
           )}
           {canReassign && (
@@ -309,7 +282,7 @@ export default function TicketDetailPage() {
               size="sm"
               onClick={() => setDialog("reassign")}
             >
-              Điều chuyển
+              Reassign
             </Button>
           )}
           {canApprove && (
@@ -318,7 +291,7 @@ export default function TicketDetailPage() {
               onClick={() => approve(undefined)}
               disabled={approving}
             >
-              {approving ? "Đang xử lý..." : "Phê duyệt"}
+              {approving ? "Processing..." : "Approve"}
             </Button>
           )}
           {canReject && (
@@ -327,16 +300,34 @@ export default function TicketDetailPage() {
               size="sm"
               onClick={() => setDialog("reject")}
             >
-              Từ chối
+              Reject
             </Button>
           )}
-          {canEscalate && (
+          {/* GH-1176: Manager approves/rejects Staff escalation request */}
+          {canEscalateApprove && (
+            <Button
+              size="sm"
+              onClick={() => setDialog("escalate-approve")}
+            >
+              Approve escalation
+            </Button>
+          )}
+          {canEscalateReject && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDialog("escalate")}
+              onClick={() => setDialog("escalate-reject")}
             >
-              Chuyển cấp
+              Reject escalation
+            </Button>
+          )}
+          {canReprioritize && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDialog("reprioritize")}
+            >
+              Change priority
             </Button>
           )}
           {canDeclareIncident && (
@@ -345,7 +336,7 @@ export default function TicketDetailPage() {
               size="sm"
               onClick={() => setDialog("incident")}
             >
-              Khai báo Incident
+              Declare Incident
             </Button>
           )}
           {canTriageReject && (
@@ -354,20 +345,18 @@ export default function TicketDetailPage() {
               size="sm"
               onClick={() => setDialog("triage-reject")}
             >
-              Từ chối (Triage)
+              Reject ticket
             </Button>
           )}
-          {/* Gộp ticket trùng — luôn cho Manager gộp thủ công (ticket chưa gộp/chưa đóng). */}
-          {!ticket.mergedIntoTicketId &&
-            ticket.status !== TicketStatusEnum.Closed && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(`/manager/tickets/${id}/merge`)}
-              >
-                Gộp ticket
-              </Button>
-            )}
+          {canMerge && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/manager/tickets/${id}/merge`)}
+            >
+              Merge ticket
+            </Button>
+          )}
         </div>
       </div>
 
@@ -378,14 +367,14 @@ export default function TicketDetailPage() {
           <Tabs defaultValue="info" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
-                <TabsTrigger value="info">Thông tin</TabsTrigger>
-                {/* `group` để ChatUnreadBadge tự ẩn khi tab này đang active. */}
+                <TabsTrigger value="info">Info</TabsTrigger>
+                {/* `group` so ChatUnreadBadge hides itself automatically when this tab is active. */}
                 <TabsTrigger value="comments" className="group">
-                  Bình luận
+                  Chat
                   <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="kb">Bài viết KB</TabsTrigger>
+                <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>
             </div>
 
@@ -394,7 +383,7 @@ export default function TicketDetailPage() {
               value="info"
               className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
             >
-              {/* Ticket có thể gắn nhiều pin — lặp từng pin. Fallback pin đơn (legacy). */}
+              {/* A ticket can have multiple batteries attached — loop over each. Fallback to single battery (legacy). */}
               {(() => {
                 const ids =
                   ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
@@ -408,7 +397,7 @@ export default function TicketDetailPage() {
                   <div className="space-y-4">
                     {ids.length > 1 && (
                       <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        {ids.length} thiết bị pin liên quan
+                        {ids.length} related battery devices
                       </p>
                     )}
                     {ids.map((bid) => (
@@ -423,14 +412,14 @@ export default function TicketDetailPage() {
               })()}
               <div>
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Tệp đính kèm
+                  Attachments
                 </p>
                 {ticket.attachmentFileIds &&
                 ticket.attachmentFileIds.length > 0 ? (
                   <TicketAttachments fileIds={ticket.attachmentFileIds} />
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    Không có tệp đính kèm.
+                    No attachments.
                   </p>
                 )}
               </div>
@@ -447,8 +436,6 @@ export default function TicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  canEditAny={checkPermission(user, P.CHAT_EDIT_ANY)}
-                  canDeleteAny={checkPermission(user, P.CHAT_DELETE_ANY)}
                   ticketClosed={status === TicketStatusEnum.Closed}
                   ticketId={id}
                   aiEnabled
@@ -486,6 +473,7 @@ export default function TicketDetailPage() {
                   existingFileIds={existingFileIds}
                   prefillText={composerPrefill.text}
                   prefillVersion={composerPrefill.version}
+                  mentionCandidates={mentionCandidates}
                 />
               </div>
             </TabsContent>
@@ -510,58 +498,58 @@ export default function TicketDetailPage() {
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel
                 ticketId={id}
-                afterResolveOnly={status === TicketStatusEnum.Resolved}
+                afterResolveOnly={status === TicketStatusEnum.Completed}
                 defaultCategory={ticket.category}
               />
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Right: Sidebar — luôn mount, animate width (đồng bộ sidebar trái) */}
+        {/* Right: Sidebar — always mounted, animates width (synced with left sidebar) */}
         <aside
           className={cn(
-            "shrink-0 border-l border-border overflow-hidden transition-all duration-200",
+            "shrink-0 border-l border-border overflow-hidden",
             sidebarOpen ? "w-75" : "w-8",
           )}
         >
-          {/* Collapsed rail — nút mở lại bảng thông tin */}
+          {/* Collapsed rail — button to reopen the info panel */}
           {!sidebarOpen && (
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              title="Mở bảng thông tin"
+              title="Open info panel"
               className="w-8 h-full flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
             >
               <PanelRightOpen className="size-4" />
             </button>
           )}
 
-          {/* Nội dung bảng — chỉ hiện khi mở, width cố định w-75 để không reflow lúc trượt */}
+          {/* Panel content — only shown when open, fixed width w-75 to avoid reflow while sliding */}
           {sidebarOpen && (
             <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
-              {/* Header — nút thu gọn */}
+              {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Thông tin
+                  Info
                 </p>
                 <button
                   type="button"
                   onClick={() => setSidebarOpen(false)}
-                  title="Thu gọn bảng thông tin"
+                  title="Collapse info panel"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <PanelRightClose className="size-4" />
                 </button>
               </div>
-              {/* ── AI verify + nghi trùng (chỉ ticket Customer tạo thủ công) ──
-                  Đặt TRÊN CÙNG: Manager cần đọc nhận định AI + cảnh báo trùng
-                  trước khi triage, không phải cuộn xuống đáy mới thấy. */}
+              {/* ── AI verify + suspected duplicate (Customer-created manual tickets only) ──
+                  Placed AT THE TOP: Manager needs to read the AI assessment + duplicate warning
+                  before triaging, not scroll to the bottom to find it. */}
               {ticket.origin === "ManualByCustomer" &&
                 (ticket.aiVerifyStatus ||
                   ticket.suspectedDuplicateOfTicketId) && (
                   <div className="px-4 py-3 space-y-2">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Kiểm tra AI
+                      AI check
                     </p>
                     {ticket.aiVerifyStatus && (
                       <div className="flex items-center gap-2">
@@ -571,7 +559,7 @@ export default function TicketDetailPage() {
                         />
                         {ticket.aiVerifyScore != null && (
                           <span className="text-xs text-muted-foreground">
-                            {(ticket.aiVerifyScore * 100).toFixed(0)}% hợp lệ
+                            {(ticket.aiVerifyScore * 100).toFixed(0)}% valid
                           </span>
                         )}
                       </div>
@@ -581,7 +569,7 @@ export default function TicketDetailPage() {
                         {ticket.aiVerifyReason}
                       </p>
                     )}
-                    {/* Nút kích hoạt AI kiểm tra lại — chỉ khi Skipped/Pending. */}
+                    {/* Button to trigger AI re-check — only when Skipped/Pending. */}
                     {(ticket.aiVerifyStatus === "Skipped" ||
                       ticket.aiVerifyStatus === "Pending") && (
                       <Button
@@ -591,12 +579,14 @@ export default function TicketDetailPage() {
                         disabled={reVerify.isPending}
                         onClick={() => reVerify.mutate()}
                       >
-                        {reVerify.isPending ? "Đang gửi…" : "AI kiểm tra lại"}
+                        {reVerify.isPending ? "Sending…" : "Re-check with AI"}
                       </Button>
                     )}
                     {ticket.suspectedDuplicateOfTicketId && (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-                        <p className="font-medium">⚠ Nghi trùng ticket khác</p>
+                        <p className="font-medium">
+                          ⚠ Suspected duplicate of another ticket
+                        </p>
                         {ticket.duplicateReason && (
                           <p className="mt-0.5">{ticket.duplicateReason}</p>
                         )}
@@ -613,7 +603,7 @@ export default function TicketDetailPage() {
                             })
                           }
                         >
-                          Gộp ticket
+                          Merge ticket
                         </Button>
                       </div>
                     )}
@@ -629,7 +619,7 @@ export default function TicketDetailPage() {
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        Trạng thái
+                        Status
                       </span>
                       <SlaCountdown slaTimer={ticket.slaTimer} />
                     </div>
@@ -638,12 +628,12 @@ export default function TicketDetailPage() {
                         Deadline
                       </span>
                       <span className="text-xs font-medium tabular-nums">
-                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                        {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        Còn lại
+                        Remaining
                       </span>
                       <span className="text-xs font-medium">
                         {ticket.slaTimer.remainingPercent.toFixed(0)}%
@@ -660,26 +650,26 @@ export default function TicketDetailPage() {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Chưa được triage.
+                    Not yet triaged.
                   </p>
                 )}
               </div>
 
-              {/* Trạng thái + thời gian xử lý */}
+              {/* Status + processing time */}
               <div className="p-4">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Trạng thái
+                  Status
                 </p>
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      Hiện tại
+                      Current
                     </span>
                     <TicketStatusBadge status={ticket.status} />
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      Thời gian xử lý
+                      Processing time
                     </span>
                     <ProcessingDurationTimer
                       activities={activities}
@@ -693,7 +683,7 @@ export default function TicketDetailPage() {
               {ticket.description && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Mô tả
+                    Description
                   </p>
                   <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
                     {ticket.description}
@@ -705,7 +695,7 @@ export default function TicketDetailPage() {
               {ticket.rejectionReason && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                    Lý do từ chối
+                    Rejection reason
                   </p>
                   <p className="text-xs leading-relaxed">
                     {ticket.rejectionReason}
@@ -717,16 +707,16 @@ export default function TicketDetailPage() {
               {ticket.resolutionSummary && (
                 <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
                   <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
-                    Kết quả giải quyết
+                    Resolution
                   </p>
                   <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
                   {ticket.resolvedAt && (
                     <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
-                      Xử lý xong lúc{" "}
-                      {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
-                        locale: vi,
+                      Resolved at{" "}
+                      {format(new Date(ticket.resolvedAt), "MM/dd/yyyy HH:mm", {
+                        locale: enUS,
                       })}
                     </p>
                   )}
@@ -737,7 +727,7 @@ export default function TicketDetailPage() {
               {ticket.escalatedAt && (
                 <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
                   <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
-                    Chuyển cấp
+                    Escalation
                   </p>
                   {ticket.escalationReason && (
                     <p className="text-xs leading-relaxed">
@@ -746,8 +736,8 @@ export default function TicketDetailPage() {
                     </p>
                   )}
                   <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
-                    {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
-                      locale: vi,
+                    {format(new Date(ticket.escalatedAt), "MM/dd/yyyy HH:mm", {
+                      locale: enUS,
                     })}
                   </p>
                 </div>
@@ -757,7 +747,7 @@ export default function TicketDetailPage() {
               {ticket.rating != null && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Đánh giá khách hàng
+                    Customer rating
                   </p>
                   <p className="text-xs font-medium">
                     {"★".repeat(ticket.rating)}
@@ -777,17 +767,17 @@ export default function TicketDetailPage() {
               {/* Meta */}
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow
-                  label="Danh mục"
+                  label="Category"
                   value={CATEGORY_LABEL[ticket.category] ?? ticket.category}
                 />
-                <SideInfoRow label="Nguồn" value={ticket.origin} />
+                <SideInfoRow label="Origin" value={ticket.origin} />
                 <SideInfoRow
-                  label="Phụ trách chính"
+                  label="Primary Handler"
                   value={primaryHandlerName}
                 />
                 {supporterNames.length > 0 && (
                   <SideInfoRow
-                    label="Hỗ trợ"
+                    label="Supporters"
                     value={
                       <span className="flex flex-wrap justify-end gap-1">
                         {supporterNames.map((name) => (
@@ -800,42 +790,32 @@ export default function TicketDetailPage() {
                   />
                 )}
                 <SideInfoRow
-                  label="Serial pin"
+                  label="Battery serial"
                   value={ticket.batterySerialNumber ?? null}
                 />
                 {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Phát hiện lúc"
+                    label="Detected at"
                     value={format(
                       new Date(ticket.detectedAt),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
+                      "MM/dd/yyyy HH:mm",
+                      { locale: enUS },
                     )}
                   />
                 )}
-                {/* #698 — khoảng thời gian Customer phát hiện sự cố. */}
-                {ticket.incidentDetectedFrom && (
+                {/* GH-866 — single incident detection timestamp (replaces the old from/to pair). */}
+                {ticket.detectedAt && (
                   <SideInfoRow
-                    label="Sự cố từ"
+                    label="Detected at"
                     value={format(
-                      new Date(ticket.incidentDetectedFrom),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
-                    )}
-                  />
-                )}
-                {ticket.incidentDetectedTo && (
-                  <SideInfoRow
-                    label="Sự cố đến"
-                    value={format(
-                      new Date(ticket.incidentDetectedTo),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: vi },
+                      new Date(ticket.detectedAt),
+                      "MM/dd/yyyy HH:mm",
+                      { locale: enUS },
                     )}
                   />
                 )}
                 <SideInfoRow
-                  label="Phạm vi"
+                  label="Scope"
                   value={
                     ticket.impactScope
                       ? (IMPACT_LABEL[ticket.impactScope] ?? ticket.impactScope)
@@ -843,7 +823,7 @@ export default function TicketDetailPage() {
                   }
                 />
                 <SideInfoRow
-                  label="Khẩn cấp"
+                  label="Urgency"
                   value={
                     ticket.urgencyLevel
                       ? (URGENCY_LABEL[ticket.urgencyLevel] ??
@@ -852,55 +832,55 @@ export default function TicketDetailPage() {
                   }
                 />
                 <SideInfoRow
-                  label="Ngày tạo"
+                  label="Created"
                   value={format(
                     new Date(ticket.createdAt),
-                    "dd/MM/yyyy HH:mm",
+                    "MM/dd/yyyy HH:mm",
                     {
-                      locale: vi,
+                      locale: enUS,
                     },
                   )}
                 />
                 {ticket.updatedAt && (
                   <SideInfoRow
-                    label="Cập nhật"
+                    label="Updated"
                     value={format(
                       new Date(ticket.updatedAt),
-                      "dd/MM/yyyy HH:mm",
+                      "MM/dd/yyyy HH:mm",
                       {
-                        locale: vi,
+                        locale: enUS,
                       },
                     )}
                   />
                 )}
                 {ticket.approvedAt && (
                   <SideInfoRow
-                    label="Duyệt lúc"
+                    label="Approved at"
                     value={format(
                       new Date(ticket.approvedAt),
-                      "dd/MM/yyyy HH:mm",
+                      "MM/dd/yyyy HH:mm",
                       {
-                        locale: vi,
+                        locale: enUS,
                       },
                     )}
                   />
                 )}
                 {ticket.closedAt && (
                   <SideInfoRow
-                    label="Đóng lúc"
+                    label="Closed at"
                     value={format(
                       new Date(ticket.closedAt),
-                      "dd/MM/yyyy HH:mm",
+                      "MM/dd/yyyy HH:mm",
                       {
-                        locale: vi,
+                        locale: enUS,
                       },
                     )}
                   />
                 )}
                 {ticket.reopenCount > 0 && (
                   <SideInfoRow
-                    label="Mở lại"
-                    value={`${ticket.reopenCount} lần`}
+                    label="Reopened"
+                    value={`${ticket.reopenCount} times`}
                   />
                 )}
               </div>
@@ -910,9 +890,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}
-      {dialog === "triage" && (
-        <TriageDialog ticketId={id} open onClose={() => setDialog(null)} />
-      )}
+      {/* GH-1176: "triage" (approval) dialog removed. */}
       {dialog === "triage-reject" && (
         <TriageRejectDialog
           ticketId={id}
@@ -939,8 +917,20 @@ export default function TicketDetailPage() {
       {dialog === "reject" && (
         <RejectDialog ticketId={id} open onClose={() => setDialog(null)} />
       )}
-      {dialog === "escalate" && (
+      {dialog === "escalate-approve" && (
         <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "escalate-reject" && (
+        <EscalateRejectDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "reprioritize" && (
+        <ReprioritizeDialog
+          ticketId={id}
+          currentImpact={ticket.impactScope}
+          currentUrgency={ticket.urgencyLevel}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "incident" && (
         <DeclareIncidentDialog

@@ -35,14 +35,14 @@ export interface KbArticleSearchParams {
 interface KbArticleSelectorProps {
   value: string[];
   onChange: (ids: string[]) => void;
-  /** Danh sách bài KB để chọn (parent fetch và truyền vào) — dùng khi không có searchFn */
+  /** List of KB articles to choose from (fetched and passed in by the parent) — used when there's no searchFn */
   options?: KbArticleSummaryDTO[];
-  /** Tìm kiếm live trên toàn bộ catalog KB (khuyến nghị) — ưu tiên hơn options nếu có */
+  /** Live search across the full KB catalog (recommended) — takes priority over options when present */
   searchFn?: (params: KbArticleSearchParams) => Promise<KbArticleSummaryDTO[]>;
   disabled?: boolean;
-  /** Khi mở dialog, pre-filter theo category này */
+  /** When the dialog opens, pre-filter by this category */
   defaultCategory?: TicketCategoryEnum;
-  /** Lấy full detail (triệu chứng/chẩn đoán/giải pháp/tags) cho panel xem trước */
+  /** Fetch full detail (symptoms/diagnosis/solution/tags) for the preview panel */
   getDetailFn?: (id: string) => Promise<KbArticleDTO>;
 }
 
@@ -62,8 +62,8 @@ export function KbArticleSelector({
     useState<TicketCategoryEnum | null>(defaultCategory ?? null);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
-  // searchFn đọc qua ref — tránh query key phụ thuộc vào function reference
-  // không ổn định giữa các lần render (cùng pattern useTicketCommentsRealtime).
+  // searchFn is read through a ref — avoids the query key depending on a function
+  // reference that isn't stable across renders (same pattern as useTicketCommentsRealtime).
   const searchFnRef = useRef(searchFn);
   useEffect(() => {
     searchFnRef.current = searchFn;
@@ -74,8 +74,8 @@ export function KbArticleSelector({
     getDetailFnRef.current = getDetailFn;
   });
 
-  // Cache lại metadata của các bài đã chọn — để badge bên ngoài dialog vẫn
-  // hiển thị được code/title dù kết quả search hiện tại không còn chứa nó.
+  // Cache metadata for selected articles — so the badge outside the dialog can still
+  // show code/title even when the current search results no longer include it.
   const [selectedMeta, setSelectedMeta] = useState<
     Map<string, KbArticleSummaryDTO>
   >(new Map());
@@ -125,8 +125,8 @@ export function KbArticleSelector({
 
   useEffect(() => {
     if (articles.length === 0) return;
-    // setState hoãn qua callback (không gọi đồng bộ trong thân effect) — tránh
-    // cascading render, cùng pattern với react-hooks/set-state-in-effect.
+    // setState is deferred via a callback (not called synchronously in the effect body) —
+    // avoids cascading renders, same pattern as react-hooks/set-state-in-effect.
     const id = setTimeout(() => {
       setSelectedMeta((prev) => {
         let changed = false;
@@ -208,11 +208,11 @@ export function KbArticleSelector({
           }
         >
           <BookOpen className="size-3.5" />
-          Chọn bài KB
+          Select KB article
         </DialogTrigger>
         <DialogContent className="!w-[94vw] !max-w-260">
           <DialogHeader>
-            <DialogTitle>Chọn bài viết Knowledge Base</DialogTitle>
+            <DialogTitle>Select Knowledge Base article</DialogTitle>
           </DialogHeader>
 
           {/* Search + match count */}
@@ -220,7 +220,7 @@ export function KbArticleSelector({
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Tìm theo tiêu đề, mã..."
+                placeholder="Search by title, code..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 className="pl-8 pr-8"
@@ -231,7 +231,7 @@ export function KbArticleSelector({
                   type="button"
                   onClick={() => setKeyword("")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
-                  aria-label="Xóa từ khóa"
+                  aria-label="Clear keyword"
                 >
                   <X className="size-3.5 text-muted-foreground" />
                 </button>
@@ -246,7 +246,7 @@ export function KbArticleSelector({
                 className="h-6 text-[11px] px-2"
                 onClick={() => setCategoryFilter(null)}
               >
-                Tất cả
+                All
               </Button>
               {KB_CATEGORY_OPTIONS.map((opt) => (
                 <Button
@@ -266,8 +266,8 @@ export function KbArticleSelector({
             </div>
 
             <p className="text-[11px] text-muted-foreground">
-              {searching ? "Đang tìm..." : `${articles.length} kết quả`}
-              {value.length > 0 && ` · đã chọn ${value.length}`}
+              {searching ? "Searching..." : `${articles.length} results`}
+              {value.length > 0 && ` · ${value.length} selected`}
             </p>
           </div>
 
@@ -310,7 +310,7 @@ export function KbArticleSelector({
               })}
               {articles.length === 0 && (
                 <div className="py-12 text-center text-sm text-muted-foreground">
-                  {searching ? "Đang tìm kiếm..." : "Không tìm thấy bài viết"}
+                  {searching ? "Searching..." : "No articles found"}
                 </div>
               )}
             </div>
@@ -337,14 +337,14 @@ export function KbArticleSelector({
                       <span className="tabular-nums font-medium">
                         {previewArticle.viewCount}
                       </span>
-                      <span>lượt xem</span>
+                      <span>views</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <ThumbsUp className="size-3" />
                       <span className="tabular-nums font-medium">
                         {previewArticle.helpfulCount}
                       </span>
-                      <span>hữu ích</span>
+                      <span>helpful</span>
                     </div>
                   </div>
 
@@ -360,7 +360,7 @@ export function KbArticleSelector({
                         <div className="space-y-3 pt-1">
                           <div>
                             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                              Nội dung
+                              Content
                             </p>
                             <SectionContent text={previewDetail.content} />
                           </div>
@@ -385,7 +385,7 @@ export function KbArticleSelector({
               ) : (
                 <div className="flex flex-col items-center justify-center text-center gap-2 m-auto text-muted-foreground">
                   <FileText className="size-7 opacity-40" />
-                  <p className="text-xs">Chọn 1 bài để xem trước</p>
+                  <p className="text-xs">Select an article to preview</p>
                 </div>
               )}
             </div>

@@ -12,6 +12,7 @@ import type {
   RollbackPayload,
 } from "@/shared/types/kb/kb.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 
 export function useAdminKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -28,29 +29,11 @@ export function useAdminKbDetail(id: string) {
   });
 }
 
-// List bài mẫu (chọn khi tạo bài mới). enabled: bật khi ở trang create.
-export function useAdminKbTemplates(enabled = true) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.templates(),
-    queryFn: () => adminKbService.getTemplates().then((r) => r.data.data),
-    enabled,
-  });
-}
-
 export function useAdminKbVersions(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.versions(id),
     queryFn: () => adminKbService.getVersions(id).then((r) => r.data.data),
     enabled: !!id,
-  });
-}
-
-export function useAdminKbVersionDetail(id: string, versionId: string | null) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
-    queryFn: () =>
-      adminKbService.getVersionById(id, versionId!).then((r) => r.data.data),
-    enabled: !!id && !!versionId,
   });
 }
 
@@ -85,7 +68,7 @@ export function useAdminKbUsageStats(id: string) {
   });
 }
 
-// create/update là form → component xử lý lỗi qua try/catch + setError
+// create/update are used in a form → the component handles errors via try/catch + setError
 export function useCreateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -108,23 +91,20 @@ export function useUpdateKbArticle() {
       id: string;
       payload: UpdateKbArticlePayload;
     }) => adminKbService.update(id, payload).then((r) => r.data.data),
-    onSuccess: (_, { id }) => {
-      toast.success(ADMIN_MESSAGES.kb.updated);
+    onSuccess: (article, { id }) => {
+      // BE moves the article to PendingReview when the change needs approval — the new content isn't shown yet.
+      toast.success(
+        article?.status === KbArticleStatusEnum.PendingReview
+          ? ADMIN_MESSAGES.kb.updatePending
+          : ADMIN_MESSAGES.kb.updated,
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
   });
 }
 
-export function useCopyKbTemplate() {
-  return useMutation({
-    mutationFn: (id: string) =>
-      adminKbService.copyTemplate(id).then((r) => r.data.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
-// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+// Duplicate a KB article → creates a new version (Draft), returns an action DTO with the new version's id.
 export function useDuplicateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -202,7 +182,7 @@ function useKbWorkflow<TVars>(
 export function useApproveKbReview() {
   return useKbWorkflow(
     (id: string) => adminKbService.approveReview(id),
-    "Đã phê duyệt và xuất bản",
+    "Approved and published",
     (id) => id,
   );
 }
@@ -211,7 +191,7 @@ export function useRejectKbReview() {
   return useKbWorkflow(
     (vars: { id: string; payload: RejectReviewPayload }) =>
       adminKbService.rejectReview(vars.id, vars.payload),
-    "Đã từ chối thay đổi",
+    "Change rejected",
     (vars) => vars.id,
   );
 }
@@ -219,7 +199,7 @@ export function useRejectKbReview() {
 export function usePublishKbArticle() {
   return useKbWorkflow(
     (id: string) => adminKbService.publish(id),
-    "Đã xuất bản bài viết",
+    "Article published",
     (id) => id,
   );
 }
@@ -227,7 +207,7 @@ export function usePublishKbArticle() {
 export function useArchiveKbArticle() {
   return useKbWorkflow(
     (id: string) => adminKbService.archive(id),
-    "Đã lưu trữ bài viết",
+    "Article archived",
     (id) => id,
   );
 }
@@ -236,7 +216,7 @@ export function useRollbackKbArticle() {
   return useKbWorkflow(
     (vars: { id: string; payload: RollbackPayload }) =>
       adminKbService.rollback(vars.id, vars.payload),
-    "Đã hoàn tác phiên bản",
+    "Version reverted",
     (vars) => vars.id,
   );
 }

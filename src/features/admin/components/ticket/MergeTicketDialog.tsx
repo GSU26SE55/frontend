@@ -15,14 +15,14 @@ import { useMergeTicket } from "@/features/admin/hooks/ticket/useAdminTickets";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Ticket hiện tại (sẽ bị gộp vào ticket đích). */
+  /** The current ticket (will be merged into the target ticket). */
   ticketId: string;
   ticketCode: string;
-  /** Ticket đích gợi ý (từ suspectedDuplicateOfTicketId) — pre-fill. */
+  /** Suggested target ticket (from suspectedDuplicateOfTicketId) — pre-fill. */
   suggestedTargetId?: string | null;
 }
 
-// Manager gộp ticket NÀY (nghi trùng) vào ticket đích → ticket này đóng lại.
+// Manager merges THIS ticket (suspected duplicate) into the target ticket → this ticket closes.
 export default function MergeTicketDialog({
   open,
   onOpenChange,
@@ -30,8 +30,8 @@ export default function MergeTicketDialog({
   ticketCode,
   suggestedTargetId,
 }: Props) {
-  // Init từ prop (parent chỉ mount khi mở qua điều kiện `open &&` → không cần effect;
-  // eslint cấm setState-in-effect).
+  // Init from prop (parent only mounts when opened via `open &&` condition → no effect needed;
+  // eslint forbids setState-in-effect).
   const [targetId, setTargetId] = useState(suggestedTargetId ?? "");
   const merge = useMergeTicket();
 
@@ -42,7 +42,7 @@ export default function MergeTicketDialog({
       await merge.mutateAsync({ id: ticketId, targetTicketId: trimmed });
       onOpenChange(false);
     } catch {
-      // lỗi đã toast trong hook onError
+      // error already toasted in the hook's onError
     }
   };
 
@@ -50,38 +50,38 @@ export default function MergeTicketDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Gộp ticket trùng</DialogTitle>
+          <DialogTitle>Merge duplicate ticket</DialogTitle>
           <DialogDescription>
-            Ticket <strong>{ticketCode}</strong> sẽ được gộp (đóng lại) vào
-            ticket đích. Chỉ gộp khi chắc chắn 2 ticket là cùng 1 sự cố trên
-            cùng cục pin.
+            Ticket <strong>{ticketCode}</strong> will be merged (closed) into
+            the target ticket. Only merge when certain both tickets are the same
+            incident on the same battery.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">
-          <Label htmlFor="merge-target">ID ticket đích (giữ lại)</Label>
+          <Label htmlFor="merge-target">Target ticket ID (kept)</Label>
           <Input
             id="merge-target"
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            placeholder="Nhập ID ticket đích..."
+            placeholder="Enter target ticket ID..."
           />
           {suggestedTargetId && (
             <p className="text-xs text-muted-foreground">
-              Gợi ý từ AI: đã điền sẵn ticket nghi trùng.
+              AI suggestion: pre-filled with the suspected duplicate ticket.
             </p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Hủy
+            Cancel
           </Button>
           <Button
             onClick={handleMerge}
             disabled={!targetId.trim() || merge.isPending}
           >
-            {merge.isPending ? "Đang gộp..." : "Gộp ticket"}
+            {merge.isPending ? "Merging..." : "Merge ticket"}
           </Button>
         </DialogFooter>
       </DialogContent>

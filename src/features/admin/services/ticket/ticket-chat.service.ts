@@ -76,8 +76,8 @@ export const ticketChatService = {
       ENDPOINTS.TICKETS.CHAT_REACTIONS(ticketId, chatId),
     ),
 
-  // BE nhận reactionType dạng string name (JsonStringEnumConverter). Idempotent nếu đã reaction cùng loại.
-  // Response Data = aggregate mới nhất → dùng luôn để cập nhật cache tức thì.
+  // BE accepts reactionType as a string name (JsonStringEnumConverter). Idempotent if already reacted with the same type.
+  // Response Data = the latest aggregate → use it directly to update the cache immediately.
   addReaction: (
     ticketId: string,
     chatId: string,
@@ -88,7 +88,7 @@ export const ticketChatService = {
       { reactionType },
     ),
 
-  // Remove qua query param ?type= (BE [FromQuery] ReactionTypeEnum type), KHÔNG dùng body.
+  // Remove via query param ?type= (BE [FromQuery] ReactionTypeEnum type), does NOT use body.
   removeReaction: (
     ticketId: string,
     chatId: string,
@@ -132,7 +132,7 @@ export const ticketChatService = {
       ENDPOINTS.TICKETS.CHAT_ATTACHMENT(ticketId, chatId, attachmentId),
     ),
 
-  // ── GH-133 C4 — Admin override sửa/xóa chat trên ticket đã Closed (Admin only) ──
+  // ── GH-133 C4 — Admin override edit/delete chat on a Closed ticket (Admin only) ──
   overrideEdit: (
     ticketId: string,
     chatId: string,

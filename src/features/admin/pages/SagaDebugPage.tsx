@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
+import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -29,9 +37,15 @@ import {
 } from "@/features/admin/hooks/ticket/useAdminSagas";
 import type { AlertTicketSagaDTO } from "@/features/admin/types/ticket/saga.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { sagaStateLabel } from "@/features/admin/enums/saga.enum";
+import {
+  alertSeverityLabel,
+  anomalyTypeLabel,
+} from "@/shared/constants/alertLabels";
+import { toneClass, SAGA_STATE_TONE } from "@/shared/theme/statusColors";
 
 function fmt(d?: string | null) {
-  return d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: vi }) : "—";
+  return d ? format(new Date(d), "MM/dd/yyyy HH:mm", { locale: enUS }) : "—";
 }
 
 function DetailRow({
@@ -71,7 +85,7 @@ export default function SagaDebugPage() {
   if (!canView) {
     return (
       <div className="p-6 text-center text-muted-foreground">
-        Bạn không có quyền xem trang này.
+        You do not have permission to view this page.
       </div>
     );
   }
@@ -84,7 +98,8 @@ export default function SagaDebugPage() {
         <div>
           <h1 className="text-lg font-semibold">Saga: Alert → Ticket</h1>
           <p className="text-sm text-muted-foreground">
-            Theo dõi & xử lý lại pipeline tự tạo ticket từ cảnh báo.
+            Monitor & reprocess the pipeline that auto-creates tickets from
+            alerts.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -96,7 +111,7 @@ export default function SagaDebugPage() {
               setPageNumber(1);
             }}
           >
-            Chỉ saga lỗi
+            Failed sagas only
           </Button>
           <RefreshButton queryKeys={[KEY.admin.sagas]} />
         </div>
@@ -106,11 +121,11 @@ export default function SagaDebugPage() {
         <Skeleton className="h-96 w-full rounded-xl" />
       ) : isError ? (
         <p className="text-sm text-destructive py-8 text-center">
-          Không tải được danh sách saga.
+          Couldn't load the saga list.
         </p>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground py-12 text-center">
-          Không có saga nào.
+          No sagas.
         </p>
       ) : (
         <>
@@ -122,8 +137,8 @@ export default function SagaDebugPage() {
                   <TableHead>{TABLE_COLUMNS.status}</TableHead>
                   <TableHead>{TABLE_COLUMNS.ticket}</TableHead>
                   <TableHead>Retry</TableHead>
-                  <TableHead>Bắt đầu</TableHead>
-                  <TableHead>Lỗi tại</TableHead>
+                  <TableHead>Started</TableHead>
+                  <TableHead>Failed at</TableHead>
                   <TableHead className="text-right">
                     {TABLE_COLUMNS.actions}
                   </TableHead>
@@ -138,8 +153,13 @@ export default function SagaDebugPage() {
                         {s.alertId.slice(0, 8)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={failed ? "destructive" : "outline"}>
-                          {s.currentState}
+                        <Badge
+                          variant="outline"
+                          className={toneClass(
+                            SAGA_STATE_TONE[s.currentState] ?? "muted",
+                          )}
+                        >
+                          {sagaStateLabel(s.currentState)}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-mono text-xs">
@@ -152,28 +172,41 @@ export default function SagaDebugPage() {
                         {fmt(s.startedAt)}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {s.failedAtStage ?? "—"}
+                        {/* FailedAtStage reuses the state machine's state names (see MarkFailed). */}
+                        {s.failedAtStage
+                          ? sagaStateLabel(s.failedAtStage)
+                          : "—"}
                       </TableCell>
-                      <TableCell className="text-right space-x-2 whitespace-nowrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => setDetail(s)}
-                        >
-                          Chi tiết
-                        </Button>
-                        {failed && canReprocess && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            disabled={reprocessing}
-                            onClick={() => reprocess(s.alertId)}
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7"
+                              />
+                            }
                           >
-                            Xử lý lại
-                          </Button>
-                        )}
+                            <EllipsisVertical className="size-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuItem onClick={() => setDetail(s)}>
+                              View details
+                            </DropdownMenuItem>
+                            {failed && canReprocess && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  disabled={reprocessing}
+                                  onClick={() => reprocess(s.alertId)}
+                                >
+                                  Reprocess
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
@@ -203,35 +236,51 @@ export default function SagaDebugPage() {
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết saga</DialogTitle>
+            <DialogTitle>Saga details</DialogTitle>
           </DialogHeader>
           {detail && (
             <div className="space-y-0.5">
               <DetailRow label="Correlation ID" value={detail.correlationId} />
-              <DetailRow label="Trạng thái" value={detail.currentState} />
+              <DetailRow
+                label="Status"
+                value={sagaStateLabel(detail.currentState)}
+              />
               <DetailRow label="Alert ID" value={detail.alertId} />
               <DetailRow
                 label="Battery Asset"
                 value={detail.assetSerialNumber ?? detail.batteryAssetId}
               />
               <DetailRow label="Customer ID" value={detail.customerId} />
-              <DetailRow label="Anomaly type" value={detail.anomalyType} />
-              <DetailRow label="Severity" value={detail.severity} />
+              <DetailRow
+                label="Anomaly type"
+                value={anomalyTypeLabel(detail.anomalyType)}
+              />
+              <DetailRow
+                label="Severity"
+                value={alertSeverityLabel(detail.severity)}
+              />
               <DetailRow
                 label="Ticket"
                 value={
                   detail.ticketCode
-                    ? `${detail.ticketCode}${detail.ticketIsReused ? " (tái dùng)" : ""}`
+                    ? `${detail.ticketCode}${detail.ticketIsReused ? " (reused)" : ""}`
                     : "—"
                 }
               />
               <DetailRow label="Retry" value={detail.retryCount} />
-              <DetailRow label="Lỗi tại stage" value={detail.failedAtStage} />
-              <DetailRow label="Lý do lỗi" value={detail.failureReason} />
-              <DetailRow label="Mã lỗi" value={detail.failureErrorCode} />
-              <DetailRow label="Thời điểm lỗi" value={fmt(detail.failedAt)} />
-              <DetailRow label="Bắt đầu" value={fmt(detail.startedAt)} />
-              <DetailRow label="Hoàn thành" value={fmt(detail.completedAt)} />
+              <DetailRow
+                label="Failed at stage"
+                value={
+                  detail.failedAtStage
+                    ? sagaStateLabel(detail.failedAtStage)
+                    : "—"
+                }
+              />
+              <DetailRow label="Failure reason" value={detail.failureReason} />
+              <DetailRow label="Error code" value={detail.failureErrorCode} />
+              <DetailRow label="Failed at" value={fmt(detail.failedAt)} />
+              <DetailRow label="Started" value={fmt(detail.startedAt)} />
+              <DetailRow label="Completed" value={fmt(detail.completedAt)} />
             </div>
           )}
         </DialogContent>

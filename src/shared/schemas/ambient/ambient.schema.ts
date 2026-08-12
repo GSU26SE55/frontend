@@ -1,10 +1,11 @@
 import { z } from "zod";
 
-// Form dùng input string (giống site form) — convert sang number khi submit.
-// Tất cả threshold field nullable: bỏ trống = không monitor metric đó.
+// The form uses string inputs (like the site form) — converted to numbers
+// on submit. Every threshold field is nullable: leaving one blank means that
+// metric is not monitored.
 export const ambientThresholdSchema = z
   .object({
-    siteId: z.string().uuid("Chọn site hợp lệ"),
+    siteId: z.string().uuid("Select a valid site"),
     highAmbientTempWarning: z.string().optional(),
     highAmbientTempCritical: z.string().optional(),
     highHumidityWarning: z.string().optional(),
@@ -31,7 +32,7 @@ export const ambientThresholdSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: [field],
-          message: "Số không hợp lệ",
+          message: "Invalid number",
         });
       }
     }
@@ -46,7 +47,7 @@ export const ambientThresholdSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["highAmbientTempCritical"],
-        message: "Phải ≥ ngưỡng cảnh báo",
+        message: "Must be ≥ the warning threshold",
       });
     }
 
@@ -56,12 +57,13 @@ export const ambientThresholdSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["highHumidityCritical"],
-        message: "Phải ≥ ngưỡng cảnh báo",
+        message: "Must be ≥ the warning threshold",
       });
     }
 
-    // Combo rule chỉ active khi có ĐỦ cả 2 ngưỡng (nhiệt + ẩm). Chặn cấu hình
-    // combo half-configured (chỉ 1 field) — BE bỏ qua nhưng dễ gây hiểu nhầm.
+    // The combo rule is only active when BOTH thresholds are set (temperature +
+    // humidity). Blocks a half-configured combo (only 1 field) — the BE ignores
+    // it, but it is easy to misread.
     const comboTemp = num(data.comboTempThreshold);
     const comboHum = num(data.comboHumidityThreshold);
     if ((comboTemp === undefined) !== (comboHum === undefined)) {
@@ -72,7 +74,7 @@ export const ambientThresholdSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: [missing],
-        message: "Combo rule cần đủ cả ngưỡng nhiệt độ và độ ẩm",
+        message: "Combo rule needs both temperature and humidity thresholds",
       });
     }
   });

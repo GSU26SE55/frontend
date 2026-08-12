@@ -51,7 +51,7 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <p className="text-center text-sm text-muted-foreground">
-        Nhập mã 6 chữ số đã gửi đến{" "}
+        Enter the 6-digit code sent to{" "}
         <span className="font-medium text-foreground">{email}</span>
       </p>
 
@@ -84,10 +84,10 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
         {isVerifying ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
-            Đang xác thực…
+            Verifying…
           </>
         ) : (
-          "Xác nhận OTP"
+          "Confirm OTP"
         )}
       </Button>
 
@@ -98,7 +98,7 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
           onClick={handleResend}
           className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
-          {countdown > 0 ? `Gửi lại sau ${countdown}s` : "Gửi lại OTP"}
+          {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
         </button>
       </div>
     </form>

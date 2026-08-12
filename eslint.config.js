@@ -5,8 +5,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
-// Feature Isolation — mỗi feature KHÔNG được import từ feature khác.
-// Code dùng chung phải đặt ở src/shared/. Chỉ chặn 3 feature còn lại, cho phép self.
+// Feature Isolation — no feature may import from another feature.
+// Shared code must live in src/shared/. Only blocks the other 3 features, self is allowed.
 const FEATURES = ["admin", "manager", "staff", "auth"];
 const featureIsolation = FEATURES.map((feat) => ({
   files: [`src/features/${feat}/**/*.{ts,tsx}`],
@@ -16,7 +16,7 @@ const featureIsolation = FEATURES.map((feat) => ({
       {
         patterns: FEATURES.filter((f) => f !== feat).map((other) => ({
           group: [`@/features/${other}/*`, `@/features/${other}`],
-          message: `features/${feat} không được import từ features/${other} — đưa code dùng chung ra src/shared/.`,
+          message: `features/${feat} must not import from features/${other} — move shared code to src/shared/.`,
         })),
       },
     ],
@@ -38,4 +38,15 @@ export default defineConfig([
     },
   },
   ...featureIsolation,
+  {
+    // The route table declares ~90 `const SomePage = lazy(() => import(...))` bindings so each
+    // page ships as its own chunk. react-refresh reads those as component declarations sitting
+    // beside a non-component export (the router object) and flags every one. The warning does
+    // not apply here: this module exports a route table, never a component, so Fast Refresh has
+    // nothing to preserve. Editing a page still hot-reloads through that page's own module.
+    files: ["src/router/index.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
 ]);

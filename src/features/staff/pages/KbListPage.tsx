@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -79,20 +78,18 @@ export default function KbListPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Staff &middot; Knowledge Base
+            Staff &middot; Guide
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Knowledge Base
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Guide</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} bài viết &mdash; tra
-            cứu hướng dẫn xử lý.
+            {isLoading ? "..." : (data?.totalItems ?? 0)} articles &mdash; look
+            up handling guides.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.kb]} />
           <Button size="sm" onClick={() => navigate("/staff/kb/new")}>
-            <Plus className="size-3.5" /> Tạo bài viết
+            <Plus className="size-3.5" /> Create article
           </Button>
         </div>
       </div>
@@ -102,7 +99,7 @@ export default function KbListPage() {
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo tiêu đề hoặc mã…"
+              placeholder="Search by title or code…"
               value={search.value}
               onChange={search.onChange}
               className="pl-8 pr-8"
@@ -117,7 +114,7 @@ export default function KbListPage() {
                   setFilter("keyword", undefined);
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
-                aria-label="Xóa từ khóa"
+                aria-label="Clear keyword"
               >
                 <X className="size-3.5 text-muted-foreground" />
               </button>
@@ -127,7 +124,7 @@ export default function KbListPage() {
           <div className="relative w-full sm:w-44">
             <Tag className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Lọc theo tag…"
+              placeholder="Filter by tag…"
               value={tagSearch.value}
               onChange={tagSearch.onChange}
               className="pl-8 pr-8"
@@ -142,7 +139,7 @@ export default function KbListPage() {
                   setFilter("tag", undefined);
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 hover:bg-muted"
-                aria-label="Xóa tag"
+                aria-label="Clear tag"
               >
                 <X className="size-3.5 text-muted-foreground" />
               </button>
@@ -154,12 +151,16 @@ export default function KbListPage() {
             onValueChange={(v: string | null) =>
               setFilter("category", v || undefined)
             }
+            items={[
+              { value: null, label: "All categories" },
+              ...KB_CATEGORY_OPTIONS,
+            ]}
           >
             <SelectTrigger className="w-44">
-              <SelectValue placeholder="Tất cả danh mục" />
+              <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
-              <SelectItem value={null}>Tất cả danh mục</SelectItem>
+              <SelectItem value={null}>All categories</SelectItem>
               {KB_CATEGORY_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -170,38 +171,34 @@ export default function KbListPage() {
 
           {hasActiveFilter && (
             <Button size="sm" variant="ghost" onClick={resetFilters}>
-              Xóa bộ lọc
+              Clear filters
             </Button>
           )}
         </div>
 
         {(search.value.length === 1 || tagSearch.value.length === 1) && (
           <p className="text-[11px] text-muted-foreground -mt-1.5">
-            Nhập ít nhất 2 ký tự để tìm
+            Enter at least 2 characters to search
           </p>
         )}
       </div>
 
-      <Card className="gap-0 py-0 overflow-hidden">
-        {isError ? (
-          <ErrorState
-            message={loadFailed("bài viết")}
-            onRetry={() => refetch()}
-          />
-        ) : (
-          <KbArticleTable
-            data={data?.items ?? []}
-            isLoading={isLoading}
-            pageNumber={data?.pageNumber ?? 1}
-            pageSize={data?.pageSize ?? 10}
-            hasFilter={hasActiveFilter}
-            onResetFilter={resetFilters}
-            onMarkHelpful={(a) => markHelpful(a.id)}
-            onCopy={(a) => handleCopy(a.id)}
-            sort={sort}
-          />
-        )}
-      </Card>
+      {isError ? (
+        <ErrorState
+          message={loadFailed("articles")}
+          onRetry={() => refetch()}
+        />
+      ) : (
+        <KbArticleTable
+          data={data?.items ?? []}
+          isLoading={isLoading}
+          hasFilter={hasActiveFilter}
+          onResetFilter={resetFilters}
+          onMarkHelpful={(a) => markHelpful(a.id)}
+          onCopy={(a) => handleCopy(a.id)}
+          sort={sort}
+        />
+      )}
 
       {data && (
         <DataPagination
@@ -212,6 +209,7 @@ export default function KbListPage() {
           hasNextPage={data.hasNextPage}
           hasPreviousPage={data.hasPreviousPage}
           onPageChange={(p) => setFilter("pageNumber", p)}
+          onPageSizeChange={(s) => setFilter("pageSize", s)}
         />
       )}
     </div>

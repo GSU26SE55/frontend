@@ -32,7 +32,7 @@ interface Props {
   items: IotDeviceDto[];
   pageNumber: number;
   pageSize: number;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Server-side sort — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -45,7 +45,7 @@ export default function IoTDeviceTable({
   const navigate = useNavigate();
   const { mutate: deleteDevice } = useDeleteIotDevice();
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  // BE đã sort toàn dataset (SortBy/SortDir) → render items nguyên trạng.
+  // BE already sorts the whole dataset (SortBy/SortDir) → render items as-is.
   const sortKey = sort.sortBy;
   const sortDirection = sort.sortDir;
   const toggleSort = sort.toggleSort;
@@ -72,7 +72,7 @@ export default function IoTDeviceTable({
               direction={sortDirection}
               onSort={toggleSort}
             >
-              Tên hiển thị
+              Display name
             </SortableTableHead>
             <SortableTableHead
               sortKey="siteName"
@@ -88,7 +88,7 @@ export default function IoTDeviceTable({
               direction={sortDirection}
               onSort={toggleSort}
             >
-              Trạng thái
+              Status
             </SortableTableHead>
             <SortableTableHead
               sortKey="currentFirmwareVersion"
@@ -104,7 +104,7 @@ export default function IoTDeviceTable({
               direction={sortDirection}
               onSort={toggleSort}
             >
-              Heartbeat gần nhất
+              Last heartbeat
             </SortableTableHead>
             <TableHead className="text-right">
               {TABLE_COLUMNS.actions}
@@ -135,7 +135,7 @@ export default function IoTDeviceTable({
               <TableCell className="text-sm text-muted-foreground">
                 {item.lastSeenAt
                   ? new Date(item.lastSeenAt).toLocaleString("vi-VN")
-                  : "Chưa từng"}
+                  : "Never"}
               </TableCell>
               <TableCell
                 className="text-right"
@@ -153,14 +153,14 @@ export default function IoTDeviceTable({
                     <DropdownMenuItem
                       onClick={() => navigate(`/admin/iot-devices/${item.id}`)}
                     >
-                      Xem chi tiết
+                      View details
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() =>
                         navigate(`/admin/iot-devices/${item.id}/edit`)
                       }
                     >
-                      Chỉnh sửa
+                      Edit
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -180,7 +180,7 @@ export default function IoTDeviceTable({
                 colSpan={8}
                 className="text-center text-muted-foreground py-8"
               >
-                Không có thiết bị
+                No devices
               </TableCell>
             </TableRow>
           )}
@@ -190,8 +190,8 @@ export default function IoTDeviceTable({
       <ConfirmActionDialog
         open={!!confirmId}
         onOpenChange={(o) => !o && setConfirmId(null)}
-        title="Decommission thiết bị?"
-        description="Thiết bị sẽ bị soft-delete, revoke key và chuyển sang Decommissioned. Calibration cascade soft-delete."
+        title="Decommission device?"
+        description="The device will be soft-deleted, its key revoked, and its status changed to Decommissioned. Calibration cascade soft-deletes."
         actionLabel="Decommission"
         destructive
         onConfirm={() => {

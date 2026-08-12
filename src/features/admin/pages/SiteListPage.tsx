@@ -98,20 +98,20 @@ export default function SiteListPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Tài sản
+            Admin &middot; Assets
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Quản lý Site
+            Site management
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} site &mdash; quản lý site khách
-            hàng.
+            {isLoading ? "..." : totalItems} sites &mdash; manage customer
+            sites.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.sites]} />
           <Button size="sm" onClick={handleCreate}>
-            <Plus className="size-3.5" /> Tạo site
+            <Plus className="size-3.5" /> Create site
           </Button>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function SiteListPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo tên site..."
+            placeholder="Search by site name..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -134,12 +134,12 @@ export default function SiteListPage() {
             }
           />
           <span className="text-muted-foreground">
-            {filters.includeDeleted ? "Ẩn đã xoá" : "Hiển thị đã xoá"}
+            {filters.includeDeleted ? "Hide deleted" : "Show deleted"}
           </span>
         </label>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -191,11 +191,11 @@ export default function SiteListPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa site?</AlertDialogTitle>
+            <AlertDialogTitle>Delete site?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmState.type === "delete" && (
                 <>
-                  Bạn có chắc muốn xóa site{" "}
+                  Are you sure you want to delete site{" "}
                   <strong>{confirmState.site.name}</strong>?
                 </>
               )}
@@ -212,7 +212,7 @@ export default function SiteListPage() {
                 closeConfirm();
               }}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -224,11 +224,11 @@ export default function SiteListPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Khôi phục site?</AlertDialogTitle>
+            <AlertDialogTitle>Restore site?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmState.type === "restore" && (
                 <>
-                  Bạn có chắc muốn khôi phục site{" "}
+                  Are you sure you want to restore site{" "}
                   <strong>{confirmState.site.name}</strong>?
                 </>
               )}
@@ -244,7 +244,7 @@ export default function SiteListPage() {
                 closeConfirm();
               }}
             >
-              Khôi phục
+              Restore
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

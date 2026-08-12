@@ -32,10 +32,10 @@ import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 interface Props {
   open: boolean;
   onClose: () => void;
-  account: AccountDto; // primary — account giữ lại
+  account: AccountDto; // primary — the account that's kept
 }
 
-// #AUTH-47: Admin merge secondary vào primary. Secondary chọn từ danh sách (loại trừ primary).
+// #AUTH-47: Admin merges secondary into primary. Secondary is chosen from the list (excluding primary).
 export default function MergeAccountDialog({ open, onClose, account }: Props) {
   const { data: listData } = useAdminAccountList({ pageSize: 100 });
   const candidates: AccountDto[] = (listData?.items ?? []).filter(
@@ -75,11 +75,11 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Gộp tài khoản</DialogTitle>
+          <DialogTitle>Merge accounts</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Giữ lại (primary):{" "}
+            Kept (primary):{" "}
             <span className="font-medium text-foreground">
               {account.fullName} — {account.email}
             </span>
@@ -87,7 +87,7 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
 
           <div className="space-y-1.5">
             <Label>
-              Tài khoản bị gộp (secondary){" "}
+              Account being merged (secondary){" "}
               <span className="text-red-500">*</span>
             </Label>
             <Controller
@@ -103,7 +103,7 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn tài khoản để gộp" />
+                    <SelectValue placeholder="Select an account to merge" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {candidates.map((c) => (
@@ -124,12 +124,12 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
 
           <div className="space-y-1.5">
             <Label htmlFor="reason">
-              Lý do <span className="text-red-500">*</span>
+              Reason <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="reason"
               rows={3}
-              placeholder="Vd: User báo support tạo nhầm 2 account cùng email"
+              placeholder="E.g.: user reported to support that 2 accounts with the same email were created by mistake"
               {...register("reason")}
             />
             {errors.reason && (
@@ -138,17 +138,18 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
           </div>
 
           <p className="text-xs text-amber-600">
-            ⚠️ Secondary sẽ bị tombstone (xóa mềm + ẩn danh email), toàn bộ
-            session bị thu hồi. Hành động <strong>không thể hoàn tác</strong>.
+            ⚠️ The secondary account will be tombstoned (soft-deleted + email
+            anonymized), and all sessions revoked. This action{" "}
+            <strong>cannot be undone</strong>.
           </p>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isPending} variant="destructive">
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Gộp tài khoản
+              Merge accounts
             </Button>
           </DialogFooter>
         </form>

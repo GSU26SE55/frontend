@@ -74,13 +74,13 @@ const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
         size="sm"
       >
         {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : "Gửi OTP"}
+        {cooldown > 0 ? `Resend in ${cooldown}s` : "Send OTP"}
       </Button>
 
       {otpSent && (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 max-w-xs">
           <div className="space-y-1">
-            <Label>Mã OTP</Label>
+            <Label>OTP code</Label>
             <Input maxLength={6} {...register("otp")} />
             {errors.otp && (
               <p className="text-sm text-destructive">{errors.otp.message}</p>
@@ -88,7 +88,7 @@ const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
           </div>
           <Button type="submit" size="sm" disabled={isVerifying}>
             {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Xác nhận
+            Confirm
           </Button>
         </form>
       )}
@@ -100,7 +100,7 @@ const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Xác thực số điện thoại</CardTitle>
+        <CardTitle>Verify phone number</CardTitle>
       </CardHeader>
       <CardContent>{inner}</CardContent>
     </Card>

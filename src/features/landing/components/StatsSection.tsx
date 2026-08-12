@@ -4,28 +4,28 @@ import {
   createCleanupBag,
   prefersReducedMotion,
 } from "@/features/landing/lib/animation";
-import test1Img from "@/assets/test 1.jpg";
+import statsBgImg from "@/assets/stats_bg.webp";
 
 const STATS_DATA = [
   {
     value: "0",
     unit: "breach",
     label: "SLA Breach",
-    sub: "Zero vi phạm SLA kể từ khi triển khai",
+    sub: "Zero SLA violations since go-live",
     color: "text-emerald-400",
   },
   {
     value: "94.7",
     unit: "%",
-    label: "SOH Trung bình",
-    sub: "Sức khỏe pin trên toàn hệ thống giám sát",
+    label: "Average SOH",
+    sub: "Battery health across every monitored system",
     color: "text-white",
   },
   {
     value: "< 18",
-    unit: "phút",
-    label: "Thời gian Triage",
-    sub: "Từ cảnh báo đến ticket có owner",
+    unit: "min",
+    label: "Triage time",
+    sub: "From alert to a ticket with an owner",
     color: "text-white",
   },
 ] as const;
@@ -144,7 +144,7 @@ const StatsSection = () => {
   return (
     <section
       className="relative w-full h-105 sm:h-140 lg:h-170 bg-cover bg-center bg-no-repeat overflow-hidden"
-      style={{ backgroundImage: `url("${test1Img}")` }}
+      style={{ backgroundImage: `url("${statsBgImg}")` }}
     >
       {/* Top gradient: blend from white (WorkflowSection) */}
       <div

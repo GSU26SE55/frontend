@@ -21,7 +21,7 @@ export function KbVisibilityBadge({
         className={cn("gap-1", toneClass("muted"), className)}
       >
         <Lock size={12} />
-        {!compact && "Nội bộ"}
+        {!compact && "Internal"}
       </Badge>
     );
   }
@@ -31,7 +31,7 @@ export function KbVisibilityBadge({
       className={cn("gap-1", toneClass("ok"), className)}
     >
       <Globe size={12} />
-      {!compact && "Công khai"}
+      {!compact && "Public"}
     </Badge>
   );
 }

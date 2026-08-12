@@ -18,8 +18,8 @@ interface Props {
   ticketId: string;
 }
 
-// Lưu ý: parent PHẢI render với `key={ticketId}` để component remount khi
-// chuyển sang ticket khác — tránh setState trong effect khi ticketId đổi.
+// Note: the parent MUST render with `key={ticketId}` so the component remounts when
+// switching to another ticket — this avoids setState in an effect when ticketId changes.
 
 const storageKey = (ticketId: string) => `staff-sub-issues:${ticketId}`;
 
@@ -33,10 +33,10 @@ function readItems(ticketId: string): SubIssueItem[] {
 }
 
 /**
- * Danh sách "sub issue" — staff tự chia nhỏ ticket thành các việc con (tên +
- * mô tả), kiểu checklist sub-issue của GitHub. CHƯA có endpoint backend cho
- * việc này — lưu tạm ở localStorage theo ticketId (không đồng bộ giữa các
- * thiết bị/người dùng) cho tới khi có API riêng.
+ * "Sub issue" list — staff break a ticket down into smaller tasks (title +
+ * description), like a GitHub sub-issue checklist. There's NO backend endpoint
+ * for this yet — stored temporarily in localStorage keyed by ticketId (not
+ * synced across devices/users) until a dedicated API exists.
  */
 export default function SubIssuePanel({ ticketId }: Props) {
   const [items, setItems] = useState<SubIssueItem[]>(() => readItems(ticketId));
@@ -79,7 +79,7 @@ export default function SubIssuePanel({ ticketId }: Props) {
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {items.length > 0
-            ? `${doneCount}/${items.length} hoàn thành`
+            ? `${doneCount}/${items.length} done`
             : noData("sub issue")}
         </p>
         <Button
@@ -87,20 +87,20 @@ export default function SubIssuePanel({ ticketId }: Props) {
           variant="outline"
           onClick={() => setCreating((c) => !c)}
         >
-          <Plus size={13} /> Thêm sub issue
+          <Plus size={13} /> Add sub issue
         </Button>
       </div>
 
       {creating && (
         <div className="rounded-lg border border-border p-3 space-y-2">
           <Input
-            placeholder="Tên sub issue..."
+            placeholder="Sub issue title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
           />
           <Textarea
-            placeholder="Mô tả chi tiết..."
+            placeholder="Detailed description..."
             rows={2}
             className="text-sm"
             value={description}
@@ -112,10 +112,10 @@ export default function SubIssuePanel({ ticketId }: Props) {
               variant="ghost"
               onClick={() => setCreating(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button size="sm" disabled={!title.trim()} onClick={addItem}>
-              Tạo
+              Create
             </Button>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function SubIssuePanel({ ticketId }: Props) {
 
       {items.length === 0 && !creating ? (
         <p className="text-sm text-muted-foreground text-center py-8">
-          Chia nhỏ ticket thành các việc con để dễ theo dõi tiến độ.
+          Break this ticket down into smaller tasks to track progress.
         </p>
       ) : (
         <ul className="space-y-1.5">
@@ -168,7 +168,7 @@ export default function SubIssuePanel({ ticketId }: Props) {
                   </button>
                   <button
                     type="button"
-                    aria-label="Xóa sub issue"
+                    aria-label="Delete sub issue"
                     onClick={() => removeItem(item.id)}
                     className="text-muted-foreground transition-colors hover:text-destructive"
                   >

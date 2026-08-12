@@ -18,21 +18,21 @@ import { RichContentView } from "@/shared/components/editor/RichContentView";
 type ViewMode = "unified" | "split";
 
 const FIELDS: { key: keyof KbArticleDiffDTO; label: string }[] = [
-  { key: "titleDiff", label: "Tiêu đề" },
-  { key: "contentDiff", label: "Nội dung" },
-  { key: "tagsDiff", label: "Thẻ" },
+  { key: "titleDiff", label: "Title" },
+  { key: "contentDiff", label: "Content" },
+  { key: "tagsDiff", label: "Tags" },
 ];
 
-// Nền cho từng loại dòng diff — del/add dùng token --diff-*, context/empty dùng
-// token hệ thống → tự đúng light/dark.
+// Background per diff line type — del/add use the --diff-* tokens, context/empty use
+// system tokens → automatically correct for light/dark.
 function rowBg(type: "eq" | "del" | "add" | "empty"): string | undefined {
   if (type === "del") return "var(--diff-del-soft)";
   if (type === "add") return "var(--diff-add-soft)";
   if (type === "empty") return "var(--surface-2)";
-  return undefined; // eq — nền mặc định (bg-background qua class)
+  return undefined; // eq — default background (bg-background via class)
 }
 
-// ── Gutter cell (line number) ────────────────────────────────────────────────
+// ── Gutter cell (line number) ─────────────────────────────────────────────────
 function Gutter({
   no,
   type,
@@ -62,7 +62,7 @@ function Gutter({
   );
 }
 
-// ── Sign cell (+/-) ──────────────────────────────────────────────────────────
+// ── Sign cell (+/-) ───────────────────────────────────────────────────────────
 function Sign({ type }: { type: "eq" | "del" | "add" | "empty" }) {
   return (
     <td
@@ -91,7 +91,7 @@ function Sign({ type }: { type: "eq" | "del" | "add" | "empty" }) {
   );
 }
 
-// ── Content cell ─────────────────────────────────────────────────────────────
+// ── Content cell ──────────────────────────────────────────────────────────────
 function CodeCell({
   text,
   type,
@@ -112,7 +112,7 @@ function CodeCell({
   );
 }
 
-// ── Unified view ─────────────────────────────────────────────────────────────
+// ── Unified view ──────────────────────────────────────────────────────────────
 function UnifiedView({ lines }: { lines: DiffLine[] }) {
   return (
     <table className="w-full border-collapse font-mono">
@@ -130,7 +130,7 @@ function UnifiedView({ lines }: { lines: DiffLine[] }) {
   );
 }
 
-// ── Split view ────────────────────────────────────────────────────────────────
+// ── Split view ─────────────────────────────────────────────────────────────────
 function SplitSide({ side }: { side: SplitRow["left"] | SplitRow["right"] }) {
   return (
     <>
@@ -169,7 +169,7 @@ function SplitView({ rows }: { rows: SplitRow[] }) {
   );
 }
 
-// ── Per-section block ─────────────────────────────────────────────────────────
+// ── Per-section block ──────────────────────────────────────────────────────────
 function SectionBlock({
   label,
   diff,
@@ -183,9 +183,9 @@ function SectionBlock({
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
-  // Bài soạn bằng rich text: diff trên markup sẽ ra rác (<p>, <img>...).
-  // Diff trên text thuần để thống kê +/- vẫn có nghĩa, còn nội dung hiển thị
-  // side-by-side ở dưới.
+  // Articles written with rich text: diffing the markup would produce noise (<p>, <img>...).
+  // Diff on plain text so the +/- stats remain meaningful, while the content is displayed
+  // side-by-side below.
   const isHtml = isHtmlContent(diff.oldValue) || isHtmlContent(diff.newValue);
 
   const computed = useMemo(() => {
@@ -256,7 +256,7 @@ function SectionBlock({
           </div>
         ) : (
           <span className="text-[11px] text-muted-foreground font-medium">
-            Không thay đổi
+            No changes
           </span>
         )}
       </button>
@@ -265,13 +265,13 @@ function SectionBlock({
         <div className="overflow-x-auto">
           {isEmpty ? (
             <p className="px-4 py-6 text-sm text-muted-foreground text-center italic">
-              (trống)
+              (empty)
             </p>
           ) : isHtml ? (
             <div className="grid gap-3 p-3 md:grid-cols-2">
               <section className="min-w-0">
                 <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-[11px] font-medium">
-                  Bản cũ
+                  Old version
                 </header>
                 <div className="max-h-[50vh] overflow-auto rounded-b-md border border-t-0 p-3">
                   <RichContentView html={diff.oldValue} />
@@ -279,7 +279,7 @@ function SectionBlock({
               </section>
               <section className="min-w-0">
                 <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-[11px] font-medium">
-                  Bản mới
+                  New version
                 </header>
                 <div className="max-h-[50vh] overflow-auto rounded-b-md border border-t-0 p-3">
                   <RichContentView html={diff.newValue} />
@@ -297,7 +297,7 @@ function SectionBlock({
   );
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Main export ────────────────────────────────────────────────────────────────
 export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
   const [view, setView] = useState<ViewMode>("unified");
 
@@ -322,7 +322,7 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
       {/* Toolbar — GitHub-style comparison header */}
       <div className="flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/30 px-4 py-2.5">
         <div className="flex items-center gap-2 text-[13px]">
-          <span className="text-muted-foreground">So sánh</span>
+          <span className="text-muted-foreground">Comparing</span>
           <code className="rounded border border-border bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.fromVersion}
           </code>

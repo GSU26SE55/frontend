@@ -21,7 +21,7 @@ interface ApiKeyRevealDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Fallback copy cho non-secure context (HTTP/IP) khi navigator.clipboard không khả dụng.
+// Fallback copy for non-secure contexts (HTTP/IP) when navigator.clipboard isn't available.
 const fallbackCopy = (text: string): boolean => {
   const ta = document.createElement("textarea");
   ta.value = text;
@@ -74,18 +74,19 @@ export default function ApiKeyRevealDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>API key của thiết bị</DialogTitle>
+          <DialogTitle>Device API key</DialogTitle>
           <DialogDescription>
-            Copy ngay và dán vào app Flutter trên điện thoại. Key này chỉ hiển
-            thị MỘT LẦN — đóng hộp thoại là không xem lại được.
+            Copy it now and paste it into the Flutter app on the phone. This key
+            is shown ONLY ONCE — once the dialog closes, it can't be viewed
+            again.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <span>
-            Nếu mất key, bạn phải thu hồi thiết bị và tạo lại — không có cách
-            khôi phục.
+            If you lose the key, you'll have to revoke the device and create a
+            new one — there's no way to recover it.
           </span>
         </div>
 
@@ -126,7 +127,7 @@ export default function ApiKeyRevealDialog({
 
         <DialogFooter>
           <Button type="button" onClick={() => onOpenChange(false)}>
-            Tôi đã lưu key
+            I've saved the key
           </Button>
         </DialogFooter>
       </DialogContent>

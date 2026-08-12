@@ -2,25 +2,20 @@ import { Badge } from "@/components/ui/badge";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import { toneClass, TICKET_STATUS_TONE } from "@/shared/theme/statusColors";
 
-// Badge trạng thái ticket DÙNG CHUNG cho admin/manager/staff — trước đây có 3 bản
-// riêng lệch nhau về label + màu. 1 nguồn label + tông màu semantic duy nhất
-// (token --ok/--info/--p1... — phân biệt được Escalated/Incident vs Resolved,
-// điều shadcn variant 4-màu không làm được).
+// Ticket status badge SHARED across admin/manager/staff — previously had 3 separate versions
+// diverging on label + color. One single source of labels + semantic color tone
+// (token --ok/--info/--p1... — distinguishes Escalated/Incident from Resolved,
+// something shadcn's 4-color variant can't do).
+// GH-1176: updated for 8-status canonical lifecycle.
 const STATUS_LABEL: Record<TicketStatusEnum, string> = {
-  [TicketStatusEnum.New]: "Mới",
-  [TicketStatusEnum.Open]: "Chờ triage",
-  [TicketStatusEnum.Approved]: "Đã duyệt",
-  [TicketStatusEnum.Assigned]: "Đã gán",
-  [TicketStatusEnum.InProgress]: "Đang xử lý",
-  [TicketStatusEnum.WaitingCustomer]: "Chờ khách hàng",
-  [TicketStatusEnum.WaitingParts]: "Chờ linh kiện",
-  [TicketStatusEnum.WaitingOnsiteSchedule]: "Chờ lịch hẹn",
-  [TicketStatusEnum.Resolved]: "Đã xử lý",
-  [TicketStatusEnum.Escalated]: "Đã chuyển cấp",
-  [TicketStatusEnum.ClosedPendingRate]: "Chờ đánh giá",
-  [TicketStatusEnum.Closed]: "Đã đóng",
-  [TicketStatusEnum.ClosedRejected]: "Bị từ chối",
-  [TicketStatusEnum.Incident]: "Sự cố",
+  [TicketStatusEnum.Open]: "Awaiting assignment",
+  [TicketStatusEnum.Pending]: "Pending",
+  [TicketStatusEnum.InProgress]: "In progress",
+  [TicketStatusEnum.Request]: "Escalation request",
+  [TicketStatusEnum.ReAssign]: "Pending reassignment",
+  [TicketStatusEnum.Completed]: "Completed",
+  [TicketStatusEnum.Closed]: "Closed",
+  [TicketStatusEnum.ClosedRejected]: "Rejected",
 };
 
 interface Props {

@@ -22,9 +22,9 @@ export const useAcceptInvite = () => {
       authService.acceptInvite(payload),
     onSuccess: (response) => {
       const res = response.data;
-      // GH-295: accept-invite trả LoginResultDto, bypass 2FA → tokens luôn set
+      // GH-295: accept-invite returns LoginResultDto, bypasses 2FA → tokens are always set
       if (!res.isSuccess || !res.data?.tokens) {
-        toast.error(res.message ?? "Không thể kích hoạt tài khoản");
+        toast.error(res.message ?? "Couldn't activate the account");
         return;
       }
       const { accessToken, refreshToken } = res.data.tokens;
@@ -32,7 +32,7 @@ export const useAcceptInvite = () => {
       const user = decodeToken(accessToken);
 
       if (user.role === UserRole.CUSTOMER) {
-        // CUSTOMER không dùng web — không giữ session, điều hướng sang trang hướng dẫn dùng App
+        // CUSTOMER doesn't use the web app — drop the session and redirect to the mobile app guide
         clearTokens();
         navigate("/use-mobile-app", { replace: true });
         return;

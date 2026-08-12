@@ -25,35 +25,30 @@ import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
 
+// GH-1176: updated for 8-status canonical lifecycle.
 const STATUS_LABELS: Record<string, string> = {
-  New: "Mới",
-  Open: "Đang mở",
-  Approved: "Đã duyệt",
-  Assigned: "Đã gán",
-  InProgress: "Đang xử lý",
-  WaitingCustomer: "Chờ khách hàng",
-  WaitingParts: "Chờ linh kiện",
-  WaitingOnsiteSchedule: "Chờ lịch hẹn",
-  Resolved: "Đã giải quyết",
-  Escalated: "Chuyển cấp",
-  ClosedPendingRate: "Chờ đánh giá",
-  Closed: "Đã đóng",
-  ClosedRejected: "Từ chối đóng",
-  Incident: "Sự cố",
+  Open: "Awaiting assignment",
+  Pending: "Pending",
+  InProgress: "In progress",
+  Request: "Escalation request",
+  ReAssign: "Pending reassignment",
+  Completed: "Completed",
+  Closed: "Closed",
+  ClosedRejected: "Rejected",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  Maintenance: "Bảo trì",
-  Repair: "Sửa chữa",
-  Inspection: "Kiểm tra",
-  Emergency: "Khẩn cấp",
-  Replacement: "Thay thế",
-  Upgrade: "Nâng cấp",
-  Other: "Khác",
-  Charging: "Lỗi sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
+  Maintenance: "Maintenance",
+  Repair: "Repair",
+  Inspection: "Inspection",
+  Emergency: "Emergency",
+  Replacement: "Replacement",
+  Upgrade: "Upgrade",
+  Other: "Other",
+  Charging: "Charging fault",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
 };
 
 const DEFAULTS = {
@@ -94,11 +89,11 @@ export default function TicketListPage() {
             Manager &middot; Ticket
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Quản lý ticket
+            Ticket Management
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; theo
-            dõi và điều phối ticket.
+            {isLoading ? "..." : (data?.totalItems ?? 0)} tickets &mdash; track
+            and coordinate tickets.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />
@@ -108,7 +103,7 @@ export default function TicketListPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo mã hoặc tiêu đề..."
+            placeholder="Search by code or title..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -126,10 +121,10 @@ export default function TicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-44">
-            <SelectValue placeholder="Tất cả trạng thái" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {Object.values(TicketStatusEnum).map((s) => (
               <SelectItem key={s} value={s}>
                 {STATUS_LABELS[s] ?? s}
@@ -150,10 +145,10 @@ export default function TicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-36">
-            <SelectValue placeholder="Tất cả priority" />
+            <SelectValue placeholder="All priorities" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả priority</SelectItem>
+            <SelectItem value={null}>All priorities</SelectItem>
             <SelectItem value={TicketPriorityEnum.P1Critical}>
               P1 Critical
             </SelectItem>
@@ -175,10 +170,10 @@ export default function TicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="Tất cả loại" />
+            <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả loại</SelectItem>
+            <SelectItem value={null}>All categories</SelectItem>
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c] ?? c}
@@ -189,7 +184,7 @@ export default function TicketListPage() {
 
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>

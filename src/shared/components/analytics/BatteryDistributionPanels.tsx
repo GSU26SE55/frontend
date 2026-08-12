@@ -19,11 +19,11 @@ const sohDonut = (
   s: BatteryDashboardStatsDto["sohDistribution"],
 ): DonutDatum[] =>
   [
-    { name: "Khỏe (≥90%)", value: s.healthy, fill: "var(--ok)" },
-    { name: "Bình thường (80–89%)", value: s.normal, fill: "var(--chart-2)" },
-    { name: "Cảnh báo (75–79%)", value: s.warning, fill: "var(--p3)" },
+    { name: "Healthy (≥90%)", value: s.healthy, fill: "var(--ok)" },
+    { name: "Normal (80–89%)", value: s.normal, fill: "var(--chart-2)" },
+    { name: "Warning (75–79%)", value: s.warning, fill: "var(--p3)" },
     { name: "EOL (<75%)", value: s.eol, fill: "var(--p1)" },
-    { name: "Chưa rõ", value: s.unknown, fill: "var(--muted-foreground)" },
+    { name: "Unknown", value: s.unknown, fill: "var(--muted-foreground)" },
   ].filter((d) => d.value > 0);
 
 const toDonut = (items: { count: number; name: string }[]): DonutDatum[] =>
@@ -34,9 +34,9 @@ const toDonut = (items: { count: number; name: string }[]): DonutDatum[] =>
   }));
 
 /**
- * Phân bố pin từ /battery/dashboard/stats: SOH · Hóa học · Môi trường 24h.
- * Tách từ DashboardStatsSection để Dashboard (Admin) tái dùng — nguồn battery
- * aggregate server-side, không tính client-side.
+ * Battery distribution from /battery/dashboard/stats: SOH · Chemistry · 24h environment.
+ * Extracted from DashboardStatsSection so Dashboard (Admin) can reuse it — the battery
+ * data is aggregated server-side, not computed client-side.
  */
 export function BatteryDistributionPanels({
   stats,
@@ -66,32 +66,32 @@ export function BatteryDistributionPanels({
     (p) => p.avgTemperature != null || p.avgHumidity != null,
   );
 
-  // Ẩn panel không có dữ liệu → reflow, không để ô trống. Cả 3 rỗng → không render gì.
+  // Hide panels with no data → reflow instead of leaving an empty slot. If all 3 are empty, render nothing.
   if (sohData.length === 0 && chemistryDonut.length === 0 && !hasAmbient)
     return null;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
       {sohData.length > 0 && (
-        <DashboardPanel title="Phân bố SOH" className="h-50">
+        <DashboardPanel title="SOH distribution" className="h-50">
           <DashboardDonut
             data={sohData}
             centerValue={stats.totalAssets}
-            centerLabel="pin"
+            centerLabel="batteries"
           />
         </DashboardPanel>
       )}
       {chemistryDonut.length > 0 && (
-        <DashboardPanel title="Hóa học pin" className="h-50">
+        <DashboardPanel title="Battery chemistry" className="h-50">
           <DashboardDonut
             data={chemistryDonut}
             centerValue={stats.totalAssets}
-            centerLabel="pin"
+            centerLabel="batteries"
           />
         </DashboardPanel>
       )}
       {hasAmbient && (
-        <DashboardPanel title="Môi trường (24 giờ)" className="h-50">
+        <DashboardPanel title="Environment (24 hours)" className="h-50">
           <ReportTimeSeriesChart
             data={stats.ambientTrend24Hours}
             xKey="hourUtc"
@@ -99,13 +99,13 @@ export function BatteryDistributionPanels({
             series={[
               {
                 key: "avgTemperature",
-                label: "Nhiệt độ (°C)",
+                label: "Temperature (°C)",
                 color: "var(--chart-2)",
                 connectNulls: true,
               },
               {
                 key: "avgHumidity",
-                label: "Độ ẩm (%)",
+                label: "Humidity (%)",
                 color: "var(--chart-3)",
                 connectNulls: true,
               },

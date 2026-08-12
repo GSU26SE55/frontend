@@ -17,9 +17,9 @@ import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
-  [SiteStatusEnum.Active]: "Hoạt động",
-  [SiteStatusEnum.UnderMaintenance]: "Bảo trì",
-  [SiteStatusEnum.Decommissioned]: "Đã ngừng",
+  [SiteStatusEnum.Active]: "Active",
+  [SiteStatusEnum.UnderMaintenance]: "Under maintenance",
+  [SiteStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const STATUS_VARIANT: Record<
@@ -39,7 +39,7 @@ interface SiteTableProps {
   onEdit: (site: SiteDto) => void;
   onDelete: (site: SiteDto) => void;
   onRestore?: (site: SiteDto) => void;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Sort server-side — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -58,7 +58,7 @@ export default function SiteTable({
   const columns: ColumnDef<SiteDto>[] = [
     {
       id: "name",
-      header: "Tên site",
+      header: "Site name",
       sortKey: "name",
       sortValue: (site) => site.name,
       cellClassName: "font-medium",
@@ -66,14 +66,14 @@ export default function SiteTable({
     },
     {
       id: "customerName",
-      header: "Khách hàng",
+      header: "Customer",
       sortKey: "customerName",
       sortValue: (site) => site.customerName,
       cell: (site) => site.customerName,
     },
     {
       id: "status",
-      header: "Trạng thái",
+      header: "Status",
       sortKey: "status",
       sortValue: (site) => STATUS_LABEL[site.status],
       cell: (site) => (
@@ -84,17 +84,17 @@ export default function SiteTable({
     },
     {
       id: "batteryAssetCount",
-      header: "Số pin",
+      header: "Battery count",
       sortKey: "batteryAssetCount",
       sortValue: (site) => site.batteryAssetCount,
       cell: (site) => site.batteryAssetCount,
     },
     {
       id: "installDate",
-      header: "Ngày lắp",
+      header: "Install date",
       sortKey: "installDate",
       sortValue: (site) => new Date(site.installDate).getTime(),
-      cell: (site) => format(new Date(site.installDate), "dd/MM/yyyy"),
+      cell: (site) => format(new Date(site.installDate), "MM/dd/yyyy"),
     },
     {
       id: "actions",
@@ -113,20 +113,20 @@ export default function SiteTable({
             {site.status !== SiteStatusEnum.Decommissioned ? (
               <>
                 <DropdownMenuItem onClick={() => onEdit(site)}>
-                  Chỉnh sửa
+                  Edit
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() => onDelete(site)}
                 >
-                  Xóa
+                  Delete
                 </DropdownMenuItem>
               </>
             ) : (
               onRestore && (
                 <DropdownMenuItem onClick={() => onRestore(site)}>
-                  Khôi phục
+                  Restore
                 </DropdownMenuItem>
               )
             )}
@@ -149,7 +149,7 @@ export default function SiteTable({
   if (data.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground py-8">
-        Chưa có site nào.
+        No sites yet.
       </p>
     );
   }

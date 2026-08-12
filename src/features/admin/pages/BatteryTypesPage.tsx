@@ -91,20 +91,20 @@ export default function BatteryTypesPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Hạ tầng pin
+            Admin &middot; Battery infrastructure
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Loại pin &amp; Ngưỡng cảnh báo
+            Battery types &amp; Alert thresholds
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} loại pin &mdash; quản lý loại pin
-            và ngưỡng cảnh báo.
+            {isLoading ? "..." : totalItems} battery types &mdash; manage
+            battery types and alert thresholds.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.batteryTypes]} />
           <Button size="sm" onClick={handleCreate}>
-            <Plus className="size-3.5" /> Tạo loại pin
+            <Plus className="size-3.5" /> Create battery type
           </Button>
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function BatteryTypesPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo tên loại pin..."
+            placeholder="Search by battery type name..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -127,12 +127,12 @@ export default function BatteryTypesPage() {
             }
           />
           <span className="text-muted-foreground">
-            {filters.includeDeleted ? "Ẩn đã xoá" : "Hiển thị đã xoá"}
+            {filters.includeDeleted ? "Hide deleted" : "Show deleted"}
           </span>
         </label>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -147,7 +147,7 @@ export default function BatteryTypesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <BatteryCharging className="size-8 opacity-30" />
-            <span className="text-sm">Chưa có loại pin nào.</span>
+            <span className="text-sm">No battery types yet.</span>
           </div>
         ) : (
           <BatteryTypeTable
@@ -193,11 +193,11 @@ export default function BatteryTypesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa loại pin?</AlertDialogTitle>
+            <AlertDialogTitle>Delete battery type?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmState.type === "delete" && (
                 <>
-                  Bạn có chắc muốn xóa loại pin{" "}
+                  Are you sure you want to delete battery type{" "}
                   <strong>{confirmState.item.name}</strong>?
                 </>
               )}
@@ -214,7 +214,7 @@ export default function BatteryTypesPage() {
                 closeConfirm();
               }}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -226,11 +226,11 @@ export default function BatteryTypesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Khôi phục loại pin?</AlertDialogTitle>
+            <AlertDialogTitle>Restore battery type?</AlertDialogTitle>
             <AlertDialogDescription>
               {confirmState.type === "restore" && (
                 <>
-                  Bạn có chắc muốn khôi phục loại pin{" "}
+                  Are you sure you want to restore battery type{" "}
                   <strong>{confirmState.item.name}</strong>?
                 </>
               )}
@@ -246,7 +246,7 @@ export default function BatteryTypesPage() {
                 closeConfirm();
               }}
             >
-              Khôi phục
+              Restore
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

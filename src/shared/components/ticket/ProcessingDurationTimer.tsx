@@ -20,10 +20,10 @@ function formatElapsed(ms: number): string {
 }
 
 /**
- * Đếm thời gian đã xử lý kể từ lần chuyển InProgress gần nhất — tự reset mỗi
- * khi staff Resume sau Hold (đúng ý nghĩa "đang xử lý bao lâu rồi", không phải
- * tổng cộng dồn). Suy ra từ activity log đã fetch sẵn cho tab Timeline — không
- * gọi thêm API.
+ * Counts processing time since the most recent transition to InProgress — auto-resets
+ * every time staff Resumes after a Hold (matches the meaning "how long has it been
+ * processing", not a cumulative total). Derived from the activity log already fetched for
+ * the Timeline tab — no extra API call.
  */
 export function ProcessingDurationTimer({
   activities,
@@ -48,8 +48,8 @@ export function ProcessingDurationTimer({
   useEffect(() => {
     if (!startedAt || status !== TicketStatusEnum.InProgress) return;
     const tick = () => setElapsedMs(Date.now() - new Date(startedAt).getTime());
-    // setState hoãn qua callback (setTimeout 0 + setInterval) thay vì gọi
-    // đồng bộ trong thân effect — tránh cascading render.
+    // setState deferred via callback (setTimeout 0 + setInterval) instead of calling
+    // synchronously in the effect body — avoids a cascading render.
     const immediate = setTimeout(tick, 0);
     const id = setInterval(tick, 1000);
     return () => {

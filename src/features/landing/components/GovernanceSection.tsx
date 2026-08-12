@@ -9,7 +9,7 @@ const FEATURE_CARDS = [
     icon: Zap,
     badge: "P1 · P2 · P3",
     title: "SLA Priority Matrix",
-    desc: "Priority tính từ Impact × Urgency — cố định trong toàn vòng đời ticket. P1 đóng trong 4h, P2 trong 24h, P3 trong 72h. Không extend deadline, chỉ escalate nhân lực.",
+    desc: "Priority is derived from Impact × Urgency and stays fixed for the ticket's whole life. P1 closes within 4h, P2 within 24h, P3 within 72h. Deadlines are never extended — only staffing escalates.",
     isDark: true,
     iconColor: "text-amber-400",
     iconBg: "bg-amber-500/15",
@@ -18,7 +18,7 @@ const FEATURE_CARDS = [
     icon: Clock,
     badge: "Auto-escalate",
     title: "Escalation Engine",
-    desc: "Khi SLA gần breach, hệ thống tự động escalate lên tier cao hơn, notify Manager và Admin trước khi trễ hạn.",
+    desc: "As an SLA nears breach, the system escalates to a higher tier and notifies Manager and Admin before the deadline passes.",
     isDark: false,
     iconColor: "text-red-500",
     iconBg: "bg-red-50",
@@ -26,8 +26,8 @@ const FEATURE_CARDS = [
   {
     icon: Database,
     badge: "Immutable log",
-    title: "Audit Trail đầy đủ",
-    desc: "Mọi hành động trên ticket — phân công, đổi trạng thái, comment, upload — đều có timestamp, actor và role. Truy vết theo thời gian thực.",
+    title: "Complete audit trail",
+    desc: "Every ticket action — assignment, status change, comment, upload — records a timestamp, actor and role, traceable in real time.",
     isDark: false,
     iconColor: "text-slate-600",
     iconBg: "bg-slate-100",
@@ -35,8 +35,8 @@ const FEATURE_CARDS = [
   {
     icon: ShieldCheck,
     badge: "ITIL 4 SVS",
-    title: "Tuân thủ ITIL 4",
-    desc: "Quy trình ticket theo chuẩn ITIL 4 Service Value System — phù hợp B2B service provider, không phải IT nội bộ.",
+    title: "ITIL 4 compliant",
+    desc: "Ticket handling follows the ITIL 4 Service Value System — built for B2B service providers, not internal IT.",
     isDark: false,
     iconColor: "text-emerald-600",
     iconBg: "bg-emerald-50",
@@ -132,17 +132,17 @@ const GovernanceSection = () => {
         <Reveal>
           <div className="max-w-3xl mb-12">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
-              Kiểm soát vận hành
+              Operational governance
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
-              Quy trình bảo trì
+              Maintenance workflows
               <br />
-              đúng chuẩn ITIL 4.
+              built to ITIL 4.
             </h2>
             <p className="mt-4 text-base text-slate-600 leading-relaxed max-w-2xl">
-              SLA, escalation và audit trail được thiết kế để không bao giờ để
-              ticket rơi vào khoảng trống — mọi hành động đều có người chịu
-              trách nhiệm.
+              SLAs, escalation and audit trails are designed so no ticket ever
+              falls through the cracks — every action has someone accountable
+              for it.
             </p>
           </div>
         </Reveal>
@@ -161,10 +161,11 @@ const GovernanceSection = () => {
             </div>
             <p className="text-sm text-slate-700 leading-relaxed">
               <span className="font-semibold text-slate-900">
-                Priority không thay đổi trong vòng đời ticket.
+                Priority never changes during a ticket's life.
               </span>{" "}
-              SLA breach kéo thêm nhân lực, không extend deadline — giữ audit
-              trail chính xác cho báo cáo vận hành.
+              An SLA breach brings in more people rather than extending the
+              deadline — keeping the audit trail accurate for operations
+              reporting.
             </p>
           </div>
         </Reveal>

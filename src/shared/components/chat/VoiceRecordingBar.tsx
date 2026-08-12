@@ -9,13 +9,13 @@ function formatElapsed(totalSeconds: number): string {
 
 interface VoiceRecordingBarProps {
   elapsedSeconds: number;
-  /** Giá trị 0-1 theo từng cột — từ useVoiceRecorder, phản ứng theo âm lượng mic */
+  /** 0-1 value per bar — from useVoiceRecorder, reacts to mic volume */
   waveform: number[];
   onStop: () => void;
   onCancel: () => void;
 }
 
-/** Thanh hiển thị khi đang ghi âm — thay chỗ ô nhập text, có sóng phản ứng theo giọng nói. */
+/** Bar shown while recording audio — replaces the text input, with a waveform that reacts to voice. */
 export function VoiceRecordingBar({
   elapsedSeconds,
   waveform,
@@ -42,7 +42,7 @@ export function VoiceRecordingBar({
         variant="ghost"
         size="icon-sm"
         onClick={onCancel}
-        aria-label="Hủy ghi âm"
+        aria-label="Cancel recording"
       >
         <X size={14} />
       </Button>
@@ -50,7 +50,7 @@ export function VoiceRecordingBar({
         type="button"
         size="icon-sm"
         onClick={onStop}
-        aria-label="Dừng và gửi ghi âm"
+        aria-label="Stop and send recording"
       >
         <Square size={12} />
       </Button>

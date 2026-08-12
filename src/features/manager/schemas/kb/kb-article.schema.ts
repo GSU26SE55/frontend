@@ -1,4 +1,4 @@
-// KB Article schema dùng chung — nguồn thật ở shared (trùng 100% admin/manager/staff).
+// Shared KB Article schema — the real source lives in shared (100% identical across admin/manager/staff).
 export {
   kbArticleSchema,
   type KbArticleFormInput,

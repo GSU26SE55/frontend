@@ -31,9 +31,9 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Tạm ngừng",
-  [BatteryStatusEnum.Decommissioned]: "Ngừng sử dụng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const DEFAULTS = {
@@ -59,7 +59,7 @@ export default function BatteryAssetsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<BatteryAssetDto | null>(null);
 
-  // Data cho các dropdown filter
+  // Data for the filter dropdowns
   const { data: customersData } = useCustomers({ pageSize: 100 });
   const { data: batteryTypesData } = useBatteryTypes({ pageSize: 100 });
   const { data: sitesData } = useSiteList({ pageNumber: 1, pageSize: 100 });
@@ -96,19 +96,20 @@ export default function BatteryAssetsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Tài sản pin
+            Admin &middot; Battery assets
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Battery Assets
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} pin &mdash; quản lý tài sản pin.
+            {isLoading ? "..." : totalItems} batteries &mdash; manage battery
+            assets.
           </p>
         </div>
         <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.batteryAssets]} />
           <Button size="sm" onClick={handleCreate}>
-            <Plus className="size-3.5" /> Tạo mới
+            <Plus className="size-3.5" /> Create
           </Button>
         </div>
       </div>
@@ -117,7 +118,7 @@ export default function BatteryAssetsPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo serial number..."
+            placeholder="Search by serial number..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -127,7 +128,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.customerId || null}
           items={[
-            { value: null, label: "Tất cả khách hàng" },
+            { value: null, label: "All customers" },
             ...(customersData?.items.map((c) => ({
               value: c.id,
               label: c.fullName,
@@ -136,10 +137,10 @@ export default function BatteryAssetsPage() {
           onValueChange={(v) => setFilter("customerId", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-44">
-            <SelectValue placeholder="Khách hàng" />
+            <SelectValue placeholder="Customer" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả khách hàng</SelectItem>
+            <SelectItem value={null}>All customers</SelectItem>
             {customersData?.items.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 {c.fullName}
@@ -151,7 +152,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.batteryTypeId || null}
           items={[
-            { value: null, label: "Tất cả loại pin" },
+            { value: null, label: "All battery types" },
             ...(batteryTypesData?.items.map((t) => ({
               value: t.id,
               label: t.name,
@@ -160,10 +161,10 @@ export default function BatteryAssetsPage() {
           onValueChange={(v) => setFilter("batteryTypeId", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="Loại pin" />
+            <SelectValue placeholder="Battery type" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả loại pin</SelectItem>
+            <SelectItem value={null}>All battery types</SelectItem>
             {batteryTypesData?.items.map((t) => (
               <SelectItem key={t.id} value={t.id}>
                 {t.name}
@@ -175,7 +176,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.siteId || null}
           items={[
-            { value: null, label: "Tất cả site" },
+            { value: null, label: "All sites" },
             ...(sitesData?.items.map((s) => ({
               value: s.id,
               label: s.name,
@@ -187,7 +188,7 @@ export default function BatteryAssetsPage() {
             <SelectValue placeholder="Site" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả site</SelectItem>
+            <SelectItem value={null}>All sites</SelectItem>
             {sitesData?.items.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.name}
@@ -199,7 +200,7 @@ export default function BatteryAssetsPage() {
         <Select
           value={filters.status || null}
           items={[
-            { value: null, label: "Mọi trạng thái" },
+            { value: null, label: "All statuses" },
             ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
               value,
               label,
@@ -208,10 +209,10 @@ export default function BatteryAssetsPage() {
           onValueChange={(v) => setFilter("status", v || undefined)}
         >
           <SelectTrigger size="sm" className="w-36">
-            <SelectValue placeholder="Trạng thái" />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Mọi trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {Object.entries(STATUS_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -227,11 +228,11 @@ export default function BatteryAssetsPage() {
               setFilter("includeDeleted", checked === true || undefined)
             }
           />
-          <span className="text-muted-foreground">Hiển thị đã xóa</span>
+          <span className="text-muted-foreground">Show deleted</span>
         </label>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -245,11 +246,11 @@ export default function BatteryAssetsPage() {
           </div>
         ) : isError ? (
           <ErrorState
-            message={loadFailed("battery asset")}
+            message={loadFailed("battery assets")}
             onRetry={() => refetch()}
           />
         ) : items.length === 0 ? (
-          <EmptyState icon={Battery} title={noData("battery asset")} />
+          <EmptyState icon={Battery} title={noData("battery assets")} />
         ) : (
           <BatteryAssetTable
             items={items}

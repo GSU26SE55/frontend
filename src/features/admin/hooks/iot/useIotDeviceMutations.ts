@@ -39,12 +39,30 @@ export function useDeleteIotDevice() {
   });
 }
 
-// rotate-key bỏ revoke + reset issuedAt nhưng KHÔNG đổi Status → invalidate detail để UI
-// refetch DTO mới (nút Revoke hiện lại). Trả IotDeviceCreatedDto để mở DeviceSecretsDialog.
+// rotate-key clears revoke + resets issuedAt but does NOT change Status → invalidate detail so
+// the UI refetches the new DTO (the Revoke button reappears). Returns IotDeviceCreatedDto to open DeviceSecretsDialog.
 export function useRotateIotDeviceKey(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => iotDeviceService.rotateKey(id).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.iotDevices.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.iotDevices.list() });
+    },
+  });
+}
+
+/**
+ * IOT3-76 — xoay RIÊNG credential MQTT.
+ *
+ * Điểm khác `useRotateIotDeviceKey` là toàn bộ giá trị của lệnh này: apiKey KHÔNG đổi, nên thiết
+ * bị vẫn gọi được `/provision` và tự nhận mật khẩu MQTT mới. Xoay apiKey thì thiết bị mất cả hai
+ * đường và bắt buộc phải mang cáp ra tận nơi.
+ */
+export function useRotateIotDeviceMqtt(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => iotDeviceService.rotateMqtt(id).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.iotDevices.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.iotDevices.list() });

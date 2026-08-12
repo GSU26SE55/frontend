@@ -3,23 +3,26 @@ export { ChatAiIntentEnum } from "@/shared/enums/ticket/chat.enum";
 import type { ActorRoleEnum } from "@/shared/enums/ticket/ticket.enum";
 import type { AddCommentPayload } from "@/shared/types/ticket/ticket.types";
 
-// ── Chat outbox (gửi comment offline-first) ──────────────────────────────
-// Tin nhắn đang chờ gửi lên BE, lưu bền ở localStorage per-ticket. Worker gửi
-// tuần tự FIFO + backoff retry; hết deadline → status "failed" (chờ user bấm
-// thử lại). KHÔNG phải token nên không vi phạm rule "cookie only" của dự án.
+// ── Chat outbox (offline-first comment sending) ──────────────────────────
+// Messages queued for the BE, persisted in localStorage per ticket. A worker
+// sends them FIFO with backoff retry; past the deadline → status "failed"
+// (waiting for the user to retry). These are not tokens, so this does not
+// break the project's "cookie only" rule.
 export type OutboxStatus = "queued" | "sending" | "failed";
 
 export interface OutboxMessage {
-  /** id tạm phía FE — "temp-{ticketId}-{seq}", seq lấy từ counter bền trong store. */
+  /** Temporary FE-side id — "temp-{ticketId}-{seq}", seq from a persisted counter in the store. */
   tempId: string;
   ticketId: string;
   payload: AddCommentPayload;
   status: OutboxStatus;
-  /** số lần đã thử gửi (dùng tính backoff delay). */
+  /** Number of send attempts so far (used to compute the backoff delay). */
   attempt: number;
   createdAt: number;
-  /** createdAt + tổng timeout — quá mốc này mà chưa gửi được → "failed". */
+  /** createdAt + total timeout — still unsent past this point → "failed". */
   deadline: number;
+  /** Failure reason shown to the user (e.g. duplicate content) — set only when retrying is pointless. */
+  failReason?: string;
 }
 
 export interface ChatDto {
@@ -51,13 +54,13 @@ export interface CreateChatPayload {
 
 export interface UpdateChatPayload {
   body: string;
-  /** Bắt buộc khi sửa tin của người khác qua quyền chat.edit.any (ngoài khung 15 phút của author) */
+  /** Required when editing someone else's message via chat.edit.any (outside the author's 15-minute window) */
   editReason?: string;
 }
 
-// GET /api/tickets/{id}/chats/{id}/reactions — aggregate group theo 5 loại reaction.
-// Khớp BE TicketChatReactionsAggregateDTO. "reactedByMe" KHÔNG có sẵn — FE tự tính
-// bằng cách so userId trong users[] với current user.
+// GET /api/tickets/{id}/chats/{id}/reactions — aggregate grouped by the 5 reaction types.
+// Matches the BE's TicketChatReactionsAggregateDTO. "reactedByMe" is NOT provided — the FE
+// derives it by comparing the userIds in users[] against the current user.
 export interface ChatReactionUserDto {
   userId: string;
   role: ActorRoleEnum;
@@ -93,8 +96,10 @@ export interface ChatTranslateDTO {
   fromCache: boolean;
 }
 
-// POST /api/tickets/{id}/chats/voice (multipart/form-data) — response giống
-// TicketActionResponse dùng chung cho các action ticket khác.
+// POST /api/tickets/{id}/chats/voice (application/json — ChatAttachmentInput for an
+// audio file already uploaded through FileStorage). Creates a placeholder chat and
+// transcribes asynchronously; the response mirrors the TicketActionResponse shared by
+// the other ticket actions.
 export interface ChatVoiceActionDTO {
   id: string | null;
   ticketId: string | null;
@@ -103,7 +108,7 @@ export interface ChatVoiceActionDTO {
   warnings?: string[] | null;
 }
 
-// ── AI chat (GH-133 Nhóm C) ──────────────────────────────────────────────
+// ── AI chat (GH-133 Group C) ─────────────────────────────────────────────
 // POST /api/tickets/{id}/chats/suggest — body
 export interface ChatSuggestPayload {
   intent: ChatAiIntentEnum;
@@ -113,18 +118,6 @@ export interface ChatSuggestPayload {
 export interface ChatSuggestDTO {
   suggestionId: string;
   suggestions: string[];
-}
-
-// POST /api/tickets/{id}/chats/sentiment-check — response data
-export type ChatSentimentLabel =
-  | "Positive"
-  | "Neutral"
-  | "Negative"
-  | "Critical";
-export interface ChatSentimentCheckDTO {
-  score: number; // [-1, 1]
-  label: ChatSentimentLabel;
-  isAlertSent: boolean;
 }
 
 // POST /api/tickets/{id}/chats/summarize — response data

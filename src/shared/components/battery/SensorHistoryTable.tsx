@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReadingHistory } from "@/shared/hooks/battery/useReadingHistory";
@@ -15,15 +15,15 @@ import type {
 } from "@/shared/types/battery/sensor-reading-history.types";
 import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
 
-// datetime-local (giờ địa phương, không timezone) → ISO UTC cho API. "" → undefined.
+// datetime-local (local time, no timezone) → ISO UTC for the API. "" → undefined.
 const toUtc = (local: string): string | undefined =>
   local ? new Date(local).toISOString() : undefined;
 
 const num = (v: number | null, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
 
-// ── Tô màu ô theo ngưỡng (đồng bộ vùng an toàn / danger zone của SensorChart) ──
-// Trong [min,max] = ok; sát mép (10% biên) = cảnh báo (p2); ngoài dải = nguy hiểm (p1).
+// ── Cell color by threshold (synced with SensorChart's safe zone / danger zone) ──
+// Within [min,max] = ok; near the edge (10% margin) = warning (p2); outside the range = danger (p1).
 function rangeTone(value: number, min: number, max: number): StatusTone {
   if (value < min || value > max) return "p1";
   const margin = (max - min) * 0.1;
@@ -31,7 +31,7 @@ function rangeTone(value: number, min: number, max: number): StatusTone {
   return "ok";
 }
 
-// SOC chỉ nguy hiểm khi THẤP: ≤ critical → p1, ≤ warning → p2, còn lại ok.
+// SOC is only dangerous when LOW: ≤ critical → p1, ≤ warning → p2, otherwise ok.
 function socTone(soc: number, warn: number, crit: number): StatusTone {
   if (soc <= crit) return "p1";
   if (soc <= warn) return "p2";
@@ -44,12 +44,12 @@ function voltageTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
 function temperatureTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
   return t ? rangeTone(v, t.temperatureMin, t.temperatureMax) : null;
 }
-// currentMaxCharge/currentMaxDischarge là optional trong ThresholdConfigDto.
-// Chưa cấu hình → KHÔNG tô màu cột Dòng (trả null), thay vì đoán một ngưỡng mặc
-// định: màu suy ra từ ngưỡng bịa sẽ lệch với cảnh báo BE bắn theo ngưỡng thật,
-// khiến người xem tin nhầm là đã đối chiếu.
+// currentMaxCharge/currentMaxDischarge are optional in ThresholdConfigDto.
+// Not configured → do NOT color the Current column (return null), rather than guessing
+// a default threshold: a color derived from a made-up threshold would diverge from the
+// BE's real-threshold alerts, misleading the viewer into thinking it was cross-checked.
 function currentTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
-  if (!t) return null; // chưa có cấu hình ngưỡng → cả bảng không tô (giữ đồng bộ)
+  if (!t) return null; // no threshold configured → the whole table stays uncolored (stay consistent)
   if (t.currentMaxCharge == null || t.currentMaxDischarge == null) return null;
   return rangeTone(v, -t.currentMaxDischarge, t.currentMaxCharge);
 }
@@ -57,7 +57,7 @@ function socOf(v: number, t?: ThresholdConfigDto): StatusTone | null {
   return t ? socTone(v, t.socWarningThreshold, t.socCriticalThreshold) : null;
 }
 
-// Số có màu theo tone (chưa có ngưỡng → hiển thị trung tính).
+// Numbers colored by tone (no threshold yet → shown neutral).
 function ToneNum({
   value,
   tone,
@@ -79,7 +79,7 @@ function buildColumns(
   return [
     {
       id: "time",
-      header: "Thời điểm",
+      header: "Time",
       headClassName: "w-[20%]",
       sortKey: "time",
       sortValue: (r) => new Date(r.time).getTime(),
@@ -88,7 +88,7 @@ function buildColumns(
     },
     {
       id: "voltage",
-      header: "Điện áp (V)",
+      header: "Voltage (V)",
       sortKey: "voltage",
       sortValue: (r) => r.voltage,
       headClassName: "w-[10%] text-right",
@@ -99,7 +99,7 @@ function buildColumns(
     },
     {
       id: "current",
-      header: "Dòng (A)",
+      header: "Current (A)",
       sortKey: "current",
       sortValue: (r) => r.current,
       headClassName: "w-[18%] text-right",
@@ -110,7 +110,7 @@ function buildColumns(
     },
     {
       id: "temperature",
-      header: "Nhiệt độ (°C)",
+      header: "Temperature (°C)",
       sortKey: "temperature",
       sortValue: (r) => r.temperature,
       headClassName: "w-[18%] text-right",
@@ -152,17 +152,17 @@ export default function SensorHistoryTable({
   batteryTypeId,
   fillHeight,
 }: SensorHistoryTableProps) {
-  // Sort server-side (Hướng B). Mặc định null → BE trả time desc + cursor bình thường.
+  // Server-side sort (Direction B). Default null → BE returns time desc + normal cursor.
   const sort = useServerSort();
-  // Bộ lọc khoảng thời gian (datetime-local, giờ địa phương).
+  // Date range filter (datetime-local, local time).
   const [fromLocal, setFromLocal] = useState("");
   const [toLocal, setToLocal] = useState("");
 
   const from = toUtc(fromLocal);
   const to = toUtc(toLocal);
 
-  // Hướng B: sort field ≠ time BẮT BUỘC có from+to (thiếu → BE 400). Nếu người dùng
-  // chọn sort khác time mà chưa nhập đủ khoảng → chưa áp sort (fallback time desc) + báo.
+  // Direction B: a sort field ≠ time REQUIRES from+to (missing → BE 400). If the user
+  // picks a sort other than time without entering a full range → sort isn't applied yet (fallback time desc) + a notice is shown.
   const isFieldSort = !!sort.sortBy && sort.sortBy !== "time";
   const rangeMissing = isFieldSort && (!from || !to);
   const activeSortBy: SensorReadingSortKey | undefined =
@@ -178,7 +178,7 @@ export default function SensorHistoryTable({
       sortBy: activeSortBy,
       sortDir: activeSortBy ? sort.sortDir : undefined,
     });
-  // Ngưỡng theo loại pin — dùng chung nguồn với SensorChart (dedup cache).
+  // Threshold by battery type — shares the same source as SensorChart (dedup cache).
   const { data: threshold } = useThresholdByType(batteryTypeId ?? "");
 
   const columns = useMemo(() => buildColumns(threshold), [threshold]);
@@ -187,32 +187,33 @@ export default function SensorHistoryTable({
 
   const hasFilter = !!fromLocal || !!toLocal;
 
-  // Bảng không tô màu trông y hệt "mọi giá trị đều bình thường" → phải nói rõ là
-  // thiếu ngưỡng, không phải đã đối chiếu xong.
+  // An uncolored table looks exactly like "every value is normal" → must state clearly
+  // that the threshold is missing, not that it's been cross-checked already.
   const missingThresholdNote = !threshold
-    ? "Loại pin này chưa cấu hình ngưỡng — số liệu bên dưới không được đối chiếu."
+    ? "This battery type has no threshold configured — the data below isn't cross-checked."
     : threshold.currentMaxCharge == null ||
         threshold.currentMaxDischarge == null
-      ? "Chưa cấu hình ngưỡng dòng nạp/xả — cột Dòng (A) không được đối chiếu."
+      ? "Charge/discharge current threshold not configured — the Current (A) column isn't cross-checked."
       : null;
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3 px-5 py-3 border-b border-border">
       <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-        Từ
-        <Input
-          type="datetime-local"
+        From
+        <DateTimePicker
           value={fromLocal}
-          onChange={(e) => setFromLocal(e.target.value)}
+          onChange={setFromLocal}
+          max={toLocal ? new Date(toLocal) : new Date()}
           className="h-8 w-52"
         />
       </label>
       <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-        Đến
-        <Input
-          type="datetime-local"
+        To
+        <DateTimePicker
           value={toLocal}
-          onChange={(e) => setToLocal(e.target.value)}
+          onChange={setToLocal}
+          min={fromLocal ? new Date(fromLocal) : undefined}
+          max={new Date()}
           className="h-8 w-52"
         />
       </label>
@@ -225,12 +226,12 @@ export default function SensorHistoryTable({
             setToLocal("");
           }}
         >
-          Xóa lọc
+          Clear filters
         </Button>
       )}
       {rangeMissing && (
         <span className="text-[11px] text-amber-600 dark:text-amber-500 pb-1.5">
-          Chọn cả “Từ” và “Đến” để sắp xếp theo cột này.
+          Select both "From" and "To" to sort by this column.
         </span>
       )}
     </div>
@@ -245,11 +246,11 @@ export default function SensorHistoryTable({
 
   const tableContent = isLoading ? (
     <div className="py-12 text-center text-sm text-muted-foreground">
-      Đang tải...
+      Loading...
     </div>
   ) : rows.length === 0 ? (
     <div className="py-12 text-center text-sm text-muted-foreground">
-      Chưa có dữ liệu
+      No data yet
     </div>
   ) : (
     <>
@@ -269,7 +270,7 @@ export default function SensorHistoryTable({
             onClick={() => fetchNextPage()}
             disabled={isFetchingNextPage}
           >
-            {isFetchingNextPage ? "Đang tải..." : "Tải thêm"}
+            {isFetchingNextPage ? "Loading..." : "Load more"}
           </Button>
         </div>
       )}
@@ -280,10 +281,10 @@ export default function SensorHistoryTable({
     return (
       <div className="flex flex-col h-full">
         <div className="px-5 py-3 border-b border-border shrink-0 flex items-center justify-between gap-2">
-          <span className="text-sm font-medium">Lịch sử cảm biến</span>
+          <span className="text-sm font-medium">Sensor history</span>
           {threshold && (
             <span className="text-[11px] text-muted-foreground">
-              Màu theo ngưỡng an toàn của {threshold.batteryTypeName}
+              Colored by the safe threshold of {threshold.batteryTypeName}
             </span>
           )}
         </div>
@@ -296,7 +297,7 @@ export default function SensorHistoryTable({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Lịch sử cảm biến</CardTitle>
+        <CardTitle className="text-base">Sensor history</CardTitle>
       </CardHeader>
       <CardContent className="px-0">
         {filterBar}

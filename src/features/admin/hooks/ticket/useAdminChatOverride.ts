@@ -8,9 +8,9 @@ import type {
 } from "@/features/admin/schemas/ticket/chat-override.schema";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
-// GH-133 C4 — Admin sửa/xóa chat trên ticket đã Closed. Dùng trong form dialog:
-// KHÔNG đặt onError ở đây — dialog tự try/catch + handleErrorApi({error, setError})
-// (map EntityError xuống field, HttpError → toast). Đặt onError sẽ gây double-toast.
+// GH-133 C4 — Admin edits/deletes chat on a Closed ticket. Used in a form dialog:
+// do NOT put onError here — the dialog does its own try/catch + handleErrorApi({error, setError})
+// (maps EntityError down to the field, HttpError → toast). Adding onError would double-toast.
 export function useOverrideEditChat() {
   const qc = useQueryClient();
   return useMutation({

@@ -31,11 +31,12 @@ import {
 } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
 const ESCALATION_REASON_LABELS: Record<string, string> = {
-  [EscalationReasonEnum.SkillGap]: "Vượt quá năng lực kỹ thuật",
-  [EscalationReasonEnum.PartsRequired]: "Cần linh kiện không có sẵn",
-  [EscalationReasonEnum.SafetyConcern]: "Lo ngại về an toàn",
-  [EscalationReasonEnum.SlaBreach]: "SLA đã vi phạm",
-  [EscalationReasonEnum.CustomerComplaint]: "Khiếu nại của khách hàng",
+  [EscalationReasonEnum.SkillGap]: "Exceeds technical capability",
+  // PartsRequired is left out of the picker — the system has no warehouse/parts
+  // inventory flow, so selecting it wouldn't lead to any further action.
+  [EscalationReasonEnum.SafetyConcern]: "Safety concern",
+  [EscalationReasonEnum.SlaBreach]: "SLA breached",
+  [EscalationReasonEnum.CustomerComplaint]: "Customer complaint",
 };
 
 interface Props {
@@ -63,7 +64,7 @@ export function EscalateRequestDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Yêu cầu chuyển cấp</DialogTitle>
+          <DialogTitle>Escalation request</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,7 +74,8 @@ export function EscalateRequestDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Lý do chuyển cấp <span className="text-destructive">*</span>
+                    Escalation reason{" "}
+                    <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -84,7 +86,7 @@ export function EscalateRequestDialog({
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn lý do" />
+                        <SelectValue placeholder="Select a reason" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -106,10 +108,10 @@ export function EscalateRequestDialog({
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú bổ sung</FormLabel>
+                  <FormLabel>Additional note</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả thêm tình huống..."
+                      placeholder="Describe the situation in more detail..."
                       rows={3}
                       {...field}
                     />
@@ -125,10 +127,10 @@ export function EscalateRequestDialog({
                 onClick={onClose}
                 disabled={isPending}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
-                {isPending ? "Đang gửi..." : "Gửi yêu cầu"}
+                {isPending ? "Sending..." : "Send request"}
               </Button>
             </DialogFooter>
           </form>

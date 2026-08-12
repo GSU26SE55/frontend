@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   editStaffProfileSchema,
   addSkillSchema,
@@ -138,15 +139,13 @@ export default function EditStaffProfileDialog({
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Hồ sơ Staff — {current.fullName}</DialogTitle>
+            <DialogTitle>Staff profile — {current.fullName}</DialogTitle>
           </DialogHeader>
 
           <Tabs defaultValue="profile">
             <TabsList>
-              <TabsTrigger value="profile">Thông tin</TabsTrigger>
-              <TabsTrigger value="skills">
-                Kỹ năng ({skills.length})
-              </TabsTrigger>
+              <TabsTrigger value="profile">Details</TabsTrigger>
+              <TabsTrigger value="skills">Skills ({skills.length})</TabsTrigger>
             </TabsList>
 
             {/* ── Profile tab ── */}
@@ -157,7 +156,7 @@ export default function EditStaffProfileDialog({
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Mã nhân viên</Label>
+                    <Label>Employee code</Label>
                     <Input
                       {...profileForm.register("employeeCode")}
                       placeholder="EMP-001"
@@ -169,10 +168,10 @@ export default function EditStaffProfileDialog({
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Phòng ban</Label>
+                    <Label>Department</Label>
                     <Input
                       {...profileForm.register("department")}
-                      placeholder="Kỹ thuật"
+                      placeholder="Engineering"
                     />
                     {pErr.department && (
                       <p className="text-xs text-red-500">
@@ -182,7 +181,8 @@ export default function EditStaffProfileDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label>
-                      Số ticket tối đa <span className="text-red-500">*</span>
+                      Max concurrent tickets{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       type="number"
@@ -200,20 +200,20 @@ export default function EditStaffProfileDialog({
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Trạng thái</Label>
+                    <Label>Status</Label>
                     <select
                       {...profileForm.register("isAvailable", {
                         setValueAs: (v: unknown) => v === "true" || v === true,
                       })}
                       className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
                     >
-                      <option value="true">Sẵn sàng</option>
-                      <option value="false">Không sẵn sàng</option>
+                      <option value="true">Available</option>
+                      <option value="false">Unavailable</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <Label>
-                      Bậc kỹ năng (Tier) <span className="text-red-500">*</span>
+                      Skill tier <span className="text-red-500">*</span>
                     </Label>
                     <select
                       {...profileForm.register("skillTier", {
@@ -232,16 +232,16 @@ export default function EditStaffProfileDialog({
                     )}
                   </div>
                   <div className="col-span-2 space-y-1.5">
-                    <Label>Ghi chú</Label>
+                    <Label>Notes</Label>
                     <Input
-                      placeholder="Ghi chú nội bộ về nhân sự"
+                      placeholder="Internal notes about this staff member"
                       {...profileForm.register("notes")}
                     />
                   </div>
                 </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={onClose}>
-                    Đóng
+                    Close
                   </Button>
                   <Button
                     type="submit"
@@ -251,7 +251,7 @@ export default function EditStaffProfileDialog({
                     {isSaving && (
                       <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
-                    Lưu
+                    Save
                   </Button>
                 </DialogFooter>
               </form>
@@ -261,7 +261,7 @@ export default function EditStaffProfileDialog({
             <TabsContent value="skills" className="space-y-4 pt-3">
               {skills.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Chưa có kỹ năng nào.
+                  No skills yet.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -273,11 +273,11 @@ export default function EditStaffProfileDialog({
                       <div>
                         <span className="font-medium">{sk.skillCode}</span>
                         <span className="ml-2 text-xs text-muted-foreground">
-                          Cấp {sk.skillLevel}
+                          Level {sk.skillLevel}
                         </span>
                         {sk.certifiedUntil && (
                           <span className="ml-2 text-xs text-muted-foreground">
-                            — hết hạn{" "}
+                            — expires{" "}
                             {new Date(sk.certifiedUntil).toLocaleDateString(
                               "vi-VN",
                             )}
@@ -301,12 +301,12 @@ export default function EditStaffProfileDialog({
                 className="space-y-3 border-t border-border pt-3"
               >
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Thêm kỹ năng
+                  Add skill
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>
-                      Mã kỹ năng <span className="text-red-500">*</span>
+                      Skill code <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       {...skillForm.register("skillCode")}
@@ -320,7 +320,7 @@ export default function EditStaffProfileDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label>
-                      Cấp độ (1–5) <span className="text-red-500">*</span>
+                      Level (1–5) <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       type="number"
@@ -338,10 +338,16 @@ export default function EditStaffProfileDialog({
                     )}
                   </div>
                   <div className="col-span-2 space-y-1.5">
-                    <Label>Hết hạn chứng chỉ</Label>
-                    <Input
-                      type="date"
-                      {...skillForm.register("certifiedUntil")}
+                    <Label>Certified until</Label>
+                    <Controller
+                      control={skillForm.control}
+                      name="certifiedUntil"
+                      render={({ field }) => (
+                        <DatePicker
+                          value={field.value}
+                          onChange={(v) => field.onChange(v ?? "")}
+                        />
+                      )}
                     />
                   </div>
                 </div>
@@ -357,7 +363,7 @@ export default function EditStaffProfileDialog({
                     ) : (
                       <Plus className="mr-1.5 size-3" />
                     )}
-                    Thêm
+                    Add
                   </Button>
                 </div>
               </form>
@@ -373,15 +379,15 @@ export default function EditStaffProfileDialog({
       >
         <DialogContent className="sm:max-w-xs">
           <DialogHeader>
-            <DialogTitle>Xóa kỹ năng?</DialogTitle>
+            <DialogTitle>Delete skill?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Bạn có chắc muốn xóa kỹ năng <strong>{skillToDelete}</strong> khỏi
-            hồ sơ của {current.fullName}?
+            Are you sure you want to remove the skill{" "}
+            <strong>{skillToDelete}</strong> from {current.fullName}'s profile?
           </p>
           <div className="flex gap-2 justify-end pt-2">
             <Button variant="outline" onClick={() => setSkillToDelete(null)}>
-              Hủy
+              Cancel
             </Button>
             <Button
               variant="destructive"
@@ -389,7 +395,7 @@ export default function EditStaffProfileDialog({
               disabled={isDeleting}
             >
               {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Xóa
+              Delete
             </Button>
           </div>
         </DialogContent>

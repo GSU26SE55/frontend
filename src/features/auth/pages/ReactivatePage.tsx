@@ -41,9 +41,9 @@ const ReactivatePage = () => {
       setEmail(data.email);
       verifyForm.reset({ email: data.email, otp: "" });
       setStep("verify");
-      // anti-enumeration: luôn báo cùng message dù email có tồn tại hay không
+      // anti-enumeration: always show the same message regardless of whether the email exists
       toast.success(
-        "Nếu tài khoản còn trong window khôi phục 90 ngày, OTP đã được gửi tới email.",
+        "If the account is still within the 90-day restore window, an OTP has been sent to the email.",
       );
     } catch (error) {
       handleErrorApi({ error, setError: requestForm.setError });
@@ -64,12 +64,12 @@ const ReactivatePage = () => {
     <div className="space-y-5">
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Khôi phục tài khoản
+          Restore account
         </h1>
         <p className="text-sm text-slate-500">
           {step === "request"
-            ? "Nhập email của tài khoản đã bị xóa (trong vòng 90 ngày)."
-            : `Nhập mã OTP đã gửi tới ${email}.`}
+            ? "Enter the email of the deleted account (within 90 days)."
+            : `Enter the OTP sent to ${email}.`}
         </p>
       </div>
 
@@ -99,7 +99,7 @@ const ReactivatePage = () => {
             className="h-10 w-full rounded-lg bg-emerald-600 font-semibold text-white hover:bg-emerald-700"
           >
             {isRequesting && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Gửi OTP khôi phục
+            Send restore OTP
           </Button>
         </form>
       ) : (
@@ -108,7 +108,7 @@ const ReactivatePage = () => {
           className="space-y-4"
         >
           <div className="space-y-1.5">
-            <Label htmlFor="otp">Mã OTP</Label>
+            <Label htmlFor="otp">OTP code</Label>
             <Input
               id="otp"
               inputMode="numeric"
@@ -128,14 +128,14 @@ const ReactivatePage = () => {
             className="h-10 w-full rounded-lg bg-emerald-600 font-semibold text-white hover:bg-emerald-700"
           >
             {isVerifying && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Xác nhận khôi phục
+            Confirm restore
           </Button>
           <button
             type="button"
             className="w-full text-center text-sm text-slate-500 hover:text-emerald-600"
             onClick={() => setStep("request")}
           >
-            Đổi email
+            Change email
           </button>
         </form>
       )}
@@ -145,7 +145,7 @@ const ReactivatePage = () => {
           to="/login"
           className="font-semibold text-emerald-600 hover:text-emerald-700"
         >
-          Quay lại đăng nhập
+          Back to log in
         </Link>
       </p>
     </div>

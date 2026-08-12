@@ -1,8 +1,9 @@
 import type { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
 
-// LoginAttemptDto — dùng chung admin (audit) + auth (login history).
-// Nullable field dùng `?: T | null` (superset): khớp BE trả null, đồng thời
-// tương thích call-site cũ của admin (trước dùng optional `?:`).
+// LoginAttemptDto — shared by admin (audit) and auth (login history).
+// Nullable fields use `?: T | null` (a superset): it matches the null the BE
+// returns while staying compatible with admin's existing call sites, which
+// previously relied on plain optional `?:`.
 export interface LoginAttemptDto {
   id: string;
   accountId?: string | null;

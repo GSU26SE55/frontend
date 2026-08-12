@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminAccountsService } from "@/features/admin/services/account/admin-accounts.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
+import { toast } from "sonner";
+import { HttpError, handleErrorApi } from "@/shared/lib/errors";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 import type {
   GetAccountsParams,
   CreateAccountPayload,
@@ -148,15 +151,34 @@ export const useAdminChangeAccountRole = () => {
     }: {
       id: string;
       payload: ChangeAccountRolePayload;
-    }) => adminAccountsService.changeRole(id, payload),
-    onSuccess: (_data, { id }) => {
+    }) =>
+      adminAccountsService.changeRole(id, payload).then((res) => {
+        // AdminAccountsController uses StatusCode(result.StatusCode, result), so errors come
+        // back as proper HTTP 4xx and axios rejects on its own. The retry-exhausted branch in
+        // the handler returns 409 with isSuccess=false — check it too, don't rely on status.
+        if (!res.data.isSuccess) {
+          throw new HttpError(
+            res.status,
+            res.data.message ?? "Couldn't change role",
+          );
+        }
+        return res.data;
+      }),
+    // The toast lives here, NOT in the mutate() callback: the submenu closes as soon as it is
+    // clicked, so the component unmounts before the request returns, and callbacks passed via
+    // mutate() are skipped once the component is unmounted — the role change would succeed
+    // with no toast at all.
+    onSuccess: (data, { id }) => {
       qc.invalidateQueries({ queryKey: KEY.admin.accounts });
       qc.invalidateQueries({ queryKey: QUERY_KEY.admin.accounts.detail(id) });
+      // BE already returns a message including the new role name ("Role changed to Manager.").
+      toast.success(data.message || ADMIN_MESSAGES.account.roleChanged);
     },
+    onError: (error) => handleErrorApi({ error }),
   });
 };
 
-// GH-295: admin reset 2FA của user khác
+// GH-295: admin resets another user's 2FA
 export const useAdminReset2fa = () => {
   const qc = useQueryClient();
   return useMutation({

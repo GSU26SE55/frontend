@@ -5,16 +5,18 @@ import type {
   PaginationResponse,
 } from "@/shared/types/api.types";
 import type { CustomerDropdownItem } from "@/features/admin/types/battery/battery-asset.types";
-import { CUSTOMER_ROLE_ID } from "@/shared/constants/roleIds";
 
 export const adminAccountService = {
-  getCustomers: (params?: {
+  // roleId is passed in by the caller (resolved dynamically via useRoleId) — do NOT hardcode
+  // it's a GUID because BE seeds the system role with Guid.NewGuid(), so the id differs per environment.
+  getCustomers: (params: {
+    roleId: string;
     pageNumber?: number;
     pageSize?: number;
     keyword?: string;
   }) =>
     axiosInstance.get<CommonResponse<PaginationResponse<CustomerDropdownItem>>>(
       ENDPOINTS.ADMIN.ACCOUNTS.LIST,
-      { params: { roleId: CUSTOMER_ROLE_ID, ...params } },
+      { params },
     ),
 };

@@ -10,7 +10,6 @@ import type {
   KbArticleSummaryDTO,
   KbArticleVersionDTO,
   KbArticleDiffDTO,
-  KbArticleTemplateDTO,
   KbArticleActionDTO,
   KbArticleListParams,
   KbCompareParams,
@@ -19,7 +18,7 @@ import type {
   UpdateKbArticlePayload,
 } from "@/shared/types/kb/kb.types";
 
-// Map params FE → query BE (Status enum string → int)
+// Map FE params → BE query (Status enum string → int)
 function toListQuery(params?: KbArticleListParams) {
   if (!params) return undefined;
   return {
@@ -37,7 +36,7 @@ function toListQuery(params?: KbArticleListParams) {
   };
 }
 
-// Staff: read + authoring (KHÔNG có workflow approve/publish/archive/rollback)
+// Staff: read + authoring (NO approve/publish/archive/rollback workflow)
 export const staffKbService = {
   getList: (params?: KbArticleListParams) =>
     axiosInstance.get<CommonResponse<PaginationResponse<KbArticleSummaryDTO>>>(
@@ -85,23 +84,9 @@ export const staffKbService = {
         },
       },
     ),
-  copyTemplate: (id: string) =>
-    axiosInstance.get<CommonResponse<KbArticleTemplateDTO>>(
-      ENDPOINTS.KB_INTERNAL.COPY_TEMPLATE(id),
-    ),
-  // Sao chép bài KB có sẵn → tạo bản mới (title "_copy", Draft), trả Id.
+  // Duplicate an existing KB article → creates a new one (title "_copy", Draft), returns its Id.
   duplicate: (id: string) =>
     axiosInstance.post<CommonResponse<KbArticleActionDTO>>(
       ENDPOINTS.KB_INTERNAL.DUPLICATE(id),
-    ),
-  // Danh sách bài mẫu (IsTemplate=true, Published) để chọn khi tạo bài mới.
-  getTemplates: () =>
-    axiosInstance.get<CommonResponse<PaginationResponse<KbArticleSummaryDTO>>>(
-      ENDPOINTS.KB_INTERNAL.TEMPLATES,
-      { params: { PageSize: 100 } },
-    ),
-  getTemplateDetail: (id: string) =>
-    axiosInstance.get<CommonResponse<KbArticleDTO>>(
-      ENDPOINTS.KB_INTERNAL.TEMPLATE_DETAIL(id),
     ),
 };

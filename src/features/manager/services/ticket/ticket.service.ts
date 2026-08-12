@@ -13,7 +13,6 @@ import type {
   MaintenanceLogDTO,
   AdminTicketListParams,
   AdminTicketQueueParams,
-  TriagePayload,
   TriageRejectPayload,
   AssignPayload,
   ReassignPayload,
@@ -21,6 +20,7 @@ import type {
   EscalatePayload,
   AddCommentPayload,
   MergeTicketPayload,
+  ReprioritizePayload,
 } from "@/shared/types/ticket/ticket.types";
 
 function toListParams(params?: AdminTicketListParams) {
@@ -62,12 +62,6 @@ export const managerTicketService = {
       { params: toQueueParams(params) },
     ),
 
-  // #697 — badge số ticket chờ duyệt (Open, chưa xóa, chưa merge).
-  getQueueCount: () =>
-    axiosInstance.get<CommonResponse<number>>(
-      ENDPOINTS.ADMIN.TICKETS.QUEUE_COUNT,
-    ),
-
   getDetail: (id: string) =>
     axiosInstance.get<CommonResponse<TicketDetailDTO>>(
       ENDPOINTS.TICKETS.DETAIL(id),
@@ -89,12 +83,7 @@ export const managerTicketService = {
       { params: { page: 1, pageSize: 50 } },
     ),
 
-  triage: (id: string, payload: TriagePayload) =>
-    axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.ADMIN.TICKETS.TRIAGE(id),
-      payload,
-    ),
-
+  // GH-1176: triage (approval) removed; triageReject remains (Open→ClosedRejected).
   triageReject: (id: string, payload: TriageRejectPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.TRIAGE_REJECT(id),
@@ -126,9 +115,16 @@ export const managerTicketService = {
       payload,
     ),
 
-  escalate: (id: string, payload: EscalatePayload) =>
+  // GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests.
+  escalateApprove: (id: string, payload: EscalatePayload) =>
     axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.ADMIN.TICKETS.ESCALATE(id),
+      ENDPOINTS.ADMIN.TICKETS.ESCALATE_APPROVE(id),
+      payload,
+    ),
+
+  escalateReject: (id: string, payload: RejectPayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.ESCALATE_REJECT(id),
       payload,
     ),
 
@@ -144,16 +140,24 @@ export const managerTicketService = {
       payload,
     ),
 
-  // Gộp ticket nghi trùng (id) vào ticket đích (targetTicketId).
+  // Merge the suspected-duplicate ticket (id) into the target ticket (targetTicketId).
   merge: (id: string, payload: MergeTicketPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.MERGE(id),
       payload,
     ),
 
-  // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
+  // Trigger an AI re-check (Skipped/Pending tickets).
   reVerify: (id: string) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.RE_VERIFY(id),
+    ),
+
+  // Change priority + reason. The BE recalculates the SLA (it does not reset it) — it can breach
+  // inside the transaction if the new deadline has already passed. The FE does NOT compute deadlines.
+  reprioritize: (id: string, payload: ReprioritizePayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.RE_PRIORITIZE(id),
+      payload,
     ),
 };

@@ -57,9 +57,10 @@ export function useUrlFilters<T extends FilterRecord>(defaults: T) {
     [setSearchParams],
   );
 
-  // Set nhiều key trong MỘT lần cập nhật URL — tránh race khi gọi setFilter
-  // liên tiếp (mỗi setFilter là 1 setSearchParams riêng, lần sau đọc prev cũ
-  // nên ghi đè lần trước). Dùng cho toggle sort (sortBy + sortDir cùng lúc).
+  // Set multiple keys in ONE URL update — avoids a race when calling setFilter
+  // repeatedly (each setFilter is its own setSearchParams call, so the later one
+  // reads the stale prev and overwrites the earlier one). Used for toggling sort
+  // (sortBy + sortDir at once).
   const setFilters = useCallback(
     (updates: Partial<Record<keyof T, T[keyof T] | undefined>>) => {
       setSearchParams(

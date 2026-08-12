@@ -22,7 +22,7 @@ const CHEMISTRY_LABEL: Record<BatteryChemistryEnum, string> = {
   [BatteryChemistryEnum.NMC]: "NMC",
   [BatteryChemistryEnum.NCA]: "NCA",
   [BatteryChemistryEnum.LCO]: "LCO",
-  [BatteryChemistryEnum.OTHER]: "Khác",
+  [BatteryChemistryEnum.OTHER]: "Other",
 };
 
 interface BatteryTypeTableProps {
@@ -34,7 +34,7 @@ interface BatteryTypeTableProps {
   onDelete: (type: BatteryTypeDto) => void;
   onRestore: (type: BatteryTypeDto) => void;
   onConfigThreshold: (type: BatteryTypeDto) => void;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Server-side sort — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -52,7 +52,7 @@ export default function BatteryTypeTable({
   const columns: ColumnDef<BatteryTypeDto>[] = [
     {
       id: "name",
-      header: "Tên model",
+      header: "Model name",
       sortKey: "name",
       sortValue: (t) => t.name,
       cellClassName: "font-medium",
@@ -60,14 +60,14 @@ export default function BatteryTypeTable({
     },
     {
       id: "manufacturer",
-      header: "Nhà sản xuất",
+      header: "Manufacturer",
       sortKey: "manufacturer",
       sortValue: (t) => t.manufacturer ?? "",
       cell: (t) => t.manufacturer ?? "—",
     },
     {
       id: "chemistry",
-      header: "Hóa học",
+      header: "Chemistry",
       sortKey: "chemistry",
       sortValue: (t) => CHEMISTRY_LABEL[t.chemistry] ?? "",
       cell: (t) => (
@@ -76,7 +76,7 @@ export default function BatteryTypeTable({
     },
     {
       id: "nominalCapacityAh",
-      header: "Dung lượng (Ah)",
+      header: "Capacity (Ah)",
       sortKey: "nominalCapacityAh",
       sortValue: (t) => t.nominalCapacityAh,
       headClassName: "justify-end text-right",
@@ -85,7 +85,7 @@ export default function BatteryTypeTable({
     },
     {
       id: "nominalVoltage",
-      header: "Điện áp (V)",
+      header: "Voltage (V)",
       sortKey: "nominalVoltage",
       sortValue: (t) => t.nominalVoltage,
       headClassName: "justify-end text-right",
@@ -94,7 +94,7 @@ export default function BatteryTypeTable({
     },
     {
       id: "maxCycleCount",
-      header: "Chu kỳ",
+      header: "Cycles",
       sortKey: "maxCycleCount",
       sortValue: (t) => t.maxCycleCount,
       headClassName: "justify-end text-right",
@@ -116,12 +116,12 @@ export default function BatteryTypeTable({
           <DropdownMenuContent align="end" className="w-36">
             {showRestore ? (
               <DropdownMenuItem onClick={() => onRestore(type)}>
-                Khôi phục
+                Restore
               </DropdownMenuItem>
             ) : (
               <>
                 <DropdownMenuItem onClick={() => onConfigThreshold(type)}>
-                  Cấu hình ngưỡng
+                  Configure thresholds
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(type)}>
                   {ACTIONS.EDIT}

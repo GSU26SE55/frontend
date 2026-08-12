@@ -83,14 +83,13 @@ export const ENDPOINTS = {
     CHAT_TRANSLATE: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}/translate`,
     CHAT_VOICE: (tid: string) => `/api/tickets/${tid}/chats/voice`,
+    CHAT_VOICE_RETRY: (tid: string, cid: string) =>
+      `/api/tickets/${tid}/chats/${cid}/voice/retry`,
     // GH-133 Nhóm C — AI chats + download attachment
     CHAT_ATTACHMENT_DOWNLOAD: (tid: string, cid: string, aid: string) =>
       `/api/tickets/${tid}/chats/${cid}/attachments/${aid}/download`, // C3
     CHAT_SUGGEST: (tid: string) => `/api/tickets/${tid}/chats/suggest`, // C2 (AI)
-    CHAT_SENTIMENT: (tid: string) =>
-      `/api/tickets/${tid}/chats/sentiment-check`, // C2 (AI)
     CHAT_SUMMARIZE: (tid: string) => `/api/tickets/${tid}/chats/summarize`, // C2 (AI)
-    CHAT_EXPORT_PDF: (tid: string) => `/api/tickets/${tid}/chats/export-pdf`, // C2
     MAINTENANCE_LOGS: (id: string) => `/api/tickets/${id}/maintenance-logs`,
     MAINTENANCE_LOG_UPDATE: (id: string, logId: string) =>
       `/api/tickets/${id}/maintenance-logs/${logId}`,
@@ -102,6 +101,12 @@ export const ENDPOINTS = {
       `/api/tickets/${tid}/participants/leave`,
     PARTICIPANTS_HISTORY: (tid: string) =>
       `/api/tickets/${tid}/participants/history`,
+    // AI-ranked suggestions for a ticket. Added here because commit 51bd9ec shipped
+    // suggestion.service.ts referencing these two keys without defining them, which broke
+    // `tsc -b`. Paths follow the BE route convention (lowercase, kebab-case) — confirm them
+    // against the TicketService controller before relying on the response.
+    STAFF_SUGGESTIONS: (id: string) => `/api/tickets/${id}/staff-suggestions`,
+    KB_SUGGESTIONS: (id: string) => `/api/tickets/${id}/kb-suggestions`,
   },
 
   // #696 — CHAT_TEMPLATES đã bị xóa khỏi BE (/api/chat-templates,
@@ -109,12 +114,14 @@ export const ENDPOINTS = {
 
   CHAT_MENTIONS: {
     ME: "/api/chats/mentions/me",
-    ACKNOWLEDGE: (id: string) => `/api/chats/mentions/${id}/acknowledge`,
   },
 
   MY_CHATS: {
     LIST: "/api/chats/me",
     ERASE: "/api/chats/erase-my-data",
+    // Tổng tin chưa đọc trên MỌI ticket của user hiện tại. BE đếm theo bản ghi chat nên
+    // tin có @mention đã nằm trong số này — không cộng thêm list mention (đếm gấp đôi).
+    UNREAD_COUNT: "/api/chats/unread-count",
   },
 
   ADMIN_CHAT_SEARCH: {
@@ -132,20 +139,29 @@ export const ENDPOINTS = {
     ME: "/api/staff/tickets/me",
     DASHBOARD_STATS: "/api/staff/tickets/dashboard/stats",
     MAINTENANCE_LOGS_ME: "/api/staff/tickets/maintenance-logs/me",
-    START: (id: string) => `/api/staff/tickets/${id}/start`,
-    HOLD: (id: string) => `/api/staff/tickets/${id}/hold`,
+    // GH-1176: unrestricted start removed; RESUME is now the restricted early-resume
+    // action for PendingContext=Held tickets only (Pending→InProgress).
     RESUME: (id: string) => `/api/staff/tickets/${id}/resume`,
-    RESOLVE: (id: string) => `/api/staff/tickets/${id}/resolve`,
+    HOLD: (id: string) => `/api/staff/tickets/${id}/hold`,
+    // GH-1176: renamed resolve→complete (InProgress→Completed).
+    COMPLETE: (id: string) => `/api/staff/tickets/${id}/complete`,
     ESCALATE_REQUEST: (id: string) =>
       `/api/staff/tickets/${id}/escalate-request`,
   },
 
   NOTIFICATIONS: {
     LIST: "/api/notifications",
+    // GET chi tiết 1 noti — KHÔNG áp bộ lọc feed InApp như LIST (đã cầm id thì trả
+    // đúng bản ghi đó). Chỉ đọc, không tự mark read. 404 nếu là noti của user khác.
+    DETAIL: (id: string) => `/api/notifications/${id}`,
     CREATE: "/api/notifications", // Admin only — tạo notification thủ công
     MARK_READ: (id: string) => `/api/notifications/${id}/read`, // PATCH — idempotent
     MARK_ALL_READ: "/api/notifications/read-all", // POST — body rỗng
     UNREAD_COUNT: "/api/notifications/unread-count", // GET — badge count
+    // PATCH — user chủ động MỞ notification (bấm push / deep link). Mạnh hơn /read,
+    // dùng để đo open-rate thật. Idempotent → gọi lại vẫn 200.
+    OPENED: (id: string) => `/api/notifications/${id}/opened`,
+    UNSUBSCRIBE: "/api/notification-unsubscribe",
   },
 
   DEVICE_TOKENS: {
@@ -157,6 +173,11 @@ export const ENDPOINTS = {
   NOTIFICATION_PREFERENCES: {
     GET: "/api/notification-preferences",
     UPDATE: "/api/notification-preferences", // PUT — upsert preference của user hiện tại
+    // Sprint 6.3 NOTI3-04 — ma trận nhóm × kênh.
+    // GET trả đủ 6 nhóm; PUT VÁ TỪNG DÒNG (chỉ nhóm gửi lên bị đổi).
+    MATRIX: "/api/notification-preferences/matrix",
+    // Bảng tra cứu NotificationType → nhóm (không nhân bản mapping ở client).
+    CATEGORIES: "/api/notification-preferences/categories",
   },
 
   ALERTS: {
@@ -164,6 +185,9 @@ export const ENDPOINTS = {
     DETAIL: (id: string) => `/api/alerts/${id}`,
     ACKNOWLEDGE: (id: string) => `/api/alerts/${id}/acknowledge`,
     RESOLVE: (id: string) => `/api/alerts/${id}/resolve`,
+    PRESCRIPTION_FEEDBACK: (id: string) =>
+      `/api/alerts/${id}/prescription-feedback`,
+    AI_PRESCRIPTION: (id: string) => `/api/alerts/${id}/ai-prescription`,
   },
 
   AMBIENT: {
@@ -191,14 +215,11 @@ export const ENDPOINTS = {
       `/api/environmental-incidents/by-site/${siteId}/active`,
   },
 
-  SLA: {
-    LIST: "/api/sla-rules",
-    UPDATE: (id: string) => `/api/sla-rules/${id}`,
-  },
-
   // AI — SOH prediction + anomaly classification (BE-AI: SohPredictionBackgroundService populate).
   SOH_PREDICTIONS: {
     LIST: "/api/v1/soh-predictions", // ?batteryAssetId=&from=&to=&pageNumber=&pageSize=
+    LONG: "/api/v1/soh-predictions/long",
+    BATCH: "/api/v1/soh-predictions/batch",
   },
   ANOMALY_CLASSIFICATIONS: {
     LIST: "/api/v1/anomaly-classifications", // ?batteryAssetId=&classification=&from=&to=
@@ -255,26 +276,84 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
-      // #697 — CommonResponse<number>: số ticket Open chưa xóa/chưa merge.
-      // Chỉ dùng cho badge — KHÔNG thay thế QUEUE (không trả danh sách ticket).
-      QUEUE_COUNT: "/api/admin/tickets/queue/count",
-      TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
+      // GH-1176: TRIAGE (approval) removed; TRIAGE_REJECT remains (Open→ClosedRejected).
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
       REASSIGN: (id: string) => `/api/admin/tickets/${id}/reassign`,
+      // GH-1176: Manager reschedule (ScheduleVersion-aware).
+      SCHEDULE: (id: string) => `/api/admin/tickets/${id}/schedule`,
       APPROVE: (id: string) => `/api/admin/tickets/${id}/approve`,
       REJECT: (id: string) => `/api/admin/tickets/${id}/reject`,
-      ESCALATE: (id: string) => `/api/admin/tickets/${id}/escalate`,
+      // GH-1176: ESCALATE (force) removed; approve/reject Staff escalation request instead.
+      ESCALATE_APPROVE: (id: string) =>
+        `/api/admin/tickets/${id}/escalate/approve`,
+      ESCALATE_REJECT: (id: string) =>
+        `/api/admin/tickets/${id}/escalate/reject`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
       // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).
       MERGE: (id: string) => `/api/admin/tickets/${id}/merge`,
       // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
       RE_VERIFY: (id: string) => `/api/admin/tickets/${id}/re-verify`,
+      // Manager đổi priority + reason. BE có thể tự escalate + đổi primary handler
+      // nếu tier staff không đủ cho priority mới → response.data.status có thể = Escalated.
+      RE_PRIORITIZE: (id: string) => `/api/admin/tickets/${id}/re-prioritize`,
     },
     SMS_GATEWAY: {
       DEVICES: "/api/admin/sms-gateway/devices",
       DEVICE_REVOKE: (id: string) => `/api/admin/sms-gateway/devices/${id}`,
+    },
+    // Sprint 6.3 NOTI3-12 — quản lý template. Chưa có endpoint create/update:
+    // tạo bản mới làm bằng SQL/seed, ACTIVATE chỉ chuyển giữa các bản đã tồn tại.
+    NOTIFICATION_TEMPLATES: {
+      LIST: "/api/admin/notification-templates", // ?type=&channel=&activeOnly=&pageNumber=&pageSize=
+      // 02/08/2026 — soạn thảo template. CREATE dùng chung path với LIST (POST vs GET).
+      CREATE: "/api/admin/notification-templates",
+      DETAIL: (id: string) => `/api/admin/notification-templates/${id}`,
+      // PUT = sinh phiên bản MỚI rồi bật lên, không ghi đè bản cũ.
+      REVISE: (id: string) => `/api/admin/notification-templates/${id}`,
+      DELETE: (id: string) => `/api/admin/notification-templates/${id}`,
+      PREVIEW: (id: string) =>
+        `/api/admin/notification-templates/${id}/preview`,
+      // Chỉ template kênh Email; rate limit 5 lần/giờ/admin (429 khi vượt).
+      TEST_SEND: (id: string) =>
+        `/api/admin/notification-templates/${id}/test-send`,
+      ACTIVATE: (id: string) =>
+        `/api/admin/notification-templates/${id}/activate`,
+      // 03/08/2026 — hai endpoint tra cứu, không sửa gì.
+      // VARIABLES: biến hợp lệ theo từng loại thông báo. Cần vì template gọi sai tên biến thì
+      // Handlebars render ra RỖNG chứ không báo lỗi — người soạn phải tự đoán và đoán sai thì
+      // không ai biết. Đây là dữ liệu tĩnh, không chạm DB.
+      VARIABLES: "/api/admin/notification-templates/variables",
+      // COVERAGE: cặp (loại × kênh) nào đang sinh thông báo thật mà thiếu template, và template
+      // nào đang dùng biến không tồn tại.
+      COVERAGE: "/api/admin/notification-templates/coverage",
+    },
+    // Sprint 6.4 — nhóm người nhận. Nhóm `Role` (kind=2) do seeder tạo, không sửa/xoá được.
+    NOTIFICATION_GROUPS: {
+      LIST: "/api/admin/notification-groups", // ?kind=&search=&pageNumber=&pageSize=
+      CREATE: "/api/admin/notification-groups", // POST — luôn tạo nhóm Static
+      DETAIL: (id: string) => `/api/admin/notification-groups/${id}`,
+      UPDATE: (id: string) => `/api/admin/notification-groups/${id}`,
+      DELETE: (id: string) => `/api/admin/notification-groups/${id}`,
+      MEMBERS: (id: string) => `/api/admin/notification-groups/${id}/members`,
+      ADD_MEMBERS: (id: string) =>
+        `/api/admin/notification-groups/${id}/members`,
+      REMOVE_MEMBER: (id: string, userId: string) =>
+        `/api/admin/notification-groups/${id}/members/${userId}`,
+    },
+    // Sprint 6.4 — gửi hàng loạt + lịch sử gửi.
+    NOTIFICATION_BROADCAST: {
+      // POST — KHÔNG gửi gì, chỉ trả số người nhận SAU KHI gom trùng. Cộng memberCount
+      // từng nhóm ở client là sai khi các nhóm giao nhau.
+      PREVIEW: "/api/admin/notifications/broadcast/preview",
+      // 03/08/2026 — xem trước NỘI DUNG theo từng kênh khi bật "dùng mẫu". Tách khỏi PREVIEW ở trên
+      // vì hai câu hỏi khác nhau: "gửi cho bao nhiêu người" và "mỗi kênh sẽ hiện ra chữ gì".
+      // Phải tách theo kênh vì mẫu khoá theo (Loại × Kênh) và bản SMS được nén ngắn riêng.
+      TEMPLATE_PREVIEW: "/api/admin/notifications/broadcast/template-preview",
+      SEND: "/api/admin/notifications/broadcast",
+      BATCHES: "/api/admin/notifications/batches",
+      BATCH_DETAIL: (id: string) => `/api/admin/notifications/batches/${id}`,
     },
     SAGAS: {
       ALERT_TICKET_LIST: "/api/admin/sagas/alert-ticket",
@@ -298,6 +377,9 @@ export const ENDPOINTS = {
       `/api/admin/tickets/${tid}/chats/${cid}/closed-override`,
     CHAT_RESTORE: (tid: string, cid: string) =>
       `/api/admin/tickets/${tid}/chats/${cid}/restore`,
+    NOTIFICATION_SETTINGS: {
+      PUSH_TRANSPORT: "/api/admin/notification-settings/push-transport",
+    },
   },
 
   // AuditAggregatorService — cross-service audit read-store (Sprint audit #AUDIT-17).
@@ -341,6 +423,7 @@ export const ENDPOINTS = {
     REALTIME: (id: string) => `/api/battery-assets/${id}/realtime`,
     CASCADE_RISK: (id: string) => `/api/battery-assets/${id}/cascade-risk`,
     TOPOLOGY: (id: string) => `/api/battery-assets/${id}/topology`,
+    BMS_SWITCH: (id: string) => `/api/battery-assets/${id}/bms-switch`,
     // Write ops live under /api/admin/battery-assets (AdminBatteryAssetsController)
     CREATE: "/api/admin/battery-assets",
     UPDATE: (id: string) => `/api/admin/battery-assets/${id}`,
@@ -389,9 +472,16 @@ export const ENDPOINTS = {
     ROTATE_KEY: (id: string) => `/api/admin/iot-devices/${id}/rotate-key`,
     REVOKE_KEY: (id: string) => `/api/admin/iot-devices/${id}/revoke-key`,
     COMMAND: (id: string) => `/api/admin/iot-devices/${id}/command`,
+    // IOT3-32 — xoay RIÊNG credential MQTT. Khác ROTATE_KEY ở chỗ apiKey còn nguyên, nên thiết
+    // bị tự lấy mật khẩu mới qua /provision — KHÔNG phải ra hiện trường.
+    ROTATE_MQTT: (id: string) => `/api/admin/iot-devices/${id}/rotate-mqtt`,
     // Lookup deviceCode → deviceId (Admin/Manager/Staff) — cầu nối cho Staff calibration.
     BY_CODE: (deviceCode: string) =>
       `/api/iot-devices/by-code/${encodeURIComponent(deviceCode)}`,
+    // IOT3-57 — danh sách cho Admin/Manager/Staff. KHÔNG trả apiKey/mqttPassword.
+    STAFF_LIST: "/api/iot-devices",
+    // IOT3-58 — lịch sử heartbeat, phân trang theo CON TRỎ (không offset).
+    HEARTBEATS: (deviceId: string) => `/api/iot-devices/${deviceId}/heartbeats`,
   },
 
   IOT_CALIBRATIONS: {
@@ -473,14 +563,8 @@ export const ENDPOINTS = {
     VERSION_DETAIL: (id: string, versionId: string) =>
       `/api/internal/knowledge-base/${id}/versions/${versionId}`,
     COMPARE: (id: string) => `/api/internal/knowledge-base/${id}/compare`,
-    COPY_TEMPLATE: (id: string) =>
-      `/api/internal/knowledge-base/${id}/copy-template`,
     // Sao chép bài KB có sẵn → tạo bản mới (title "_copy", Draft), trả Id.
     DUPLICATE: (id: string) => `/api/internal/knowledge-base/${id}/duplicate`,
-    // List bài mẫu — server ép IsTemplate=true + Status=Published
-    TEMPLATES: "/api/internal/knowledge-base/templates",
-    TEMPLATE_DETAIL: (id: string) =>
-      `/api/internal/knowledge-base/templates/${id}`,
   },
 
   // KB workflow — duyệt/xuất bản (Manager/Admin)

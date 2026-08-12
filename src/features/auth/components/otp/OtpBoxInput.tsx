@@ -71,7 +71,7 @@ const OtpBoxInput = ({
           maxLength={1}
           value={digit}
           disabled={disabled}
-          aria-label={`Chữ số thứ ${index + 1}`}
+          aria-label={`Digit ${index + 1}`}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}
           onPaste={handlePaste}

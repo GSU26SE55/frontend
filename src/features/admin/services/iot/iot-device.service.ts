@@ -21,12 +21,12 @@ export const iotDeviceService = {
       ENDPOINTS.IOT_DEVICES.LIST,
       { params },
     ),
-  // Trả IotDeviceDetailDto — kèm full plaintext apiKey (xem lại được nhiều lần).
+  // Returns IotDeviceDetailDto — includes the full plaintext apiKey (can be viewed multiple times).
   getById: (id: string) =>
     axiosInstance.get<CommonResponse<IotDeviceDetailDto>>(
       ENDPOINTS.IOT_DEVICES.DETAIL(id),
     ),
-  // Trả IotDeviceCreatedDto — secrets (rawApiKey, QR, MQTT) chỉ có 1 lần.
+  // Returns IotDeviceCreatedDto — secrets (rawApiKey, QR, MQTT) are only available once.
   create: (payload: CreateIotDevicePayload) =>
     axiosInstance.post<CommonResponse<IotDeviceCreatedDto>>(
       ENDPOINTS.IOT_DEVICES.CREATE,
@@ -41,11 +41,18 @@ export const iotDeviceService = {
     axiosInstance.delete<CommonResponse<null>>(
       ENDPOINTS.IOT_DEVICES.DELETE(id),
     ),
-  // 200 (không 201); trả IotDeviceCreatedDto với key mới, bỏ revoke, KHÔNG đổi Status.
+  // 200 (not 201); returns IotDeviceCreatedDto with the new key, drops revoke, does NOT change Status.
   rotateKey: (id: string) =>
     axiosInstance.post<CommonResponse<IotDeviceCreatedDto>>(
       ENDPOINTS.IOT_DEVICES.ROTATE_KEY(id),
     ),
+  // IOT3-32/76 — xoay RIÊNG credential MQTT. apiKey còn nguyên ⇒ thiết bị tự lấy mật khẩu mới
+  // qua /provision. Khác hẳn `rotateKey`, vốn buộc phải ra hiện trường nạp lại apiKey.
+  rotateMqtt: (id: string) =>
+    axiosInstance.post<CommonResponse<IotDeviceCreatedDto>>(
+      ENDPOINTS.IOT_DEVICES.ROTATE_MQTT(id),
+    ),
+
   revokeKey: (id: string) =>
     axiosInstance.post<CommonResponse<null>>(
       ENDPOINTS.IOT_DEVICES.REVOKE_KEY(id),

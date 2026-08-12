@@ -1,58 +1,64 @@
-// Toast message dùng CHUNG cross-feature (shared/hooks, shared/components) + các
-// message lặp ở nhiều feature (KB refs, micro permission). Gom 1 nguồn.
-// Toast riêng 1 feature → features/<feature>/constants/messages.ts.
+// Toast messages SHARED cross-feature (shared/hooks, shared/components) plus
+// messages repeated across several features (KB refs, mic permission). One source.
+// Toasts specific to a single feature → features/<feature>/constants/messages.ts.
 
 export const MESSAGES = {
-  // Lỗi chung
-  unknownError: "Có lỗi không xác định xảy ra",
-  micPermission: "Không thể truy cập micro. Vui lòng cấp quyền và thử lại.",
+  // Generic errors
+  unknownError: "Something went wrong",
+  micPermission: "Can't access the microphone. Grant permission and try again.",
 
-  // KB references (dùng ở cả staff/manager)
+  // KB references (used by both staff and manager)
   kb: {
-    refAttached: "Đã gắn bài viết KB",
-    refDetached: "Đã gỡ bài viết KB",
+    refAttached: "KB article attached",
+    refDetached: "KB article detached",
   },
 
   // Ticket chat (shared/hooks/useTicketChatActions)
   chat: {
-    commentDeleted: "Đã xóa bình luận",
-    fileScanning: "File đang được quét virus, vui lòng thử lại sau ít giây.",
-    fileInfected: "File bị nhiễm virus — không thể tải xuống.",
+    commentDeleted: "Comment deleted",
+    fileScanning: "File is being scanned for viruses, try again in a moment.",
+    fileInfected: "File is infected — download blocked.",
+    voiceRetryQueued: "Retrying voice transcription...",
   },
 
-  // Alerts / môi trường (shared/hooks)
+  // Alerts / environment (shared/hooks)
   alert: {
-    acknowledged: "Đã xác nhận cảnh báo",
-    resolved: "Đã xử lý cảnh báo",
+    acknowledged: "Alert acknowledged",
+    resolved: "Alert resolved",
   },
   incident: {
-    acknowledged: "Đã xác nhận sự cố",
-    resolved: "Đã xử lý sự cố",
-    falseAlarm: "Đã đánh dấu báo động giả",
-    reported: "Đã ghi nhận sự cố",
-    // Dedup: BE trả 200 + incident cũ khi site đã có incident active cùng loại.
-    alreadyActive: "Site này đã có sự cố cùng loại đang mở — hiển thị sự cố đó",
+    acknowledged: "Incident acknowledged",
+    resolved: "Incident resolved",
+    falseAlarm: "Marked as false alarm",
+    reported: "Incident reported",
+    // Dedup: the BE returns 200 with the existing incident when the site already
+    // has an active incident of the same type.
+    alreadyActive:
+      "This site already has an open incident of the same type — showing that one",
   },
   ambient: {
-    thresholdSaved: "Đã lưu cấu hình ngưỡng môi trường",
+    thresholdSaved: "Environmental threshold settings saved",
   },
   classification: {
-    feedbackSubmitted: "Đã ghi nhận đánh giá",
+    feedbackSubmitted: "Feedback recorded",
   },
 
-  // Thiết bị / calibration / notification (shared/components)
+  // Device / calibration / notification (shared/components)
   device: {
-    registered: "Đăng ký thiết bị thành công",
-    unregistered: "Đã hủy đăng ký thiết bị",
+    registered: "Device registered",
+    unregistered: "Device unregistered",
   },
   calibration: {
-    added: "Thêm calibration thành công",
-    deleted: "Đã xóa calibration",
+    added: "Calibration added",
+    deleted: "Calibration deleted",
   },
   notificationPrefs: {
-    saved: "Đã lưu cài đặt thông báo",
+    saved: "Notification settings saved",
+    matrixSaved: "Per-group preferences saved",
+    matrixNoChange: "No changes to save",
+    matrixSaveFailed: "Couldn't save per-group preferences",
   },
   file: {
-    loadInfoFailed: "Lỗi khi tải thông tin tệp tin.",
+    loadInfoFailed: "Failed to load file details.",
   },
 } as const;

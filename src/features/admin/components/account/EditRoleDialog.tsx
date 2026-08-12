@@ -66,32 +66,33 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa role</DialogTitle>
+          <DialogTitle>Edit role</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           {role.isSystemRole && (
             <p className="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-300">
-              Đây là system role — chỉ chỉnh sửa được tên hiển thị và mô tả.
+              This is a system role — only the display name and description can
+              be edited.
             </p>
           )}
           <div className="space-y-1.5">
             <Label>
-              Tên role <span className="text-red-500">*</span>
+              Role name <span className="text-red-500">*</span>
             </Label>
             <Input
               {...register("name")}
               disabled={role.isSystemRole}
-              placeholder="VD: SeniorTechnician"
+              placeholder="e.g. SeniorTechnician"
             />
             {errors.name && (
               <p className="text-xs text-red-500">{errors.name.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>Mô tả</Label>
+            <Label>Description</Label>
             <Input
               {...register("description")}
-              placeholder="Mô tả ngắn về role này"
+              placeholder="Short description of this role"
             />
             {errors.description && (
               <p className="text-xs text-red-500">
@@ -101,11 +102,11 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Lưu thay đổi
+              Save changes
             </Button>
           </DialogFooter>
         </form>

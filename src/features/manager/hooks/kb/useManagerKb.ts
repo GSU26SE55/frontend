@@ -12,6 +12,7 @@ import type {
   RollbackPayload,
 } from "@/shared/types/kb/kb.types";
 import { MANAGER_MESSAGES } from "@/features/manager/constants/messages";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 
 export function useManagerKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -28,32 +29,11 @@ export function useManagerKbDetail(id: string) {
   });
 }
 
-// List bài mẫu (chọn khi tạo bài mới).
-export function useManagerKbTemplates(enabled = true) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.templates(),
-    queryFn: () => managerKbService.getTemplates().then((r) => r.data.data),
-    enabled,
-  });
-}
-
 export function useManagerKbVersions(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.versions(id),
     queryFn: () => managerKbService.getVersions(id).then((r) => r.data.data),
     enabled: !!id,
-  });
-}
-
-export function useManagerKbVersionDetail(
-  id: string,
-  versionId: string | null,
-) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
-    queryFn: () =>
-      managerKbService.getVersionById(id, versionId!).then((r) => r.data.data),
-    enabled: !!id && !!versionId,
   });
 }
 
@@ -82,7 +62,7 @@ export function useManagerKbSuggest(ticketId?: string) {
   });
 }
 
-// create/update là form → component xử lý lỗi qua try/catch + setError
+// create/update are forms → the component handles errors via try/catch + setError
 export function useManagerCreateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -105,23 +85,20 @@ export function useManagerUpdateKbArticle() {
       id: string;
       payload: UpdateKbArticlePayload;
     }) => managerKbService.update(id, payload).then((r) => r.data.data),
-    onSuccess: (_, { id }) => {
-      toast.success(MANAGER_MESSAGES.kb.updated);
+    onSuccess: (article, { id }) => {
+      // The BE moves the article back to PendingReview when a change needs approval — the new content isn't live yet.
+      toast.success(
+        article?.status === KbArticleStatusEnum.PendingReview
+          ? MANAGER_MESSAGES.kb.updatePending
+          : MANAGER_MESSAGES.kb.updated,
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
   });
 }
 
-export function useManagerCopyKbTemplate() {
-  return useMutation({
-    mutationFn: (id: string) =>
-      managerKbService.copyTemplate(id).then((r) => r.data.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
-// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+// Copy a KB article → create a new one (Draft), returns an action DTO holding the new id.
 export function useManagerDuplicateKbArticle() {
   const qc = useQueryClient();
   return useMutation({
@@ -187,7 +164,7 @@ function useManagerKbWorkflow<TVars>(
 export function useManagerApproveKbReview() {
   return useManagerKbWorkflow(
     (id: string) => managerKbService.approveReview(id),
-    "Đã phê duyệt và xuất bản",
+    "Approved and published",
     (id) => id,
   );
 }
@@ -196,7 +173,7 @@ export function useManagerRejectKbReview() {
   return useManagerKbWorkflow(
     (vars: { id: string; payload: RejectReviewPayload }) =>
       managerKbService.rejectReview(vars.id, vars.payload),
-    "Đã từ chối thay đổi",
+    "Changes rejected",
     (vars) => vars.id,
   );
 }
@@ -204,7 +181,7 @@ export function useManagerRejectKbReview() {
 export function useManagerPublishKbArticle() {
   return useManagerKbWorkflow(
     (id: string) => managerKbService.publish(id),
-    "Đã xuất bản bài viết",
+    "Article published",
     (id) => id,
   );
 }
@@ -212,7 +189,7 @@ export function useManagerPublishKbArticle() {
 export function useManagerArchiveKbArticle() {
   return useManagerKbWorkflow(
     (id: string) => managerKbService.archive(id),
-    "Đã lưu trữ bài viết",
+    "Article archived",
     (id) => id,
   );
 }
@@ -221,7 +198,7 @@ export function useManagerRollbackKbArticle() {
   return useManagerKbWorkflow(
     (vars: { id: string; payload: RollbackPayload }) =>
       managerKbService.rollback(vars.id, vars.payload),
-    "Đã hoàn tác phiên bản",
+    "Version rolled back",
     (vars) => vars.id,
   );
 }

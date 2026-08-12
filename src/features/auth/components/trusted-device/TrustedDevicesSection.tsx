@@ -21,9 +21,9 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { TrustedDeviceDto } from "@/features/auth/types/trusted-device/trusted-device.types";
 
 const fmt = (iso?: string | null) =>
-  iso ? format(new Date(iso), "dd/MM/yyyy HH:mm") : "—";
+  iso ? format(new Date(iso), "MM/dd/yyyy HH:mm") : "—";
 
-// #AUTH-48: quản lý thiết bị tin cậy — list + revoke 1 / revoke all
+// #AUTH-48: manage trusted devices — list + revoke one / revoke all
 const TrustedDevicesSection = () => {
   const { data, isLoading, isError } = useTrustedDevices();
   const { mutate: revokeOne, isPending: isRevoking } = useRevokeTrustedDevice();
@@ -36,8 +36,7 @@ const TrustedDevicesSection = () => {
 
   const handleRevokeOne = (id: string) => {
     revokeOne(id, {
-      onSuccess: (res) =>
-        toast.success(res.data.message ?? "Đã thu hồi thiết bị"),
+      onSuccess: (res) => toast.success(res.data.message ?? "Device revoked"),
       onError: (error) => handleErrorApi({ error }),
     });
   };
@@ -45,7 +44,7 @@ const TrustedDevicesSection = () => {
   const handleRevokeAll = () => {
     revokeAll(undefined, {
       onSuccess: (res) => {
-        toast.success(res.data.message ?? "Đã thu hồi toàn bộ thiết bị");
+        toast.success(res.data.message ?? "All devices revoked");
         setConfirmAll(false);
       },
       onError: (error) => handleErrorApi({ error }),
@@ -55,7 +54,7 @@ const TrustedDevicesSection = () => {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Đang tải thiết bị...
+        <Loader2 className="size-4 animate-spin" /> Loading devices...
       </div>
     );
   }
@@ -63,7 +62,7 @@ const TrustedDevicesSection = () => {
   if (isError) {
     return (
       <p className="text-sm text-destructive">
-        Không tải được danh sách thiết bị tin cậy.
+        Failed to load trusted devices list.
       </p>
     );
   }
@@ -71,8 +70,8 @@ const TrustedDevicesSection = () => {
   if (devices.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Chưa có thiết bị tin cậy nào. Tick &quot;Tin tưởng thiết bị này&quot;
-        khi đăng nhập 2FA để thêm.
+        No trusted devices yet. Check &quot;Trust this device&quot; during 2FA
+        login to add one.
       </p>
     );
   }
@@ -92,16 +91,16 @@ const TrustedDevicesSection = () => {
                   <p className="text-sm font-medium truncate">{d.label}</p>
                   {d.isCurrentDevice && (
                     <Badge variant="secondary" className="text-[10px]">
-                      Thiết bị này
+                      This device
                     </Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  IP {d.ipPrefix} · tin tưởng {fmt(d.trustedAt)} · hết hạn{" "}
+                  IP {d.ipPrefix} · trusted {fmt(d.trustedAt)} · expires{" "}
                   {fmt(d.expiresAt)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Lần cuối dùng {fmt(d.lastUsedAt)} · {d.usageCount} lần
+                  Last used {fmt(d.lastUsedAt)} · {d.usageCount} times
                 </p>
               </div>
             </div>
@@ -124,17 +123,15 @@ const TrustedDevicesSection = () => {
         className="text-destructive hover:text-destructive"
         onClick={() => setConfirmAll(true)}
       >
-        Thu hồi tất cả
+        Revoke all
       </Button>
 
       <AlertDialog open={confirmAll} onOpenChange={setConfirmAll}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Thu hồi tất cả thiết bị tin cậy?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Revoke all trusted devices?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tất cả thiết bị sẽ phải xác thực 2FA lại ở lần đăng nhập tới.
+              All devices will need to re-verify 2FA on their next login.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -147,7 +144,7 @@ const TrustedDevicesSection = () => {
               {isRevokingAll && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Thu hồi tất cả
+              Revoke all
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

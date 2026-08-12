@@ -49,6 +49,7 @@ import {
   useAdminDeleteAccount,
   useAdminReset2fa,
 } from "@/features/admin/hooks/account/useAdminAccounts";
+import { useAdminRoleList } from "@/features/admin/hooks/account/useAdminRoles";
 import { AccountStatusEnum } from "@/shared/types/account/account.types";
 import { toneClass, ACCOUNT_STATUS_TONE } from "@/shared/theme/statusColors";
 import { UserRole } from "@/shared/types/account/session.types";
@@ -56,7 +57,7 @@ import InviteAccountDialog from "@/features/admin/components/account/InviteAccou
 import CreateAccountDialog from "@/features/admin/components/account/CreateAccountDialog";
 import EditAccountDialog from "@/features/admin/components/account/EditAccountDialog";
 import ChangeAccountStatusDialog from "@/features/admin/components/account/ChangeAccountStatusDialog";
-import ChangeRoleDialog from "@/features/admin/components/account/ChangeRoleDialog";
+import ChangeRoleSubmenu from "@/features/admin/components/account/ChangeRoleSubmenu";
 import AccountDetailDrawer from "@/features/admin/components/account/AccountDetailDrawer";
 import EditStaffProfileDialog from "@/features/admin/components/account/EditStaffProfileDialog";
 import MergeAccountDialog from "@/features/admin/components/account/MergeAccountDialog";
@@ -70,27 +71,27 @@ import { loadFailed, noData } from "@/shared/constants/emptyStates";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
-    label: "Chờ xác thực",
+    label: "Pending verification",
     cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.PendingVerification]),
   },
   [AccountStatusEnum.Active]: {
-    label: "Hoạt động",
+    label: "Active",
     cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Active]),
   },
   [AccountStatusEnum.Locked]: {
-    label: "Đã khóa",
+    label: "Locked",
     cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Locked]),
   },
   [AccountStatusEnum.Inactive]: {
-    label: "Không hoạt động",
+    label: "Inactive",
     cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Inactive]),
   },
   [AccountStatusEnum.Suspended]: {
-    label: "Tạm khóa",
+    label: "Suspended",
     cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Suspended]),
   },
   [AccountStatusEnum.Banned]: {
-    label: "Bị cấm",
+    label: "Banned",
     cls: toneClass(ACCOUNT_STATUS_TONE[AccountStatusEnum.Banned]),
   },
 };
@@ -108,7 +109,6 @@ type DialogState =
   | { type: "create" }
   | { type: "edit"; account: AccountDto }
   | { type: "status"; account: AccountDto }
-  | { type: "role"; account: AccountDto }
   | { type: "unlock"; account: AccountDto }
   | { type: "reset2fa"; account: AccountDto }
   | { type: "delete"; account: AccountDto }
@@ -140,6 +140,10 @@ export default function AccountsPage() {
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
   });
+  // Fetch once for the whole table — the "Change role" submenu on each row shares this list.
+  const { data: rolesData } = useAdminRoleList({ pageSize: 100 });
+  const roles = rolesData?.items ?? [];
+
   const { mutate: unlock } = useAdminUnlockAccount();
   const { mutate: deleteAccount, isPending: isDeleting } =
     useAdminDeleteAccount();
@@ -147,7 +151,7 @@ export default function AccountsPage() {
 
   const accounts = data?.items ?? [];
   const total = data?.totalItems ?? 0;
-  // BE đã sort toàn dataset (SortBy/SortDir) → render accounts nguyên trạng.
+  // BE already sorts the full dataset (SortBy/SortDir) → render accounts as-is.
   const sortKey = sort.sortBy;
   const sortDirection = sort.sortDir;
   const toggleSort = sort.toggleSort;
@@ -156,7 +160,7 @@ export default function AccountsPage() {
 
   const handleUnlock = (account: AccountDto) => {
     unlock(account.id, {
-      onSuccess: () => toast.success(`Đã mở khóa ${account.fullName}`),
+      onSuccess: () => toast.success(`Unlocked ${account.fullName}`),
       onError: (err) => handleErrorApi({ error: err }),
     });
     close();
@@ -164,7 +168,7 @@ export default function AccountsPage() {
 
   const handleDelete = (account: AccountDto) => {
     deleteAccount(account.id, {
-      onSuccess: () => toast.success(`Đã xóa ${account.fullName}`),
+      onSuccess: () => toast.success(`Deleted ${account.fullName}`),
       onError: (err) => handleErrorApi({ error: err }),
     });
     close();
@@ -172,7 +176,7 @@ export default function AccountsPage() {
 
   const handleReset2fa = (account: AccountDto) => {
     reset2fa(account.id, {
-      onSuccess: () => toast.success(`Đã reset 2FA cho ${account.fullName}`),
+      onSuccess: () => toast.success(`Reset 2FA for ${account.fullName}`),
       onError: (err) => handleErrorApi({ error: err }),
     });
     close();
@@ -184,13 +188,13 @@ export default function AccountsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin · Người dùng
+            Admin · Users
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Quản lý tài khoản
+            Account management
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "…" : total} tài khoản — Admin, Manager, Staff,
+            {isLoading ? "…" : total} accounts — Admin, Manager, Staff,
             Customer.
           </p>
         </div>
@@ -201,10 +205,10 @@ export default function AccountsPage() {
             variant="outline"
             onClick={() => setDialog({ type: "invite" })}
           >
-            <Mail className="size-3.5" /> Mời người dùng
+            <Mail className="size-3.5" /> Invite user
           </Button>
           <Button size="sm" onClick={() => setDialog({ type: "create" })}>
-            <Plus className="size-3.5" /> Tạo tài khoản
+            <Plus className="size-3.5" /> Create account
           </Button>
         </div>
       </div>
@@ -214,7 +218,7 @@ export default function AccountsPage() {
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo tên, email..."
+            placeholder="Search by name, email..."
             value={search.value}
             onChange={search.onChange}
             className="pl-8"
@@ -222,7 +226,7 @@ export default function AccountsPage() {
         </div>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -237,11 +241,11 @@ export default function AccountsPage() {
           </div>
         ) : isError ? (
           <ErrorState
-            message={loadFailed("tài khoản")}
+            message={loadFailed("accounts")}
             onRetry={() => refetch()}
           />
         ) : accounts.length === 0 ? (
-          <EmptyState icon={Users} title={noData("tài khoản")} />
+          <EmptyState icon={Users} title={noData("accounts")} />
         ) : (
           <Table>
             <TableHeader>
@@ -255,7 +259,7 @@ export default function AccountsPage() {
                   direction={sortDirection}
                   onSort={toggleSort}
                 >
-                  Người dùng
+                  User
                 </SortableTableHead>
                 <SortableTableHead
                   sortKey="role"
@@ -271,7 +275,7 @@ export default function AccountsPage() {
                   direction={sortDirection}
                   onSort={toggleSort}
                 >
-                  Trạng thái
+                  Status
                 </SortableTableHead>
                 <SortableTableHead
                   sortKey="createdAt"
@@ -279,7 +283,7 @@ export default function AccountsPage() {
                   direction={sortDirection}
                   onSort={toggleSort}
                 >
-                  Ngày tạo
+                  Created
                 </SortableTableHead>
                 <TableHead className="text-right">
                   {TABLE_COLUMNS.actions}
@@ -328,7 +332,7 @@ export default function AccountsPage() {
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground italic">
-                          Chưa gán
+                          Unassigned
                         </span>
                       )}
                     </TableCell>
@@ -361,28 +365,22 @@ export default function AccountsPage() {
                               setDialog({ type: "edit", account: acc })
                             }
                           >
-                            Chỉnh sửa
+                            Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "status", account: acc })
                             }
                           >
-                            Đổi trạng thái
+                            Change status
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setDialog({ type: "role", account: acc })
-                            }
-                          >
-                            Đổi role
-                          </DropdownMenuItem>
+                          <ChangeRoleSubmenu account={acc} roles={roles} />
                           <DropdownMenuItem
                             onClick={() =>
                               setDialog({ type: "detail", account: acc })
                             }
                           >
-                            Sessions & Lịch sử
+                            Sessions & History
                           </DropdownMenuItem>
                           {isStaff && (
                             <DropdownMenuItem
@@ -393,7 +391,7 @@ export default function AccountsPage() {
                                 })
                               }
                             >
-                              Hồ sơ Staff
+                              Staff profile
                             </DropdownMenuItem>
                           )}
                           {acc.twoFactorEnabled && (
@@ -413,7 +411,7 @@ export default function AccountsPage() {
                                   setDialog({ type: "unlock", account: acc })
                                 }
                               >
-                                Mở khóa
+                                Unlock
                               </DropdownMenuItem>
                             </>
                           )}
@@ -423,7 +421,7 @@ export default function AccountsPage() {
                               setDialog({ type: "merge", account: acc })
                             }
                           >
-                            Gộp tài khoản
+                            Merge account
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
@@ -431,7 +429,7 @@ export default function AccountsPage() {
                               setDialog({ type: "delete", account: acc })
                             }
                           >
-                            Xóa tài khoản
+                            Delete account
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -470,9 +468,6 @@ export default function AccountsPage() {
           account={dialog.account}
         />
       )}
-      {dialog.type === "role" && (
-        <ChangeRoleDialog open onClose={close} account={dialog.account} />
-      )}
       {dialog.type === "detail" && (
         <AccountDetailDrawer open onClose={close} account={dialog.account} />
       )}
@@ -490,11 +485,11 @@ export default function AccountsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận mở khóa</AlertDialogTitle>
+            <AlertDialogTitle>Confirm unlock</AlertDialogTitle>
             <AlertDialogDescription>
               {dialog.type === "unlock" && (
                 <>
-                  Bạn có chắc muốn mở khóa tài khoản{" "}
+                  Are you sure you want to unlock the account{" "}
                   <strong>{dialog.account.fullName}</strong>?
                 </>
               )}
@@ -507,7 +502,7 @@ export default function AccountsPage() {
                 dialog.type === "unlock" && handleUnlock(dialog.account)
               }
             >
-              Mở khóa
+              Unlock
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -524,10 +519,11 @@ export default function AccountsPage() {
             <AlertDialogDescription>
               {dialog.type === "reset2fa" && (
                 <>
-                  Xác thực 2 lớp của <strong>{dialog.account.fullName}</strong>{" "}
-                  sẽ bị xóa (secret + backup codes). User phải enroll lại nếu
-                  muốn dùng 2FA. Chỉ thực hiện sau khi đã xác minh danh tính
-                  user qua kênh khác.
+                  Two-factor authentication for{" "}
+                  <strong>{dialog.account.fullName}</strong> will be cleared
+                  (secret + backup codes). The user must re-enroll to use 2FA
+                  again. Only do this after verifying the user's identity
+                  through another channel.
                 </>
               )}
             </AlertDialogDescription>
@@ -557,13 +553,13 @@ export default function AccountsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa tài khoản</AlertDialogTitle>
+            <AlertDialogTitle>Delete account</AlertDialogTitle>
             <AlertDialogDescription>
               {dialog.type === "delete" && (
                 <>
-                  Bạn có chắc muốn xóa tài khoản{" "}
-                  <strong>{dialog.account.fullName}</strong>? Hành động này
-                  không thể hoàn tác.
+                  Are you sure you want to delete the account{" "}
+                  <strong>{dialog.account.fullName}</strong>? This action cannot
+                  be undone.
                 </>
               )}
             </AlertDialogDescription>
@@ -578,7 +574,7 @@ export default function AccountsPage() {
               }
             >
               {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

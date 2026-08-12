@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import {
@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFileBlobUrl } from "@/shared/hooks/file/useFileBlobUrl";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import {
   profileSchema,
   type ProfileFormValues,
@@ -37,10 +38,10 @@ import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 // ── Maps ─────────────────────────────────────────────────────────────────────
 const ROLE_LABEL: Record<string, string> = {
-  Admin: "Quản trị viên",
-  Manager: "Quản lý",
-  Staff: "Kỹ thuật viên",
-  Customer: "Khách hàng",
+  Admin: "Admin",
+  Manager: "Manager",
+  Staff: "Technician",
+  Customer: "Customer",
 };
 
 const STATUS_CONFIG: Record<
@@ -51,20 +52,20 @@ const STATUS_CONFIG: Record<
   }
 > = {
   [AccountStatusEnum.PendingVerification]: {
-    label: "Chờ xác thực",
+    label: "Pending verification",
     variant: "outline",
   },
-  [AccountStatusEnum.Active]: { label: "Hoạt động", variant: "default" },
-  [AccountStatusEnum.Locked]: { label: "Bị khóa", variant: "destructive" },
+  [AccountStatusEnum.Active]: { label: "Active", variant: "default" },
+  [AccountStatusEnum.Locked]: { label: "Locked", variant: "destructive" },
   [AccountStatusEnum.Inactive]: {
-    label: "Không hoạt động",
+    label: "Inactive",
     variant: "secondary",
   },
   [AccountStatusEnum.Suspended]: {
-    label: "Tạm đình chỉ",
+    label: "Suspended",
     variant: "destructive",
   },
-  [AccountStatusEnum.Banned]: { label: "Bị cấm", variant: "destructive" },
+  [AccountStatusEnum.Banned]: { label: "Banned", variant: "destructive" },
 };
 
 const TIER_LABEL: Record<number, string> = {
@@ -90,6 +91,7 @@ const ProfilePage = () => {
     register,
     handleSubmit,
     setError,
+    control,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -162,7 +164,7 @@ const ProfilePage = () => {
       })
     : null;
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
+  // ── Loading state ────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="p-6 space-y-5">
@@ -181,13 +183,13 @@ const ProfilePage = () => {
     <div className="p-6 space-y-6">
       {/* ── Profile banner ── */}
       <div className="flex items-center gap-5 p-5 rounded-xl bg-muted/40 border border-border/60">
-        {/* Avatar — toàn bộ vùng tròn clickable */}
+        {/* Avatar — entire circular area is clickable */}
         <button
           type="button"
           disabled={isAvatarBusy}
           onClick={() => fileInputRef.current?.click()}
           className="relative shrink-0 rounded-full group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Thay đổi ảnh đại diện"
+          aria-label="Change avatar"
         >
           <Avatar className="size-18 text-2xl ring-2 ring-background shadow-sm">
             {avatarUrl && (
@@ -200,7 +202,7 @@ const ProfilePage = () => {
               {initials}
             </AvatarFallback>
           </Avatar>
-          {/* Hover overlay — nét đứt + icon camera giữa */}
+          {/* Hover overlay — dashed border + camera icon in the middle */}
           <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             {isAvatarBusy ? (
               <Loader2 size={20} className="text-white animate-spin" />
@@ -239,7 +241,7 @@ const ProfilePage = () => {
           </div>
           {account?.id && (
             <p className="text-[11px] text-muted-foreground mb-1.5">
-              ID tài khoản:{" "}
+              Account ID:{" "}
               <span className="font-mono select-all text-foreground/70">
                 {account.id.slice(0, 8).toUpperCase()}…
               </span>
@@ -265,20 +267,20 @@ const ProfilePage = () => {
             {account?.createdAt && (
               <span className="flex items-center gap-1">
                 <CalendarDays size={11} />
-                Tham gia {format(new Date(account.createdAt), "dd/MM/yyyy")}
+                Joined {format(new Date(account.createdAt), "MM/dd/yyyy")}
               </span>
             )}
             {account?.lastLoginAt && (
               <span className="flex items-center gap-1">
                 <Clock size={11} />
-                Đăng nhập lần cuối{" "}
-                {format(new Date(account.lastLoginAt), "dd/MM/yyyy HH:mm")}
+                Last login{" "}
+                {format(new Date(account.lastLoginAt), "MM/dd/yyyy HH:mm")}
               </span>
             )}
             {account?.twoFactorEnabled && (
               <span className="flex items-center gap-1 text-emerald-600">
                 <ShieldCheck size={11} />
-                2FA bật
+                2FA enabled
               </span>
             )}
           </div>
@@ -288,15 +290,15 @@ const ProfilePage = () => {
       {/* ── Editable info form ── */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <p className="text-[13px] font-semibold mb-3">Thông tin cá nhân</p>
+          <p className="text-[13px] font-semibold mb-3">Personal information</p>
           <Separator />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Họ và tên — full width */}
+          {/* Full name — full width */}
           <div className="sm:col-span-2 space-y-1.5">
             <Label className="text-xs">
-              Họ và tên <span className="text-destructive">*</span>
+              Full name <span className="text-destructive">*</span>
             </Label>
             <Input {...register("fullName")} className="h-9" />
             {errors.fullName && (
@@ -309,7 +311,7 @@ const ProfilePage = () => {
           {/* Email — readonly */}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">
-              Email (chỉ đọc)
+              Email (read-only)
             </Label>
             <Input
               value={account?.email ?? ""}
@@ -318,9 +320,9 @@ const ProfilePage = () => {
             />
           </div>
 
-          {/* Số điện thoại */}
+          {/* Phone number */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Số điện thoại</Label>
+            <Label className="text-xs">Phone number</Label>
             <Input
               {...register("phoneNumber")}
               className="h-9"
@@ -333,15 +335,25 @@ const ProfilePage = () => {
             )}
           </div>
 
-          {/* Ngày sinh */}
+          {/* Date of birth */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Ngày sinh</Label>
-            <Input type="date" {...register("birthDate")} className="h-9" />
+            <Label className="text-xs">Date of birth</Label>
+            <Controller
+              control={control}
+              name="birthDate"
+              render={({ field }) => (
+                <DatePicker
+                  value={field.value}
+                  onChange={(v) => field.onChange(v ?? "")}
+                  className="h-9"
+                />
+              )}
+            />
           </div>
 
-          {/* Múi giờ */}
+          {/* Time zone */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Múi giờ</Label>
+            <Label className="text-xs">Time zone</Label>
             <Input
               {...register("timeZone")}
               className="h-9"
@@ -349,13 +361,13 @@ const ProfilePage = () => {
             />
           </div>
 
-          {/* Địa chỉ — full width */}
+          {/* Address — full width */}
           <div className="sm:col-span-2 space-y-1.5">
-            <Label className="text-xs">Địa chỉ</Label>
+            <Label className="text-xs">Address</Label>
             <Input
               {...register("address")}
               className="h-9"
-              placeholder="Số nhà, đường, quận/huyện, tỉnh/thành phố"
+              placeholder="Street address, ward/district, city/province"
             />
           </div>
         </div>
@@ -366,14 +378,14 @@ const ProfilePage = () => {
             <div>
               <p className="text-[13px] font-semibold mb-3 flex items-center gap-1.5">
                 <Briefcase size={13} />
-                Thông tin nhân viên
+                Staff information
               </p>
               <Separator />
             </div>
             <div className="grid gap-3 sm:grid-cols-3 text-sm">
               {account.staffProfile.employeeCode && (
                 <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">Mã nhân viên</p>
+                  <p className="text-xs text-muted-foreground">Employee code</p>
                   <p className="font-mono font-medium">
                     {account.staffProfile.employeeCode}
                   </p>
@@ -381,14 +393,14 @@ const ProfilePage = () => {
               )}
               {account.staffProfile.department && (
                 <div className="space-y-0.5">
-                  <p className="text-xs text-muted-foreground">Phòng ban</p>
+                  <p className="text-xs text-muted-foreground">Department</p>
                   <p className="font-medium">
                     {account.staffProfile.department}
                   </p>
                 </div>
               )}
               <div className="space-y-0.5">
-                <p className="text-xs text-muted-foreground">Cấp bậc kỹ năng</p>
+                <p className="text-xs text-muted-foreground">Skill tier</p>
                 <p className="font-medium">
                   {TIER_LABEL[account.staffProfile.skillTier] ??
                     `Tier ${account.staffProfile.skillTier}`}
@@ -396,14 +408,14 @@ const ProfilePage = () => {
               </div>
               <div className="space-y-0.5">
                 <p className="text-xs text-muted-foreground">
-                  Ticket đồng thời tối đa
+                  Max concurrent tickets
                 </p>
                 <p className="font-medium">
                   {account.staffProfile.maxConcurrentTickets}
                 </p>
               </div>
               <div className="space-y-0.5">
-                <p className="text-xs text-muted-foreground">Trạng thái</p>
+                <p className="text-xs text-muted-foreground">Status</p>
                 <p
                   className={
                     account.staffProfile.isAvailable
@@ -412,8 +424,8 @@ const ProfilePage = () => {
                   }
                 >
                   {account.staffProfile.isAvailable
-                    ? "Sẵn sàng"
-                    : "Không sẵn sàng"}
+                    ? "Available"
+                    : "Unavailable"}
                 </p>
               </div>
             </div>
@@ -422,11 +434,11 @@ const ProfilePage = () => {
 
         <div className="flex items-center justify-between pt-1">
           <p className="text-xs text-muted-foreground">
-            Hỗ trợ ảnh đại diện: JPG, PNG, WEBP · Tối đa 20MB
+            Supported avatar formats: JPG, PNG, WEBP · Max 20MB
           </p>
           <Button type="submit" size="sm" disabled={isUpdating}>
             {isUpdating && <Loader2 className="mr-2 size-3.5 animate-spin" />}
-            Lưu thay đổi
+            Save changes
           </Button>
         </div>
       </form>

@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PauseReasonEnum } from "@/shared/types/ticket/ticket.types";
@@ -30,10 +31,10 @@ import {
   type HoldFormValues,
 } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
-const PAUSE_REASON_LABELS: Record<string, string> = {
-  [PauseReasonEnum.WaitingCustomer]: "Chờ khách hàng phản hồi",
-  [PauseReasonEnum.WaitingParts]: "Chờ linh kiện về",
-  [PauseReasonEnum.WaitingOnsiteSchedule]: "Chờ lịch hẹn tại chỗ",
+// GH-1176: new PauseReasonEnum values (CustomerUnavailable, WorkBlocked).
+const PAUSE_REASON_LABELS: Record<PauseReasonEnum, string> = {
+  [PauseReasonEnum.CustomerUnavailable]: "Customer unavailable",
+  [PauseReasonEnum.WorkBlocked]: "Work blocked (parts / on-site schedule)",
 };
 
 interface Props {
@@ -46,6 +47,7 @@ interface Props {
 export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
   const form = useForm<HoldFormValues>({
     resolver: zodResolver(holdSchema),
+    defaultValues: { rescheduledStartAtUtc: "" },
   });
 
   const handleSubmit = form.handleSubmit((data) => {
@@ -56,7 +58,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tạm dừng xử lý</DialogTitle>
+          <DialogTitle>Put on hold</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,7 +68,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Lý do tạm dừng <span className="text-destructive">*</span>
+                    Hold reason <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -77,7 +79,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn lý do" />
+                        <SelectValue placeholder="Select a reason" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -96,13 +98,33 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
             />
             <FormField
               control={form.control}
+              name="rescheduledStartAtUtc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Customer appointment{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    When the customer / blocker will be available. Work resumes
+                    automatically at this time.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú</FormLabel>
+                  <FormLabel>Note</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả thêm nếu cần..."
+                      placeholder="Add more detail if needed..."
                       rows={3}
                       {...field}
                     />
@@ -118,10 +140,10 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                 onClick={onClose}
                 disabled={isPending}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Tạm dừng"}
+                {isPending ? "Processing..." : "Put on hold"}
               </Button>
             </DialogFooter>
           </form>

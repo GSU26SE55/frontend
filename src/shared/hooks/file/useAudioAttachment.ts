@@ -5,24 +5,24 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 const GUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Chỉ nhận fileId là GUID hợp lệ — loại URL rác/legacy gây 404 khi ghép /api/files/{id}. */
+/** Only accepts a fileId that's a valid GUID — filters out junk/legacy URLs that would 404 when appended to /api/files/{id}. */
 export function isFileId(s: string | undefined | null): s is string {
   return !!s && GUID_RE.test(s.trim());
 }
 
 interface AudioAttachmentResult {
-  /** true khi contentType bắt đầu bằng "audio/". undefined khi chưa load. */
+  /** true when contentType starts with "audio/". undefined while not yet loaded. */
   isAudio?: boolean;
   contentType?: string;
   isLoading: boolean;
 }
 
 /**
- * Phát hiện 1 attachment có phải audio không, qua metadata (contentType). List endpoint chỉ
- * trả fileId (không kèm contentType) nên phải hỏi /api/files/{id}/metadata. Kết quả cache lâu
- * (contentType bất biến) — mỗi voice bubble chỉ gọi 1 lần, share cache toàn app.
+ * Detects whether an attachment is audio via its metadata (contentType). The list endpoint only
+ * returns fileId (no contentType), so this queries /api/files/{id}/metadata. The result is cached
+ * for a long time (contentType is immutable) — each voice bubble fetches once and shares the cache app-wide.
  *
- * `enabled=false` (fileId không phải GUID) → không gọi, coi như không phải audio.
+ * `enabled=false` (fileId isn't a GUID) → skips the call, treated as not audio.
  */
 export function useAudioAttachment(
   fileId: string | undefined,
@@ -37,7 +37,7 @@ export function useAudioAttachment(
       return res.data.data ?? null;
     },
     enabled: valid,
-    staleTime: 60 * 60 * 1000, // 1h — contentType không đổi
+    staleTime: 60 * 60 * 1000, // 1h — contentType doesn't change
     gcTime: 24 * 60 * 60 * 1000,
     retry: 1,
   });

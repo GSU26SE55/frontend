@@ -2,8 +2,8 @@ import { z } from "zod";
 
 export const upsertThresholdSchema = z
   .object({
-    voltageMin: z.number().positive("Phải > 0"),
-    voltageMax: z.number().positive("Phải > 0"),
+    voltageMin: z.number().positive("Must be > 0"),
+    voltageMax: z.number().positive("Must be > 0"),
     temperatureMin: z.number(),
     temperatureMax: z.number(),
     socWarningThreshold: z.number().min(0).max(100),
@@ -15,15 +15,15 @@ export const upsertThresholdSchema = z
     effectiveFromUtc: z.string().optional(),
   })
   .refine((d) => d.voltageMax > d.voltageMin, {
-    message: "voltageMax phải lớn hơn voltageMin",
+    message: "voltageMax must be greater than voltageMin",
     path: ["voltageMax"],
   })
   .refine((d) => d.temperatureMax > d.temperatureMin, {
-    message: "temperatureMax phải lớn hơn temperatureMin",
+    message: "temperatureMax must be greater than temperatureMin",
     path: ["temperatureMax"],
   })
   .refine((d) => d.socCriticalThreshold < d.socWarningThreshold, {
-    message: "socCritical phải nhỏ hơn socWarning",
+    message: "socCritical must be less than socWarning",
     path: ["socCriticalThreshold"],
   })
   .refine(
@@ -32,7 +32,7 @@ export const upsertThresholdSchema = z
       d.sohCriticalThreshold == null ||
       d.sohCriticalThreshold < d.sohWarningThreshold,
     {
-      message: "sohCritical phải nhỏ hơn sohWarning",
+      message: "sohCritical must be less than sohWarning",
       path: ["sohCriticalThreshold"],
     },
   );

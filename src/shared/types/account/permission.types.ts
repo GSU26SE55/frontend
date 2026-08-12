@@ -1,6 +1,6 @@
-// Permission — dùng chung admin + auth (GET /api/admin/permissions,
-// GET /api/auth/me/permissions). Trùng shape ở 2 feature trước đây.
-// description: chấp nhận cả null (BE) lẫn undefined (optional) — superset an toàn.
+// Permission — shared by admin + auth (GET /api/admin/permissions,
+// GET /api/auth/me/permissions). This shape used to be duplicated in both features.
+// description: accepts both null (from the BE) and undefined (optional) — a safe superset.
 export interface PermissionDto {
   id: string;
   code: string;

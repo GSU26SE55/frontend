@@ -35,8 +35,8 @@ export const managerSiteService = {
       { params },
     ),
 
-  // GH-693 — theo BE: truyền ticketPriority để AuthService trả sẵn Staff Active +
-  // available + đủ tier cho Primary Handler. Không truyền → trả toàn bộ (dùng cho Supporter).
+  // GH-693 — per the BE: pass ticketPriority so AuthService returns only Staff who are Active +
+  // available + high enough tier for Primary Handler. Omit it → returns everyone (used for Supporters).
   getStaffList: (ticketPriority?: TicketPriorityEnum) =>
     axiosInstance
       .get<CommonResponse<StaffAssignmentProfileDto[]>>(ENDPOINTS.STAFF.LIST, {

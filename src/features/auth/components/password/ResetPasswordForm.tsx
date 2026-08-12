@@ -52,7 +52,7 @@ const ResetPasswordForm = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1.5">
-        <Label htmlFor="newPassword">Mật khẩu mới</Label>
+        <Label htmlFor="newPassword">New password</Label>
         <div className="relative">
           <Input
             id="newPassword"
@@ -65,7 +65,7 @@ const ResetPasswordForm = ({
           <button
             type="button"
             onClick={() => setShowNew((v) => !v)}
-            aria-label={showNew ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            aria-label={showNew ? "Hide password" : "Show password"}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
             {showNew ? (
@@ -83,7 +83,7 @@ const ResetPasswordForm = ({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+        <Label htmlFor="confirmPassword">Confirm password</Label>
         <div className="relative">
           <Input
             id="confirmPassword"
@@ -96,7 +96,7 @@ const ResetPasswordForm = ({
           <button
             type="button"
             onClick={() => setShowConfirm((v) => !v)}
-            aria-label={showConfirm ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            aria-label={showConfirm ? "Hide password" : "Show password"}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
             {showConfirm ? (
@@ -121,10 +121,10 @@ const ResetPasswordForm = ({
         {isPending ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
-            Đang xử lý…
+            Processing…
           </>
         ) : (
-          "Đặt lại mật khẩu"
+          "Reset password"
         )}
       </Button>
     </form>

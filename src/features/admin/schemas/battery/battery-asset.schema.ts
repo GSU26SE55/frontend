@@ -7,30 +7,30 @@ export const batteryAssetFormSchema = z
   .object({
     serialNumber: z
       .string()
-      .min(5, "Tối thiểu 5 ký tự")
+      .min(5, "Must be at least 5 characters")
       .max(64)
-      .regex(/^[A-Z0-9-]+$/, "Chỉ chứa A-Z, 0-9, dấu -"),
-    batteryTypeId: z.string().uuid("UUID không hợp lệ"),
-    customerId: z.string().uuid("UUID không hợp lệ"),
+      .regex(/^[A-Z0-9-]+$/, "Only A-Z, 0-9, and - are allowed"),
+    batteryTypeId: z.string().uuid("Invalid UUID"),
+    customerId: z.string().uuid("Invalid UUID"),
     siteId: z.string().uuid().optional().or(z.literal("")),
     installDate: z
       .string()
-      .min(1, "Bắt buộc")
+      .min(1, "Required")
       .refine(
         (v) => new Date(v) <= new Date(),
-        "Ngày lắp đặt không được ở tương lai",
+        "Install date cannot be in the future",
       )
       .refine((v) => {
         const fiveYearsAgo = new Date();
         fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
         return new Date(v) >= fiveYearsAgo;
-      }, "Ngày lắp đặt không được cũ hơn 5 năm"),
+      }, "Install date cannot be older than 5 years"),
     warrantyEndDate: z.string().optional(),
     location: z.string().max(255).optional(),
-    latitude: coordField("Vĩ độ", -90, 90),
-    longitude: coordField("Kinh độ", -180, 180),
+    latitude: coordField("Latitude", -90, 90),
+    longitude: coordField("Longitude", -180, 180),
     notes: z.string().max(1000).optional(),
-    // Chỉ dùng khi edit — BE update command nhận 2 field này (mặc định Active nếu thiếu)
+    // Used only when editing — BE update command accepts these 2 fields (defaults to Active if omitted)
     warrantyStatus: z.nativeEnum(WarrantyStatusEnum).optional(),
     status: z.nativeEnum(BatteryStatusEnum).optional(),
   })
@@ -41,14 +41,14 @@ export const batteryAssetFormSchema = z
       new Date(d.warrantyEndDate) > new Date(d.installDate),
     {
       path: ["warrantyEndDate"],
-      message: "Ngày hết bảo hành phải sau ngày lắp đặt",
+      message: "Warranty end date must be after the install date",
     },
   );
 
 export type BatteryAssetFormValues = z.infer<typeof batteryAssetFormSchema>;
 
 export const transferOwnerSchema = z.object({
-  newCustomerId: z.string().uuid("Chọn khách hàng"),
+  newCustomerId: z.string().uuid("Select a customer"),
   reason: z.string().max(500).optional(),
 });
 

@@ -9,20 +9,21 @@ export interface StaffTicketsParams {
   status?: TicketStatusEnum;
   pageNumber: number;
   pageSize: number;
-  /** GH-132 (E) — chỉ ticket đang mở còn SLA timer (cho SLA Monitor). */
+  /** GH-132 (E) — only open tickets that still have an SLA timer (for the SLA Monitor). */
   slaOpen?: boolean;
-  /** GH-132 (E) — "slaRemaining" = sort theo hạn SLA còn lại tăng dần. */
+  /** GH-132 (E) — "slaRemaining" = sort by SLA time remaining, ascending. */
   sortBy?: "slaRemaining";
 }
 
-export interface StartTicketRequest {
-  logType?: MaintenanceLogTypeEnum;
-  latitude?: number;
-  longitude?: number;
-}
+// `POST /api/staff/tickets/{id}/start` takes NO body — the controller declares
+// `Start(Guid id, CancellationToken ct)` with no [FromBody]. The command only reads
+// TicketId + StaffId/StaffName from the JWT, so any field sent is silently ignored.
 
+// GH-1176: rescheduledStartAtUtc required — hold requires a future appointment.
 export interface HoldTicketRequest {
   reason: PauseReasonEnum;
+  /** ISO-8601 UTC; must be in the future (BE validates). */
+  rescheduledStartAtUtc: string;
   note?: string;
 }
 
@@ -35,7 +36,7 @@ export interface EscalateTicketRequest {
   note?: string;
 }
 
-// CommentAttachmentInput trùng shape với shared → dùng chung, không định nghĩa lại.
+// CommentAttachmentInput has the same shape as the shared one → reuse it rather than redefining it.
 export type { CommentAttachmentInput } from "@/shared/types/ticket/ticket.types";
 import type { CommentAttachmentInput } from "@/shared/types/ticket/ticket.types";
 
@@ -45,7 +46,7 @@ export interface AddCommentRequest {
   attachments?: CommentAttachmentInput[];
 }
 
-// MaintenanceAttachmentInput cùng shape với CommentAttachmentInput → alias, không lặp 4 field.
+// MaintenanceAttachmentInput has the same shape as CommentAttachmentInput → aliased instead of repeating 4 fields.
 export type MaintenanceAttachmentInput = CommentAttachmentInput;
 
 export interface AddMaintenanceLogRequest {
@@ -65,8 +66,8 @@ export interface AddMaintenanceLogRequest {
 }
 
 // PATCH /api/tickets/{ticketId}/maintenance-logs/{logId} — partial update.
-// Mọi field optional; chỉ Staff tạo log mới sửa được; khoá khi ticket
-// Resolved/ClosedPendingRate/Closed (BE enforce).
+// Every field is optional; only the Staff member who created the log can edit it; locked once the
+// ticket is Resolved/ClosedPendingRate/Closed (enforced by the BE).
 export interface UpdateMaintenanceLogRequest {
   logType?: MaintenanceLogTypeEnum;
   summary?: string;

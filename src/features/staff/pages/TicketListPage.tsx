@@ -15,14 +15,12 @@ import { TicketCard } from "@/features/staff/components/ticket/TicketCard";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
+// GH-1176: updated for 8-status canonical lifecycle visible to Staff.
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: TicketStatusEnum.Assigned, label: "Đã gán" },
-  { value: TicketStatusEnum.InProgress, label: "Đang xử lý" },
-  { value: TicketStatusEnum.WaitingCustomer, label: "Chờ khách hàng" },
-  { value: TicketStatusEnum.WaitingParts, label: "Chờ linh kiện" },
-  { value: TicketStatusEnum.WaitingOnsiteSchedule, label: "Chờ lịch hẹn" },
-  { value: TicketStatusEnum.Resolved, label: "Đã xử lý" },
-  { value: TicketStatusEnum.Escalated, label: "Đã chuyển cấp" },
+  { value: TicketStatusEnum.Pending, label: "Pending" },
+  { value: TicketStatusEnum.InProgress, label: "In progress" },
+  { value: TicketStatusEnum.Request, label: "Escalation request" },
+  { value: TicketStatusEnum.Completed, label: "Completed" },
 ];
 
 const DEFAULTS = {
@@ -48,12 +46,10 @@ export default function TicketListPage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Staff &middot; Ticket
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Ticket của tôi
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">My tickets</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket &mdash; ticket
-            được giao cho bạn.
+            {isLoading ? "..." : (data?.totalItems ?? 0)} tickets &mdash;
+            tickets assigned to you.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.staffTickets]} size="icon" />
@@ -71,10 +67,10 @@ export default function TicketListPage() {
           }
         >
           <SelectTrigger size="sm" className="w-48">
-            <SelectValue placeholder="Tất cả trạng thái" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>Tất cả trạng thái</SelectItem>
+            <SelectItem value={null}>All statuses</SelectItem>
             {STATUS_FILTER_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
@@ -84,7 +80,7 @@ export default function TicketListPage() {
         </Select>
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -99,7 +95,7 @@ export default function TicketListPage() {
 
       {isError && (
         <p className="text-center text-destructive py-8">
-          Không thể tải danh sách ticket.
+          Couldn't load the ticket list.
         </p>
       )}
 
@@ -107,7 +103,7 @@ export default function TicketListPage() {
         <>
           {data.items.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
-              Không có ticket nào.
+              No tickets.
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

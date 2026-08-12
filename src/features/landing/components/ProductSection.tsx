@@ -5,9 +5,9 @@ import {
   createCleanupBag,
   prefersReducedMotion,
 } from "@/features/landing/lib/animation";
-import solarOnlyImg from "@/assets/solar_only.png";
-import solarBatteryImg from "@/assets/solar_battery.png";
-import solarMonitoringImg from "@/assets/solar_monitoring.png";
+import solarOnlyImg from "@/assets/solar_only.webp";
+import solarBatteryImg from "@/assets/solar_battery.webp";
+import solarMonitoringImg from "@/assets/solar_monitoring.webp";
 
 const PRODUCT_ITEMS = [
   {
@@ -140,7 +140,7 @@ const ProductSection = () => {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
           <div data-anim="header" className="max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-emerald-700">
-              Gói sản phẩm
+              Product packages
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl leading-tight">
               Our energy system, simplified.
@@ -176,6 +176,7 @@ const ProductSection = () => {
                     alt={item.title}
                     className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
+                    decoding="async"
                   />
 
                   {isMonitoring && (
@@ -187,6 +188,8 @@ const ProductSection = () => {
                         src={solarMonitoringImg}
                         alt="Gateway Controller"
                         className="h-full w-full object-contain"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   )}

@@ -12,7 +12,7 @@ export const useResendResetOtp = () =>
     onSuccess: (response) => {
       const res = response.data;
       if (!res.isSuccess) {
-        toast.error(res.message ?? "Gửi lại OTP thất bại");
+        toast.error(res.message ?? "Couldn't resend the code");
         return;
       }
       toast.success(AUTH_MESSAGES.otp.resent);

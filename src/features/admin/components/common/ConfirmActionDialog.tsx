@@ -20,7 +20,7 @@ interface Props {
   onConfirm: () => void;
 }
 
-// Reusable confirm cho các action không có form: rotate/revoke key, delete device, publish/archive firmware.
+// Reusable confirm for actions without a form: rotate/revoke key, delete device, publish/archive firmware.
 export default function ConfirmActionDialog({
   open,
   onOpenChange,

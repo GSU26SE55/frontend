@@ -10,7 +10,7 @@ import type {
   BlogPostOriginEnum,
 } from "@/shared/enums/blog/blog.enum";
 
-// ── DTOs (khớp contract BE — enum status/origin dạng STRING) ──
+// ── DTOs (match the BE contract — status/origin enums come as STRINGS) ──
 
 export interface BlogPostDTO {
   id: string;
@@ -28,7 +28,7 @@ export interface BlogPostDTO {
   updatedAt?: string | null;
 }
 
-// List item — KHÔNG có contentHtml
+// List item — does NOT include contentHtml
 export interface BlogPostListItemDTO {
   id: string;
   title: string;
@@ -54,7 +54,7 @@ export interface BlogPostVersionDTO {
   createdAt: string;
 }
 
-// Diff CHỈ so sánh contentHtml — không có per-field như KB
+// The diff compares contentHtml ONLY — no per-field diff like the KB has
 export interface BlogDiffDTO {
   oldVersionNumber: number;
   newVersionNumber: number;
@@ -62,7 +62,7 @@ export interface BlogDiffDTO {
   newContentHtml: string;
 }
 
-// Payload nhẹ trả về sau các action (create/update/publish/archive/delete/generate)
+// Lightweight payload returned by actions (create/update/publish/archive/delete/generate)
 export interface BlogPostActionDTO {
   id: string;
   title: string;
@@ -82,20 +82,22 @@ export interface BlogTemplateDTO {
 }
 
 // ── Query params ──
-// ⚠️ Blog dùng `Page`, KB dùng `PageNumber` — response cả hai đều trả `pageNumber`.
+// ⚠️ Blog uses `Page`, the KB uses `PageNumber` — but both responses return `pageNumber`.
 
 export interface BlogPostListParams {
   status?: BlogPostStatusEnum;
   origin?: BlogPostOriginEnum;
   page?: number;
   pageSize?: number;
+  /** Search keyword matched against title / summary — filtered by the BE, not the client. */
+  q?: string;
 }
 
 export interface BlogTemplateListParams {
   isActive?: boolean;
 }
 
-// ⚠️ Compare dùng SỐ version (khác KB dùng Guid versionId)
+// ⚠️ Compare uses the version NUMBER (unlike the KB, which uses a Guid versionId)
 export interface BlogCompareParams {
   oldVersionNumber: number;
   newVersionNumber: number;
@@ -113,7 +115,7 @@ export interface CreateBlogPostPayload {
 
 export interface UpdateBlogPostPayload extends CreateBlogPostPayload {
   changeNote?: string;
-  // Optimistic concurrency — phải khớp BlogPost.currentVersion trong DB, lệch → 409
+  // Optimistic concurrency — must match BlogPost.currentVersion in the DB; a mismatch → 409
   currentVersion: number;
 }
 

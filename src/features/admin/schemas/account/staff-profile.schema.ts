@@ -5,25 +5,25 @@ export const editStaffProfileSchema = z.object({
   department: z.string().optional(),
   maxConcurrentTickets: z
     .number()
-    .int("Phải là số nguyên")
-    .min(1, "Tối thiểu 1")
-    .max(20, "Tối đa 20"),
+    .int("Must be an integer")
+    .min(1, "Must be at least 1")
+    .max(20, "Must be at most 20"),
   isAvailable: z.boolean(),
   skillTier: z
     .number()
-    .int("Phải là số nguyên")
-    .min(1, "Tối thiểu 1")
-    .max(3, "Tối đa 3"),
-  notes: z.string().max(500, "Tối đa 500 ký tự").optional(),
+    .int("Must be an integer")
+    .min(1, "Must be at least 1")
+    .max(3, "Must be at most 3"),
+  notes: z.string().max(500, "Must be at most 500 characters").optional(),
 });
 
 export const addSkillSchema = z.object({
-  skillCode: z.string().min(1, "Mã kỹ năng không được trống"),
+  skillCode: z.string().min(1, "Skill code is required"),
   skillLevel: z
     .number()
-    .int("Phải là số nguyên")
-    .min(1, "Tối thiểu 1")
-    .max(5, "Tối đa 5"),
+    .int("Must be an integer")
+    .min(1, "Must be at least 1")
+    .max(5, "Must be at most 5"),
   certifiedUntil: z.string().optional(),
 });
 

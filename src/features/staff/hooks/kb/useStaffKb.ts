@@ -10,6 +10,7 @@ import type {
   UpdateKbArticlePayload,
 } from "@/shared/types/kb/kb.types";
 import { STAFF_MESSAGES } from "@/features/staff/constants/messages";
+import { KbArticleStatusEnum } from "@/shared/enums/kb/kb.enum";
 
 export function useStaffKbList(params?: KbArticleListParams) {
   return useQuery({
@@ -26,29 +27,11 @@ export function useStaffKbDetail(id: string) {
   });
 }
 
-// List bài mẫu (chọn khi tạo bài mới).
-export function useStaffKbTemplates(enabled = true) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.templates(),
-    queryFn: () => staffKbService.getTemplates().then((r) => r.data.data),
-    enabled,
-  });
-}
-
 export function useStaffKbVersions(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.kb.versions(id),
     queryFn: () => staffKbService.getVersions(id).then((r) => r.data.data),
     enabled: !!id,
-  });
-}
-
-export function useStaffKbVersionDetail(id: string, versionId: string | null) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.versionDetail(id, versionId),
-    queryFn: () =>
-      staffKbService.getVersionById(id, versionId!).then((r) => r.data.data),
-    enabled: !!id && !!versionId,
   });
 }
 
@@ -73,7 +56,7 @@ export function useStaffKbSuggest(ticketId?: string) {
   });
 }
 
-// create/update là form → component xử lý lỗi qua try/catch + setError (không onError ở hook)
+// create/update are form submits → the component handles errors via try/catch + setError (no onError on the hook)
 export function useStaffKbCreate() {
   const qc = useQueryClient();
   return useMutation({
@@ -96,23 +79,20 @@ export function useStaffKbUpdate() {
       id: string;
       payload: UpdateKbArticlePayload;
     }) => staffKbService.update(id, payload).then((r) => r.data.data),
-    onSuccess: (_, { id }) => {
-      toast.success(STAFF_MESSAGES.kb.updated);
+    onSuccess: (article, { id }) => {
+      // Staff editing their own article goes live immediately; editing someone else's needs approval first.
+      toast.success(
+        article?.status === KbArticleStatusEnum.PendingReview
+          ? STAFF_MESSAGES.kb.updatePending
+          : STAFF_MESSAGES.kb.updated,
+      );
       qc.invalidateQueries({ queryKey: QUERY_KEY.kb.detail(id) });
       qc.invalidateQueries({ queryKey: [KEY.kb] });
     },
   });
 }
 
-export function useStaffKbCopyTemplate() {
-  return useMutation({
-    mutationFn: (id: string) =>
-      staffKbService.copyTemplate(id).then((r) => r.data.data),
-    onError: (error) => handleErrorApi({ error }),
-  });
-}
-
-// Sao chép bài KB → tạo bản mới (Draft), trả action DTO có id bản mới.
+// Duplicate a KB article → creates a new one (Draft) and returns an action DTO with the new id.
 export function useStaffDuplicateKbArticle() {
   const qc = useQueryClient();
   return useMutation({

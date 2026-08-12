@@ -11,7 +11,6 @@ import {
   useManagerKbVersions,
   useManagerKbCompare,
   useManagerRollbackKbArticle,
-  useManagerKbVersionDetail,
   useMarkManagerKbHelpful,
   useManagerDuplicateKbArticle,
 } from "@/features/manager/hooks/kb/useManagerKb";
@@ -43,18 +42,16 @@ export default function KbDetailPage() {
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
     null,
   );
-  const [viewVersionId, setViewVersionId] = useState<string | null>(null);
 
   const { data: versions } = useManagerKbVersions(verOpen ? id! : "");
   const { data: diff } = useManagerKbCompare(id!, compareParams);
-  const { data: versionDetail } = useManagerKbVersionDetail(id!, viewVersionId);
 
   if (isLoading) return <KbArticleDetailSkeleton />;
 
   if (!article) {
     return (
       <div className="p-6 text-center text-muted-foreground">
-        Không tìm thấy bài viết.
+        Article not found.
       </div>
     );
   }
@@ -67,6 +64,7 @@ export default function KbDetailPage() {
         breadcrumb="Manager · Knowledge Base"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
+        onViewVersions={() => setVerOpen(true)}
         onEdit={() => navigate(`/manager/kb/${article.id}/edit`)}
         actions={
           <>
@@ -77,7 +75,7 @@ export default function KbDetailPage() {
               onClick={() => setVerOpen(true)}
             >
               <History className="size-3.5" />
-              Phiên bản
+              Versions
             </Button>
             <Button
               size="sm"
@@ -90,7 +88,7 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Sao chép
+              Duplicate
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -110,7 +108,7 @@ export default function KbDetailPage() {
                 onClick={() => publish(article.id)}
               >
                 <Upload className="size-3.5" />
-                Xuất bản
+                Publish
               </Button>
             )}
             {article.status === KbArticleStatusEnum.Published && (
@@ -121,7 +119,7 @@ export default function KbDetailPage() {
                 onClick={() => archive(article.id)}
               >
                 <Archive className="size-3.5" />
-                Lưu trữ
+                Archive
               </Button>
             )}
           </>
@@ -133,12 +131,10 @@ export default function KbDetailPage() {
         onOpenChange={setVerOpen}
         versions={versions ?? []}
         diff={diff}
-        versionDetail={versionDetail}
         isPending={rollingBack}
         onCompare={(fromVersionId, toVersionId) =>
           setCompareParams({ fromVersionId, toVersionId })
         }
-        onViewVersion={(versionId) => setViewVersionId(versionId || null)}
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }

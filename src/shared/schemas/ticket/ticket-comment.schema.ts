@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Attachment input dùng chung cho comment và maintenance log (cùng shape).
+// Attachment input shared by comments and maintenance logs (same shape).
 export const attachmentSchema = z.object({
   fileId: z.string().uuid(),
   fileName: z.string().optional(),
@@ -8,10 +8,21 @@ export const attachmentSchema = z.object({
   sizeBytes: z.number().int().optional(),
 });
 
+// @-mention: each tagged person → { userId, displayName }. Matches BE
+// ChatMentionInput (POST /chats field `mentions`). The FE builds it from the
+// list of authors in the conversation.
+export const mentionInputSchema = z.object({
+  userId: z.string().uuid(),
+  displayName: z.string(),
+});
+
 export const addCommentSchema = z.object({
-  // Không validate rỗng — UI disable nút gửi khi rỗng thay vì báo lỗi.
+  // No empty check — the UI disables the send button when empty instead of
+  // showing an error.
   body: z.string(),
   isInternal: z.boolean(),
   attachments: z.array(attachmentSchema).optional(),
+  mentions: z.array(mentionInputSchema).optional(),
 });
 export type AddCommentFormValues = z.infer<typeof addCommentSchema>;
+export type MentionInput = z.infer<typeof mentionInputSchema>;

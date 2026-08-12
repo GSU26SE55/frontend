@@ -10,6 +10,8 @@ export function useUpdateBatteryAsset(id: string) {
       batteryAssetService.update(id, payload).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.batteryAssets] });
+      // Editing a battery may change its site → both the old and new site's battery lists must reload.
+      qc.invalidateQueries({ queryKey: [KEY.sites] });
     },
   });
 }

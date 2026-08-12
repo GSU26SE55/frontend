@@ -45,10 +45,10 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
     <div className="space-y-5">
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Tạo tài khoản
+          Create account
         </h1>
         <p className="text-sm text-slate-500">
-          Điền thông tin để bắt đầu sử dụng hệ thống
+          Fill in your details to start using the system
         </p>
       </div>
 
@@ -59,11 +59,11 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
             htmlFor="fullName"
             className="text-sm font-medium text-slate-700"
           >
-            Họ và tên
+            Full name
           </Label>
           <Input
             id="fullName"
-            placeholder="Nguyễn Văn A"
+            placeholder="Nguyen Van A"
             autoComplete="name"
             className={inputCls}
             {...register("fullName")}
@@ -97,7 +97,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
             htmlFor="phoneNumber"
             className="text-sm font-medium text-slate-700"
           >
-            Số điện thoại
+            Phone number
           </Label>
           <Input
             id="phoneNumber"
@@ -118,7 +118,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
             htmlFor="password"
             className="text-sm font-medium text-slate-700"
           >
-            Mật khẩu
+            Password
           </Label>
           <div className="relative">
             <Input
@@ -132,7 +132,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Ẩn" : "Hiện"}
+              aria-label={showPassword ? "Hide" : "Show"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               {showPassword ? (
@@ -153,7 +153,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
             htmlFor="confirmPassword"
             className="text-sm font-medium text-slate-700"
           >
-            Xác nhận mật khẩu
+            Confirm password
           </Label>
           <div className="relative">
             <Input
@@ -167,7 +167,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
             <button
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
-              aria-label={showConfirm ? "Ẩn" : "Hiện"}
+              aria-label={showConfirm ? "Hide" : "Show"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               {showConfirm ? (
@@ -192,29 +192,29 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
           {isPending ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Đang xử lý…
+              Processing…
             </>
           ) : (
-            "Tạo tài khoản"
+            "Create account"
           )}
         </Button>
 
         <p className="text-center text-sm text-slate-500">
-          Đã có tài khoản?{" "}
+          Already have an account?{" "}
           {onLogin ? (
             <button
               type="button"
               onClick={onLogin}
               className="font-semibold text-emerald-600 hover:text-emerald-700 underline-offset-4 hover:underline cursor-pointer"
             >
-              Đăng nhập
+              Log in
             </button>
           ) : (
             <Link
               to="/login"
               className="font-semibold text-emerald-600 hover:text-emerald-700 underline-offset-4 hover:underline"
             >
-              Đăng nhập
+              Log in
             </Link>
           )}
         </p>

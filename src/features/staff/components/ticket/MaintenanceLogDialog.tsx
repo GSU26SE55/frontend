@@ -41,10 +41,10 @@ import {
 } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
 const LOG_TYPE_LABELS: Record<string, string> = {
-  [MaintenanceLogTypeEnum.RemoteSupport]: "Hỗ trợ từ xa",
-  [MaintenanceLogTypeEnum.OnSite]: "Đến tại chỗ",
-  [MaintenanceLogTypeEnum.PartReplacement]: "Thay linh kiện",
-  [MaintenanceLogTypeEnum.Inspection]: "Kiểm tra định kỳ",
+  [MaintenanceLogTypeEnum.RemoteSupport]: "Remote support",
+  [MaintenanceLogTypeEnum.OnSite]: "On-site visit",
+  [MaintenanceLogTypeEnum.PartReplacement]: "Part replacement",
+  [MaintenanceLogTypeEnum.Inspection]: "Routine inspection",
 };
 
 interface Props {
@@ -68,8 +68,8 @@ export function MaintenanceLogDialog({
     defaultValues: { logType: MaintenanceLogTypeEnum.RemoteSupport },
   });
 
-  // Dialog mount sẵn (open prop điều khiển ẩn/hiện) → clear ảnh mỗi lần mở
-  // để log mới không kế thừa ảnh của log trước.
+  // The dialog stays mounted (the `open` prop just toggles visibility) → clear photos
+  // on every open so a new log doesn't inherit photos from the previous one.
   useEffect(() => {
     if (open) {
       form.setValue("beforePhotos", []);
@@ -103,7 +103,7 @@ export function MaintenanceLogDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Thêm nhật ký bảo trì</DialogTitle>
+          <DialogTitle>Add maintenance log</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -112,7 +112,7 @@ export function MaintenanceLogDialog({
               name="logType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Loại nhật ký</FormLabel>
+                  <FormLabel>Log type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -123,7 +123,7 @@ export function MaintenanceLogDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn loại" />
+                        <SelectValue placeholder="Select a type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
@@ -144,12 +144,11 @@ export function MaintenanceLogDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Tóm tắt công việc{" "}
-                    <span className="text-destructive">*</span>
+                    Work summary <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả công việc đã thực hiện..."
+                      placeholder="Describe the work performed..."
                       rows={3}
                       {...field}
                     />
@@ -163,10 +162,10 @@ export function MaintenanceLogDialog({
               name="diagnosisDetails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chi tiết chẩn đoán</FormLabel>
+                  <FormLabel>Diagnosis details</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Kết quả chẩn đoán..."
+                      placeholder="Diagnosis results..."
                       rows={2}
                       {...field}
                     />
@@ -180,10 +179,10 @@ export function MaintenanceLogDialog({
               name="actionsTaken"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Hành động đã thực hiện</FormLabel>
+                  <FormLabel>Actions taken</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Liệt kê các bước đã thực hiện..."
+                      placeholder="List the steps taken..."
                       rows={2}
                       {...field}
                     />
@@ -198,7 +197,7 @@ export function MaintenanceLogDialog({
                 name="durationMinutes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Thời lượng (phút)</FormLabel>
+                    <FormLabel>Duration (minutes)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -227,9 +226,9 @@ export function MaintenanceLogDialog({
                 name="partsUsed"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Linh kiện đã dùng</FormLabel>
+                    <FormLabel>Parts used</FormLabel>
                     <FormControl>
-                      <Input placeholder="Mô tả linh kiện..." {...field} />
+                      <Input placeholder="Describe the parts..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -241,10 +240,10 @@ export function MaintenanceLogDialog({
               name="resolutionNote"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú kết quả</FormLabel>
+                  <FormLabel>Resolution note</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Kết quả sau khi xử lý..."
+                      placeholder="Outcome after handling..."
                       rows={2}
                       {...field}
                     />
@@ -258,7 +257,7 @@ export function MaintenanceLogDialog({
               name="relatedKbArticleIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bài viết KB liên quan</FormLabel>
+                  <FormLabel>Related KB articles</FormLabel>
                   <FormControl>
                     <KbArticleSelector
                       value={field.value ?? []}
@@ -281,7 +280,7 @@ export function MaintenanceLogDialog({
                     value={field.value ?? []}
                     onChange={field.onChange}
                     onUploadingChange={setUploadingBefore}
-                    label="Ảnh trước"
+                    label="Before photos"
                     large
                   />
                 )}
@@ -295,7 +294,7 @@ export function MaintenanceLogDialog({
                     value={field.value ?? []}
                     onChange={field.onChange}
                     onUploadingChange={setUploadingAfter}
-                    label="Ảnh sau"
+                    label="After photos"
                     large
                   />
                 )}
@@ -308,10 +307,10 @@ export function MaintenanceLogDialog({
                 onClick={onClose}
                 disabled={isPending}
               >
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending || uploading}>
-                {isPending ? "Đang lưu..." : "Lưu nhật ký"}
+                {isPending ? "Saving..." : "Save log"}
               </Button>
             </DialogFooter>
           </form>

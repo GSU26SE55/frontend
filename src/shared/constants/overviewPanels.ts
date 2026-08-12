@@ -1,35 +1,39 @@
-// Tên các panel (title của <DashboardPanel>) trong trang TỔNG QUAN (Overview) của 3 role.
-// Đây là các panel bên trong trang mặc định theo role (/admin, /manager, /staff) —
-// KHÔNG phải "section" của sidebar (Hạ tầng pin / Hỗ trợ / Người dùng).
-// Gom về 1 nguồn để đổi tên panel chỉ sửa 1 chỗ, tránh hardcode rải rác 3 page.
-// Dùng: title={OVERVIEW_PANELS.admin.alerts7d}
+// Panel names (the title of <DashboardPanel>) on the Overview page of all 3 roles.
+// These are the panels inside the role's default page (/admin, /manager, /staff) —
+// NOT the sidebar "sections" (Battery infrastructure / Support / Users).
+// Kept in one place so renaming a panel touches one spot instead of 3 pages.
+// Usage: title={OVERVIEW_PANELS.admin.alerts7d}
 
 export const OVERVIEW_PANELS = {
   admin: {
-    alerts7d: "Cảnh báo 7 ngày",
-    alertsByType: "Cảnh báo theo loại",
-    slaSystem: "Tuân thủ SLA hệ thống",
-    batteryByStatus: "Pin theo trạng thái",
-    topAlerting: "Pin cảnh báo nhiều nhất",
-    siteHealth: "Sức khỏe site",
-    telemetry24h: "Telemetry trung bình · 24h",
+    alerts7d: "Alerts · 7 days",
+    alertsByType: "Alerts by type",
+    slaSystem: "System-wide SLA compliance",
+    // "Operational status" = the business lifecycle (Active/Suspended/
+    // Decommissioned, set by hand by an admin), NOT connectivity. Named
+    // explicitly so it doesn't visually clash with the "Batteries online"
+    // panel (online/offline) sitting right next to it on the dashboard.
+    batteryByStatus: "Batteries by operational status",
+    topAlerting: "Most-alerting batteries",
+    siteHealth: "Site health",
+    telemetry24h: "Average telemetry · 24h",
   },
   manager: {
-    ticketPipeline: "Pipeline xử lý ticket",
-    sla: "Tuân thủ SLA",
-    priority: "Ticket theo ưu tiên",
-    newTickets7d: "Ticket mới · 7 ngày",
-    staffLoad: "Tải nhân sự",
-    triageQueue: "Hàng chờ triage",
-    sitesNeedAttention: "Sites cần chú ý",
-    topAlerting: "Pin cảnh báo nhiều nhất",
+    ticketPipeline: "Ticket pipeline",
+    sla: "SLA compliance",
+    priority: "Tickets by priority",
+    newTickets7d: "New tickets · 7 days",
+    staffLoad: "Staff workload",
+    triageQueue: "Triage queue",
+    sitesNeedAttention: "Sites needing attention",
+    topAlerting: "Most-alerting batteries",
   },
   staff: {
-    personalSla: "Tuân thủ SLA cá nhân",
-    tickets7d: "Ticket · 7 ngày",
-    ticketStatus: "Trạng thái ticket",
-    priority: "Ưu tiên xử lý",
-    slaRisk: "Rủi ro SLA",
-    recentNotifications: "Thông báo gần đây",
+    personalSla: "My SLA compliance",
+    tickets7d: "Tickets · 7 days",
+    ticketStatus: "Ticket status",
+    priority: "Work priority",
+    slaRisk: "SLA risk",
+    recentNotifications: "Recent notifications",
   },
 } as const;

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import { PanelLeftClose, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo.webp";
 
 export interface NavItem {
   label: string;
@@ -26,12 +26,16 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-// Active khi pathname trùng khớp item.path hoặc là route con của nó (vd item
-// "Tickets" /manager/tickets vẫn active ở trang chi tiết /manager/tickets/:id).
-// Khi 1 item khác trong sidebar có path CỤ THỂ HƠN cũng khớp (vd "Hàng chờ"
-// /manager/tickets/queue là con của "Tickets"), chỉ item cụ thể hơn được active —
-// tránh 2 mục cùng sáng lên khi đứng ở /manager/tickets/queue.
-function isPathActive(path: string, pathname: string, allPaths: string[]): boolean {
+// Active when pathname matches item.path exactly or is a child route of it (e.g. the
+// "Tickets" item /manager/tickets stays active on the detail page /manager/tickets/:id).
+// When another sidebar item has a MORE SPECIFIC path that also matches (e.g. "Queue"
+// /manager/tickets/queue is a child of "Tickets"), only the more specific item is
+// active — avoids two items lighting up at once when on /manager/tickets/queue.
+function isPathActive(
+  path: string,
+  pathname: string,
+  allPaths: string[],
+): boolean {
   const matches = (p: string) => pathname === p || pathname.startsWith(`${p}/`);
   if (!matches(path)) return false;
   return !allPaths.some(
@@ -39,7 +43,7 @@ function isPathActive(path: string, pathname: string, allPaths: string[]): boole
   );
 }
 
-// ── Collapsible section ────────────────────────────────────────────────────
+// ── Collapsible section ─────────────────────────────────────────────────────
 function Section({
   section,
   sidebarCollapsed,
@@ -96,37 +100,51 @@ function Section({
           </p>
         ))}
 
-      {/* Items */}
+      {/* Items — when the sidebar is collapsed, always show full icons regardless of
+          the section's open/close state (open only matters for hiding/showing labels
+          when the sidebar is expanded — collapsed has no label to close). */}
       <div
         className="overflow-hidden transition-all duration-200"
-        style={{
-          maxHeight: open ? `${section.items.length * 42}px` : "0px",
-          opacity: open ? 1 : 0,
-        }}
+        style={
+          sidebarCollapsed
+            ? undefined
+            : {
+                maxHeight: open ? `${section.items.length * 42}px` : "0px",
+                opacity: open ? 1 : 0,
+              }
+        }
       >
         <ul className="space-y-0.5">
           {section.items.map((item) => {
             const active = isPathActive(item.path, pathname, allPaths);
             return (
-              <li key={item.path}>
+              <li key={item.path} className="relative">
                 <Link
                   to={item.path}
                   replace
                   title={sidebarCollapsed ? item.label : undefined}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-colors duration-100",
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-all duration-150 relative overflow-hidden",
                     sidebarCollapsed && "justify-center px-2",
                     active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-xs"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                   )}
                 >
-                  <item.icon size={15} className="shrink-0" />
+                  <item.icon
+                    size={15}
+                    className={cn(
+                      "shrink-0 transition-transform duration-200",
+                      active
+                        ? "text-primary scale-110"
+                        : "text-muted-foreground group-hover:scale-105",
+                    )}
+                  />
                   {!sidebarCollapsed && (
                     <>
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge !== undefined && (
-                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none">
+                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none animate-pulse">
                           {item.badge}
                         </span>
                       )}
@@ -142,7 +160,7 @@ function Section({
   );
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
+// ── Sidebar ──────────────────────────────────────────────────────────────────
 export default function Sidebar({
   appName,
   sections,
@@ -170,8 +188,8 @@ export default function Sidebar({
           <button
             className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors p-0.5 group"
             onClick={onToggle}
-            title="Mở rộng thanh bên"
-            aria-label="Mở rộng thanh bên"
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
           >
             <img
               src={logoImg}
@@ -196,8 +214,8 @@ export default function Sidebar({
             <button
               className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
               onClick={onToggle}
-              title="Thu gọn"
-              aria-label="Thu gọn thanh bên"
+              title="Collapse"
+              aria-label="Collapse sidebar"
             >
               <PanelLeftClose size={15} />
             </button>
@@ -206,7 +224,10 @@ export default function Sidebar({
       </div>
 
       {/* ── Navigation ── */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-3">
+      <nav
+        className="flex-1 overflow-y-auto py-3 px-2 space-y-3"
+        style={{ scrollbarGutter: "stable" }}
+      >
         {sections.map((section, si) => (
           <Section
             key={si}
@@ -225,10 +246,10 @@ export default function Sidebar({
             "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
             collapsed && "justify-center px-2",
           )}
-          title={collapsed ? "Trợ giúp" : undefined}
+          title={collapsed ? "Help" : undefined}
         >
           <HelpCircle size={14} className="shrink-0" />
-          {!collapsed && "Trợ giúp & phím tắt"}
+          {!collapsed && "Help & shortcuts"}
         </button>
       </div> */}
     </aside>

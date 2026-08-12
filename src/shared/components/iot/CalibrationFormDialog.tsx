@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   createCalibrationSchema,
@@ -37,11 +38,14 @@ export default function CalibrationFormDialog({
     handleSubmit,
     setError,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateCalibrationForm>({
     resolver: zodResolver(createCalibrationSchema),
     defaultValues: { scale: 1, offset: 0 },
   });
+
+  const calibratedAt = useWatch({ control, name: "calibratedAt" });
 
   const { mutateAsync: createCalibration } = useCreateCalibration(deviceId);
 
@@ -72,7 +76,7 @@ export default function CalibrationFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Thêm calibration</DialogTitle>
+          <DialogTitle>Add calibration</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -91,7 +95,7 @@ export default function CalibrationFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="unit">Đơn vị *</Label>
+              <Label htmlFor="unit">Unit *</Label>
               <Input id="unit" {...register("unit")} placeholder="V" />
               {errors.unit && (
                 <p className="text-sm text-destructive">
@@ -134,11 +138,17 @@ export default function CalibrationFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="calibratedAt">Ngày calibration *</Label>
-              <Input
-                id="calibratedAt"
-                type="date"
-                {...register("calibratedAt")}
+              <Label htmlFor="calibratedAt">Calibration date *</Label>
+              <Controller
+                control={control}
+                name="calibratedAt"
+                render={({ field }) => (
+                  <DatePicker
+                    id="calibratedAt"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                  />
+                )}
               />
               {errors.calibratedAt && (
                 <p className="text-sm text-destructive">
@@ -147,8 +157,19 @@ export default function CalibrationFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="expiresAt">Ngày hết hạn</Label>
-              <Input id="expiresAt" type="date" {...register("expiresAt")} />
+              <Label htmlFor="expiresAt">Expiration date</Label>
+              <Controller
+                control={control}
+                name="expiresAt"
+                render={({ field }) => (
+                  <DatePicker
+                    id="expiresAt"
+                    value={field.value}
+                    onChange={(v) => field.onChange(v ?? "")}
+                    min={calibratedAt || undefined}
+                  />
+                )}
+              />
               {errors.expiresAt && (
                 <p className="text-sm text-destructive">
                   {errors.expiresAt.message}
@@ -158,11 +179,11 @@ export default function CalibrationFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryAssetId">Battery Asset ID (tuỳ chọn)</Label>
+            <Label htmlFor="batteryAssetId">Battery Asset ID (optional)</Label>
             <Input
               id="batteryAssetId"
               {...register("batteryAssetId")}
-              placeholder="Bỏ trống = calibration cấp device"
+              placeholder="Leave blank = device-level calibration"
             />
             {errors.batteryAssetId && (
               <p className="text-sm text-destructive">
@@ -172,7 +193,7 @@ export default function CalibrationFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="notes">Ghi chú</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" {...register("notes")} />
           </div>
 
@@ -182,10 +203,10 @@ export default function CalibrationFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Thêm
+              Add
             </Button>
           </DialogFooter>
         </form>

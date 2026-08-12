@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,22 +17,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
-import { Eye, ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
+import {
+  Eye,
+  ThumbsUp,
+  EllipsisVertical,
+  BookOpen,
+  ArrowUpDown,
+} from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import {
   KbArticleStatusEnum,
   KbCategoryLabel,
 } from "@/shared/enums/kb/kb.enum";
-import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
-import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
-import { noData } from "@/shared/constants/emptyStates";
+import { noData, notFound } from "@/shared/constants/emptyStates";
+
+const NONE_SORT = "__none__";
+
+const SORT_ITEMS = [
+  { value: "code", label: "Code" },
+  { value: "title", label: "Title" },
+  { value: "category", label: "Category" },
+  { value: "status", label: "Status" },
+  { value: "viewCount", label: "Views" },
+  { value: "helpfulCount", label: "Helpful" },
+];
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
   isLoading?: boolean;
-  pageNumber: number;
-  pageSize: number;
   hasFilter?: boolean;
   onResetFilter?: () => void;
   onPublish?: (article: KbArticleSummaryDTO) => void;
@@ -40,18 +53,18 @@ interface KbArticleTableProps {
   onDelete?: (article: KbArticleSummaryDTO) => void;
   onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
   onEdit?: (article: KbArticleSummaryDTO) => void;
-  /** Sao chép row này → tạo bài mới tương tự (mở trang create điền sẵn). */
+  /** Copy this row → create a similar new article (opens the create page pre-filled). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
+  /** Generate blog with AI — BE only accepts Published articles (409 otherwise). */
+  onGenerateBlog?: (article: KbArticleSummaryDTO) => void;
   basePath?: string;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Sort server-side — state from useUrlSort. */
   sort: ServerSortState;
 }
 
 export default function KbArticleTable({
   data,
   isLoading,
-  pageNumber,
-  pageSize,
   hasFilter,
   onResetFilter,
   onPublish,
@@ -60,14 +73,11 @@ export default function KbArticleTable({
   onMarkHelpful,
   onEdit,
   onCopy,
+  onGenerateBlog,
   basePath = "/admin/kb",
   sort,
 }: KbArticleTableProps) {
   const navigate = useNavigate();
-  // BE đã sort toàn dataset (SortBy/SortDir) → render data nguyên trạng.
-  const sortKey = sort.sortBy;
-  const sortDirection = sort.sortDir;
-  const toggleSort = sort.toggleSort;
 
   if (isLoading) {
     return (
@@ -84,11 +94,11 @@ export default function KbArticleTable({
       <div className="py-16 text-center flex flex-col items-center gap-3">
         <BookOpen className="size-10 text-muted-foreground/40" />
         <p className="text-sm text-muted-foreground">
-          {hasFilter ? "Không khớp với bộ lọc hiện tại" : noData("bài viết")}
+          {hasFilter ? notFound("articles") : noData("articles")}
         </p>
         {hasFilter && onResetFilter && (
           <Button size="sm" variant="outline" onClick={onResetFilter}>
-            Xóa bộ lọc
+            Clear filters
           </Button>
         )}
       </div>
@@ -96,178 +106,152 @@ export default function KbArticleTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-12 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {TABLE_COLUMNS.index}
-          </TableHead>
-          <SortableTableHead
-            sortKey="code"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="w-25 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Mã
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="title"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Tiêu đề
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="category"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="w-27.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Danh mục
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="status"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="w-30 text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Trạng thái
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="viewCount"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="w-22.5 justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Lượt xem
-          </SortableTableHead>
-          <SortableTableHead
-            sortKey="helpfulCount"
-            activeSortKey={sortKey}
-            direction={sortDirection}
-            onSort={toggleSort}
-            className="w-22.5 justify-center text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            Hữu ích
-          </SortableTableHead>
-          <TableHead className="w-20 text-right text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            {TABLE_COLUMNS.actions}
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((article, index) => (
-          <TableRow
+    <div className="space-y-3">
+      <div className="flex items-center justify-end gap-2 px-1">
+        <span className="text-xs text-muted-foreground">Sort</span>
+        <Select
+          value={sort.sortBy ?? NONE_SORT}
+          onValueChange={(v) =>
+            sort.setSort(v && v !== NONE_SORT ? v : null, sort.sortDir)
+          }
+          items={[{ value: NONE_SORT, label: "Default" }, ...SORT_ITEMS]}
+        >
+          <SelectTrigger size="sm" className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value={NONE_SORT}>Default</SelectItem>
+            {SORT_ITEMS.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!sort.sortBy}
+          onClick={() =>
+            sort.sortBy &&
+            sort.setSort(sort.sortBy, sort.sortDir === "asc" ? "desc" : "asc")
+          }
+          title={sort.sortDir === "desc" ? "Descending" : "Ascending"}
+        >
+          <ArrowUpDown className="size-3.5" />
+        </Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {data.map((article) => (
+          <Card
             key={article.id}
-            className="cursor-pointer h-11 hover:bg-muted/40"
             onClick={() => navigate(`${basePath}/${article.id}`)}
+            className="cursor-pointer p-5 transition-colors hover:bg-accent/40"
           >
-            <TableCell className="py-2 text-center text-muted-foreground tabular-nums text-[11px]">
-              {(pageNumber - 1) * pageSize + index + 1}
-            </TableCell>
-            <TableCell className="py-2 font-mono text-[11px] text-muted-foreground">
-              {article.code}
-            </TableCell>
-            <TableCell className="py-2">
-              <p className="text-[13px] font-medium leading-tight">
-                {article.title}
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-mono text-xs text-muted-foreground">
+                {article.code}
               </p>
-            </TableCell>
-            <TableCell className="py-2">
-              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+              <div onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="-mt-1 -mr-1 size-8"
+                      />
+                    }
+                  >
+                    <EllipsisVertical className="size-4.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-36">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        onEdit
+                          ? onEdit(article)
+                          : navigate(`${basePath}/${article.id}/edit`)
+                      }
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    {onCopy && (
+                      <DropdownMenuItem onClick={() => onCopy(article)}>
+                        Copy
+                      </DropdownMenuItem>
+                    )}
+                    {article.status === KbArticleStatusEnum.Draft &&
+                      onPublish && (
+                        <DropdownMenuItem onClick={() => onPublish(article)}>
+                          Publish
+                        </DropdownMenuItem>
+                      )}
+                    {article.status === KbArticleStatusEnum.Published &&
+                      onGenerateBlog && (
+                        <DropdownMenuItem
+                          onClick={() => onGenerateBlog(article)}
+                        >
+                          Generate blog with AI
+                        </DropdownMenuItem>
+                      )}
+                    {article.status === KbArticleStatusEnum.Published &&
+                      onArchive && (
+                        <DropdownMenuItem onClick={() => onArchive(article)}>
+                          Archive
+                        </DropdownMenuItem>
+                      )}
+                    {onDelete && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => onDelete(article)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            <h3 className="mt-2 line-clamp-2 text-base font-medium leading-snug">
+              {article.title}
+            </h3>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <KbStatusBadge status={article.status} />
+              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {KbCategoryLabel[article.category] ?? article.category}
               </span>
-            </TableCell>
-            <TableCell className="py-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <KbStatusBadge status={article.status} />
-              </div>
-            </TableCell>
-            <TableCell className="py-2 text-center">
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                <Eye className="size-3" /> {article.viewCount}
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-4 border-t border-border/60 pt-3">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <Eye className="size-3.5" /> {article.viewCount}
               </span>
-            </TableCell>
-            <TableCell
-              className="py-2 text-center"
-              onClick={(e) => e.stopPropagation()}
-            >
               {onMarkHelpful ? (
                 <button
                   type="button"
-                  onClick={() => onMarkHelpful(article)}
-                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkHelpful(article);
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
                 >
-                  <ThumbsUp className="size-3" /> {article.helpfulCount}
+                  <ThumbsUp className="size-3.5" /> {article.helpfulCount}
                 </button>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <ThumbsUp className="size-3" /> {article.helpfulCount}
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <ThumbsUp className="size-3.5" /> {article.helpfulCount}
                 </span>
               )}
-            </TableCell>
-            <TableCell
-              className="py-2 text-right"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button variant="ghost" size="icon" className="size-7" />
-                  }
-                >
-                  <EllipsisVertical className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-36">
-                  <DropdownMenuItem
-                    onClick={() =>
-                      onEdit
-                        ? onEdit(article)
-                        : navigate(`${basePath}/${article.id}/edit`)
-                    }
-                  >
-                    Chỉnh sửa
-                  </DropdownMenuItem>
-                  {onCopy && (
-                    <DropdownMenuItem onClick={() => onCopy(article)}>
-                      Sao chép
-                    </DropdownMenuItem>
-                  )}
-                  {article.status === KbArticleStatusEnum.Draft &&
-                    onPublish && (
-                      <DropdownMenuItem onClick={() => onPublish(article)}>
-                        Xuất bản
-                      </DropdownMenuItem>
-                    )}
-                  {article.status === KbArticleStatusEnum.Published &&
-                    onArchive && (
-                      <DropdownMenuItem onClick={() => onArchive(article)}>
-                        Lưu trữ
-                      </DropdownMenuItem>
-                    )}
-                  {onDelete && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => onDelete(article)}
-                      >
-                        Xóa
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
+            </div>
+          </Card>
         ))}
-      </TableBody>
-    </Table>
+      </div>
+    </div>
   );
 }

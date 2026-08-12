@@ -1,8 +1,9 @@
-// Nav config sidebar cho role ADMIN.
-// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
-// Label/title đặc thù chỉ admin dùng → giữ inline ở đây.
+// Sidebar nav config for the ADMIN role.
+// Shared label/title (used by ≥2 roles) → import from shared/constants/sidebarLabels.
+// Label/title specific to admin only → keep inline here.
 
 import {
+  History,
   Newspaper,
   LayoutTemplate,
   LayoutDashboard,
@@ -13,19 +14,18 @@ import {
   Settings,
   Bell,
   BellRing,
+  Inbox,
   Ticket,
   ScrollText,
-  FileClock,
   BookOpen,
   ShieldAlert,
   MessageSquare,
-  Workflow,
   BarChart3,
   Cpu,
-  HardDrive,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
+  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -44,18 +44,20 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/analytics",
         icon: BarChart3,
       },
+      // Route shared across all roles (no /admin prefix) — BE filters by UserId in the JWT.
+      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {
-    title: "Hạ tầng pin",
+    title: "Battery infrastructure",
     collapsible: true,
     defaultOpen: true,
     items: [
-      // Pin truy cập qua Site (Battery & Site → site detail → chi tiết pin).
-      // Route /admin/battery-assets/:id vẫn giữ cho deep-link từ alert/ticket.
+      // Batteries accessed via Site (Battery & Site → site detail → battery detail).
+      // Route /admin/battery-assets/:id is kept for deep-links from alert/ticket.
       { label: SIDEBAR_LABELS.sites, path: "/admin/sites", icon: MapPin },
       {
-        label: "Loại pin & Ngưỡng",
+        label: "Battery types & thresholds",
         path: "/admin/battery-types",
         icon: BatteryCharging,
       },
@@ -69,12 +71,13 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/environmental-incidents",
         icon: ShieldAlert,
       },
-      { label: "IoT Devices", path: "/admin/iot-devices", icon: Cpu },
-      { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
+      { label: "Devices", path: "/admin/iot-devices", icon: Cpu },
+      // Hidden from nav per request — route kept intact, not deleted.
+      // { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
     ],
   },
   {
-    title: "Hỗ trợ",
+    title: "Support",
     collapsible: true,
     defaultOpen: true,
     items: [
@@ -89,20 +92,15 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/blog",
         icon: Newspaper,
       },
-      {
-        label: SIDEBAR_LABELS.blogTemplates,
-        path: "/admin/blog/templates",
-        icon: LayoutTemplate,
-      },
     ],
   },
   {
-    title: "Người dùng",
+    title: "Users",
     collapsible: true,
     defaultOpen: false,
     items: [
-      { label: "Tài khoản", path: "/admin/accounts", icon: Users },
-      { label: "Vai trò & Quyền hạn", path: "/admin/roles", icon: Shield },
+      { label: "Accounts", path: "/admin/accounts", icon: Users },
+      { label: "Roles & Permissions", path: "/admin/roles", icon: Shield },
     ],
   },
   {
@@ -111,19 +109,36 @@ export const ADMIN_NAV: NavSection[] = [
     defaultOpen: false,
     items: [
       { label: "SMS Gateway", path: "/admin/sms-gateway", icon: MessageSquare },
-      { label: "Saga Debug", path: "/admin/sagas", icon: Workflow },
-      { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
+      // Hidden from nav per request — route kept intact, not deleted.
+      // { label: "Saga Debug", path: "/admin/sagas", icon: Workflow },
+      { label: "Logs", path: "/admin/audit-logs", icon: ScrollText },
+      // Hidden from nav per request — routes kept intact, not deleted.
+      // {
+      //   label: "Battery & Alert Audit",
+      //   path: "/admin/battery-audit-logs",
+      //   icon: FileClock,
+      // },
+      // {
+      //   label: "File Access Audit",
+      //   path: "/admin/files-audit-logs",
+      //   icon: FileClock,
+      // },
+      { label: "Send notification", path: "/admin/notifications", icon: Bell },
       {
-        label: "Audit Pin & Cảnh báo",
-        path: "/admin/battery-audit-logs",
-        icon: FileClock,
+        label: "Notification groups",
+        path: "/admin/notification-groups",
+        icon: Users,
       },
       {
-        label: "Audit Truy cập File",
-        path: "/admin/files-audit-logs",
-        icon: FileClock,
+        label: "Send history",
+        path: "/admin/notification-batches",
+        icon: History,
       },
-      { label: "Gửi thông báo", path: "/admin/notifications", icon: Bell },
+      {
+        label: "Notification templates",
+        path: "/admin/notification-templates",
+        icon: LayoutTemplate,
+      },
       {
         label: SIDEBAR_LABELS.settings,
         path: "/admin/settings",

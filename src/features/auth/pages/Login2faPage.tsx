@@ -15,7 +15,7 @@ type Mode = "totp" | "backup" | "sms";
 
 const Login2faPage = () => {
   const navigate = useNavigate();
-  // đọc challengeToken 1 lần khi mount (lazy init — tránh set-state-in-effect)
+  // read challengeToken once on mount (lazy init — avoids set-state-in-effect)
   const [challengeToken] = useState<string | null>(() =>
     sessionStorage.getItem(CHALLENGE_TOKEN_KEY),
   );
@@ -31,7 +31,7 @@ const Login2faPage = () => {
   const { mutate: sendSms, isPending: isSendingSms } = useSend2faSms();
 
   useEffect(() => {
-    // không có challenge → quay lại login
+    // no challenge → go back to login
     if (!challengeToken) navigate("/login", { replace: true });
   }, [challengeToken, navigate]);
 
@@ -50,7 +50,7 @@ const Login2faPage = () => {
       {
         onSuccess: (res) => {
           setMaskedPhone(res.data.data ?? null);
-          toast.success(res.data.message ?? "Đã gửi OTP qua SMS");
+          toast.success(res.data.message ?? "OTP sent via SMS");
         },
         onError: (error) => handleErrorApi({ error }),
       },
@@ -66,7 +66,7 @@ const Login2faPage = () => {
         code,
         isBackupCode: isBackup,
         isSmsCode: isSms,
-        // backup code path không trust device (BE bỏ qua) → chỉ gửi khi totp/sms
+        // backup code path doesn't trust the device (BE ignores it) → only send when totp/sms
         trustDevice: isBackup ? false : trustDevice,
         trustDeviceLabel:
           !isBackup && trustDevice && trustDeviceLabel.trim()
@@ -81,18 +81,18 @@ const Login2faPage = () => {
   if (!challengeToken) return null;
 
   const hint = isBackup
-    ? "Nhập một backup code (xxxx-xxxx)."
+    ? "Enter a backup code (xxxx-xxxx)."
     : isSms
       ? maskedPhone
-        ? `Nhập mã 6 số đã gửi tới ${maskedPhone}.`
-        : "Bấm gửi để nhận OTP qua SMS."
-      : "Nhập mã 6 số từ ứng dụng Authenticator.";
+        ? `Enter the 6-digit code sent to ${maskedPhone}.`
+        : "Tap send to receive an OTP via SMS."
+      : "Enter the 6-digit code from your Authenticator app.";
 
   return (
     <div className="space-y-5">
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Xác thực 2 lớp
+          Two-factor authentication
         </h1>
         <p className="text-sm text-slate-500">{hint}</p>
       </div>
@@ -107,13 +107,13 @@ const Login2faPage = () => {
             onClick={handleSendSms}
           >
             {isSendingSms && <Loader2 className="mr-2 size-4 animate-spin" />}
-            {maskedPhone ? "Gửi lại OTP qua SMS" : "Gửi OTP qua SMS"}
+            {maskedPhone ? "Resend OTP via SMS" : "Send OTP via SMS"}
           </Button>
         )}
 
         <div className="space-y-1.5">
           <Label htmlFor="code">
-            {isBackup ? "Backup code" : isSms ? "Mã OTP (SMS)" : "Mã TOTP"}
+            {isBackup ? "Backup code" : isSms ? "OTP code (SMS)" : "TOTP code"}
           </Label>
           <Input
             id="code"
@@ -143,12 +143,12 @@ const Login2faPage = () => {
                 htmlFor="trust-device"
                 className="text-sm font-normal text-slate-600"
               >
-                Tin tưởng thiết bị này (bỏ qua 2FA trong 30 ngày)
+                Trust this device (skip 2FA for 30 days)
               </Label>
             </div>
             {trustDevice && (
               <Input
-                placeholder="Tên thiết bị (vd: MacBook nhà) — tùy chọn"
+                placeholder="Device name (e.g. Home MacBook) — optional"
                 maxLength={120}
                 value={trustDeviceLabel}
                 onChange={(e) => setTrustDeviceLabel(e.target.value)}
@@ -163,7 +163,7 @@ const Login2faPage = () => {
           className="h-10 w-full rounded-lg bg-emerald-600 font-semibold text-white hover:bg-emerald-700"
         >
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Xác thực
+          Verify
         </Button>
 
         <div className="flex flex-col gap-1.5 text-center text-sm text-slate-500">
@@ -173,7 +173,7 @@ const Login2faPage = () => {
               className="hover:text-emerald-600"
               onClick={() => switchMode("backup")}
             >
-              Dùng backup code thay thế
+              Use a backup code instead
             </button>
           )}
           {!isSms && (
@@ -182,7 +182,7 @@ const Login2faPage = () => {
               className="hover:text-emerald-600"
               onClick={() => switchMode("sms")}
             >
-              Mất Authenticator? Nhận OTP qua SMS
+              Lost your Authenticator? Get an OTP via SMS
             </button>
           )}
           {mode !== "totp" && (
@@ -191,7 +191,7 @@ const Login2faPage = () => {
               className="hover:text-emerald-600"
               onClick={() => switchMode("totp")}
             >
-              Dùng mã TOTP từ Authenticator
+              Use TOTP code from Authenticator
             </button>
           )}
         </div>

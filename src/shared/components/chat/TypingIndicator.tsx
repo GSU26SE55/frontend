@@ -1,19 +1,20 @@
 interface Props {
-  /** Tên những người đang nhập. */
+  /** Names of the people currently typing. */
   names: string[];
 }
 
 /**
- * Chỉ báo "đang nhập" dạng chữ, nền trong suốt, đặt ngay trên ô nhập. 1 người → "[Tên] đang
- * nhập"; nhiều người → "N người đang nhập". Kèm 3 chấm nhấp nháy nhỏ (keyframe dot-pulse).
+ * Text-based "typing" indicator, transparent background, placed right above the input.
+ * 1 person → "[Name] is typing"; multiple → "N people are typing". Includes 3 small
+ * pulsing dots (dot-pulse keyframe).
  */
 export default function TypingIndicator({ names }: Props) {
   if (names.length === 0) return null;
 
   const label =
     names.length === 1
-      ? `${names[0]} đang nhập`
-      : `${names.length} người đang nhập`;
+      ? `${names[0]} is typing`
+      : `${names.length} people are typing`;
 
   return (
     <div className="flex items-center gap-1.5 px-1 pb-1 text-[11px] text-muted-foreground italic leading-none">

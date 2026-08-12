@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { History, GitCompare, Undo2, Eye } from "lucide-react";
+import { History, GitCompare, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,8 +23,7 @@ import { ACTIONS } from "@/shared/constants/actions";
 interface KbVersionHistoryProps {
   versions: KbArticleVersionDTO[];
   onCompare: (fromVersionId: string, toVersionId?: string) => void;
-  onRollback?: (versionId: string) => void; // chỉ Manager/Admin
-  onViewVersion?: (versionId: string) => void;
+  onRollback?: (versionId: string) => void; // Manager/Admin only
   isPending?: boolean;
 }
 
@@ -32,7 +31,6 @@ export function KbVersionHistory({
   versions,
   onCompare,
   onRollback,
-  onViewVersion,
   isPending,
 }: KbVersionHistoryProps) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -48,7 +46,7 @@ export function KbVersionHistory({
   if (!versions.length) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
-        Chưa có phiên bản nào.
+        No versions yet.
       </p>
     );
   }
@@ -58,7 +56,7 @@ export function KbVersionHistory({
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 text-sm font-semibold">
           <History className="size-4" />
-          Lịch sử phiên bản
+          Version history
         </h3>
         <Button
           size="sm"
@@ -68,7 +66,7 @@ export function KbVersionHistory({
           onClick={() => onCompare(selected[0], selected[1])}
         >
           <GitCompare className="size-3.5" />
-          So sánh {selected.length > 0 ? `(${selected.length})` : ""}
+          Compare {selected.length > 0 ? `(${selected.length})` : ""}
         </Button>
       </div>
 
@@ -105,20 +103,9 @@ export function KbVersionHistory({
                 )}
                 <p className="text-[11px] text-muted-foreground">
                   {v.changedBy} ·{" "}
-                  {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
+                  {format(new Date(v.createdAt), "MM/dd/yyyy HH:mm")}
                 </p>
               </div>
-              {onViewVersion && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-7"
-                  title="Xem nội dung phiên bản này"
-                  onClick={() => onViewVersion(v.id)}
-                >
-                  <Eye className="size-3.5" />
-                </Button>
-              )}
               {onRollback && (
                 <AlertDialog>
                   <AlertDialogTrigger
@@ -127,7 +114,7 @@ export function KbVersionHistory({
                         size="icon"
                         variant="ghost"
                         className="size-7"
-                        title="Hoàn tác về phiên bản này"
+                        title="Roll back to this version"
                         disabled={isPending}
                       />
                     }
@@ -137,11 +124,11 @@ export function KbVersionHistory({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        Hoàn tác về v{v.majorVersion}.{v.minorVersion}?
+                        Roll back to v{v.majorVersion}.{v.minorVersion}?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        Nội dung bài viết sẽ được khôi phục về phiên bản này và
-                        tạo một phiên bản mới. Bạn có chắc chắn?
+                        The article content will be restored to this version and
+                        a new version will be created. Are you sure?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -150,7 +137,7 @@ export function KbVersionHistory({
                         variant="default"
                         onClick={() => onRollback(v.id)}
                       >
-                        Hoàn tác
+                        Roll back
                       </AlertDialogCancel>
                     </AlertDialogFooter>
                   </AlertDialogContent>

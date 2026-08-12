@@ -43,7 +43,7 @@ export default function SlaCountdown({ slaTimer }: Props) {
       <span
         className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("ok")}`}
       >
-        Đúng hạn
+        On time
       </span>
     );
   }
@@ -53,7 +53,7 @@ export default function SlaCountdown({ slaTimer }: Props) {
       <span
         className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
       >
-        Vi phạm SLA
+        SLA breached
       </span>
     );
   }
@@ -63,14 +63,14 @@ export default function SlaCountdown({ slaTimer }: Props) {
       <span
         className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p3")}`}
       >
-        Tạm dừng
+        Paused
       </span>
     );
   }
 
-  // Ngưỡng cảnh báo THỐNG NHẤT với staff SlaCountdown + dashboard isNearBreach:
-  // dùng remainingPercent (tương đối, đúng cho mọi priority P1/P2/P3) thay vì
-  // mốc <1h tuyệt đối — tránh cùng 1 ticket 2 role hiển thị mức khẩn khác nhau.
+  // Warning threshold kept CONSISTENT with staff SlaCountdown + dashboard isNearBreach:
+  // uses remainingPercent (relative, correct for every priority P1/P2/P3) instead of an
+  // absolute <1h mark — avoids the same ticket showing a different urgency level per role.
   const isWarning = isNearBreachPercent(slaTimer.remainingPercent);
   return (
     <span

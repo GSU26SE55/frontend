@@ -29,15 +29,23 @@ import {
   type EscalateFormValues,
 } from "@/features/manager/schemas/ticket/ticket.schema";
 import { EscalationReasonEnum } from "@/shared/types/ticket/ticket.types";
-import { useEscalateTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
+// GH-1176: Manager approves Staff escalation request (Request→ReAssign).
+import { useEscalateApproveTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
 
 const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
-  SkillGap: "Vượt quá năng lực kỹ thuật",
-  PartsRequired: "Cần linh kiện không có sẵn",
-  SafetyConcern: "Lo ngại về an toàn",
-  SlaBreach: "SLA đã vi phạm",
-  CustomerComplaint: "Khiếu nại của khách hàng",
+  SkillGap: "Exceeds technical capability",
+  PartsRequired: "Requires unavailable parts",
+  SafetyConcern: "Safety concern",
+  SlaBreach: "SLA breached",
+  CustomerComplaint: "Customer complaint",
 };
+
+// Options offered to the user — PartsRequired is excluded since the system has no
+// warehouse flow. The label above is kept so older tickets that stored this value
+// still display the correct text.
+const REASON_OPTIONS = (
+  Object.values(EscalationReasonEnum) as EscalationReasonEnum[]
+).filter((v) => v !== EscalationReasonEnum.PartsRequired);
 
 interface Props {
   ticketId: string;
@@ -46,7 +54,7 @@ interface Props {
 }
 
 export default function EscalateDialog({ ticketId, open, onClose }: Props) {
-  const { mutateAsync, isPending } = useEscalateTicket(ticketId);
+  const { mutateAsync, isPending } = useEscalateApproveTicket(ticketId);
 
   const form = useForm<EscalateFormValues>({
     resolver: zodResolver(escalateSchema),
@@ -63,7 +71,7 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Chuyển cấp xử lý</DialogTitle>
+          <DialogTitle>Escalate</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -72,24 +80,22 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lý do chuyển cấp *</FormLabel>
+                  <FormLabel>Escalation reason *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    items={Object.entries(EscalationReasonEnum).map(
-                      ([, v]) => ({
-                        value: v,
-                        label: ESCALATION_REASON_LABEL[v],
-                      }),
-                    )}
+                    items={REASON_OPTIONS.map((v) => ({
+                      value: v,
+                      label: ESCALATION_REASON_LABEL[v],
+                    }))}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Chọn lý do" />
+                        <SelectValue placeholder="Select a reason" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent alignItemWithTrigger={false}>
-                      {Object.entries(EscalationReasonEnum).map(([, v]) => (
+                      {REASON_OPTIONS.map((v) => (
                         <SelectItem key={v} value={v}>
                           {ESCALATION_REASON_LABEL[v]}
                         </SelectItem>
@@ -106,9 +112,9 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ghi chú bổ sung (tuỳ chọn)</FormLabel>
+                  <FormLabel>Additional notes (optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Ghi chú..." {...field} />
+                    <Textarea placeholder="Notes..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,10 +123,10 @@ export default function EscalateDialog({ ticketId, open, onClose }: Props) {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Hủy
+                Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Đang xử lý..." : "Chuyển cấp"}
+                {isPending ? "Processing..." : "Escalate"}
               </Button>
             </DialogFooter>
           </form>

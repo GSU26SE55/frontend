@@ -7,9 +7,9 @@ import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 
 const STATUS_LABEL: Record<SiteStatusEnum, string> = {
-  [SiteStatusEnum.Active]: "Hoạt động",
-  [SiteStatusEnum.UnderMaintenance]: "Bảo trì",
-  [SiteStatusEnum.Decommissioned]: "Đã ngừng",
+  [SiteStatusEnum.Active]: "Active",
+  [SiteStatusEnum.UnderMaintenance]: "Under maintenance",
+  [SiteStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const STATUS_VARIANT: Record<
@@ -25,7 +25,7 @@ interface SiteTableProps {
   data: SiteDto[];
   pageNumber?: number;
   pageSize?: number;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Server-side sort — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -40,7 +40,7 @@ export default function SiteTable({
   const columns: ColumnDef<SiteDto>[] = [
     {
       id: "name",
-      header: "Tên site",
+      header: "Site name",
       sortKey: "name",
       sortValue: (s) => s.name,
       cellClassName: "font-medium",
@@ -48,14 +48,14 @@ export default function SiteTable({
     },
     {
       id: "customerName",
-      header: "Khách hàng",
+      header: "Customer",
       sortKey: "customerName",
       sortValue: (s) => s.customerName,
       cell: (s) => s.customerName,
     },
     {
       id: "status",
-      header: "Trạng thái",
+      header: "Status",
       sortKey: "status",
       sortValue: (s) => STATUS_LABEL[s.status],
       cell: (s) => (
@@ -66,17 +66,17 @@ export default function SiteTable({
     },
     {
       id: "batteryAssetCount",
-      header: "Số pin",
+      header: "Batteries",
       sortKey: "batteryAssetCount",
       sortValue: (s) => s.batteryAssetCount,
       cell: (s) => s.batteryAssetCount,
     },
     {
       id: "installDate",
-      header: "Ngày lắp đặt",
+      header: "Install date",
       sortKey: "installDate",
       sortValue: (s) => new Date(s.installDate).getTime(),
-      cell: (s) => format(new Date(s.installDate), "dd/MM/yyyy"),
+      cell: (s) => format(new Date(s.installDate), "MM/dd/yyyy"),
     },
     {
       id: "chevron",

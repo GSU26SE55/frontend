@@ -5,7 +5,7 @@ import { prefersReducedMotion } from "@/features/landing/lib/animation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/features/landing/landing.constants";
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo.webp";
 
 type LandingHeaderProps = {
   scrolled: boolean;
@@ -84,7 +84,7 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
 
         {/* Right: Badge + Login */}
         <div className="flex items-center justify-end gap-3">
-          {/* "AI-Powered" badge — visible trên đủ lớn */}
+          {/* "AI-Powered" badge — shown on large enough screens */}
           {/* <span
             data-anim="header-item"
             className={cn(
@@ -110,7 +110,7 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
             )}
           >
             <LockKeyhole className="size-3.5" />
-            Đăng nhập
+            Sign in
           </Button>
         </div>
       </div>

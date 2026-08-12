@@ -9,11 +9,12 @@ import {
   type BatteryAssetDto,
 } from "@/shared/types/battery/battery.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { toneClass } from "@/shared/theme/statusColors";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Không hoạt động",
-  [BatteryStatusEnum.Decommissioned]: "Đã ngừng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const STATUS_VARIANT: Record<
@@ -25,6 +26,21 @@ const STATUS_VARIANT: Record<
   [BatteryStatusEnum.Decommissioned]: "destructive",
 };
 
+// `status` is the business lifecycle (Active/Suspended/Decommissioned), set by hand by the
+// admin — it does NOT auto-update based on connectivity. So an "Active" battery can still stop
+// sending data (broken wire, power loss, faulty sensor) without the DB's status column ever
+// knowing. An "Active" badge sitting next to a "Last reading" that's days stale is
+// self-contradictory on the very same row — cover that badge with "Disconnected" in that case.
+// The threshold matches the BE's default `OfflineThresholdMinutes` (see docs/api-battery.md,
+// offlineAssets section) — used for DISPLAY only, not the actual alert source.
+const OFFLINE_THRESHOLD_MINUTES = 10;
+
+function isReadingStale(lastSensorReadingAt: string | null | undefined) {
+  if (!lastSensorReadingAt) return true; // never had a reading → treat as disconnected
+  const ageMs = Date.now() - new Date(lastSensorReadingAt).getTime();
+  return ageMs > OFFLINE_THRESHOLD_MINUTES * 60_000;
+}
+
 interface SiteAssetsTableProps {
   data: BatteryAssetDto[];
   totalCount: number;
@@ -32,7 +48,7 @@ interface SiteAssetsTableProps {
   pageSize: number;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
-  /** Click 1 cục pin → mở chi tiết. Bỏ → hàng không click được. */
+  /** Click a battery → open details. Omit → row isn't clickable. */
   onAssetClick?: (asset: BatteryAssetDto) => void;
 }
 
@@ -60,7 +76,7 @@ export default function SiteAssetsTable({
   if (data.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground py-8">
-        Chưa có pin nào.
+        No batteries yet.
       </p>
     );
   }
@@ -68,35 +84,48 @@ export default function SiteAssetsTable({
   const columns: ColumnDef<BatteryAssetDto>[] = [
     {
       id: "serialNumber",
-      header: "Số seri",
+      header: "Serial number",
       cell: (asset) => asset.serialNumber,
       cellClassName: "font-mono text-sm",
     },
     {
       id: "batteryTypeName",
-      header: "Loại pin",
+      header: "Battery type",
       cell: (asset) => asset.batteryTypeName,
     },
     {
       id: "status",
       header: TABLE_COLUMNS.status,
-      cell: (asset) => (
-        <Badge variant={STATUS_VARIANT[asset.status]}>
-          {STATUS_LABEL[asset.status]}
-        </Badge>
-      ),
+      cell: (asset) => {
+        const offline =
+          asset.status === BatteryStatusEnum.Active &&
+          isReadingStale(asset.lastSensorReadingAt);
+        return offline ? (
+          <Badge
+            variant="outline"
+            className={toneClass("p3")}
+            title="Status is Active on record, but there's no recent sensor reading"
+          >
+            Disconnected
+          </Badge>
+        ) : (
+          <Badge variant={STATUS_VARIANT[asset.status]}>
+            {STATUS_LABEL[asset.status]}
+          </Badge>
+        );
+      },
     },
     {
       id: "installDate",
-      header: "Ngày lắp",
-      cell: (asset) => format(new Date(asset.installDate), "dd/MM/yyyy"),
+      header: "Install date",
+      cell: (asset) => format(new Date(asset.installDate), "MM/dd/yyyy"),
     },
     {
       id: "lastSensorReadingAt",
-      header: "Đọc cuối",
+      header: "Last reading",
       cell: (asset) =>
         asset.lastSensorReadingAt
-          ? format(new Date(asset.lastSensorReadingAt), "dd/MM/yyyy HH:mm")
+          ? format(new Date(asset.lastSensorReadingAt), "MM/dd/yyyy HH:mm")
           : "—",
     },
   ];
@@ -131,7 +160,7 @@ export default function SiteAssetsTable({
             onClick={() => onPageChange(pageNumber - 1)}
             disabled={pageNumber <= 1}
           >
-            Trước
+            Previous
           </Button>
           <span className="text-sm text-muted-foreground">
             {pageNumber} / {totalPages}
@@ -142,7 +171,7 @@ export default function SiteAssetsTable({
             onClick={() => onPageChange(pageNumber + 1)}
             disabled={pageNumber >= totalPages}
           >
-            Sau
+            Next
           </Button>
         </div>
       )}

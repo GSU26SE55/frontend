@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceForm from "@/features/admin/components/iot/IoTDeviceForm";
 import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
+import { fromCreatedDto } from "@/features/admin/components/iot/deviceSecrets";
 import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
 import type { IotDeviceCreatedDto } from "@/shared/types/iot/iot.types";
 
@@ -17,7 +18,7 @@ export default function IoTDeviceFormPage() {
 
   const [created, setCreated] = useState<IotDeviceCreatedDto | null>(null);
 
-  // Sau khi đóng dialog reveal → điều hướng tới detail của device vừa tạo.
+  // After closing the reveal dialog → navigate to the detail page of the newly created device.
   const handleSecretsClose = () => {
     const newId = created?.id;
     setCreated(null);
@@ -36,10 +37,10 @@ export default function IoTDeviceFormPage() {
         </Button>
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; IoT Devices
+            Admin &middot; Devices
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isEdit ? "Chỉnh sửa thiết bị" : "Tạo thiết bị mới"}
+            {isEdit ? "Edit device" : "Create new device"}
           </h1>
         </div>
       </div>
@@ -52,7 +53,7 @@ export default function IoTDeviceFormPage() {
             ))}
           </div>
         ) : isEdit && !device ? (
-          <p className="text-muted-foreground">Không tìm thấy thiết bị.</p>
+          <p className="text-muted-foreground">Device not found.</p>
         ) : (
           <IoTDeviceForm
             device={isEdit ? device : undefined}
@@ -66,7 +67,7 @@ export default function IoTDeviceFormPage() {
       <DeviceKeyRevealDialog
         open={!!created}
         onOpenChange={(o) => !o && handleSecretsClose()}
-        device={created}
+        device={created ? fromCreatedDto(created) : null}
       />
     </div>
   );

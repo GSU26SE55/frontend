@@ -3,9 +3,9 @@ import { z } from "zod";
 const envSchema = z.object({
   VITE_API_BASE_URL: z.string().min(1),
   VITE_GOOGLE_CLIENT_ID: z.string().min(1),
-  // Origin của SignalR hub (vd http://localhost:5xxx). signalr.ts ghép path
-  // /hubs/ticket-chats. Biến RIÊNG; optional → khi không set, signalr.ts
-  // fallback về VITE_API_BASE_URL (đặt VITE_WS_URL khi hub khác origin API).
+  // SignalR hub origin (e.g. http://localhost:5xxx). signalr.ts appends the path
+  // /hubs/ticket-chats. SEPARATE var; optional → when unset, signalr.ts falls
+  // back to VITE_API_BASE_URL (set VITE_WS_URL when the hub is on a different origin than the API).
   VITE_WS_URL: z.string().min(1).optional(),
 });
 

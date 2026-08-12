@@ -8,20 +8,20 @@ import {
 } from "@/shared/enums/iot/iot.enum";
 
 const SCOPE_LABEL: Record<number, string> = {
-  [IotApiKeyScopeEnum.SensorIngest]: "Sensor Ingest — đẩy sensor readings",
+  [IotApiKeyScopeEnum.SensorIngest]: "Sensor Ingest — push sensor readings",
   [IotApiKeyScopeEnum.DeviceHeartbeat]:
     "Device Heartbeat — provision + heartbeat",
   [IotApiKeyScopeEnum.EnvironmentalIngest]:
-    "Environmental Ingest — dữ liệu môi trường",
-  [IotApiKeyScopeEnum.FirmwareCheck]: "Firmware Check — kiểm tra OTA",
+    "Environmental Ingest — environmental data",
+  [IotApiKeyScopeEnum.FirmwareCheck]: "Firmware Check — OTA check",
 };
 
 interface Props {
-  value: number; // bitmask hiện tại (default EdgeDeviceDefault = 11)
+  value: number; // current bitmask (default EdgeDeviceDefault = 15 — GH-785)
   onChange: (value: number) => void;
 }
 
-// Render checkbox cho từng flag nguyên tử; combo lưu thành 1 số bitmask.
+// Render a checkbox per atomic flag; the combination is stored as a single bitmask number.
 export default function ApiKeyScopesField({ value, onChange }: Props) {
   return (
     <div className="space-y-2 rounded-md border p-3">
@@ -45,7 +45,7 @@ export default function ApiKeyScopesField({ value, onChange }: Props) {
         className="text-xs text-muted-foreground underline"
         onClick={() => onChange(IotApiKeyScopeEnum.EdgeDeviceDefault)}
       >
-        Đặt mặc định (EdgeDeviceDefault)
+        Reset to default (EdgeDeviceDefault)
       </button>
     </div>
   );

@@ -90,13 +90,13 @@ export const adminAccountsService = {
       payload,
     ),
 
-  // GH-295: admin reset 2FA của user khác (idempotent)
+  // GH-295: admin resets another user's 2FA (idempotent)
   reset2fa: (id: string) =>
     axiosInstance.delete<CommonResponse<string>>(
       ENDPOINTS.ADMIN.ACCOUNTS.RESET_2FA(id),
     ),
 
-  // #AUTH-47: merge secondary account vào primary (path id = primaryAccountId)
+  // #AUTH-47: merge the secondary account into the primary (path id = primaryAccountId)
   merge: (primaryId: string, payload: MergeAccountPayload) =>
     axiosInstance.post<CommonResponse<string>>(
       ENDPOINTS.ADMIN.ACCOUNTS.MERGE(primaryId),

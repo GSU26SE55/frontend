@@ -1,5 +1,5 @@
-// Audit log Pin & Cảnh báo (BatteryService fallback) — docs/api-battery.md §Audit (2739-2794).
-// severity/actionCategory: DISPLAY-only (render badge màu); KHÔNG phải filter param.
+// Battery & Alert audit log (BatteryService fallback) — docs/api-battery.md §Audit (2739-2794).
+// severity/actionCategory: DISPLAY-only (renders a colored badge); NOT a filter param.
 export type {
   AuditSeverity,
   AuditActionCategory,
@@ -9,17 +9,17 @@ export interface BatteryAuditLogDto {
   id: string;
   eventId: string; // idempotency key
   actionCode: string;
-  actionCategory: string; // xem AuditActionCategory
-  severity: string; // xem AuditSeverity
+  actionCategory: string; // see AuditActionCategory
+  severity: string; // see AuditSeverity
   targetId: string | null;
-  targetDisplay: string | null; // null / [REDACTED] sau GDPR
-  actorAccountId: string | null; // null nếu hệ thống
+  targetDisplay: string | null; // null / [REDACTED] after GDPR
+  actorAccountId: string | null; // null if system
   isSuccess: boolean;
   reason: string | null;
   occurredAt: string; // ISO UTC
 }
 
-// Filter param BatteryService: chỉ action / target / date / page (KHÔNG có severity/category).
+// Filter param BatteryService: only action / target / date / page (NO severity/category).
 export interface BatteryAuditLogParams {
   action?: string;
   batteryId?: string;

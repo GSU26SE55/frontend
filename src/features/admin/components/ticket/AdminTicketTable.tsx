@@ -11,17 +11,17 @@ import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 
 const CATEGORY_LABELS: Record<string, string> = {
-  Maintenance: "Bảo trì",
-  Repair: "Sửa chữa",
-  Inspection: "Kiểm tra",
-  Emergency: "Khẩn cấp",
-  Replacement: "Thay thế",
-  Upgrade: "Nâng cấp",
-  Other: "Khác",
-  Charging: "Lỗi sạc",
-  Overheat: "Quá nhiệt",
-  NoPower: "Không điện",
-  Performance: "Hiệu suất",
+  Maintenance: "Maintenance",
+  Repair: "Repair",
+  Inspection: "Inspection",
+  Emergency: "Emergency",
+  Replacement: "Replacement",
+  Upgrade: "Upgrade",
+  Other: "Other",
+  Charging: "Charging fault",
+  Overheat: "Overheat",
+  NoPower: "No power",
+  Performance: "Performance",
 };
 
 interface Props {
@@ -31,7 +31,7 @@ interface Props {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
-  /** Sort server-side — state từ useUrlSort. */
+  /** Server-side sort — state from useUrlSort. */
   sort: ServerSortState;
 }
 
@@ -50,7 +50,7 @@ export default function AdminTicketTable({
   const columns: ColumnDef<TicketDTO>[] = [
     {
       id: "code",
-      header: "Mã",
+      header: "Code",
       sortKey: "code",
       sortValue: (t) => t.code,
       headClassName: "w-32",
@@ -66,7 +66,7 @@ export default function AdminTicketTable({
     },
     {
       id: "title",
-      header: "Tiêu đề",
+      header: "Title",
       sortKey: "title",
       sortValue: (t) => t.title,
       cellClassName: "max-w-xs truncate",
@@ -74,7 +74,7 @@ export default function AdminTicketTable({
     },
     {
       id: "category",
-      header: "Loại",
+      header: "Category",
       sortKey: "category",
       sortValue: (t) => CATEGORY_LABELS[t.category] ?? t.category,
       headClassName: "w-32",
@@ -83,7 +83,7 @@ export default function AdminTicketTable({
     },
     {
       id: "status",
-      header: "Trạng thái",
+      header: "Status",
       sortKey: "status",
       sortValue: (t) => t.status,
       headClassName: "w-36",
@@ -99,12 +99,12 @@ export default function AdminTicketTable({
     },
     {
       id: "createdAt",
-      header: "Ngày tạo",
+      header: "Created",
       sortKey: "createdAt",
       sortValue: (t) => new Date(t.createdAt).getTime(),
       headClassName: "w-36",
       cellClassName: "text-sm text-muted-foreground",
-      cell: (t) => format(new Date(t.createdAt), "dd/MM/yyyy HH:mm"),
+      cell: (t) => format(new Date(t.createdAt), "MM/dd/yyyy HH:mm"),
     },
   ];
 
@@ -121,7 +121,7 @@ export default function AdminTicketTable({
   if (!tickets.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <p>Không có ticket nào.</p>
+        <p>No tickets found.</p>
       </div>
     );
   }

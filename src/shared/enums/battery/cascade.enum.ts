@@ -1,8 +1,9 @@
-// Cascade Risk — dùng ≥ 2 feature (admin + manager) → đặt ở shared.
-// Docs: docs/api-battery.md §Nhóm 12 (Sprint 7 B4).
-// ⚠️ BE serialize enum dạng STRING NAME trong response ("SeriesString", "High"),
-//    nhưng POST topology nhận INT ({ electricalTopology: 2 }). Value số dùng để gửi POST + build select;
-//    DTO field dùng string-name union (keyof typeof Enum) — xem cascade.types.ts.
+// Cascade Risk — used by ≥ 2 features (admin + manager) → lives in shared.
+// Docs: docs/api-battery.md §Group 12 (Sprint 7 B4).
+// ⚠️ The BE serializes the enum as a STRING NAME in responses ("SeriesString", "High"),
+//    but POST topology takes an INT ({ electricalTopology: 2 }). The numeric values are for
+//    the POST body + building selects; DTO fields use the string-name union
+//    (keyof typeof Enum) — see cascade.types.ts.
 
 export const ElectricalTopologyEnum = {
   Independent: 1,

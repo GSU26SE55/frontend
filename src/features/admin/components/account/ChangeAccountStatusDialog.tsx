@@ -30,10 +30,10 @@ import type { AccountDto } from "@/shared/types/account/account.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_OPTIONS = [
-  { value: AccountStatusEnum.Active, label: "Hoạt động" },
-  { value: AccountStatusEnum.Inactive, label: "Không hoạt động" },
-  { value: AccountStatusEnum.Suspended, label: "Tạm khóa" },
-  { value: AccountStatusEnum.Banned, label: "Bị cấm" },
+  { value: AccountStatusEnum.Active, label: "Active" },
+  { value: AccountStatusEnum.Inactive, label: "Inactive" },
+  { value: AccountStatusEnum.Suspended, label: "Suspended" },
+  { value: AccountStatusEnum.Banned, label: "Banned" },
 ];
 
 interface Props {
@@ -83,18 +83,18 @@ export default function ChangeAccountStatusDialog({
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Thay đổi trạng thái tài khoản</DialogTitle>
+          <DialogTitle>Change account status</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Tài khoản:{" "}
+            Account:{" "}
             <span className="font-medium text-foreground">
               {account.fullName}
             </span>
           </p>
           <div className="space-y-1.5">
             <Label>
-              Trạng thái mới <span className="text-red-500">*</span>
+              New status <span className="text-red-500">*</span>
             </Label>
             <Controller
               name="status"
@@ -109,7 +109,7 @@ export default function ChangeAccountStatusDialog({
                   onValueChange={(v) => field.onChange(Number(v))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder="Select a status" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {STATUS_OPTIONS.map((o) => (
@@ -126,15 +126,15 @@ export default function ChangeAccountStatusDialog({
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>Lý do</Label>
+            <Label>Reason</Label>
             <Input
               {...register("reason")}
-              placeholder="Nhập lý do (tùy chọn)"
+              placeholder="Enter a reason (optional)"
             />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Hủy
+              Cancel
             </Button>
             <Button
               type="submit"
@@ -142,7 +142,7 @@ export default function ChangeAccountStatusDialog({
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Xác nhận
+              Confirm
             </Button>
           </DialogFooter>
         </form>

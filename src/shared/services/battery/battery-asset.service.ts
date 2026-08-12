@@ -10,9 +10,9 @@ import type {
   BatteryAssetListParams,
 } from "@/shared/types/battery/battery-asset.types";
 
-// Read-only battery asset — dùng chung admin/manager/staff.
-// getList: Admin,Manager (Staff bị BE chặn → staff không gọi getList).
-// getById/getRealtime: Admin,Manager,Staff,Customer.
+// Read-only battery asset — shared across admin/manager/staff.
+// getList: Admin, Manager (Staff is blocked by the BE → staff never calls getList).
+// getById/getRealtime: Admin, Manager, Staff, Customer.
 export const batteryAssetService = {
   getList: (params?: BatteryAssetListParams) =>
     axiosInstance.get<

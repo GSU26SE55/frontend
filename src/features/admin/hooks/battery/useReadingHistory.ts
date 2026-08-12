@@ -1,4 +1,4 @@
-// Re-export từ shared — nguồn thật ở shared/hooks/battery/useReadingHistory.ts.
+// Re-export from shared — real source at shared/hooks/battery/useReadingHistory.ts.
 export {
   useReadingHistory,
   useReadingHistoryLatest,

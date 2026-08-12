@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Pagination,
   PaginationContent,
@@ -55,8 +56,31 @@ export default function DataPagination({
   onPageSizeChange,
   pageSizeOptions = PAGE_SIZE_OPTIONS,
 }: DataPaginationProps) {
+  // Page beyond the data — a stale URL/bookmark, or data was just filtered/deleted down.
+  const outOfRange =
+    totalItems > 0 && (pageNumber - 1) * pageSize >= totalItems;
+
+  // Auto-pull back to the last page that STILL has data.
+  //
+  // Why this is needed: the BE returns 200 + empty items for a page beyond the data (before
+  // 08/02/2026 it threw a 500 from int overflow, so the FE never had to handle this state
+  // before). Without pulling back, the screen contradicts itself: title says "4 battery types",
+  // this bar says "Showing 0 / 4", but the table says "No battery types yet" — the user thinks
+  // all the data is gone. The "Previous" button also only steps back 1 page at a time, so from
+  // page 99 it'd take 98 clicks.
+  //
+  // No infinite loop: after pulling back, pageNumber = totalPages so outOfRange becomes false.
+  // Every consumer of onPageChange genuinely updates state (all 29 spots have been checked),
+  // so the next render is guaranteed to exit.
+  useEffect(() => {
+    if (outOfRange) onPageChange(totalPages);
+  }, [outOfRange, totalPages, onPageChange]);
+
   if (totalItems === 0) return null;
 
+  // outOfRange only exists for exactly 1 render before the effect above pulls back to the last
+  // page. It still needs handling here, otherwise that render prints a nonsensical string like
+  // "Showing 76–39 / 39".
   const from = (pageNumber - 1) * pageSize + 1;
   const to = Math.min(pageNumber * pageSize, totalItems);
   const pageRange = buildPageRange(pageNumber, totalPages);
@@ -65,17 +89,23 @@ export default function DataPagination({
     <div className="flex items-center justify-between px-1">
       {/* Left: total */}
       <span className="text-sm text-muted-foreground whitespace-nowrap">
-        Hiển thị {from}–{to} / {totalItems}
+        {outOfRange
+          ? `Showing 0 / ${totalItems}`
+          : `Showing ${from}–${to} / ${totalItems}`}
       </span>
 
       {/* Right: page size selector + pagination */}
       <div className="flex items-center gap-2">
         {onPageSizeChange && (
           <>
-            <span className="text-sm text-muted-foreground">Dòng</span>
+            <span className="text-sm text-muted-foreground">Rows</span>
             <Select
               value={String(pageSize)}
               onValueChange={(v) => onPageSizeChange(Number(v))}
+              items={pageSizeOptions.map((s) => ({
+                value: String(s),
+                label: String(s),
+              }))}
             >
               <SelectTrigger className="h-8 w-16">
                 <SelectValue />

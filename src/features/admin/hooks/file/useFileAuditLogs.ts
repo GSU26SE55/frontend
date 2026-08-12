@@ -3,8 +3,8 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { fileAuditLogsService } from "@/features/admin/services/file/file-audit-logs.service";
 import type { FileAuditLogParams } from "@/features/admin/types/file/file-audit.types";
 
-// GH-133 C5 — audit truy cập file GDPR (Admin). BE không trả actionCategory →
-// map "" để giữ đúng shape audit chung (BatteryAuditLogTable render badge category).
+// GH-133 C5 — GDPR file access audit (Admin). BE doesn't return actionCategory →
+// map to "" to keep the common audit shape (BatteryAuditLogTable renders the badge category).
 export function useFileAuditLogs(params?: FileAuditLogParams, enabled = true) {
   return useQuery({
     queryKey: QUERY_KEY.admin.fileAuditLogs.list(params),

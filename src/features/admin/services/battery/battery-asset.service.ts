@@ -9,7 +9,7 @@ import type {
 } from "@/features/admin/types/battery/battery-asset.types";
 import { batteryAssetService as sharedBatteryAssetService } from "@/shared/services/battery/battery-asset.service";
 
-// Read (getList/getById/getRealtime) dùng chung ở shared; admin bổ sung CRUD (Admin-only).
+// Read (getList/getById/getRealtime) is shared; admin adds CRUD (Admin-only).
 export const batteryAssetService = {
   ...sharedBatteryAssetService,
   create: (payload: CreateBatteryAssetPayload) =>

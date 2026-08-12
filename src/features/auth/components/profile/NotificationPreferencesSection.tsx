@@ -26,7 +26,7 @@ import {
 import type { NotificationPreferenceDto } from "@/shared/types/notification/notification-preference.types";
 import { MESSAGES } from "@/shared/constants/messages";
 
-// Default khớp BE GetNotificationPreferenceQueryHandler (chưa cấu hình)
+// Default matches BE GetNotificationPreferenceQueryHandler (not yet configured)
 const DEFAULT_PREF: NotificationPreferenceFormValues = {
   pushEnabled: true,
   emailEnabled: true,
@@ -38,10 +38,10 @@ const DEFAULT_PREF: NotificationPreferenceFormValues = {
 };
 
 const CHANNELS = [
-  { name: "pushEnabled", label: "Push", desc: "Thông báo đẩy tới thiết bị" },
-  { name: "emailEnabled", label: "Email", desc: "Gửi qua email" },
-  { name: "smsEnabled", label: "SMS", desc: "Gửi qua tin nhắn SMS" },
-  { name: "inAppEnabled", label: "Trong ứng dụng", desc: "Hiển thị trong app" },
+  { name: "pushEnabled", label: "Push", desc: "Push notification to devices" },
+  { name: "emailEnabled", label: "Email", desc: "Send via email" },
+  { name: "smsEnabled", label: "SMS", desc: "Send via SMS message" },
+  { name: "inAppEnabled", label: "In-app", desc: "Show inside the app" },
 ] as const;
 
 const TIMEZONE_OPTIONS = [
@@ -87,11 +87,11 @@ export default function NotificationPreferencesSection() {
     defaultValues: DEFAULT_PREF,
   });
 
-  // Bật/tắt quiet hours suy ra từ giá trị form (tránh state song song + set-state-in-effect)
+  // Quiet hours toggle derived from form value (avoids parallel state + set-state-in-effect)
   const quietHoursStart = useWatch({ control, name: "quietHoursStart" });
   const quietHoursEnabled = quietHoursStart !== null;
 
-  // Load+edit: fill form khi data về (pattern khác form đăng-ký dùng defaultValues tĩnh)
+  // Load+edit: fill the form when data arrives (differs from registration form, which uses static defaultValues)
   useEffect(() => {
     if (data) reset(toFormValues(data));
   }, [data, reset]);
@@ -107,7 +107,7 @@ export default function NotificationPreferencesSection() {
   };
 
   const onSubmit = async (values: NotificationPreferenceFormValues) => {
-    // An toàn: quiet hours tắt → luôn gửi null/null
+    // Safety: quiet hours off → always send null/null
     const payload: NotificationPreferenceFormValues = quietHoursEnabled
       ? values
       : { ...values, quietHoursStart: null, quietHoursEnd: null };
@@ -122,7 +122,7 @@ export default function NotificationPreferencesSection() {
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Đang tải…
+        <Loader2 className="size-4 animate-spin" /> Loading…
       </div>
     );
   }
@@ -131,10 +131,10 @@ export default function NotificationPreferencesSection() {
     return (
       <div className="space-y-3">
         <p className="text-sm text-red-500">
-          Không tải được cài đặt thông báo.
+          Failed to load notification settings.
         </p>
         <Button type="button" variant="outline" onClick={() => refetch()}>
-          Thử lại
+          Retry
         </Button>
       </div>
     );
@@ -142,9 +142,9 @@ export default function NotificationPreferencesSection() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Kênh nhận thông báo */}
+      {/* Notification channels */}
       <div className="space-y-3">
-        <p className="text-[13px] font-semibold">Kênh nhận thông báo</p>
+        <p className="text-[13px] font-semibold">Notification channels</p>
         <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
           {CHANNELS.map((ch) => (
             <div
@@ -171,13 +171,13 @@ export default function NotificationPreferencesSection() {
         </div>
       </div>
 
-      {/* Khung giờ yên tĩnh */}
+      {/* Quiet hours */}
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold">Khung giờ yên tĩnh</p>
+            <p className="text-[13px] font-semibold">Quiet hours</p>
             <p className="text-xs text-muted-foreground">
-              Tạm dừng thông báo trong khung giờ này (hỗ trợ qua đêm).
+              Pause notifications during this time range (supports overnight).
             </p>
           </div>
           <Switch
@@ -190,7 +190,7 @@ export default function NotificationPreferencesSection() {
         {quietHoursEnabled && (
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="pref-quiet-start">Bắt đầu</Label>
+              <Label htmlFor="pref-quiet-start">Start</Label>
               <Controller
                 name="quietHoursStart"
                 control={control}
@@ -210,7 +210,7 @@ export default function NotificationPreferencesSection() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pref-quiet-end">Kết thúc</Label>
+              <Label htmlFor="pref-quiet-end">End</Label>
               <Controller
                 name="quietHoursEnd"
                 control={control}
@@ -233,16 +233,20 @@ export default function NotificationPreferencesSection() {
         )}
       </div>
 
-      {/* Múi giờ */}
+      {/* Time zone */}
       <div className="space-y-1.5">
-        <Label>Múi giờ</Label>
+        <Label>Time zone</Label>
         <Controller
           name="timeZone"
           control={control}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              items={TIMEZONE_OPTIONS.map((tz) => ({ value: tz, label: tz }))}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Chọn múi giờ" />
+                <SelectValue placeholder="Select time zone" />
               </SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>
                 {TIMEZONE_OPTIONS.map((tz) => (
@@ -262,7 +266,7 @@ export default function NotificationPreferencesSection() {
       <div className="flex justify-end">
         <Button type="submit" disabled={update.isPending}>
           {update.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Lưu cài đặt
+          Save settings
         </Button>
       </div>
     </form>

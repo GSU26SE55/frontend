@@ -1,12 +1,13 @@
-// Nav config sidebar cho role STAFF.
-// Label/title chung (≥2 role) → import từ shared/constants/sidebarLabels.
-// Label/title đặc thù chỉ staff dùng → giữ inline ở đây.
+// Sidebar nav config for the STAFF role.
+// Labels/titles shared by 2+ roles → imported from shared/constants/sidebarLabels.
+// Labels/titles only staff uses → kept inline here.
 
 import {
   Newspaper,
   LayoutDashboard,
   Settings,
   BellRing,
+  Inbox,
   Ticket,
   Clock,
   FileText,
@@ -14,9 +15,11 @@ import {
   ShieldAlert,
   Wrench,
   SlidersHorizontal,
+  HardDrive,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
+  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -29,9 +32,11 @@ export const STAFF_NAV: NavSection[] = [
         path: "/staff/dashboard",
         icon: LayoutDashboard,
       },
+      // Route shared by every role (no /staff prefix) — the BE already filters by the UserId in the JWT.
+      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
       {
-        label: "Lịch sử bảo trì",
+        label: "Maintenance history",
         path: "/staff/maintenance-logs",
         icon: Wrench,
       },
@@ -47,14 +52,20 @@ export const STAFF_NAV: NavSection[] = [
       },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
       {
-        label: "Calibration thiết bị",
+        label: "Device calibration",
         path: "/staff/iot-calibrations",
         icon: SlidersHorizontal,
+      },
+      // IOT3-68 — đặt CẠNH calibration: cùng một người, cùng một lúc, cùng một thiết bị.
+      {
+        label: "Thiết bị IoT",
+        path: "/staff/iot-devices",
+        icon: HardDrive,
       },
     ],
   },
   {
-    title: "Báo cáo",
+    title: "Reports",
     collapsible: true,
     defaultOpen: true,
     items: [

@@ -9,6 +9,7 @@ export const KEY = {
   notifications: "notifications",
   notificationPreferences: "notificationPreferences",
   sites: "sites",
+  geocode: "geocode",
   files: "files",
   batteryAssets: "batteryAssets",
   batteryTypes: "batteryTypes",
@@ -45,6 +46,10 @@ export const KEY = {
     tickets: ["admin", "tickets"] as const,
     smsGateway: ["admin", "smsGateway"] as const,
     sagas: ["admin", "sagas"] as const,
+    notificationTemplates: ["admin", "notificationTemplates"] as const,
+    notificationGroups: ["admin", "notificationGroups"] as const, // Sprint 6.4
+    notificationBatches: ["admin", "notificationBatches"] as const, // Sprint 6.4
+    notificationSettings: ["admin", "notificationSettings"] as const,
   },
   manager: {
     tickets: ["manager", "tickets"] as const,
@@ -59,7 +64,7 @@ export const KEY = {
   chatMentions: "chatMentions",
   myChats: "myChats",
   ticketParticipants: "ticketParticipants",
-  permissionsCatalog: "permissionsCatalog", // GH-133 C1 — catalog full mọi role
+  permissionsCatalog: "permissionsCatalog", // GH-133 C1 — full catalog for every role
 } as const;
 
 export const QUERY_KEY = {
@@ -92,10 +97,17 @@ export const QUERY_KEY = {
   },
   notifications: {
     list: (params?: object) => [KEY.notifications, "list", params] as const,
+    // Infinite-scroll inbox — a SEPARATE key from list so the inbox's many cached pages
+    // do not overwrite the bell dropdown's 10-item cache.
+    infinite: (params?: object) =>
+      [KEY.notifications, "infinite", params] as const,
+    detail: (id: string) => [KEY.notifications, "detail", id] as const,
     unreadCount: () => [KEY.notifications, "unread-count"] as const,
   },
   notificationPreferences: {
     me: () => [KEY.notificationPreferences, "me"] as const,
+    matrix: () => [KEY.notificationPreferences, "matrix"] as const,
+    categories: () => [KEY.notificationPreferences, "categories"] as const,
   },
   sites: {
     list: (params?: object) => [KEY.sites, "list", params] as const,
@@ -105,12 +117,17 @@ export const QUERY_KEY = {
       [KEY.sites, "assets", siteId, params] as const,
     cascadeSummary: (id: string) => [KEY.sites, "cascade-summary", id] as const,
   },
+  geocode: {
+    search: (query: string) => [KEY.geocode, "search", query] as const,
+  },
   batteryAssets: {
     list: (params?: object) => [KEY.batteryAssets, "list", params] as const,
     detail: (id: string) => [KEY.batteryAssets, "detail", id] as const,
     realtime: (id: string) => [KEY.batteryAssets, "realtime", id] as const,
     cascadeRisk: (id: string) =>
       [KEY.batteryAssets, "cascade-risk", id] as const,
+    bmsSwitch: (id: string) =>
+      [KEY.batteryAssets, "bms-switch", id] as const,
   },
   batteryTypes: {
     list: (params?: object) => [KEY.batteryTypes, "list", params] as const,
@@ -134,6 +151,9 @@ export const QUERY_KEY = {
   sohPredictions: {
     list: (assetId: string, params?: object) =>
       [KEY.sohPredictions, "list", assetId, params] as const,
+    long: (assetId: string, params?: object) =>
+      [KEY.sohPredictions, "long", assetId, params] as const,
+    batch: (params?: object) => [KEY.sohPredictions, "batch", params] as const,
   },
   anomalyClassifications: {
     list: (assetId: string, params?: object) =>
@@ -206,6 +226,54 @@ export const QUERY_KEY = {
     smsGateway: {
       list: (params?: object) => [...KEY.admin.smsGateway, "list", params],
     },
+    notificationTemplates: {
+      list: (params?: object) => [
+        ...KEY.admin.notificationTemplates,
+        "list",
+        params,
+      ],
+      // A static contract between the consumer and the template — it does not change
+      // within a single working session.
+      variables: () => [...KEY.admin.notificationTemplates, "variables"],
+      // Depends on real data, so it must be invalidated after a template is edited.
+      coverage: () => [...KEY.admin.notificationTemplates, "coverage"],
+    },
+    notificationGroups: {
+      list: (params?: object) => [
+        ...KEY.admin.notificationGroups,
+        "list",
+        params,
+      ],
+      detail: (id: string) => [...KEY.admin.notificationGroups, "detail", id],
+      members: (id: string, params?: object) => [
+        ...KEY.admin.notificationGroups,
+        "members",
+        id,
+        params,
+      ],
+    },
+    notificationBatches: {
+      list: (params?: object) => [
+        ...KEY.admin.notificationBatches,
+        "list",
+        params,
+      ],
+      detail: (id: string) => [...KEY.admin.notificationBatches, "detail", id],
+      // The preview depends on the selected groups AND individuals AND channels — put all
+      // of them in the key so changing a selection refetches instead of reusing a stale count.
+      preview: (params?: object) => [
+        ...KEY.admin.notificationBatches,
+        "preview",
+        params,
+      ],
+      // The previewed content depends on the template in the DB + the variables the admin
+      // is typing.
+      templatePreview: (params?: object) => [
+        ...KEY.admin.notificationBatches,
+        "template-preview",
+        params,
+      ],
+    },
     sagas: {
       list: (params?: object) => [...KEY.admin.sagas, "alert-ticket", params],
       detail: (alertId: string) => [
@@ -214,6 +282,10 @@ export const QUERY_KEY = {
         "detail",
         alertId,
       ],
+    },
+    notificationSettings: {
+      pushTransport: () =>
+        [...KEY.admin.notificationSettings, "pushTransport"] as const,
     },
   },
   alerts: {
@@ -238,6 +310,12 @@ export const QUERY_KEY = {
   },
   tickets: {
     detail: (id: string) => [KEY.tickets, "detail", id] as const,
+    // AI suggestions — do NOT cache for long: staff availability changes constantly, and a
+    // stale suggestion can point at someone who has just been loaded up with tickets.
+    staffSuggestions: (id: string, topN: number) =>
+      [KEY.tickets, "staffSuggestions", id, topN] as const,
+    kbSuggestions: (id: string, topN: number) =>
+      [KEY.tickets, "kbSuggestions", id, topN] as const,
     activities: (id: string) => [KEY.tickets, "activities", id] as const,
     maintenanceLogs: (id: string) =>
       [KEY.tickets, "maintenanceLogs", id] as const,
@@ -269,7 +347,6 @@ export const QUERY_KEY = {
     tickets: {
       list: (params?: object) => [...KEY.manager.tickets, "list", params],
       queue: (params?: object) => [...KEY.manager.tickets, "queue", params],
-      queueCount: () => [...KEY.manager.tickets, "queue-count"],
       detail: (id: string) => [...KEY.manager.tickets, "detail", id],
       activities: (id: string) => [...KEY.manager.tickets, "activities", id],
     },
@@ -278,19 +355,16 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.kb, "list", params] as const,
     detail: (id: string) => [KEY.kb, "detail", id] as const,
     versions: (id: string) => [KEY.kb, "versions", id] as const,
-    versionDetail: (id: string, versionId: string | null) =>
-      [KEY.kb, "version-detail", id, versionId] as const,
     compare: (id: string, fromVersionId?: string, toVersionId?: string) =>
       [KEY.kb, "compare", id, fromVersionId, toVersionId] as const,
     suggest: (params?: object) => [KEY.kb, "suggest", params] as const,
     usageStats: (id: string) => [KEY.kb, "usage-stats", id] as const,
-    templates: (params?: object) => [KEY.kb, "templates", params] as const,
   },
   blog: {
-    // Public (chỉ bài Published)
+    // Public (Published posts only)
     publicList: (params?: object) => [KEY.blog, "public-list", params] as const,
     publicDetail: (id: string) => [KEY.blog, "public-detail", id] as const,
-    // Internal (mọi trạng thái)
+    // Internal (every status)
     list: (params?: object) => [KEY.blog, "list", params] as const,
     detail: (id: string) => [KEY.blog, "detail", id] as const,
     versions: (id: string) => [KEY.blog, "versions", id] as const,
@@ -313,6 +387,12 @@ export const QUERY_KEY = {
     detail: (id: string) => [KEY.iotDevices, "detail", id] as const,
     byCode: (deviceCode: string) =>
       [KEY.iotDevices, "by-code", deviceCode] as const,
+    // IOT3-66/67 — đường Staff (`/api/iot-devices`), TÁCH khỏi `list` của admin
+    // (`/api/admin/iot-devices`): hai endpoint khác nhau, hai hình dạng dữ liệu khác nhau,
+    // dùng chung key là cache của bên này trả cho bên kia.
+    staffList: (params?: object) => [KEY.iotDevices, "staff-list", params] as const,
+    heartbeats: (deviceId: string, params?: object) =>
+      [KEY.iotDevices, "heartbeats", deviceId, params] as const,
   },
   iotCalibrations: {
     list: (deviceId: string, params?: object) =>
@@ -388,6 +468,7 @@ export const QUERY_KEY = {
   },
   myChats: {
     list: (params?: object) => [KEY.myChats, "list", params] as const,
+    unreadCount: () => [KEY.myChats, "unread-count"] as const,
   },
   ticketParticipants: {
     list: (tid: string) => [KEY.ticketParticipants, "list", tid] as const,

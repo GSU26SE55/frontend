@@ -5,7 +5,7 @@ import {
   otpField,
 } from "@/shared/schemas/common.schema";
 
-// #AUTH-50 bước 1 — submit email account đã soft-delete
+// #AUTH-50 step 1 — submit the email of a soft-deleted account
 export const reactivateRequestSchema = z.object({
   email: emailFieldMax(256),
 });
@@ -13,9 +13,9 @@ export type ReactivateRequestFormValues = z.infer<
   typeof reactivateRequestSchema
 >;
 
-// #AUTH-50 bước 2 — submit email + OTP 6 số
+// #AUTH-50 step 2 — submit email + 6-digit OTP
 export const reactivateVerifySchema = z.object({
   email: emailField.max(256),
-  otp: otpField("OTP gồm 6 chữ số"),
+  otp: otpField("OTP must be 6 digits"),
 });
 export type ReactivateVerifyFormValues = z.infer<typeof reactivateVerifySchema>;

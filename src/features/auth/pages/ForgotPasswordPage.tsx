@@ -8,13 +8,13 @@ import ResetPasswordForm from "@/features/auth/components/password/ResetPassword
 import { cn } from "@/lib/utils";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
-// Fallback nếu BE không trả expiresInSeconds (api-auth.md: resetToken TTL 900s = 15 phút)
+// Fallback if BE doesn't return expiresInSeconds (api-auth.md: resetToken TTL 900s = 15 minutes)
 const RESET_TOKEN_TTL_FALLBACK_S = 900;
 
 const STEPS = [
   { label: "Email" },
-  { label: "Xác thực" },
-  { label: "Mật khẩu" },
+  { label: "Verify" },
+  { label: "Password" },
 ] as const;
 
 type ForgotPasswordStep = 1 | 2 | 3;
@@ -70,14 +70,14 @@ const forgotPasswordReducer = (
 
 const STEP_META = {
   1: {
-    title: "Quên mật khẩu",
-    desc: "Nhập email để nhận mã OTP đặt lại mật khẩu",
+    title: "Forgot password",
+    desc: "Enter your email to receive a password reset OTP",
   },
   2: {
-    title: "Nhập mã OTP",
-    desc: "Mã xác thực đã được gửi đến email của bạn",
+    title: "Enter OTP",
+    desc: "A verification code has been sent to your email",
   },
-  3: { title: "Mật khẩu mới", desc: "Đặt mật khẩu mới cho tài khoản của bạn" },
+  3: { title: "New password", desc: "Set a new password for your account" },
 };
 
 const ForgotPasswordPage = () => {
@@ -166,7 +166,7 @@ const ForgotPasswordPage = () => {
         <p className="text-sm text-slate-500">{STEP_META[state.step].desc}</p>
         {state.step === 3 && state.countdown > 0 && (
           <p className="text-xs font-semibold text-amber-500">
-            Mã hết hạn sau: {formattedCountdown}
+            Code expires in: {formattedCountdown}
           </p>
         )}
       </div>
@@ -207,7 +207,7 @@ const ForgotPasswordPage = () => {
           className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-emerald-600 transition-colors"
         >
           <ChevronLeft className="size-3.5" />
-          Quay lại đăng nhập
+          Back to log in
         </Link>
       </div>
     </div>

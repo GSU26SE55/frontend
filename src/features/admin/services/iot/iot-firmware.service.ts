@@ -17,7 +17,7 @@ export const iotFirmwareService = {
     axiosInstance.get<
       CommonResponse<PaginationResponse<IotFirmwareReleaseDto>>
     >(ENDPOINTS.IOT_FIRMWARE.LIST, { params }),
-  // Bước 1 của 2-step: upload .bin (multipart) → trả artifactUrl + sha256 + size. KHÔNG tạo release.
+  // Step 1 of 2: upload .bin (multipart) → returns artifactUrl + sha256 + size. Does NOT create a release.
   uploadBinary: (payload: UploadFirmwareBinaryPayload) => {
     const form = new FormData();
     form.append("file", payload.file);
@@ -35,7 +35,7 @@ export const iotFirmwareService = {
       { headers: { "Content-Type": undefined } },
     );
   },
-  // Bước 2 của 2-step: tạo release record từ metadata + artifact info.
+  // Step 2 of 2: create the release record from metadata + artifact info.
   createRelease: (payload: CreateFirmwareReleasePayload) =>
     axiosInstance.post<CommonResponse<IotFirmwareReleaseDto>>(
       ENDPOINTS.IOT_FIRMWARE.CREATE,

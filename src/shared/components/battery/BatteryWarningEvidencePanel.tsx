@@ -1,23 +1,29 @@
-import { ShieldAlert } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronUp, ShieldAlert } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useReadingEvidence,
   toWarningRows,
 } from "@/shared/hooks/battery/useReadingEvidence";
 
+/** Number of rows shown by default before clicking "Show more". */
+const PREVIEW_ROWS = 10;
+/** How many extra rows each "Show more" click reveals. */
+const LOAD_MORE_STEP = 25;
+
 const num = (v: number | null | undefined, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
 
 interface Props {
   batteryAssetId?: string | null;
-  /** Thời điểm Customer phát hiện sự cố — mốc để lấy log bằng chứng (±15'). */
+  /** When the Customer detected the incident — anchor point for fetching evidence logs (±15'). */
   detectedAt?: string | null;
 }
 
 /**
- * Bằng chứng cảnh báo — CHỈ hiển thị các reading WARNING (vượt ngưỡng) quanh thời điểm
- * phát hiện sự cố (DetectedAt ±15'), KHÔNG phải log real-time bình thường. Dùng để Manager
- * đối chiếu ticket thủ công có thật hay không. Dùng chung manager + staff.
+ * Alert evidence — shows ONLY the WARNING readings (threshold breaches) around the
+ * incident detection time (DetectedAt ±15'), NOT the normal real-time log. Used by Manager
+ * to cross-check whether a manually filed ticket is genuine. Shared by manager + staff.
  */
 export default function BatteryWarningEvidencePanel({
   batteryAssetId,
@@ -26,7 +32,13 @@ export default function BatteryWarningEvidencePanel({
   const { data, isLoading } = useReadingEvidence(batteryAssetId, detectedAt);
   const warnings = toWarningRows(data?.items ?? []);
 
-  // Không có pin hoặc ticket không có mốc phát hiện → không có bằng chứng để hiện.
+  // A ±15' window at 5s frequency yields a few hundred rows — rendering them all would
+  // swallow the whole page. Defaults to 10 rows, each "Show more" reveals 25 (matches mobile).
+  const [limit, setLimit] = useState(PREVIEW_ROWS);
+  const visibleRows = warnings.slice(0, limit);
+  const hiddenCount = warnings.length - visibleRows.length;
+
+  // No battery, or the ticket has no detection timestamp → no evidence to show.
   if (!batteryAssetId || !detectedAt) return null;
 
   return (
@@ -34,15 +46,20 @@ export default function BatteryWarningEvidencePanel({
       <div className="flex items-center gap-2 mb-2">
         <ShieldAlert className="size-4 text-amber-600" />
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Bằng chứng cảnh báo (lúc phát hiện)
+          Alert evidence (at detection time)
         </p>
+        {warnings.length > 0 && (
+          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+            {warnings.length}
+          </span>
+        )}
       </div>
 
       {isLoading ? (
         <Skeleton className="h-24 w-full" />
       ) : warnings.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Không có cảnh báo bất thường quanh thời điểm phát hiện.
+          No anomaly alerts around the detection time.
         </p>
       ) : (
         <div className="rounded-md border border-amber-300 dark:border-amber-800 overflow-hidden">
@@ -50,7 +67,7 @@ export default function BatteryWarningEvidencePanel({
             <thead className="bg-amber-50 dark:bg-amber-950/40">
               <tr>
                 <th className="px-2 py-1.5 text-left font-medium text-muted-foreground">
-                  Thời điểm
+                  Time
                 </th>
                 <th className="px-2 py-1.5 text-right font-medium text-muted-foreground">
                   V
@@ -65,12 +82,12 @@ export default function BatteryWarningEvidencePanel({
                   SOC%
                 </th>
                 <th className="px-2 py-1.5 text-left font-medium text-muted-foreground">
-                  Cảnh báo
+                  Alert
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-200/60 dark:divide-amber-900/60">
-              {warnings.map(({ reading: r, reasons }) => (
+              {visibleRows.map(({ reading: r, reasons }) => (
                 <tr
                   key={r.time}
                   className="bg-amber-50/50 dark:bg-amber-950/20"
@@ -106,6 +123,31 @@ export default function BatteryWarningEvidencePanel({
               ))}
             </tbody>
           </table>
+
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setLimit((v) => v + LOAD_MORE_STEP)}
+              className="flex w-full items-center justify-center gap-1.5 border-t border-amber-200/60 bg-amber-50/60 py-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/60"
+            >
+              Show {Math.min(LOAD_MORE_STEP, hiddenCount)} more rows
+              <span className="font-normal text-muted-foreground">
+                {hiddenCount} left
+              </span>
+              <ChevronDown className="size-3.5" />
+            </button>
+          )}
+
+          {hiddenCount === 0 && warnings.length > PREVIEW_ROWS && (
+            <button
+              type="button"
+              onClick={() => setLimit(PREVIEW_ROWS)}
+              className="flex w-full items-center justify-center gap-1.5 border-t border-amber-200/60 bg-amber-50/60 py-2 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/60"
+            >
+              Collapse
+              <ChevronUp className="size-3.5" />
+            </button>
+          )}
         </div>
       )}
     </div>

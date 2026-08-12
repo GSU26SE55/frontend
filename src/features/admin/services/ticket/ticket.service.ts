@@ -94,7 +94,7 @@ export const adminTicketService = {
       .post<TicketActionResponse>(ENDPOINTS.TICKETS.CHATS(id), payload)
       .then((r) => r.data),
 
-  // Manager gộp ticket nghi trùng (id) vào ticket đích (targetTicketId).
+  // Manager merges a suspected duplicate ticket (id) into the target ticket (targetTicketId).
   merge: (id: string, payload: MergeTicketPayload) =>
     axiosInstance
       .post<TicketActionResponse>(ENDPOINTS.ADMIN.TICKETS.MERGE(id), payload)

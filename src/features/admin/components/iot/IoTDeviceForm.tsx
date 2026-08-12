@@ -37,11 +37,11 @@ import type {
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 const STATUS_OPTIONS: { value: IotDeviceStatusEnum; label: string }[] = [
-  { value: IotDeviceStatusEnum.Pending, label: "Chờ provision" },
-  { value: IotDeviceStatusEnum.Active, label: "Hoạt động" },
+  { value: IotDeviceStatusEnum.Pending, label: "Pending provisioning" },
+  { value: IotDeviceStatusEnum.Active, label: "Active" },
   { value: IotDeviceStatusEnum.Offline, label: "Offline" },
-  { value: IotDeviceStatusEnum.Disabled, label: "Vô hiệu hóa" },
-  { value: IotDeviceStatusEnum.Decommissioned, label: "Ngừng sử dụng" },
+  { value: IotDeviceStatusEnum.Disabled, label: "Disabled" },
+  { value: IotDeviceStatusEnum.Decommissioned, label: "Decommissioned" },
 ];
 
 interface Props {
@@ -126,12 +126,12 @@ export default function IoTDeviceForm({
             className="cursor-not-allowed opacity-60 font-mono"
           />
           <p className="text-xs text-muted-foreground">
-            Không thể đổi device code sau khi tạo.
+            Device code can't be changed after creation.
           </p>
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="displayName">Tên hiển thị *</Label>
+          <Label htmlFor="displayName">Display name *</Label>
           <Input id="displayName" {...register("displayName")} />
           {errors.displayName && (
             <p className="text-sm text-destructive">
@@ -158,7 +158,7 @@ export default function IoTDeviceForm({
                   onValueChange={field.onChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn site" />
+                    <SelectValue placeholder="Select site" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {sitesData?.items.map((s) => (
@@ -177,7 +177,7 @@ export default function IoTDeviceForm({
             )}
           </div>
           <div className="space-y-1">
-            <Label>Trạng thái *</Label>
+            <Label>Status *</Label>
             <Controller
               control={control}
               name="status"
@@ -185,9 +185,13 @@ export default function IoTDeviceForm({
                 <Select
                   value={field.value != null ? String(field.value) : null}
                   onValueChange={(v) => field.onChange(Number(v))}
+                  items={STATUS_OPTIONS.map((o) => ({
+                    value: String(o.value),
+                    label: o.label,
+                  }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
                     {STATUS_OPTIONS.map((o) => (
@@ -208,7 +212,9 @@ export default function IoTDeviceForm({
             <Input id="hardwareRevision" {...register("hardwareRevision")} />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="heartbeatIntervalSeconds">Heartbeat (giây)</Label>
+            <Label htmlFor="heartbeatIntervalSeconds">
+              Heartbeat (seconds)
+            </Label>
             <Input
               id="heartbeatIntervalSeconds"
               type="number"
@@ -231,9 +237,15 @@ export default function IoTDeviceForm({
               <Select
                 value={field.value ?? null}
                 onValueChange={field.onChange}
+                items={
+                  firmwareData?.items.map((f) => ({
+                    value: f.id,
+                    label: `${f.version} (${f.hardwareRevision})`,
+                  })) ?? []
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Không đặt target" />
+                  <SelectValue placeholder="No target set" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {firmwareData?.items.map((f) => (
@@ -246,7 +258,7 @@ export default function IoTDeviceForm({
             )}
           />
           <p className="text-xs text-muted-foreground">
-            Chỉ liệt kê release đã publish &amp; chưa archive.
+            Only published, non-archived releases are listed.
           </p>
         </div>
 
@@ -270,16 +282,16 @@ export default function IoTDeviceForm({
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="notes">Ghi chú</Label>
+          <Label htmlFor="notes">Notes</Label>
           <Textarea id="notes" {...register("notes")} />
         </div>
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Hủy
+            Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            Lưu thay đổi
+            Save changes
           </Button>
         </div>
       </form>
@@ -333,7 +345,7 @@ export default function IoTDeviceForm({
           )}
         </div>
         <div className="space-y-1">
-          <Label htmlFor="displayName">Tên hiển thị *</Label>
+          <Label htmlFor="displayName">Display name *</Label>
           <Input id="displayName" {...register("displayName")} />
           {errors.displayName && (
             <p className="text-sm text-destructive">
@@ -361,7 +373,7 @@ export default function IoTDeviceForm({
                 onValueChange={field.onChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn site" />
+                  <SelectValue placeholder="Select site" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
                   {sitesData?.items.map((s) => (
@@ -388,7 +400,7 @@ export default function IoTDeviceForm({
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="heartbeatIntervalSeconds">Heartbeat (giây)</Label>
+        <Label htmlFor="heartbeatIntervalSeconds">Heartbeat (seconds)</Label>
         <Input
           id="heartbeatIntervalSeconds"
           type="number"
@@ -403,21 +415,22 @@ export default function IoTDeviceForm({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        API key scopes mặc định "Edge Device" (đủ cho thiết bị gửi sensor +
-        heartbeat) — chỉnh lại sau trong màn Sửa thiết bị nếu cần scope khác.
+        API key scopes default to "Edge Device" (enough for a device sending
+        sensor data + heartbeat) — change it later on the Edit device screen if
+        you need different scopes.
       </p>
 
       <div className="space-y-1">
-        <Label htmlFor="notes">Ghi chú</Label>
+        <Label htmlFor="notes">Notes</Label>
         <Textarea id="notes" {...register("notes")} />
       </div>
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Hủy
+          Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          Tạo thiết bị
+          Create device
         </Button>
       </div>
     </form>

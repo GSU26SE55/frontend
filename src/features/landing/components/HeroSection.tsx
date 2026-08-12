@@ -20,7 +20,7 @@ import {
 } from "@/features/landing/landing.constants";
 import type { HeroDemoId } from "@/features/landing/types/landing.types";
 import { prefersReducedMotion } from "@/features/landing/lib/animation";
-import heroImage from "@/assets/hero1.jpg";
+import heroImage from "@/assets/hero1.webp";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -37,18 +37,22 @@ const DEMO_META: Record<
 > = {
   health: {
     title: "Battery Health",
-    placeholder: "Tìm battery pack…",
+    placeholder: "Search battery packs…",
     icon: Gauge,
   },
   alerts: {
     title: "Anomaly Alerts",
-    placeholder: "Lọc theo severity…",
+    placeholder: "Filter by severity…",
     icon: AlertTriangle,
   },
-  tickets: { title: "Work Orders", placeholder: "Tìm ticket…", icon: Ticket },
+  tickets: {
+    title: "Work Orders",
+    placeholder: "Search tickets…",
+    icon: Ticket,
+  },
   sla: {
     title: "SLA Governance",
-    placeholder: "Lọc theo priority…",
+    placeholder: "Filter by priority…",
     icon: ShieldCheck,
   },
 };
@@ -58,21 +62,21 @@ const ALERT_ROWS = [
     id: "ALT-0031",
     site: "Block C · BAT-0417",
     severity: "P1" as const,
-    msg: "Nhiệt độ vượt ngưỡng 46°C",
+    msg: "Temperature above threshold at 46°C",
     time: "2m ago",
   },
   {
     id: "ALT-0028",
     site: "Inverter Yard · BAT-0308",
     severity: "P2" as const,
-    msg: "SOH giảm −4.8% trong 7 ngày",
+    msg: "SOH down −4.8% over 7 days",
     time: "18m ago",
   },
   {
     id: "ALT-0025",
     site: "Rooftop A · BAT-0142",
     severity: "P3" as const,
-    msg: "Voltage dao động nhẹ",
+    msg: "Slight voltage fluctuation",
     time: "2h ago",
   },
 ] as const;
@@ -396,7 +400,7 @@ const SlaContent = () => (
             <p className="font-mono text-lg font-semibold text-white">
               {row.active}
             </p>
-            <p className="text-[10px] text-white/35">Đang mở</p>
+            <p className="text-[10px] text-white/35">Open</p>
           </div>
           <div>
             <p className="font-mono text-lg font-semibold text-emerald-400">
@@ -557,6 +561,10 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
             alt="Solar battery operations overview"
             className="absolute inset-0 h-full w-full object-cover object-bottom"
             loading="eager"
+            // This is the LCP element and it competes with the JavaScript bundle for
+            // bandwidth on a cold load; the hint tells the browser to fetch it first.
+            fetchPriority="high"
+            decoding="async"
           />
           <div
             aria-hidden
@@ -574,13 +582,13 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                   ref={headingRef}
                   className="text-4xl font-semibold leading-[1.04] sm:text-5xl xl:text-6xl xl:leading-[1.02]"
                 >
-                  Giám sát pin mặt trời. Xử lý sự cố nhanh hơn.
+                  Monitor solar batteries. Resolve incidents faster.
                 </h1>
                 <p
                   ref={subRef}
                   className="mt-5 max-w-2xl text-base leading-7 text-white/78 sm:text-lg"
                 >
-                  Một console cho SOH, cảnh báo, ticket và SLA bảo trì.
+                  One console for SOH, alerts, tickets and maintenance SLAs.
                 </p>
                 <div ref={ctaRef} className="mt-8">
                   <Button
@@ -588,7 +596,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                     className="h-12 gap-2 bg-white px-5 font-semibold text-slate-950 hover:bg-slate-100"
                     onClick={onLogin}
                   >
-                    Vào hệ thống
+                    Enter the system
                     <ChevronRight className="size-4" />
                   </Button>
                 </div>
@@ -598,7 +606,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
         </div>
       </div>
 
-      {/* Demo panel — dark bg seamless từ hero, fade to white ở đáy */}
+      {/* Demo panel — dark background flowing on from the hero, fading to white at the bottom */}
       <div className="relative bg-[oklch(0.08_0.02_245)]">
         {/* Fade to white at bottom */}
         <div
@@ -660,7 +668,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                 </div>
               </div>
 
-              {/* Floating tab bar — centered, overlap đáy panel */}
+              {/* Floating tab bar — centered, overlapping the bottom of the panel */}
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
                 <div
                   ref={tabBarRef}

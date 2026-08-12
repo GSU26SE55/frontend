@@ -10,8 +10,11 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  MentionTextarea,
+  type MentionCandidate,
+} from "@/shared/components/chat/MentionTextarea";
 import {
   Tooltip,
   TooltipContent,
@@ -40,6 +43,8 @@ interface Props {
   existingFileIds?: string[];
   prefillText?: string;
   prefillVersion?: number;
+  /** People who can be @-tagged — usually built from the participants in the conversation. */
+  mentionCandidates?: MentionCandidate[];
 }
 
 export function AddCommentForm({
@@ -51,6 +56,7 @@ export function AddCommentForm({
   existingFileIds = [],
   prefillText,
   prefillVersion = 0,
+  mentionCandidates = [],
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -165,30 +171,49 @@ export function AddCommentForm({
                 control={form.control}
                 name="body"
                 render={({ field }) => {
-                  const { ref: fieldRef, ...fieldProps } = field;
+                  const { ref: fieldRef, value } = field;
                   return (
                     <FormItem className="flex-1 space-y-0">
                       <FormControl>
-                        <Textarea
+                        <MentionTextarea
                           key={resetCount}
                           ref={(el) => {
                             fieldRef(el);
                             textareaRef.current = el;
                           }}
+                          candidates={mentionCandidates}
+                          isInternal={isInternal}
+                          value={value ?? ""}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            onTyping?.();
+                            const el = textareaRef.current;
+                            if (el) autoResize(el);
+                          }}
+                          onMentionsChange={(mentions) =>
+                            form.setValue("mentions", mentions)
+                          }
+                          // Enter sends / Shift+Enter for a new line. The guard must match the
+                          // send button below exactly, otherwise Enter could bypass a condition
+                          // the button is blocking on (uploading, recording, empty…).
+                          onSubmitKey={() => {
+                            if (
+                              isPending ||
+                              uploading ||
+                              isRecording ||
+                              isEmpty
+                            )
+                              return;
+                            handleSubmit();
+                          }}
                           placeholder={
                             isInternal
-                              ? "Ghi chu noi bo (khach khong thay)..."
-                              : "Them binh luan..."
+                              ? "Internal note (not visible to customer)..."
+                              : "Add a comment... (type @ to tag)"
                           }
                           rows={1}
                           className="flex min-h-9 resize-none items-center overflow-y-auto rounded-xl border-0 bg-transparent py-1.75 leading-4.5 shadow-none focus-visible:ring-0"
                           style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
-                          {...fieldProps}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            onTyping?.();
-                          }}
-                          onInput={(e) => autoResize(e.currentTarget)}
                         />
                       </FormControl>
                       <FormMessage className="px-2" />
@@ -203,7 +228,7 @@ export function AddCommentForm({
                       type="button"
                       variant="ghost"
                       disabled={isInternal || uploading || transcribing}
-                      aria-label="Ghi am tin nhan"
+                      aria-label="Record voice message"
                       onClick={handleStartRecording}
                       className="h-9 w-9 shrink-0 rounded-full p-0 text-muted-foreground"
                     />
@@ -217,8 +242,8 @@ export function AddCommentForm({
                 </TooltipTrigger>
                 <TooltipContent>
                   {isInternal
-                    ? "Ghi am luon duoc gui cong khai"
-                    : "Ghi am tin nhan"}
+                    ? "Voice messages are always sent publicly"
+                    : "Record voice message"}
                 </TooltipContent>
               </Tooltip>
             </>
@@ -229,7 +254,7 @@ export function AddCommentForm({
             size="icon-lg"
             className="shrink-0 rounded-full"
             disabled={isPending || uploading || isRecording || isEmpty}
-            aria-label="Gui binh luan"
+            aria-label="Send comment"
           >
             <Send size={16} />
           </Button>

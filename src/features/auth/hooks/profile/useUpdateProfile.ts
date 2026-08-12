@@ -10,8 +10,8 @@ export const useUpdateProfile = () => {
     mutationFn: (payload: UpdateProfilePayload) =>
       profileService.updateProfile(payload),
     onSuccess: () => {
-      // Invalidate với exact key để trigger refetch ngay, không dùng setQueryData
-      // vì useCurrentUser & useProfile share key nhưng khác queryFn transform shape
+      // Invalidate with the exact key to trigger an immediate refetch; setQueryData isn't
+      // used because useCurrentUser & useProfile share the key but transform to different shapes
       queryClient.invalidateQueries({ queryKey: QUERY_KEY.profile.me() });
     },
   });

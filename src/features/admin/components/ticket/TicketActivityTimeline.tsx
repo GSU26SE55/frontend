@@ -28,7 +28,7 @@ export default function TicketActivityTimeline({
   if (!activities?.length) {
     return (
       <p className="text-sm text-muted-foreground py-4 text-center">
-        Chưa có hoạt động nào.
+        No activity yet.
       </p>
     );
   }
@@ -55,7 +55,7 @@ export default function TicketActivityTimeline({
                   {meta.label}
                 </p>
                 <time className="text-xs text-muted-foreground whitespace-nowrap">
-                  {format(new Date(activity.createdAt), "dd/MM/yyyy HH:mm")}
+                  {format(new Date(activity.createdAt), "MM/dd/yyyy HH:mm")}
                 </time>
               </div>
               {activity.actorDisplayName && (

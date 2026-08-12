@@ -47,7 +47,7 @@ export default function TransferOwnerDialog({
 
   const onSubmit = async (data: TransferOwnerFormValues) => {
     if (data.newCustomerId === currentCustomerId) {
-      setError("newCustomerId", { message: "Phải chọn khách hàng khác" });
+      setError("newCustomerId", { message: "Select a different customer" });
       return;
     }
     try {
@@ -66,18 +66,18 @@ export default function TransferOwnerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Chuyển chủ sở hữu</DialogTitle>
+          <DialogTitle>Transfer ownership</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="newCustomerId">Khách hàng mới *</Label>
+            <Label htmlFor="newCustomerId">New customer *</Label>
             <select
               id="newCustomerId"
               {...register("newCustomerId")}
               className={selectClass}
             >
-              <option value="">-- Chọn khách hàng --</option>
+              <option value="">-- Select a customer --</option>
               {customersData?.items
                 .filter((c) => c.id !== currentCustomerId)
                 .map((c) => (
@@ -94,8 +94,8 @@ export default function TransferOwnerDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="reason">Lý do</Label>
-            <Input id="reason" {...register("reason")} placeholder="Tuỳ chọn" />
+            <Label htmlFor="reason">Reason</Label>
+            <Input id="reason" {...register("reason")} placeholder="Optional" />
             {errors.reason && (
               <p className="text-sm text-destructive">
                 {errors.reason.message}
@@ -109,10 +109,10 @@ export default function TransferOwnerDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Chuyển
+              Transfer
             </Button>
           </DialogFooter>
         </form>

@@ -85,19 +85,19 @@ const RolesSection = () => {
         >
           <div>
             <p className="mb-3 text-sm font-medium text-emerald-300">
-              Vận hành theo vai trò
+              Role-based operations
             </p>
             <h2 className="text-3xl font-semibold leading-tight lg:text-4xl">
-              Cùng một hệ thống, quyết định khác nhau cho từng vai trò.
+              One system, a different set of decisions for every role.
             </h2>
           </div>
           <p className="text-base leading-7 text-slate-300">
-            Admin thiết lập chuẩn vận hành, manager điều phối hàng chờ, staff
-            xử lý công việc hiện trường.
+            Admins set the operating standard, managers coordinate the queue,
+            and staff handle the work in the field.
           </p>
         </div>
 
-        {/* Bento grid: Admin rộng hơn */}
+        {/* Bento grid: the Admin card is wider */}
         <div className="mt-12 grid gap-4 lg:grid-cols-[1.4fr_0.8fr_0.8fr]">
           {ROLES.map((role, index) => (
             <RoleCard key={role.role} role={role} index={index} />

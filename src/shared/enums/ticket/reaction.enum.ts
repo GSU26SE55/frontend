@@ -1,6 +1,7 @@
-// Loại reaction cho chat message — khớp BE ReactionTypeEnum (TicketService.Domain).
-// BE gửi/nhận string name (JsonStringEnumConverter) — KHÔNG phải số.
-// Response aggregate group theo đúng 5 key này.
+// Reaction types for a chat message — mirrors the BE's ReactionTypeEnum
+// (TicketService.Domain).
+// The BE sends/receives string names (JsonStringEnumConverter) — NOT numbers.
+// The aggregate response groups by exactly these 5 keys.
 export const ReactionTypeEnum = {
   ThumbsUp: "ThumbsUp",
   Acknowledged: "Acknowledged",
@@ -11,7 +12,7 @@ export const ReactionTypeEnum = {
 export type ReactionTypeEnum =
   (typeof ReactionTypeEnum)[keyof typeof ReactionTypeEnum];
 
-// Thứ tự hiển thị trong picker + hàng reaction dưới bubble.
+// Display order in the picker + the reaction row under a bubble.
 export const REACTION_ORDER: ReactionTypeEnum[] = [
   ReactionTypeEnum.ThumbsUp,
   ReactionTypeEnum.Acknowledged,
@@ -20,14 +21,14 @@ export const REACTION_ORDER: ReactionTypeEnum[] = [
   ReactionTypeEnum.Disagree,
 ];
 
-// Emoji + nhãn tiếng Việt cho từng loại — FE tự map (BE chỉ định nghĩa enum).
+// Emoji + display label per type — mapped on the FE (the BE only defines the enum).
 export const REACTION_META: Record<
   ReactionTypeEnum,
   { emoji: string; label: string }
 > = {
-  ThumbsUp: { emoji: "👍", label: "Thích" },
-  Acknowledged: { emoji: "🫡", label: "Đã tiếp nhận" },
-  Resolved: { emoji: "😀", label: "Đã giải quyết" },
-  NeedMoreInfo: { emoji: "🤔", label: "Cần thêm thông tin" },
-  Disagree: { emoji: "🙄", label: "Không đồng ý" },
+  ThumbsUp: { emoji: "👍", label: "Like" },
+  Acknowledged: { emoji: "🫡", label: "Acknowledged" },
+  Resolved: { emoji: "😀", label: "Resolved" },
+  NeedMoreInfo: { emoji: "🤔", label: "Need more information" },
+  Disagree: { emoji: "🙄", label: "Disagree" },
 };

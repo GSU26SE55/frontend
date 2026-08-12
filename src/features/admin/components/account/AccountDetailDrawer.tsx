@@ -2,7 +2,7 @@ import { useState } from "react";
 import { LogOut, Loader2, History } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   Drawer,
   DrawerContent,
@@ -42,14 +42,14 @@ interface Props {
 }
 
 const SESSION_STATUS_MAP: Record<number, { label: string; cls: string }> = {
-  [RefreshTokenStatus.Active]: { label: "Đang hoạt động", cls: "text-ok" },
-  [RefreshTokenStatus.Used]: { label: "Đã dùng", cls: "text-muted-foreground" },
-  [RefreshTokenStatus.Revoked]: { label: "Đã thu hồi", cls: "text-p1" },
+  [RefreshTokenStatus.Active]: { label: "Active", cls: "text-ok" },
+  [RefreshTokenStatus.Used]: { label: "Used", cls: "text-muted-foreground" },
+  [RefreshTokenStatus.Revoked]: { label: "Revoked", cls: "text-p1" },
   [RefreshTokenStatus.Expired]: {
-    label: "Hết hạn",
+    label: "Expired",
     cls: "text-muted-foreground",
   },
-  [RefreshTokenStatus.Compromised]: { label: "Xâm phạm", cls: "text-p1" },
+  [RefreshTokenStatus.Compromised]: { label: "Compromised", cls: "text-p1" },
 };
 
 const LOGIN_RESULT_OK = [LoginAttemptResult.Success];
@@ -93,7 +93,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
   };
 
   const fmt = (dt: string) =>
-    format(new Date(dt), "dd/MM/yyyy HH:mm", { locale: vi });
+    format(new Date(dt), "MM/dd/yyyy HH:mm", { locale: enUS });
 
   return (
     <>
@@ -110,7 +110,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
               </div>
               <div className="min-w-0 flex-1">
                 <DrawerTitle className="text-base font-semibold leading-tight">
-                  Sessions & Lịch sử —{" "}
+                  Sessions & history —{" "}
                   <span className="text-muted-foreground font-normal">
                     {account.fullName}
                   </span>
@@ -135,7 +135,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="history">Lịch sử đăng nhập</TabsTrigger>
+              <TabsTrigger value="history">Login history</TabsTrigger>
             </TabsList>
 
             {/* ── Sessions tab ── */}
@@ -157,7 +157,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                     ) : (
                       <LogOut className="mr-1.5 size-3" />
                     )}
-                    Thu hồi tất cả
+                    Revoke all
                   </Button>
                 </div>
               )}
@@ -169,7 +169,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                 </div>
               ) : sessions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Không có session nào.
+                  No sessions.
                 </p>
               ) : (
                 sessions.map((s) => {
@@ -188,7 +188,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                         </span>
                         {s.isCurrent && (
                           <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">
-                            Phiên hiện tại
+                            Current session
                           </span>
                         )}
                       </div>
@@ -200,11 +200,12 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                           </div>
                         )}
                         <div>
-                          Cấp: {fmt(s.issuedAt)} — Hết hạn: {fmt(s.expiredAt)}
+                          Issued: {fmt(s.issuedAt)} — Expires:{" "}
+                          {fmt(s.expiredAt)}
                         </div>
                         {s.revokedAt && (
                           <div>
-                            Thu hồi: {fmt(s.revokedAt)}
+                            Revoked: {fmt(s.revokedAt)}
                             {s.revokedReason ? ` — ${s.revokedReason}` : ""}
                           </div>
                         )}
@@ -228,17 +229,17 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                 </div>
               ) : history.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Không có lịch sử đăng nhập.
+                  No login history.
                 </p>
               ) : (
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-border text-left text-[10.5px] text-muted-foreground uppercase tracking-wider">
-                      <th className="py-2 pr-3">STT</th>
-                      <th className="py-2 pr-3">Kết quả</th>
+                      <th className="py-2 pr-3">#</th>
+                      <th className="py-2 pr-3">Result</th>
                       <th className="py-2 pr-3">IP</th>
-                      <th className="py-2 pr-3">Phương thức</th>
-                      <th className="py-2">Thời gian</th>
+                      <th className="py-2 pr-3">Method</th>
+                      <th className="py-2">Time</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -282,7 +283,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
           <DrawerFooter className="border-t border-border">
             <DrawerClose asChild>
               <Button variant="outline" className="w-full">
-                Đóng
+                Close
               </Button>
             </DrawerClose>
           </DrawerFooter>
@@ -295,18 +296,18 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Thu hồi tất cả session?</DialogTitle>
+            <DialogTitle>Revoke all sessions?</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tất cả session của <strong>{account.fullName}</strong> sẽ bị thu hồi
-            ngay lập tức. Người dùng sẽ bị đăng xuất khỏi tất cả thiết bị.
+            All sessions for <strong>{account.fullName}</strong> will be revoked
+            immediately. The user will be signed out on every device.
           </p>
           <div className="flex gap-2 justify-end pt-2">
             <Button
               variant="outline"
               onClick={() => setConfirmRevokeAll(false)}
             >
-              Hủy
+              Cancel
             </Button>
             <Button
               variant="destructive"
@@ -314,7 +315,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
               disabled={isRevoking}
             >
               {isRevoking && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Thu hồi tất cả
+              Revoke all
             </Button>
           </div>
         </DialogContent>

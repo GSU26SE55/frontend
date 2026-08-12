@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { BatteryFull, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,15 @@ import BatteryUsageHistoryPanel from "@/features/manager/components/battery/Batt
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
-  [BatteryStatusEnum.Active]: "Hoạt động",
-  [BatteryStatusEnum.Inactive]: "Không hoạt động",
-  [BatteryStatusEnum.Decommissioned]: "Đã ngừng",
+  [BatteryStatusEnum.Active]: "Active",
+  [BatteryStatusEnum.Inactive]: "Inactive",
+  [BatteryStatusEnum.Decommissioned]: "Decommissioned",
 };
 
 const WARRANTY_LABEL: Record<WarrantyStatusEnum, string> = {
-  [WarrantyStatusEnum.ACTIVE]: "Còn bảo hành",
-  [WarrantyStatusEnum.EXPIRED]: "Hết bảo hành",
-  [WarrantyStatusEnum.VOID]: "Vô hiệu",
+  [WarrantyStatusEnum.ACTIVE]: "Under warranty",
+  [WarrantyStatusEnum.EXPIRED]: "Warranty expired",
+  [WarrantyStatusEnum.VOID]: "Void",
 };
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -39,7 +39,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 interface Props {
   batteryAssetId?: string | null;
-  /** Thời điểm phát hiện sự cố (ticket.detectedAt) — để hiện log bằng chứng warning. */
+  /** Incident detection time (ticket.detectedAt) — used to show the warning evidence log. */
   detectedAt?: string | null;
 }
 
@@ -56,7 +56,7 @@ export default function BatteryAssetInfoPanel({
   if (!batteryAssetId) {
     return (
       <p className="text-sm text-muted-foreground text-center py-6">
-        Ticket này không gắn với thiết bị pin nào.
+        This ticket isn't linked to any battery device.
       </p>
     );
   }
@@ -68,7 +68,7 @@ export default function BatteryAssetInfoPanel({
   if (isError || !asset) {
     return (
       <p className="text-sm text-destructive text-center py-6">
-        Không tải được thông tin thiết bị pin.
+        Couldn't load battery device information.
       </p>
     );
   }
@@ -78,14 +78,14 @@ export default function BatteryAssetInfoPanel({
       <div className="flex items-center gap-2 mb-2">
         <BatteryFull className="size-4 text-muted-foreground" />
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Thông tin thiết bị pin
+          Battery device information
         </p>
         <Badge variant="outline" className="ml-auto text-[11px] font-normal">
           {STATUS_LABEL[asset.status] ?? asset.status}
         </Badge>
       </div>
 
-      {/* Mở trang chi tiết real-time (live telemetry + chart + AI) cho đúng pin gắn ticket. */}
+      {/* Open the real-time detail page (live telemetry + chart + AI) for the battery linked to this ticket. */}
       <Link
         to={`/manager/battery-assets/${batteryAssetId}`}
         className={cn(
@@ -94,27 +94,27 @@ export default function BatteryAssetInfoPanel({
         )}
       >
         <Activity className="size-3.5" />
-        Xem chi tiết real-time
+        View real-time detail
       </Link>
 
       <div className="divide-y divide-border/50">
-        <InfoRow label="Số seri" value={asset.serialNumber} />
-        <InfoRow label="Loại pin" value={asset.batteryTypeName} />
+        <InfoRow label="Serial number" value={asset.serialNumber} />
+        <InfoRow label="Battery type" value={asset.batteryTypeName} />
         <InfoRow label="Site" value={asset.siteName} />
-        <InfoRow label="Khách hàng" value={asset.customerName} />
+        <InfoRow label="Customer" value={asset.customerName} />
         <InfoRow
-          label="Ngày lắp đặt"
-          value={format(new Date(asset.installDate), "dd/MM/yyyy", {
-            locale: vi,
+          label="Install date"
+          value={format(new Date(asset.installDate), "MM/dd/yyyy", {
+            locale: enUS,
           })}
         />
         <InfoRow
-          label="Bảo hành"
+          label="Warranty"
           value={
             <>
               {WARRANTY_LABEL[asset.warrantyStatus] ?? asset.warrantyStatus}
               {asset.warrantyEndDate &&
-                ` (đến ${format(new Date(asset.warrantyEndDate), "dd/MM/yyyy")})`}
+                ` (until ${format(new Date(asset.warrantyEndDate), "MM/dd/yyyy")})`}
             </>
           }
         />

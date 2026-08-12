@@ -11,8 +11,13 @@ import type {
   ActivityActionEnum,
   ActorRoleEnum,
   TicketVerifyStatusEnum,
+  TicketCloseReasonEnum,
   TicketAssignmentRoleEnum,
+  PendingContextEnum,
+  PauseReasonEnum,
 } from "@/shared/enums/ticket/ticket.enum";
+import type { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
+export { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
 export {
   TicketStatusEnum,
   TicketPriorityEnum,
@@ -20,6 +25,7 @@ export {
   TicketOriginEnum,
   ImpactScopeEnum,
   UrgencyLevelEnum,
+  PendingContextEnum,
   PauseReasonEnum,
   EscalationReasonEnum,
   SlaTimerStatusEnum,
@@ -27,17 +33,28 @@ export {
   ActivityActionEnum,
   ActorRoleEnum,
   TicketVerifyStatusEnum,
+  TicketCloseReasonEnum,
   TicketAssignmentRoleEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 // --- DTOs ---
 
 /**
- * #697 — 1 dòng phân công Staff trên ticket. BE đã lọc bản ghi soft-deleted.
- * Đúng 1 phần tử role=PrimaryHandler, 0..N phần tử role=Supporter.
+ * #697 — one Staff assignment row on a ticket. The BE already filters out
+ * soft-deleted records. Exactly one entry with role=PrimaryHandler, and
+ * 0..N entries with role=Supporter.
  */
 export interface TicketAssignmentDTO {
   staffId: string;
   role: TicketAssignmentRoleEnum;
+  /**
+   * Staff member's name — the BE reads it from the StaffAccount synced into
+   * TicketService. Null when the sync hasn't caught up → fall back to `staffId`.
+   *
+   * This field is what lets EVERY role read the name; previously it took an extra
+   * call to `/api/staff` (Admin/Manager only), so Staff could not see who was
+   * handling the ticket.
+   */
+  staffName?: string | null;
 }
 
 export interface SlaTimerDTO {
@@ -56,21 +73,25 @@ export interface SlaTimerDTO {
 export interface TicketDTO {
   id: string;
   code: string;
-  /** Pin chính (legacy — pin đầu tiên). Dùng batteryAssetIds cho danh sách đầy đủ. */
+  /** Primary battery (legacy — the first one). Use batteryAssetIds for the full list. */
   batteryAssetId?: string | null;
-  /** Danh sách ID pin gắn ticket (ticket có thể gắn nhiều pin). BE trả từ TicketBatteryAssets. */
+  /**
+   * IDs of the batteries attached to the ticket (a ticket can cover several).
+   * The BE returns them from TicketBatteryAssets.
+   */
   batteryAssetIds?: string[];
   customerId: string;
   /**
-   * #697 — thay cho `assignedStaffId` (đã bỏ ở BE). Dùng
+   * #697 — replaces `assignedStaffId` (dropped on the BE). Use
    * `getPrimaryHandler()` / `getSupporters()` (shared/utils/ticket/assignments)
-   * thay vì tự lọc ở từng chỗ.
+   * instead of filtering by hand at each call site.
    */
   assignments: TicketAssignmentDTO[];
   title: string;
   category: TicketCategoryEnum;
-  // BE trả null khi ticket chưa triage (state New/Open) — priority/impact/urgency
-  // được gán tại bước triage. Guard null trước khi render badge.
+  // The BE returns null while the ticket hasn't been triaged (state New/Open) —
+  // priority/impact/urgency are assigned during triage. Guard against null before
+  // rendering the badge.
   priority: TicketPriorityEnum | null;
   impactScope: ImpactScopeEnum | null;
   urgencyLevel: UrgencyLevelEnum | null;
@@ -78,30 +99,51 @@ export interface TicketDTO {
   origin: TicketOriginEnum;
   reopenCount: number;
   isIncident: boolean;
+  /** GH-1176: UTC schedule set during assign/reschedule. Null when no schedule has been set. */
+  scheduledStartAtUtc?: string | null;
+  /** GH-1176: incremented on every assign/reschedule; used for optimistic activation. */
+  scheduleVersion: number;
+  /** GH-1176: why the ticket is Pending — Scheduled (initial assignment) or Held (staff hold). */
+  pendingContext?: PendingContextEnum | null;
+  /** GH-1176: hold reason — only set when pendingContext=Held. */
+  pendingReason?: PauseReasonEnum | null;
+  /** GH-1176: active incident episode ID (set when priority=Urgent + isIncident=true). */
+  activeIncidentEpisodeId?: string | null;
+  /**
+   * Precomputed by the BE for the current user — drives the unread-chat dot on
+   * the list.
+   */
+  hasUnreadChat: boolean;
   createdAt: string;
   updatedAt?: string | null;
   slaTimer: SlaTimerDTO | null;
 
-  // ── Ticket thủ công: giờ phát hiện + serial pin (snapshot) + AI verify + merge ──
-  /** Thời điểm Customer phát hiện pin bất thường (điền từ Mobile). Khác createdAt. */
+  // ── Manual ticket: detection time + battery serial (snapshot) + AI verify + merge ──
+  /**
+   * GH-866 — a SINGLE timestamp for when the Customer noticed the incident
+   * (ISO-8601 UTC), replacing the `incidentDetectedFrom`/`To` pair the BE removed.
+   * Distinct from `createdAt`. Null for tickets generated automatically from an Alert.
+   */
   detectedAt?: string | null;
-  /** Serial pin (snapshot lúc tạo) — hiển thị không cần gọi thêm API. */
+  /** Battery serial (snapshot at creation) — displayed without an extra API call. */
   batterySerialNumber?: string | null;
-  /** Trạng thái AI verify thật/rác (human-in-the-loop). */
+  /** AI verdict on whether the ticket is genuine or junk (human-in-the-loop). */
   aiVerifyStatus?: TicketVerifyStatusEnum | null;
-  /** Điểm hợp lệ [0..1] từ AI. */
+  /** Validity score [0..1] from the AI. */
   aiVerifyScore?: number | null;
-  /** Lý do AI đưa ra verdict (cho Manager đọc). */
+  /** The AI's reasoning behind the verdict (for the Manager to read). */
   aiVerifyReason?: string | null;
-  /** Ticket bị nghi trùng với ticket này (cùng pin/chủ, còn mở). */
+  /** Ticket this one is suspected of duplicating (same battery/owner, still open). */
   suspectedDuplicateOfTicketId?: string | null;
-  /** Lý do nghi trùng. */
+  /** Why it is suspected of being a duplicate. */
   duplicateReason?: string | null;
-  /** Set khi Manager đã gộp ticket này vào ticket khác (ẩn khỏi queue). */
+  /** Set once a Manager merged this ticket into another one (hidden from the queue). */
   mergedIntoTicketId?: string | null;
+  /** Special close reason — set alongside `mergedIntoTicketId` on a Manager merge. */
+  closeReason?: TicketCloseReasonEnum | null;
 }
 
-/** Payload gộp ticket (Manager) — gộp ticket hiện tại vào ticket đích. */
+/** Merge payload (Manager) — merges the current ticket into the target ticket. */
 export interface MergeTicketPayload {
   targetTicketId: string;
 }
@@ -129,9 +171,22 @@ export interface TicketCommentDTO {
   isInternal: boolean;
   attachmentFileIds?: string[] | null;
   createdAt: string;
-  // BE trả sẵn trên cùng response GET .../chats (TicketChatDTO) — trước đây chưa type.
+  // Already returned on the same GET .../chats response (TicketChatDTO) — it just
+  // wasn't typed before.
   editCount?: number;
   updatedAt?: string | null;
+  /**
+   * Whether the current user has read this message. The BE sets it on GET /chats
+   * (list + cursor); messages you sent yourself are always true. The realtime
+   * ChatAdded event does NOT include it → undefined means "unknown", so don't treat
+   * undefined as unread (it would draw the "Unread messages" divider in the wrong
+   * place).
+   */
+  isRead?: boolean;
+  // Voice chat (created via POST /chats/voice): Pending/Processing = transcribing (body is
+  // temporarily empty), Completed = body holds the transcript, Failed = error → allow retry.
+  // null for ordinary text chat.
+  voiceTranscriptionStatus?: VoiceTranscriptionStatusEnum | null;
 }
 
 export interface MaintenanceLogDTO {
@@ -153,7 +208,7 @@ export interface MaintenanceLogDTO {
   createdAt: string;
 }
 
-// GET /api/staff/tickets/maintenance-logs/me — log cá nhân gom theo ticket.
+// GET /api/staff/tickets/maintenance-logs/me — your own logs, grouped by ticket.
 export interface StaffMaintenanceLogGroupDTO {
   ticketId: string;
   ticketCode: string;
@@ -162,12 +217,6 @@ export interface StaffMaintenanceLogGroupDTO {
 }
 
 export interface TicketDetailDTO extends TicketDTO {
-  /**
-   * #698 — khoảng thời gian Customer phát hiện sự cố (ISO-8601 UTC).
-   * Ticket sinh tự động từ Alert có thể trả `incidentDetectedTo = null`.
-   */
-  incidentDetectedFrom?: string | null;
-  incidentDetectedTo?: string | null;
   description?: string | null;
   resolutionSummary?: string | null;
   resolvedAt?: string | null;
@@ -183,9 +232,15 @@ export interface TicketDetailDTO extends TicketDTO {
   escalationReason?: EscalationReasonEnum;
   originAlertId?: string | null;
   activities?: TicketActivityDTO[] | null;
-  comments?: TicketCommentDTO[] | null;
+  /**
+   * The BE returns `chats` (TicketChatDTO[]) — there is NO `comments` any more.
+   * `TicketCommentsController` was deleted; the `TicketCommentDTO` in this file is
+   * exactly the shape of TicketChatDTO (the old name is kept so we don't have to
+   * touch every call site).
+   */
+  chats?: TicketCommentDTO[] | null;
   maintenanceLogs?: MaintenanceLogDTO[] | null;
-  // BE trả mảng FileId (string[]), KHÔNG phải mảng TicketAttachmentDTO.
+  // The BE returns an array of FileIds (string[]), NOT an array of TicketAttachmentDTO.
   attachmentFileIds?: string[] | null;
 }
 
@@ -244,32 +299,35 @@ export interface TriagePayload {
 }
 
 /**
- * #697 — POST /api/admin/tickets/{id}/assign.
- * Primary phải active + available + đủ skill tier theo priority (không đạt → 403).
- * Supporter KHÔNG bị check tier, nhưng không được trùng Primary và không trùng nhau.
+ * POST /api/admin/tickets/{id}/assign — GH-1176: scheduledStartAtUtc is now required.
+ * Current window [nowUtc-5m, nowUtc] → direct InProgress; future → Pending (no SLA yet).
  */
 export interface AssignPayload {
   primaryHandlerStaffId: string;
   supporterStaffIds: string[];
+  /** ISO-8601 UTC; BE classifies as current (≤nowUtc) or future (>nowUtc). */
+  scheduledStartAtUtc: string;
   notes?: string;
 }
 
 /**
- * #697 — POST /api/admin/tickets/{id}/reassign.
- * Primary hiện tại tự động hạ thành Supporter; KHÔNG gửi lại danh sách supporter.
- * SLA timer không reset.
+ * POST /api/admin/tickets/{id}/reassign — GH-1176: scheduledStartAtUtc required.
+ * Same current/future classification as AssignPayload.
  */
 export interface ReassignPayload {
   newPrimaryHandlerStaffId: string;
   reason: string;
+  /** ISO-8601 UTC; determines ReAssign→InProgress (current) or ReAssign→Pending (future). */
+  scheduledStartAtUtc: string;
 }
 
 export interface RejectPayload {
   reason: string;
 }
 
-// Tách riêng khỏi RejectPayload — gắn 1-1 với TicketTriageRejectCommand
-// (luồng Open|Escalated → ClosedRejected), khác RejectPayload (Resolved → InProgress).
+// Kept separate from RejectPayload — it maps 1-1 to TicketTriageRejectCommand
+// (the Open|Escalated → ClosedRejected flow), unlike RejectPayload
+// (Resolved → InProgress).
 export interface TriageRejectPayload {
   reason: string;
 }
@@ -279,6 +337,17 @@ export interface EscalatePayload {
   note?: string;
 }
 
+// POST /api/admin/tickets/{id}/re-prioritize — Manager changes the priority with a reason.
+// Do NOT send managerId/managerName/ticketId: the BE takes the identity from the JWT and
+// the ticket id from the URL.
+export interface ReprioritizePayload {
+  // The BE derives the priority from the Impact × Urgency matrix (User Guide §3.9) —
+  // the client never sends priority directly.
+  impact: ImpactScopeEnum;
+  urgency: UrgencyLevelEnum;
+  reason: string;
+}
+
 export interface CommentAttachmentInput {
   fileId: string;
   fileName?: string;
@@ -286,8 +355,16 @@ export interface CommentAttachmentInput {
   sizeBytes?: number;
 }
 
+// @-mention sent to the BE (POST /chats, field `mentions`) — matches the
+// ChatMentionInput record.
+export interface CommentMentionInput {
+  userId: string;
+  displayName: string;
+}
+
 export interface AddCommentPayload {
   body: string;
   isInternal: boolean;
   attachments?: CommentAttachmentInput[];
+  mentions?: CommentMentionInput[];
 }

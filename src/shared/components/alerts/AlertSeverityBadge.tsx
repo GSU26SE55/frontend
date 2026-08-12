@@ -3,9 +3,9 @@ import { AlertSeverityEnum } from "@/shared/enums/alerts/alert.enum";
 import { toneClass, ALERT_SEVERITY_TONE } from "@/shared/theme/statusColors";
 
 const LABEL: Record<AlertSeverityEnum, string> = {
-  [AlertSeverityEnum.Info]: "Thông tin",
-  [AlertSeverityEnum.Warning]: "Cảnh báo",
-  [AlertSeverityEnum.Critical]: "Nguy hiểm",
+  [AlertSeverityEnum.Info]: "Info",
+  [AlertSeverityEnum.Warning]: "Warning",
+  [AlertSeverityEnum.Critical]: "Critical",
 };
 
 export default function AlertSeverityBadge({

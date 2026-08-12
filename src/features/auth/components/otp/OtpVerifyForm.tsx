@@ -54,9 +54,9 @@ const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight text-slate-900">
-          Xác thực email
+          Verify email
         </h1>
-        <p className="text-sm text-slate-500">Mã 6 chữ số đã được gửi đến</p>
+        <p className="text-sm text-slate-500">A 6-digit code was sent to</p>
       </div>
 
       {/* Email badge */}
@@ -97,22 +97,22 @@ const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
           {isVerifying ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Đang xác thực…
+              Verifying…
             </>
           ) : (
-            "Xác thực"
+            "Verify"
           )}
         </Button>
 
         <div className="text-center">
-          <p className="text-xs text-slate-500 mb-1">Chưa nhận được mã?</p>
+          <p className="text-xs text-slate-500 mb-1">Didn't get a code?</p>
           <button
             type="button"
             disabled={countdown > 0 || isResending}
             onClick={handleResend}
             className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
-            {countdown > 0 ? `Gửi lại sau ${countdown}s` : "Gửi lại mã"}
+            {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
           </button>
         </div>
       </form>

@@ -1,22 +1,31 @@
 import { z } from "zod";
 
-// Cross-feature (admin device detail + staff page) → đặt ở shared/schemas.
+// Cross-feature (admin device detail + staff page) → lives in shared/schemas.
 export const createCalibrationSchema = z
   .object({
-    channel: z.string().min(1, "Bắt buộc").max(32, "Tối đa 32 ký tự"),
+    channel: z
+      .string()
+      .min(1, "Required")
+      .max(32, "Must be at most 32 characters"),
     batteryAssetId: z.string().uuid().optional(),
     scale: z
-      .number({ message: "Bắt buộc" })
-      .refine((v) => v !== 0, "Scale phải khác 0"),
-    offset: z.number({ message: "Bắt buộc" }),
-    unit: z.string().min(1, "Bắt buộc").max(16, "Tối đa 16 ký tự"),
-    calibratedAt: z.string().min(1, "Bắt buộc"),
+      .number({ message: "Required" })
+      .refine((v) => v !== 0, "Scale must not be 0"),
+    offset: z.number({ message: "Required" }),
+    unit: z
+      .string()
+      .min(1, "Required")
+      .max(16, "Must be at most 16 characters"),
+    calibratedAt: z.string().min(1, "Required"),
     expiresAt: z.string().optional(),
-    notes: z.string().max(500, "Tối đa 500 ký tự").optional(),
+    notes: z.string().max(500, "Must be at most 500 characters").optional(),
   })
   .refine(
     (d) => !d.expiresAt || new Date(d.expiresAt) > new Date(d.calibratedAt),
-    { message: "Ngày hết hạn phải sau ngày calibration", path: ["expiresAt"] },
+    {
+      message: "Expiry date must be after the calibration date",
+      path: ["expiresAt"],
+    },
   );
 
 export type CreateCalibrationForm = z.infer<typeof createCalibrationSchema>;

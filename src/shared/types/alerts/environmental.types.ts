@@ -35,14 +35,15 @@ export interface IncidentListParams {
   to?: string;
 }
 
-// POST /api/environmental-incidents/manual — người (Staff/Manager/Admin) report thủ công
-// bằng JWT khi thấy cháy/khói/ngập mà không có sensor tự động. reportedBy lấy từ token.
+// POST /api/environmental-incidents/manual — a person (Staff/Manager/Admin) reports
+// manually with their JWT after spotting fire/smoke/flooding that no sensor picked up.
+// reportedBy is taken from the token.
 export interface ManualIncidentPayload {
   siteId: string;
   incidentType: EnvironmentalIncidentTypeEnum;
   severity: AlertSeverityEnum;
-  // Khớp BE `ReportEnvironmentalIncidentCommand.Notes` (số nhiều) — sai tên field
-  // thì BE bind null và bỏ qua im lặng, không báo lỗi.
+  // Matches the BE's `ReportEnvironmentalIncidentCommand.Notes` (plural) — get the
+  // field name wrong and the BE binds null and silently ignores it, with no error.
   notes?: string;
 }
 
