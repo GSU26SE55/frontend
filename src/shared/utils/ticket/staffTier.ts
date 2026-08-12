@@ -13,7 +13,7 @@ import { TicketPriorityEnum } from "@/shared/enums/ticket/ticket.enum";
 
 /**
  * Minimum tier a PrimaryHandler must reach.
- * P1 → Tier 3 · P2 → Tier 2 · P3 → Tier 1.
+ * Urgent/P1 → Tier 3 · P2 → Tier 2 · P3 → Tier 1.
  * Returns `null` when the ticket has not been triaged (priority null) — the BE skips the
  * tier check in that case (`ticket.Priority.HasValue`), so the FE does not block it either.
  */
@@ -21,6 +21,7 @@ export function getMinTierForPriority(
   priority: TicketPriorityEnum | null | undefined,
 ): StaffSkillTierEnum | null {
   switch (priority) {
+    case TicketPriorityEnum.Urgent:
     case TicketPriorityEnum.P1Critical:
       return StaffSkillTierEnum.SeniorSpecialist;
     case TicketPriorityEnum.P2High:
@@ -49,6 +50,7 @@ export function isEligiblePrimaryHandler(
 // Short labels — match TicketPriorityBadge so the Manager can line them up with the badge
 // on the ticket.
 const PRIORITY_SHORT_LABEL: Record<TicketPriorityEnum, string> = {
+  [TicketPriorityEnum.Urgent]: "Urgent",
   [TicketPriorityEnum.P1Critical]: "P1 · Critical",
   [TicketPriorityEnum.P2High]: "P2 · High",
   [TicketPriorityEnum.P3Normal]: "P3 · Standard",

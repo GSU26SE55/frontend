@@ -36,25 +36,21 @@ const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
 const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
 
 const STATUS_LABELS: Record<TicketStatus, string> = {
-  New: "New",
-  Open: "Open",
-  Assigned: "Assigned",
-  InProgress: "In progress",
-  WaitingCustomer: "Waiting on customer",
-  WaitingParts: "Waiting on parts",
-  WaitingOnsiteSchedule: "Waiting on onsite schedule",
-  Resolved: "Resolved",
-  Escalated: "Escalated",
-  ClosedPendingRate: "Pending rating",
-  Closed: "Closed",
-  ClosedRejected: "Closed - rejected",
-  Incident: "Incident",
+  [TicketStatusEnum.Open]: "Open",
+  [TicketStatusEnum.Pending]: "Pending",
+  [TicketStatusEnum.InProgress]: "In progress",
+  [TicketStatusEnum.Request]: "Escalation request",
+  [TicketStatusEnum.ReAssign]: "Pending reassignment",
+  [TicketStatusEnum.Completed]: "Completed",
+  [TicketStatusEnum.Closed]: "Closed",
+  [TicketStatusEnum.ClosedRejected]: "Closed - rejected",
 };
 
 const PRIORITY_LABELS: Record<TicketPriority, string> = {
-  P1Critical: "P1 Critical",
-  P2High: "P2 High",
-  P3Normal: "P3 Normal",
+  [TicketPriorityEnum.P1Critical]: "P1 Critical",
+  [TicketPriorityEnum.P2High]: "P2 High",
+  [TicketPriorityEnum.P3Normal]: "P3 Normal",
+  [TicketPriorityEnum.Urgent]: "Urgent",
 };
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
