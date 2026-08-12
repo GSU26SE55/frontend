@@ -87,13 +87,13 @@ pipeline {
                                  rm -f '${remoteDir}/source.tar.gz'"
 
                             set +x
-                            printf '%s\\n' "\${TOKEN}" | ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} "
+                            printf '%s' "\${TOKEN}" | ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} \
+                                "umask 077; cat > '${remoteDir}/.ghcr-token'"
+                            ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} "
                                 set -eu
-                                read -r GHCR_PASSWORD
                                 export DOCKER_CONFIG='${remoteDockerConfig}'
-                                printf '%s' \"\${GHCR_PASSWORD}\" | \
-                                    docker login ghcr.io -u '${env.GH_USER}' --password-stdin
-                                unset GHCR_PASSWORD
+                                docker login ghcr.io -u '${env.GH_USER}' --password-stdin < '${remoteDir}/.ghcr-token'
+                                rm -f '${remoteDir}/.ghcr-token'
                                 cd '${remoteDir}'
                                 docker build --secret id=frontend_env,src=.env.ci ${tagArgs} .
                                 rm -f .env.ci
