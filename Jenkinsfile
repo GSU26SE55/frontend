@@ -104,7 +104,16 @@ pipeline {
                                     --restart unless-stopped \
                                     -p '127.0.0.1:${vpsPort}:80' \
                                     '${env.IMAGE_NAME}:${imageTag}'
-                                curl --fail --silent --show-error --retry 10 --retry-delay 2 \
+                                # The container may accept connections a moment after `docker run` returns.
+                                # Poll briefly before the final assertion so a startup race does not fail deploy.
+                                for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+                                    if curl --fail --silent --show-error --max-time 5 \
+                                        'http://127.0.0.1:${vpsPort}/' >/dev/null; then
+                                        break
+                                    fi
+                                    sleep 2
+                                done
+                                curl --fail --silent --show-error --max-time 5 \
                                     'http://127.0.0.1:${vpsPort}/' >/dev/null
                                 docker logout ghcr.io
                                 docker image prune -f
