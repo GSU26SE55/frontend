@@ -39,9 +39,10 @@ import { useReprioritizeTicket } from "@/features/manager/hooks/ticket/useManage
 import { computePriority } from "@/shared/utils/ticket/priorityMatrix";
 
 const PRIORITY_LABEL: Record<TicketPriorityEnum, string> = {
-  P1Critical: "P1 — Critical (SLA 4h)",
-  P2High: "P2 — High (SLA 24h)",
-  P3Normal: "P3 — Standard (SLA 72h)",
+  [TicketPriorityEnum.P1Critical]: "P1 — Critical (SLA 4h)",
+  [TicketPriorityEnum.P2High]: "P2 — High (SLA 24h)",
+  [TicketPriorityEnum.P3Normal]: "P3 — Standard (SLA 72h)",
+  [TicketPriorityEnum.Urgent]: "Urgent — SLA timer stopped",
 };
 
 const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
