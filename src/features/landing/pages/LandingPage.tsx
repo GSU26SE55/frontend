@@ -1,25 +1,22 @@
-import { useEffect, useState } from 'react';
-import FinalCtaSection from '@/features/landing/components/FinalCtaSection';
-import GovernanceSection from '@/features/landing/components/GovernanceSection';
-import HeroSection from '@/features/landing/components/HeroSection';
-import LandingFooter from '@/features/landing/components/LandingFooter';
-import LandingHeader from '@/features/landing/components/LandingHeader';
-
-import ProductSection from '@/features/landing/components/ProductSection';
-import RolesSection from '@/features/landing/components/RolesSection';
-import WorkflowSection from '@/features/landing/components/WorkflowSection';
-import StatsSection from '@/features/landing/components/StatsSection';
-import LoginDialog from '../components/auth/LoginDialog';
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import FinalCtaSection from "@/features/landing/components/FinalCtaSection";
+import GovernanceSection from "@/features/landing/components/GovernanceSection";
+import HeroSection from "@/features/landing/components/HeroSection";
+import LandingFooter from "@/features/landing/components/LandingFooter";
+import LandingHeader from "@/features/landing/components/LandingHeader";
+import ProductSection from "@/features/landing/components/ProductSection";
+import RolesSection from "@/features/landing/components/RolesSection";
+import WorkflowSection from "@/features/landing/components/WorkflowSection";
+import StatsSection from "@/features/landing/components/StatsSection";
 const LandingPage = () => {
-  const [loginOpen, setLoginOpen] = useState(false);
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
@@ -31,20 +28,19 @@ const LandingPage = () => {
         Skip to main content
       </a>
 
-      <LandingHeader scrolled={scrolled} onLogin={() => setLoginOpen(true)} />
+      <LandingHeader scrolled={scrolled} onLogin={() => navigate("/login")} />
 
       <main id="main-content">
-        <HeroSection onLogin={() => setLoginOpen(true)} />
-        <ProductSection /> 
+        <HeroSection onLogin={() => navigate("/login")} />
+        <ProductSection />
         <WorkflowSection />
         <StatsSection />
         <RolesSection />
         <GovernanceSection />
-        <FinalCtaSection onLogin={() => setLoginOpen(true)} />
+        <FinalCtaSection onLogin={() => navigate("/login")} />
       </main>
 
       <LandingFooter />
-      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 };

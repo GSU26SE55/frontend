@@ -1,61 +1,121 @@
-import { LockKeyhole } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { NAV_ITEMS } from '@/features/landing/landing.constants';
-import logoImg from '@/assets/logo.png';
+import { useEffect, useRef } from "react";
+import { animate, stagger } from "animejs";
+import { LockKeyhole } from "lucide-react";
+import { prefersReducedMotion } from "@/features/landing/lib/animation";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { NAV_ITEMS } from "@/features/landing/landing.constants";
+import logoImg from "@/assets/logo.webp";
 
 type LandingHeaderProps = {
   scrolled: boolean;
   onLogin: () => void;
 };
 
-const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => (
-  <header
-    className={cn(
-      'fixed left-0 right-0 top-0 z-40 px-6 py-4 transition-all duration-300 lg:px-12',
-      scrolled
-        ? 'border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md'
-        : 'border-b border-transparent bg-transparent'
-    )}
-  >
-    <div className="mx-auto grid w-full max-w-7xl grid-cols-3 items-center">
-      <nav className="flex items-center justify-start gap-8 text-sm font-medium" aria-label="Primary navigation">
-        {NAV_ITEMS.map(item => (
+const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
+  const headerRef = useRef<HTMLHeadElement>(null);
+
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) return;
+    if (prefersReducedMotion()) return;
+
+    const targets = node.querySelectorAll("[data-anim='header-item']");
+    const anim = animate(targets, {
+      opacity: [0, 1],
+      translateY: [-14, 0],
+      duration: 600,
+      delay: stagger(80, { start: 150 }),
+      ease: "outQuart",
+    });
+
+    return () => {
+      anim.revert();
+    };
+  }, []);
+
+  return (
+    <header
+      ref={headerRef}
+      className={cn(
+        "fixed left-0 right-0 top-0 z-40 transition-all duration-300",
+        scrolled
+          ? "border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md py-3 px-6 lg:px-12"
+          : "border-b border-transparent bg-transparent py-4 px-6 lg:px-12",
+      )}
+    >
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-3 items-center">
+        {/* Left: Nav */}
+        <nav
+          className="flex items-center justify-start gap-6 text-sm font-medium"
+          aria-label="Primary navigation"
+        >
+          {NAV_ITEMS.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              data-anim="header-item"
+              className={cn(
+                "whitespace-nowrap transition-colors duration-300 hidden md:block",
+                scrolled
+                  ? "text-slate-600 hover:text-slate-950"
+                  : "text-white/80 hover:text-white",
+              )}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Center: Logo */}
+        <div className="flex justify-center">
           <a
-            key={item.href}
-            href={item.href}
+            href="#main-content"
+            data-anim="header-item"
+            className="flex h-11 items-center focus:outline-none"
+          >
+            <img
+              src={logoImg}
+              alt="Sunaria Logo"
+              className="h-full w-auto object-contain transition-all duration-300"
+            />
+          </a>
+        </div>
+
+        {/* Right: Badge + Login */}
+        <div className="flex items-center justify-end gap-3">
+          {/* "AI-Powered" badge — shown on large enough screens */}
+          {/* <span
+            data-anim="header-item"
             className={cn(
-              'whitespace-nowrap transition-colors duration-300',
-              scrolled ? 'text-slate-600 hover:text-slate-950' : 'text-white/85 hover:text-white'
+              "hidden lg:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide transition-all duration-300",
+              scrolled
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-emerald-400/30 bg-emerald-500/10 text-emerald-300",
             )}
           >
-            {item.label}
-          </a>
-        ))}
-      </nav>
+            <Zap className="size-3" />
+            AI Monitoring
+          </span> */}
 
-      <div className="flex justify-center">
-        <a href="#main-content" className="flex h-12 items-center focus:outline-none">
-          <img src={logoImg} alt="Sunaria Logo" className="h-full w-auto object-contain transition-all duration-300" />
-        </a>
+          <Button
+            size="sm"
+            onClick={onLogin}
+            data-anim="header-item"
+            className={cn(
+              "h-9 gap-2 rounded-lg px-4 text-sm font-semibold transition-all duration-300 cursor-pointer",
+              scrolled
+                ? "bg-slate-950 text-white hover:bg-slate-800"
+                : "bg-white/10 text-white border border-white/20 hover:bg-white/20 backdrop-blur-sm",
+            )}
+          >
+            <LockKeyhole className="size-3.5" />
+            Sign in
+          </Button>
+        </div>
       </div>
-
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          variant="outline"
-          className={cn(
-            'h-10 gap-2 border-none bg-transparent p-0 text-sm font-medium transition-all duration-300 hover:bg-transparent',
-            scrolled ? 'text-slate-900 hover:text-slate-600' : 'text-white/85 hover:text-white'
-          )}
-          onClick={onLogin}
-        >
-          Đăng nhập
-          <LockKeyhole className="size-4" />
-        </Button>
-      </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 export default LandingHeader;

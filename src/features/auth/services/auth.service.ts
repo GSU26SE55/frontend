@@ -1,9 +1,14 @@
-import axiosInstance from '@/shared/lib/axios';
-import { env } from '@/config/env';
-import { ENDPOINTS } from '@/shared/utils/endpoints';
+import axios from "axios";
+import axiosInstance from "@/shared/lib/axios";
+import { env } from "@/config/env";
+import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type {
   LoginPayload,
-  LoginResponseData,
+  LoginResultData,
+  Verify2faLoginPayload,
+  Sms2faPayload,
+  ReactivateRequestPayload,
+  ReactivateVerifyPayload,
   RegisterPayload,
   OtpVerifyPayload,
   ResendOtpPayload,
@@ -11,23 +16,54 @@ import type {
   VerifyResetOtpPayload,
   VerifyResetOtpResponseData,
   ResetPasswordPayload,
+  AcceptInvitePayload,
 } from "@/features/auth/types/auth.types";
 import type { CommonResponse } from "@/shared/types/api.types";
+import type { AccountDto } from "@/shared/types/account/account.types";
 
 export const authService = {
   login: (payload: LoginPayload) =>
-    axiosInstance.post<CommonResponse<LoginResponseData>>(
+    axiosInstance.post<CommonResponse<LoginResultData>>(
       ENDPOINTS.AUTH.LOGIN,
+      payload,
+    ),
+
+  // GH-295: step 2 of the 2FA login — verify the TOTP/backup/SMS code with the challengeToken
+  verify2faLogin: (payload: Verify2faLoginPayload) =>
+    axiosInstance.post<CommonResponse<LoginResultData>>(
+      ENDPOINTS.AUTH.LOGIN_VERIFY_2FA,
+      payload,
+    ),
+
+  // #AUTH-58: send the SMS OTP fallback — rate limit partitioned by the X-Challenge-Token header.
+  // The returned data is the masked phone number (e.g. "******1234").
+  send2faSms: (payload: Sms2faPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.LOGIN_2FA_SMS,
+      payload,
+      { headers: { "X-Challenge-Token": payload.challengeToken } },
+    ),
+
+  // #AUTH-50: restore a soft-deleted account (90-day window)
+  reactivateRequest: (payload: ReactivateRequestPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.REACTIVATE_REQUEST,
+      payload,
+    ),
+
+  reactivateVerify: (payload: ReactivateVerifyPayload) =>
+    axiosInstance.post<CommonResponse<string>>(
+      ENDPOINTS.AUTH.REACTIVATE_VERIFY,
       payload,
     ),
 
   logout: () => axiosInstance.post<CommonResponse>(ENDPOINTS.AUTH.LOGOUT),
 
   refreshToken: (refreshToken: string) =>
-    axiosInstance.post<CommonResponse<LoginResponseData>>(
+    axios.post<CommonResponse<LoginResultData>>(
       `${env.VITE_API_BASE_URL}${ENDPOINTS.AUTH.REFRESH_TOKEN}`,
       { refreshToken },
-      { timeout: 10_000 }
+      { timeout: 10_000 },
     ),
 
   register: (payload: RegisterPayload) =>
@@ -54,6 +90,21 @@ export const authService = {
   resendResetOtp: (payload: ResendOtpPayload) =>
     axiosInstance.post<CommonResponse>(
       ENDPOINTS.AUTH.RESEND_RESET_OTP,
+      payload,
+    ),
+
+  // GH-295: the google callback returns a JSON LoginResultDto (data.tokens.*), it does NOT redirect the token through the URL
+  googleCallback: (code: string, state: string) =>
+    axiosInstance.get<CommonResponse<LoginResultData>>(
+      ENDPOINTS.AUTH.GOOGLE_CALLBACK,
+      { params: { code, state }, withCredentials: true },
+    ),
+
+  getMe: () => axiosInstance.get<CommonResponse<AccountDto>>(ENDPOINTS.AUTH.ME),
+
+  acceptInvite: (payload: AcceptInvitePayload) =>
+    axiosInstance.post<CommonResponse<LoginResultData>>(
+      ENDPOINTS.AUTH.ACCEPT_INVITE,
       payload,
     ),
 };

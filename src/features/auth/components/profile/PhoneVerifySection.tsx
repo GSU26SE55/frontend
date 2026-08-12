@@ -1,0 +1,110 @@
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  confirmOtpSchema,
+  type ConfirmOtpFormValues,
+} from "@/features/auth/schemas/otp/confirm-otp.schema";
+import { useSendPhoneOtp } from "@/features/auth/hooks/profile/useSendPhoneOtp";
+import { useVerifyPhoneOtp } from "@/features/auth/hooks/profile/useVerifyPhoneOtp";
+import { handleErrorApi } from "@/shared/lib/errors";
+import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
+
+const COOLDOWN_SECONDS = 60;
+
+interface PhoneVerifySectionProps {
+  bare?: boolean;
+}
+
+const PhoneVerifySection = ({ bare }: PhoneVerifySectionProps = {}) => {
+  const [otpSent, setOtpSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<ConfirmOtpFormValues>({
+    resolver: zodResolver(confirmOtpSchema),
+  });
+
+  const { mutate: sendOtp, isPending: isSending } = useSendPhoneOtp();
+  const { mutateAsync: verifyOtp, isPending: isVerifying } =
+    useVerifyPhoneOtp();
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  const handleSendOtp = () => {
+    sendOtp(undefined, {
+      onSuccess: () => {
+        toast.success(AUTH_MESSAGES.phone.otpSent);
+        setOtpSent(true);
+        setCooldown(COOLDOWN_SECONDS);
+      },
+      onError: (error) => handleErrorApi({ error }),
+    });
+  };
+
+  const onSubmit = async (data: ConfirmOtpFormValues) => {
+    try {
+      await verifyOtp(data);
+      toast.success(AUTH_MESSAGES.phone.verified);
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
+  };
+
+  const inner = (
+    <div className="space-y-4">
+      <Button
+        onClick={handleSendOtp}
+        disabled={isSending || cooldown > 0}
+        variant="outline"
+        size="sm"
+      >
+        {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {cooldown > 0 ? `Resend in ${cooldown}s` : "Send OTP"}
+      </Button>
+
+      {otpSent && (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 max-w-xs">
+          <div className="space-y-1">
+            <Label>OTP code</Label>
+            <Input maxLength={6} {...register("otp")} />
+            {errors.otp && (
+              <p className="text-sm text-destructive">{errors.otp.message}</p>
+            )}
+          </div>
+          <Button type="submit" size="sm" disabled={isVerifying}>
+            {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Confirm
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+
+  if (bare) return inner;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Verify phone number</CardTitle>
+      </CardHeader>
+      <CardContent>{inner}</CardContent>
+    </Card>
+  );
+};
+
+export default PhoneVerifySection;

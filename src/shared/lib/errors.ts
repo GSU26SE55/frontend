@@ -1,13 +1,14 @@
-import { toast } from 'sonner';
-import type { UseFormSetError } from 'react-hook-form';
-import type { ErrorEntity } from '@/shared/types/api.types';
+import { toast } from "sonner";
+import type { UseFormSetError } from "react-hook-form";
+import type { ErrorEntity } from "@/shared/types/api.types";
+import { MESSAGES } from "@/shared/constants/messages";
 
 export class HttpError extends Error {
   readonly statusCode: number;
 
   constructor(statusCode: number, message: string) {
     super(message);
-    this.name = 'HttpError';
+    this.name = "HttpError";
     this.statusCode = statusCode;
   }
 }
@@ -15,9 +16,9 @@ export class HttpError extends Error {
 export class EntityError extends HttpError {
   readonly errors: ErrorEntity[];
 
-  constructor(errors: ErrorEntity[]) {
-    super(422, 'Validation error');
-    this.name = 'EntityError';
+  constructor(errors: ErrorEntity[], statusCode: number = 422) {
+    super(statusCode, "Validation error");
+    this.name = "EntityError";
     this.errors = errors;
   }
 }
@@ -30,8 +31,8 @@ interface HandleErrorParams {
 export const handleErrorApi = ({ error, setError }: HandleErrorParams) => {
   if (error instanceof EntityError) {
     if (setError) {
-      error.errors.forEach(err =>
-        setError(err.field, { type: 'server', message: err.detail })
+      error.errors.forEach((err) =>
+        setError(err.field, { type: "server", message: err.detail }),
       );
     }
     return;
@@ -40,5 +41,5 @@ export const handleErrorApi = ({ error, setError }: HandleErrorParams) => {
     toast.error(error.message);
     return;
   }
-  toast.error('Có lỗi không xác định xảy ra');
+  toast.error(MESSAGES.unknownError);
 };

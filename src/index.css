@@ -6,77 +6,168 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  color-scheme: light;
+
+  /* Clean light theme — matches Auth/Login palette */
+  --background: oklch(0.984 0.003 247); /* slate-50 */
+  --foreground: oklch(0.129 0.042 264); /* slate-900 */
+  --card: oklch(1 0 0); /* white */
+  --card-foreground: oklch(0.129 0.042 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.50 0.22 260);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0.005 260);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0.005 260);
-  --muted-foreground: oklch(0.556 0.01 260);
-  --accent: oklch(0.97 0.005 260);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.129 0.042 264);
+  --primary: oklch(0.596 0.168 160); /* emerald-600 — matches login button */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.968 0.007 247); /* slate-100 */
+  --secondary-foreground: oklch(0.279 0.041 264);
+  --muted: oklch(0.968 0.007 247); /* slate-100 */
+  --muted-foreground: oklch(0.554 0.023 264); /* slate-500 */
+  --accent: oklch(0.968 0.007 247);
+  --accent-foreground: oklch(0.279 0.041 264);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0.005 260);
-  --input: oklch(0.922 0.005 260);
-  --ring: oklch(0.50 0.22 260);
-  --chart-1: oklch(0.50 0.22 260);
-  --chart-2: oklch(0.65 0.15 170);
+  --border: oklch(0.928 0.006 264); /* slate-200 */
+  --input: oklch(0.928 0.006 264);
+  --ring: oklch(0.596 0.168 160); /* emerald */
+  --chart-1: oklch(0.596 0.168 160); /* emerald */
+  --chart-2: oklch(0.5 0.22 260); /* blue */
   --chart-3: oklch(0.75 0.12 80);
   --chart-4: oklch(0.62 0.18 295);
   --chart-5: oklch(0.62 0.18 15);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0.005 260);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.50 0.22 260);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0.005 260);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0.005 260);
-  --sidebar-ring: oklch(0.50 0.22 260);
+  --radius: 0.375rem;
+  --sidebar: oklch(1 0 0); /* white sidebar */
+  --sidebar-foreground: oklch(0.129 0.042 264);
+  --sidebar-primary: oklch(0.596 0.168 160);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.945 0.028 160); /* emerald-50 tint for active */
+  --sidebar-accent-foreground: oklch(0.448 0.168 160); /* emerald-700 */
+  --sidebar-border: oklch(0.928 0.006 264);
+  --sidebar-ring: oklch(0.596 0.168 160);
+
+  /* Semantic status colors */
+  --ok: #16a34a; /* green-600 */
+  --ok-soft: #dcfce7; /* green-100 */
+  --p1: #dc2626; /* red-600 */
+  --p1-soft: #fee2e2; /* red-100 */
+  --p2: #ea580c; /* orange-600 */
+  --p2-soft: #ffedd5; /* orange-100 */
+  --p3: #ca8a04; /* yellow-600 */
+  --p3-soft: #fef9c3; /* yellow-100 */
+  --info: #2563eb; /* blue-600 */
+  --info-soft: #dbeafe; /* blue-100 */
+  --muted-status: #64748b; /* slate-500 — neutral status (draft/inactive) */
+  --muted-status-soft: #f1f5f9; /* slate-100 */
+
+  /* SLA state — maps back onto the semantic tokens (no new colors) */
+  --sla-ok: var(--ok);
+  --sla-caution: var(--p3);
+  --sla-warning: var(--p1);
+
+  /* Diff (GitHub-style) — its own color set for code/text diffs */
+  --diff-add: #116329;
+  --diff-add-soft: #e6ffec;
+  --diff-del: #cf222e;
+  --diff-del-soft: #ffebe9;
+
+  /* Surface helpers */
+  --surface-2: oklch(0.968 0.007 247);
+  --border-2: oklch(0.944 0.006 264);
+  --border-strong: oklch(0.869 0.012 264); /* slate-300 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.68 0.19 260);
-  --primary-foreground: oklch(0.1 0.01 260);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  color-scheme: dark;
+
+  --background: oklch(0.17 0.018 255);
+  --foreground: oklch(0.985 0.004 247);
+  --card: oklch(0.215 0.018 255);
+  --card-foreground: oklch(0.985 0.004 247);
+  --popover: oklch(0.215 0.018 255);
+  --popover-foreground: oklch(0.985 0.004 247);
+  --primary: oklch(0.68 0.168 160);
+  --primary-foreground: oklch(0.12 0.025 160);
+  --secondary: oklch(0.27 0.018 255);
+  --secondary-foreground: oklch(0.985 0.004 247);
+  --muted: oklch(0.27 0.018 255);
+  --muted-foreground: oklch(0.74 0.018 255);
+  --accent: oklch(0.29 0.035 160);
+  --accent-foreground: oklch(0.95 0.04 160);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 11%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.68 0.19 260);
-  --chart-1: oklch(0.68 0.19 260);
+  --ring: oklch(0.68 0.168 160);
+  --chart-1: oklch(0.68 0.168 160);
   --chart-2: oklch(0.72 0.12 170);
-  --chart-3: oklch(0.78 0.10 80);
-  --chart-4: oklch(0.70 0.16 295);
+  --chart-3: oklch(0.78 0.1 80);
+  --chart-4: oklch(0.7 0.16 295);
   --chart-5: oklch(0.67 0.16 15);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.68 0.19 260);
-  --sidebar-primary-foreground: oklch(0.1 0.01 260);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.68 0.19 260);
+  --sidebar: oklch(0.205 0.018 255);
+  --sidebar-foreground: oklch(0.985 0.004 247);
+  --sidebar-primary: oklch(0.68 0.168 160);
+  --sidebar-primary-foreground: oklch(0.12 0.025 160);
+  --sidebar-accent: oklch(0.29 0.035 160);
+  --sidebar-accent-foreground: oklch(0.94 0.055 160);
+  --sidebar-border: oklch(1 0 0 / 11%);
+  --sidebar-ring: oklch(0.68 0.168 160);
+
+  --ok: #4ade80;
+  --ok-soft: rgb(34 197 94 / 0.16);
+  --p1: #f87171;
+  --p1-soft: rgb(239 68 68 / 0.16);
+  --p2: #fb923c;
+  --p2-soft: rgb(249 115 22 / 0.16);
+  --p3: #facc15;
+  --p3-soft: rgb(234 179 8 / 0.16);
+  --info: #60a5fa;
+  --info-soft: rgb(59 130 246 / 0.16);
+  --muted-status: #94a3b8; /* slate-400 */
+  --muted-status-soft: rgb(100 116 139 / 0.16);
+
+  /* SLA — inherits the semantic tokens (a dark variant is already defined above) */
+  --sla-ok: var(--ok);
+  --sla-caution: var(--p3);
+  --sla-warning: var(--p1);
+
+  /* Diff dark */
+  --diff-add: #4ade80;
+  --diff-add-soft: rgb(34 197 94 / 0.16);
+  --diff-del: #f87171;
+  --diff-del-soft: rgb(239 68 68 / 0.16);
+
+  --surface-2: oklch(0.25 0.018 255);
+  --border-2: oklch(1 0 0 / 9%);
+  --border-strong: oklch(1 0 0 / 16%);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.28);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.32), 0 2px 4px -2px rgb(0 0 0 / 0.24);
 }
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: "Geist Variable", sans-serif;
+
+  /* Semantic status colors → Tailwind utilities (bg-ok-soft, text-p1, border-p2...) */
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-p1: var(--p1);
+  --color-p1-soft: var(--p1-soft);
+  --color-p2: var(--p2);
+  --color-p2-soft: var(--p2-soft);
+  --color-p3: var(--p3);
+  --color-p3-soft: var(--p3-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-muted-status: var(--muted-status);
+  --color-muted-status-soft: var(--muted-status-soft);
+  --color-sla-ok: var(--sla-ok);
+  --color-sla-caution: var(--sla-caution);
+  --color-sla-warning: var(--sla-warning);
+  --color-diff-add: var(--diff-add);
+  --color-diff-add-soft: var(--diff-add-soft);
+  --color-diff-del: var(--diff-del);
+  --color-diff-del-soft: var(--diff-del-soft);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -123,20 +214,197 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  section[id],
+  main[id] {
+    scroll-margin-top: 4.5rem;
   }
 }
 
+/* sr-only — the shadcn/tailwind.css preset's version is missing `clip: rect(0,0,0,0)`,
+   so hidden elements still take up layout space (e.g. PaginationEllipsis "More pages"),
+   making <html> taller → a second scrollbar appears. Override with the standard version
+   so hidden elements don't affect layout. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Dashboard typography utilities */
+.font-mono-num {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+/* Row hover for tables */
+.row-hover:hover {
+  background: var(--surface-2);
+}
+.row-active {
+  background: var(--surface-2);
+  box-shadow: inset 2px 0 0 var(--foreground);
+}
+
+/* SLA pulse dot */
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+.pulse-dot {
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+
+/* Incident ticket card — a continuously pulsing red border.
+   Only border-color + box-shadow are animated (not opacity on the whole element like
+   animate-pulse), so the text inside stays readable. 1.8s cadence: slow enough not to
+   strain the eyes when a grid has many cards pulsing at once. */
+@keyframes incident-border-pulse {
+  0%,
+  100% {
+    border-color: var(--destructive);
+    box-shadow:
+      0 0 0 0 color-mix(in oklab, var(--destructive) 55%, transparent),
+      0 0 12px 0 color-mix(in oklab, var(--destructive) 30%, transparent);
+  }
+  50% {
+    /* Down to 25% — a wide swing makes the pulse clearly readable; at 60% the two
+       phases look too similar and the border reads as static. */
+    border-color: color-mix(in oklab, var(--destructive) 25%, transparent);
+    box-shadow:
+      0 0 0 6px color-mix(in oklab, var(--destructive) 0%, transparent),
+      0 0 0 0 color-mix(in oklab, var(--destructive) 0%, transparent);
+  }
+}
+.incident-pulse {
+  /* 2px border — Card's default 1px is too thin, the red washes out while pulsing. */
+  border-width: 2px;
+  animation: incident-border-pulse 1.6s ease-in-out infinite;
+}
+
+/* When the user enables "reduce motion" at the OS level → keep the red border static,
+   still conveying urgency without the pulsing effect. */
+@media (prefers-reduced-motion: reduce) {
+  .incident-pulse {
+    animation: none;
+    border-color: var(--destructive);
+  }
+}
+
+/* Typing indicator dot — matches mobile exactly (opacity 0.3↔1, 1s cycle) */
+@keyframes typing-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typing-dot 1s ease-in-out infinite;
+}
+
+/* Page fade-in */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  animation: fade-up 0.28s ease both;
+}
+
+/* Page enter — fade when entering a page (used on the page wrapper). No position
+   shift (translateY) — avoids a "jumping" feeling on every route change. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-enter {
+  animation: page-enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Plain fade-in (no movement) — for secondary panels/content */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 0.25s ease both;
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0px,
+    var(--surface-2) 100px,
+    var(--muted) 200px
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
 @keyframes aurora-pulse {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes float-card {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(0.3deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(0.3deg);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -146,4 +414,87 @@
   .animate-float-card {
     animation: float-card 5s ease-in-out infinite;
   }
+}
+
+/* Respect motion-sensitive users — disable every infinitely-looping animation
+   (pulsing dots, shimmer skeleton, spinner, fade-up) + transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Rich text content (Tiptap) — Blog + Knowledge Base.
+   Tailwind preflight resets the default styles for h2/ul/blockquote/etc.,
+   so they must be redeclared here, or authored content renders unstyled. */
+.rich-content > * + * {
+  margin-top: 0.75em;
+}
+.rich-content h1,
+.rich-content h2,
+.rich-content h3 {
+  font-weight: 600;
+  line-height: 1.3;
+}
+.rich-content h1 {
+  font-size: 1.5em;
+}
+.rich-content h2 {
+  font-size: 1.25em;
+}
+.rich-content h3 {
+  font-size: 1.1em;
+}
+.rich-content ul,
+.rich-content ol {
+  padding-left: 1.5rem;
+}
+.rich-content ul {
+  list-style: disc;
+}
+.rich-content ol {
+  list-style: decimal;
+}
+.rich-content li > * + * {
+  margin-top: 0.25em;
+}
+.rich-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rich-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+  color: var(--muted-foreground);
+}
+.rich-content pre {
+  background: var(--muted);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+  font-size: 0.875em;
+}
+.rich-content code {
+  background: var(--muted);
+  border-radius: 0.25rem;
+  padding: 0.1em 0.3em;
+  font-size: 0.875em;
+}
+.rich-content pre code {
+  background: transparent;
+  padding: 0;
+}
+.rich-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+}
+.rich-content hr {
+  border-top: 1px solid var(--border);
 }

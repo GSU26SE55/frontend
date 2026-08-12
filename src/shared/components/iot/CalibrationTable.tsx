@@ -1,0 +1,129 @@
+import { useState } from "react";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { useDeleteCalibration } from "@/shared/hooks/iot/useIotCalibrationMutations";
+import { handleErrorApi } from "@/shared/lib/errors";
+import type { IotDeviceCalibrationDto } from "@/shared/types/iot/iot.types";
+import { ACTIONS } from "@/shared/constants/actions";
+import { MESSAGES } from "@/shared/constants/messages";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+
+interface Props {
+  deviceId: string;
+  items: IotDeviceCalibrationDto[];
+  canDelete?: boolean;
+}
+
+export default function CalibrationTable({
+  deviceId,
+  items,
+  canDelete = true,
+}: Props) {
+  const { mutate: deleteCalibration } = useDeleteCalibration(deviceId);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{TABLE_COLUMNS.channel}</TableHead>
+            <TableHead>Scale</TableHead>
+            <TableHead>Offset</TableHead>
+            <TableHead>{TABLE_COLUMNS.unit}</TableHead>
+            <TableHead>{TABLE_COLUMNS.calibrated}</TableHead>
+            <TableHead>{TABLE_COLUMNS.expiresAt}</TableHead>
+            {canDelete && <TableHead className="text-right">Delete</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell className="font-medium">{item.channel}</TableCell>
+              <TableCell className="tabular-nums">{item.scale}</TableCell>
+              <TableCell className="tabular-nums">{item.offset}</TableCell>
+              <TableCell>{item.unit}</TableCell>
+              <TableCell className="text-sm">
+                {item.calibratedAt.slice(0, 10)}
+              </TableCell>
+              <TableCell className="text-sm">
+                {item.expiresAt ? item.expiresAt.slice(0, 10) : "—"}
+              </TableCell>
+              {canDelete && (
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 text-destructive"
+                    onClick={() => setConfirmId(item.id)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+          {items.length === 0 && (
+            <TableRow>
+              <TableCell
+                colSpan={canDelete ? 7 : 6}
+                className="text-center text-muted-foreground py-8"
+              >
+                No calibration yet
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      <AlertDialog
+        open={!!confirmId}
+        onOpenChange={(o) => !o && setConfirmId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete calibration?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => {
+                if (!confirmId) return;
+                deleteCalibration(confirmId, {
+                  onSuccess: () => toast.success(MESSAGES.calibration.deleted),
+                  onError: (error) => handleErrorApi({ error }),
+                });
+                setConfirmId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}

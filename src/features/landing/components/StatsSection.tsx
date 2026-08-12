@@ -1,56 +1,181 @@
-import Reveal from '@/features/landing/components/Reveal';
-import test1Img from '@/assets/test 1.jpg';
+import { useEffect, useRef } from "react";
+import { animate, onScroll, stagger } from "animejs";
+import {
+  createCleanupBag,
+  prefersReducedMotion,
+} from "@/features/landing/lib/animation";
+import statsBgImg from "@/assets/stats_bg.webp";
 
 const STATS_DATA = [
-  { value: '$1500+', label: 'Average Annual Savings' },
-  { value: '5-7 Years', label: 'Payback Period' },
-  { value: '$30,000+', label: 'Lifetime Saving' },
+  {
+    value: "0",
+    unit: "breach",
+    label: "SLA Breach",
+    sub: "Zero SLA violations since go-live",
+    color: "text-emerald-400",
+  },
+  {
+    value: "94.7",
+    unit: "%",
+    label: "Average SOH",
+    sub: "Battery health across every monitored system",
+    color: "text-white",
+  },
+  {
+    value: "< 18",
+    unit: "min",
+    label: "Triage time",
+    sub: "From alert to a ticket with an owner",
+    color: "text-white",
+  },
 ] as const;
 
+const parseStatValue = (raw: string) => {
+  const match = raw.match(/^(.*?)(-?\d+(?:\.\d+)?)(.*)$/);
+  if (!match) return { prefix: "", target: 0, decimals: 0, suffix: raw };
+  const [, prefix, numberText, suffix] = match;
+  const decimals = numberText.includes(".")
+    ? numberText.split(".")[1].length
+    : 0;
+  return { prefix, target: parseFloat(numberText), decimals, suffix };
+};
+
+const StatItem = ({ stat }: { stat: (typeof STATS_DATA)[number] }) => (
+  <div
+    data-anim="stat-item"
+    className="flex flex-col items-center justify-center px-4 text-center"
+    style={{ opacity: 0 }}
+  >
+    <div className="flex items-end gap-1.5">
+      <span
+        data-anim="stat-value"
+        className={`text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)] ${stat.color}`}
+      >
+        {parseStatValue(stat.value).prefix}0
+      </span>
+      <span className="mb-1 text-base sm:text-xl font-semibold text-slate-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+        {stat.unit}
+      </span>
+    </div>
+    <p className="mt-2 text-sm sm:text-base font-semibold text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0.7)]">
+      {stat.label}
+    </p>
+    <p className="mt-1 hidden sm:block text-xs text-slate-300/80 max-w-45 leading-relaxed drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+      {stat.sub}
+    </p>
+  </div>
+);
+
 const StatsSection = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const items = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-anim='stat-item']"),
+    );
+    if (items.length === 0) return;
+
+    const setFinalValues = () => {
+      items.forEach((el, i) => {
+        el.style.opacity = "1";
+        const valueEl = el.querySelector<HTMLElement>(
+          "[data-anim='stat-value']",
+        );
+        if (!valueEl) return;
+        const { prefix, target, decimals, suffix } = parseStatValue(
+          STATS_DATA[i].value,
+        );
+        valueEl.textContent = `${prefix}${target.toFixed(decimals)}${suffix}`;
+      });
+    };
+
+    if (prefersReducedMotion()) {
+      setFinalValues();
+      return;
+    }
+
+    const bag = createCleanupBag();
+
+    const anim = animate(items, {
+      opacity: [0, 1],
+      translateY: [20, 0],
+      duration: 600,
+      ease: "outQuad",
+      delay: stagger(120),
+      autoplay: onScroll({ target: container, repeat: false }),
+      onBegin: () => {
+        items.forEach((el, i) => {
+          const valueEl = el.querySelector<HTMLElement>(
+            "[data-anim='stat-value']",
+          );
+          if (!valueEl) return;
+          const { prefix, target, decimals, suffix } = parseStatValue(
+            STATS_DATA[i].value,
+          );
+          if (target === 0) {
+            valueEl.textContent = `${prefix}${target.toFixed(decimals)}${suffix}`;
+            return;
+          }
+          const counter = { val: 0 };
+          bag.add(
+            animate(counter, {
+              val: target,
+              duration: 1400,
+              delay: i * 120,
+              ease: "outExpo",
+              onUpdate: () => {
+                valueEl.textContent = `${prefix}${counter.val.toFixed(decimals)}${suffix}`;
+              },
+            }),
+          );
+        });
+      },
+    });
+
+    return () => {
+      anim.revert();
+      bag.flush();
+    };
+  }, []);
+
   return (
-    <section 
-      className="relative w-full h-[450px] sm:h-[600px] lg:h-[720px] bg-cover bg-center bg-no-repeat overflow-hidden"
-      style={{ backgroundImage: `url("${test1Img}")` }}
+    <section
+      className="relative w-full h-105 sm:h-140 lg:h-170 bg-cover bg-center bg-no-repeat overflow-hidden"
+      style={{ backgroundImage: `url("${statsBgImg}")` }}
     >
-      {/* Top seamless transition: fades from solid white to transparent to completely blend with WorkflowSection above */}
-      <div 
-        className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-white via-white/60 to-transparent z-10 pointer-events-none" 
+      {/* Top gradient: blend from white (WorkflowSection) */}
+      <div
+        className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-white via-white/60 to-transparent z-10 pointer-events-none"
         aria-hidden="true"
       />
 
-      {/* Bottom seamless transition: fades from slate-950 to transparent to blend with RolesSection below */}
-      <div 
-        className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent z-10 pointer-events-none" 
+      {/* Bottom gradient: blend to slate-950 (RolesSection) */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent z-10 pointer-events-none"
         aria-hidden="true"
       />
 
-      {/* Soft overall darkening overlay for rich contrast and text readability */}
-      <div 
-        className="absolute inset-0 bg-slate-950/10 z-0 pointer-events-none" 
+      {/* Dark overlay for readability */}
+      <div
+        className="absolute inset-0 bg-slate-950/30 z-0 pointer-events-none"
         aria-hidden="true"
       />
 
-      {/* Center-bottom stats list, exactly matching the screenshot */}
-      <div className="absolute bottom-12 sm:bottom-16 md:bottom-20 left-0 right-0 z-20 w-full px-5">
+      {/* Stats centered near bottom */}
+      <div className="absolute bottom-14 sm:bottom-20 left-0 right-0 z-20 px-5">
         <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <div className="grid grid-cols-3 text-center text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-              {STATS_DATA.map((stat) => (
-                <div key={stat.label} className="flex flex-col items-center justify-center px-2">
-                  {/* Clean white bold text */}
-                  <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-none">
-                    {stat.value}
-                  </span>
-                  
-                  {/* Clean faded sub-label */}
-                  <span className="mt-3 text-[10px] sm:text-xs md:text-sm font-medium text-slate-200 tracking-wide opacity-90">
-                    {stat.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
+          {/* Dividers between stat items */}
+          <div
+            ref={containerRef}
+            className="grid grid-cols-3 divide-x divide-white/15"
+          >
+            {STATS_DATA.map((stat) => (
+              <StatItem key={stat.label} stat={stat} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -1,0 +1,277 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AlertTriangle, Bell, CheckCircle, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { KpiCard } from "@/shared/components/dashboard/KpiCard";
+import { useStaffNotifications } from "@/features/staff/hooks/notification/useStaffNotifications";
+import {
+  toneClass,
+  NOTIFICATION_STATUS_TONE,
+} from "@/shared/theme/statusColors";
+import {
+  NotificationStatusEnum,
+  NotificationTypeEnum,
+  isUnreadStatus,
+} from "@/features/staff/types/notification/notification.types";
+import type { NotificationDto } from "@/features/staff/types/notification/notification.types";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+
+const PAGE_SIZE = 10;
+
+const TYPE_LABEL: Record<number, string> = {
+  [NotificationTypeEnum.TicketCreated]: "New ticket",
+  [NotificationTypeEnum.TicketAssigned]: "Ticket assigned",
+  [NotificationTypeEnum.TicketStatusChanged]: "Status changed",
+  [NotificationTypeEnum.TicketResolved]: "Ticket resolved",
+  [NotificationTypeEnum.TicketClosed]: "Ticket closed",
+  [NotificationTypeEnum.TicketEscalated]: "Escalated",
+  [NotificationTypeEnum.SlaWarning]: "SLA warning",
+  [NotificationTypeEnum.SlaBreached]: "SLA breached",
+  [NotificationTypeEnum.BatteryAnomalyDetected]: "Battery anomaly",
+  [NotificationTypeEnum.EnvironmentalIncidentDetected]:
+    "Environmental incident",
+  [NotificationTypeEnum.EnvironmentalIncidentResolved]:
+    "Environmental incident resolved",
+  [NotificationTypeEnum.AccountActivated]: "Account",
+  [NotificationTypeEnum.IncidentDeclared]: "Incident",
+  [NotificationTypeEnum.System]: "System",
+};
+
+function getStatusClass(status: number) {
+  return toneClass(NOTIFICATION_STATUS_TONE[status] ?? "muted");
+}
+
+function getStatusLabel(status: number) {
+  if (status === NotificationStatusEnum.Read) return "Read";
+  // Sprint 6.3 NOTI3-14 — Opened is stronger than Read; Delivered is actual proof of
+  // delivery. Without these two branches, both would fall to "Pending", which is the
+  // opposite of their meaning.
+  if (status === NotificationStatusEnum.Opened) return "Opened";
+  if (status === NotificationStatusEnum.Delivered) return "Delivered";
+  if (status === NotificationStatusEnum.Sent) return "Sent";
+  if (status === NotificationStatusEnum.Failed) return "Failed";
+  // Pending and Processing (GH-792) are both "not done yet" from the user's point of view.
+  return "Pending";
+}
+
+function canOpenTicket(notification: NotificationDto) {
+  return (
+    notification.entityId &&
+    notification.entityType?.toLowerCase().includes("ticket")
+  );
+}
+
+export default function AlertsPage() {
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const [unreadOnly, setUnreadOnly] = useState(false);
+
+  const { data, isLoading, isError, refetch, isFetching } =
+    useStaffNotifications({
+      pageNumber: page,
+      pageSize: PAGE_SIZE,
+      unreadOnly: unreadOnly || undefined,
+    });
+
+  const notifications = data?.items ?? [];
+  const totalItems = data?.totalItems ?? 0;
+  const totalPages =
+    data?.totalPages ?? Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  // Uses the helper instead of comparing `!== Read` directly: the BE's definition of
+  // "unread" (GetUnreadCountQueryHandler) excludes BOTH Read AND Opened, so a naive
+  // comparison would overcount every record the user already opened and the badge
+  // would drift from the number the server returns.
+  const unreadCount = notifications.filter((item) =>
+    isUnreadStatus(item.status),
+  ).length;
+  const slaCount = notifications.filter(
+    (item) =>
+      item.type === NotificationTypeEnum.SlaWarning ||
+      item.type === NotificationTypeEnum.SlaBreached,
+  ).length;
+
+  return (
+    <div className="p-6 space-y-6 max-w-360 mx-auto">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            Staff &middot; Alerts
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Alerts & Reports
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Notifications from tickets, SLA, and the system.
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            variant={unreadOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setUnreadOnly((value) => !value);
+              setPage(1);
+            }}
+          >
+            Unread
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw
+              className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
+            />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <KpiCard
+          label="Total notifications"
+          value={isLoading ? "--" : totalItems}
+          sub="items"
+          icon={<Bell className="size-4" />}
+        />
+        <KpiCard
+          label="Unread on this page"
+          value={isLoading ? "--" : unreadCount}
+          sub="items"
+          icon={<AlertTriangle className="size-4" />}
+          iconBg="bg-amber-500/10"
+          iconColor="text-amber-600 dark:text-amber-300"
+        />
+        <KpiCard
+          label="SLA alerts"
+          value={isLoading ? "--" : slaCount}
+          sub="items"
+          icon={<CheckCircle className="size-4" />}
+          iconBg="bg-destructive/10"
+          iconColor="text-destructive"
+        />
+      </div>
+
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b border-border py-4">
+          <CardTitle>Notification list</CardTitle>
+        </CardHeader>
+        {isLoading ? (
+          <div className="p-4 space-y-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : isError ? (
+          <CardContent className="py-10 text-center text-destructive">
+            Couldn't load notifications.
+          </CardContent>
+        ) : notifications.length === 0 ? (
+          <CardContent className="py-10 text-center text-muted-foreground">
+            No matching notifications.
+          </CardContent>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
+                <TableHead>Content</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>{TABLE_COLUMNS.status}</TableHead>
+                <TableHead>{TABLE_COLUMNS.time}</TableHead>
+                <TableHead className="text-right">Link</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {notifications.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(page - 1) * PAGE_SIZE + index + 1}
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-xl">
+                      <p className="font-medium">{item.title}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {item.body}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {TYPE_LABEL[item.type] ?? `Type ${item.type}`}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={getStatusClass(item.status)}
+                    >
+                      {getStatusLabel(item.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleString("vi-VN")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {canOpenTicket(item) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          navigate(`/staff/tickets/${item.entityId}`)
+                        }
+                      >
+                        Open ticket
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((value) => value - 1)}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((value) => value + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

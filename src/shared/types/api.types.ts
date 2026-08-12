@@ -12,7 +12,7 @@ export interface CommonResponse<T = undefined> {
 
 export interface PaginationResponse<T> {
   items: T[];
-  totalCount: number;
+  totalItems: number;
   pageNumber: number;
   pageSize: number;
   totalPages: number;

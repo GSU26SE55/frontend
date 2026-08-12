@@ -1,45 +1,82 @@
-import type { SessionUser, UserRole } from '@/shared/types/session.types';
+import type {
+  SessionUser,
+  UserRole,
+} from "@/shared/types/account/session.types";
 
-type PermissionType = string & { readonly __brand: 'Permission' };
+type PermissionType = string & { readonly __brand: "Permission" };
 
+// Source of truth: BE PermissionCodes.cs + PermissionSeed.cs (40 system codes, verified in GH-106).
+// Codes are lowercase "module.action". Do NOT add codes that don't exist in the BE seed.
 export const P = {
-  TICKET_VIEW: 'ticket.view' as PermissionType,
-  TICKET_CREATE: 'ticket.create' as PermissionType,
-  TICKET_TRIAGE: 'ticket.triage' as PermissionType,
-  TICKET_ASSIGN: 'ticket.assign' as PermissionType,
-  TICKET_ESCALATE: 'ticket.escalate' as PermissionType,
-  TICKET_CLOSE: 'ticket.close' as PermissionType,
-  TICKET_CLOSE_REJECT: 'ticket.close_reject' as PermissionType,
+  // user.*
+  USER_VIEW: "user.view" as PermissionType,
+  USER_CREATE: "user.create" as PermissionType,
+  USER_UPDATE: "user.update" as PermissionType,
+  USER_DELETE: "user.delete" as PermissionType,
+  USER_CHANGE_STATUS: "user.change_status" as PermissionType,
+  USER_UNLOCK: "user.unlock" as PermissionType,
+  USER_ASSIGN_ROLE: "user.assign_role" as PermissionType,
+  USER_FORCE_LOGOUT: "user.force_logout" as PermissionType,
+  USER_INVITE: "user.invite" as PermissionType,
 
-  BATTERY_VIEW: 'battery.view' as PermissionType,
-  BATTERY_CREATE: 'battery.create' as PermissionType,
-  BATTERY_UPDATE: 'battery.update' as PermissionType,
-  BATTERY_DELETE: 'battery.delete' as PermissionType,
-  BATTERY_ASSIGN: 'battery.assign' as PermissionType,
-  BATTERY_CONFIG_VIEW: 'battery.config.view' as PermissionType,
-  BATTERY_CONFIG_UPDATE: 'battery.config.update' as PermissionType,
+  // role.*
+  ROLE_VIEW: "role.view" as PermissionType,
+  ROLE_CREATE: "role.create" as PermissionType,
+  ROLE_UPDATE: "role.update" as PermissionType,
+  ROLE_DELETE: "role.delete" as PermissionType,
+  ROLE_ASSIGN_PERMISSION: "role.assign_permission" as PermissionType,
 
-  USER_VIEW: 'user.view' as PermissionType,
-  USER_CREATE: 'user.create' as PermissionType,
-  USER_UPDATE: 'user.update' as PermissionType,
-  USER_INVITE: 'user.invite' as PermissionType,
-  USER_DEACTIVATE: 'user.deactivate' as PermissionType,
+  // battery.*
+  BATTERY_VIEW: "battery.view" as PermissionType,
+  BATTERY_CREATE: "battery.create" as PermissionType,
+  BATTERY_UPDATE: "battery.update" as PermissionType,
+  BATTERY_DELETE: "battery.delete" as PermissionType,
+  BATTERY_ASSIGN: "battery.assign" as PermissionType,
+  BATTERY_CONFIGURE: "battery.configure" as PermissionType,
 
-  SLA_VIEW: 'sla.view' as PermissionType,
-  SLA_CONFIGURE: 'sla.configure' as PermissionType,
+  // ticket.*
+  TICKET_VIEW: "ticket.view" as PermissionType,
+  TICKET_VIEW_ALL: "ticket.view_all" as PermissionType,
+  TICKET_CREATE: "ticket.create" as PermissionType,
+  TICKET_ASSIGN: "ticket.assign" as PermissionType,
+  TICKET_RESOLVE: "ticket.resolve" as PermissionType,
+  TICKET_CLOSE: "ticket.close" as PermissionType,
+  TICKET_ESCALATE: "ticket.escalate" as PermissionType,
 
-  AUDIT_LOG_VIEW: 'audit_log.view' as PermissionType,
-  REPORT_VIEW: 'report.view' as PermissionType,
+  // notification.*
+  NOTIFICATION_VIEW: "notification.view" as PermissionType,
+  NOTIFICATION_SEND: "notification.send" as PermissionType,
+  NOTIFICATION_MANAGE_TEMPLATE:
+    "notification.manage_template" as PermissionType,
 
-  NOTIFICATION_VIEW: 'notification.view' as PermissionType,
+  // knowledge_base.*
+  KNOWLEDGE_BASE_VIEW: "knowledge_base.view" as PermissionType,
+  KNOWLEDGE_BASE_CREATE: "knowledge_base.create" as PermissionType,
+  KNOWLEDGE_BASE_UPDATE: "knowledge_base.update" as PermissionType,
+  KNOWLEDGE_BASE_DELETE: "knowledge_base.delete" as PermissionType,
+  KNOWLEDGE_BASE_PUBLISH: "knowledge_base.publish" as PermissionType,
 
-  MAINTENANCE_LOG_VIEW: 'maintenance_log.view' as PermissionType,
-  MAINTENANCE_LOG_CREATE: 'maintenance_log.create' as PermissionType,
+  // reports.*
+  REPORTS_VIEW: "reports.view" as PermissionType,
+  REPORTS_EXPORT: "reports.export" as PermissionType,
+
+  // audit.*
+  AUDIT_VIEW: "audit.view" as PermissionType,
+
+  // ticket.saga.* (Sprint 5B #241)
+  TICKET_SAGA_VIEW: "ticket.saga.view" as PermissionType,
+  TICKET_SAGA_REPROCESS: "ticket.saga.reprocess" as PermissionType,
+
+  // chat.* (#CHAT-16)
+  CHAT_CREATE_INTERNAL: "chat.create.internal" as PermissionType,
+  CHAT_EDIT_ANY: "chat.edit.any" as PermissionType,
+  CHAT_DELETE_ANY: "chat.delete.any" as PermissionType,
+  CHAT_VIEW_INTERNAL: "chat.view.internal" as PermissionType,
 } as const;
 
 export const checkPermission = (
   user: SessionUser | null | undefined,
-  permission: PermissionType
+  permission: PermissionType,
 ): boolean => user?.permissions.includes(permission) ?? false;
 
 export const checkRole = (

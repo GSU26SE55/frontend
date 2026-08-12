@@ -1,44 +1,58 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useRef, type ReactNode } from "react";
+import { animate, onScroll } from "animejs";
+import { cn } from "@/lib/utils";
+import { prefersReducedMotion } from "@/features/landing/lib/animation";
 
 type RevealProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
+  translateX?: number;
+  translateY?: number;
+  duration?: number;
+  ease?: string;
 };
 
-const Reveal = ({ children, className, delay = 0 }: RevealProps) => {
+const Reveal = ({
+  children,
+  className,
+  delay = 0,
+  translateX = 0,
+  translateY = 28,
+  duration = 700,
+  ease = "outQuart",
+}: RevealProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.16 }
-    );
+    if (prefersReducedMotion()) {
+      node.style.opacity = "1";
+      return;
+    }
 
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
+    const props: Record<string, unknown> = {
+      opacity: [0, 1],
+      duration,
+      delay,
+      ease,
+      autoplay: onScroll({ target: node, repeat: false }),
+    };
+
+    if (translateY !== 0) props.translateY = [translateY, 0];
+    if (translateX !== 0) props.translateX = [translateX, 0];
+
+    const anim = animate(node, props);
+
+    return () => {
+      anim.revert();
+    };
+  }, [delay, translateX, translateY, duration, ease]);
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        'min-w-0 transition-all duration-500 motion-reduce:transition-none',
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0',
-        className
-      )}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
+    <div ref={ref} className={cn("min-w-0", className)} style={{ opacity: 0 }}>
       {children}
     </div>
   );

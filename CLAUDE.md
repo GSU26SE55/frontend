@@ -38,7 +38,7 @@ src/
 │       ├── schemas/           ← {name}.schema.ts (Zod)
 │       └── types/             ← {name}.types.ts
 └── shared/
-    ├── components/ui/         ← shadcn (generated)
+    ├── components/ui/         ← shadcn (generated) — vị trí thực tế: src/components/ui/ (không phải shared/)
     ├── components/layout/     ← AppLayout, AuthLayout, Sidebar, Header
     ├── lib/axios.ts           ← Axios instance + interceptors
     ├── lib/errors.ts          ← HttpError, EntityError, handleErrorApi

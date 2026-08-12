@@ -1,12 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>Solar Battery Management</title>
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #splash.dark {
+        background: #1a1d2e;
+      }
+      #splash.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash svg {
+        width: 72px;
+        height: 72px;
+      }
+      #splash.dark svg {
+        fill: #34d399;
+      }
+      #splash .splash-text {
+        margin-top: 18px;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: #94a3b8;
+      }
+      #splash.dark .splash-text {
+        color: #64748b;
+      }
+    </style>
   </head>
   <body>
+    <div id="splash">
+      <svg fill="#0d9488" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="0"><animate id="sp0" begin="0;sp2.begin+0.4s" attributeName="r" calcMode="spline" dur="1.2s" values="0;11" keySplines=".52,.6,.25,.99" fill="freeze"/><animate begin="0;sp2.begin+0.4s" attributeName="opacity" calcMode="spline" dur="1.2s" values="1;0" keySplines=".52,.6,.25,.99" fill="freeze"/></circle><circle cx="12" cy="12" r="0"><animate id="sp1" begin="sp0.begin+0.4s" attributeName="r" calcMode="spline" dur="1.2s" values="0;11" keySplines=".52,.6,.25,.99" fill="freeze"/><animate begin="sp0.begin+0.4s" attributeName="opacity" calcMode="spline" dur="1.2s" values="1;0" keySplines=".52,.6,.25,.99" fill="freeze"/></circle><circle cx="12" cy="12" r="0"><animate id="sp2" begin="sp0.begin+0.8s" attributeName="r" calcMode="spline" dur="1.2s" values="0;11" keySplines=".52,.6,.25,.99" fill="freeze"/><animate begin="sp0.begin+0.8s" attributeName="opacity" calcMode="spline" dur="1.2s" values="1;0" keySplines=".52,.6,.25,.99" fill="freeze"/></circle></svg>
+    </div>
+    <script>
+      (function () {
+        var t = localStorage.getItem("theme");
+        var isDark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches);
+        if (isDark) document.getElementById("splash").classList.add("dark");
+        window.__splashStart = Date.now();
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
