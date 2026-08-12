@@ -13,6 +13,8 @@ import type {
   TicketVerifyStatusEnum,
   TicketCloseReasonEnum,
   TicketAssignmentRoleEnum,
+  PendingContextEnum,
+  PauseReasonEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 import type { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
 export { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
@@ -23,6 +25,7 @@ export {
   TicketOriginEnum,
   ImpactScopeEnum,
   UrgencyLevelEnum,
+  PendingContextEnum,
   PauseReasonEnum,
   EscalationReasonEnum,
   SlaTimerStatusEnum,
@@ -96,6 +99,16 @@ export interface TicketDTO {
   origin: TicketOriginEnum;
   reopenCount: number;
   isIncident: boolean;
+  /** GH-1176: UTC schedule set during assign/reschedule. Null when no schedule has been set. */
+  scheduledStartAtUtc?: string | null;
+  /** GH-1176: incremented on every assign/reschedule; used for optimistic activation. */
+  scheduleVersion: number;
+  /** GH-1176: why the ticket is Pending — Scheduled (initial assignment) or Held (staff hold). */
+  pendingContext?: PendingContextEnum | null;
+  /** GH-1176: hold reason — only set when pendingContext=Held. */
+  pendingReason?: PauseReasonEnum | null;
+  /** GH-1176: active incident episode ID (set when priority=Urgent + isIncident=true). */
+  activeIncidentEpisodeId?: string | null;
   /**
    * Precomputed by the BE for the current user — drives the unread-chat dot on
    * the list.
@@ -286,25 +299,26 @@ export interface TriagePayload {
 }
 
 /**
- * #697 — POST /api/admin/tickets/{id}/assign.
- * The Primary must be active, available, and meet the skill tier required by the
- * priority (otherwise → 403). Supporters are NOT tier-checked, but they must not
- * duplicate the Primary or each other.
+ * POST /api/admin/tickets/{id}/assign — GH-1176: scheduledStartAtUtc is now required.
+ * Current window [nowUtc-5m, nowUtc] → direct InProgress; future → Pending (no SLA yet).
  */
 export interface AssignPayload {
   primaryHandlerStaffId: string;
   supporterStaffIds: string[];
+  /** ISO-8601 UTC; BE classifies as current (≤nowUtc) or future (>nowUtc). */
+  scheduledStartAtUtc: string;
   notes?: string;
 }
 
 /**
- * #697 — POST /api/admin/tickets/{id}/reassign.
- * The current Primary is automatically demoted to Supporter; do NOT resend the
- * supporter list. The SLA timer is not reset.
+ * POST /api/admin/tickets/{id}/reassign — GH-1176: scheduledStartAtUtc required.
+ * Same current/future classification as AssignPayload.
  */
 export interface ReassignPayload {
   newPrimaryHandlerStaffId: string;
   reason: string;
+  /** ISO-8601 UTC; determines ReAssign→InProgress (current) or ReAssign→Pending (future). */
+  scheduledStartAtUtc: string;
 }
 
 export interface RejectPayload {

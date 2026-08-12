@@ -1,0 +1,1 @@
+﻿[{"status":"APPROVED","implementedAt":"2026-08-12","notes":"All C-01..C-08 concerns implemented: enum updates (TicketStatusEnum 8-status, TicketPriorityEnum+Urgent, PendingContextEnum, PauseReasonEnum, SlaTimerStatusEnum+Stopped), TicketDTO new fields, service/schema/UI updates"}]

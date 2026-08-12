@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import TicketTable from "@/features/manager/components/ticket/TicketTable";
-import TriageDialog from "@/features/manager/components/ticket/TriageDialog";
+// GH-1176: TriageDialog (approval) removed; queue shows Open tickets awaiting assignment.
 import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import {
@@ -46,8 +46,7 @@ const DEFAULTS = {
 export default function TicketQueuePage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
-  const [triageTarget, setTriageTarget] = useState<TicketDTO | null>(null);
-  // Auto tickets can't be triaged — the corresponding action is reviewing the AI-assigned level.
+  // GH-1176: triageTarget removed (triage approval removed; queue is Open tickets only).
   const [reprioritizeTarget, setReprioritizeTarget] =
     useState<TicketDTO | null>(null);
 
@@ -70,8 +69,7 @@ export default function TicketQueuePage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} tickets awaiting a
-            priority decision &mdash; new tickets need triage, AI-created
-            tickets need their suggested level reviewed before assigning Staff.
+            priority decision &mdash; review the priority and assign Staff.
           </p>
         </div>
         <RefreshButton queryKeys={[KEY.manager.tickets]} />
@@ -138,8 +136,6 @@ export default function TicketQueuePage() {
         <TicketTable
           tickets={data?.items ?? []}
           isLoading={isLoading}
-          showTriage
-          onTriage={setTriageTarget}
           onReprioritize={setReprioritizeTarget}
           pageNumber={filters.pageNumber}
           pageSize={filters.pageSize}
@@ -156,14 +152,6 @@ export default function TicketQueuePage() {
         onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
-
-      {triageTarget && (
-        <TriageDialog
-          ticketId={triageTarget.id}
-          open={!!triageTarget}
-          onClose={() => setTriageTarget(null)}
-        />
-      )}
 
       {reprioritizeTarget && (
         <ReprioritizeDialog

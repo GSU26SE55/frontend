@@ -15,15 +15,12 @@ import { TicketCard } from "@/features/staff/components/ticket/TicketCard";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 
-// Dropped WaitingCustomer/WaitingOnsiteSchedule: the hold flow now only has a
-// "waiting for parts" reason (see PAUSE_REASON_LABELS in HoldDialog), so those two
-// statuses no longer occur — leaving them in the filter would only add options that
-// always return empty results.
+// GH-1176: updated for 8-status canonical lifecycle visible to Staff.
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: TicketStatusEnum.Assigned, label: "Assigned" },
+  { value: TicketStatusEnum.Pending, label: "Pending" },
   { value: TicketStatusEnum.InProgress, label: "In progress" },
-  { value: TicketStatusEnum.Resolved, label: "Resolved" },
-  { value: TicketStatusEnum.Escalated, label: "Escalated" },
+  { value: TicketStatusEnum.Request, label: "Escalation request" },
+  { value: TicketStatusEnum.Completed, label: "Completed" },
 ];
 
 const DEFAULTS = {

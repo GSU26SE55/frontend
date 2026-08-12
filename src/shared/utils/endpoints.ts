@@ -139,10 +139,12 @@ export const ENDPOINTS = {
     ME: "/api/staff/tickets/me",
     DASHBOARD_STATS: "/api/staff/tickets/dashboard/stats",
     MAINTENANCE_LOGS_ME: "/api/staff/tickets/maintenance-logs/me",
-    START: (id: string) => `/api/staff/tickets/${id}/start`,
-    HOLD: (id: string) => `/api/staff/tickets/${id}/hold`,
+    // GH-1176: unrestricted start removed; RESUME is now the restricted early-resume
+    // action for PendingContext=Held tickets only (Pending→InProgress).
     RESUME: (id: string) => `/api/staff/tickets/${id}/resume`,
-    RESOLVE: (id: string) => `/api/staff/tickets/${id}/resolve`,
+    HOLD: (id: string) => `/api/staff/tickets/${id}/hold`,
+    // GH-1176: renamed resolve→complete (InProgress→Completed).
+    COMPLETE: (id: string) => `/api/staff/tickets/${id}/complete`,
     ESCALATE_REQUEST: (id: string) =>
       `/api/staff/tickets/${id}/escalate-request`,
   },
@@ -274,13 +276,19 @@ export const ENDPOINTS = {
     TICKETS: {
       LIST: "/api/admin/tickets",
       QUEUE: "/api/admin/tickets/queue",
-      TRIAGE: (id: string) => `/api/admin/tickets/${id}/triage`,
+      // GH-1176: TRIAGE (approval) removed; TRIAGE_REJECT remains (Open→ClosedRejected).
       TRIAGE_REJECT: (id: string) => `/api/admin/tickets/${id}/triage-reject`,
       ASSIGN: (id: string) => `/api/admin/tickets/${id}/assign`,
       REASSIGN: (id: string) => `/api/admin/tickets/${id}/reassign`,
+      // GH-1176: Manager reschedule (ScheduleVersion-aware).
+      SCHEDULE: (id: string) => `/api/admin/tickets/${id}/schedule`,
       APPROVE: (id: string) => `/api/admin/tickets/${id}/approve`,
       REJECT: (id: string) => `/api/admin/tickets/${id}/reject`,
-      ESCALATE: (id: string) => `/api/admin/tickets/${id}/escalate`,
+      // GH-1176: ESCALATE (force) removed; approve/reject Staff escalation request instead.
+      ESCALATE_APPROVE: (id: string) =>
+        `/api/admin/tickets/${id}/escalate/approve`,
+      ESCALATE_REJECT: (id: string) =>
+        `/api/admin/tickets/${id}/escalate/reject`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
       // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).

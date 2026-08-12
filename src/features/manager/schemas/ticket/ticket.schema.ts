@@ -27,12 +27,13 @@ export const triageSchema = z
 
 export type TriageFormValues = z.infer<typeof triageSchema>;
 
-// #697 — 1 Primary Handler + N Supporter (TicketAssignCommand).
+// GH-1176: scheduledStartAtUtc required — determines InProgress (current) vs Pending (future).
 export const assignSchema = z
   .object({
     primaryHandlerStaffId: z.string().uuid("Invalid Staff ID"),
-    // Supporting Staff (Collaborators in chat) — they assist, but don't count toward workload/KPI.
     supporterStaffIds: z.array(z.string().uuid()),
+    // ISO-8601 with timezone; BE normalizes to UTC and classifies current vs future.
+    scheduledStartAtUtc: z.string().min(1, "A start schedule is required"),
     notes: z.string().optional(),
   })
   .superRefine((val, ctx) => {
@@ -54,11 +55,11 @@ export const assignSchema = z
 
 export type AssignFormValues = z.infer<typeof assignSchema>;
 
-// #697 — the current Primary is automatically demoted to Supporter; don't resend the supporter list.
+// GH-1176: scheduledStartAtUtc required — same current/future rule as assignment.
 export const reassignSchema = z.object({
   newPrimaryHandlerStaffId: z.string().uuid("Invalid Staff ID"),
-  // Required by the BE (TicketReassignCommand) — empty → 400.
   reason: z.string().min(1, "Reassignment reason is required"),
+  scheduledStartAtUtc: z.string().min(1, "A start schedule is required"),
 });
 
 export type ReassignFormValues = z.infer<typeof reassignSchema>;

@@ -18,14 +18,7 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 interface Props {
   tickets: TicketDTO[];
   isLoading: boolean;
-  showTriage?: boolean;
-  onTriage?: (ticket: TicketDTO) => void;
-  /**
-   * Auto tickets (Open + AutoFromAlert) can't be triaged — the BE only allows New → Open.
-   * What's needed for them is reviewing the priority already assigned by AI, so the queue
-   * calls this callback instead of onTriage. Not passed → the action column is hidden for
-   * auto tickets.
-   */
+  // GH-1176: showTriage/onTriage removed (triage approval removed).
   onReprioritize?: (ticket: TicketDTO) => void;
   pageNumber?: number;
   pageSize?: number;
@@ -48,8 +41,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 export default function TicketTable({
   tickets,
   isLoading,
-  showTriage,
-  onTriage,
   onReprioritize,
   pageNumber = 1,
   pageSize = 0,
@@ -170,24 +161,14 @@ export default function TicketTable({
     },
   ];
 
-  if (showTriage) {
+  // GH-1176: triage approval removed; queue shows Open tickets with reprioritize action only.
+  if (onReprioritize) {
     columns.push({
       id: "triage",
       header: "",
       stopRowClick: true,
-      // Two ticket types share the same queue but need different actions:
-      // New → triage (assign Impact/Urgency for the first time). Open+AutoFromAlert →
-      // priority already assigned by AI, only needs review; clicking Triage here would
-      // get a 403 from the BE since there's no Open→Open rule.
       cell: (t) =>
-        t.status === TicketStatusEnum.New ? (
-          <button
-            className="rounded border px-2 py-1 text-xs hover:bg-muted"
-            onClick={() => onTriage?.(t)}
-          >
-            Triage
-          </button>
-        ) : onReprioritize ? (
+        onReprioritize ? (
           <button
             className="rounded border px-2 py-1 text-xs hover:bg-muted"
             onClick={() => onReprioritize(t)}

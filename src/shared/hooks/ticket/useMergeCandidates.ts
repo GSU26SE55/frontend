@@ -5,12 +5,11 @@ import {
   TicketOriginEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 
-// Ticket already closed out → can't merge into it (only merge into a ticket still being worked).
+// GH-1176: updated for 8-status lifecycle. Completed is terminal for merge purposes.
 const CLOSED_STATUSES: TicketStatusEnum[] = [
+  TicketStatusEnum.Completed,
   TicketStatusEnum.Closed,
   TicketStatusEnum.ClosedRejected,
-  TicketStatusEnum.ClosedPendingRate,
-  TicketStatusEnum.Resolved,
 ];
 
 /**
@@ -44,8 +43,9 @@ export function useMergeCandidates(
       if (t.id === sourceTicketId) return false;
       if (t.mergedIntoTicketId) return false;
       if (CLOSED_STATUSES.includes(t.status)) return false;
-      // A target still in New is only valid when it's an auto ticket — see the doc comment above.
-      if (t.status === TicketStatusEnum.New) {
+      // GH-1176: New is removed; only Open tickets can be merged (source must be Open too).
+      // Auto-origin Open tickets are preferred as target per merge rules.
+      if (t.status === TicketStatusEnum.Open) {
         return AUTO_ORIGINS.includes(t.origin);
       }
       return true;

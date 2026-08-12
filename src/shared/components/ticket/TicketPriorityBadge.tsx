@@ -24,6 +24,12 @@ const PRIORITY_CONFIG: Record<
     color: "var(--p3)",
     soft: "var(--p3-soft)",
   },
+  // GH-1176: Urgent priority — SLA timer never runs for these tickets.
+  [TicketPriorityEnum.Urgent]: {
+    label: "Urgent",
+    color: "var(--p1)",
+    soft: "var(--p1-soft)",
+  },
 };
 
 interface Props {

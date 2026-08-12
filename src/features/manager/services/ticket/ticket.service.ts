@@ -13,7 +13,6 @@ import type {
   MaintenanceLogDTO,
   AdminTicketListParams,
   AdminTicketQueueParams,
-  TriagePayload,
   TriageRejectPayload,
   AssignPayload,
   ReassignPayload,
@@ -84,12 +83,7 @@ export const managerTicketService = {
       { params: { page: 1, pageSize: 50 } },
     ),
 
-  triage: (id: string, payload: TriagePayload) =>
-    axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.ADMIN.TICKETS.TRIAGE(id),
-      payload,
-    ),
-
+  // GH-1176: triage (approval) removed; triageReject remains (Open→ClosedRejected).
   triageReject: (id: string, payload: TriageRejectPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.TRIAGE_REJECT(id),
@@ -121,9 +115,16 @@ export const managerTicketService = {
       payload,
     ),
 
-  escalate: (id: string, payload: EscalatePayload) =>
+  // GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests.
+  escalateApprove: (id: string, payload: EscalatePayload) =>
     axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.ADMIN.TICKETS.ESCALATE(id),
+      ENDPOINTS.ADMIN.TICKETS.ESCALATE_APPROVE(id),
+      payload,
+    ),
+
+  escalateReject: (id: string, payload: RejectPayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.ESCALATE_REJECT(id),
       payload,
     ),
 

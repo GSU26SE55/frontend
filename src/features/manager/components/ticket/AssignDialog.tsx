@@ -1,4 +1,4 @@
-import { useForm, useWatch } from "react-hook-form";
+﻿import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,6 +77,7 @@ export default function AssignDialog({
     defaultValues: {
       primaryHandlerStaffId: "",
       supporterStaffIds: [],
+      scheduledStartAtUtc: "",
       notes: "",
     },
   });
@@ -86,7 +88,7 @@ export default function AssignDialog({
   });
 
   const onSubmit = async (values: AssignFormValues) => {
-    await mutateAsync(values);
+    await mutateAsync({ ...values, scheduledStartAtUtc: new Date(values.scheduledStartAtUtc).toISOString() });
     form.reset();
     onClose();
   };
@@ -218,6 +220,26 @@ export default function AssignDialog({
                     Supporters get access to the ticket's internal chat but
                     aren't counted toward workload. This role doesn't require a
                     tier.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="scheduledStartAtUtc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Start schedule <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Within the last 5 minutes → starts immediately (InProgress).
+                    Future → Pending until due.
                   </p>
                   <FormMessage />
                 </FormItem>

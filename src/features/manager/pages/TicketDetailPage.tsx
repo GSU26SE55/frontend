@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -13,12 +13,13 @@ import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import SlaCountdown from "@/features/manager/components/ticket/SlaCountdown";
-import TriageDialog from "@/features/manager/components/ticket/TriageDialog";
+// GH-1176: TriageDialog (approval) removed.
 import AssignDialog from "@/features/manager/components/ticket/AssignDialog";
 import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog";
 import RejectDialog from "@/features/manager/components/ticket/RejectDialog";
 import TriageRejectDialog from "@/features/manager/components/ticket/TriageRejectDialog";
 import EscalateDialog from "@/features/manager/components/ticket/EscalateDialog";
+import EscalateRejectDialog from "@/features/manager/components/ticket/EscalateRejectDialog";
 import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareIncidentDialog";
 import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
@@ -65,13 +66,15 @@ import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 
+// GH-1176: "triage" (approval) removed; "escalate" (force) removed;
+// "escalate-approve" and "escalate-reject" added for Request-status handling.
 type DialogType =
-  | "triage"
   | "triage-reject"
   | "assign"
   | "reassign"
   | "reject"
-  | "escalate"
+  | "escalate-approve"
+  | "escalate-reject"
   | "reprioritize"
   | "incident"
   | null;
@@ -201,53 +204,25 @@ export default function TicketDetailPage() {
   }
 
   const status = ticket.status;
-  // Triage = New → Open (TransitionRuleProvider, Manager/Admin/System). Previously
-  // the gate incorrectly checked Open: the queue only returns New tickets, so the button never showed.
-  const canTriage = status === TicketStatusEnum.New;
-  // triage-reject: New|Escalated → ClosedRejected — the rule provider has both sources.
-  // Changed Open→New for the same reason as canTriage; the Escalated branch is unchanged.
-  const canTriageReject = (
-    [TicketStatusEnum.New, TicketStatusEnum.Escalated] as TicketStatusEnum[]
-  ).includes(status);
-  // Assign = Open → Assigned. Previously gated on 'Approved' — that status does NOT
-  // exist on the BE (only ActivityActionEnum.Approved does), so the button never showed.
+  // GH-1176: triage approval removed; only triage-reject (Open→ClosedRejected) remains.
+  const canTriageReject = status === TicketStatusEnum.Open;
+  // GH-1176: assign Open→InProgress (current schedule) or Open→Pending (future schedule).
   const canAssign = status === TicketStatusEnum.Open;
-  const canReassign = (
-    [
-      TicketStatusEnum.Assigned,
-      TicketStatusEnum.InProgress,
-      TicketStatusEnum.Escalated,
-    ] as TicketStatusEnum[]
-  ).includes(status);
-  const canApprove = status === TicketStatusEnum.Resolved;
-  const canReject = status === TicketStatusEnum.Resolved;
-  // Escalate = add resources/tier while the ticket is CURRENTLY being worked on.
-  //
-  // NO Waiting* states: TransitionRuleProvider at WaitingCustomer/WaitingParts/
-  // WaitingOnsiteSchedule only defines a single exit path, → InProgress, so
-  // TicketEscalateForceCommandHandler (calls CanTransition(..., Escalated, Manager))
-  // returns 403 at those statuses. To escalate a paused ticket, Staff must
-  // "Resume" it first — matches §3.11: paused means waiting on a third party, not
-  // a state meant for handoff.
-  const canEscalate = (
-    [
-      TicketStatusEnum.Assigned,
-      TicketStatusEnum.InProgress,
-      TicketStatusEnum.Escalated,
-    ] as TicketStatusEnum[]
-  ).includes(status);
-  // ONLY Open — already triaged but not yet assigned to Staff. User Guide §3.8: priority
-  // stays fixed for the ticket's lifetime; letting it change after work has been assigned would
-  // shift the SLA deadline, exactly what the docs forbid. If Staff finds it beyond their
-  // capacity, they submit an Escalation Request (§3.12) instead.
+  // GH-1176: reassign only from ReAssign status.
+  const canReassign = status === TicketStatusEnum.ReAssign;
+  // GH-1176: approve/reject completion (Completed → Closed / Completed → InProgress).
+  const canApprove = status === TicketStatusEnum.Completed;
+  const canReject = status === TicketStatusEnum.Completed;
+  // GH-1176: Manager approves/rejects Staff escalation request (Request status).
+  const canEscalateApprove = status === TicketStatusEnum.Request;
+  const canEscalateReject = status === TicketStatusEnum.Request;
+  // GH-1176: force escalation endpoint removed; only Staff-requested escalation remains.
+  // canReprioritize: Open only — priority fixed once assigned per User Guide §3.8.
   const canReprioritize = status === TicketStatusEnum.Open;
   const canDeclareIncident = !ticket.isIncident;
-  // Merge ticket: the SOURCE ticket (the one being merged away) must still be New —
-  // not yet triaged, not yet assigned to anyone. Already triaged = Manager decided to handle it
-  // separately → can no longer be merged. This also doubles as how a Manager "splits off" a
-  // suspected duplicate: triaging it makes the Merge button disappear.
+  // GH-1176: merge source must be Open (previously New, which no longer exists).
   const canMerge =
-    !ticket.mergedIntoTicketId && status === TicketStatusEnum.New;
+    !ticket.mergedIntoTicketId && status === TicketStatusEnum.Open;
 
   // comments come from a separate query (useTicketComments) + realtime push (SignalR).
 
@@ -296,11 +271,6 @@ export default function TicketDetailPage() {
             queryKeys={[KEY.manager.tickets, KEY.tickets]}
             size="icon"
           />
-          {canTriage && (
-            <Button size="sm" onClick={() => setDialog("triage")}>
-              Triage
-            </Button>
-          )}
           {canAssign && (
             <Button size="sm" onClick={() => setDialog("assign")}>
               Assign Staff
@@ -333,13 +303,22 @@ export default function TicketDetailPage() {
               Reject
             </Button>
           )}
-          {canEscalate && (
+          {/* GH-1176: Manager approves/rejects Staff escalation request */}
+          {canEscalateApprove && (
+            <Button
+              size="sm"
+              onClick={() => setDialog("escalate-approve")}
+            >
+              Approve escalation
+            </Button>
+          )}
+          {canEscalateReject && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setDialog("escalate")}
+              onClick={() => setDialog("escalate-reject")}
             >
-              Escalate
+              Reject escalation
             </Button>
           )}
           {canReprioritize && (
@@ -366,7 +345,7 @@ export default function TicketDetailPage() {
               size="sm"
               onClick={() => setDialog("triage-reject")}
             >
-              Reject (Triage)
+              Reject ticket
             </Button>
           )}
           {canMerge && (
@@ -519,7 +498,7 @@ export default function TicketDetailPage() {
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel
                 ticketId={id}
-                afterResolveOnly={status === TicketStatusEnum.Resolved}
+                afterResolveOnly={status === TicketStatusEnum.Completed}
                 defaultCategory={ticket.category}
               />
             </TabsContent>
@@ -911,9 +890,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* ── Dialogs ─────────────────────────────────────────────────────── */}
-      {dialog === "triage" && (
-        <TriageDialog ticketId={id} open onClose={() => setDialog(null)} />
-      )}
+      {/* GH-1176: "triage" (approval) dialog removed. */}
       {dialog === "triage-reject" && (
         <TriageRejectDialog
           ticketId={id}
@@ -940,6 +917,12 @@ export default function TicketDetailPage() {
       {dialog === "reject" && (
         <RejectDialog ticketId={id} open onClose={() => setDialog(null)} />
       )}
+      {dialog === "escalate-approve" && (
+        <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
+      {dialog === "escalate-reject" && (
+        <EscalateRejectDialog ticketId={id} open onClose={() => setDialog(null)} />
+      )}
       {dialog === "reprioritize" && (
         <ReprioritizeDialog
           ticketId={id}
@@ -948,9 +931,6 @@ export default function TicketDetailPage() {
           open
           onClose={() => setDialog(null)}
         />
-      )}
-      {dialog === "escalate" && (
-        <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />
       )}
       {dialog === "incident" && (
         <DeclareIncidentDialog

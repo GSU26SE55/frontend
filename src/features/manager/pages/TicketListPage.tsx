@@ -25,21 +25,16 @@ import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
 
+// GH-1176: updated for 8-status canonical lifecycle.
 const STATUS_LABELS: Record<string, string> = {
-  New: "New",
-  Open: "Open",
-  Approved: "Approved",
-  Assigned: "Assigned",
+  Open: "Awaiting assignment",
+  Pending: "Pending",
   InProgress: "In progress",
-  WaitingCustomer: "Waiting on customer",
-  WaitingParts: "Waiting on parts",
-  WaitingOnsiteSchedule: "Waiting on schedule",
-  Resolved: "Resolved",
-  Escalated: "Escalated",
-  ClosedPendingRate: "Awaiting rating",
+  Request: "Escalation request",
+  ReAssign: "Pending reassignment",
+  Completed: "Completed",
   Closed: "Closed",
   ClosedRejected: "Rejected",
-  Incident: "Incident",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {

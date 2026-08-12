@@ -29,7 +29,8 @@ import {
   type EscalateFormValues,
 } from "@/features/manager/schemas/ticket/ticket.schema";
 import { EscalationReasonEnum } from "@/shared/types/ticket/ticket.types";
-import { useEscalateTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
+// GH-1176: Manager approves Staff escalation request (Request→ReAssign).
+import { useEscalateApproveTicket } from "@/features/manager/hooks/ticket/useManagerTickets";
 
 const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
   SkillGap: "Exceeds technical capability",
@@ -53,7 +54,7 @@ interface Props {
 }
 
 export default function EscalateDialog({ ticketId, open, onClose }: Props) {
-  const { mutateAsync, isPending } = useEscalateTicket(ticketId);
+  const { mutateAsync, isPending } = useEscalateApproveTicket(ticketId);
 
   const form = useForm<EscalateFormValues>({
     resolver: zodResolver(escalateSchema),

@@ -88,6 +88,7 @@ export default function BatteryAssetForm({
 
   const installDate = useWatch({ control, name: "installDate" });
   const siteId = useWatch({ control, name: "siteId" });
+  const customerId = useWatch({ control, name: "customerId" });
 
   // Auto-fill Location from the selected site's address — the battery is physically
   // at the site, so it shares the site's location instead of a separately typed one.

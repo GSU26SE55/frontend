@@ -6,7 +6,6 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type {
   AdminTicketListParams,
   AdminTicketQueueParams,
-  TriagePayload,
   TriageRejectPayload,
   AssignPayload,
   ReassignPayload,
@@ -77,21 +76,7 @@ export const useTicketComments = (id: string) =>
     staleTime: 60_000,
   });
 
-export const useTriageTicket = (id: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: TriagePayload) =>
-      managerTicketService.triage(id, payload),
-    onSuccess: () => {
-      toast.success(MANAGER_MESSAGES.ticket.triaged);
-      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
-      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
-    },
-    onError: (error) => handleErrorApi({ error }),
-  });
-};
-
+// GH-1176: useTriageTicket removed (triage approval removed).
 export const useTriageRejectTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
@@ -169,13 +154,28 @@ export const useRejectTicket = (id: string) => {
   });
 };
 
-export const useEscalateTicket = (id: string) => {
+// GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests.
+export const useEscalateApproveTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: EscalatePayload) =>
-      managerTicketService.escalate(id, payload),
+      managerTicketService.escalateApprove(id, payload),
     onSuccess: () => {
       toast.success(MANAGER_MESSAGES.ticket.escalated);
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+    },
+    onError: (error) => handleErrorApi({ error }),
+  });
+};
+
+export const useEscalateRejectTicket = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RejectPayload) =>
+      managerTicketService.escalateReject(id, payload),
+    onSuccess: () => {
+      toast.success(MANAGER_MESSAGES.ticket.escalationRejected);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
@@ -197,7 +197,8 @@ export const useReprioritizeTicket = (id: string) => {
     mutationFn: (payload: ReprioritizePayload) =>
       managerTicketService.reprioritize(id, payload).then((r) => r.data),
     onSuccess: (res) => {
-      const autoEscalated = res.data?.status === TicketStatusEnum.Escalated;
+      // GH-1176: auto-escalation now moves to ReAssign, not legacy Escalated status.
+      const autoEscalated = res.data?.status === TicketStatusEnum.ReAssign;
       toast.success(
         autoEscalated
           ? MANAGER_MESSAGES.ticket.reprioritizedWithEscalation
