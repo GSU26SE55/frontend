@@ -20,10 +20,11 @@ import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetFo
 import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
 import SetTopologyDialog from "@/features/admin/components/iot/SetTopologyDialog";
 import BatteryRealtimeDetail from "@/shared/components/battery/BatteryRealtimeDetail";
+import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // Admin — full battery detail page: uses the shared BatteryRealtimeDetail (read-only core)
-// + injects admin CRUD (Edit/Transfer/Delete) via headerActions and SetTopologyDialog via topologyAction.
+// + injects admin CRUD and SetTopologyDialog through headerActions.
 export default function BatteryAssetDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -84,6 +85,7 @@ export default function BatteryAssetDetailPage() {
             </Button>
           </>
         }
+        bmsControl={<BmsSwitchControlCard assetId={id} />}
       />
 
       {/* -- Dialogs (Admin only) -- */}

@@ -134,6 +134,9 @@ interface BatteryRealtimeDetailProps {
   assetId: string;
   // Admin injects CRUD buttons (Edit/Transfer/Delete/Set topology) + dialogs through this slot. Manager/Staff leave it empty.
   headerActions?: ReactNode;
+  // Only Admin and Staff pass this safety-critical control. The API performs the
+  // same authorization check, so route composition is not the security boundary.
+  bmsControl?: ReactNode;
 }
 
 // Real-time battery detail page (read-only core) — shared by admin/manager/staff.
@@ -141,6 +144,7 @@ interface BatteryRealtimeDetailProps {
 export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
+  bmsControl,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
 
@@ -286,6 +290,7 @@ export default function BatteryRealtimeDetail({
                   : undefined
               }
             />
+            {bmsControl}
           </div>
 
           {/* Right: chart / history tabs */}
