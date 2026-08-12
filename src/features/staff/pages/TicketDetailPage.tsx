@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -22,10 +22,9 @@ import {
   useStaffTicketComments,
 } from "@/features/staff/hooks/ticket/useStaffTicketDetail";
 import {
-  useStartTicket,
   useHoldTicket,
   useResumeTicket,
-  useResolveTicket,
+  useCompleteTicket,
   useEscalateTicket,
   useAddMaintenanceLog,
 } from "@/features/staff/hooks/ticket/useStaffTicketMutations";
@@ -70,11 +69,7 @@ import type { EscalateRequestFormValues } from "@/features/staff/schemas/ticket/
 import type { AddCommentFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { MaintenanceLogFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
-const WAITING_STATUSES = [
-  TicketStatusEnum.WaitingCustomer,
-  TicketStatusEnum.WaitingParts,
-  TicketStatusEnum.WaitingOnsiteSchedule,
-];
+// GH-1176: removed legacy WaitingCustomer/WaitingParts/WaitingOnsiteSchedule statuses.
 
 function SideInfoRow({
   label,
@@ -149,10 +144,10 @@ export default function TicketDetailPage() {
   // must still be taggable.
   const mentionCandidates = useMentionCandidates(ticketId);
 
-  const startMutation = useStartTicket(ticketId);
+  // GH-1176: startMutation now calls resume (early resume for Held tickets only).
   const holdMutation = useHoldTicket(ticketId);
-  const resumeMutation = useResumeTicket(ticketId);
-  const resolveMutation = useResolveTicket(ticketId);
+  const resumeMutationForHeld = useResumeTicket(ticketId);
+  const completeMutation = useCompleteTicket(ticketId);
   const escalateMutation = useEscalateTicket(ticketId);
   // Outbox chat: a worker sends sequentially + retries; the composer only enqueues.
   const {
@@ -196,33 +191,28 @@ export default function TicketDetailPage() {
   }
 
   const { status } = ticket;
-  const isAssigned = status === TicketStatusEnum.Assigned;
   const isInProgress = status === TicketStatusEnum.InProgress;
-  const isWaiting = WAITING_STATUSES.includes(
-    status as (typeof WAITING_STATUSES)[number],
-  );
-  const canComment = isInProgress || isWaiting || isAssigned;
-  const canAddLog = isInProgress || isWaiting;
-  // Locks log editing once the ticket is Resolved/ClosedPendingRate/Closed (BE enforced).
-  const canEditLog = isInProgress || isWaiting;
-  // Attaching a KB reference: matches the BE (AddTicketKbReferenceCommandHandler) —
-  // blocked from ClosedPendingRate/Closed onward. At Resolved, attaching is still
-  // allowed but ONLY for the 2 after-resolve types
-  // (GeneratedAfterResolve/ProvidedToCustomer) — guard H.
+  const isPending = status === TicketStatusEnum.Pending;
+  // GH-1176: Staff can comment while InProgress or Pending (held).
+  const canComment = isInProgress || isPending;
+  const canAddLog = isInProgress;
+  const canEditLog = isInProgress;
+  // GH-1176: KB references blocked once Completed or terminal.
   const canAddKb = !(
     [
-      TicketStatusEnum.ClosedPendingRate,
+      TicketStatusEnum.Completed,
       TicketStatusEnum.Closed,
+      TicketStatusEnum.ClosedRejected,
     ] as TicketStatusEnum[]
   ).includes(status);
-  const kbAfterResolveOnly = status === TicketStatusEnum.Resolved;
+  const kbAfterResolveOnly = status === TicketStatusEnum.Completed;
 
   const handleHoldSubmit = (data: HoldFormValues) => {
-    holdMutation.mutate(data, { onSuccess: () => setHoldOpen(false) });
+    holdMutation.mutate({ ...data, rescheduledStartAtUtc: new Date(data.rescheduledStartAtUtc).toISOString() }, { onSuccess: () => setHoldOpen(false) });
   };
 
   const handleResolveSubmit = (data: ResolveFormValues) => {
-    resolveMutation.mutate(data, { onSuccess: () => setResolveOpen(false) });
+    completeMutation.mutate(data, { onSuccess: () => setResolveOpen(false) });
   };
 
   const handleEscalateSubmit = (data: EscalateRequestFormValues) => {
@@ -282,13 +272,14 @@ export default function TicketDetailPage() {
             queryKeys={[KEY.staffTickets, KEY.tickets]}
             size="icon"
           />
-          {isAssigned && (
+          {/* GH-1176: unrestricted start removed; early resume is shown for Held tickets only */}
+          {isPending && ticket.pendingContext === "Held" && (
             <Button
               size="sm"
-              onClick={() => startMutation.mutate(undefined)}
-              disabled={startMutation.isPending}
+              onClick={() => resumeMutationForHeld.mutate(undefined)}
+              disabled={resumeMutationForHeld.isPending}
             >
-              {startMutation.isPending ? "Processing..." : "Start handling"}
+              {resumeMutationForHeld.isPending ? "Processing..." : "Resume early"}
             </Button>
           )}
           {isInProgress && (
@@ -316,15 +307,7 @@ export default function TicketDetailPage() {
               </Button>
             </>
           )}
-          {isWaiting && (
-            <Button
-              size="sm"
-              onClick={() => resumeMutation.mutate(undefined)}
-              disabled={resumeMutation.isPending}
-            >
-              {resumeMutation.isPending ? "Processing..." : "Resume handling"}
-            </Button>
-          )}
+          {/* GH-1176: resume is handled by the resumeMutationForHeld button above for Held tickets. */}
         </div>
       </div>
 
@@ -911,7 +894,7 @@ export default function TicketDetailPage() {
         open={resolveOpen}
         onClose={() => setResolveOpen(false)}
         onSubmit={handleResolveSubmit}
-        isPending={resolveMutation.isPending}
+        isPending={completeMutation.isPending}
       />
       <EscalateRequestDialog
         open={escalateOpen}

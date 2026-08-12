@@ -32,14 +32,6 @@ function useTicketMutation<TData>(
   });
 }
 
-export function useStartTicket(ticketId: string) {
-  return useTicketMutation(
-    () => staffTicketService.start(ticketId),
-    ticketId,
-    "Work started on the ticket",
-  );
-}
-
 export function useHoldTicket(ticketId: string) {
   return useTicketMutation(
     (data: HoldTicketRequest) => staffTicketService.hold(ticketId, data),
@@ -48,6 +40,7 @@ export function useHoldTicket(ticketId: string) {
   );
 }
 
+// GH-1176: restricted to PendingContext=Held tickets; unrestricted start removed.
 export function useResumeTicket(ticketId: string) {
   return useTicketMutation(
     () => staffTicketService.resume(ticketId),
@@ -56,11 +49,12 @@ export function useResumeTicket(ticketId: string) {
   );
 }
 
-export function useResolveTicket(ticketId: string) {
+// GH-1176: renamed from useResolveTicket (InProgress→Completed).
+export function useCompleteTicket(ticketId: string) {
   return useTicketMutation(
-    (data: ResolveTicketRequest) => staffTicketService.resolve(ticketId, data),
+    (data: ResolveTicketRequest) => staffTicketService.complete(ticketId, data),
     ticketId,
-    "Ticket marked as resolved",
+    "Ticket marked as completed",
   );
 }
 

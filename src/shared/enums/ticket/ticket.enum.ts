@@ -1,27 +1,24 @@
-// Mirrors the BE's TicketStatusEnum (13 values). There is NO 'Approved' — that is
-// ActivityActionEnum.Approved (the Manager's approve action), not a ticket status.
+// GH-1176: canonical 8-status lifecycle. Removed: New, Assigned, WaitingCustomer,
+// WaitingParts, WaitingOnsiteSchedule, Resolved, Escalated, ClosedPendingRate, Incident.
 export const TicketStatusEnum = {
-  New: "New",
   Open: "Open",
-  Assigned: "Assigned",
+  Pending: "Pending",
   InProgress: "InProgress",
-  WaitingCustomer: "WaitingCustomer",
-  WaitingParts: "WaitingParts",
-  WaitingOnsiteSchedule: "WaitingOnsiteSchedule",
-  Resolved: "Resolved",
-  Escalated: "Escalated",
-  ClosedPendingRate: "ClosedPendingRate",
+  Request: "Request",
+  ReAssign: "ReAssign",
+  Completed: "Completed",
   Closed: "Closed",
   ClosedRejected: "ClosedRejected",
-  Incident: "Incident",
 } as const;
 export type TicketStatusEnum =
   (typeof TicketStatusEnum)[keyof typeof TicketStatusEnum];
 
+// GH-1176: Urgent added (priority 4 — SLA timer never runs for Urgent tickets).
 export const TicketPriorityEnum = {
   P1Critical: "P1Critical",
   P2High: "P2High",
   P3Normal: "P3Normal",
+  Urgent: "Urgent",
 } as const;
 export type TicketPriorityEnum =
   (typeof TicketPriorityEnum)[keyof typeof TicketPriorityEnum];
@@ -105,10 +102,19 @@ export const UrgencyLevelEnum = {
 export type UrgencyLevelEnum =
   (typeof UrgencyLevelEnum)[keyof typeof UrgencyLevelEnum];
 
+// GH-1176: PendingContextEnum — why a ticket is in Pending.
+export const PendingContextEnum = {
+  Scheduled: "Scheduled",
+  Held: "Held",
+} as const;
+export type PendingContextEnum =
+  (typeof PendingContextEnum)[keyof typeof PendingContextEnum];
+
+// GH-1176: PauseReasonEnum — hold reason (only valid when PendingContext=Held).
+// Replaced: WaitingCustomer, WaitingParts, WaitingOnsiteSchedule.
 export const PauseReasonEnum = {
-  WaitingCustomer: "WaitingCustomer",
-  WaitingParts: "WaitingParts",
-  WaitingOnsiteSchedule: "WaitingOnsiteSchedule",
+  CustomerUnavailable: "CustomerUnavailable",
+  WorkBlocked: "WorkBlocked",
 } as const;
 export type PauseReasonEnum =
   (typeof PauseReasonEnum)[keyof typeof PauseReasonEnum];
@@ -123,11 +129,13 @@ export const EscalationReasonEnum = {
 export type EscalationReasonEnum =
   (typeof EscalationReasonEnum)[keyof typeof EscalationReasonEnum];
 
+// GH-1176: Stopped added — SLA timer for Urgent tickets; never creates or runs.
 export const SlaTimerStatusEnum = {
   Running: "Running",
   Paused: "Paused",
   Met: "Met",
   Breached: "Breached",
+  Stopped: "Stopped",
 } as const;
 export type SlaTimerStatusEnum =
   (typeof SlaTimerStatusEnum)[keyof typeof SlaTimerStatusEnum];
@@ -141,13 +149,16 @@ export const MaintenanceLogTypeEnum = {
 export type MaintenanceLogTypeEnum =
   (typeof MaintenanceLogTypeEnum)[keyof typeof MaintenanceLogTypeEnum];
 
+// GH-1176: synced with BE ActivityActionEnum. Removed: AutoClosed (AutoClose removed),
+// TriageApproved (triage approval removed). Renamed: Commented → Chatted (BE name).
+// Resolved retained (BE still uses it for the activity record of staff completion).
 export const ActivityActionEnum = {
   Created: "Created",
   StatusChanged: "StatusChanged",
   PriorityAssigned: "PriorityAssigned",
   StaffAssigned: "StaffAssigned",
   StaffReassigned: "StaffReassigned",
-  Commented: "Commented",
+  Chatted: "Chatted",
   MaintenanceLogged: "MaintenanceLogged",
   AttachmentAdded: "AttachmentAdded",
   SlaPaused: "SlaPaused",
@@ -162,10 +173,13 @@ export const ActivityActionEnum = {
   Rejected: "Rejected",
   Rated: "Rated",
   Reopened: "Reopened",
-  AutoClosed: "AutoClosed",
   ResolvedByEscalatedStaff: "ResolvedByEscalatedStaff",
-  TriageApproved: "TriageApproved",
   Closed: "Closed",
+  RatingRequested: "RatingRequested",
+  ParticipantAdded: "ParticipantAdded",
+  ParticipantRemoved: "ParticipantRemoved",
+  ParticipantRoleChanged: "ParticipantRoleChanged",
+  IncidentDeclassified: "IncidentDeclassified",
 } as const;
 export type ActivityActionEnum =
   (typeof ActivityActionEnum)[keyof typeof ActivityActionEnum];

@@ -19,8 +19,11 @@ export interface StaffTicketsParams {
 // `Start(Guid id, CancellationToken ct)` with no [FromBody]. The command only reads
 // TicketId + StaffId/StaffName from the JWT, so any field sent is silently ignored.
 
+// GH-1176: rescheduledStartAtUtc required — hold requires a future appointment.
 export interface HoldTicketRequest {
   reason: PauseReasonEnum;
+  /** ISO-8601 UTC; must be in the future (BE validates). */
+  rescheduledStartAtUtc: string;
   note?: string;
 }
 

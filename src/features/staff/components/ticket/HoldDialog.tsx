@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PauseReasonEnum } from "@/shared/types/ticket/ticket.types";
@@ -30,12 +31,10 @@ import {
   type HoldFormValues,
 } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
-// Only "waiting for parts" remains — the other two reasons (waiting on customer,
-// waiting for on-site appointment) were removed from the hold flow. PauseReasonEnum
-// still keeps all 3 values so older tickets in WaitingCustomer/WaitingOnsiteSchedule
-// can still be read; only new selections are blocked.
-const PAUSE_REASON_LABELS: Record<string, string> = {
-  [PauseReasonEnum.WaitingParts]: "Waiting for parts",
+// GH-1176: new PauseReasonEnum values (CustomerUnavailable, WorkBlocked).
+const PAUSE_REASON_LABELS: Record<PauseReasonEnum, string> = {
+  [PauseReasonEnum.CustomerUnavailable]: "Customer unavailable",
+  [PauseReasonEnum.WorkBlocked]: "Work blocked (parts / on-site schedule)",
 };
 
 interface Props {
@@ -48,6 +47,7 @@ interface Props {
 export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
   const form = useForm<HoldFormValues>({
     resolver: zodResolver(holdSchema),
+    defaultValues: { rescheduledStartAtUtc: "" },
   });
 
   const handleSubmit = form.handleSubmit((data) => {
@@ -92,6 +92,26 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                       )}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="rescheduledStartAtUtc"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Customer appointment{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    When the customer / blocker will be available. Work resumes
+                    automatically at this time.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

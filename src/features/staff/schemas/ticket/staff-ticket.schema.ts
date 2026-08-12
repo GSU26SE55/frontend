@@ -9,8 +9,16 @@ import { attachmentSchema } from "@/shared/schemas/ticket/ticket-comment.schema"
 // commentAttachment and maintenanceAttachment share a shape → both use attachmentSchema.
 const maintenanceAttachmentSchema = attachmentSchema;
 
+// GH-1176: rescheduledStartAtUtc required — hold requires a future customer appointment.
 export const holdSchema = z.object({
   reason: z.nativeEnum(PauseReasonEnum),
+  rescheduledStartAtUtc: z
+    .string()
+    .min(1, "A future appointment is required")
+    .refine(
+      (v) => new Date(v) > new Date(),
+      "Appointment must be in the future",
+    ),
   note: z.string().optional(),
 });
 export type HoldFormValues = z.infer<typeof holdSchema>;

@@ -1,9 +1,9 @@
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 
+// GH-1176: terminal statuses in the canonical 8-status lifecycle.
 const TERMINAL_STATUSES = new Set<string>([
-  TicketStatusEnum.Resolved,
-  TicketStatusEnum.ClosedPendingRate,
+  TicketStatusEnum.Completed,
   TicketStatusEnum.Closed,
   TicketStatusEnum.ClosedRejected,
 ]);

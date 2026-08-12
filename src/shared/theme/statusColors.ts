@@ -118,26 +118,24 @@ export function toneVars(tone: StatusTone): {
 
 // ── Maps per enum (fallback outside the map → "muted") ───────────────────────
 
+// GH-1176: updated for 8-status canonical lifecycle.
 export const TICKET_STATUS_TONE: Record<TicketStatusEnum, StatusTone> = {
-  [TicketStatusEnum.New]: "info",
   [TicketStatusEnum.Open]: "info",
-  [TicketStatusEnum.Assigned]: "info",
+  [TicketStatusEnum.Pending]: "p3",
   [TicketStatusEnum.InProgress]: "info",
-  [TicketStatusEnum.ClosedPendingRate]: "info",
-  [TicketStatusEnum.WaitingCustomer]: "p3",
-  [TicketStatusEnum.WaitingParts]: "p3",
-  [TicketStatusEnum.WaitingOnsiteSchedule]: "p3",
-  [TicketStatusEnum.Resolved]: "ok",
+  [TicketStatusEnum.Request]: "p2",
+  [TicketStatusEnum.ReAssign]: "p1",
+  [TicketStatusEnum.Completed]: "ok",
   [TicketStatusEnum.Closed]: "ok",
-  [TicketStatusEnum.Escalated]: "p1",
-  [TicketStatusEnum.ClosedRejected]: "p1",
-  [TicketStatusEnum.Incident]: "p1",
+  [TicketStatusEnum.ClosedRejected]: "muted",
 };
 
+// GH-1176: Urgent added — same severity color as P1Critical.
 export const TICKET_PRIORITY_TONE: Record<TicketPriorityEnum, StatusTone> = {
   [TicketPriorityEnum.P1Critical]: "p1",
   [TicketPriorityEnum.P2High]: "p2",
   [TicketPriorityEnum.P3Normal]: "p3",
+  [TicketPriorityEnum.Urgent]: "p1",
 };
 
 export const SLA_TIMER_TONE: Record<SlaTimerStatusEnum, StatusTone> = {
@@ -145,6 +143,7 @@ export const SLA_TIMER_TONE: Record<SlaTimerStatusEnum, StatusTone> = {
   [SlaTimerStatusEnum.Paused]: "p3",
   [SlaTimerStatusEnum.Met]: "ok",
   [SlaTimerStatusEnum.Breached]: "p1",
+  [SlaTimerStatusEnum.Stopped]: "muted",
 };
 
 // Used by AlertSeverityBadge AND BatteryAuditLogTable (same Info/Warning/Critical scale).
