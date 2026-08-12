@@ -304,6 +304,7 @@ export interface TriagePayload {
  */
 export interface AssignPayload {
   primaryHandlerStaffId: string;
+  priority: TicketPriorityEnum;
   supporterStaffIds: string[];
   /** ISO-8601 UTC; BE classifies as current (≤nowUtc) or future (>nowUtc). */
   scheduledStartAtUtc: string;

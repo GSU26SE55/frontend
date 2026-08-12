@@ -121,7 +121,7 @@ export function TicketCard({ ticket }: Props) {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                No SLA yet — awaiting triage
+                No SLA yet — in queue
               </p>
             )}
           </div>
