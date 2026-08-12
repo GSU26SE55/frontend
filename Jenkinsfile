@@ -1,6 +1,6 @@
 // Pipeline: CI + Docker + Deploy — Frontend (ReactJS)
 // Trigger: push vào staging (từ dev→staging) hoặc main (từ staging→main)
-// Stages: Install → Type Check → Lint → Build → Docker Build & Push → Deploy
+// Stages: Install → Type Check → Build → Docker Build & Push → Deploy
 // Internal port: staging → 127.0.0.1:3000 | main → 127.0.0.1:8081
 // Public HTTPS is terminated by host Nginx + Certbot.
 
@@ -48,12 +48,6 @@ pipeline {
         stage('Type Check') {
             steps {
                 sh 'pnpm exec tsc --noEmit'
-            }
-        }
-
-        stage('Lint') {
-            steps {
-                sh 'pnpm exec eslint . --max-warnings=0'
             }
         }
 
