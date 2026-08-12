@@ -165,6 +165,10 @@ export default function BatteryAssetForm({
     const lockedSite = sites.find((site) => site.id === lockedSiteId);
     if (lockedSite) {
       setValue("customerId", lockedSite.customerId, { shouldValidate: true });
+      // Battery inherits the site's coordinates — the lat/long inputs are hidden
+      // when locked, so pull the values straight from the site.
+      setValue("latitude", lockedSite.latitude?.toString() ?? "");
+      setValue("longitude", lockedSite.longitude?.toString() ?? "");
     }
   }, [editData, lockedSiteId, open, setValue, sites]);
 
@@ -391,26 +395,30 @@ export default function BatteryAssetForm({
             <Input id="location" {...register("location")} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="latitude">Latitude</Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                {...register("latitude")}
-              />
+          {/* Opened from the site page → coordinates come from the site, so hide the
+              inputs. The values still live in form state (set from the locked site). */}
+          {!lockedSiteId && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  {...register("latitude")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  {...register("longitude")}
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="longitude">Longitude</Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                {...register("longitude")}
-              />
-            </div>
-          </div>
+          )}
 
           {isEdit && (
             <div className="grid grid-cols-2 gap-4">

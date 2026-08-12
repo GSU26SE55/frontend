@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
+import AddressAutocomplete from "@/shared/components/site/AddressAutocomplete";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   siteFormSchema,
@@ -57,6 +58,7 @@ export default function SiteFormDialog({
     register,
     handleSubmit,
     setError,
+    setValue,
     reset,
     control,
     formState: { errors, isSubmitting },
@@ -182,16 +184,39 @@ export default function SiteFormDialog({
 
           <div className="space-y-1">
             <Label htmlFor="address">Address</Label>
-            <Input id="address" {...register("address")} />
+            {/* Type an address → pick a suggestion → latitude/longitude auto-fill. */}
+            <Controller
+              control={control}
+              name="address"
+              render={({ field }) => (
+                <AddressAutocomplete
+                  id="address"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onSelect={(r) => {
+                    field.onChange(r.displayName);
+                    setValue("latitude", r.latitude.toString(), {
+                      shouldValidate: true,
+                    });
+                    setValue("longitude", r.longitude.toString(), {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              )}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="latitude">Latitude</Label>
+              {/* Filled from the address picker — read-only so it can't drift from the address. */}
               <Input
                 id="latitude"
                 type="number"
                 step="any"
+                readOnly
+                className="bg-muted text-muted-foreground"
                 {...register("latitude")}
               />
               {errors.latitude && (
@@ -206,6 +231,8 @@ export default function SiteFormDialog({
                 id="longitude"
                 type="number"
                 step="any"
+                readOnly
+                className="bg-muted text-muted-foreground"
                 {...register("longitude")}
               />
               {errors.longitude && (

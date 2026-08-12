@@ -9,6 +9,7 @@ export const KEY = {
   notifications: "notifications",
   notificationPreferences: "notificationPreferences",
   sites: "sites",
+  geocode: "geocode",
   files: "files",
   batteryAssets: "batteryAssets",
   batteryTypes: "batteryTypes",
@@ -115,6 +116,9 @@ export const QUERY_KEY = {
     assets: (siteId: string, params?: object) =>
       [KEY.sites, "assets", siteId, params] as const,
     cascadeSummary: (id: string) => [KEY.sites, "cascade-summary", id] as const,
+  },
+  geocode: {
+    search: (query: string) => [KEY.geocode, "search", query] as const,
   },
   batteryAssets: {
     list: (params?: object) => [KEY.batteryAssets, "list", params] as const,
