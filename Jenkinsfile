@@ -10,8 +10,8 @@ pipeline {
     environment {
         IMAGE_NAME = "ghcr.io/gsu26se55/frontend"
         GH_USER    = 'gsu26se55'
-        VPS_HOST   = '209.97.166.60'
-        VPS_USER   = 'root'
+        VPS_HOST   = '146.190.201.118'
+        VPS_USER   = 'frontend'
     }
 
     options {
