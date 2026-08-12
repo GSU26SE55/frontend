@@ -1,6 +1,6 @@
 // Pipeline: CI + Docker + Deploy — Frontend (ReactJS)
 // Trigger: push vào staging (từ dev→staging) hoặc main (từ staging→main)
-// Stages: Install → Type Check → Build → Docker Build & Push → Deploy
+// Stages: Docker Build & Push (includes install, type-check, and Vite build) → Deploy
 // Internal port: staging → 127.0.0.1:3000 | main → 127.0.0.1:8081
 // Public HTTPS is terminated by host Nginx + Certbot.
 
@@ -20,10 +20,6 @@ pipeline {
         disableConcurrentBuilds(abortPrevious: true)
     }
 
-    tools {
-        nodejs 'node-20'
-    }
-
     stages {
         stage('Check Branch') {
             steps {
@@ -34,29 +30,6 @@ pipeline {
                         error("Branch '${env.CURRENT_BRANCH}' không được phép chạy CI/CD. Chỉ staging và main.")
                     }
                     echo "Branch hợp lệ: ${env.CURRENT_BRANCH}"
-                }
-            }
-        }
-
-        stage('Install') {
-            steps {
-                sh 'node --version && corepack enable && pnpm --version'
-                sh 'pnpm install --frozen-lockfile'
-            }
-        }
-
-        stage('Type Check') {
-            steps {
-                sh 'pnpm exec tsc --noEmit'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                withCredentials([file(credentialsId: 'FRONTEND_ENV_FILE', variable: 'FRONTEND_ENV')]) {
-                    sh 'cp "$FRONTEND_ENV" .env'
-                    sh 'pnpm build'
-                    sh 'rm -f .env'
                 }
             }
         }
