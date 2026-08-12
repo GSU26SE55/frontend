@@ -1,6 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { env } from "@/config/env";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLinkGoogle } from "@/features/auth/hooks/account/useLinkGoogle";
@@ -27,26 +28,30 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
   const inner = (
     <div className="flex items-center gap-2">
       {!isLinked ? (
-        <GoogleLogin
-          onSuccess={(credentialResponse) => {
-            if (credentialResponse.credential) {
-              linkGoogle(
-                { idToken: credentialResponse.credential },
-                {
-                  onSuccess: () => toast.success(AUTH_MESSAGES.google.linked),
-                  onError: (error) => handleErrorApi({ error }),
-                },
-              );
-            }
-          }}
-          onError={() => {
-            toast.error(AUTH_MESSAGES.google.loginFailed);
-          }}
-          text="signin"
-          shape="rectangular"
-          theme="outline"
-          size="medium"
-        />
+        // Provider scoped here (not app-wide) so the Google GSI script loads only when
+        // the link button actually renders — keeps it off every other page.
+        <GoogleOAuthProvider clientId={env.VITE_GOOGLE_CLIENT_ID}>
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              if (credentialResponse.credential) {
+                linkGoogle(
+                  { idToken: credentialResponse.credential },
+                  {
+                    onSuccess: () => toast.success(AUTH_MESSAGES.google.linked),
+                    onError: (error) => handleErrorApi({ error }),
+                  },
+                );
+              }
+            }}
+            onError={() => {
+              toast.error(AUTH_MESSAGES.google.loginFailed);
+            }}
+            text="signin"
+            shape="rectangular"
+            theme="outline"
+            size="medium"
+          />
+        </GoogleOAuthProvider>
       ) : (
         <Button
           variant="destructive"

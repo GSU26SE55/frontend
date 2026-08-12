@@ -99,7 +99,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
               </Label>
               <Input
                 type="email"
-                placeholder="user@sunaria.vn"
+                placeholder="user@solars.vn"
                 {...register("email")}
               />
               {errors.email && (
