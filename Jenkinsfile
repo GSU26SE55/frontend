@@ -1,6 +1,6 @@
 // Pipeline: CI + Docker + Deploy — Frontend (ReactJS)
 // Trigger: push vào staging (từ dev→staging) hoặc main (từ staging→main)
-// Stages: Docker Build & Push (includes install, type-check, and Vite build) → Deploy
+// Stages: Remote Docker Build & Deploy on the frontend VPS
 // Internal port: staging → 127.0.0.1:3000 | main → 127.0.0.1:8081
 // Public HTTPS is terminated by host Nginx + Certbot.
 
@@ -34,11 +34,13 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Remote Build & Deploy') {
             steps {
                 script {
                     def branch = env.CURRENT_BRANCH
                     def shortSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def remoteDir = "/tmp/frontend-${branch}-${env.BUILD_NUMBER}"
+                    def remoteDockerConfig = "/tmp/frontend-docker-${branch}-${env.BUILD_NUMBER}"
 
                     def tags = []
                     if (branch == 'main') {
@@ -50,50 +52,63 @@ pipeline {
                     }
 
                     def tagArgs = tags.collect { "-t ${it}" }.join(' ')
+                    def pushCommands = tags.collect { "docker push ${it}" }.join('\n')
+                    def containerName = branch == 'main' ? 'frontend-prod' : 'frontend-staging'
+                    def imageTag = branch == 'main' ? 'latest' : 'staging'
+                    def vpsPort = branch == 'main' ? '8081' : '3000'
 
                     withCredentials([
                         string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN'),
-                        file(credentialsId: 'FRONTEND_ENV_FILE', variable: 'FRONTEND_ENV')
-                    ]) {
-                        sh "echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin"
-                        sh "docker build --secret id=frontend_env,src=\${FRONTEND_ENV} ${tagArgs} ."
-                        tags.each { tag -> sh "docker push ${tag}" }
-                        sh "docker logout ghcr.io"
-                    }
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    def branch = env.CURRENT_BRANCH
-
-                    // staging → port 3000, container: frontend-staging
-                    // main    → port 80,   container: frontend-prod
-                    def containerName = branch == 'main' ? 'frontend-prod'    : 'frontend-staging'
-                    def imageTag      = branch == 'main' ? 'latest'            : 'staging'
-                    def vpsPort       = branch == 'main' ? '8081'              : '3000'
-
-                    withCredentials([
-                        string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN'),
+                        file(credentialsId: 'FRONTEND_ENV_FILE', variable: 'FRONTEND_ENV'),
                         sshUserPrivateKey(credentialsId: 'VPS_SSH_KEY', keyFileVariable: 'SSH_KEY')
                     ]) {
                         sh """
-                            ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.VPS_USER}@${env.VPS_HOST} \
-                                "set -e; \
-                                echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin; \
-                                docker pull ${env.IMAGE_NAME}:${imageTag}; \
-                                docker rm -f ${containerName} 2>/dev/null || true; \
+                            set -eu
+                            SOURCE_ARCHIVE=\$(mktemp /tmp/frontend-source.XXXXXX.tar.gz)
+                            SSH_OPTS="-i \${SSH_KEY} -o StrictHostKeyChecking=no"
+
+                            cleanup() {
+                                rm -f "\${SOURCE_ARCHIVE}"
+                                ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} \
+                                    "rm -rf '${remoteDir}' '${remoteDockerConfig}'" || true
+                            }
+                            trap cleanup EXIT
+
+                            git archive --format=tar.gz -o "\${SOURCE_ARCHIVE}" HEAD
+                            ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} \
+                                "rm -rf '${remoteDir}' '${remoteDockerConfig}'; \
+                                 install -d -m 700 '${remoteDir}' '${remoteDockerConfig}'"
+                            scp \${SSH_OPTS} "\${SOURCE_ARCHIVE}" \
+                                ${env.VPS_USER}@${env.VPS_HOST}:'${remoteDir}/source.tar.gz'
+                            scp \${SSH_OPTS} "\${FRONTEND_ENV}" \
+                                ${env.VPS_USER}@${env.VPS_HOST}:'${remoteDir}/.env.ci'
+                            ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} \
+                                "tar -xzf '${remoteDir}/source.tar.gz' -C '${remoteDir}'; \
+                                 rm -f '${remoteDir}/source.tar.gz'"
+
+                            set +x
+                            printf '%s\\n' "\${TOKEN}" | ssh \${SSH_OPTS} ${env.VPS_USER}@${env.VPS_HOST} "
+                                set -eu
+                                read -r GHCR_PASSWORD
+                                export DOCKER_CONFIG='${remoteDockerConfig}'
+                                printf '%s' \"\${GHCR_PASSWORD}\" | \
+                                    docker login ghcr.io -u '${env.GH_USER}' --password-stdin
+                                unset GHCR_PASSWORD
+                                cd '${remoteDir}'
+                                docker build --secret id=frontend_env,src=.env.ci ${tagArgs} .
+                                rm -f .env.ci
+                                ${pushCommands}
+                                docker rm -f '${containerName}' 2>/dev/null || true
                                 docker run -d \
-                                    --name ${containerName} \
+                                    --name '${containerName}' \
                                     --restart unless-stopped \
-                                    -p 127.0.0.1:${vpsPort}:80 \
-                                    ${env.IMAGE_NAME}:${imageTag}; \
+                                    -p '127.0.0.1:${vpsPort}:80' \
+                                    '${env.IMAGE_NAME}:${imageTag}'
                                 curl --fail --silent --show-error --retry 10 --retry-delay 2 \
-                                    http://127.0.0.1:${vpsPort}/ >/dev/null; \
-                                docker logout ghcr.io; \
-                                docker image prune -f"
+                                    'http://127.0.0.1:${vpsPort}/' >/dev/null
+                                docker logout ghcr.io
+                                docker image prune -f
+                            "
                         """
                     }
                 }
@@ -115,7 +130,6 @@ pipeline {
             echo "Pipeline thất bại — kiểm tra log từng stage"
         }
         cleanup {
-            sh 'docker image prune -f || true'
             cleanWs()
         }
     }
