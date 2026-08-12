@@ -1,7 +1,8 @@
 // Pipeline: CI + Docker + Deploy — Frontend (ReactJS)
 // Trigger: push vào staging (từ dev→staging) hoặc main (từ staging→main)
 // Stages: Install → Type Check → Lint → Build → Docker Build & Push → Deploy
-// Port:   staging → VPS:3000 | main → VPS:80
+// Internal port: staging → 127.0.0.1:3000 | main → 127.0.0.1:8081
+// Public HTTPS is terminated by host Nginx + Certbot.
 
 pipeline {
     agent any
@@ -9,8 +10,8 @@ pipeline {
     environment {
         IMAGE_NAME = "ghcr.io/gsu26se55/frontend"
         GH_USER    = 'gsu26se55'
-        VPS_HOST   = '152.42.167.222'
-        VPS_USER   = 'root'
+        VPS_HOST   = '209.97.166.60'
+        VPS_USER   = 'frontend'
     }
 
     options {
@@ -39,26 +40,30 @@ pipeline {
 
         stage('Install') {
             steps {
-                sh 'node --version && npm --version'
-                sh 'npm install'
+                sh 'node --version && corepack enable && pnpm --version'
+                sh 'pnpm install --frozen-lockfile'
             }
         }
 
         stage('Type Check') {
             steps {
-                sh 'npx tsc --noEmit'
+                sh 'pnpm exec tsc --noEmit'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'npx eslint . --max-warnings=0'
+                sh 'pnpm exec eslint . --max-warnings=0'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'npm run build'
+                withCredentials([file(credentialsId: 'FRONTEND_ENV_FILE', variable: 'FRONTEND_ENV')]) {
+                    sh 'cp "$FRONTEND_ENV" .env'
+                    sh 'pnpm build'
+                    sh 'rm -f .env'
+                }
             }
         }
 
@@ -79,9 +84,12 @@ pipeline {
 
                     def tagArgs = tags.collect { "-t ${it}" }.join(' ')
 
-                    withCredentials([string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN')]) {
+                    withCredentials([
+                        string(credentialsId: 'GHCR_TOKEN', variable: 'TOKEN'),
+                        file(credentialsId: 'FRONTEND_ENV_FILE', variable: 'FRONTEND_ENV')
+                    ]) {
                         sh "echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin"
-                        sh "docker build ${tagArgs} ."
+                        sh "docker build --secret id=frontend_env,src=\${FRONTEND_ENV} ${tagArgs} ."
                         tags.each { tag -> sh "docker push ${tag}" }
                         sh "docker logout ghcr.io"
                     }
@@ -106,16 +114,18 @@ pipeline {
                     ]) {
                         sh """
                             ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.VPS_USER}@${env.VPS_HOST} \
-                                "echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin && \
-                                docker pull ${env.IMAGE_NAME}:${imageTag} && \
-                                docker stop ${containerName} 2>/dev/null || true && \
-                                docker rm   ${containerName} 2>/dev/null || true && \
+                                "set -e; \
+                                echo \${TOKEN} | docker login ghcr.io -u ${env.GH_USER} --password-stdin; \
+                                docker pull ${env.IMAGE_NAME}:${imageTag}; \
+                                docker rm -f ${containerName} 2>/dev/null || true; \
                                 docker run -d \
                                     --name ${containerName} \
                                     --restart unless-stopped \
-                                    -p ${vpsPort}:80 \
-                                    ${env.IMAGE_NAME}:${imageTag} && \
-                                docker logout ghcr.io && \
+                                    -p 127.0.0.1:${vpsPort}:80 \
+                                    ${env.IMAGE_NAME}:${imageTag}; \
+                                curl --fail --silent --show-error --retry 10 --retry-delay 2 \
+                                    http://127.0.0.1:${vpsPort}/ >/dev/null; \
+                                docker logout ghcr.io; \
                                 docker image prune -f"
                         """
                     }
@@ -129,8 +139,8 @@ pipeline {
             script {
                 def branch = env.CURRENT_BRANCH
                 def url = branch == 'main'
-                    ? 'http://capstonegsu26se55.mooo.com'
-                    : 'http://capstonegsu26se55.mooo.com:3000'
+                    ? 'https://solars.io.vn'
+                    : 'https://staging.solars.io.vn'
                 echo "Deploy thành công → ${url}"
             }
         }

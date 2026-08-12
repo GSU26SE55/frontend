@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { WarrantyStatusEnum } from "@/features/admin/enums/battery-asset.enum";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
+import { coordField } from "@/shared/schemas/common.schema";
 
 export const batteryAssetFormSchema = z
   .object({
@@ -26,6 +27,8 @@ export const batteryAssetFormSchema = z
       }, "Install date cannot be older than 5 years"),
     warrantyEndDate: z.string().optional(),
     location: z.string().max(255).optional(),
+    latitude: coordField("Latitude", -90, 90),
+    longitude: coordField("Longitude", -180, 180),
     notes: z.string().max(1000).optional(),
     // Used only when editing — BE update command accepts these 2 fields (defaults to Active if omitted)
     warrantyStatus: z.nativeEnum(WarrantyStatusEnum).optional(),

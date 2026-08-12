@@ -51,6 +51,12 @@ const WARRANTY_LABELS: Record<WarrantyStatusEnum, string> = {
   [WarrantyStatusEnum.VOID]: "Void",
 };
 
+const toNumOrNull = (val?: string): number | undefined => {
+  if (!val || val === "") return undefined;
+  const n = parseFloat(val);
+  return isNaN(n) ? undefined : n;
+};
+
 interface BatteryAssetFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -87,6 +93,7 @@ export default function BatteryAssetForm({
   });
 
   const installDate = useWatch({ control, name: "installDate" });
+  const customerId = useWatch({ control, name: "customerId" });
   const siteId = useWatch({ control, name: "siteId" });
 
   // Auto-fill Location from the selected site's address — the battery is physically
@@ -152,6 +159,8 @@ export default function BatteryAssetForm({
           installDate: editData.installDate.slice(0, 10),
           warrantyEndDate: editData.warrantyEndDate?.slice(0, 10) ?? "",
           location: editData.location ?? "",
+          latitude: editData.latitude?.toString() ?? "",
+          longitude: editData.longitude?.toString() ?? "",
           notes: editData.notes ?? "",
           warrantyStatus: editData.warrantyStatus,
           status: editData.status,
@@ -168,6 +177,10 @@ export default function BatteryAssetForm({
     const lockedSite = sites.find((site) => site.id === lockedSiteId);
     if (lockedSite) {
       setValue("customerId", lockedSite.customerId, { shouldValidate: true });
+      // Battery inherits the site's coordinates — the lat/long inputs are hidden
+      // when locked, so pull the values straight from the site.
+      setValue("latitude", lockedSite.latitude?.toString() ?? "");
+      setValue("longitude", lockedSite.longitude?.toString() ?? "");
     }
   }, [editData, lockedSiteId, open, setValue, sites]);
 
@@ -185,6 +198,8 @@ export default function BatteryAssetForm({
         ? new Date(data.warrantyEndDate).toISOString()
         : undefined,
       location: data.location || undefined,
+      latitude: toNumOrNull(data.latitude),
+      longitude: toNumOrNull(data.longitude),
       notes: data.notes || undefined,
     };
 
@@ -396,6 +411,31 @@ export default function BatteryAssetForm({
               </p>
             )}
           </div>
+
+          {/* Opened from the site page → coordinates come from the site, so hide the
+              inputs. The values still live in form state (set from the locked site). */}
+          {!lockedSiteId && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="latitude">Latitude</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  {...register("latitude")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="longitude">Longitude</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  {...register("longitude")}
+                />
+              </div>
+            </div>
+          )}
 
           {isEdit && (
             <div className="grid grid-cols-2 gap-4">

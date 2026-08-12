@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
+import AddressAutocomplete from "@/shared/components/site/AddressAutocomplete";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   siteFormSchema,
@@ -39,6 +40,12 @@ interface SiteFormDialogProps {
   editData?: SiteDto | null;
 }
 
+const toNumOrNull = (val?: string): number | null | undefined => {
+  if (!val || val === "") return null;
+  const n = parseFloat(val);
+  return isNaN(n) ? null : n;
+};
+
 export default function SiteFormDialog({
   open,
   onOpenChange,
@@ -52,8 +59,8 @@ export default function SiteFormDialog({
     register,
     handleSubmit,
     setError,
-    reset,
     setValue,
+    reset,
     control,
     formState: { errors, isSubmitting },
   } = useForm<SiteFormValues>({
@@ -71,6 +78,8 @@ export default function SiteFormDialog({
           name: editData.name,
           customerId: editData.customerId,
           address: editData.address ?? "",
+          latitude: editData.latitude?.toString() ?? "",
+          longitude: editData.longitude?.toString() ?? "",
           installDate: editData.installDate.slice(0, 10),
           status: editData.status,
           contactPersonName: editData.contactPersonName ?? "",
@@ -102,6 +111,8 @@ export default function SiteFormDialog({
       installDate: data.installDate,
       status: data.status,
       address: data.address || undefined,
+      latitude: toNumOrNull(data.latitude),
+      longitude: toNumOrNull(data.longitude),
       contactPersonName: data.contactPersonName || undefined,
       contactPersonPhone: data.contactPersonPhone || undefined,
     };
@@ -187,12 +198,68 @@ export default function SiteFormDialog({
 
           <div className="space-y-1">
             <Label htmlFor="address">Address</Label>
-            <Input id="address" {...register("address")} />
+            {/* Type an address → pick a suggestion → latitude/longitude auto-fill. */}
+            <Controller
+              control={control}
+              name="address"
+              render={({ field }) => (
+                <AddressAutocomplete
+                  id="address"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onSelect={(r) => {
+                    field.onChange(r.displayName);
+                    setValue("latitude", r.latitude.toString(), {
+                      shouldValidate: true,
+                    });
+                    setValue("longitude", r.longitude.toString(), {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              )}
+            />
             {!isEdit && (
               <p className="text-xs text-muted-foreground">
                 Auto-filled from the customer's saved address — you can edit it.
               </p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="latitude">Latitude</Label>
+              {/* Filled from the address picker — read-only so it can't drift from the address. */}
+              <Input
+                id="latitude"
+                type="number"
+                step="any"
+                readOnly
+                className="bg-muted text-muted-foreground"
+                {...register("latitude")}
+              />
+              {errors.latitude && (
+                <p className="text-sm text-destructive">
+                  {errors.latitude.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="longitude">Longitude</Label>
+              <Input
+                id="longitude"
+                type="number"
+                step="any"
+                readOnly
+                className="bg-muted text-muted-foreground"
+                {...register("longitude")}
+              />
+              {errors.longitude && (
+                <p className="text-sm text-destructive">
+                  {errors.longitude.message}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
