@@ -339,7 +339,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 {/* `group` so ChatUnreadBadge auto-hides while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
-                  Comments
+                  Chat
                   <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">

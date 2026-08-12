@@ -11,7 +11,7 @@ export const SIDEBAR_LABELS = {
   analytics: "Analytics",
   sites: "Battery & Site",
   tickets: "Tickets",
-  knowledgeBase: "Knowledge Base",
+  knowledgeBase: "Guide",
   blog: "Blog",
   batteryAlerts: "Battery alerts",
   envIncidents: "Environmental incidents",

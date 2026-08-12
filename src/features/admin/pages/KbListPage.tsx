@@ -124,11 +124,9 @@ export default function KbListPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Knowledge Base
+            Admin &middot; Guide
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Knowledge Base
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Guide</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : (data?.totalItems ?? 0)} articles &mdash;
             manage the knowledge base.

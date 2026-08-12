@@ -17,14 +17,11 @@ import {
   Inbox,
   Ticket,
   ScrollText,
-  FileClock,
   BookOpen,
   ShieldAlert,
   MessageSquare,
-  Workflow,
   BarChart3,
   Cpu,
-  HardDrive,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
@@ -74,8 +71,9 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/environmental-incidents",
         icon: ShieldAlert,
       },
-      { label: "IoT Devices", path: "/admin/iot-devices", icon: Cpu },
-      { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
+      { label: "Devices", path: "/admin/iot-devices", icon: Cpu },
+      // Hidden from nav per request — route kept intact, not deleted.
+      // { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
     ],
   },
   {
@@ -111,18 +109,20 @@ export const ADMIN_NAV: NavSection[] = [
     defaultOpen: false,
     items: [
       { label: "SMS Gateway", path: "/admin/sms-gateway", icon: MessageSquare },
-      { label: "Saga Debug", path: "/admin/sagas", icon: Workflow },
-      { label: "Audit Logs", path: "/admin/audit-logs", icon: ScrollText },
-      {
-        label: "Battery & Alert Audit",
-        path: "/admin/battery-audit-logs",
-        icon: FileClock,
-      },
-      {
-        label: "File Access Audit",
-        path: "/admin/files-audit-logs",
-        icon: FileClock,
-      },
+      // Hidden from nav per request — route kept intact, not deleted.
+      // { label: "Saga Debug", path: "/admin/sagas", icon: Workflow },
+      { label: "Logs", path: "/admin/audit-logs", icon: ScrollText },
+      // Hidden from nav per request — routes kept intact, not deleted.
+      // {
+      //   label: "Battery & Alert Audit",
+      //   path: "/admin/battery-audit-logs",
+      //   icon: FileClock,
+      // },
+      // {
+      //   label: "File Access Audit",
+      //   path: "/admin/files-audit-logs",
+      //   icon: FileClock,
+      // },
       { label: "Send notification", path: "/admin/notifications", icon: Bell },
       {
         label: "Notification groups",

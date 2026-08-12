@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import {
   useUpdateSite,
 } from "@/features/admin/hooks/site/useSites";
 import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
+import { useAdminAccountDetail } from "@/features/admin/hooks/account/useAdminAccounts";
 import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
 import {
   SiteStatusEnum,
@@ -89,6 +90,19 @@ export default function SiteFormDialog({
       }
     }
   }, [open, editData, reset]);
+
+  // Auto-fill Address from the selected customer's saved address — only on create
+  // (not edit, so we never silently overwrite an address the user already set on the site).
+  const customerId = useWatch({ control, name: "customerId" });
+  const { data: customerDetail } = useAdminAccountDetail(
+    !isEdit ? (customerId ?? "") : "",
+  );
+  useEffect(() => {
+    if (!isEdit && customerDetail?.address) {
+      setValue("address", customerDetail.address);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerDetail]);
 
   const onSubmit = async (data: SiteFormValues) => {
     const payload: SiteCreatePayload = {
@@ -205,6 +219,11 @@ export default function SiteFormDialog({
                 />
               )}
             />
+            {!isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Auto-filled from the customer's saved address — you can edit it.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

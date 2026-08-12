@@ -96,6 +96,18 @@ export default function BatteryAssetForm({
   const customerId = useWatch({ control, name: "customerId" });
   const siteId = useWatch({ control, name: "siteId" });
 
+  // Auto-fill Location from the selected site's address — the battery is physically
+  // at the site, so it shares the site's location instead of a separately typed one.
+  // Only on create (not edit) so we never silently overwrite a location already set on the asset.
+  useEffect(() => {
+    if (isEdit || !siteId) return;
+    const site = sitesData?.items.find((s) => s.id === siteId);
+    if (site?.address) {
+      setValue("location", site.address);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteId, sitesData]);
+
   const batteryTypeOptions = useMemo(
     () =>
       batteryTypesData?.items.map((t) => ({ value: t.id, label: t.name })) ??
@@ -393,6 +405,11 @@ export default function BatteryAssetForm({
           <div className="space-y-1">
             <Label htmlFor="location">Location</Label>
             <Input id="location" {...register("location")} />
+            {!isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Auto-filled from the selected site's address — you can edit it.
+              </p>
+            )}
           </div>
 
           {/* Opened from the site page → coordinates come from the site, so hide the
