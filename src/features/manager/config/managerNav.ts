@@ -52,7 +52,7 @@ export const MANAGER_NAV: NavSection[] = [
       // The /manager/battery-assets/:id route is kept for deep-links from alerts/tickets.
       { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
       { label: SIDEBAR_LABELS.tickets, path: "/manager/tickets", icon: Ticket },
-      { label: "Awaiting triage", path: MANAGER_QUEUE_PATH, icon: Clock },
+      { label: "Queue", path: MANAGER_QUEUE_PATH, icon: Clock },
       {
         label: SIDEBAR_LABELS.knowledgeBase,
         path: "/manager/kb",

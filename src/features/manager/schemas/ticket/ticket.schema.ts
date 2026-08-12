@@ -31,6 +31,7 @@ export type TriageFormValues = z.infer<typeof triageSchema>;
 export const assignSchema = z
   .object({
     primaryHandlerStaffId: z.string().uuid("Invalid Staff ID"),
+    priority: z.nativeEnum(TicketPriorityEnum),
     supporterStaffIds: z.array(z.string().uuid()),
     // ISO-8601 with timezone; BE normalizes to UTC and classifies current vs future.
     scheduledStartAtUtc: z.string().min(1, "A start schedule is required"),

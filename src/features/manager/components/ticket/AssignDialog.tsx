@@ -1,4 +1,5 @@
-﻿import { useForm, useWatch } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -33,7 +34,7 @@ import { useAssignTicket } from "@/features/manager/hooks/ticket/useManagerTicke
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import StaffMultiSelect from "@/features/manager/components/ticket/StaffMultiSelect";
 import { StaffSuggestionPanel } from "@/shared/components/ticket/StaffSuggestionPanel";
-import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
+import { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
 import {
   getMinTierForPriority,
   getTierRequirementHint,
@@ -49,6 +50,18 @@ interface Props {
   onClose: () => void;
 }
 
+const PRIORITY_OPTIONS: Array<{ value: TicketPriorityEnum; label: string }> = [
+  { value: TicketPriorityEnum.P1Critical, label: "P1 · Critical" },
+  { value: TicketPriorityEnum.P2High, label: "P2 · High" },
+  { value: TicketPriorityEnum.P3Normal, label: "P3 · Standard" },
+  { value: TicketPriorityEnum.Urgent, label: "Urgent" },
+];
+
+const formatLocalDatetime = (d = new Date()) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export default function AssignDialog({
   ticketId,
   priority,
@@ -62,25 +75,40 @@ export default function AssignDialog({
     isError: staffError,
   } = useStaffAssignmentList();
 
+  const form = useForm<AssignFormValues>({
+    resolver: zodResolver(assignSchema),
+    defaultValues: {
+      primaryHandlerStaffId: "",
+      priority: priority ?? TicketPriorityEnum.P2High,
+      supporterStaffIds: [],
+      scheduledStartAtUtc: formatLocalDatetime(),
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.setValue("scheduledStartAtUtc", formatLocalDatetime());
+      if (priority) {
+        form.setValue("priority", priority);
+      }
+    }
+  }, [open, priority, form]);
+
+  const selectedPriority = useWatch({
+    control: form.control,
+    name: "priority",
+  }) ?? priority ?? TicketPriorityEnum.P2High;
+
   // Consistent with ReassignDialog: show ALL staff, disable those without enough tier
   // for Primary (Supporter doesn't check tier). Minimum tier follows the ticket priority.
-  const minTier = getMinTierForPriority(priority);
-  const tierHint = getTierRequirementHint(priority);
+  const minTier = getMinTierForPriority(selectedPriority);
+  const tierHint = getTierRequirementHint(selectedPriority);
   const primaryOptions = staffList.map((s) => ({
     ...s,
     eligible: isEligiblePrimaryHandler(s.skillTier, minTier),
   }));
   const hasEligiblePrimary = primaryOptions.some((s) => s.eligible);
-
-  const form = useForm<AssignFormValues>({
-    resolver: zodResolver(assignSchema),
-    defaultValues: {
-      primaryHandlerStaffId: "",
-      supporterStaffIds: [],
-      scheduledStartAtUtc: "",
-      notes: "",
-    },
-  });
 
   const primaryStaffId = useWatch({
     control: form.control,
@@ -88,9 +116,19 @@ export default function AssignDialog({
   });
 
   const onSubmit = async (values: AssignFormValues) => {
-    await mutateAsync({ ...values, scheduledStartAtUtc: new Date(values.scheduledStartAtUtc).toISOString() });
-    form.reset();
-    onClose();
+    try {
+      const isoDate = values.scheduledStartAtUtc
+        ? new Date(values.scheduledStartAtUtc).toISOString()
+        : new Date().toISOString();
+      await mutateAsync({
+        ...values,
+        scheduledStartAtUtc: isoDate,
+      });
+      form.reset();
+      onClose();
+    } catch {
+      // Error handled by mutation onError (handleErrorApi)
+    }
   };
 
   return (
@@ -108,16 +146,49 @@ export default function AssignDialog({
               ticketId={ticketId}
               selectedStaffId={primaryStaffId}
               onPick={(s) => {
-                form.setValue("primaryHandlerStaffId", s.staffId, {
+                const matched = staffList.find(
+                  (st) => st.accountId === s.staffId,
+                );
+                const targetId = matched?.accountId || s.staffId;
+                form.setValue("primaryHandlerStaffId", targetId, {
                   shouldValidate: true,
                 });
                 form.setValue(
                   "supporterStaffIds",
                   form
                     .getValues("supporterStaffIds")
-                    .filter((id) => id !== s.staffId),
+                    .filter((id) => id !== targetId),
                 );
               }}
+            />
+
+            <FormField
+              control={form.control}
+              name="priority"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ticket Priority *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    items={PRIORITY_OPTIONS}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select ticket priority" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent alignItemWithTrigger={false}>
+                      {PRIORITY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
             <FormField

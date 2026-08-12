@@ -44,8 +44,8 @@ function toQueueParams(params?: AdminTicketQueueParams) {
   return {
     Priority: params.priority,
     Category: params.category,
-    PageNumber: params.pageNumber,
-    PageSize: params.pageSize,
+    PageNumber: params.pageNumber ?? 1,
+    PageSize: params.pageSize ?? 25,
   };
 }
 
@@ -93,13 +93,19 @@ export const managerTicketService = {
   assign: (id: string, payload: AssignPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.ASSIGN(id),
-      payload,
+      {
+        ...payload,
+        scheduledStartAt: payload.scheduledStartAtUtc,
+      },
     ),
 
   reassign: (id: string, payload: ReassignPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.ADMIN.TICKETS.REASSIGN(id),
-      payload,
+      {
+        ...payload,
+        scheduledStartAt: payload.scheduledStartAtUtc,
+      },
     ),
 
   approve: (id: string, comment?: string) =>
