@@ -1,0 +1,14 @@
+# Solars — Solar Battery Management
+
+> Platform for monitoring solar lithium-ion batteries and managing maintenance
+> tickets on SLA (ITIL-aligned) for Admin, Manager, and Staff roles. Real-time
+> battery health, State-of-Health (SOH) prediction, and anomaly detection.
+
+## Pages
+
+- [Home](https://solars.io.vn/): Product overview, features, and how the platform works.
+
+## Notes
+
+- The application dashboards (`/admin`, `/manager`, `/staff`) require
+  authentication and are not publicly accessible.
