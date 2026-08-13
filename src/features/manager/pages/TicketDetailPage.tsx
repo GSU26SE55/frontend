@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -490,7 +490,7 @@ export default function TicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} />
+                <TicketActivityTimeline activities={activities} assignments={ticket.assignments} />
               )}
             </TabsContent>
 
