@@ -3,6 +3,11 @@ import { format } from "date-fns";
 import { BatteryCharging, MessageSquare, Repeat2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import {
+  TicketAssignmentRoleEnum,
+  TicketAssignmentRoleLabel,
+} from "@/shared/enums/ticket/ticket.enum";
+import { useSessionStore } from "@/shared/stores/sessionStore";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 // Label map for TicketCategoryEnum — kept in kb.enum since KB shares the exact
@@ -15,6 +20,13 @@ interface Props {
 }
 
 export function TicketCard({ ticket }: Props) {
+  // Which role the CURRENT staff member holds on this ticket. Primary owns it; Supporter only
+  // assists, so the two demand very different attention when scanning the dashboard.
+  const accountId = useSessionStore((s) => s.user?.accountId);
+  const myRole = accountId
+    ? ticket.assignments?.find((a) => a.staffId === accountId)?.role
+    : undefined;
+
   return (
     <Link to={`/staff/tickets/${ticket.id}`} className="block h-full">
       {/* h-full + flex: cards in the same row have equal height. Without it, a card
@@ -43,7 +55,24 @@ export function TicketCard({ ticket }: Props) {
             <p className="text-xs text-muted-foreground font-mono truncate">
               {ticket.code}
             </p>
+            {/* Role badge joins the EXISTING badge row rather than adding a new one — an extra
+                row would change the card's height and shift the SLA line, the same problem the
+                signal row below is fixed for. */}
             <div className="flex shrink-0 items-center gap-1.5">
+              {myRole && (
+                <span
+                  className={
+                    myRole === TicketAssignmentRoleEnum.PrimaryHandler
+                      ? "rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+                      : "rounded-md bg-purple-100 px-1.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-500/15 dark:text-purple-400"
+                  }
+                  title={TicketAssignmentRoleLabel[myRole]}
+                >
+                  {myRole === TicketAssignmentRoleEnum.PrimaryHandler
+                    ? "Primary"
+                    : "Supporter"}
+                </span>
+              )}
               <TicketPriorityBadge priority={ticket.priority} />
               <TicketStatusBadge status={ticket.status} />
             </div>
@@ -80,29 +109,29 @@ export function TicketCard({ ticket }: Props) {
             </div>
 
             {/* Signals that need attention — filled chips so they stand out from
-                the white background. Only shown when actually present, so a normal
-                card stays compact.
+                the white background.
                 NO "Incident" chip here: that severity level is shown by the pulsing
-                card border. */}
-            {(ticket.reopenCount > 0 || ticket.hasUnreadChat) && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {ticket.reopenCount > 0 && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
-                    title="This ticket was reopened before — the previous attempt likely didn't fully resolve it"
-                  >
-                    <Repeat2 className="size-3.5" aria-hidden />
-                    Reopened {ticket.reopenCount}×
-                  </span>
-                )}
-                {ticket.hasUnreadChat && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                    <MessageSquare className="size-3.5" aria-hidden />
-                    New message
-                  </span>
-                )}
-              </div>
-            )}
+                card border.
+                The row is ALWAYS rendered with a reserved height. `hasUnreadChat` flips to true
+                the moment a message arrives; if the row appeared only then, the card would grow
+                a line taller, the grid would reflow and the SLA clock at the bottom would jump. */}
+            <div className="flex min-h-6 flex-wrap items-center gap-1.5">
+              {ticket.reopenCount > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-400"
+                  title="This ticket was reopened before — the previous attempt likely didn't fully resolve it"
+                >
+                  <Repeat2 className="size-3.5" aria-hidden />
+                  Reopened {ticket.reopenCount}×
+                </span>
+              )}
+              {ticket.hasUnreadChat && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                  <MessageSquare className="size-3.5" aria-hidden />
+                  New message
+                </span>
+              )}
+            </div>
           </div>
 
           {/* SLA always sits at the card's bottom thanks to justify-between — every
