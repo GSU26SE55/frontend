@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import SearchableSelect from "@/shared/components/ui/SearchableSelect";
 import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
+import AddressAutocomplete from "@/shared/components/site/AddressAutocomplete";
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -98,12 +99,16 @@ export default function BatteryAssetForm({
 
   // Auto-fill Location from the selected site's address — the battery is physically
   // at the site, so it shares the site's location instead of a separately typed one.
+  // The coordinates travel with the address: latitude/longitude are read-only and only
+  // ever come from a resolved place, so they can never drift from the text next to them.
   // Only on create (not edit) so we never silently overwrite a location already set on the asset.
   useEffect(() => {
     if (isEdit || !siteId) return;
     const site = sitesData?.items.find((s) => s.id === siteId);
     if (site?.address) {
       setValue("location", site.address);
+      setValue("latitude", site.latitude?.toString() ?? "");
+      setValue("longitude", site.longitude?.toString() ?? "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId, sitesData]);
@@ -404,10 +409,31 @@ export default function BatteryAssetForm({
 
           <div className="space-y-1">
             <Label htmlFor="location">Location</Label>
-            <Input id="location" {...register("location")} />
+            {/* Type a place → pick a suggestion → latitude/longitude auto-fill. */}
+            <Controller
+              control={control}
+              name="location"
+              render={({ field }) => (
+                <AddressAutocomplete
+                  id="location"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onSelect={(r) => {
+                    field.onChange(r.displayName);
+                    setValue("latitude", r.latitude.toString(), {
+                      shouldValidate: true,
+                    });
+                    setValue("longitude", r.longitude.toString(), {
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              )}
+            />
             {!isEdit && (
               <p className="text-xs text-muted-foreground">
-                Auto-filled from the selected site's address — you can edit it.
+                Auto-filled from the selected site's address — you can search for a
+                different place.
               </p>
             )}
           </div>
@@ -418,12 +444,20 @@ export default function BatteryAssetForm({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="latitude">Latitude</Label>
+                {/* Filled from the location picker — read-only so it can't drift from the address. */}
                 <Input
                   id="latitude"
                   type="number"
                   step="any"
+                  readOnly
+                  className="bg-muted text-muted-foreground"
                   {...register("latitude")}
                 />
+                {errors.latitude && (
+                  <p className="text-sm text-destructive">
+                    {errors.latitude.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="longitude">Longitude</Label>
@@ -431,8 +465,15 @@ export default function BatteryAssetForm({
                   id="longitude"
                   type="number"
                   step="any"
+                  readOnly
+                  className="bg-muted text-muted-foreground"
                   {...register("longitude")}
                 />
+                {errors.longitude && (
+                  <p className="text-sm text-destructive">
+                    {errors.longitude.message}
+                  </p>
+                )}
               </div>
             </div>
           )}

@@ -50,13 +50,6 @@ interface Props {
   onClose: () => void;
 }
 
-const PRIORITY_OPTIONS: Array<{ value: TicketPriorityEnum; label: string }> = [
-  { value: TicketPriorityEnum.P1Critical, label: "P1 · Critical" },
-  { value: TicketPriorityEnum.P2High, label: "P2 · High" },
-  { value: TicketPriorityEnum.P3Normal, label: "P3 · Standard" },
-  { value: TicketPriorityEnum.Urgent, label: "Urgent" },
-];
-
 const formatLocalDatetime = (d = new Date()) => {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -162,34 +155,10 @@ export default function AssignDialog({
               }}
             />
 
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ticket Priority *</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    items={PRIORITY_OPTIONS}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select ticket priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent alignItemWithTrigger={false}>
-                      {PRIORITY_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* No priority picker here: priority is derived from the Impact × Urgency matrix
+                at triage and stays fixed for the ticket's lifetime, so assigning must not be a
+                second chance to change it. The field itself stays in the form — the assign API
+                requires a priority, and the tier gating below reads it from form state. */}
 
             <FormField
               control={form.control}
