@@ -41,11 +41,11 @@ import { formatRelativeTime } from "@/shared/utils/iotDeviceHealth";
  */
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "Tất cả trạng thái" },
-  { value: String(IotDeviceStatusEnum.Active), label: "Hoạt động" },
+  { value: "all", label: "All statuses" },
+  { value: String(IotDeviceStatusEnum.Active), label: "Active" },
   { value: String(IotDeviceStatusEnum.Offline), label: "Offline" },
-  { value: String(IotDeviceStatusEnum.Pending), label: "Chờ provision" },
-  { value: String(IotDeviceStatusEnum.Disabled), label: "Vô hiệu hóa" },
+  { value: String(IotDeviceStatusEnum.Pending), label: "Pending provision" },
+  { value: String(IotDeviceStatusEnum.Disabled), label: "Disabled" },
 ];
 
 export default function IoTDevicesPage() {
@@ -58,7 +58,8 @@ export default function IoTDevicesPage() {
   const params = useMemo(
     () => ({
       keyword: keyword.trim() || undefined,
-      status: status === "all" ? undefined : (Number(status) as IotDeviceStatusEnum),
+      status:
+        status === "all" ? undefined : (Number(status) as IotDeviceStatusEnum),
       pageSize: 50,
       sortBy: "lastSeenAt",
       sortDir: "desc" as const,
@@ -77,9 +78,9 @@ export default function IoTDevicesPage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Staff &middot; IoT
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Thiết bị IoT</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">IoT Devices</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Trạng thái, firmware và thời điểm thấy lần cuối của các gateway tại hiện trường.
+            Status, firmware and last-seen time of the gateways in the field.
           </p>
         </div>
         <Button
@@ -88,8 +89,10 @@ export default function IoTDevicesPage() {
           onClick={() => refetch()}
           disabled={isFetching}
         >
-          <RefreshCw className={isFetching ? "size-3.5 animate-spin" : "size-3.5"} />
-          Làm mới
+          <RefreshCw
+            className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
+          />
+          Refresh
         </Button>
       </div>
 
@@ -97,7 +100,7 @@ export default function IoTDevicesPage() {
         <div className="relative flex-1 min-w-64 max-w-md">
           <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo mã hoặc tên thiết bị"
+            placeholder="Search by device code or name"
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             className="pl-8"
@@ -105,7 +108,7 @@ export default function IoTDevicesPage() {
         </div>
         {/* onValueChange của shadcn Select trả `string | null` (null khi bỏ chọn);
             `setStatus` chỉ nhận string. Quy null về "all" thay vì ép kiểu — bỏ chọn
-            nghĩa là không lọc nữa, đúng bằng "Tất cả trạng thái". */}
+            nghĩa là không lọc nữa, đúng bằng "All statuses". */}
         <Select value={status} onValueChange={(v) => setStatus(v ?? "all")}>
           <SelectTrigger className="w-52">
             <SelectValue />
@@ -125,10 +128,15 @@ export default function IoTDevicesPage() {
       ) : isError ? (
         <Card className="p-6">
           <p className="text-sm text-muted-foreground">
-            Không tải được danh sách thiết bị.
+            Could not load the device list.
           </p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
-            Thử lại
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => refetch()}
+          >
+            Retry
           </Button>
         </Card>
       ) : items.length === 0 ? (
@@ -136,8 +144,8 @@ export default function IoTDevicesPage() {
           <HardDrive className="size-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             {keyword || status !== "all"
-              ? "Không có thiết bị nào khớp bộ lọc."
-              : "Chưa có thiết bị nào."}
+              ? "No device matches the filter."
+              : "No devices yet."}
           </p>
         </Card>
       ) : (
@@ -145,12 +153,12 @@ export default function IoTDevicesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mã thiết bị</TableHead>
-                <TableHead>Tên</TableHead>
-                <TableHead>Địa điểm</TableHead>
-                <TableHead>Trạng thái</TableHead>
+                <TableHead>Device code</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Site</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Firmware</TableHead>
-                <TableHead>Thấy lần cuối</TableHead>
+                <TableHead>Last seen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
