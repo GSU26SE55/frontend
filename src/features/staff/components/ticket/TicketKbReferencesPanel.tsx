@@ -178,7 +178,7 @@ export default function TicketKbReferencesPanel({
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
-          Related KB articles
+          Related guide articles
           {totalRefs > 0 && (
             <span className="ml-1.5 text-xs font-normal text-muted-foreground">
               ({totalRefs})
@@ -265,7 +265,7 @@ export default function TicketKbReferencesPanel({
                 ? aiSuggest.note ||
                   'Couldn\'t get suggestions from AI. You can search manually with the "Attach article" button.'
                 : aiSuggest?.note ||
-                  "No matching KB article to suggest for this ticket."}
+                  "No matching guide article to suggest for this ticket."}
             </p>
           )}
 
@@ -399,7 +399,7 @@ export default function TicketKbReferencesPanel({
         <div className="rounded-lg border border-dashed py-10 px-4 text-center">
           <BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground mb-3">
-            No KB article has been attached to this ticket yet.
+            No guide article has been attached to this ticket yet.
           </p>
           {canAdd ? (
             <Button

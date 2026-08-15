@@ -257,7 +257,7 @@ export function MaintenanceLogDialog({
               name="relatedKbArticleIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Related KB articles</FormLabel>
+                  <FormLabel>Related guide articles</FormLabel>
                   <FormControl>
                     <KbArticleSelector
                       value={field.value ?? []}

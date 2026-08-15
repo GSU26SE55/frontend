@@ -165,7 +165,7 @@ export default function TicketKbReferencesPanel({
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">
-          Related KB articles
+          Related guide articles
           {totalRefs > 0 && (
             <span className="ml-1.5 text-xs font-normal text-muted-foreground">
               ({totalRefs})
@@ -330,7 +330,7 @@ export default function TicketKbReferencesPanel({
         <div className="rounded-lg border border-dashed py-10 px-4 text-center">
           <BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" />
           <p className="text-sm text-muted-foreground mb-3">
-            No KB articles attached to this ticket yet.
+            No guide articles attached to this ticket yet.
           </p>
           <Button
             size="sm"
