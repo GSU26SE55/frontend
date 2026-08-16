@@ -331,10 +331,7 @@ export default function TicketDetailPage() {
           )}
           {/* GH-1176: Manager approves/rejects Staff escalation request */}
           {canEscalateApprove && (
-            <Button
-              size="sm"
-              onClick={() => setDialog("escalate-approve")}
-            >
+            <Button size="sm" onClick={() => setDialog("escalate-approve")}>
               Approve escalation
             </Button>
           )}
@@ -431,6 +428,9 @@ export default function TicketDetailPage() {
                         key={bid}
                         batteryAssetId={bid}
                         detectedAt={ticket.detectedAt}
+                        // Người khai báo nhớ "khoảng 3 giờ", không phải 15:04:32 — cửa sổ
+                        // giây chỉ đúng cho mốc do bộ quét đóng dấu.
+                        isManualReport={ticket.origin !== "AutoFromAlert"}
                       />
                     ))}
                   </div>
@@ -516,7 +516,10 @@ export default function TicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} assignments={ticket.assignments} />
+                <TicketActivityTimeline
+                  activities={activities}
+                  assignments={ticket.assignments}
+                />
               )}
             </TabsContent>
 
@@ -953,7 +956,11 @@ export default function TicketDetailPage() {
         <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />
       )}
       {dialog === "escalate-reject" && (
-        <EscalateRejectDialog ticketId={id} open onClose={() => setDialog(null)} />
+        <EscalateRejectDialog
+          ticketId={id}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "reprioritize" && (
         <ReprioritizeDialog

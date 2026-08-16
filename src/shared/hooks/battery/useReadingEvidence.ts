@@ -85,7 +85,7 @@ export interface EvidenceThresholds {
 
 export interface ReadingWarning {
   reading: SensorReadingDto;
-  reasons: string[]; // warning labels ("Overheating 72°C > 60°C"...)
+  reasons: string[]; // warning labels ("Overheating 72°C > 60°C"...); empty = within limits
 }
 
 /**
@@ -141,7 +141,16 @@ export function toWarningRows(
         `Discharge current ${Math.abs(r.current).toFixed(0)}A > ${thresholds.currentMaxDischarge.toFixed(0)}A`,
       );
 
-    if (reasons.length > 0) rows.push({ reading: r, reasons });
+    // Giữ CẢ dòng không vi phạm. Trước đây lọc bỏ chúng, nên một ticket có đầy đủ số đo
+    // nhưng đều trong ngưỡng lại hiện bảng trống — Manager đọc thành "không có dữ liệu" và
+    // mất luôn căn cứ để bác một ticket khai khống. Số đo bình thường quanh thời điểm khai
+    // báo CŨNG là bằng chứng, chỉ là bằng chứng theo chiều ngược lại.
+    rows.push({ reading: r, reasons });
   }
   return rows;
+}
+
+/** Số dòng thực sự vượt ngưỡng — dùng cho badge đếm và câu tóm tắt phía trên bảng. */
+export function countBreaches(rows: ReadingWarning[]): number {
+  return rows.filter((r) => r.reasons.length > 0).length;
 }
