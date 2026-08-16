@@ -88,12 +88,12 @@ export const POLLING_SECONDS_MAX = 3600;
 
 /** Vài mức dùng thường xuyên — bấm một cái thay vì gõ số. Vẫn nhập tay được giá trị khác. */
 export const POLLING_PRESETS = [
-  { seconds: 1, label: "1 giây" },
-  { seconds: 5, label: "5 giây" },
-  { seconds: 10, label: "10 giây" },
-  { seconds: 30, label: "30 giây" },
-  { seconds: 60, label: "1 phút" },
-  { seconds: 300, label: "5 phút" },
+  { seconds: 1, label: "1 second" },
+  { seconds: 5, label: "5 seconds" },
+  { seconds: 10, label: "10 seconds" },
+  { seconds: 30, label: "30 seconds" },
+  { seconds: 60, label: "1 minute" },
+  { seconds: 300, label: "5 minutes" },
 ] as const;
 
 /**
@@ -110,21 +110,23 @@ export const IOT_COMMAND_META: Record<
   { label: string; description: string; effect: string }
 > = {
   set_interval: {
-    label: "Đổi nhịp lấy mẫu",
-    description: "Thiết bị đo và gửi số liệu dày hơn hoặc thưa hơn.",
+    label: "Change sampling interval",
+    description:
+      "The device measures and reports data more or less frequently.",
     effect:
-      "Có hiệu lực ngay, nhưng mất khi thiết bị khởi động lại — firmware chỉ giữ trong RAM, không ghi vào bộ nhớ trong. Muốn đổi vĩnh viễn thì sửa cấu hình rồi cho thiết bị provision lại.",
+      "Takes effect immediately but is lost when the device reboots — the firmware keeps it in RAM only and never writes it to internal storage. To change it permanently, edit the configuration and re-provision the device.",
   },
   trigger_ota: {
-    label: "Kiểm tra firmware mới ngay",
-    description: "Thiết bị hỏi server xem có bản cập nhật không, không đợi lịch định kỳ.",
+    label: "Check for new firmware now",
+    description:
+      "The device asks the server for an update instead of waiting for the schedule.",
     effect:
-      "Bị từ chối nếu thiết bị đang tắt OTA hoặc đang xác minh bản firmware vừa nạp — khi đó thiết bị trả về lý do cụ thể.",
+      "Rejected if OTA is disabled on the device or the device is still verifying a freshly flashed build — in that case the device returns the exact reason.",
   },
   request_heartbeat: {
-    label: "Yêu cầu báo cáo sức khoẻ ngay",
-    description: "Không phải đợi hết chu kỳ báo cáo định kỳ.",
+    label: "Request a health report now",
+    description: "No need to wait for the next scheduled report.",
     effect:
-      "Thiết bị gửi báo cáo bằng HTTPS chứ không qua MQTT. Nên nếu đường HTTPS đang hỏng, lệnh sẽ báo thất bại dù MQTT vẫn tốt.",
+      "The device sends the report over HTTPS rather than MQTT. So if the HTTPS path is broken, the command fails even when MQTT is healthy.",
   },
 };

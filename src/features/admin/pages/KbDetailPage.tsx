@@ -82,7 +82,7 @@ export default function KbDetailPage() {
       <KbArticleDetail
         article={article}
         backUrl="/admin/kb"
-        breadcrumb="Admin · Knowledge Base"
+        breadcrumb="Admin · Guide"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
         onViewVersions={() => setVerOpen(true)}
@@ -168,7 +168,7 @@ export default function KbDetailPage() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete KB article?</AlertDialogTitle>
+                  <AlertDialogTitle>Delete guide article?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Article <strong>{article.code}</strong> will be permanently
                     deleted. This action can't be undone.

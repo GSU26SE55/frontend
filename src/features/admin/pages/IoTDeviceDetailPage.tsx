@@ -174,7 +174,7 @@ export default function IoTDeviceDetailPage() {
             size="sm"
             onClick={() => setRevealed(fromDetailDto(device))}
           >
-            Xem lại thông tin
+            View details
           </Button>
           {!isDecommissioned && (
             <Button
@@ -182,7 +182,7 @@ export default function IoTDeviceDetailPage() {
               size="sm"
               onClick={() => setConfirm("rotate-mqtt")}
             >
-              Xoay khoá MQTT
+              Rotate MQTT key
             </Button>
           )}
           {!isDecommissioned && (
@@ -310,15 +310,17 @@ export default function IoTDeviceDetailPage() {
       <ConfirmActionDialog
         open={confirm === "rotate-mqtt"}
         onOpenChange={(o) => !o && setConfirm(null)}
-        title="Xoay khoá MQTT?"
-        description="Chỉ đổi username/mật khẩu MQTT. API key GIỮ NGUYÊN, nên thiết bị tự gọi /provision lấy mật khẩu mới — KHÔNG cần ra hiện trường. Trong lúc chờ, thiết bị tạm mất đường MQTT nhưng vẫn gửi dữ liệu qua HTTPS."
-        actionLabel="Xoay khoá MQTT"
+        title="Rotate MQTT key?"
+        description="Changes only the MQTT username/password. The API key STAYS THE SAME, so the device calls /provision itself to fetch the new password — NO site visit needed. While it waits, the device temporarily loses MQTT but keeps sending data over HTTPS."
+        actionLabel="Rotate MQTT key"
         onConfirm={() => {
           setConfirm(null);
           rotateMqtt(undefined, {
             onSuccess: (res) => {
               if (res.data) setRevealed(fromCreatedDto(res.data));
-              toast.success("Đã xoay khoá MQTT. Thiết bị sẽ tự re-provision.");
+              toast.success(
+                "MQTT key rotated. The device will re-provision itself.",
+              );
             },
             onError: (error) => handleErrorApi({ error }),
           });
@@ -328,7 +330,7 @@ export default function IoTDeviceDetailPage() {
         open={confirm === "rotate"}
         onOpenChange={(o) => !o && setConfirm(null)}
         title="Rotate API key?"
-        description="Đổi CẢ API key LẪN khoá MQTT. Thiết bị mất cả hai đường và KHÔNG tự lành được — bắt buộc mang cáp ra hiện trường nạp lại API key. Chỉ nghi bị lộ API key mới dùng lệnh này; nếu chỉ cần đổi khoá MQTT thì dùng Xoay khoá MQTT."
+        description="Changes BOTH the API key AND the MQTT key. The device loses both channels and CANNOT recover on its own — someone must go on site with a cable and flash the new API key. Use this only when the API key is suspected leaked; to change just the MQTT key use Rotate MQTT key."
         actionLabel="Rotate"
         onConfirm={() => {
           setConfirm(null);

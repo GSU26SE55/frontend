@@ -1,4 +1,5 @@
-﻿import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -47,6 +48,11 @@ interface Props {
   onClose: () => void;
 }
 
+const formatLocalDatetime = (d = new Date()) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export default function ReassignDialog({
   ticketId,
   priority,
@@ -70,14 +76,27 @@ export default function ReassignDialog({
     defaultValues: {
       newPrimaryHandlerStaffId: "",
       reason: "",
-      scheduledStartAtUtc: "",
+      scheduledStartAtUtc: formatLocalDatetime(),
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      form.setValue("scheduledStartAtUtc", formatLocalDatetime());
+    }
+  }, [open, form]);
+
   const onSubmit = async (values: ReassignFormValues) => {
-    await mutateAsync({ ...values, scheduledStartAtUtc: new Date(values.scheduledStartAtUtc).toISOString() });
-    form.reset();
-    onClose();
+    try {
+      const isoDate = values.scheduledStartAtUtc
+        ? new Date(values.scheduledStartAtUtc).toISOString()
+        : new Date().toISOString();
+      await mutateAsync({ ...values, scheduledStartAtUtc: isoDate });
+      form.reset();
+      onClose();
+    } catch {
+      // Error handled by mutation onError
+    }
   };
 
   return (

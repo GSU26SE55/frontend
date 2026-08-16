@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -208,7 +208,15 @@ export default function TicketDetailPage() {
   const kbAfterResolveOnly = status === TicketStatusEnum.Completed;
 
   const handleHoldSubmit = (data: HoldFormValues) => {
-    holdMutation.mutate({ ...data, rescheduledStartAtUtc: new Date(data.rescheduledStartAtUtc).toISOString() }, { onSuccess: () => setHoldOpen(false) });
+    holdMutation.mutate(
+      {
+        ...data,
+        rescheduledStartAtUtc: new Date(
+          data.rescheduledStartAtUtc,
+        ).toISOString(),
+      },
+      { onSuccess: () => setHoldOpen(false) },
+    );
   };
 
   const handleResolveSubmit = (data: ResolveFormValues) => {
@@ -279,7 +287,9 @@ export default function TicketDetailPage() {
               onClick={() => resumeMutationForHeld.mutate(undefined)}
               disabled={resumeMutationForHeld.isPending}
             >
-              {resumeMutationForHeld.isPending ? "Processing..." : "Resume early"}
+              {resumeMutationForHeld.isPending
+                ? "Processing..."
+                : "Resume early"}
             </Button>
           )}
           {isInProgress && (
@@ -329,7 +339,7 @@ export default function TicketDetailPage() {
                   Logs{logs.length > 0 && ` (${logs.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="sub-issues">Sub Issue</TabsTrigger>
-                <TabsTrigger value="kb">KB articles</TabsTrigger>
+                <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>
             </div>
 
@@ -392,7 +402,10 @@ export default function TicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} />
+                <TicketActivityTimeline
+                  activities={activities}
+                  assignments={ticket.assignments}
+                />
               )}
             </TabsContent>
 

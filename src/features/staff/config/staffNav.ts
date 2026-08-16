@@ -58,7 +58,7 @@ export const STAFF_NAV: NavSection[] = [
       },
       // IOT3-68 — đặt CẠNH calibration: cùng một người, cùng một lúc, cùng một thiết bị.
       {
-        label: "Thiết bị IoT",
+        label: "IoT Devices",
         path: "/staff/iot-devices",
         icon: HardDrive,
       },

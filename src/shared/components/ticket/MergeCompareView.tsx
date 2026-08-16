@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
-import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  Copy,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -120,9 +125,15 @@ export default function MergeCompareView({
     <div className="space-y-4 p-4 md:p-6">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={onBack}>
+        {/* Icon-only, matching the back button on the ticket detail page. aria-label keeps the
+            control named for screen readers now that the visible text is gone. */}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Back"
+          onClick={onBack}
+        >
           <ArrowLeftIcon className="size-4" />
-          Back
         </Button>
         <div>
           <h1 className="text-lg font-semibold">
@@ -143,7 +154,7 @@ export default function MergeCompareView({
             onValueChange={(v) => onTargetIdChange(v ?? "")}
             items={options.map((t) => ({
               value: t.id,
-              label: `${t.id === source.suspectedDuplicateOfTicketId ? "⭐ " : ""}${t.code} — ${t.title}`,
+              label: `${t.id === source.suspectedDuplicateOfTicketId ? "AI suggestion · " : ""}${t.code} — ${t.title}`,
             }))}
           >
             <SelectTrigger className="w-full min-w-0">
@@ -159,15 +170,20 @@ export default function MergeCompareView({
             <SelectContent alignItemWithTrigger={false}>
               {options.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
-                  {t.id === source.suspectedDuplicateOfTicketId ? "⭐ " : ""}
+                  {t.id === source.suspectedDuplicateOfTicketId
+                    ? "AI suggestion · "
+                    : ""}
                   {t.code} — {t.title}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {source.suspectedDuplicateOfTicketId && (
-            <p className="text-xs text-amber-600">
-              ⭐ AI suggestion: the suspected duplicate ticket has been
+            /* Copy icon = "these look like the same ticket". Deliberately NOT the warning
+               triangle below, which means the opposite: they look like DIFFERENT incidents. */
+            <p className="flex items-center gap-1.5 text-xs text-amber-600">
+              <Copy className="size-3 shrink-0" />
+              AI suggestion: the suspected duplicate ticket has been
               pre-selected.
             </p>
           )}

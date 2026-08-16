@@ -9,7 +9,15 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN --mount=type=secret,id=frontend_env,target=/app/.env,required=true pnpm build
+
+# BuildKit deliberately excludes secret contents from its cache key. Jenkins
+# supplies a unique build id so changing FRONTEND_ENV_FILE always rebuilds the
+# Vite bundle while the dependency-install layer above remains cached.
+ARG FRONTEND_BUILD_ID=local
+RUN --mount=type=secret,id=frontend_env,target=/app/.env,required=true \
+    test -n "$FRONTEND_BUILD_ID" && \
+    grep -q '^VITE_API_BASE_URL=' /app/.env && \
+    pnpm build
 
 # Stage 2: Serve với Nginx
 FROM nginx:stable-alpine

@@ -109,8 +109,8 @@ export default function DeviceCommandDialog({
       // qua `solar/{deviceCode}/cmd/ack`. Nói mập mờ ở đây là để Admin tưởng lệnh đã chạy.
       toast.success(
         res.data
-          ? `Đã đẩy lệnh xuống ${res.data.topic} — thiết bị sẽ báo kết quả riêng`
-          : "Đã đẩy lệnh xuống broker",
+          ? `Command pushed to ${res.data.topic} — the device reports the result separately`
+          : "Command pushed to the broker",
       );
       onOpenChange(false);
     } catch (error) {
@@ -122,33 +122,37 @@ export default function DeviceCommandDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Gửi lệnh tới thiết bị</DialogTitle>
+          <DialogTitle>Send a command to the device</DialogTitle>
           <DialogDescription>
-            Lệnh được đẩy xuống thiết bị qua MQTT. Thiết bị báo kết quả về sau,
-            không phải ngay lúc bấm.
+            The command is pushed to the device over MQTT. The device reports
+            the result later, not at the moment you click.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {deviceStatus !== undefined &&
             deviceStatus !== IotDeviceStatusEnum.Active && (
-            <p className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-              <AlertTriangleIcon className="mt-px size-3.5 shrink-0" />
-              <span>
-                Thiết bị đang ở trạng thái{" "}
-                <IoTDeviceStatusBadge status={deviceStatus} />. Lệnh gửi lúc này
-                sẽ <b>mất</b> chứ không nằm chờ — broker không giữ lệnh hộ thiết
-                bị đang ngắt kết nối. Đợi thiết bị hoạt động trở lại rồi gửi
-                lại.
-              </span>
-            </p>
-          )}
+              <p className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                <AlertTriangleIcon className="mt-px size-3.5 shrink-0" />
+                <span>
+                  The device is currently{" "}
+                  <IoTDeviceStatusBadge status={deviceStatus} />. A command sent
+                  now is <b>lost</b> rather than queued — the broker does not
+                  hold commands for a disconnected device. Wait until the device
+                  is back online, then send it again.
+                </span>
+              </p>
+            )}
 
           {mode === "guided" ? (
             <>
               <div className="space-y-2">
-                <Label>Chọn lệnh</Label>
-                <div role="radiogroup" aria-label="Chọn lệnh" className="grid gap-2">
+                <Label>Select a command</Label>
+                <div
+                  role="radiogroup"
+                  aria-label="Select a command"
+                  className="grid gap-2"
+                >
                   {IOT_COMMAND_TYPES.map((t) => {
                     const item = IOT_COMMAND_META[t];
                     const selected = type === t;
@@ -194,7 +198,7 @@ export default function DeviceCommandDialog({
 
               {type === "set_interval" && (
                 <div className="space-y-2">
-                  <Label htmlFor="pollingSeconds">Nhịp lấy mẫu</Label>
+                  <Label htmlFor="pollingSeconds">Sampling interval</Label>
                   <div className="flex flex-wrap gap-1.5">
                     {POLLING_PRESETS.map((preset) => (
                       <Button
@@ -229,7 +233,7 @@ export default function DeviceCommandDialog({
                       {...register("pollingSeconds")}
                     />
                     <span className="text-sm text-muted-foreground">
-                      giây — nhận từ {POLLING_SECONDS_MIN} đến{" "}
+                      seconds — accepts {POLLING_SECONDS_MIN} to{" "}
                       {POLLING_SECONDS_MAX}
                     </span>
                   </div>
@@ -251,7 +255,7 @@ export default function DeviceCommandDialog({
           ) : (
             <>
               <div className="space-y-1">
-                <Label htmlFor="rawType">Tên lệnh</Label>
+                <Label htmlFor="rawType">Command name</Label>
                 <Input
                   id="rawType"
                   placeholder="vd: set_interval"
@@ -265,7 +269,7 @@ export default function DeviceCommandDialog({
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="params">Tham số (JSON)</Label>
+                <Label htmlFor="params">Payload (JSON)</Label>
                 <Textarea
                   id="params"
                   {...register("params")}
@@ -285,10 +289,10 @@ export default function DeviceCommandDialog({
               <p className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
                 <AlertTriangleIcon className="mt-px size-3.5 shrink-0" />
                 <span>
-                  Firmware hiện chỉ hiểu{" "}
-                  <code>{IOT_COMMAND_TYPES.join(" · ")}</code>. Tên khác vẫn gửi
-                  được và vẫn trả 202, nhưng thiết bị sẽ báo{" "}
-                  <code>unknown</code> và không làm gì.
+                  The firmware currently understands only{" "}
+                  <code>{IOT_COMMAND_TYPES.join(" · ")}</code>. Other names can
+                  still be sent and still return 202, but the device replies{" "}
+                  <code>unknown</code> and does nothing.
                 </span>
               </p>
             </>
@@ -307,18 +311,18 @@ export default function DeviceCommandDialog({
             className="rounded-lg border border-dashed border-input"
           >
             <summary className="cursor-pointer px-3 py-2 text-sm text-muted-foreground select-none">
-              Tuỳ chọn nâng cao
+              Advanced options
             </summary>
             <div className="space-y-3 border-t border-dashed border-input p-3">
               <div className="space-y-1">
-                <Label htmlFor="cmdId">Mã lệnh (tuỳ chọn)</Label>
+                <Label htmlFor="cmdId">Command id (optional)</Label>
                 <Input
                   id="cmdId"
                   {...register("cmdId")}
-                  placeholder="Bỏ trống → hệ thống tự sinh"
+                  placeholder="Leave empty → generated automatically"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Dùng để đối chiếu với phản hồi của thiết bị trong log.
+                  Used to match the device reply in the logs.
                 </p>
               </div>
 
@@ -328,9 +332,11 @@ export default function DeviceCommandDialog({
                 render={({ field }) => (
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <Label htmlFor="rawMode">Tự nhập lệnh và JSON</Label>
+                      <Label htmlFor="rawMode">
+                        Enter command and JSON manually
+                      </Label>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        Dành cho lệnh chưa có trong danh sách.
+                        For commands not in the list above.
                       </p>
                     </div>
                     <Switch
@@ -357,10 +363,10 @@ export default function DeviceCommandDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Huỷ
+              Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              Gửi lệnh
+              Send command
             </Button>
           </DialogFooter>
         </form>

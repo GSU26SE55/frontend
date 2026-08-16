@@ -39,7 +39,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 interface Props {
   batteryAssetId?: string | null;
-  /** When the incident was detected (ticket.detectedAt) — used to show the warning evidence log. */
+  /** Incident detection time (ticket.detectedAt) — used to show the warning evidence log. */
   detectedAt?: string | null;
 }
 
@@ -56,7 +56,7 @@ export default function BatteryAssetInfoPanel({
   if (!batteryAssetId) {
     return (
       <p className="text-sm text-muted-foreground text-center py-6">
-        This ticket is not linked to any battery device.
+        This ticket isn't linked to any battery device.
       </p>
     );
   }
@@ -68,7 +68,7 @@ export default function BatteryAssetInfoPanel({
   if (isError || !asset) {
     return (
       <p className="text-sm text-destructive text-center py-6">
-        Couldn't load the battery device details.
+        Couldn't load battery device information.
       </p>
     );
   }
@@ -78,14 +78,14 @@ export default function BatteryAssetInfoPanel({
       <div className="flex items-center gap-2 mb-2">
         <BatteryFull className="size-4 text-muted-foreground" />
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Battery device details
+          Battery device information
         </p>
         <Badge variant="outline" className="ml-auto text-[11px] font-normal">
           {STATUS_LABEL[asset.status] ?? asset.status}
         </Badge>
       </div>
 
-      {/* Opens the real-time detail page (live telemetry + chart + AI) for the battery on this ticket. */}
+      {/* Open the real-time detail page (live telemetry + chart + AI) for the battery linked to this ticket. */}
       <Link
         to={`/staff/battery-assets/${batteryAssetId}`}
         className={cn(
@@ -94,7 +94,7 @@ export default function BatteryAssetInfoPanel({
         )}
       >
         <Activity className="size-3.5" />
-        View real-time details
+        View real-time detail
       </Link>
       <div className="divide-y divide-border/50">
         <InfoRow label="Serial number" value={asset.serialNumber} />

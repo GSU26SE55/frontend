@@ -121,13 +121,13 @@ export default function DeviceKeyRevealDialog({
     const w = window.open("", "_blank", "width=420,height=320");
     if (!w) {
       toast.error(
-        "Trình duyệt đã chặn cửa sổ in. Hãy cho phép pop-up rồi thử lại.",
+        "The browser blocked the print window. Allow pop-ups and try again.",
       );
       return;
     }
     w.document
       .write(`<!doctype html><html lang="vi"><head><meta charset="utf-8">
-<title>Nhãn ${device.deviceCode}</title>
+<title>Label ${device.deviceCode}</title>
 <style>
   /* Khổ nhãn thật — đặt ở @page thì máy in nhãn mới không tự co về A4. */
   @page { size: 50mm 30mm; margin: 0; }
@@ -157,7 +157,7 @@ export default function DeviceKeyRevealDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Thông tin nạp thiết bị</DialogTitle>
+          <DialogTitle>Device provisioning details</DialogTitle>
           {/*
             IOT3-74 — cảnh báo cũ ghi "chỉ hiển thị MỘT LẦN" cho TẤT CẢ. Sai với `apiKey`:
             GH-724 lưu plaintext và `GET /{id}` đọc lại được. Nói sai theo hướng bi quan cũng có
@@ -165,9 +165,9 @@ export default function DeviceKeyRevealDialog({
             hiện trường nạp lại một thiết bị vốn đang chạy tốt.
           */}
           <DialogDescription>
-            Xem lại được bất cứ lúc nào qua nút <b>Xem lại thông tin</b> trong
-            danh sách thiết bị — trừ <b>mật khẩu MQTT</b> của các thiết bị tạo
-            trước bản cập nhật này.
+            You can view this again at any time from the <b>View details</b>{" "}
+            button in the device list — except the <b>MQTT password</b> of
+            devices created before this update.
           </DialogDescription>
         </DialogHeader>
 
@@ -189,24 +189,25 @@ export default function DeviceKeyRevealDialog({
               </div>
               <ol className="max-w-60 list-inside list-decimal space-y-1 text-left text-xs text-muted-foreground">
                 <li>
-                  Kết nối điện thoại vào Wi-Fi <b>SolarGW-xxxx</b>.
+                  Connect the phone to the <b>SolarGW-xxxx</b> Wi-Fi network.
                 </li>
                 <li>
-                  Mở <b>192.168.4.1:8080</b>, đăng nhập portal và chọn Wi-Fi
-                  2.4 GHz của khách.
+                  Open <b>192.168.4.1:8080</b>, sign in to the portal and pick
+                  the customer&apos;s 2.4 GHz Wi-Fi.
                 </li>
                 <li>
-                  Bấm <b>Mở camera / chọn ảnh QR</b>, rồi đưa trọn mã này vào ảnh.
+                  Tap <b>Open camera / pick a QR image</b>, then fit this whole
+                  code into the frame.
                 </li>
                 <li>
-                  Web tự nhận QR; ESP32 lưu cấu hình, khởi động lại và chuyển
-                  trạng thái Active.
+                  The page reads the QR automatically; the ESP32 saves the
+                  configuration, reboots and switches to Active.
                 </li>
               </ol>
               <p className="max-w-60 text-center text-[11px] leading-relaxed text-muted-foreground">
-                Không cần cài APK. Khi khách đổi nhà hoặc đổi router, chỉ kết
-                nối lại SolarGW và nhập Wi-Fi mới; mã IoT được giữ nguyên nên
-                không cần quét QR lần nữa.
+                No APK needed. When the customer moves or changes router, just
+                reconnect to SolarGW and enter the new Wi-Fi; the IoT key is
+                kept, so there is no need to scan the QR again.
               </p>
               <Button
                 type="button"
@@ -215,15 +216,15 @@ export default function DeviceKeyRevealDialog({
                 onClick={printLabel}
               >
                 <Printer className="size-3.5" />
-                In nhãn 50×30 mm
+                Print 50×30 mm label
               </Button>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground max-w-56">
-              Thiết bị này được tạo trước khi hệ thống lưu API key dạng đọc lại
-              được, nên không dựng lại được mã QR. Dùng <b>Xoay API key</b> để
-              cấp khoá mới — nhưng nhớ rằng thao tác đó bắt buộc phải nạp lại
-              thiết bị tại chỗ.
+              This device was created before the system stored re-readable API
+              keys, so the QR code cannot be rebuilt. Use <b>Rotate API key</b>{" "}
+              to issue a new one — but note that doing so requires re-flashing
+              the device on site.
             </div>
           )}
 
@@ -232,12 +233,12 @@ export default function DeviceKeyRevealDialog({
               <CopyRow label="API Key" value={device.apiKey} />
             ) : (
               <p className="text-sm text-muted-foreground">
-                Chưa lưu API key dạng đọc lại được cho thiết bị này.
+                No re-readable API key was stored for this device.
               </p>
             )}
             {scannableProvisioningUrl && (
               <CopyRow
-                label="URL cài đặt trong QR"
+                label="Setup URL encoded in the QR"
                 value={scannableProvisioningUrl}
               />
             )}
@@ -259,11 +260,11 @@ export default function DeviceKeyRevealDialog({
                   <CopyRow label="MQTT Password" value={device.mqttPassword} />
                 ) : (
                   <p className="text-sm text-amber-600">
-                    Mật khẩu MQTT của thiết bị này không đọc lại được (tạo trước
-                    bản cập nhật). Dùng <b>Xoay khoá MQTT</b> — thiết bị tự lấy
-                    mật khẩu mới qua
-                    <code className="mx-1">/provision</code>, không cần ra hiện
-                    trường.
+                    The MQTT password of this device cannot be read back (it was
+                    created before this update). Use <b>Rotate MQTT key</b> —
+                    the device fetches a new password itself via
+                    <code className="mx-1">/provision</code>, with no site visit
+                    needed.
                   </p>
                 )}
                 <CopyRow
@@ -293,9 +294,9 @@ export default function DeviceKeyRevealDialog({
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
-                MQTT bridge chưa được bật trên máy chủ, nên chưa có thông tin
-                broker để cấu hình thiết bị. Thiết bị vẫn dùng được API Key ở
-                trên.
+                The MQTT bridge is not enabled on the server, so there are no
+                broker details to configure the device with. The device can
+                still use the API key above.
               </p>
             )}
           </div>
@@ -330,7 +331,7 @@ export default function DeviceKeyRevealDialog({
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Đóng</Button>
+          <Button onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

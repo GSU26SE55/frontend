@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
+import { useSessionStore } from "@/shared/stores/sessionStore";
 import {
   createTicketCommentConnection,
   isConnected,
@@ -54,6 +55,25 @@ export function useTicketCommentsRealtime(
       }
     };
 
+    // BE broadcasts to the whole ticket group, sender included, so a message the user just
+    // sent arrives back here too. Refetching the unread count for it makes the badge blink up
+    // and then drop again — only messages from OTHER people can change that count.
+    // The store is read imperatively: putting accountId in the effect deps would rebuild the
+    // SignalR connection every time the session object changes identity.
+    const onChatAdded = (dto?: { authorUserId?: string | null }) => {
+      const myAccountId = useSessionStore.getState().user?.accountId;
+      const isMine = !!dto?.authorUserId && dto.authorUserId === myAccountId;
+      qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+      if (!isMine) {
+        qc.invalidateQueries({
+          queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
+        });
+      }
+      for (const key of extraKeysRef.current) {
+        qc.invalidateQueries({ queryKey: key });
+      }
+    };
+
     // The hub client is loaded on demand (see shared/lib/signalr.ts), so the connection is
     // created asynchronously. Cleanup waits on `ready`, which also preserves the original
     // invariant: never call stop() while start() is still pending, or SignalR throws
@@ -67,7 +87,7 @@ export function useTicketCommentsRealtime(
         conn = c;
         connRef.current = c;
 
-        c.on("ChatAdded", invalidateChatList);
+        c.on("ChatAdded", onChatAdded);
         c.on("ChatEdited", invalidateChatList);
         c.on("ChatDeleted", invalidateChatList);
 
