@@ -47,6 +47,8 @@ import type { AlertDto } from "@/shared/types/alerts/alert.types";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 
 const DEFAULTS = {
   severity: "",
@@ -105,17 +107,20 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          {subtitle}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Battery alerts
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isLoading ? "..." : totalItems} alerts &mdash; anomalies detected by
-          the system
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            {subtitle}
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Battery alerts
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : totalItems} alerts &mdash; anomalies detected by
+            the system
+          </p>
+        </div>
+        <RefreshButton queryKeys={[KEY.alerts]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

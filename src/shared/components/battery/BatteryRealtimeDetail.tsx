@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Battery, HeartPulse, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Battery, BatteryFull, HeartPulse, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -40,39 +40,44 @@ const STATUS_CONFIG: Record<
   },
   [BatteryStatusEnum.Inactive]: {
     label: "Inactive",
-    dot: "bg-muted-foreground",
-    badge: "bg-muted text-muted-foreground border-border",
+    dot: "bg-zinc-400",
+    badge: "bg-zinc-100 text-zinc-600 border-zinc-200",
   },
   [BatteryStatusEnum.Decommissioned]: {
     label: "Decommissioned",
     dot: "bg-red-500",
-    badge: "bg-red-50 text-red-600 border-red-200",
+    badge: "bg-red-50 text-red-700 border-red-200",
   },
 };
 
-const fmtDate = (s: string) =>
-  format(new Date(s), "MM/dd/yyyy", { locale: enUS });
+function fmtDate(iso?: string | null) {
+  if (!iso) return "—";
+  try {
+    return format(new Date(iso), "MMM d, yyyy", { locale: enUS });
+  } catch {
+    return iso;
+  }
+}
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="flex items-start justify-between gap-3 py-2">
-      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
-      <span className="text-xs font-medium text-right leading-relaxed">
-        {value ?? <span className="text-muted-foreground/50">—</span>}
+    <div className="flex items-center justify-between py-1.5 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground text-right truncate max-w-[140px]">
+        {value || "—"}
       </span>
     </div>
   );
 }
 
-// SOH is the single most meaningful "is this battery still healthy" number (it IS
-// current/nominal capacity expressed as a %), so it gets top billing above Information
-// instead of being buried as one more stat tile among Voltage/Current/Temperature/SOC.
+// Prominently placed at the top of the sidebar. Max Capacity indicates overall health,
+// so it gets top billing above Information.
 function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
   if (sohPercent == null) {
     return (
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 text-muted-foreground">
-        <HeartPulse size={16} />
-        <span className="text-xs">SOH not available yet</span>
+        <BatteryFull size={16} />
+        <span className="text-xs font-medium">Max Capacity not available</span>
       </div>
     );
   }
@@ -81,29 +86,32 @@ function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
   return (
     <div className="px-4 pt-4 pb-3">
       <div
-        className="rounded-lg p-3 flex items-center gap-3"
-        style={{ backgroundColor: bg }}
+        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-all"
+        style={{
+          backgroundColor: bg,
+          borderColor: `${fg}35`,
+        }}
       >
         <div
-          className="size-9 rounded-full flex items-center justify-center shrink-0"
+          className="size-10 rounded-full flex items-center justify-center shrink-0 shadow-sm"
           style={{ backgroundColor: fg }}
         >
-          <HeartPulse size={16} className="text-white" />
+          <BatteryFull size={19} className="text-white" strokeWidth={2.3} />
         </div>
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-1 leading-none">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1 leading-none mb-1">
             <span
-              className="text-2xl font-bold tabular-nums"
+              className="text-2xl font-black tracking-tight tabular-nums"
               style={{ color: fg }}
             >
               {sohPercent.toFixed(0)}
             </span>
-            <span className="text-xs font-medium" style={{ color: fg }}>
+            <span className="text-xs font-bold" style={{ color: fg }}>
               %
             </span>
           </div>
-          <span className="text-[11px] text-muted-foreground">
-            State of Health
+          <span className="text-[12px] font-semibold text-foreground/80 tracking-tight block">
+            Max Capacity
           </span>
         </div>
       </div>
@@ -226,6 +234,7 @@ export default function BatteryRealtimeDetail({
 
         <div className="flex items-center gap-2 shrink-0">
           <RefreshButton queryKeys={[KEY.batteryAssets]} size="icon" />
+          {bmsControl}
           {headerActions}
         </div>
       </div>
@@ -265,8 +274,8 @@ export default function BatteryRealtimeDetail({
                   value={
                     asset.lastSensorReadingAt
                       ? new Date(asset.lastSensorReadingAt).toLocaleString(
-                          "vi-VN",
-                        )
+                        "vi-VN",
+                      )
                       : null
                   }
                 />
@@ -283,14 +292,13 @@ export default function BatteryRealtimeDetail({
               thresholds={
                 threshold
                   ? {
-                      socWarning: threshold.socWarningThreshold,
-                      socCritical: threshold.socCriticalThreshold,
-                      temperatureMax: threshold.temperatureMax,
-                    }
+                    socWarning: threshold.socWarningThreshold,
+                    socCritical: threshold.socCriticalThreshold,
+                    temperatureMax: threshold.temperatureMax,
+                  }
                   : undefined
               }
             />
-            {bmsControl}
           </div>
 
           {/* Right: chart / history tabs */}
