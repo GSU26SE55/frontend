@@ -5,6 +5,7 @@ import {
   useReadingEvidence,
   toWarningRows,
 } from "@/shared/hooks/battery/useReadingEvidence";
+import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 
 /** Number of rows shown by default before clicking "Show more". */
 const PREVIEW_ROWS = 10;
@@ -16,21 +17,54 @@ const num = (v: number | null | undefined, digits = 2) =>
 
 interface Props {
   batteryAssetId?: string | null;
-  /** When the Customer detected the incident — anchor point for fetching evidence logs (±15'). */
+  /** When the incident was detected — anchor point for fetching evidence logs (±15s). */
   detectedAt?: string | null;
+  /** Battery type of the asset — needed to read the SAME thresholds the backend enforced. */
+  batteryTypeId?: string | null;
+  /**
+   * True when a person supplied `detectedAt` (Customer- or Staff-created ticket) rather than
+   * the scanner. Widens the search window, because a human recalls "around 3pm", not 15:04:32.
+   * Defaults to false so an omitted flag keeps the strict machine window.
+   */
+  isManualReport?: boolean;
 }
 
 /**
- * Alert evidence — shows ONLY the WARNING readings (threshold breaches) around the
- * incident detection time (DetectedAt ±15'), NOT the normal real-time log. Used by Manager
- * to cross-check whether a manually filed ticket is genuine. Shared by manager + staff.
+ * Alert evidence — shows ONLY the readings that breached this battery type's configured
+ * thresholds around the detection time, NOT the normal real-time log. Used by Manager to
+ * cross-check that a ticket really is backed by the sensor data. Shared by manager + staff.
+ *
+ * Thresholds are fetched per battery type rather than hardcoded, so the panel judges rows by
+ * exactly the limits `AnomalyRules` used when it raised the alert.
  */
 export default function BatteryWarningEvidencePanel({
   batteryAssetId,
   detectedAt,
+  batteryTypeId,
+  isManualReport = false,
 }: Props) {
-  const { data, isLoading } = useReadingEvidence(batteryAssetId, detectedAt);
-  const warnings = toWarningRows(data?.items ?? []);
+  const { data, isLoading } = useReadingEvidence(
+    batteryAssetId,
+    detectedAt,
+    isManualReport,
+  );
+  const { data: threshold, isLoading: isThresholdLoading } = useThresholdByType(
+    batteryTypeId ?? "",
+    undefined,
+    !!batteryTypeId,
+  );
+  const warnings = toWarningRows(
+    data?.items ?? [],
+    threshold
+      ? {
+          temperatureMax: threshold.temperatureMax,
+          temperatureMin: threshold.temperatureMin,
+          socWarningThreshold: threshold.socWarningThreshold,
+          currentMaxCharge: threshold.currentMaxCharge,
+          currentMaxDischarge: threshold.currentMaxDischarge,
+        }
+      : undefined,
+  );
 
   // A ±15' window at 5s frequency yields a few hundred rows — rendering them all would
   // swallow the whole page. Defaults to 10 rows, each "Show more" reveals 25 (matches mobile).
@@ -53,10 +87,24 @@ export default function BatteryWarningEvidencePanel({
             {warnings.length}
           </span>
         )}
+        {threshold && (
+          // Name the limits on screen: without them a row of numbers is not evidence of
+          // anything — the reader cannot tell which value was out of bounds, or by how much.
+          <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
+            {threshold.batteryTypeName} · {threshold.temperatureMin}…
+            {threshold.temperatureMax}°C · SOC {threshold.socWarningThreshold}%
+          </span>
+        )}
       </div>
 
-      {isLoading ? (
+      {isLoading || isThresholdLoading ? (
         <Skeleton className="h-24 w-full" />
+      ) : !threshold ? (
+        // No config for this battery type → the backend has no limits to enforce either.
+        // Say so plainly instead of rendering rows judged against thresholds we invented.
+        <p className="text-sm text-muted-foreground text-center py-4">
+          This battery type has no threshold config — no basis to flag readings.
+        </p>
       ) : warnings.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">
           No anomaly alerts around the detection time.
@@ -87,40 +135,51 @@ export default function BatteryWarningEvidencePanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-amber-200/60 dark:divide-amber-900/60">
-              {visibleRows.map(({ reading: r, reasons }) => (
-                <tr
-                  key={r.time}
-                  className="bg-amber-50/50 dark:bg-amber-950/20"
-                >
-                  <td className="px-2 py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">
-                    {new Date(r.time).toLocaleString("vi-VN")}
-                  </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">
-                    {num(r.voltage)}
-                  </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">
-                    {num(r.current)}
-                  </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums font-medium text-amber-700 dark:text-amber-400">
-                    {num(r.temperature, 1)}
-                  </td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">
-                    {num(r.socPercent, 1)}
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <div className="flex flex-wrap gap-1">
-                      {reasons.map((reason) => (
-                        <span
-                          key={reason}
-                          className="inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-300"
-                        >
-                          {reason}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {visibleRows.map(({ reading: r, reasons }) => {
+                // The reading stamped at DetectedAt is the one that tipped the counter and
+                // caused the alert. Marking it separates cause from the surrounding context.
+                const isTrigger =
+                  !!detectedAt &&
+                  new Date(r.time).getTime() === new Date(detectedAt).getTime();
+                return (
+                  <tr
+                    key={r.time}
+                    className={
+                      isTrigger
+                        ? "bg-amber-100 dark:bg-amber-900/40 font-medium"
+                        : "bg-amber-50/50 dark:bg-amber-950/20"
+                    }
+                  >
+                    <td className="px-2 py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">
+                      {new Date(r.time).toLocaleString("vi-VN")}
+                    </td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">
+                      {num(r.voltage)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">
+                      {num(r.current)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right tabular-nums font-medium text-amber-700 dark:text-amber-400">
+                      {num(r.temperature, 1)}
+                    </td>
+                    <td className="px-2 py-1.5 text-right tabular-nums">
+                      {num(r.socPercent, 1)}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <div className="flex flex-wrap gap-1">
+                        {reasons.map((reason) => (
+                          <span
+                            key={reason}
+                            className="inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-300"
+                          >
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 

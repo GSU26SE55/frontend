@@ -15,7 +15,9 @@ import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
-import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
+// Ẩn cùng tab "AI prediction" (xem TabsTrigger/TabsContent bên dưới). Comment thay vì xoá
+// để bật lại chỉ bằng bỏ ba khối comment, không phải tìm lại đường import.
+// import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
@@ -301,7 +303,9 @@ export default function BatteryRealtimeDetail({
                   <TabsTrigger value="chart">Chart</TabsTrigger>
                   <TabsTrigger value="peak">Charge/discharge peak</TabsTrigger>
                   <TabsTrigger value="history">Sensor history</TabsTrigger>
-                  <TabsTrigger value="ai">AI prediction</TabsTrigger>
+                  {/* Tab "AI prediction" tạm ẩn theo yêu cầu — chưa cần cho luồng hiện tại.
+                      Giữ nguyên component + TabsContent bên dưới (cũng đã ẩn) để bật lại chỉ
+                      bằng cách bỏ hai khối comment này, không phải dựng lại từ đầu. */}
                 </TabsList>
               </div>
               <TabsContent
@@ -333,12 +337,13 @@ export default function BatteryRealtimeDetail({
                   fillHeight
                 />
               </TabsContent>
-              <TabsContent
+              {/* Ẩn cùng TabsTrigger "ai" ở trên — xem ghi chú tại đó. */}
+              {/* <TabsContent
                 value="ai"
                 className="min-h-0 overflow-y-auto m-0 p-5"
               >
                 <AiPredictionCard assetId={id} />
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
         </div>
