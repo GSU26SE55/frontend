@@ -9,7 +9,7 @@ interface Props {
   batteryAssetId?: string | null;
 }
 
-/** Recent usage — the 10 latest sensor readings for the battery attached to the ticket. */
+/** Recent usage history — the 10 latest sensor readings for the battery linked to this ticket. */
 export default function BatteryUsageHistoryPanel({ batteryAssetId }: Props) {
   const { data, isLoading } = useStaffReadingHistory(batteryAssetId, 10);
   const readings = data?.items ?? [];
@@ -21,7 +21,7 @@ export default function BatteryUsageHistoryPanel({ batteryAssetId }: Props) {
       <div className="flex items-center gap-2 mb-2">
         <Activity className="size-4 text-muted-foreground" />
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-          Recent usage
+          Recent usage history
         </p>
       </div>
       {isLoading ? (

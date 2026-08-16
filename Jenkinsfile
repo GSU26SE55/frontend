@@ -95,7 +95,10 @@ pipeline {
                                 docker login ghcr.io -u '${env.GH_USER}' --password-stdin < '${remoteDir}/.ghcr-token'
                                 rm -f '${remoteDir}/.ghcr-token'
                                 cd '${remoteDir}'
-                                docker build --secret id=frontend_env,src=.env.ci ${tagArgs} .
+                                docker build \
+                                    --build-arg FRONTEND_BUILD_ID='${env.BUILD_NUMBER}-${shortSha}' \
+                                    --secret id=frontend_env,src=.env.ci \
+                                    ${tagArgs} .
                                 rm -f .env.ci
                                 ${pushCommands}
                                 docker rm -f '${containerName}' 2>/dev/null || true

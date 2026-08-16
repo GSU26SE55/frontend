@@ -186,7 +186,7 @@ export default function ManagerDashboardPage() {
           <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight truncate mt-0.5">
             {ticketsLoading
               ? "Dashboard"
-              : `${openCount} open tickets · ${queueCount} awaiting triage`}
+              : `${openCount} open tickets · ${queueCount} in queue`}
           </h1>
         </div>
         <RefreshButton
@@ -204,7 +204,7 @@ export default function ManagerDashboardPage() {
           to="/manager/tickets"
         />
         <DashboardKpi
-          label="Needs triage"
+          label="Queue"
           value={queueLoading ? "--" : queueCount}
           icon={<Inbox className="size-4" />}
           accent={queueCount > 0 ? "var(--p3)" : undefined}
@@ -377,7 +377,7 @@ export default function ManagerDashboardPage() {
         {showTriage && (
           <DashboardPanel
             title={OVERVIEW_PANELS.manager.triageQueue}
-            desc={`${queueCount} tickets awaiting triage`}
+            desc={`${queueCount} tickets in queue`}
             className="min-h-[280px]"
             bodyClassName="overflow-y-auto"
           >

@@ -324,9 +324,14 @@ export function TicketCommentThread({
   // would vanish before the user gets to see where "unread" started. Locked via state +
   // "adjust during render" (React's official pattern for state derived from props): only sets
   // when the tab changes or the first time isRead is available, so it doesn't loop forever.
+  // `count` is locked in together with the anchor: counting by the divider's POSITION
+  // (visible.length - anchorIndex) would count every message that arrives afterwards —
+  // including the ones the current user types themselves — so the badge kept growing while
+  // the sender was watching their own messages.
   const [unreadAnchor, setUnreadAnchor] = useState<{
     tab: ChatTab;
     id: string | null;
+    count: number;
   } | null>(null);
 
   // Only lock in once the BE has returned isRead for at least 1 message — the realtime
@@ -336,19 +341,16 @@ export function TicketCommentThread({
     unreadAnchor?.tab !== tab &&
     visible.some((c) => c.isRead !== undefined)
   ) {
+    const unread = visible.filter((c) => c.isRead === false);
     setUnreadAnchor({
       tab,
-      id: visible.find((c) => c.isRead === false)?.id ?? null,
+      id: unread[0]?.id ?? null,
+      count: unread.length,
     });
   }
 
   const unreadAnchorId = unreadAnchor?.tab === tab ? unreadAnchor.id : null;
-
-  const unreadCount = useMemo(() => {
-    if (!unreadAnchorId) return 0;
-    const idx = visible.findIndex((c) => c.id === unreadAnchorId);
-    return idx < 0 ? 0 : visible.length - idx;
-  }, [visible, unreadAnchorId]);
+  const unreadCount = unreadAnchor?.tab === tab ? unreadAnchor.count : 0;
 
   // Messages waiting to send (outbox) belonging to the current tab — optimistic bubble at the end of the stream.
   const pendingForTab = useMemo(

@@ -31,7 +31,8 @@ export const useAdminTicketQueue = (params?: AdminTicketQueueParams) =>
     queryKey: QUERY_KEY.manager.tickets.queue(params),
     queryFn: () =>
       managerTicketService.getQueue(params).then((r) => r.data.data),
-    staleTime: 30_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
   });
 
 export const useManagerTicketDetail = (id: string) =>
@@ -101,6 +102,7 @@ export const useAssignTicket = (id: string) => {
       toast.success(MANAGER_MESSAGES.ticket.staffAssigned);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
       // #697 — Primary → PrimaryAssignee, Supporter → Collaborator in chat.
       qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
     },

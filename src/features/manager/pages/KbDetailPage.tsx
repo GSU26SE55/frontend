@@ -61,7 +61,7 @@ export default function KbDetailPage() {
       <KbArticleDetail
         article={article}
         backUrl="/manager/kb"
-        breadcrumb="Manager · Knowledge Base"
+        breadcrumb="Manager · Guide"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
         onViewVersions={() => setVerOpen(true)}

@@ -95,7 +95,7 @@ const ACTIVITY_META: Record<string, ActivityMeta> = {
   },
   Escalated: { label: "Escalated", tone: "p2", icon: ArrowUpCircle },
   IncidentDeclared: { label: "Incident declared", tone: "p1", icon: Siren },
-  Resolved: { label: "Resolution reported", tone: "ok", icon: CheckCircle2 },
+  Resolved: { label: "Completed", tone: "ok", icon: CheckCircle2 },
   Approved: { label: "Approved", tone: "ok", icon: BadgeCheck },
   TriageApproved: { label: "Triage approved", tone: "ok", icon: BadgeCheck },
   Rejected: { label: "Rejected", tone: "p1", icon: XCircle },
@@ -103,7 +103,7 @@ const ACTIVITY_META: Record<string, ActivityMeta> = {
   Reopened: { label: "Ticket reopened", tone: "p2", icon: RotateCcw },
   AutoClosed: { label: "Auto-closed", tone: "muted", icon: Lock },
   ResolvedByEscalatedStaff: {
-    label: "Resolved after escalation",
+    label: "Completed after escalation",
     tone: "ok",
     icon: CheckCircle2,
   },

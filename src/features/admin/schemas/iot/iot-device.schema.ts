@@ -77,8 +77,8 @@ export const updateIotDeviceSchema = z.object({
 export const deviceCommandSchema = z
   .object({
     mode: z.enum(["guided", "raw"]),
-    // KHÔNG đặt `.min(1)` ở đây: hai chế độ cần hai lời nhắc khác nhau ("Chọn một lệnh" vs
-    // "Nhập tên lệnh"), mà lỗi ở tầng object thì chặn luôn `superRefine` không chạy.
+    // KHÔNG đặt `.min(1)` ở đây: hai chế độ cần hai lời nhắc khác nhau ("Select a command" vs
+    // "Enter the command name"), mà lỗi ở tầng object thì chặn luôn `superRefine` không chạy.
     type: z.string(),
     pollingSeconds: z.string().optional(),
     params: z.string().optional(),
@@ -90,7 +90,7 @@ export const deviceCommandSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["type"],
-          message: "Chọn một lệnh",
+          message: "Select a command",
         });
         return;
       }
@@ -103,7 +103,7 @@ export const deviceCommandSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["pollingSeconds"],
-          message: "Nhập nhịp lấy mẫu",
+          message: "Enter the sampling interval",
         });
         return;
       }
@@ -113,7 +113,7 @@ export const deviceCommandSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["pollingSeconds"],
-          message: "Chỉ nhận số nguyên dương, đơn vị giây",
+          message: "Must be a positive integer, in seconds",
         });
         return;
       }
@@ -122,7 +122,7 @@ export const deviceCommandSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["pollingSeconds"],
-          message: `Thiết bị chỉ nhận từ ${POLLING_SECONDS_MIN} đến ${POLLING_SECONDS_MAX} giây`,
+          message: `The device only accepts ${POLLING_SECONDS_MIN} to ${POLLING_SECONDS_MAX} seconds`,
         });
       }
       return;
@@ -133,7 +133,7 @@ export const deviceCommandSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["type"],
-        message: "Nhập tên lệnh",
+        message: "Enter the command name",
       });
     }
 
@@ -147,18 +147,22 @@ export const deviceCommandSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["params"],
-        message: "JSON không hợp lệ",
+        message: "Invalid JSON",
       });
       return;
     }
     // Backend serialize thẳng giá trị này vào trường `params` của gói lệnh, còn firmware đọc nó
     // bằng `params["pollingSeconds"]` — tức bắt buộc phải là object. Mảng hay số lọt xuống thì
     // thiết bị im lặng bỏ qua tham số, đúng kiểu lỗi "mọi tầng báo thành công".
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["params"],
-        message: 'Tham số phải là một object, ví dụ {"pollingSeconds": 5}',
+        message: 'Payload must be an object, e.g. {"pollingSeconds": 5}',
       });
     }
   });

@@ -16,12 +16,14 @@ export default function ManagerAppLayout() {
   const queueCount = queuePage?.totalItems ?? 0;
 
   const sections = useMemo(() => {
-    if (!queueCount) return MANAGER_NAV;
     return MANAGER_NAV.map((section) => ({
       ...section,
       items: section.items.map((item) =>
         item.path === MANAGER_QUEUE_PATH
-          ? { ...item, badge: queueCount > 99 ? "99+" : queueCount }
+          ? {
+              ...item,
+              badge: queueCount > 0 ? (queueCount > 99 ? "99+" : queueCount) : undefined,
+            }
           : item,
       ),
     }));

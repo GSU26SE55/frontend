@@ -8,24 +8,24 @@
 
 /** "3 phút trước" đọc nhanh hơn hẳn một mốc ISO khi đang trực. */
 export function formatRelativeTime(iso: string | null | undefined): string {
-  if (!iso) return "chưa từng";
+  if (!iso) return "never";
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return "—";
   const diffSec = Math.round((Date.now() - t) / 1000);
   // Đồng hồ máy trạm lệch sẽ ra số âm — đừng hiện "-5 phút trước".
-  if (diffSec < 0) return "vừa xong";
-  if (diffSec < 60) return `${diffSec} giây trước`;
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)} phút trước`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} giờ trước`;
-  return `${Math.floor(diffSec / 86400)} ngày trước`;
+  if (diffSec < 0) return "just now";
+  if (diffSec < 60) return `${diffSec}s ago`;
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
 export function formatUptime(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined) return "—";
   if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} phút`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ`;
-  return `${Math.floor(seconds / 86400)} ngày`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} h`;
+  return `${Math.floor(seconds / 86400)} d`;
 }
 
 /**

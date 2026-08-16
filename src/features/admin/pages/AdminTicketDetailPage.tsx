@@ -275,7 +275,7 @@ export default function AdminTicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} />
+                <TicketActivityTimeline activities={activities} assignments={ticket?.assignments} />
               )}
             </TabsContent>
 

@@ -109,7 +109,7 @@ export default function KbEditorPage() {
 
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Admin &middot; Knowledge Base
+          Admin &middot; Guide
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           {isEdit ? "Edit article" : "Create new article"}

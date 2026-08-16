@@ -1,8 +1,8 @@
-﻿import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ArrowLeft, Copy, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,9 @@ import {
   useApproveTicket,
   useTicketComments,
   useReVerifyTicket,
+  useAdminTicketList,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
+import { useMergeCandidates } from "@/shared/hooks/ticket/useMergeCandidates";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
@@ -87,6 +89,13 @@ const CATEGORY_LABEL: Partial<Record<TicketCategoryEnum, string>> = {
   Repair: "Repair",
   Other: "Other",
 };
+
+// Statuses where the ticket is finished for good — no further Manager action is meaningful.
+const TERMINAL_STATUSES: TicketStatusEnum[] = [
+  TicketStatusEnum.Completed,
+  TicketStatusEnum.Closed,
+  TicketStatusEnum.ClosedRejected,
+];
 
 const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
   SingleAsset: "Single Asset",
@@ -181,6 +190,17 @@ export default function TicketDetailPage() {
     discard: discardChat,
   } = useChatSender(id, managerTicketService.addComment);
 
+  // Same pair MergeComparePage uses, so the merge button only appears when that page would
+  // actually have something to offer — otherwise clicking it lands on an empty target picker.
+  // useAdminTicketList shares its query key (and 30s staleTime) with the ticket list page, so
+  // this usually resolves from cache; useMergeCandidates is a plain useMemo, no extra request.
+  const { data: mergeSourceList } = useAdminTicketList({ pageSize: 100 });
+  const mergeCandidates = useMergeCandidates(
+    mergeSourceList?.items,
+    id,
+    ticket?.suspectedDuplicateOfTicketId,
+  );
+
   if (isError) {
     return (
       <div className="text-center py-16">
@@ -219,10 +239,16 @@ export default function TicketDetailPage() {
   // GH-1176: force escalation endpoint removed; only Staff-requested escalation remains.
   // canReprioritize: Open only — priority fixed once assigned per User Guide §3.8.
   const canReprioritize = status === TicketStatusEnum.Open;
-  const canDeclareIncident = !ticket.isIncident;
+  // A closed-out ticket can no longer be turned into an incident — the work is already
+  // finished or rejected, so declaring one would create an incident nobody will act on.
+  const canDeclareIncident =
+    !ticket.isIncident && !TERMINAL_STATUSES.includes(status);
   // GH-1176: merge source must be Open (previously New, which no longer exists).
+  // Also require at least one valid target, otherwise the merge page opens with nothing to pick.
   const canMerge =
-    !ticket.mergedIntoTicketId && status === TicketStatusEnum.Open;
+    !ticket.mergedIntoTicketId &&
+    status === TicketStatusEnum.Open &&
+    mergeCandidates.length > 0;
 
   // comments come from a separate query (useTicketComments) + realtime push (SignalR).
 
@@ -490,7 +516,7 @@ export default function TicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} />
+                <TicketActivityTimeline activities={activities} assignments={ticket.assignments} />
               )}
             </TabsContent>
 
@@ -584,27 +610,33 @@ export default function TicketDetailPage() {
                     )}
                     {ticket.suspectedDuplicateOfTicketId && (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
-                        <p className="font-medium">
-                          ⚠ Suspected duplicate of another ticket
+                        {/* Copy icon, not a warning triangle: this panel says "these two look
+                            like the same thing", which is a different message from the merge
+                            page's triangle warning "these two are probably NOT the same". */}
+                        <p className="font-medium flex items-center gap-1.5">
+                          <Copy size={13} className="shrink-0" />
+                          Suspected duplicate of another ticket
                         </p>
                         {ticket.duplicateReason && (
                           <p className="mt-0.5">{ticket.duplicateReason}</p>
                         )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-2 h-7"
-                          onClick={() =>
-                            navigate(`/manager/tickets/${id}/merge`, {
-                              state: {
-                                suggestedTargetId:
-                                  ticket.suspectedDuplicateOfTicketId,
-                              },
-                            })
-                          }
-                        >
-                          Merge ticket
-                        </Button>
+                        {canMerge && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 h-7"
+                            onClick={() =>
+                              navigate(`/manager/tickets/${id}/merge`, {
+                                state: {
+                                  suggestedTargetId:
+                                    ticket.suspectedDuplicateOfTicketId,
+                                },
+                              })
+                            }
+                          >
+                            Merge ticket
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>

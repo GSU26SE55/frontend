@@ -258,9 +258,11 @@ export function RichTextEditor({
     },
   });
 
-  // Sync when form reset() loads server data after the editor has already mounted
+  // Sync when form reset() loads server data after the editor has already mounted.
+  // isDestroyed guard: under StrictMode the effect can run after the view is torn down,
+  // and getHTML() on a destroyed editor throws (schema is null → DOMSerializer.fromSchema).
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
     const incoming = value || "";
     if (incoming !== editor.getHTML()) {
       editor.commands.setContent(incoming, { emitUpdate: false });
@@ -268,7 +270,8 @@ export function RichTextEditor({
   }, [value, editor]);
 
   useEffect(() => {
-    editor?.setEditable(!disabled);
+    if (!editor || editor.isDestroyed) return;
+    editor.setEditable(!disabled);
   }, [disabled, editor]);
 
   // Upload image → insert a node storing fileId (no base64 embedded in the content)
@@ -295,6 +298,8 @@ export function RichTextEditor({
             toast.error(`Failed to upload "${file.name}"`);
             continue;
           }
+          // The user may have navigated away while the upload was in flight
+          if (editor.isDestroyed) return;
           editor.chain().focus().setAuthImage({ fileId, alt: file.name }).run();
         } catch {
           toast.error(`Failed to upload "${file.name}"`);

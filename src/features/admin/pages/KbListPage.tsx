@@ -310,8 +310,8 @@ export default function KbListPage() {
                 <>
                   AI will generate a blog post from{" "}
                   <strong>{toGenerate.title}</strong>. The post is saved as a
-                  draft so you can review it before publishing. Each KB article
-                  can have only one blog — archive the old one before
+                  draft so you can review it before publishing. Each guide
+                  article can have only one blog — archive the old one before
                   regenerating.
                 </>
               )}

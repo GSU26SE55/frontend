@@ -1,4 +1,5 @@
-﻿import { useForm, useWatch } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
@@ -33,7 +34,7 @@ import { useAssignTicket } from "@/features/manager/hooks/ticket/useManagerTicke
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
 import StaffMultiSelect from "@/features/manager/components/ticket/StaffMultiSelect";
 import { StaffSuggestionPanel } from "@/shared/components/ticket/StaffSuggestionPanel";
-import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
+import { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
 import {
   getMinTierForPriority,
   getTierRequirementHint,
@@ -49,6 +50,11 @@ interface Props {
   onClose: () => void;
 }
 
+const formatLocalDatetime = (d = new Date()) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export default function AssignDialog({
   ticketId,
   priority,
@@ -62,25 +68,40 @@ export default function AssignDialog({
     isError: staffError,
   } = useStaffAssignmentList();
 
+  const form = useForm<AssignFormValues>({
+    resolver: zodResolver(assignSchema),
+    defaultValues: {
+      primaryHandlerStaffId: "",
+      priority: priority ?? TicketPriorityEnum.P2High,
+      supporterStaffIds: [],
+      scheduledStartAtUtc: formatLocalDatetime(),
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      form.setValue("scheduledStartAtUtc", formatLocalDatetime());
+      if (priority) {
+        form.setValue("priority", priority);
+      }
+    }
+  }, [open, priority, form]);
+
+  const selectedPriority = useWatch({
+    control: form.control,
+    name: "priority",
+  }) ?? priority ?? TicketPriorityEnum.P2High;
+
   // Consistent with ReassignDialog: show ALL staff, disable those without enough tier
   // for Primary (Supporter doesn't check tier). Minimum tier follows the ticket priority.
-  const minTier = getMinTierForPriority(priority);
-  const tierHint = getTierRequirementHint(priority);
+  const minTier = getMinTierForPriority(selectedPriority);
+  const tierHint = getTierRequirementHint(selectedPriority);
   const primaryOptions = staffList.map((s) => ({
     ...s,
     eligible: isEligiblePrimaryHandler(s.skillTier, minTier),
   }));
   const hasEligiblePrimary = primaryOptions.some((s) => s.eligible);
-
-  const form = useForm<AssignFormValues>({
-    resolver: zodResolver(assignSchema),
-    defaultValues: {
-      primaryHandlerStaffId: "",
-      supporterStaffIds: [],
-      scheduledStartAtUtc: "",
-      notes: "",
-    },
-  });
 
   const primaryStaffId = useWatch({
     control: form.control,
@@ -88,9 +109,19 @@ export default function AssignDialog({
   });
 
   const onSubmit = async (values: AssignFormValues) => {
-    await mutateAsync({ ...values, scheduledStartAtUtc: new Date(values.scheduledStartAtUtc).toISOString() });
-    form.reset();
-    onClose();
+    try {
+      const isoDate = values.scheduledStartAtUtc
+        ? new Date(values.scheduledStartAtUtc).toISOString()
+        : new Date().toISOString();
+      await mutateAsync({
+        ...values,
+        scheduledStartAtUtc: isoDate,
+      });
+      form.reset();
+      onClose();
+    } catch {
+      // Error handled by mutation onError (handleErrorApi)
+    }
   };
 
   return (
@@ -108,17 +139,26 @@ export default function AssignDialog({
               ticketId={ticketId}
               selectedStaffId={primaryStaffId}
               onPick={(s) => {
-                form.setValue("primaryHandlerStaffId", s.staffId, {
+                const matched = staffList.find(
+                  (st) => st.accountId === s.staffId,
+                );
+                const targetId = matched?.accountId || s.staffId;
+                form.setValue("primaryHandlerStaffId", targetId, {
                   shouldValidate: true,
                 });
                 form.setValue(
                   "supporterStaffIds",
                   form
                     .getValues("supporterStaffIds")
-                    .filter((id) => id !== s.staffId),
+                    .filter((id) => id !== targetId),
                 );
               }}
             />
+
+            {/* No priority picker here: priority is derived from the Impact × Urgency matrix
+                at triage and stays fixed for the ticket's lifetime, so assigning must not be a
+                second chance to change it. The field itself stays in the form — the assign API
+                requires a priority, and the tier gating below reads it from form state. */}
 
             <FormField
               control={form.control}
