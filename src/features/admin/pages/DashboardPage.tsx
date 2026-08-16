@@ -81,6 +81,8 @@ const ANOMALY_LABEL: Record<number, string> = {
   13: "Cell imbalance",
   14: "Env. incident",
   15: "Sensor drift",
+  16: "Low temperature",
+  17: "Data integrity",
 };
 
 const ANOMALY_SEVERITY_COLOR: Record<number, string> = {
@@ -99,6 +101,10 @@ const ANOMALY_SEVERITY_COLOR: Record<number, string> = {
   13: "var(--p3)",
   14: "var(--p3)",
   15: "var(--muted-foreground)",
+  // Undertemp là rủi ro an toàn (lithium plating khi sạc lạnh) nên cùng thang với Overheat;
+  // 17 làm thiết bị bị Decommissioned vĩnh viễn — không có mức nào nặng hơn.
+  16: "var(--p1)",
+  17: "var(--p1)",
 };
 
 const BATTERY_STATUS_META: Record<number, { name: string; fill: string }> = {

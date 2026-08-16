@@ -124,6 +124,7 @@ export default function BatteryAssetInfoPanel({
         <BatteryWarningEvidencePanel
           batteryAssetId={batteryAssetId}
           detectedAt={detectedAt}
+          batteryTypeId={asset.batteryTypeId}
         />
       </div>
 
