@@ -368,7 +368,7 @@ export default function TicketKbReferencesPanel({
                 </div>
 
                 <Input
-                  placeholder="Note (optional)..."
+                  placeholder="Note..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                 />

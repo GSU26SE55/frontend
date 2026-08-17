@@ -25,6 +25,17 @@ export function getSupporters(
   );
 }
 
+/** Staff superseded as Primary Handler by a reassign/escalate decision — audit trail only. */
+export function getPreviousPrimaryHandlers(
+  assignments: TicketAssignmentDTO[] | undefined | null,
+): TicketAssignmentDTO[] {
+  return (
+    assignments?.filter(
+      (a) => a.role === TicketAssignmentRoleEnum.PreviousPrimaryHandler,
+    ) ?? []
+  );
+}
+
 /**
  * Display name for one assignment row.
  * The BE already returns `staffName` (from the synced StaffAccount), so every role can use
@@ -48,4 +59,11 @@ export function getSupporterNames(
   assignments: TicketAssignmentDTO[] | undefined | null,
 ): string[] {
   return getSupporters(assignments).map(assignmentDisplayName);
+}
+
+/** Names of staff previously superseded as Primary Handler — an empty array when there are none. */
+export function getPreviousPrimaryHandlerNames(
+  assignments: TicketAssignmentDTO[] | undefined | null,
+): string[] {
+  return getPreviousPrimaryHandlers(assignments).map(assignmentDisplayName);
 }

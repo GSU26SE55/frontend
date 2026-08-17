@@ -5,6 +5,7 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import { staffTicketService } from "@/features/staff/services/ticket/ticket.service";
 import type {
   HoldTicketRequest,
+  ResumeTicketRequest,
   ResolveTicketRequest,
   EscalateTicketRequest,
   AddCommentRequest,
@@ -43,7 +44,7 @@ export function useHoldTicket(ticketId: string) {
 // GH-1176: restricted to PendingContext=Held tickets; unrestricted start removed.
 export function useResumeTicket(ticketId: string) {
   return useTicketMutation(
-    () => staffTicketService.resume(ticketId),
+    (data: ResumeTicketRequest) => staffTicketService.resume(ticketId, data),
     ticketId,
     "Work resumed on the ticket",
   );

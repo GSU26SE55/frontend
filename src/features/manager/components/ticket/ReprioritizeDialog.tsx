@@ -124,7 +124,9 @@ export default function ReprioritizeDialog({
               name="impact"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Impact scope *</FormLabel>
+                  <FormLabel>
+                    Impact scope <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -156,7 +158,9 @@ export default function ReprioritizeDialog({
               name="urgency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Urgency level *</FormLabel>
+                  <FormLabel>
+                    Urgency level <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -194,7 +198,10 @@ export default function ReprioritizeDialog({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason for change *</FormLabel>
+                  <FormLabel>
+                    Reason for change{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Why the priority needs to change..."

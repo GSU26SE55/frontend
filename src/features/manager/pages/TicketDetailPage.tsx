@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import {
@@ -12,7 +12,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
@@ -31,7 +30,6 @@ import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareI
 import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
-import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
   type ChatTab,
@@ -71,6 +69,7 @@ import {
 import {
   getPrimaryHandlerName,
   getSupporterNames,
+  getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
@@ -140,6 +139,13 @@ function SideInfoRow({
 export default function TicketDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Reached from either /manager/tickets/:id (list) or /manager/tickets/queue/:id (queue) —
+  // same detail page, but Back must return to whichever list the user came from.
+  const isFromQueue = location.pathname.startsWith("/manager/tickets/queue/");
+  const backToListPath = isFromQueue
+    ? "/manager/tickets/queue"
+    : "/manager/tickets";
   const [dialog, setDialog] = useState<DialogType>(null);
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -157,6 +163,9 @@ export default function TicketDetailPage() {
   // no need to look it up via staffList — the helper falls back to staffId when the name is missing.
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
+  const previousPrimaryHandlerNames = getPreviousPrimaryHandlerNames(
+    ticket?.assignments,
+  );
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -218,7 +227,7 @@ export default function TicketDetailPage() {
         <p className="text-destructive mb-4">
           Ticket not found or you don't have access.
         </p>
-        <Button variant="outline" onClick={() => navigate("/manager/tickets")}>
+        <Button variant="outline" onClick={() => navigate(backToListPath)}>
           Back to list
         </Button>
       </div>
@@ -276,7 +285,7 @@ export default function TicketDetailPage() {
             variant="ghost"
             size="icon-sm"
             className="-ml-1 shrink-0"
-            onClick={() => navigate("/manager/tickets")}
+            onClick={() => navigate(backToListPath)}
           >
             <ArrowLeft size={16} />
           </Button>
@@ -288,11 +297,6 @@ export default function TicketDetailPage() {
               <TicketStatusBadge status={ticket.status} />
               {ticket.priority && (
                 <TicketPriorityBadge priority={ticket.priority} />
-              )}
-              {ticket.isIncident && (
-                <Badge variant="destructive" className="text-xs">
-                  Incident
-                </Badge>
               )}
             </div>
             <h1
@@ -404,10 +408,8 @@ export default function TicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
-                {/* `group` so ChatUnreadBadge hides itself automatically when this tab is active. */}
                 <TabsTrigger value="comments" className="group">
                   Chat
-                  <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="kb">Guide</TabsTrigger>
@@ -759,11 +761,11 @@ export default function TicketDetailPage() {
                 </div>
               )}
 
-              {/* Rejection reason */}
+              {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
               {ticket.rejectionReason && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                    Rejection reason
+                    Reason
                   </p>
                   <p className="text-xs leading-relaxed">
                     {ticket.rejectionReason}
@@ -846,15 +848,13 @@ export default function TicketDetailPage() {
                 {supporterNames.length > 0 && (
                   <SideInfoRow
                     label="Supporters"
-                    value={
-                      <span className="flex flex-wrap justify-end gap-1">
-                        {supporterNames.map((name) => (
-                          <Badge key={name} variant="secondary">
-                            {name}
-                          </Badge>
-                        ))}
-                      </span>
-                    }
+                    value={supporterNames.join(", ")}
+                  />
+                )}
+                {previousPrimaryHandlerNames.length > 0 && (
+                  <SideInfoRow
+                    label="Previous handler"
+                    value={previousPrimaryHandlerNames.join(", ")}
                   />
                 )}
                 {/* Hidden on site-level tickets: the row can never hold a value there, and an

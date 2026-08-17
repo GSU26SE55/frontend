@@ -5,10 +5,10 @@ import { enUS } from "date-fns/locale";
 import { ArrowLeft, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   getPrimaryHandlerName,
   getSupporterNames,
+  getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
 import {
   isTicketChatLocked,
@@ -42,7 +42,6 @@ import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge"
 import TicketActivityTimeline from "@/features/admin/components/ticket/TicketActivityTimeline";
 import AdminClosedOverrideDialog from "@/features/admin/components/ticket/AdminClosedOverrideDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
-import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import type { TicketCommentDTO } from "@/shared/types/ticket/ticket.types";
 import {
   TicketCommentThread,
@@ -123,6 +122,9 @@ export default function AdminTicketDetailPage() {
   // Handler names — taken straight from assignments (BE already includes staffName).
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
+  const previousPrimaryHandlerNames = getPreviousPrimaryHandlerNames(
+    ticket?.assignments,
+  );
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
@@ -224,12 +226,6 @@ export default function AdminTicketDetailPage() {
               {ticket.priority && (
                 <TicketPriorityBadge priority={ticket.priority} />
               )}
-              {ticket.isIncident && (
-                <Badge variant="destructive" className="text-xs">
-                  <AlertTriangle size={10} className="mr-1" />
-                  Incident
-                </Badge>
-              )}
             </div>
             <h1
               className="text-base font-semibold truncate leading-tight mt-0.5"
@@ -265,10 +261,8 @@ export default function AdminTicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                {/* `group` lets ChatUnreadBadge hide itself while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
                   Chat
-                  <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -444,11 +438,11 @@ export default function AdminTicketDetailPage() {
             </div>
           )}
 
-          {/* Rejection reason */}
+          {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
           {ticket.rejectionReason && (
             <div className="p-4">
               <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                Rejection reason
+                Reason
               </p>
               <p className="text-xs leading-relaxed">
                 {ticket.rejectionReason}
@@ -481,15 +475,13 @@ export default function AdminTicketDetailPage() {
             {supporterNames.length > 0 && (
               <SideInfoRow
                 label="Supporters"
-                value={
-                  <span className="flex flex-wrap justify-end gap-1">
-                    {supporterNames.map((name) => (
-                      <Badge key={name} variant="secondary">
-                        {name}
-                      </Badge>
-                    ))}
-                  </span>
-                }
+                value={supporterNames.join(", ")}
+              />
+            )}
+            {previousPrimaryHandlerNames.length > 0 && (
+              <SideInfoRow
+                label="Previous handler"
+                value={previousPrimaryHandlerNames.join(", ")}
               />
             )}
             <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />

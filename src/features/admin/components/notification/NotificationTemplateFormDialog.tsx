@@ -218,7 +218,10 @@ export default function NotificationTemplateFormDialog({
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notification type</FormLabel>
+                      <FormLabel>
+                        Notification type{" "}
+                        <span className="text-destructive">*</span>
+                      </FormLabel>
                       <Select
                         value={String(field.value)}
                         onValueChange={(v) => v && field.onChange(Number(v))}
@@ -251,7 +254,9 @@ export default function NotificationTemplateFormDialog({
                   name="channel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Channel</FormLabel>
+                      <FormLabel>
+                        Channel <span className="text-destructive">*</span>
+                      </FormLabel>
                       <Select
                         value={String(field.value)}
                         onValueChange={(v) => v && field.onChange(Number(v))}
@@ -286,7 +291,7 @@ export default function NotificationTemplateFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Title{" "}
+                      Title <span className="text-destructive">*</span>{" "}
                       <span className="text-xs font-normal text-muted-foreground">
                         ({field.value?.length ?? 0}/{TEMPLATE_TITLE_MAX})
                       </span>
@@ -315,7 +320,7 @@ export default function NotificationTemplateFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Body{" "}
+                      Body <span className="text-destructive">*</span>{" "}
                       <span className="text-xs font-normal text-muted-foreground">
                         ({field.value?.length ?? 0}/{TEMPLATE_BODY_MAX})
                       </span>

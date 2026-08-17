@@ -127,10 +127,7 @@ export default function ChangeAccountStatusDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Reason</Label>
-            <Input
-              {...register("reason")}
-              placeholder="Enter a reason (optional)"
-            />
+            <Input {...register("reason")} placeholder="Enter a reason" />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>

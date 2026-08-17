@@ -278,11 +278,10 @@ export const ENDPOINTS = {
       SCHEDULE: (id: string) => `/api/admin/tickets/${id}/schedule`,
       APPROVE: (id: string) => `/api/admin/tickets/${id}/approve`,
       REJECT: (id: string) => `/api/admin/tickets/${id}/reject`,
-      // GH-1176: ESCALATE (force) removed; approve/reject Staff escalation request instead.
-      ESCALATE_APPROVE: (id: string) =>
-        `/api/admin/tickets/${id}/escalate/approve`,
-      ESCALATE_REJECT: (id: string) =>
-        `/api/admin/tickets/${id}/escalate/reject`,
+      // GH-1176: ESCALATE (force) removed; single decision endpoint (Approve bool distinguishes
+      // approve/reject) — matches BE TicketEscalationDecisionCommand / AdminTicketsController.
+      ESCALATION_DECISION: (id: string) =>
+        `/api/admin/tickets/${id}/escalation-decision`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
       // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).

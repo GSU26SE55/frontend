@@ -29,7 +29,11 @@ interface Props {
   onClose: () => void;
 }
 
-export default function EscalateRejectDialog({ ticketId, open, onClose }: Props) {
+export default function EscalateRejectDialog({
+  ticketId,
+  open,
+  onClose,
+}: Props) {
   const { mutateAsync, isPending } = useEscalateRejectTicket(ticketId);
 
   const form = useForm<RejectFormValues>({
@@ -38,7 +42,7 @@ export default function EscalateRejectDialog({ ticketId, open, onClose }: Props)
   });
 
   const onSubmit = async (values: RejectFormValues) => {
-    await mutateAsync(values);
+    await mutateAsync({ ...values, keepCurrentPrimary: false });
     form.reset();
     onClose();
   };
@@ -60,7 +64,9 @@ export default function EscalateRejectDialog({ ticketId, open, onClose }: Props)
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rejection reason</FormLabel>
+                  <FormLabel>
+                    Rejection reason <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea placeholder="Enter reason..." {...field} />
                   </FormControl>

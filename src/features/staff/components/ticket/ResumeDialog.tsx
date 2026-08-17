@@ -17,49 +17,53 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
-  resolveSchema,
-  type ResolveFormValues,
+  resumeSchema,
+  type ResumeFormValues,
 } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: ResolveFormValues) => void;
+  onSubmit: (data: ResumeFormValues) => Promise<unknown>;
   isPending: boolean;
 }
 
-export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
-  const form = useForm<ResolveFormValues>({
-    resolver: zodResolver(resolveSchema),
-    defaultValues: { resolutionSummary: "" },
+export function ResumeDialog({ open, onClose, onSubmit, isPending }: Props) {
+  const form = useForm<ResumeFormValues>({
+    resolver: zodResolver(resumeSchema),
+    defaultValues: { reason: "" },
   });
 
-  const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      handleErrorApi({ error, setError: form.setError });
+    }
   });
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Complete</DialogTitle>
+          <DialogTitle>Resume</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormField
               control={form.control}
-              name="resolutionSummary"
+              name="reason"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Resolution summary{" "}
-                    <span className="text-destructive">*</span>
+                    Reason <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe how you resolved the issue..."
-                      rows={4}
+                      placeholder="Why is this ticket resuming before the scheduled appointment?"
+                      rows={3}
                       {...field}
                     />
                   </FormControl>
@@ -77,7 +81,7 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Processing..." : "Complete"}
+                {isPending ? "Processing..." : "Resume"}
               </Button>
             </DialogFooter>
           </form>

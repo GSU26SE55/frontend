@@ -28,6 +28,11 @@ interface Props {
    * (AdminTicketListParams); the queue (AdminTicketQueueParams has no sort) skips it → static sort.
    */
   sort?: ServerSortState;
+  /**
+   * Base path for the row-click detail link. Defaults to the "Tickets" list route;
+   * the Queue page passes "/manager/tickets/queue" so Back returns to the Queue instead.
+   */
+  detailBasePath?: string;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -46,6 +51,7 @@ export default function TicketTable({
   pageNumber = 1,
   pageSize = 0,
   sort,
+  detailBasePath = "/manager/tickets",
 }: Props) {
   const navigate = useNavigate();
 
@@ -191,7 +197,7 @@ export default function TicketTable({
         showIndex
         pageNumber={pageNumber}
         pageSize={pageSize}
-        onRowClick={(t) => navigate(`/manager/tickets/${t.id}`)}
+        onRowClick={(t) => navigate(`${detailBasePath}/${t.id}`)}
         serverSort={sort}
       />
     </Card>

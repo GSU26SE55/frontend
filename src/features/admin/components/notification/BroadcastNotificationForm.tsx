@@ -267,7 +267,7 @@ export default function BroadcastNotificationForm() {
         </div>
 
         <div className="space-y-1.5">
-          <Label>Add specific people (optional)</Label>
+          <Label>Add specific people</Label>
           {selectedUsers.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {selectedUsers.map((a) => (
