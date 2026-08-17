@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -38,8 +38,10 @@ import {
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   extractPlaceholders,
-  insertPlaceholder,
+  insertPlaceholderAt,
+  renderWithSamples,
 } from "@/features/admin/utils/handlebars";
+import { getVariableDoc } from "@/features/admin/constants/templateVariableDocs";
 import TemplateVariablePalette from "@/features/admin/components/notification/TemplateVariablePalette";
 import {
   notificationTemplateFormSchema,
@@ -112,19 +114,45 @@ export default function NotificationTemplateFormDialog({
     useWatch({ control: form.control, name: "type" }) ??
     NotificationTypeEnum.TicketCreated;
 
-  // Clicking a variable inserts it into whichever field was last being edited, not always a fixed
-  // field. Defaults to the body since that's where most variables go.
-  const [lastFocused, setLastFocused] = useState<
-    "titleTemplate" | "bodyTemplate"
-  >("bodyTemplate");
+  // Ô đích của việc chèn biến. Trước đây suy ra từ "ô vừa focus", nhưng bấm chip là focus đã rời
+  // khỏi ô nên người dùng không nhìn thấy đích ở đâu — và thực tế đã chèn nhầm sang ô kia. Nay đích
+  // là một lựa chọn hiện rõ trên màn hình, giữ nguyên cho tới khi người dùng đổi.
+  const [target, setTarget] = useState<"titleTemplate" | "bodyTemplate">(
+    "bodyTemplate",
+  );
 
+  // Cần ref để đọc vị trí con trỏ lúc chèn, và đặt lại con trỏ ngay sau token vừa chèn.
+  const titleRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  /**
+   * Chèn biến vào ô đang chọn, tại đúng vị trí con trỏ.
+   *
+   * Sau khi chèn phải trả con trỏ về ngay sau token: nếu không, ô mất focus và lần chèn kế tiếp lại
+   * rơi về đầu chuỗi (selectionStart của một input vừa mất focus là 0) — người dùng bấm hai biến
+   * liên tiếp sẽ thấy biến thứ hai nhảy lên đầu câu.
+   */
   const handleInsert = (name: string) => {
-    const current = lastFocused === "titleTemplate" ? title : body;
-    form.setValue(lastFocused, insertPlaceholder(current, name), {
-      shouldDirty: true,
-      shouldValidate: true,
+    const el = target === "titleTemplate" ? titleRef.current : bodyRef.current;
+    const current = target === "titleTemplate" ? title : body;
+
+    const start = el?.selectionStart ?? current.length;
+    const end = el?.selectionEnd ?? current.length;
+
+    const { value, caret } = insertPlaceholderAt(current, name, start, end);
+    form.setValue(target, value, { shouldDirty: true, shouldValidate: true });
+
+    // Đợi React ghi giá trị mới vào DOM rồi mới đặt caret.
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(caret, caret);
     });
   };
+
+  // Câu đọc thử — thay biến bằng giá trị mẫu để người soạn thấy ngay câu văn thật sự trông ra sao,
+  // thay vì phải tự dịch `{{code}}` trong đầu. Chỉ để xem; giá trị lưu xuống DB vẫn là template gốc.
+  const previewOf = (text: string) =>
+    renderWithSamples(text, (n) => getVariableDoc(n)?.sample);
 
   const onSubmit = async (values: NotificationTemplateFormValues) => {
     try {
@@ -150,7 +178,9 @@ export default function NotificationTemplateFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      {/* Bảng biến khá cao (tới 20 chip), cộng thêm 2 ô soạn thảo là vượt màn hình laptop —
+          trước đây phần cuối bảng và cả nút Lưu bị cắt mất, không cuộn tới được. */}
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {isEdit
@@ -175,36 +205,105 @@ export default function NotificationTemplateFormDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            {/* Chỉ vùng nội dung cuộn — nút Lưu/Huỷ luôn nằm trong tầm mắt, không phải cuộn xuống
+                đáy bảng biến mới bấm được. */}
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 pb-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notification type</FormLabel>
+                      <Select
+                        value={String(field.value)}
+                        onValueChange={(v) => v && field.onChange(Number(v))}
+                        disabled={isEdit}
+                        items={TYPE_OPTIONS.map((o) => ({
+                          value: String(o.value),
+                          label: o.label,
+                        }))}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent alignItemWithTrigger={false}>
+                          {TYPE_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={String(o.value)}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="channel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Channel</FormLabel>
+                      <Select
+                        value={String(field.value)}
+                        onValueChange={(v) => v && field.onChange(Number(v))}
+                        disabled={isEdit}
+                        items={CHANNEL_OPTIONS.map((o) => ({
+                          value: String(o.value),
+                          label: o.label,
+                        }))}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent alignItemWithTrigger={false}>
+                          {CHANNEL_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={String(o.value)}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="type"
+                name="titleTemplate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notification type</FormLabel>
-                    <Select
-                      value={String(field.value)}
-                      onValueChange={(v) => v && field.onChange(Number(v))}
-                      disabled={isEdit}
-                      items={TYPE_OPTIONS.map((o) => ({
-                        value: String(o.value),
-                        label: o.label,
-                      }))}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent alignItemWithTrigger={false}>
-                        {TYPE_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={String(o.value)}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>
+                      Title{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({field.value?.length ?? 0}/{TEMPLATE_TITLE_MAX})
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="VD: Ticket mới"
+                        {...field}
+                        ref={titleRef}
+                        onFocus={() => setTarget("titleTemplate")}
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <p className="text-xs text-muted-foreground">
+                        Đọc thử: {previewOf(field.value)}
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -212,92 +311,44 @@ export default function NotificationTemplateFormDialog({
 
               <FormField
                 control={form.control}
-                name="channel"
+                name="bodyTemplate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Channel</FormLabel>
-                    <Select
-                      value={String(field.value)}
-                      onValueChange={(v) => v && field.onChange(Number(v))}
-                      disabled={isEdit}
-                      items={CHANNEL_OPTIONS.map((o) => ({
-                        value: String(o.value),
-                        label: o.label,
-                      }))}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent alignItemWithTrigger={false}>
-                        {CHANNEL_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={String(o.value)}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>
+                      Body{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({field.value?.length ?? 0}/{TEMPLATE_BODY_MAX})
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        rows={5}
+                        placeholder="VD: Ticket vừa được tạo."
+                        {...field}
+                        ref={bodyRef}
+                        onFocus={() => setTarget("bodyTemplate")}
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <p className="text-xs text-muted-foreground">
+                        Đọc thử: {previewOf(field.value)}
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+
+              <TemplateVariablePalette
+                type={selectedType}
+                typedNames={placeholders}
+                onInsert={handleInsert}
+                target={target}
+                onTargetChange={setTarget}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="titleTemplate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Title{" "}
-                    <span className="text-xs font-normal text-muted-foreground">
-                      ({field.value?.length ?? 0}/{TEMPLATE_TITLE_MAX})
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. New ticket {{code}}"
-                      {...field}
-                      onFocus={() => setLastFocused("titleTemplate")}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bodyTemplate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Body{" "}
-                    <span className="text-xs font-normal text-muted-foreground">
-                      ({field.value?.length ?? 0}/{TEMPLATE_BODY_MAX})
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      rows={5}
-                      placeholder="e.g. Ticket {{code}} was just created, priority {{priority}}."
-                      {...field}
-                      onFocus={() => setLastFocused("bodyTemplate")}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <TemplateVariablePalette
-              type={selectedType}
-              typedNames={placeholders}
-              onInsert={handleInsert}
-            />
-
-            <DialogFooter>
+            <DialogFooter className="mt-4 border-t pt-4">
               <Button
                 type="button"
                 variant="outline"
