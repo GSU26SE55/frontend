@@ -643,7 +643,9 @@ export function TicketCommentThread({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        {aiEnabled && ticketId && (
+        {/* Closed ticket → no composer to insert a suggestion into, so the AI bar has
+            nothing to act on. */}
+        {aiEnabled && ticketId && !ticketClosed && (
           <div className="ml-auto">
             <ChatAiPanel ticketId={ticketId} onSuggestions={setAiSuggestions} />
           </div>
@@ -799,7 +801,7 @@ export function TicketCommentThread({
                       />
                     )}
 
-                    {!isEditing && ticketId && (
+                    {!isEditing && ticketId && !ticketClosed && (
                       <ChatReactionBar
                         ticketId={ticketId}
                         chatId={c.id}

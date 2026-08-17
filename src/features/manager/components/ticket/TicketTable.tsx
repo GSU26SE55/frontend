@@ -7,6 +7,7 @@ import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import {
   TicketStatusEnum,
   TicketOriginEnum,
@@ -93,8 +94,10 @@ export default function TicketTable({
               origin={t.origin}
               hideWhenOk
             />
-            {/* Suspected duplicate of an open ticket. */}
-            {t.suspectedDuplicateOfTicketId && (
+            {/* Suspected duplicate — only while the ticket is still open. Once it is finished
+                the merge decision has been made (often BY merging it), so the badge would be
+                pointing at a question that is already answered. */}
+            {t.suspectedDuplicateOfTicketId && isOpenTicket(t) && (
               <Badge
                 variant="outline"
                 className="border-amber-200 bg-amber-50 text-amber-700"

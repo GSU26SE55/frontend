@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ArrowLeft, Lock, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,10 @@ import {
 } from "@/shared/utils/ticket/assignments";
 import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
+import {
+  isTicketChatLocked,
+  TICKET_CHAT_LOCKED_NOTICE,
+} from "@/shared/utils/ticket.utils";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import type { MaintenanceLogDTO } from "@/shared/types/ticket/ticket.types";
 import {
@@ -198,14 +202,12 @@ export default function TicketDetailPage() {
   const canComment = isInProgress || isPending;
   const canAddLog = isInProgress;
   const canEditLog = isInProgress;
+  // Ticket finished → chat is archived: edit/delete locked and the composer replaced by a
+  // notice. Distinct from !canComment, which is also false mid-lifecycle (e.g. Open) — the
+  // composer is simply absent there, with no "closed" claim to make about it.
+  const chatLocked = isTicketChatLocked(status);
   // GH-1176: KB references blocked once Completed or terminal.
-  const canAddKb = !(
-    [
-      TicketStatusEnum.Completed,
-      TicketStatusEnum.Closed,
-      TicketStatusEnum.ClosedRejected,
-    ] as TicketStatusEnum[]
-  ).includes(status);
+  const canAddKb = !chatLocked;
   const kbAfterResolveOnly = status === TicketStatusEnum.Completed;
 
   const handleHoldSubmit = (data: HoldFormValues) => {
@@ -431,7 +433,7 @@ export default function TicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  ticketClosed={status === TicketStatusEnum.Closed}
+                  ticketClosed={chatLocked}
                   ticketId={ticketId}
                   aiEnabled
                   onSelectSuggestion={(text) => {
@@ -458,6 +460,14 @@ export default function TicketDetailPage() {
                   onDiscardPending={discardChat}
                 />
               </div>
+              {chatLocked && (
+                <div className="shrink-0 border-t border-border p-3">
+                  <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
+                    <Lock className="size-3.5" />
+                    {TICKET_CHAT_LOCKED_NOTICE}
+                  </p>
+                </div>
+              )}
               {canComment && (
                 <div className="shrink-0 border-t border-border p-3">
                   <TypingIndicator names={typingNames} />
@@ -636,7 +646,7 @@ export default function TicketDetailPage() {
                   permissions, so they aren't carried over here. */}
               {ticket.origin === "ManualByCustomer" &&
                 (ticket.aiVerifyStatus ||
-                  ticket.suspectedDuplicateOfTicketId) && (
+                  (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
                   <div className="px-4 py-3 space-y-2">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       AI check
@@ -659,7 +669,9 @@ export default function TicketDetailPage() {
                         {ticket.aiVerifyReason}
                       </p>
                     )}
-                    {ticket.suspectedDuplicateOfTicketId && (
+                    {/* Dropped once the ticket is finished — the duplicate question is settled
+                        by then, and a ticket closed BY a merge would still flag itself. */}
+                    {ticket.suspectedDuplicateOfTicketId && !chatLocked && (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
                         <p className="font-medium">
                           ⚠ Suspected duplicate of another ticket
