@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,6 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import {
   useAlertList,
@@ -34,6 +37,8 @@ import {
   useAcknowledgeAlert,
   useResolveAlert,
 } from "@/shared/hooks/alerts/useAlerts";
+import { useTicketCode } from "@/shared/hooks/ticket/useTicketCode";
+import type { SiteOption } from "@/shared/types/site/site.types";
 import {
   AlertSeverityEnum,
   AlertStatusEnum,
@@ -85,7 +90,21 @@ const formatDateTime = (iso?: string | null) =>
 const formatMeasure = (value?: number | null, unit?: string | null) =>
   value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
 
-export default function AlertsView({ subtitle }: { subtitle: string }) {
+export default function AlertsView({
+  subtitle,
+  basePath,
+  sites,
+}: {
+  subtitle: string;
+  // Role prefix ("/admin" | "/manager" | "/staff") for the link to the linked ticket.
+  // Passed in rather than derived from the session because each portal mounts its own
+  // `tickets/:id` route — following the same convention as BlogEditorView.
+  basePath: string;
+  // Used to name site-level alerts. Passed in rather than fetched here because each
+  // portal has its own useSiteList hook and shared/ must not import from features/ —
+  // same arrangement as EnvironmentalIncidentsView.
+  sites?: SiteOption[];
+}) {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -105,17 +124,20 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          {subtitle}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Battery alerts
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isLoading ? "..." : totalItems} alerts &mdash; anomalies detected by
-          the system
-        </p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-0.5">
+            {subtitle}
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Battery alerts
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : totalItems} alerts &mdash; anomalies detected
+            by the system
+          </p>
+        </div>
+        <RefreshButton queryKeys={[KEY.alerts]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -246,6 +268,8 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
 
       <AlertDetailDialog
         alertId={selectedId}
+        basePath={basePath}
+        sites={sites}
         onClose={() => setSelectedId(null)}
       />
     </div>
@@ -255,12 +279,23 @@ export default function AlertsView({ subtitle }: { subtitle: string }) {
 // ── Detail dialog ────────────────────────────────────────────────────────
 function AlertDetailDialog({
   alertId,
+  basePath,
+  sites,
   onClose,
 }: {
   alertId: string | null;
+  basePath: string;
+  sites?: SiteOption[];
   onClose: () => void;
 }) {
   const { data: alert, isLoading } = useAlertDetail(alertId ?? "");
+  const ticketCode = useTicketCode(alert?.ticketId);
+
+  // Falls back to a shortened id when the site list has not loaded or the site is
+  // outside this user's scope — matches EnvironmentalIncidentsView.
+  const siteNameById = new Map((sites ?? []).map((s) => [s.id, s.name]));
+  const siteName = (id?: string | null) =>
+    id ? (siteNameById.get(id) ?? id.slice(0, 8)) : null;
   const { mutate: acknowledge, isPending: ackPending } = useAcknowledgeAlert();
   const { mutate: resolve, isPending: resolvePending } = useResolveAlert();
 
@@ -312,8 +347,11 @@ function AlertDetailDialog({
             </DetailRow>
             <DetailRow label={isSiteLevel(alert) ? "Site" : "Battery"}>
               <span className="font-mono text-xs">
+                {/* Site-level alerts carry only siteId; name it from the site list the
+                    page already loaded. The battery branch beside it has always shown a
+                    serial, so leaving the site branch as a raw UUID read as a defect. */}
                 {isSiteLevel(alert)
-                  ? (alert.siteId ?? "—")
+                  ? (siteName(alert.siteId) ?? "—")
                   : alert.batterySerialNumber}
               </span>
             </DetailRow>
@@ -328,7 +366,14 @@ function AlertDetailDialog({
             </DetailRow>
             <DetailRow label="Ticket">
               {alert.ticketId ? (
-                <span className="font-mono-num text-xs">{alert.ticketId}</span>
+                <Link
+                  to={`${basePath}/tickets/${alert.ticketId}`}
+                  className="font-mono-num text-xs text-primary hover:underline"
+                >
+                  {/* Falls back to the raw id while the code loads, or when the ticket
+                      cannot be read — never leaves the row blank. */}
+                  {ticketCode ?? alert.ticketId}
+                </Link>
               ) : (
                 "—"
               )}

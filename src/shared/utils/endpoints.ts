@@ -164,12 +164,6 @@ export const ENDPOINTS = {
     UNSUBSCRIBE: "/api/notification-unsubscribe",
   },
 
-  DEVICE_TOKENS: {
-    REGISTER: "/api/device-tokens",
-    UNREGISTER: "/api/device-tokens", // DELETE — body { token }
-    LIST: "/api/device-tokens",
-  },
-
   NOTIFICATION_PREFERENCES: {
     GET: "/api/notification-preferences",
     UPDATE: "/api/notification-preferences", // PUT — upsert preference của user hiện tại

@@ -130,7 +130,7 @@ export default function SiteDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <RefreshButton queryKeys={[KEY.sites]} size="icon" />
+            <RefreshButton queryKeys={[KEY.sites]} />
             {isDecommissioned ? (
               <>
                 <Badge variant="destructive">Decommissioned</Badge>

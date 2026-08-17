@@ -248,7 +248,12 @@ interface TicketCommentThreadProps {
   editPending?: boolean;
   deletePending?: boolean;
   /** Housekeeping — reports the currently displayed chats as read (no unread badge to wire up) */
-  onMarkRead?: (chatIds: string[]) => void;
+  /**
+   * Marks chats as read. `onFailed` is invoked only if the request fails — the thread uses it
+   * to put those ids back in line, so a dropped receipt gets retried on the next render
+   * instead of being written off for the session.
+   */
+  onMarkRead?: (chatIds: string[], onFailed: () => void) => void;
   /** Every role can translate (BE doesn't restrict this) — passing this prop shows the translate menu */
   onTranslate?: (
     chat: TicketCommentDTO,
@@ -352,6 +357,49 @@ export function TicketCommentThread({
   const unreadAnchorId = unreadAnchor?.tab === tab ? unreadAnchor.id : null;
   const unreadCount = unreadAnchor?.tab === tab ? unreadAnchor.count : 0;
 
+  // "New messages" marker — a SECOND, separate line for messages that land while the user is
+  // already in the chat. The unread anchor above is frozen on open, so without this a message
+  // arriving mid-conversation is indistinguishable from backlog: both just sit below the same
+  // red line. Only messages from other people count — marking your own would push the line
+  // down on every send.
+  // `seenOnOpen` holds the ids present when the tab was opened; anything outside it arrived
+  // while the user was watching. Kept in state rather than a ref because it is read during
+  // render — refs must not be.
+  const [newAfter, setNewAfter] = useState<{
+    tab: ChatTab;
+    seenOnOpen: ReadonlySet<string>;
+    id: string | null;
+  } | null>(null);
+
+  // Derived from props via "adjust during render" — the same pattern the unread anchor above
+  // uses, and the reason neither runs in an effect: setting state from an effect costs an
+  // extra render pass and trips react-hooks/set-state-in-effect.
+  if (visible.length > 0) {
+    if (newAfter?.tab !== tab) {
+      // Tab switched (or first data) — everything on screen counts as already seen, so only
+      // what arrives from here on can be "new".
+      setNewAfter({
+        tab,
+        seenOnOpen: new Set(visible.map((c) => c.id)),
+        id: null,
+      });
+    } else if (!newAfter.id) {
+      // visible is ASC (oldest first) → the first unseen match is the oldest one, which is
+      // where the line belongs.
+      const firstFromOthers = visible.find(
+        (c) =>
+          !newAfter.seenOnOpen.has(c.id) &&
+          !!c.authorUserId &&
+          c.authorUserId !== currentUserId,
+      );
+      if (firstFromOthers) {
+        setNewAfter({ ...newAfter, id: firstFromOthers.id });
+      }
+    }
+  }
+
+  const newAfterId = newAfter?.tab === tab ? newAfter.id : null;
+
   // Messages waiting to send (outbox) belonging to the current tab — optimistic bubble at the end of the stream.
   const pendingForTab = useMemo(
     () =>
@@ -369,6 +417,35 @@ export function TicketCommentThread({
   useEffect(() => {
     jumpedToUnreadRef.current = false;
   }, [tab]);
+
+  // Reaching the bottom means those messages have been seen, so the "New messages" line has
+  // done its job and is cleared. The unread line above is NOT touched — it stays pinned for
+  // the session so the user keeps their place in the backlog. Observed rather than measured
+  // via scroll offsets because the scroll container lives in the parent page, not here.
+  useEffect(() => {
+    const el = bottomRef.current;
+    if (!el || !newAfterId) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Those ids move into seenOnOpen as the line clears, so the same messages can't
+        // immediately re-trigger it on the next render.
+        if (entry.isIntersecting) {
+          setNewAfter((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  seenOnOpen: new Set(visible.map((c) => c.id)),
+                  id: null,
+                }
+              : prev,
+          );
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [newAfterId, visible]);
 
   useEffect(() => {
     const el = bottomRef.current;
@@ -424,16 +501,34 @@ export function TicketCommentThread({
     };
   }, [visible.length, tab, aiSuggestions.length, pendingForTab.length]);
 
+  // Mark-read only covers messages from OTHER people. A message the user sent themself is
+  // never unread, so sending it here just burns a slot in the BE read-receipt queue
+  // (bounded, and a full queue drops receipts silently) and inflates the count it is meant
+  // to clear. Messages BE already reports as read are skipped for the same reason.
   const markedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!onMarkRead) return;
     const unmarked = visible
+      .filter(
+        (c) =>
+          c.isRead !== true &&
+          !!c.authorUserId &&
+          c.authorUserId !== currentUserId,
+      )
       .map((c) => c.id)
       .filter((id) => !markedRef.current.has(id));
     if (unmarked.length === 0) return;
+    // Marked BEFORE the call so a re-render mid-flight doesn't fire the same ids again —
+    // callers pass a fresh inline `onMarkRead` every render, so this effect re-runs often
+    // and the ref is the only thing keeping it from looping.
     unmarked.forEach((id) => markedRef.current.add(id));
-    onMarkRead(unmarked);
-  }, [visible, onMarkRead]);
+    // Released again if the request fails, so the ids go back in the queue for the next
+    // render instead of being written off for the session. BE answers 503 when its
+    // read-receipt queue is full — exactly the case worth retrying.
+    onMarkRead(unmarked, () =>
+      unmarked.forEach((id) => markedRef.current.delete(id)),
+    );
+  }, [visible, onMarkRead, currentUserId]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
@@ -608,6 +703,19 @@ export function TicketCommentThread({
                         : "Unread message"}
                     </span>
                     <div className="h-px flex-1 bg-destructive" />
+                  </div>
+                )}
+                {/* Deliberately quieter than the red unread line: a plain tinted rule, no
+                    pill. It says "the conversation moved on while you were here", not "you
+                    have a backlog to clear" — the two must not compete for attention. Skipped
+                    when it would land in the same slot as the unread line. */}
+                {c.id === newAfterId && c.id !== unreadAnchorId && (
+                  <div className="flex items-center gap-2 py-0.5">
+                    <div className="h-px flex-1 bg-primary/35" />
+                    <span className="text-[10px] font-semibold text-primary/90">
+                      New messages
+                    </span>
+                    <div className="h-px flex-1 bg-primary/35" />
                   </div>
                 )}
                 <div

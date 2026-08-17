@@ -11,11 +11,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import {
   useIotDeviceHeartbeats,
   useIotDevicesForStaff,
@@ -148,22 +150,8 @@ export default function IoTDeviceDetailPage() {
             </div>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            heartbeats.refetch();
-            list.refetch();
-          }}
-          disabled={heartbeats.isFetching}
-        >
-          <RefreshCw
-            className={
-              heartbeats.isFetching ? "size-3.5 animate-spin" : "size-3.5"
-            }
-          />
-          Refresh
-        </Button>
+        {/* Root key covers both the staff list and the heartbeat history. */}
+        <RefreshButton queryKeys={[KEY.iotDevices]} />
       </div>
 
       {/* ---- Số liệu mới nhất ---- */}

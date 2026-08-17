@@ -42,6 +42,13 @@ export const NotificationTypeEnum = {
   // left it out. This notification tells a Customer their ticket was merged.
   // Do NOT reuse 27 for any type.
   TicketMerged: 34,
+  // 35–39 shipped on the BE with active templates but were missing here, so the inbox
+  // rendered them as "#36" instead of a name (the `#${t}` fallback in notificationLabels).
+  SlaAutoResumed: 35,
+  IotDeviceRecovered: 36,
+  IotDeviceAutoDecommissioned: 37,
+  TicketWorkStarted: 38,
+  TicketScheduleChanged: 39,
   System: 99,
 } as const;
 // ⚠️ The numbers follow the BE's `NotificationTypeEnum.cs`. The Sprint 6.2 group sits at 27–33
@@ -104,12 +111,3 @@ export const NotificationFrequencyEnum = {
 } as const;
 export type NotificationFrequencyEnum =
   (typeof NotificationFrequencyEnum)[keyof typeof NotificationFrequencyEnum];
-
-// Device token platform — used by the /api/device-tokens endpoints.
-export const DevicePlatformEnum = {
-  Ios: 1,
-  Android: 2,
-  Web: 3,
-} as const;
-export type DevicePlatformEnum =
-  (typeof DevicePlatformEnum)[keyof typeof DevicePlatformEnum];

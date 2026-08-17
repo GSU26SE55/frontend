@@ -7,10 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useManagerBatteryAsset } from "@/features/manager/hooks/battery/useBatteryAsset";
-import {
-  BatteryStatusEnum,
-  WarrantyStatusEnum,
-} from "@/features/manager/types/battery/battery-asset.types";
+import { BatteryStatusEnum } from "@/features/manager/types/battery/battery-asset.types";
 import BatteryUsageHistoryPanel from "@/features/manager/components/battery/BatteryUsageHistoryPanel";
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
 
@@ -18,12 +15,6 @@ const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Active",
   [BatteryStatusEnum.Inactive]: "Inactive",
   [BatteryStatusEnum.Decommissioned]: "Decommissioned",
-};
-
-const WARRANTY_LABEL: Record<WarrantyStatusEnum, string> = {
-  [WarrantyStatusEnum.ACTIVE]: "Under warranty",
-  [WarrantyStatusEnum.EXPIRED]: "Warranty expired",
-  [WarrantyStatusEnum.VOID]: "Void",
 };
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -41,14 +32,11 @@ interface Props {
   batteryAssetId?: string | null;
   /** Incident detection time (ticket.detectedAt) — used to show the warning evidence log. */
   detectedAt?: string | null;
-  /** True when a person supplied `detectedAt` (not the scanner) — widens the evidence window. */
-  isManualReport?: boolean;
 }
 
 export default function BatteryAssetInfoPanel({
   batteryAssetId,
   detectedAt,
-  isManualReport = false,
 }: Props) {
   const {
     data: asset,
@@ -114,11 +102,11 @@ export default function BatteryAssetInfoPanel({
         <InfoRow
           label="Warranty"
           value={
-            <>
-              {WARRANTY_LABEL[asset.warrantyStatus] ?? asset.warrantyStatus}
-              {asset.warrantyEndDate &&
-                ` (until ${format(new Date(asset.warrantyEndDate), "MM/dd/yyyy")})`}
-            </>
+            asset.warrantyEndDate
+              ? format(new Date(asset.warrantyEndDate), "MM/dd/yyyy", {
+                  locale: enUS,
+                })
+              : "—"
           }
         />
       </div>
@@ -128,7 +116,6 @@ export default function BatteryAssetInfoPanel({
           batteryAssetId={batteryAssetId}
           detectedAt={detectedAt}
           batteryTypeId={asset.batteryTypeId}
-          isManualReport={isManualReport}
         />
       </div>
 

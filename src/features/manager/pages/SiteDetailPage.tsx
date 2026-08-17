@@ -95,7 +95,7 @@ export default function ManagerSiteDetailPage() {
           >
             <ArrowLeft className="size-3.5" /> Back
           </Button>
-          <RefreshButton queryKeys={[KEY.sites]} size="icon" />
+          <RefreshButton queryKeys={[KEY.sites]} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">{site.name}</h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">

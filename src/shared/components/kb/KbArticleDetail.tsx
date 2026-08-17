@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { KbStatusBadge } from "./KbStatusBadge";
 import { KbPendingReviewNotice } from "./KbPendingReviewNotice";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
@@ -164,6 +166,7 @@ export function KbArticleDetail({
           </div>
           <div className="flex items-center gap-2 shrink-0 pt-0.5">
             <KbStatusBadge status={article.status} />
+            <RefreshButton queryKeys={[KEY.kb]} />
             {actions}
             {onEdit && (
               <Button size="sm" className="gap-1.5" onClick={onEdit}>

@@ -22,12 +22,6 @@ interface Props {
   detectedAt?: string | null;
   /** Battery type of the asset — needed to read the SAME thresholds the backend enforced. */
   batteryTypeId?: string | null;
-  /**
-   * True when a person supplied `detectedAt` (Customer- or Staff-created ticket) rather than
-   * the scanner. Widens the search window, because a human recalls "around 3pm", not 15:04:32.
-   * Defaults to false so an omitted flag keeps the strict machine window.
-   */
-  isManualReport?: boolean;
 }
 
 /**
@@ -42,13 +36,8 @@ export default function BatteryWarningEvidencePanel({
   batteryAssetId,
   detectedAt,
   batteryTypeId,
-  isManualReport = false,
 }: Props) {
-  const { data, isLoading } = useReadingEvidence(
-    batteryAssetId,
-    detectedAt,
-    isManualReport,
-  );
+  const { data, isLoading } = useReadingEvidence(batteryAssetId, detectedAt);
   const { data: threshold, isLoading: isThresholdLoading } = useThresholdByType(
     batteryTypeId ?? "",
     undefined,
@@ -90,14 +79,6 @@ export default function BatteryWarningEvidencePanel({
         {breachCount > 0 && (
           <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
             {breachCount}
-          </span>
-        )}
-        {threshold && (
-          // Name the limits on screen: without them a row of numbers is not evidence of
-          // anything — the reader cannot tell which value was out of bounds, or by how much.
-          <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
-            {threshold.batteryTypeName} · {threshold.temperatureMin}…
-            {threshold.temperatureMax}°C · SOC {threshold.socWarningThreshold}%
           </span>
         )}
       </div>
