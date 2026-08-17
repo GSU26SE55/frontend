@@ -22,12 +22,6 @@ interface Props {
   detectedAt?: string | null;
   /** Battery type of the asset — needed to read the SAME thresholds the backend enforced. */
   batteryTypeId?: string | null;
-  /**
-   * True when a person supplied `detectedAt` (Customer- or Staff-created ticket) rather than
-   * the scanner. Widens the search window, because a human recalls "around 3pm", not 15:04:32.
-   * Defaults to false so an omitted flag keeps the strict machine window.
-   */
-  isManualReport?: boolean;
 }
 
 /**
@@ -42,13 +36,8 @@ export default function BatteryWarningEvidencePanel({
   batteryAssetId,
   detectedAt,
   batteryTypeId,
-  isManualReport = false,
 }: Props) {
-  const { data, isLoading } = useReadingEvidence(
-    batteryAssetId,
-    detectedAt,
-    isManualReport,
-  );
+  const { data, isLoading } = useReadingEvidence(batteryAssetId, detectedAt);
   const { data: threshold, isLoading: isThresholdLoading } = useThresholdByType(
     batteryTypeId ?? "",
     undefined,

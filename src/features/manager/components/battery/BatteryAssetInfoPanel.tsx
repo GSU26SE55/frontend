@@ -41,14 +41,11 @@ interface Props {
   batteryAssetId?: string | null;
   /** Incident detection time (ticket.detectedAt) — used to show the warning evidence log. */
   detectedAt?: string | null;
-  /** True when a person supplied `detectedAt` (not the scanner) — widens the evidence window. */
-  isManualReport?: boolean;
 }
 
 export default function BatteryAssetInfoPanel({
   batteryAssetId,
   detectedAt,
-  isManualReport = false,
 }: Props) {
   const {
     data: asset,
@@ -128,7 +125,6 @@ export default function BatteryAssetInfoPanel({
           batteryAssetId={batteryAssetId}
           detectedAt={detectedAt}
           batteryTypeId={asset.batteryTypeId}
-          isManualReport={isManualReport}
         />
       </div>
 
