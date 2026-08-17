@@ -1,4 +1,5 @@
 import { UserRole } from "@/shared/types/account/session.types";
+import { NotificationTypeEnum } from "@/shared/enums/notification/notification.enum";
 import type { NotificationDto } from "@/shared/types/notification/notification.types";
 
 const ROLE_PREFIX: Record<UserRole, string> = {
@@ -62,12 +63,25 @@ const ENTITY_ROUTES: Record<string, EntityRoute> = {
  * `null` does not mean clicking does nothing — the caller opens it in the inbox instead.
  */
 export function notificationDeepLink(
-  n: Pick<NotificationDto, "entityType" | "entityId">,
+  n: Pick<NotificationDto, "entityType" | "entityId" | "type">,
   role?: UserRole,
 ): string | null {
   if (!n.entityType || !n.entityId || !role) return null;
 
-  const route = ENTITY_ROUTES[n.entityType.trim().toLowerCase()];
+  const entityType = n.entityType.trim().toLowerCase();
+
+  // A freshly created ticket has no assignee yet — Manager works it from the Queue, not
+  // from the plain ticket list, so the deep link must land on the queue's own detail route
+  // (tickets/queue/:id) for "Back" to return to the Queue instead of the full ticket list.
+  if (
+    entityType === "ticket" &&
+    role === UserRole.MANAGER &&
+    n.type === NotificationTypeEnum.TicketCreated
+  ) {
+    return `/${ROLE_PREFIX[role]}/tickets/queue/${n.entityId}`;
+  }
+
+  const route = ENTITY_ROUTES[entityType];
   if (!route || !route.roles.includes(role)) return null;
 
   return `/${ROLE_PREFIX[role]}/${route.path(n.entityId)}`;

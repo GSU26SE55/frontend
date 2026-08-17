@@ -8,17 +8,15 @@ import {
   MapPin,
   Settings,
   BellRing,
-  Inbox,
   Ticket,
   Clock,
   BookOpen,
   ShieldAlert,
   BarChart3,
-  SlidersHorizontal,
+  // SlidersHorizontal, // unused while "Calibrations expiring" nav entry is hidden
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
-  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -39,8 +37,6 @@ export const MANAGER_NAV: NavSection[] = [
         path: "/manager/analytics",
         icon: BarChart3,
       },
-      // Route shared by every role (no /manager prefix) — the BE already filters by UserId from the JWT.
-      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {
@@ -73,11 +69,12 @@ export const MANAGER_NAV: NavSection[] = [
         path: "/manager/environmental-incidents",
         icon: ShieldAlert,
       },
-      {
-        label: "Calibrations expiring",
-        path: "/manager/iot-calibrations",
-        icon: SlidersHorizontal,
-      },
+      // Ẩn tạm Calibrations expiring khỏi sidebar — không xoá, chờ yêu cầu bật lại.
+      // {
+      //   label: "Calibrations expiring",
+      //   path: "/manager/iot-calibrations",
+      //   icon: SlidersHorizontal,
+      // },
     ],
   },
   {

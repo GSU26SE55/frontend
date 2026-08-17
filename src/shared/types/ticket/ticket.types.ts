@@ -343,9 +343,12 @@ export interface TriageRejectPayload {
   reason: string;
 }
 
-export interface EscalatePayload {
-  reason: EscalationReasonEnum;
-  note?: string;
+// POST /api/admin/tickets/{id}/escalation-decision — Manager approves or rejects a Staff
+// escalation request. Maps 1-1 to BE TicketEscalationDecisionCommand.
+export interface EscalationDecisionPayload {
+  approve: boolean;
+  reason: string;
+  keepCurrentPrimary: boolean;
 }
 
 // POST /api/admin/tickets/{id}/re-prioritize — Manager changes the priority with a reason.

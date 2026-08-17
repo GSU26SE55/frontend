@@ -17,7 +17,7 @@ import type {
   AssignPayload,
   ReassignPayload,
   RejectPayload,
-  EscalatePayload,
+  EscalationDecisionPayload,
   AddCommentPayload,
   MergeTicketPayload,
   ReprioritizePayload,
@@ -121,16 +121,11 @@ export const managerTicketService = {
       payload,
     ),
 
-  // GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests.
-  escalateApprove: (id: string, payload: EscalatePayload) =>
+  // GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests
+  // through the single BE decision endpoint (Approve bool distinguishes the two).
+  escalationDecision: (id: string, payload: EscalationDecisionPayload) =>
     axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.ADMIN.TICKETS.ESCALATE_APPROVE(id),
-      payload,
-    ),
-
-  escalateReject: (id: string, payload: RejectPayload) =>
-    axiosInstance.post<TicketActionResponse>(
-      ENDPOINTS.ADMIN.TICKETS.ESCALATE_REJECT(id),
+      ENDPOINTS.ADMIN.TICKETS.ESCALATION_DECISION(id),
       payload,
     ),
 

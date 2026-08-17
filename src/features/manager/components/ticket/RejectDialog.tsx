@@ -60,7 +60,9 @@ export default function RejectDialog({ ticketId, open, onClose }: Props) {
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rejection reason</FormLabel>
+                  <FormLabel>
+                    Rejection reason <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea placeholder="Enter reason..." {...field} />
                   </FormControl>

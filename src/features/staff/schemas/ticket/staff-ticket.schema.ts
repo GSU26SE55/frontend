@@ -9,19 +9,27 @@ import { attachmentSchema } from "@/shared/schemas/ticket/ticket-comment.schema"
 // commentAttachment and maintenanceAttachment share a shape → both use attachmentSchema.
 const maintenanceAttachmentSchema = attachmentSchema;
 
-// GH-1176: rescheduledStartAtUtc required — hold requires a future customer appointment.
+// GH-1176: rescheduledStartAt required — hold requires a future customer appointment.
+// Field name must match BE TicketHoldCommand.RescheduledStartAt exactly (no Utc suffix).
 export const holdSchema = z.object({
   reason: z.nativeEnum(PauseReasonEnum),
-  rescheduledStartAtUtc: z
+  rescheduledStartAt: z
     .string()
     .min(1, "A future appointment is required")
     .refine(
       (v) => new Date(v) > new Date(),
       "Appointment must be in the future",
     ),
-  note: z.string().optional(),
+  // Required by the BE (TicketHoldCommand) — empty/whitespace → 400.
+  note: z.string().min(1, "A hold note is required"),
 });
 export type HoldFormValues = z.infer<typeof holdSchema>;
+
+// Required by the BE (TicketResumeCommand) — empty → 400.
+export const resumeSchema = z.object({
+  reason: z.string().min(1, "An early-resume reason is required"),
+});
+export type ResumeFormValues = z.infer<typeof resumeSchema>;
 
 export const resolveSchema = z.object({
   // Required by the BE (TicketResolveCommand) — empty → 400.

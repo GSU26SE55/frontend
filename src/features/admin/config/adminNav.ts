@@ -14,7 +14,6 @@ import {
   Settings,
   Bell,
   BellRing,
-  Inbox,
   Ticket,
   ScrollText,
   BookOpen,
@@ -25,7 +24,6 @@ import {
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
-  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -44,8 +42,6 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/analytics",
         icon: BarChart3,
       },
-      // Route shared across all roles (no /admin prefix) — BE filters by UserId in the JWT.
-      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {

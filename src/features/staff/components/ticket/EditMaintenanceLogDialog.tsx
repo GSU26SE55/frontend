@@ -99,7 +99,9 @@ export function EditMaintenanceLogDialog({
               name="logType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Log type</FormLabel>
+                  <FormLabel>
+                    Log type <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}

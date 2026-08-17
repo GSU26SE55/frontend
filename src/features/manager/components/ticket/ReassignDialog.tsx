@@ -23,9 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import {
   reassignSchema,
   type ReassignFormValues,
@@ -116,7 +116,10 @@ export default function ReassignDialog({
               name="newPrimaryHandlerStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Primary Handler *</FormLabel>
+                  <FormLabel>
+                    New Primary Handler{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -179,7 +182,11 @@ export default function ReassignDialog({
                     Start schedule <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input type="datetime-local" {...field} />
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      className="w-full"
+                    />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
                     Within the last 5 minutes → starts immediately (InProgress).
@@ -195,7 +202,10 @@ export default function ReassignDialog({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reassignment reason</FormLabel>
+                  <FormLabel>
+                    Reassignment reason{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea placeholder="Reason..." {...field} />
                   </FormControl>

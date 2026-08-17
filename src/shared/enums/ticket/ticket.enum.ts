@@ -71,9 +71,11 @@ export const TicketVerifyStatusLabel: Record<TicketVerifyStatusEnum, string> = {
 };
 
 // #697 — a ticket has 1 PrimaryHandler + N Supporters (replacing the old assignedStaffId).
+// GH-1176: PreviousPrimaryHandler — kept on reassign/escalate for audit trail (BE AssignmentRoleEnum=3).
 export const TicketAssignmentRoleEnum = {
   PrimaryHandler: "PrimaryHandler", // owns the ticket; counts toward My Tickets/KPI
   Supporter: "Supporter", // assists, internal chat access only — does NOT count toward workload
+  PreviousPrimaryHandler: "PreviousPrimaryHandler", // superseded by a reassign/escalate decision
 } as const;
 export type TicketAssignmentRoleEnum =
   (typeof TicketAssignmentRoleEnum)[keyof typeof TicketAssignmentRoleEnum];
@@ -84,6 +86,7 @@ export const TicketAssignmentRoleLabel: Record<
 > = {
   [TicketAssignmentRoleEnum.PrimaryHandler]: "Primary handler",
   [TicketAssignmentRoleEnum.Supporter]: "Supporter",
+  [TicketAssignmentRoleEnum.PreviousPrimaryHandler]: "Previous primary handler",
 };
 
 export const ImpactScopeEnum = {
@@ -145,6 +148,8 @@ export const MaintenanceLogTypeEnum = {
   OnSite: "OnSite",
   PartReplacement: "PartReplacement",
   Inspection: "Inspection",
+  // Log auto-created when Staff completes a ticket — distinct from logs written mid-work.
+  Completion: "Completion",
 } as const;
 export type MaintenanceLogTypeEnum =
   (typeof MaintenanceLogTypeEnum)[keyof typeof MaintenanceLogTypeEnum];

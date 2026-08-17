@@ -10,7 +10,7 @@ import type {
   AssignPayload,
   ReassignPayload,
   RejectPayload,
-  EscalatePayload,
+  EscalationDecisionPayload,
   AddCommentPayload,
   ReprioritizePayload,
 } from "@/shared/types/ticket/ticket.types";
@@ -156,12 +156,16 @@ export const useRejectTicket = (id: string) => {
   });
 };
 
-// GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests.
+// GH-1176: force escalation removed; Manager approves/rejects Staff escalation requests
+// through the single BE decision endpoint (Approve bool distinguishes the two).
 export const useEscalateApproveTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: EscalatePayload) =>
-      managerTicketService.escalateApprove(id, payload),
+    mutationFn: (payload: Omit<EscalationDecisionPayload, "approve">) =>
+      managerTicketService.escalationDecision(id, {
+        ...payload,
+        approve: true,
+      }),
     onSuccess: () => {
       toast.success(MANAGER_MESSAGES.ticket.escalated);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
@@ -174,8 +178,11 @@ export const useEscalateApproveTicket = (id: string) => {
 export const useEscalateRejectTicket = (id: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: RejectPayload) =>
-      managerTicketService.escalateReject(id, payload),
+    mutationFn: (payload: Omit<EscalationDecisionPayload, "approve">) =>
+      managerTicketService.escalationDecision(id, {
+        ...payload,
+        approve: false,
+      }),
     onSuccess: () => {
       toast.success(MANAGER_MESSAGES.ticket.escalationRejected);
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
