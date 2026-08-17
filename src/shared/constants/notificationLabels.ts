@@ -56,6 +56,11 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationTypeEnum, string> = {
   [NotificationTypeEnum.BatteryAnomalyWarning]: "Battery anomaly (warning)",
   [NotificationTypeEnum.BatteryAnomalyInfo]: "Battery anomaly (info)",
   [NotificationTypeEnum.TicketMerged]: "Ticket merged",
+  [NotificationTypeEnum.SlaAutoResumed]: "SLA resumed",
+  [NotificationTypeEnum.IotDeviceRecovered]: "IoT device recovered",
+  [NotificationTypeEnum.IotDeviceAutoDecommissioned]: "IoT device disabled",
+  [NotificationTypeEnum.TicketWorkStarted]: "Work started",
+  [NotificationTypeEnum.TicketScheduleChanged]: "Schedule changed",
   [NotificationTypeEnum.System]: "System notification",
 };
 
