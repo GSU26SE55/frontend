@@ -137,6 +137,9 @@ export interface WarrantyExpiringRow {
   warrantyEndDate: string | null;
   daysRemaining: number | null;
   customerId: string;
+  // null when the account was deleted or the read model has not caught up — render
+  // customerId in that case rather than leaving the cell blank.
+  customerName: string | null;
 }
 
 export interface EnvironmentalIncidentRow {

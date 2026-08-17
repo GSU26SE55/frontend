@@ -81,14 +81,6 @@ export default function BatteryWarningEvidencePanel({
             {breachCount}
           </span>
         )}
-        {threshold && (
-          // Name the limits on screen: without them a row of numbers is not evidence of
-          // anything — the reader cannot tell which value was out of bounds, or by how much.
-          <span className="text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
-            {threshold.batteryTypeName} · {threshold.temperatureMin}…
-            {threshold.temperatureMax}°C · SOC {threshold.socWarningThreshold}%
-          </span>
-        )}
       </div>
 
       {isLoading || isThresholdLoading ? (

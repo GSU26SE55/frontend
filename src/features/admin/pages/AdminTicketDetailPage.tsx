@@ -153,8 +153,8 @@ export default function AdminTicketDetailPage() {
   const { mutate: deleteChat, isPending: deleteChatPending } =
     useDeleteTicketChat();
   const { mutate: markChatsRead } = useMarkTicketChatsRead();
-  const handleMarkRead = (chatIds: string[]) =>
-    markChatsRead({ ticketId, payload: { chatIds } });
+  const handleMarkRead = (chatIds: string[], onFailed: () => void) =>
+    markChatsRead({ ticketId, payload: { chatIds }, onFailed });
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId, chatId: chat.id, targetLanguage });
@@ -255,7 +255,7 @@ export default function AdminTicketDetailPage() {
           <Tabs defaultValue="timeline" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
-                <TabsTrigger value="timeline">Activity history</TabsTrigger>
+                <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 {/* `group` lets ChatUnreadBadge hide itself while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
                   Chat
@@ -275,7 +275,10 @@ export default function AdminTicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} assignments={ticket?.assignments} />
+                <TicketActivityTimeline
+                  activities={activities}
+                  assignments={ticket?.assignments}
+                />
               )}
             </TabsContent>
 
@@ -473,24 +476,20 @@ export default function AdminTicketDetailPage() {
             )}
             <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />
             <SideInfoRow label="Urgency" value={ticket.urgencyLevel ?? null} />
-            <SideInfoRow
-              label="Battery serial"
-              value={ticket.batterySerialNumber ?? null}
-            />
+            {/* Site-level ticket has no battery by design — see the Manager page for the full
+                reasoning. An empty row here reads as a load failure. */}
+            {!ticket.environmentalIncidentId && (
+              <SideInfoRow
+                label="Battery serial"
+                value={ticket.batterySerialNumber ?? null}
+              />
+            )}
             <SideInfoRow
               label="Created"
               value={format(new Date(ticket.createdAt), "MM/dd/yyyy HH:mm", {
                 locale: enUS,
               })}
             />
-            {ticket.detectedAt && (
-              <SideInfoRow
-                label="Detected at"
-                value={format(new Date(ticket.detectedAt), "MM/dd/yyyy HH:mm", {
-                  locale: enUS,
-                })}
-              />
-            )}
             {/* GH-866 — a single incident detection timestamp (replaces the old from/to pair). */}
             {ticket.detectedAt && (
               <SideInfoRow

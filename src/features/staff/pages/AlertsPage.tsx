@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Bell, CheckCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { KpiCard } from "@/shared/components/dashboard/KpiCard";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { useStaffNotifications } from "@/features/staff/hooks/notification/useStaffNotifications";
 import {
   toneClass,
@@ -77,12 +78,11 @@ export default function AlertsPage() {
   const [page, setPage] = useState(1);
   const [unreadOnly, setUnreadOnly] = useState(false);
 
-  const { data, isLoading, isError, refetch, isFetching } =
-    useStaffNotifications({
-      pageNumber: page,
-      pageSize: PAGE_SIZE,
-      unreadOnly: unreadOnly || undefined,
-    });
+  const { data, isLoading, isError } = useStaffNotifications({
+    pageNumber: page,
+    pageSize: PAGE_SIZE,
+    unreadOnly: unreadOnly || undefined,
+  });
 
   const notifications = data?.items ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -126,17 +126,7 @@ export default function AlertsPage() {
           >
             Unread
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isFetching}
-          >
-            <RefreshCw
-              className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
-            />
-            Refresh
-          </Button>
+          <RefreshButton queryKeys={[["staff", "notifications"]]} />
         </div>
       </div>
 

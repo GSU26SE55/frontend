@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   notificationPreferenceSchema,
@@ -27,6 +20,14 @@ import type { NotificationPreferenceDto } from "@/shared/types/notification/noti
 import { MESSAGES } from "@/shared/constants/messages";
 
 // Default matches BE GetNotificationPreferenceQueryHandler (not yet configured)
+/**
+ * The one time zone the system runs on. Not a user choice: quiet hours are resolved
+ * against it on the BE (NotificationDispatcher falls back to this same value), so
+ * letting a user pick a different one only makes their quiet hours fire at unexpected
+ * local times. The field still travels in the PUT payload — the BE column is required.
+ */
+const SYSTEM_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
 const DEFAULT_PREF: NotificationPreferenceFormValues = {
   pushEnabled: true,
   emailEnabled: true,
@@ -34,7 +35,7 @@ const DEFAULT_PREF: NotificationPreferenceFormValues = {
   inAppEnabled: true,
   quietHoursStart: null,
   quietHoursEnd: null,
-  timeZone: "Asia/Ho_Chi_Minh",
+  timeZone: SYSTEM_TIME_ZONE,
 };
 
 const CHANNELS = [
@@ -43,19 +44,6 @@ const CHANNELS = [
   { name: "smsEnabled", label: "SMS", desc: "Send via SMS message" },
   { name: "inAppEnabled", label: "In-app", desc: "Show inside the app" },
 ] as const;
-
-const TIMEZONE_OPTIONS = [
-  "Asia/Ho_Chi_Minh",
-  "Asia/Bangkok",
-  "Asia/Singapore",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "Asia/Kolkata",
-  "Australia/Sydney",
-  "Europe/London",
-  "America/New_York",
-  "UTC",
-];
 
 function toFormValues(
   dto: NotificationPreferenceDto,
@@ -67,7 +55,11 @@ function toFormValues(
     inAppEnabled: dto.inAppEnabled,
     quietHoursStart: dto.quietHoursStart ?? null,
     quietHoursEnd: dto.quietHoursEnd ?? null,
-    timeZone: dto.timeZone,
+    // Not editable in the UI: the system runs on a single time zone. Kept in the form
+    // (and in the PUT payload) because quiet hours are meaningless without it — the BE
+    // resolves them against this value. Echo back what the BE stored rather than forcing
+    // SYSTEM_TIME_ZONE, so a value set elsewhere is not silently overwritten on save.
+    timeZone: dto.timeZone || SYSTEM_TIME_ZONE,
   };
 }
 
@@ -230,36 +222,6 @@ export default function NotificationPreferencesSection() {
               )}
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Time zone */}
-      <div className="space-y-1.5">
-        <Label>Time zone</Label>
-        <Controller
-          name="timeZone"
-          control={control}
-          render={({ field }) => (
-            <Select
-              value={field.value}
-              onValueChange={field.onChange}
-              items={TIMEZONE_OPTIONS.map((tz) => ({ value: tz, label: tz }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select time zone" />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                {TIMEZONE_OPTIONS.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.timeZone && (
-          <p className="text-xs text-red-500">{errors.timeZone.message}</p>
         )}
       </div>
 

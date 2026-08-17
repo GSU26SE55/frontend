@@ -104,12 +104,3 @@ export const NotificationFrequencyEnum = {
 } as const;
 export type NotificationFrequencyEnum =
   (typeof NotificationFrequencyEnum)[keyof typeof NotificationFrequencyEnum];
-
-// Device token platform — used by the /api/device-tokens endpoints.
-export const DevicePlatformEnum = {
-  Ios: 1,
-  Android: 2,
-  Web: 3,
-} as const;
-export type DevicePlatformEnum =
-  (typeof DevicePlatformEnum)[keyof typeof DevicePlatformEnum];

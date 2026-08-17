@@ -52,6 +52,7 @@ import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDu
 import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKbReferencesPanel";
 import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
+import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -162,8 +163,8 @@ export default function TicketDetailPage() {
   const { mutate: deleteChat, isPending: deleteChatPending } =
     useDeleteTicketChat();
   const { mutate: markChatsRead } = useMarkTicketChatsRead();
-  const handleMarkRead = (chatIds: string[]) =>
-    markChatsRead({ ticketId, payload: { chatIds } });
+  const handleMarkRead = (chatIds: string[], onFailed: () => void) =>
+    markChatsRead({ ticketId, payload: { chatIds }, onFailed });
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId, chatId: chat.id, targetLanguage });
@@ -356,6 +357,16 @@ export default function TicketDetailPage() {
                     : ticket.batteryAssetId
                       ? [ticket.batteryAssetId]
                       : [];
+                // See the Manager page for why this precedes the empty fallback: on a site-level
+                // ticket "no battery" is the correct shape, not missing data.
+                if (ids.length === 0 && ticket.environmentalIncidentId)
+                  return (
+                    <EnvironmentalIncidentInfoPanel
+                      incidentId={ticket.environmentalIncidentId}
+                      description={ticket.description}
+                      basePath="/staff"
+                    />
+                  );
                 if (ids.length === 0)
                   return <BatteryAssetInfoPanel batteryAssetId={null} />;
                 return (

@@ -32,6 +32,7 @@ import {
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
 import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
+import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -177,8 +178,8 @@ export default function TicketDetailPage() {
   const { mutate: deleteChat, isPending: deleteChatPending } =
     useDeleteTicketChat();
   const { mutate: markChatsRead } = useMarkTicketChatsRead();
-  const handleMarkRead = (chatIds: string[]) =>
-    markChatsRead({ ticketId: id, payload: { chatIds } });
+  const handleMarkRead = (chatIds: string[], onFailed: () => void) =>
+    markChatsRead({ ticketId: id, payload: { chatIds }, onFailed });
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId: id, chatId: chat.id, targetLanguage });
@@ -414,6 +415,17 @@ export default function TicketDetailPage() {
                     : ticket.batteryAssetId
                       ? [ticket.batteryAssetId]
                       : [];
+                // No battery AND an incident id → site-level ticket. Checked before the empty
+                // fallback because "no battery attached" is the normal, correct shape here, not
+                // missing data, and the battery panel's empty state says the opposite.
+                if (ids.length === 0 && ticket.environmentalIncidentId)
+                  return (
+                    <EnvironmentalIncidentInfoPanel
+                      incidentId={ticket.environmentalIncidentId}
+                      description={ticket.description}
+                      basePath="/manager"
+                    />
+                  );
                 if (ids.length === 0)
                   return <BatteryAssetInfoPanel batteryAssetId={null} />;
                 return (
@@ -821,18 +833,13 @@ export default function TicketDetailPage() {
                     }
                   />
                 )}
-                <SideInfoRow
-                  label="Battery serial"
-                  value={ticket.batterySerialNumber ?? null}
-                />
-                {ticket.detectedAt && (
+                {/* Hidden on site-level tickets: the row can never hold a value there, and an
+                    empty "—" reads as data that failed to load rather than a field that does
+                    not apply. */}
+                {!ticket.environmentalIncidentId && (
                   <SideInfoRow
-                    label="Detected at"
-                    value={format(
-                      new Date(ticket.detectedAt),
-                      "MM/dd/yyyy HH:mm",
-                      { locale: enUS },
-                    )}
+                    label="Battery serial"
+                    value={ticket.batterySerialNumber ?? null}
                   />
                 )}
                 {/* GH-866 — single incident detection timestamp (replaces the old from/to pair). */}

@@ -18,8 +18,10 @@ export default function CalibrationsExpiringTable({ items }: Props) {
   const columns: ColumnDef<IotDeviceCalibrationDto>[] = [
     {
       id: "iotDeviceId",
-      header: "Device ID",
-      cell: (item) => item.iotDeviceId,
+      header: "Device",
+      // Falls back to the id when the device row is gone — an expiring calibration still
+      // has to be visible.
+      cell: (item) => item.iotDeviceCode ?? item.iotDeviceId,
       cellClassName: "font-mono text-xs",
     },
     {
