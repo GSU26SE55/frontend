@@ -5,10 +5,13 @@ import {
   useReadingEvidence,
   toWarningRows,
 } from "@/shared/hooks/battery/useReadingEvidence";
+import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 
 interface Props {
   assetId?: string | null;
   detectedAt?: string | null;
+  /** Battery type of the asset — needed to read the SAME thresholds the backend enforced. */
+  batteryTypeId?: string | null;
   /** Column label (ticket code) — so the Manager knows which ticket the evidence belongs to. */
   title: string;
 }
@@ -21,10 +24,27 @@ interface Props {
 export default function CompareEvidencePanel({
   assetId,
   detectedAt,
+  batteryTypeId,
   title,
 }: Props) {
   const { data, isLoading } = useReadingEvidence(assetId, detectedAt);
-  const rows = toWarningRows(data?.items ?? []);
+  const { data: threshold } = useThresholdByType(
+    batteryTypeId ?? "",
+    undefined,
+    !!batteryTypeId,
+  );
+  const rows = toWarningRows(
+    data?.items ?? [],
+    threshold
+      ? {
+          temperatureMax: threshold.temperatureMax,
+          temperatureMin: threshold.temperatureMin,
+          socWarningThreshold: threshold.socWarningThreshold,
+          currentMaxCharge: threshold.currentMaxCharge,
+          currentMaxDischarge: threshold.currentMaxDischarge,
+        }
+      : undefined,
+  );
 
   // Hook has enabled: !!assetId && !!detectedAt → never fetches without a timestamp.
   const disabled = !assetId || !detectedAt;
@@ -46,7 +66,7 @@ export default function CompareEvidencePanel({
         </div>
       ) : rows.length === 0 ? (
         <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-          No readings exceeded thresholds within ±15 minutes of detection.
+          No readings exceeded thresholds within ±2 minutes of detection.
         </p>
       ) : (
         <div className="max-h-64 overflow-y-auto rounded-md border">

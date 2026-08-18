@@ -214,9 +214,23 @@ export default function TicketDetailPage() {
   // actually have something to offer — otherwise clicking it lands on an empty target picker.
   // useAdminTicketList shares its query key (and 30s staleTime) with the ticket list page, so
   // this usually resolves from cache; useMergeCandidates is a plain useMemo, no extra request.
+  // TicketGetListQueryHandler hides Open tickets by default (that's the Queue's job), so a
+  // second call with status=Open is required — otherwise an Open source ticket (the only case
+  // canMerge even applies) can never find its Open auto-origin target (e.g. the AI-suggested one).
   const { data: mergeSourceList } = useAdminTicketList({ pageSize: 100 });
+  const { data: mergeSourceOpenList } = useAdminTicketList({
+    pageSize: 100,
+    status: TicketStatusEnum.Open,
+  });
+  const mergeSourceItems = useMemo(
+    () => [
+      ...(mergeSourceList?.items ?? []),
+      ...(mergeSourceOpenList?.items ?? []),
+    ],
+    [mergeSourceList?.items, mergeSourceOpenList?.items],
+  );
   const mergeCandidates = useMergeCandidates(
-    mergeSourceList?.items,
+    mergeSourceItems,
     id,
     ticket?.suspectedDuplicateOfTicketId,
   );

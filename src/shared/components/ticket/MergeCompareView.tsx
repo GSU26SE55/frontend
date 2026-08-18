@@ -325,11 +325,13 @@ export default function MergeCompareView({
               <CompareEvidencePanel
                 assetId={source.batteryAssetId}
                 detectedAt={source.detectedAt}
+                batteryTypeId={sourceAsset?.batteryTypeId}
                 title={source.code}
               />
               <CompareEvidencePanel
                 assetId={target.batteryAssetId}
                 detectedAt={target.detectedAt}
+                batteryTypeId={targetAsset?.batteryTypeId}
                 title={target.code}
               />
             </CardContent>

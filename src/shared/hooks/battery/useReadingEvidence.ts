@@ -84,6 +84,8 @@ export function useReadingEvidence(
 export interface EvidenceThresholds {
   temperatureMax: number;
   temperatureMin: number;
+  voltageMax: number;
+  voltageMin: number;
   socWarningThreshold: number;
   currentMaxCharge?: number;
   currentMaxDischarge?: number;
@@ -121,6 +123,14 @@ export function toWarningRows(
     if (r.temperature < thresholds.temperatureMin)
       reasons.push(
         `Low temperature ${r.temperature.toFixed(0)}°C < ${thresholds.temperatureMin.toFixed(0)}°C`,
+      );
+    if (r.voltage > thresholds.voltageMax)
+      reasons.push(
+        `Overvoltage ${r.voltage.toFixed(2)}V > ${thresholds.voltageMax.toFixed(2)}V`,
+      );
+    if (r.voltage < thresholds.voltageMin)
+      reasons.push(
+        `Undervoltage ${r.voltage.toFixed(2)}V < ${thresholds.voltageMin.toFixed(2)}V`,
       );
     if (r.socPercent < thresholds.socWarningThreshold)
       reasons.push(
