@@ -11,7 +11,6 @@ import {
   Lock,
   KeyRound,
   MonitorSmartphone,
-  BellRing,
   Bell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,7 +25,6 @@ import GoogleLinkSection from "@/features/auth/components/profile/GoogleLinkSect
 import TrustedDevicesSection from "@/features/auth/components/trusted-device/TrustedDevicesSection";
 import LoginHistoryTable from "@/features/auth/components/account/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/profile/DangerZone";
-import DeviceTokensSection from "@/features/auth/components/profile/DeviceTokensSection";
 import NotificationPreferencesSection from "@/features/auth/components/profile/NotificationPreferencesSection";
 import NotificationCategoryMatrixSection from "@/features/auth/components/profile/NotificationCategoryMatrixSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
@@ -129,12 +127,6 @@ const AccountSettingsPage = () => {
         label: "Security",
         icon: ShieldCheck,
         desc: "Two-factor authentication, phone number, and external links",
-      },
-      {
-        key: "devices",
-        label: "Notification devices",
-        icon: BellRing,
-        desc: "Manage devices registered for push notifications",
       },
       {
         key: "notifications",
@@ -381,9 +373,6 @@ const AccountSettingsPage = () => {
                     </SecurityRow>
                   </div>
                 )}
-
-                {/* Notification devices (push device tokens) */}
-                {active === "devices" && <DeviceTokensSection />}
 
                 {active === "notifications" && (
                   <div className="space-y-8">

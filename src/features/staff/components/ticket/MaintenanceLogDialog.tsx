@@ -52,6 +52,11 @@ interface Props {
   onClose: () => void;
   onSubmit: (data: MaintenanceLogFormValues) => void;
   isPending: boolean;
+  title?: string;
+  submitLabel?: string;
+  // Complete flow: force LogType=Completion and hide the picker — the log's type doesn't
+  // depend on what Staff chooses, it's determined by the action that created it.
+  fixedLogType?: MaintenanceLogTypeEnum;
 }
 
 export function MaintenanceLogDialog({
@@ -59,13 +64,18 @@ export function MaintenanceLogDialog({
   onClose,
   onSubmit,
   isPending,
+  title = "Add maintenance log",
+  submitLabel = "Save log",
+  fixedLogType,
 }: Props) {
   const [uploadingBefore, setUploadingBefore] = useState(false);
   const [uploadingAfter, setUploadingAfter] = useState(false);
   const uploading = uploadingBefore || uploadingAfter;
   const form = useForm<MaintenanceLogFormValues>({
     resolver: zodResolver(maintenanceLogSchema),
-    defaultValues: { logType: MaintenanceLogTypeEnum.RemoteSupport },
+    defaultValues: {
+      logType: fixedLogType ?? MaintenanceLogTypeEnum.RemoteSupport,
+    },
   });
 
   // The dialog stays mounted (the `open` prop just toggles visibility) → clear photos
@@ -74,8 +84,9 @@ export function MaintenanceLogDialog({
     if (open) {
       form.setValue("beforePhotos", []);
       form.setValue("afterPhotos", []);
+      if (fixedLogType) form.setValue("logType", fixedLogType);
     }
-  }, [open, form]);
+  }, [open, form, fixedLogType]);
 
   const handleSubmit = form.handleSubmit((data) => {
     onSubmit(data);
@@ -103,41 +114,47 @@ export function MaintenanceLogDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add maintenance log</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="logType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Log type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    items={Object.entries(LOG_TYPE_LABELS).map(([v, l]) => ({
-                      value: v,
-                      label: l,
-                    }))}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent alignItemWithTrigger={false}>
-                      {Object.entries(LOG_TYPE_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!fixedLogType && (
+              <FormField
+                control={form.control}
+                name="logType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Log type <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      items={Object.entries(LOG_TYPE_LABELS).map(([v, l]) => ({
+                        value: v,
+                        label: l,
+                      }))}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent alignItemWithTrigger={false}>
+                        {Object.entries(LOG_TYPE_LABELS).map(
+                          ([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="summary"
@@ -310,7 +327,7 @@ export function MaintenanceLogDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending || uploading}>
-                {isPending ? "Saving..." : "Save log"}
+                {isPending ? "Saving..." : submitLabel}
               </Button>
             </DialogFooter>
           </form>

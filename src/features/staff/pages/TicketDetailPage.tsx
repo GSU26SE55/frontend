@@ -2,18 +2,27 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { ArrowLeft, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { ArrowLeft, Lock, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
+  getPrimaryHandler,
   getPrimaryHandlerName,
   getSupporterNames,
+  getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
-import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
+import {
+  TicketStatusEnum,
+  MaintenanceLogTypeEnum,
+} from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
+import {
+  isTicketChatLocked,
+  TICKET_CHAT_LOCKED_NOTICE,
+} from "@/shared/utils/ticket.utils";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import type { MaintenanceLogDTO } from "@/shared/types/ticket/ticket.types";
 import {
@@ -35,7 +44,7 @@ import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
 import { HoldDialog } from "@/features/staff/components/ticket/HoldDialog";
-import { ResolveDialog } from "@/features/staff/components/ticket/ResolveDialog";
+import { ResumeDialog } from "@/features/staff/components/ticket/ResumeDialog";
 import { EscalateRequestDialog } from "@/features/staff/components/ticket/EscalateRequestDialog";
 import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
 import { AddCommentForm } from "@/features/staff/components/ticket/AddCommentForm";
@@ -43,7 +52,6 @@ import { MaintenanceLogDialog } from "@/features/staff/components/ticket/Mainten
 import { EditMaintenanceLogDialog } from "@/features/staff/components/ticket/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
-import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
   type ChatTab,
@@ -52,6 +60,7 @@ import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDu
 import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKbReferencesPanel";
 import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
+import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -64,7 +73,7 @@ import {
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
 import type { HoldFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
-import type { ResolveFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import type { ResumeFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { EscalateRequestFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { AddCommentFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { MaintenanceLogFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
@@ -93,9 +102,12 @@ export default function TicketDetailPage() {
   const navigate = useNavigate();
 
   const [holdOpen, setHoldOpen] = useState(false);
-  const [resolveOpen, setResolveOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  // Complete requires a maintenance log first — this dialog is reused for that flow
+  // (see handleCompleteLogSubmit below); the standalone "+ Add log" button never sets this.
+  const [completeLogOpen, setCompleteLogOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
   // Chat tab: new comments are sent under whichever tab is active (public/internal).
   const [chatTab, setChatTab] = useState<ChatTab>("public");
@@ -117,6 +129,9 @@ export default function TicketDetailPage() {
   // Handler's name — taken directly from assignments (BE already includes staffName).
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
+  const previousPrimaryHandlerNames = getPreviousPrimaryHandlerNames(
+    ticket?.assignments,
+  );
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
   const { data: comments = [] } = useStaffTicketComments(ticketId);
@@ -162,8 +177,8 @@ export default function TicketDetailPage() {
   const { mutate: deleteChat, isPending: deleteChatPending } =
     useDeleteTicketChat();
   const { mutate: markChatsRead } = useMarkTicketChatsRead();
-  const handleMarkRead = (chatIds: string[]) =>
-    markChatsRead({ ticketId, payload: { chatIds } });
+  const handleMarkRead = (chatIds: string[], onFailed: () => void) =>
+    markChatsRead({ ticketId, payload: { chatIds }, onFailed });
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId, chatId: chat.id, targetLanguage });
@@ -195,33 +210,34 @@ export default function TicketDetailPage() {
   const isPending = status === TicketStatusEnum.Pending;
   // GH-1176: Staff can comment while InProgress or Pending (held).
   const canComment = isInProgress || isPending;
+  // Only the current PrimaryHandler and Manager/Admin may post on the public channel.
+  // Supporter and PreviousPrimaryHandler may only view public — composer hidden on that tab for
+  // them (BE also enforces this — ChatAddCommandHandler returns 403 — this just avoids the
+  // round trip). Manager/Admin aren't in ticket.assignments, so allow them unconditionally.
+  const isPrimaryHandler =
+    getPrimaryHandler(ticket.assignments)?.staffId === currentUserId;
+  const canPostPublic =
+    user?.role === "MANAGER" || user?.role === "ADMIN" || isPrimaryHandler;
   const canAddLog = isInProgress;
   const canEditLog = isInProgress;
+  // Ticket finished → chat is archived: edit/delete locked and the composer replaced by a
+  // notice. Distinct from !canComment, which is also false mid-lifecycle (e.g. Open) — the
+  // composer is simply absent there, with no "closed" claim to make about it.
+  const chatLocked = isTicketChatLocked(status);
   // GH-1176: KB references blocked once Completed or terminal.
-  const canAddKb = !(
-    [
-      TicketStatusEnum.Completed,
-      TicketStatusEnum.Closed,
-      TicketStatusEnum.ClosedRejected,
-    ] as TicketStatusEnum[]
-  ).includes(status);
+  const canAddKb = !chatLocked;
   const kbAfterResolveOnly = status === TicketStatusEnum.Completed;
 
-  const handleHoldSubmit = (data: HoldFormValues) => {
-    holdMutation.mutate(
-      {
+  const handleHoldSubmit = (data: HoldFormValues) =>
+    holdMutation
+      .mutateAsync({
         ...data,
-        rescheduledStartAtUtc: new Date(
-          data.rescheduledStartAtUtc,
-        ).toISOString(),
-      },
-      { onSuccess: () => setHoldOpen(false) },
-    );
-  };
+        rescheduledStartAt: new Date(data.rescheduledStartAt).toISOString(),
+      })
+      .then(() => setHoldOpen(false));
 
-  const handleResolveSubmit = (data: ResolveFormValues) => {
-    completeMutation.mutate(data, { onSuccess: () => setResolveOpen(false) });
-  };
+  const handleResumeSubmit = (data: ResumeFormValues) =>
+    resumeMutationForHeld.mutateAsync(data).then(() => setResumeOpen(false));
 
   const handleEscalateSubmit = (data: EscalateRequestFormValues) => {
     escalateMutation.mutate(data, { onSuccess: () => setEscalateOpen(false) });
@@ -232,7 +248,28 @@ export default function TicketDetailPage() {
   };
 
   const handleLogSubmit = (data: MaintenanceLogFormValues) => {
-    logMutation.mutate(data, { onSuccess: () => setLogOpen(false) });
+    // BE requires StartedAt (TicketService.MaintenanceLogAddCommand.ValidateAsync) — the form
+    // has no dedicated input for it, so stamp "now" at submit time.
+    logMutation.mutate(
+      { ...data, startedAt: new Date().toISOString() },
+      { onSuccess: () => setLogOpen(false) },
+    );
+  };
+
+  // Complete requires a maintenance log first: save the log, then use its own summary as
+  // the ticket's resolutionSummary — no separate "describe the resolution" step.
+  const handleCompleteLogSubmit = (data: MaintenanceLogFormValues) => {
+    logMutation.mutate(
+      { ...data, startedAt: new Date().toISOString() },
+      {
+        onSuccess: () => {
+          completeMutation.mutate(
+            { resolutionSummary: data.summary },
+            { onSuccess: () => setCompleteLogOpen(false) },
+          );
+        },
+      },
+    );
   };
 
   const logs = ticket.maintenanceLogs ?? [];
@@ -259,11 +296,6 @@ export default function TicketDetailPage() {
               </span>
               <TicketStatusBadge status={ticket.status} />
               <TicketPriorityBadge priority={ticket.priority} />
-              {ticket.isIncident && (
-                <Badge variant="destructive" className="text-xs">
-                  Incident
-                </Badge>
-              )}
             </div>
             <h1
               className="text-base font-semibold truncate leading-tight mt-0.5"
@@ -284,12 +316,10 @@ export default function TicketDetailPage() {
           {isPending && ticket.pendingContext === "Held" && (
             <Button
               size="sm"
-              onClick={() => resumeMutationForHeld.mutate(undefined)}
+              onClick={() => setResumeOpen(true)}
               disabled={resumeMutationForHeld.isPending}
             >
-              {resumeMutationForHeld.isPending
-                ? "Processing..."
-                : "Resume early"}
+              {resumeMutationForHeld.isPending ? "Processing..." : "Resume"}
             </Button>
           )}
           {isInProgress && (
@@ -301,12 +331,8 @@ export default function TicketDetailPage() {
               >
                 Hold
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setResolveOpen(true)}
-              >
-                Report resolution
+              <Button size="sm" onClick={() => setCompleteLogOpen(true)}>
+                Complete
               </Button>
               <Button
                 variant="outline"
@@ -330,10 +356,8 @@ export default function TicketDetailPage() {
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                {/* `group` so ChatUnreadBadge auto-hides while this tab is active. */}
                 <TabsTrigger value="comments" className="group">
                   Chat
-                  <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   Logs{logs.length > 0 && ` (${logs.length})`}
@@ -356,6 +380,16 @@ export default function TicketDetailPage() {
                     : ticket.batteryAssetId
                       ? [ticket.batteryAssetId]
                       : [];
+                // See the Manager page for why this precedes the empty fallback: on a site-level
+                // ticket "no battery" is the correct shape, not missing data.
+                if (ids.length === 0 && ticket.environmentalIncidentId)
+                  return (
+                    <EnvironmentalIncidentInfoPanel
+                      incidentId={ticket.environmentalIncidentId}
+                      description={ticket.description}
+                      basePath="/staff"
+                    />
+                  );
                 if (ids.length === 0)
                   return <BatteryAssetInfoPanel batteryAssetId={null} />;
                 return (
@@ -420,7 +454,7 @@ export default function TicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  ticketClosed={status === TicketStatusEnum.Closed}
+                  ticketClosed={chatLocked}
                   ticketId={ticketId}
                   aiEnabled
                   onSelectSuggestion={(text) => {
@@ -447,7 +481,15 @@ export default function TicketDetailPage() {
                   onDiscardPending={discardChat}
                 />
               </div>
-              {canComment && (
+              {chatLocked && (
+                <div className="shrink-0 border-t border-border p-3">
+                  <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
+                    <Lock className="size-3.5" />
+                    {TICKET_CHAT_LOCKED_NOTICE}
+                  </p>
+                </div>
+              )}
+              {canComment && (chatTab === "internal" || canPostPublic) && (
                 <div className="shrink-0 border-t border-border p-3">
                   <TypingIndicator names={typingNames} />
                   <AddCommentForm
@@ -625,7 +667,7 @@ export default function TicketDetailPage() {
                   permissions, so they aren't carried over here. */}
               {ticket.origin === "ManualByCustomer" &&
                 (ticket.aiVerifyStatus ||
-                  ticket.suspectedDuplicateOfTicketId) && (
+                  (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
                   <div className="px-4 py-3 space-y-2">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       AI check
@@ -648,7 +690,9 @@ export default function TicketDetailPage() {
                         {ticket.aiVerifyReason}
                       </p>
                     )}
-                    {ticket.suspectedDuplicateOfTicketId && (
+                    {/* Dropped once the ticket is finished — the duplicate question is settled
+                        by then, and a ticket closed BY a merge would still flag itself. */}
+                    {ticket.suspectedDuplicateOfTicketId && !chatLocked && (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
                         <p className="font-medium">
                           ⚠ Suspected duplicate of another ticket
@@ -761,11 +805,11 @@ export default function TicketDetailPage() {
                   </div>
                 )}
 
-              {/* Rejection reason */}
+              {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
               {ticket.rejectionReason && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                    Rejection reason
+                    Reason
                   </p>
                   <p className="text-xs leading-relaxed">
                     {ticket.rejectionReason}
@@ -847,15 +891,13 @@ export default function TicketDetailPage() {
                 {supporterNames.length > 0 && (
                   <SideInfoRow
                     label="Supporters"
-                    value={
-                      <span className="flex flex-wrap justify-end gap-1">
-                        {supporterNames.map((name) => (
-                          <Badge key={name} variant="secondary">
-                            {name}
-                          </Badge>
-                        ))}
-                      </span>
-                    }
+                    value={supporterNames.join(", ")}
+                  />
+                )}
+                {previousPrimaryHandlerNames.length > 0 && (
+                  <SideInfoRow
+                    label="Previous handler"
+                    value={previousPrimaryHandlerNames.join(", ")}
                   />
                 )}
                 {/* GH-866 — 1 detection timestamp (replaces the old from/to pair). */}
@@ -903,11 +945,11 @@ export default function TicketDetailPage() {
         onSubmit={handleHoldSubmit}
         isPending={holdMutation.isPending}
       />
-      <ResolveDialog
-        open={resolveOpen}
-        onClose={() => setResolveOpen(false)}
-        onSubmit={handleResolveSubmit}
-        isPending={completeMutation.isPending}
+      <ResumeDialog
+        open={resumeOpen}
+        onClose={() => setResumeOpen(false)}
+        onSubmit={handleResumeSubmit}
+        isPending={resumeMutationForHeld.isPending}
       />
       <EscalateRequestDialog
         open={escalateOpen}
@@ -920,6 +962,16 @@ export default function TicketDetailPage() {
         onClose={() => setLogOpen(false)}
         onSubmit={handleLogSubmit}
         isPending={logMutation.isPending}
+      />
+      {/* Complete requires a maintenance log first — this dialog's summary becomes the ticket's resolutionSummary. */}
+      <MaintenanceLogDialog
+        open={completeLogOpen}
+        onClose={() => setCompleteLogOpen(false)}
+        onSubmit={handleCompleteLogSubmit}
+        isPending={logMutation.isPending || completeMutation.isPending}
+        title="Complete ticket"
+        submitLabel="Save log & complete"
+        fixedLogType={MaintenanceLogTypeEnum.Completion}
       />
       {editingLog && (
         <EditMaintenanceLogDialog

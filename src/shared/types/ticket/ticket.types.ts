@@ -99,6 +99,16 @@ export interface TicketDTO {
   origin: TicketOriginEnum;
   reopenCount: number;
   isIncident: boolean;
+  /**
+   * Environmental incident (smoke, gas leak, flooding) this ticket was auto-created from.
+   * Null on every other ticket.
+   *
+   * Presence of this id is what makes a ticket *site-level*: the fault is in the cabinet, not in
+   * one battery, so `batteryAssetId` is empty by design. Without it the UI cannot tell "no battery
+   * attached" apart from "battery data not loaded yet", and falls back to the battery layout —
+   * printing a row of blanks plus a "Battery serial —" that can never hold a value.
+   */
+  environmentalIncidentId?: string | null;
   /** GH-1176: UTC schedule set during assign/reschedule. Null when no schedule has been set. */
   scheduledStartAtUtc?: string | null;
   /** GH-1176: incremented on every assign/reschedule; used for optimistic activation. */
@@ -333,9 +343,12 @@ export interface TriageRejectPayload {
   reason: string;
 }
 
-export interface EscalatePayload {
-  reason: EscalationReasonEnum;
-  note?: string;
+// POST /api/admin/tickets/{id}/escalation-decision — Manager approves or rejects a Staff
+// escalation request. Maps 1-1 to BE TicketEscalationDecisionCommand.
+export interface EscalationDecisionPayload {
+  approve: boolean;
+  reason: string;
+  keepCurrentPrimary: boolean;
 }
 
 // POST /api/admin/tickets/{id}/re-prioritize — Manager changes the priority with a reason.

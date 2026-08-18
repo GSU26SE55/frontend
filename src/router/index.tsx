@@ -28,92 +28,242 @@ const ManagerAppLayout = lazy(
 const RoleAwareAppLayout = lazy(() => import("./RoleAwareAppLayout"));
 
 // Pages.
-const GoogleCallbackPage = lazy(() => import("@/features/auth/pages/GoogleCallbackPage"));
-const UseMobileAppPage = lazy(() => import("@/features/auth/pages/UseMobileAppPage"));
+const GoogleCallbackPage = lazy(
+  () => import("@/features/auth/pages/GoogleCallbackPage"),
+);
+const UseMobileAppPage = lazy(
+  () => import("@/features/auth/pages/UseMobileAppPage"),
+);
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const Login2faPage = lazy(() => import("@/features/auth/pages/Login2faPage"));
-const ReactivatePage = lazy(() => import("@/features/auth/pages/ReactivatePage"));
-const CrossDeviceConfirmPage = lazy(() => import("@/features/auth/pages/CrossDeviceConfirmPage"));
+const ReactivatePage = lazy(
+  () => import("@/features/auth/pages/ReactivatePage"),
+);
+const CrossDeviceConfirmPage = lazy(
+  () => import("@/features/auth/pages/CrossDeviceConfirmPage"),
+);
 const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
 const OtpVerifyPage = lazy(() => import("@/features/auth/pages/OtpVerifyPage"));
-const ForgotPasswordPage = lazy(() => import("@/features/auth/pages/ForgotPasswordPage"));
-const AcceptInvitePage = lazy(() => import("@/features/auth/pages/AcceptInvitePage"));
-const AccountSettingsPage = lazy(() => import("@/features/auth/pages/AccountSettingsPage"));
-const NotificationInboxPage = lazy(() => import("@/shared/pages/NotificationInboxPage"));
-const NotificationUnsubscribePage = lazy(() => import("@/shared/pages/NotificationUnsubscribePage"));
+const ForgotPasswordPage = lazy(
+  () => import("@/features/auth/pages/ForgotPasswordPage"),
+);
+const AcceptInvitePage = lazy(
+  () => import("@/features/auth/pages/AcceptInvitePage"),
+);
+const AccountSettingsPage = lazy(
+  () => import("@/features/auth/pages/AccountSettingsPage"),
+);
+const NotificationInboxPage = lazy(
+  () => import("@/shared/pages/NotificationInboxPage"),
+);
+const NotificationUnsubscribePage = lazy(
+  () => import("@/shared/pages/NotificationUnsubscribePage"),
+);
 const ProfilePage = lazy(() => import("@/features/auth/pages/ProfilePage"));
-const AuditLogsPage = lazy(() => import("@/features/admin/pages/AuditLogsPage"));
-const BatteryAuditLogsPage = lazy(() => import("@/features/admin/pages/BatteryAuditLogsPage"));
-const FilesAuditLogsPage = lazy(() => import("@/features/admin/pages/FilesAuditLogsPage"));
-const NotificationAdminPage = lazy(() => import("@/features/admin/pages/NotificationAdminPage"));
-const NotificationTemplatesPage = lazy(() => import("@/features/admin/pages/NotificationTemplatesPage"));
-const NotificationGroupsPage = lazy(() => import("@/features/admin/pages/NotificationGroupsPage"));
-const NotificationBatchesPage = lazy(() => import("@/features/admin/pages/NotificationBatchesPage"));
-const AdminDashboardPage = lazy(() => import("@/features/admin/pages/DashboardPage"));
-const AdminAnalyticsPage = lazy(() => import("@/features/admin/pages/AnalyticsPage"));
-const AdminSiteListPage = lazy(() => import("@/features/admin/pages/SiteListPage"));
-const AdminSiteDetailPage = lazy(() => import("@/features/admin/pages/SiteDetailPage"));
-const BatteryAssetsPage = lazy(() => import("@/features/admin/pages/BatteryAssetsPage"));
-const BatteryTypesPage = lazy(() => import("@/features/admin/pages/BatteryTypesPage"));
-const BatteryAssetDetailPage = lazy(() => import("@/features/admin/pages/BatteryAssetDetailPage"));
-const IoTDevicesPage = lazy(() => import("@/features/admin/pages/IoTDevicesPage"));
-const IoTDeviceFormPage = lazy(() => import("@/features/admin/pages/IoTDeviceFormPage"));
-const IoTDeviceDetailPage = lazy(() => import("@/features/admin/pages/IoTDeviceDetailPage"));
-const IoTFirmwareReleasesPage = lazy(() => import("@/features/admin/pages/IoTFirmwareReleasesPage"));
-const IoTFirmwareFormPage = lazy(() => import("@/features/admin/pages/IoTFirmwareFormPage"));
-const ManagerCalibrationsExpiringPage = lazy(() => import("@/features/manager/pages/CalibrationsExpiringPage"));
-const StaffIoTCalibrationsPage = lazy(() => import("@/features/staff/pages/IoTCalibrationsPage"));
-const StaffIoTDevicesPage = lazy(() => import("@/features/staff/pages/IoTDevicesPage"));
-const StaffIoTDeviceDetailPage = lazy(() => import("@/features/staff/pages/IoTDeviceDetailPage"));
+const AuditLogsPage = lazy(
+  () => import("@/features/admin/pages/AuditLogsPage"),
+);
+const BatteryAuditLogsPage = lazy(
+  () => import("@/features/admin/pages/BatteryAuditLogsPage"),
+);
+const FilesAuditLogsPage = lazy(
+  () => import("@/features/admin/pages/FilesAuditLogsPage"),
+);
+const NotificationAdminPage = lazy(
+  () => import("@/features/admin/pages/NotificationAdminPage"),
+);
+const NotificationTemplatesPage = lazy(
+  () => import("@/features/admin/pages/NotificationTemplatesPage"),
+);
+const NotificationGroupsPage = lazy(
+  () => import("@/features/admin/pages/NotificationGroupsPage"),
+);
+const NotificationBatchesPage = lazy(
+  () => import("@/features/admin/pages/NotificationBatchesPage"),
+);
+const AdminDashboardPage = lazy(
+  () => import("@/features/admin/pages/DashboardPage"),
+);
+const AdminAnalyticsPage = lazy(
+  () => import("@/features/admin/pages/AnalyticsPage"),
+);
+const AdminSiteListPage = lazy(
+  () => import("@/features/admin/pages/SiteListPage"),
+);
+const AdminSiteDetailPage = lazy(
+  () => import("@/features/admin/pages/SiteDetailPage"),
+);
+const BatteryAssetsPage = lazy(
+  () => import("@/features/admin/pages/BatteryAssetsPage"),
+);
+const BatteryTypesPage = lazy(
+  () => import("@/features/admin/pages/BatteryTypesPage"),
+);
+const BatteryAssetDetailPage = lazy(
+  () => import("@/features/admin/pages/BatteryAssetDetailPage"),
+);
+const IoTDevicesPage = lazy(
+  () => import("@/features/admin/pages/IoTDevicesPage"),
+);
+const IoTDeviceFormPage = lazy(
+  () => import("@/features/admin/pages/IoTDeviceFormPage"),
+);
+const IoTDeviceDetailPage = lazy(
+  () => import("@/features/admin/pages/IoTDeviceDetailPage"),
+);
+const IoTFirmwareReleasesPage = lazy(
+  () => import("@/features/admin/pages/IoTFirmwareReleasesPage"),
+);
+const IoTFirmwareFormPage = lazy(
+  () => import("@/features/admin/pages/IoTFirmwareFormPage"),
+);
+const ManagerCalibrationsExpiringPage = lazy(
+  () => import("@/features/manager/pages/CalibrationsExpiringPage"),
+);
+const StaffIoTCalibrationsPage = lazy(
+  () => import("@/features/staff/pages/IoTCalibrationsPage"),
+);
+const StaffIoTDevicesPage = lazy(
+  () => import("@/features/staff/pages/IoTDevicesPage"),
+);
+const StaffIoTDeviceDetailPage = lazy(
+  () => import("@/features/staff/pages/IoTDeviceDetailPage"),
+);
 const AccountsPage = lazy(() => import("@/features/admin/pages/AccountsPage"));
 const RolesPage = lazy(() => import("@/features/admin/pages/RolesPage"));
-const AdminTicketListPage = lazy(() => import("@/features/admin/pages/AdminTicketListPage"));
-const AdminSagaDebugPage = lazy(() => import("@/features/admin/pages/SagaDebugPage"));
-const AdminTicketDetailPage = lazy(() => import("@/features/admin/pages/AdminTicketDetailPage"));
+const AdminTicketListPage = lazy(
+  () => import("@/features/admin/pages/AdminTicketListPage"),
+);
+const AdminSagaDebugPage = lazy(
+  () => import("@/features/admin/pages/SagaDebugPage"),
+);
+const AdminTicketDetailPage = lazy(
+  () => import("@/features/admin/pages/AdminTicketDetailPage"),
+);
 const AdminAlertsPage = lazy(() => import("@/features/admin/pages/AlertsPage"));
-const AdminEnvironmentalIncidentsPage = lazy(() => import("@/features/admin/pages/EnvironmentalIncidentsPage"));
-const AdminAmbientConfigPage = lazy(() => import("@/features/admin/pages/AmbientConfigPage"));
-const AdminSmsGatewayPage = lazy(() => import("@/features/admin/pages/SmsGatewayPage"));
-const ManagerDashboardPage = lazy(() => import("@/features/manager/pages/DashboardPage"));
-const ManagerAnalyticsPage = lazy(() => import("@/features/manager/pages/AnalyticsPage"));
-const ManagerSiteListPage = lazy(() => import("@/features/manager/pages/SiteListPage"));
-const ManagerSiteDetailPage = lazy(() => import("@/features/manager/pages/SiteDetailPage"));
-const ManagerBatteryAssetsPage = lazy(() => import("@/features/manager/pages/BatteryAssetsPage"));
-const ManagerBatteryAssetDetailPage = lazy(() => import("@/features/manager/pages/BatteryAssetDetailPage"));
-const ManagerTicketListPage = lazy(() => import("@/features/manager/pages/TicketListPage"));
-const ManagerTicketQueuePage = lazy(() => import("@/features/manager/pages/TicketQueuePage"));
-const ManagerTicketDetailPage = lazy(() => import("@/features/manager/pages/TicketDetailPage"));
-const ManagerMergeComparePage = lazy(() => import("@/features/manager/pages/MergeComparePage"));
-const ManagerAlertsPage = lazy(() => import("@/features/manager/pages/AlertsPage"));
-const ManagerEnvironmentalIncidentsPage = lazy(() => import("@/features/manager/pages/EnvironmentalIncidentsPage"));
-const ManagerAmbientConfigPage = lazy(() => import("@/features/manager/pages/AmbientConfigPage"));
-const StaffDashboardPage = lazy(() => import("@/features/staff/pages/DashboardPage"));
-const StaffTicketListPage = lazy(() => import("@/features/staff/pages/TicketListPage"));
-const StaffTicketDetailPage = lazy(() => import("@/features/staff/pages/TicketDetailPage"));
-const StaffMyMaintenanceLogsPage = lazy(() => import("@/features/staff/pages/MyMaintenanceLogsPage"));
-const StaffSlaMonitorPage = lazy(() => import("@/features/staff/pages/SlaMonitorPage"));
+const AdminEnvironmentalIncidentsPage = lazy(
+  () => import("@/features/admin/pages/EnvironmentalIncidentsPage"),
+);
+const AdminAmbientConfigPage = lazy(
+  () => import("@/features/admin/pages/AmbientConfigPage"),
+);
+const AdminSmsGatewayPage = lazy(
+  () => import("@/features/admin/pages/SmsGatewayPage"),
+);
+const ManagerDashboardPage = lazy(
+  () => import("@/features/manager/pages/DashboardPage"),
+);
+const ManagerAnalyticsPage = lazy(
+  () => import("@/features/manager/pages/AnalyticsPage"),
+);
+const ManagerSiteListPage = lazy(
+  () => import("@/features/manager/pages/SiteListPage"),
+);
+const ManagerSiteDetailPage = lazy(
+  () => import("@/features/manager/pages/SiteDetailPage"),
+);
+const ManagerBatteryAssetsPage = lazy(
+  () => import("@/features/manager/pages/BatteryAssetsPage"),
+);
+const ManagerBatteryAssetDetailPage = lazy(
+  () => import("@/features/manager/pages/BatteryAssetDetailPage"),
+);
+const ManagerTicketListPage = lazy(
+  () => import("@/features/manager/pages/TicketListPage"),
+);
+const ManagerTicketQueuePage = lazy(
+  () => import("@/features/manager/pages/TicketQueuePage"),
+);
+const ManagerTicketDetailPage = lazy(
+  () => import("@/features/manager/pages/TicketDetailPage"),
+);
+const ManagerMergeComparePage = lazy(
+  () => import("@/features/manager/pages/MergeComparePage"),
+);
+const ManagerAlertsPage = lazy(
+  () => import("@/features/manager/pages/AlertsPage"),
+);
+const ManagerEnvironmentalIncidentsPage = lazy(
+  () => import("@/features/manager/pages/EnvironmentalIncidentsPage"),
+);
+const ManagerAmbientConfigPage = lazy(
+  () => import("@/features/manager/pages/AmbientConfigPage"),
+);
+const StaffDashboardPage = lazy(
+  () => import("@/features/staff/pages/DashboardPage"),
+);
+const StaffTicketListPage = lazy(
+  () => import("@/features/staff/pages/TicketListPage"),
+);
+const StaffTicketDetailPage = lazy(
+  () => import("@/features/staff/pages/TicketDetailPage"),
+);
+const StaffMyMaintenanceLogsPage = lazy(
+  () => import("@/features/staff/pages/MyMaintenanceLogsPage"),
+);
+const StaffSlaMonitorPage = lazy(
+  () => import("@/features/staff/pages/SlaMonitorPage"),
+);
 const StaffAlertsPage = lazy(() => import("@/features/staff/pages/AlertsPage"));
 const AdminKbListPage = lazy(() => import("@/features/admin/pages/KbListPage"));
-const AdminKbDetailPage = lazy(() => import("@/features/admin/pages/KbDetailPage"));
-const AdminKbEditorPage = lazy(() => import("@/features/admin/pages/KbEditorPage"));
-const ManagerKbListPage = lazy(() => import("@/features/manager/pages/KbListPage"));
-const ManagerKbDetailPage = lazy(() => import("@/features/manager/pages/KbDetailPage"));
-const ManagerKbEditorPage = lazy(() => import("@/features/manager/pages/KbEditorPage"));
+const AdminKbDetailPage = lazy(
+  () => import("@/features/admin/pages/KbDetailPage"),
+);
+const AdminKbEditorPage = lazy(
+  () => import("@/features/admin/pages/KbEditorPage"),
+);
+const ManagerKbListPage = lazy(
+  () => import("@/features/manager/pages/KbListPage"),
+);
+const ManagerKbDetailPage = lazy(
+  () => import("@/features/manager/pages/KbDetailPage"),
+);
+const ManagerKbEditorPage = lazy(
+  () => import("@/features/manager/pages/KbEditorPage"),
+);
 const StaffKbListPage = lazy(() => import("@/features/staff/pages/KbListPage"));
-const StaffKbDetailPage = lazy(() => import("@/features/staff/pages/KbDetailPage"));
-const StaffKbEditorPage = lazy(() => import("@/features/staff/pages/KbEditorPage"));
-const AdminBlogListPage = lazy(() => import("@/features/admin/pages/BlogListPage"));
-const AdminBlogDetailPage = lazy(() => import("@/features/admin/pages/BlogDetailPage"));
-const AdminBlogEditorPage = lazy(() => import("@/features/admin/pages/BlogEditorPage"));
-const ManagerBlogListPage = lazy(() => import("@/features/manager/pages/BlogListPage"));
-const ManagerBlogDetailPage = lazy(() => import("@/features/manager/pages/BlogDetailPage"));
-const ManagerBlogEditorPage = lazy(() => import("@/features/manager/pages/BlogEditorPage"));
-const StaffBlogListPage = lazy(() => import("@/features/staff/pages/BlogListPage"));
-const StaffBlogDetailPage = lazy(() => import("@/features/staff/pages/BlogDetailPage"));
-const StaffBlogEditorPage = lazy(() => import("@/features/staff/pages/BlogEditorPage"));
-const StaffBatteryAlertsPage = lazy(() => import("@/features/staff/pages/BatteryAlertsPage"));
-const StaffBatteryAssetDetailPage = lazy(() => import("@/features/staff/pages/BatteryAssetDetailPage"));
-const StaffEnvironmentalIncidentsPage = lazy(() => import("@/features/staff/pages/EnvironmentalIncidentsPage"));
+const StaffKbDetailPage = lazy(
+  () => import("@/features/staff/pages/KbDetailPage"),
+);
+const StaffKbEditorPage = lazy(
+  () => import("@/features/staff/pages/KbEditorPage"),
+);
+const AdminBlogListPage = lazy(
+  () => import("@/features/admin/pages/BlogListPage"),
+);
+const AdminBlogDetailPage = lazy(
+  () => import("@/features/admin/pages/BlogDetailPage"),
+);
+const AdminBlogEditorPage = lazy(
+  () => import("@/features/admin/pages/BlogEditorPage"),
+);
+const ManagerBlogListPage = lazy(
+  () => import("@/features/manager/pages/BlogListPage"),
+);
+const ManagerBlogDetailPage = lazy(
+  () => import("@/features/manager/pages/BlogDetailPage"),
+);
+const ManagerBlogEditorPage = lazy(
+  () => import("@/features/manager/pages/BlogEditorPage"),
+);
+const StaffBlogListPage = lazy(
+  () => import("@/features/staff/pages/BlogListPage"),
+);
+const StaffBlogDetailPage = lazy(
+  () => import("@/features/staff/pages/BlogDetailPage"),
+);
+const StaffBlogEditorPage = lazy(
+  () => import("@/features/staff/pages/BlogEditorPage"),
+);
+const StaffBatteryAlertsPage = lazy(
+  () => import("@/features/staff/pages/BatteryAlertsPage"),
+);
+const StaffBatteryAssetDetailPage = lazy(
+  () => import("@/features/staff/pages/BatteryAssetDetailPage"),
+);
+const StaffEnvironmentalIncidentsPage = lazy(
+  () => import("@/features/staff/pages/EnvironmentalIncidentsPage"),
+);
 
 const router = createBrowserRouter([
   {
@@ -291,6 +441,10 @@ const router = createBrowserRouter([
               },
               { path: "tickets", element: <ManagerTicketListPage /> },
               { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
+              {
+                path: "tickets/queue/:id",
+                element: <ManagerTicketDetailPage />,
+              },
               { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
               {
                 path: "tickets/:id/merge",

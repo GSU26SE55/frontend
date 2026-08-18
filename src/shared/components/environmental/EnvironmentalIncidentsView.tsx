@@ -32,6 +32,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import AlertSeverityBadge from "@/shared/components/alerts/AlertSeverityBadge";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -134,7 +136,7 @@ export default function EnvironmentalIncidentsView({
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             {subtitle}
@@ -147,11 +149,14 @@ export default function EnvironmentalIncidentsView({
             gas leak / flood / overheat at site level
           </p>
         </div>
-        {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
-            Staff can only list sites once BE opens GET /api/sites to the Staff role. */}
-        {sites && sites.length > 0 && (
-          <Button onClick={() => setReportOpen(true)}>Manual report</Button>
-        )}
+        <div className="flex items-center gap-2">
+          <RefreshButton queryKeys={[KEY.environmentalIncidents]} />
+          {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
+              Staff can only list sites once BE opens GET /api/sites to the Staff role. */}
+          {sites && sites.length > 0 && (
+            <Button onClick={() => setReportOpen(true)}>Manual report</Button>
+          )}
+        </div>
       </div>
 
       {sites && sites.length > 0 && (

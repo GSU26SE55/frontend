@@ -88,10 +88,13 @@ export default function AssignDialog({
     }
   }, [open, priority, form]);
 
-  const selectedPriority = useWatch({
-    control: form.control,
-    name: "priority",
-  }) ?? priority ?? TicketPriorityEnum.P2High;
+  const selectedPriority =
+    useWatch({
+      control: form.control,
+      name: "priority",
+    }) ??
+    priority ??
+    TicketPriorityEnum.P2High;
 
   // Consistent with ReassignDialog: show ALL staff, disable those without enough tier
   // for Primary (Supporter doesn't check tier). Minimum tier follows the ticket priority.
@@ -165,7 +168,9 @@ export default function AssignDialog({
               name="primaryHandlerStaffId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Primary Handler *</FormLabel>
+                  <FormLabel>
+                    Primary Handler <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={(v: string | null) => {
                       field.onChange(v ?? "");
@@ -239,7 +244,7 @@ export default function AssignDialog({
               name="supporterStaffIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Supporter (optional)</FormLabel>
+                  <FormLabel>Supporter</FormLabel>
                   <FormControl>
                     <StaffMultiSelect
                       options={staffList
@@ -291,7 +296,7 @@ export default function AssignDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (optional)</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Notes for this assignment..."

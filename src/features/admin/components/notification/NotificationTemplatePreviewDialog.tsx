@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Send } from "lucide-react";
+import { Send, Wand2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,14 +8,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -28,15 +18,8 @@ import {
   notificationTypeLabel,
   notificationChannelLabel,
 } from "@/shared/constants/notificationLabels";
-import {
-  extractPlaceholders,
-  toInputValue,
-} from "@/features/admin/utils/handlebars";
-import {
-  templateSampleDataSchema,
-  parseSampleData,
-  type TemplateSampleDataFormValues,
-} from "@/features/admin/schemas/notification/notification-template.schema";
+import { extractPlaceholders } from "@/features/admin/utils/handlebars";
+import { getVariableDoc } from "@/features/admin/constants/templateVariableDocs";
 import {
   usePreviewTemplate,
   useTestSendTemplate,
@@ -50,8 +33,6 @@ interface Props {
   template: NotificationTemplateDto | null;
   onClose: () => void;
 }
-
-type InputMode = "form" | "json";
 
 export default function NotificationTemplatePreviewDialog({
   template,
@@ -68,19 +49,13 @@ export default function NotificationTemplatePreviewDialog({
   // few seconds, exactly while the user is still waiting for the mail, so it gets missed.
   const [sentTo, setSentTo] = useState<string | null>(null);
 
-  // Form is the default: a template's variable set is known up front, so there's no reason to force
-  // hand-typed JSON. Raw JSON stays as an escape hatch for future templates that use block helpers
-  // (which need properly typed bool/number values) — no current template does that.
-  const [mode, setMode] = useState<InputMode>("form");
+  // 17/08/2026 — chế độ "nhập JSON thô" đã bị gỡ. Nó tồn tại như lối thoát cho template dùng block
+  // helper (cần bool/number đúng kiểu), nhưng không template nào trong 82 cái đang dùng, còn người
+  // vận hành thì phải nhìn thấy một ô JSON không liên quan gì tới việc họ đang làm.
   const [vars, setVars] = useState<Record<string, string>>({});
 
   const preview = usePreviewTemplate();
   const testSend = useTestSendTemplate();
-
-  const form = useForm<TemplateSampleDataFormValues>({
-    resolver: zodResolver(templateSampleDataSchema),
-    defaultValues: { sampleDataJson: "" },
-  });
 
   // Variables come from BOTH the title and the body — the body holds most of them, and the table
   // doesn't show it.
@@ -101,17 +76,12 @@ export default function NotificationTemplatePreviewDialog({
   const canTestSend = template.channel === NotificationChannelEnum.Email;
   const outOfQuota = remaining === 0;
 
-  const jsonText = form.getValues().sampleDataJson?.trim() ?? "";
-
   /**
-   * Collect the sample data for whichever mode is open.
-   * An empty field ⇒ SKIPPED (that key isn't sent) — this keeps the old semantics of empty JSON: a
-   * placeholder with no value renders empty, which is how you spot a template calling the wrong
-   * variable name.
+   * Gom dữ liệu mẫu từ các ô đang nhập.
+   * Ô để trống ⇒ BỎ QUA (không gửi khoá đó) — biến không có giá trị sẽ render ra trống, đó chính là
+   * cách phát hiện template đang gọi sai tên biến.
    */
   const buildSampleData = (): Record<string, unknown> | undefined => {
-    if (mode === "json") return parseSampleData(jsonText);
-
     const entries = placeholders
       .map((name) => [name, vars[name] ?? ""] as const)
       .filter(([, value]) => value !== "");
@@ -121,39 +91,20 @@ export default function NotificationTemplatePreviewDialog({
     return entries.length > 0 ? Object.fromEntries(entries) : undefined;
   };
 
-  /** Broken JSON ⇒ block, so the test-send button doesn't silently fire with empty data. */
-  const hasBrokenJson = () =>
-    mode === "json" &&
-    jsonText !== "" &&
-    parseSampleData(jsonText) === undefined;
-
-  const switchMode = (next: InputMode) => {
-    if (next === mode) return;
-
-    if (next === "json") {
-      // Pre-fill the JSON from the values already in the form so nothing has to be retyped.
-      const data = buildSampleData();
-      form.setValue(
-        "sampleDataJson",
-        data ? JSON.stringify(data, null, 2) : "",
-      );
-    } else {
-      // If the JSON is broken, leave the form as-is instead of overwriting it with unparseable data.
-      const parsed = parseSampleData(jsonText);
-      if (parsed) {
-        setVars((prev) => ({
-          ...prev,
-          ...Object.fromEntries(
-            placeholders.map((name) => [name, toInputValue(parsed[name])]),
-          ),
-        }));
+  /**
+   * Fill every field with its documented sample value. Variables with no dictionary entry are left
+   * alone rather than filled with a guess — a made-up value renders a sentence that looks right
+   * while proving nothing.
+   */
+  const fillSampleValues = () => {
+    setVars((prev) => {
+      const next = { ...prev };
+      for (const name of placeholders) {
+        const doc = getVariableDoc(name);
+        if (doc) next[name] = doc.sample;
       }
-      // Clear the JSON field: it stays in form state even while hidden, and leaving a broken string
-      // there makes zodResolver block submit with an error the user can't see in form mode.
-      form.setValue("sampleDataJson", "", { shouldValidate: true });
-    }
-
-    setMode(next);
+      return next;
+    });
   };
 
   const runPreview = async () => {
@@ -172,22 +123,12 @@ export default function NotificationTemplatePreviewDialog({
     }
   };
 
-  // Only JSON mode runs zod validation. In form mode the JSON field is hidden, so a validation
-  // error on it would block submit without showing up anywhere.
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    if (mode === "json") {
-      void form.handleSubmit(() => runPreview())(e);
-      return;
-    }
     e.preventDefault();
     void runPreview();
   };
 
   const onTestSend = async () => {
-    if (hasBrokenJson()) {
-      setPreviewError("Sample data is not valid JSON.");
-      return;
-    }
     setPreviewError(null);
     const res = await testSend.mutateAsync({
       id: template.id,
@@ -200,50 +141,55 @@ export default function NotificationTemplatePreviewDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {notificationTypeLabel(template.type)} ·{" "}
             {notificationChannelLabel(template.channel)} · v{template.version}
           </DialogTitle>
           <DialogDescription>
-            Render with sample data — nothing is sent anywhere. Empty fields
-            render empty, which is how you spot a template calling the wrong
-            variable name.
+            Xem thử nội dung với dữ liệu mẫu — không gửi đi đâu cả. Ô để trống
+            sẽ hiện ra trống, đó là cách phát hiện mẫu đang gọi sai tên biến.
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
+        <div className="min-h-0 flex-1 overflow-y-auto px-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">Sample data</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => switchMode(mode === "form" ? "json" : "form")}
-              >
-                {mode === "form" ? "Enter raw JSON" : "Back to form"}
-              </Button>
+              <span className="text-sm font-medium">Dữ liệu mẫu</span>
+              {/* Điền tay từng ô chỉ để đọc thử một câu là chỗ mất công nhất ở màn này — phần lớn
+                  người dùng chỉ muốn xem câu chữ đọc có xuôi không. */}
+              {placeholders.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={fillSampleValues}
+                >
+                  <Wand2 className="size-3.5" />
+                  Điền mẫu
+                </Button>
+              )}
             </div>
 
-            {mode === "form" ? (
-              placeholders.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  This template has no variables — click "Preview" to render it
-                  right away.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {placeholders.map((name) => (
+            {placeholders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Mẫu này không dùng biến nào — bấm "Xem thử" để hiển thị ngay.
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {placeholders.map((name) => {
+                  // Nhãn là tên tiếng Việt — tên biến thô không hiện ra nữa, người dùng nghiệp
+                  // vụ không cần biết template gọi khoá gì.
+                  const doc = getVariableDoc(name);
+                  return (
                     <div key={name} className="space-y-1.5">
-                      {/* Label kept as {{name}} — admin sees exactly the variable the template references. */}
                       <Label
                         htmlFor={`tpl-var-${name}`}
-                        className="font-mono text-xs"
+                        className="text-xs font-medium"
                       >
-                        {`{{${name}}}`}
+                        {doc?.label ?? name}
                       </Label>
                       <Input
                         id={`tpl-var-${name}`}
@@ -254,41 +200,18 @@ export default function NotificationTemplatePreviewDialog({
                             [name]: e.target.value,
                           }))
                         }
-                        placeholder="(leave blank)"
+                        // Giá trị mẫu làm placeholder cũng là một dạng tài liệu: người dùng thấy
+                        // ngay biến này mang giá trị kiểu gì lúc gửi thật.
+                        placeholder={doc ? `VD: ${doc.sample}` : "(để trống)"}
                       />
                     </div>
-                  ))}
-                </div>
-              )
-            ) : (
-              <FormField
-                control={form.control}
-                name="sampleDataJson"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea
-                        rows={5}
-                        className="font-mono text-xs"
-                        placeholder={
-                          placeholders.length > 0
-                            ? `{\n${placeholders
-                                .map((n) => `  "${n}": ""`)
-                                .join(",\n")}\n}`
-                            : "{}"
-                        }
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  );
+                })}
+              </div>
             )}
-
             <div className="flex items-center gap-2">
               <Button type="submit" disabled={preview.isPending}>
-                {preview.isPending ? "Building…" : "Preview"}
+                {preview.isPending ? "Đang dựng…" : "Xem thử"}
               </Button>
               <Button
                 type="button"
@@ -297,18 +220,18 @@ export default function NotificationTemplatePreviewDialog({
                 onClick={onTestSend}
                 title={
                   !canTestSend
-                    ? "Test send is only available for Email channel templates"
+                    ? "Chỉ mẫu kênh Email mới gửi thử được"
                     : outOfQuota
-                      ? "You've used all 5 test sends for this hour"
-                      : "Send to your own email"
+                      ? "Đã dùng hết 5 lượt gửi thử trong giờ này"
+                      : "Gửi vào email của chính bạn"
                 }
               >
                 <Send className="size-3.5" />
-                {testSend.isPending ? "Sending…" : "Send test to me"}
+                {testSend.isPending ? "Đang gửi…" : "Gửi thử cho tôi"}
               </Button>
               {remaining !== null && (
                 <span className="text-xs text-muted-foreground">
-                  {remaining} sends left this hour
+                  Còn {remaining} lượt gửi trong giờ này
                 </span>
               )}
             </div>
@@ -319,12 +242,12 @@ export default function NotificationTemplatePreviewDialog({
                 gray without saying why. */}
             {!canTestSend ? (
               <p className="text-xs text-muted-foreground">
-                Test send is only available for Email templates — this template
-                is on the {notificationChannelLabel(template.channel)} channel.
+                Chỉ mẫu kênh Email mới gửi thử được — mẫu này thuộc kênh{" "}
+                {notificationChannelLabel(template.channel)}.
               </p>
             ) : outOfQuota ? (
               <p className="text-xs text-muted-foreground">
-                You've used all 5 test sends for this hour. Try again next hour.
+                Đã dùng hết 5 lượt gửi thử trong giờ này. Thử lại vào giờ sau.
               </p>
             ) : null}
 
@@ -336,46 +259,49 @@ export default function NotificationTemplatePreviewDialog({
                 {/* Sent ≠ received. Spell out where to check when the email never shows up —
                     the most common cause is the account still carrying the default seed email. */}
                 <p className="mt-1 text-muted-foreground">
-                  The email is sent to the address of the account you're
-                  currently logged in as. Don't see it? Check your spam folder,
-                  and confirm the address above matches the mailbox you're
-                  checking.
+                  Email được gửi tới địa chỉ của tài khoản bạn đang đăng nhập.
+                  Không thấy? Kiểm tra hộp thư rác, và đối chiếu địa chỉ ở trên
+                  với hòm thư bạn đang mở.
                 </p>
               </div>
             )}
           </form>
-        </Form>
 
-        {previewError && (
-          <p className="text-sm text-red-500 border border-red-500/30 bg-red-500/5 rounded-lg px-3 py-2">
-            {previewError}
-          </p>
-        )}
+          {previewError && (
+            <p className="text-sm text-red-500 border border-red-500/30 bg-red-500/5 rounded-lg px-3 py-2">
+              {previewError}
+            </p>
+          )}
 
-        {rendered && (
-          <div className="space-y-3 border border-border rounded-xl p-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-0.5">Title</p>
-              <p className="text-sm font-medium break-words">
-                {rendered.title || (
-                  <span className="text-muted-foreground italic">(empty)</span>
-                )}
-              </p>
+          {rendered && (
+            <div className="space-y-3 border border-border rounded-xl p-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Tiêu đề</p>
+                <p className="text-sm font-medium break-words">
+                  {rendered.title || (
+                    <span className="text-muted-foreground italic">
+                      (trống)
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Nội dung</p>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {rendered.body || (
+                    <span className="text-muted-foreground italic">
+                      (trống)
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-0.5">Body</p>
-              <p className="text-sm whitespace-pre-wrap break-words">
-                {rendered.body || (
-                  <span className="text-muted-foreground italic">(empty)</span>
-                )}
-              </p>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="mt-4 border-t pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
-            Close
+            Đóng
           </Button>
         </DialogFooter>
       </DialogContent>

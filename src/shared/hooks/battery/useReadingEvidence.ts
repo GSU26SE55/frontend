@@ -4,51 +4,57 @@ import { sensorReadingService } from "@/shared/services/battery/sensor-reading.s
 import type { SensorReadingDto } from "@/shared/types/battery/sensor-reading-history.types";
 
 /**
- * How wide to look around `detectedAt` — and it depends on WHO produced that timestamp.
+ * How wide to look around `detectedAt` when pulling the evidence log.
  *
- * `AutoFromAlert`: the scanner stamps the alert with the reading's own `Time`, so the two
- * match to the millisecond. Seconds is the right granularity, and it has to stay tight: a
- * ±15' window swept in readings from *other* cases run minutes earlier on the same battery,
- * and an Undertemp ticket ended up displaying the 72°C row belonging to an Overheat ticket.
+ * ±2 minutes, and the number is not free: it MUST match
+ * `BatteryInternalService.SnapshotWindow`, the window the backend uses to build the sensor
+ * snapshot that AI verify scores against. If the two drift apart, the Manager reads a verdict
+ * ("matches sensor data") computed from readings the table below it never shows.
  *
- * `ManualByCustomer` / `CreatedByStaff`: a person typed in when they noticed the problem.
- * Nobody recalls an incident to the second — they enter "3pm" for something seen around 3pm.
- * Judging that estimate with a 15-second window returns nothing and makes a genuine report
- * look unsupported.
+ * The same width serves both kinds of ticket, for different reasons:
  *
- * ±2 minutes is not a free choice — it MUST match `BatteryInternalService.SnapshotWindow`,
- * the window the backend uses to build the sensor snapshot that AI verify scores against.
- * If the two drift apart, the Manager reads a verdict ("matches sensor data") computed from
- * readings the evidence table below it never shows, and has no way to reconcile them.
- * At 10s per reading that window holds ~24 rows — comfortably above the 5-breach noise
+ *   `AutoFromAlert` — the scanner stamps the alert with the reading's own `Time`, so the
+ *   breach itself sits at the centre. The surrounding minutes are what make it readable as an
+ *   *event*: the simulator's warm-up walks the battery up to the limit (31→50→61→67→72°C), and
+ *   a ±15s window would clip all of that away, leaving one lone row of round numbers that
+ *   looks fabricated. One reading proves a threshold was crossed; it cannot show a battery
+ *   heating up.
+ *
+ *   `ManualByCustomer` / `CreatedByStaff` — a person typed in when they noticed the problem.
+ *   Nobody recalls an incident to the second; they enter "3pm" for something seen around 3pm.
+ *
+ * At 10s per reading the window holds ~24 rows — comfortably above the 5-breach noise
  * threshold the backend itself uses to conclude a fault is real.
+ *
+ * The cost is real and worth naming: two cases run on the same battery less than 2 minutes
+ * apart will bleed into each other's evidence. That is how an Undertemp ticket once displayed
+ * the 72°C row belonging to an Overheat ticket. Demos run one case at a time, and the
+ * per-reading threshold labels make a foreign row obvious, so the trade lands on the side of
+ * showing the story rather than hiding it.
  */
-const AUTO_WINDOW_MS = 15 * 1_000; // ±15s — machine timestamp, exact
-const MANUAL_WINDOW_MS = 2 * 60 * 1_000; // ±2' — human estimate; mirrors SnapshotWindow
+const EVIDENCE_WINDOW_MS = 2 * 60 * 1_000; // ±2' — mirrors BatteryInternalService.SnapshotWindow
 
 /**
  * Sensor log around the incident detection time — serves as EVIDENCE for the ticket, NOT the
  * current real-time log. Only rows breaching the battery type's thresholds are rendered
  * (see `toWarningRows`). Query is disabled when assetId or detectedAt is missing.
  *
- * @param isManualReport true when a human supplied `detectedAt` (Customer- or Staff-created
- *   ticket). Defaults to false so an omitted flag yields the strict machine window rather
- *   than silently widening the search for auto tickets.
  */
 export function useReadingEvidence(
   assetId: string | null | undefined,
   detectedAt: string | null | undefined,
-  isManualReport = false,
 ) {
-  const windowMs = isManualReport ? MANUAL_WINDOW_MS : AUTO_WINDOW_MS;
-
   // Both sides of detectedAt: an auto run sends several readings in a burst so the breach can
   // sit either side of the stamp, and a human estimate is just as likely early as late.
   const from = detectedAt
-    ? new Date(new Date(detectedAt).getTime() - windowMs).toISOString()
+    ? new Date(
+        new Date(detectedAt).getTime() - EVIDENCE_WINDOW_MS,
+      ).toISOString()
     : undefined;
   const to = detectedAt
-    ? new Date(new Date(detectedAt).getTime() + windowMs).toISOString()
+    ? new Date(
+        new Date(detectedAt).getTime() + EVIDENCE_WINDOW_MS,
+      ).toISOString()
     : undefined;
 
   return useQuery({
@@ -85,7 +91,7 @@ export interface EvidenceThresholds {
 
 export interface ReadingWarning {
   reading: SensorReadingDto;
-  reasons: string[]; // warning labels ("Overheating 72°C > 60°C"...)
+  reasons: string[]; // warning labels ("Overheating 72°C > 60°C"...); empty = within limits
 }
 
 /**
@@ -141,7 +147,16 @@ export function toWarningRows(
         `Discharge current ${Math.abs(r.current).toFixed(0)}A > ${thresholds.currentMaxDischarge.toFixed(0)}A`,
       );
 
-    if (reasons.length > 0) rows.push({ reading: r, reasons });
+    // Giữ CẢ dòng không vi phạm. Trước đây lọc bỏ chúng, nên một ticket có đầy đủ số đo
+    // nhưng đều trong ngưỡng lại hiện bảng trống — Manager đọc thành "không có dữ liệu" và
+    // mất luôn căn cứ để bác một ticket khai khống. Số đo bình thường quanh thời điểm khai
+    // báo CŨNG là bằng chứng, chỉ là bằng chứng theo chiều ngược lại.
+    rows.push({ reading: r, reasons });
   }
   return rows;
+}
+
+/** Số dòng thực sự vượt ngưỡng — dùng cho badge đếm và câu tóm tắt phía trên bảng. */
+export function countBreaches(rows: ReadingWarning[]): number {
+  return rows.filter((r) => r.reasons.length > 0).length;
 }

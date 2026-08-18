@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
 import CalibrationTable from "@/shared/components/iot/CalibrationTable";
 import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import {
   useDeviceByCode,
   useIotCalibrations,
@@ -82,9 +84,14 @@ export default function IoTCalibrationsPage() {
                 {device.displayName} &middot; {device.siteName ?? "—"}
               </p>
             </div>
-            <Button size="sm" onClick={() => setCalibrationOpen(true)}>
-              <Plus className="size-3.5" /> Add calibration
-            </Button>
+            <div className="flex items-center gap-2">
+              <RefreshButton
+                queryKeys={[KEY.iotCalibrations, KEY.iotDevices]}
+              />
+              <Button size="sm" onClick={() => setCalibrationOpen(true)}>
+                <Plus className="size-3.5" /> Add calibration
+              </Button>
+            </div>
           </Card>
 
           <Card className="gap-0 py-0 overflow-hidden">

@@ -7,6 +7,7 @@ import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
 import SlaCountdown from "./SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import {
   TicketStatusEnum,
   TicketOriginEnum,
@@ -27,6 +28,11 @@ interface Props {
    * (AdminTicketListParams); the queue (AdminTicketQueueParams has no sort) skips it → static sort.
    */
   sort?: ServerSortState;
+  /**
+   * Base path for the row-click detail link. Defaults to the "Tickets" list route;
+   * the Queue page passes "/manager/tickets/queue" so Back returns to the Queue instead.
+   */
+  detailBasePath?: string;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -45,6 +51,7 @@ export default function TicketTable({
   pageNumber = 1,
   pageSize = 0,
   sort,
+  detailBasePath = "/manager/tickets",
 }: Props) {
   const navigate = useNavigate();
 
@@ -93,8 +100,10 @@ export default function TicketTable({
               origin={t.origin}
               hideWhenOk
             />
-            {/* Suspected duplicate of an open ticket. */}
-            {t.suspectedDuplicateOfTicketId && (
+            {/* Suspected duplicate — only while the ticket is still open. Once it is finished
+                the merge decision has been made (often BY merging it), so the badge would be
+                pointing at a question that is already answered. */}
+            {t.suspectedDuplicateOfTicketId && isOpenTicket(t) && (
               <Badge
                 variant="outline"
                 className="border-amber-200 bg-amber-50 text-amber-700"
@@ -188,7 +197,7 @@ export default function TicketTable({
         showIndex
         pageNumber={pageNumber}
         pageSize={pageSize}
-        onRowClick={(t) => navigate(`/manager/tickets/${t.id}`)}
+        onRowClick={(t) => navigate(`${detailBasePath}/${t.id}`)}
         serverSort={sort}
       />
     </Card>

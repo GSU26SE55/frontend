@@ -7,19 +7,17 @@ import {
   LayoutDashboard,
   Settings,
   BellRing,
-  Inbox,
   Ticket,
   Clock,
   FileText,
   BookOpen,
   ShieldAlert,
   Wrench,
-  SlidersHorizontal,
+  // SlidersHorizontal, // unused while "Device calibration" nav entry is hidden
   HardDrive,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
-  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -32,8 +30,6 @@ export const STAFF_NAV: NavSection[] = [
         path: "/staff/dashboard",
         icon: LayoutDashboard,
       },
-      // Route shared by every role (no /staff prefix) — the BE already filters by the UserId in the JWT.
-      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
       { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
       {
         label: "Maintenance history",
@@ -51,11 +47,12 @@ export const STAFF_NAV: NavSection[] = [
         icon: Newspaper,
       },
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },
-      {
-        label: "Device calibration",
-        path: "/staff/iot-calibrations",
-        icon: SlidersHorizontal,
-      },
+      // Ẩn tạm Device calibration khỏi sidebar — không xoá, chờ yêu cầu bật lại.
+      // {
+      //   label: "Device calibration",
+      //   path: "/staff/iot-calibrations",
+      //   icon: SlidersHorizontal,
+      // },
       // IOT3-68 — đặt CẠNH calibration: cùng một người, cùng một lúc, cùng một thiết bị.
       {
         label: "IoT Devices",

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface RefreshButtonProps extends VariantProps<typeof buttonVariants> {
@@ -11,12 +12,14 @@ interface RefreshButtonProps extends VariantProps<typeof buttonVariants> {
   className?: string;
 }
 
+const ICON_SIZES = ["icon", "icon-xs", "icon-sm", "icon-lg"];
+
 export function RefreshButton({
   queryKeys,
   label = "Refresh",
   className,
   variant = "outline",
-  size = "sm",
+  size = "icon-sm",
 }: RefreshButtonProps) {
   const queryClient = useQueryClient();
   const [spinning, setSpinning] = useState(false);
@@ -33,20 +36,43 @@ export function RefreshButton({
     setTimeout(() => setSpinning(false), 600);
   };
 
+  const iconOnly = ICON_SIZES.includes(size ?? "");
+  // No explicit size class — Button scales the icon to match its own size variant.
+  const icon = <RefreshCw className={cn(spinning && "animate-spin")} />;
+
+  if (!iconOnly) {
+    return (
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handleRefresh}
+        disabled={spinning}
+        className={cn(className)}
+      >
+        {icon}
+        {label}
+      </Button>
+    );
+  }
+
+  // Icon-only: the label lives in the tooltip so the action stays discoverable.
   return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleRefresh}
-      disabled={spinning}
-      className={cn(className)}
-    >
-      <RefreshCw className={cn("h-4 w-4", spinning && "animate-spin")} />
-      {size !== "icon" &&
-        size !== "icon-sm" &&
-        size !== "icon-xs" &&
-        size !== "icon-lg" &&
-        label}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant={variant}
+            size={size}
+            onClick={handleRefresh}
+            disabled={spinning}
+            aria-label={label}
+            className={cn(className)}
+          />
+        }
+      >
+        {icon}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

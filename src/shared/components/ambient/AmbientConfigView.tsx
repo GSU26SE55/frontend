@@ -31,6 +31,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   useAmbientThresholdBySite,
@@ -165,6 +167,7 @@ export default function AmbientConfigView({
               <Settings2 size={14} />
               Configure threshold
             </Button>
+            <RefreshButton queryKeys={[KEY.ambient]} />
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { BatteryCharging, MessageSquare, Repeat2 } from "lucide-react";
+import { BatteryCharging, Repeat2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import {
@@ -123,12 +123,6 @@ export function TicketCard({ ticket }: Props) {
                 >
                   <Repeat2 className="size-3.5" aria-hidden />
                   Reopened {ticket.reopenCount}×
-                </span>
-              )}
-              {ticket.hasUnreadChat && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                  <MessageSquare className="size-3.5" aria-hidden />
-                  New message
                 </span>
               )}
             </div>
