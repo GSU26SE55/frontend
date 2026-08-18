@@ -49,6 +49,8 @@ export default function BatteryWarningEvidencePanel({
       ? {
           temperatureMax: threshold.temperatureMax,
           temperatureMin: threshold.temperatureMin,
+          voltageMax: threshold.voltageMax,
+          voltageMin: threshold.voltageMin,
           socWarningThreshold: threshold.socWarningThreshold,
           currentMaxCharge: threshold.currentMaxCharge,
           currentMaxDischarge: threshold.currentMaxDischarge,
@@ -153,7 +155,17 @@ export default function BatteryWarningEvidencePanel({
                       <td className="px-2 py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">
                         {new Date(r.time).toLocaleString("vi-VN")}
                       </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">
+                      <td
+                        className={`px-2 py-1.5 text-right tabular-nums ${
+                          reasons.some(
+                            (x) =>
+                              x.startsWith("Overvoltage") ||
+                              x.startsWith("Undervoltage"),
+                          )
+                            ? "font-medium text-amber-700 dark:text-amber-400"
+                            : ""
+                        }`}
+                      >
                         {num(r.voltage)}
                       </td>
                       <td className="px-2 py-1.5 text-right tabular-nums">
