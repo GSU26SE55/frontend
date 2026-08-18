@@ -18,7 +18,7 @@ const num = (v: number | null | undefined, digits = 2) =>
 
 interface Props {
   batteryAssetId?: string | null;
-  /** When the incident was detected — anchor point for fetching evidence logs (±15s). */
+  /** When the incident was detected — anchor point for fetching evidence logs (±2'). */
   detectedAt?: string | null;
   /** Battery type of the asset — needed to read the SAME thresholds the backend enforced. */
   batteryTypeId?: string | null;
@@ -60,7 +60,7 @@ export default function BatteryWarningEvidencePanel({
   // cảnh xung quanh, vẫn phải hiện để người đọc thấy pin lúc đó ra sao.
   const breachCount = countBreaches(warnings);
 
-  // A ±15' window at 5s frequency yields a few hundred rows — rendering them all would
+  // A ±2' window at 5s frequency yields a few dozen rows — rendering them all would
   // swallow the whole page. Defaults to 10 rows, each "Show more" reveals 25 (matches mobile).
   const [limit, setLimit] = useState(PREVIEW_ROWS);
   const visibleRows = warnings.slice(0, limit);
