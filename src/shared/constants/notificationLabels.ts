@@ -61,6 +61,10 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationTypeEnum, string> = {
   [NotificationTypeEnum.IotDeviceAutoDecommissioned]: "IoT device disabled",
   [NotificationTypeEnum.TicketWorkStarted]: "Work started",
   [NotificationTypeEnum.TicketScheduleChanged]: "Schedule changed",
+  [NotificationTypeEnum.PeriodicMaintenanceReminder]:
+    "Periodic maintenance reminder",
+  [NotificationTypeEnum.PeriodicMaintenanceScheduleChanged]:
+    "Periodic maintenance schedule changed",
   [NotificationTypeEnum.System]: "System notification",
 };
 

@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isPast } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,9 @@ interface Props {
   ticketId: string;
   /** Ticket priority — determines the Primary Handler's minimum tier. */
   priority: TicketPriorityEnum | null;
+  /** GH-1244: schedule selected by the Customer before Manager assignment. */
+  scheduledStartAtUtc?: string | null;
+  isPeriodicMaintenance?: boolean;
   open: boolean;
   onClose: () => void;
 }
@@ -58,6 +62,8 @@ const formatLocalDatetime = (d = new Date()) => {
 export default function AssignDialog({
   ticketId,
   priority,
+  scheduledStartAtUtc,
+  isPeriodicMaintenance = false,
   open,
   onClose,
 }: Props) {
@@ -79,14 +85,40 @@ export default function AssignDialog({
     },
   });
 
+  const customerSchedule = useMemo(
+    () =>
+      isPeriodicMaintenance && scheduledStartAtUtc
+        ? new Date(scheduledStartAtUtc)
+        : null,
+    [isPeriodicMaintenance, scheduledStartAtUtc],
+  );
+  const hasCustomerSchedule =
+    customerSchedule !== null && !Number.isNaN(customerSchedule.getTime());
+  const isCustomerScheduleExpired =
+    hasCustomerSchedule && isPast(customerSchedule);
+  const isCustomerScheduleActive =
+    hasCustomerSchedule && !isCustomerScheduleExpired;
+
   useEffect(() => {
     if (open) {
-      form.setValue("scheduledStartAtUtc", formatLocalDatetime());
+      form.setValue(
+        "scheduledStartAtUtc",
+        isCustomerScheduleActive && customerSchedule
+          ? formatLocalDatetime(customerSchedule)
+          : formatLocalDatetime(),
+      );
+      form.setValue("notes", "");
       if (priority) {
         form.setValue("priority", priority);
       }
     }
-  }, [open, priority, form]);
+  }, [
+    open,
+    priority,
+    form,
+    customerSchedule,
+    isCustomerScheduleActive,
+  ]);
 
   const selectedPriority =
     useWatch({
@@ -112,10 +144,24 @@ export default function AssignDialog({
   });
 
   const onSubmit = async (values: AssignFormValues) => {
+    if (isCustomerScheduleExpired && !values.notes?.trim()) {
+      form.setError("notes", {
+        type: "manual",
+        message:
+          "Record how you contacted the Customer before replacing their expired schedule",
+      });
+      return;
+    }
+
     try {
-      const isoDate = values.scheduledStartAtUtc
-        ? new Date(values.scheduledStartAtUtc).toISOString()
-        : new Date().toISOString();
+      // Preserve the exact Customer-selected instant (including seconds). Reformatting the
+      // datetime-local value would truncate precision and the BE correctly rejects a mismatch.
+      const isoDate =
+        isCustomerScheduleActive && customerSchedule
+          ? customerSchedule.toISOString()
+          : values.scheduledStartAtUtc
+            ? new Date(values.scheduledStartAtUtc).toISOString()
+            : new Date().toISOString();
       await mutateAsync({
         ...values,
         scheduledStartAtUtc: isoDate,
@@ -280,12 +326,29 @@ export default function AssignDialog({
                     Start schedule <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input type="datetime-local" {...field} />
+                    <Input
+                      type="datetime-local"
+                      disabled={isCustomerScheduleActive}
+                      {...field}
+                    />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Within the last 5 minutes → starts immediately (InProgress).
-                    Future → Pending until due.
-                  </p>
+                  {isCustomerScheduleActive ? (
+                    <p className="text-xs text-sky-700">
+                      The Customer selected this schedule. It must be kept while
+                      it is still valid.
+                    </p>
+                  ) : isCustomerScheduleExpired && customerSchedule ? (
+                    <p className="text-xs text-amber-700">
+                      The Customer schedule expired at{" "}
+                      {customerSchedule.toLocaleString("vi-VN")}. Choose a new
+                      time and record the Customer contact below.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Within the last 5 minutes → starts immediately
+                      (InProgress). Future → Pending until due.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -296,10 +359,19 @@ export default function AssignDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
+                  <FormLabel>
+                    Notes
+                    {isCustomerScheduleExpired && (
+                      <span className="text-destructive"> *</span>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Notes for this assignment..."
+                      placeholder={
+                        isCustomerScheduleExpired
+                          ? "How and when was the Customer contacted?"
+                          : "Notes for this assignment..."
+                      }
                       {...field}
                     />
                   </FormControl>
