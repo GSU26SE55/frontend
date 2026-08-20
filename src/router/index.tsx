@@ -105,6 +105,9 @@ const BatteryAssetDetailPage = lazy(
 const IoTDevicesPage = lazy(
   () => import("@/features/admin/pages/IoTDevicesPage"),
 );
+const DataImportPage = lazy(
+  () => import("@/features/admin/pages/DataImportPage"),
+);
 const IoTDeviceFormPage = lazy(
   () => import("@/features/admin/pages/IoTDeviceFormPage"),
 );
@@ -365,6 +368,7 @@ const router = createBrowserRouter([
                 path: "battery-assets/:id",
                 element: <BatteryAssetDetailPage />,
               },
+              { path: "data-import", element: <DataImportPage /> },
               { path: "iot-devices", element: <IoTDevicesPage /> },
               { path: "iot-devices/new", element: <IoTDeviceFormPage /> },
               { path: "iot-devices/:id", element: <IoTDeviceDetailPage /> },
