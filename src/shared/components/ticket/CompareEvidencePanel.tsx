@@ -39,6 +39,13 @@ export default function CompareEvidencePanel({
       ? {
           temperatureMax: threshold.temperatureMax,
           temperatureMin: threshold.temperatureMin,
+          // Voltage bounds were missing here. They are required by EvidenceThresholds, so the file
+          // did not type-check — and because the whole project shares one tsc pass, that single
+          // omission blocked `npm run build` for everyone. The behavioural half is worse: without
+          // these two, toWarningRows never produced an Overvoltage/Undervoltage reason, so the
+          // evidence panel silently hid exactly the readings an operator opens it to look for.
+          voltageMax: threshold.voltageMax,
+          voltageMin: threshold.voltageMin,
           socWarningThreshold: threshold.socWarningThreshold,
           currentMaxCharge: threshold.currentMaxCharge,
           currentMaxDischarge: threshold.currentMaxDischarge,
