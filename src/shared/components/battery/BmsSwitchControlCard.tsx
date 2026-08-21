@@ -82,7 +82,10 @@ export default function BmsSwitchControlCard({
   const mutation = useSetBmsSwitch(assetId);
   const { data: cascade } = useCascadeRisk(assetId);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
-  const [localSwitches, setLocalSwitches] = useState<{ charge?: boolean; discharge?: boolean }>({
+  const [localSwitches, setLocalSwitches] = useState<{
+    charge?: boolean;
+    discharge?: boolean;
+  }>({
     charge: true,
     discharge: true,
   });
@@ -91,8 +94,10 @@ export default function BmsSwitchControlCard({
   const highRisk =
     cascade?.level === "High" || (cascade?.cascadeRiskScore ?? 0) >= 0.7;
   const pending = mutation.isPending || stateQuery.data?.pendingCommand != null;
-  const chargeEnabled = stateQuery.data?.chargeEnabled ?? localSwitches.charge ?? true;
-  const dischargeEnabled = stateQuery.data?.dischargeEnabled ?? localSwitches.discharge ?? true;
+  const chargeEnabled =
+    stateQuery.data?.chargeEnabled ?? localSwitches.charge ?? true;
+  const dischargeEnabled =
+    stateQuery.data?.dischargeEnabled ?? localSwitches.discharge ?? true;
   const charge = mosfetState(chargeEnabled);
   const discharge = mosfetState(dischargeEnabled);
 
@@ -112,7 +117,7 @@ export default function BmsSwitchControlCard({
       setLocalSwitches((prev) => ({ ...prev, charge: payload.enable }));
     } else if (payload.target === BmsSwitchTarget.Discharge) {
       setLocalSwitches((prev) => ({ ...prev, discharge: payload.enable }));
-    } else if (payload.target === BmsSwitchTarget.Both) {
+    } else if (payload.target === BmsSwitchTarget.All) {
       setLocalSwitches({ charge: payload.enable, discharge: payload.enable });
     }
 

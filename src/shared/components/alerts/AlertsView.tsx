@@ -52,8 +52,6 @@ import type { AlertDto } from "@/shared/types/alerts/alert.types";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
-import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { KEY } from "@/shared/utils/queryKeys";
 
 const DEFAULTS = {
   severity: "",

@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Battery, BatteryFull, HeartPulse, ShieldAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  Battery,
+  BatteryFull,
+  HeartPulse,
+  ShieldAlert,
+} from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -22,6 +28,8 @@ import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/ticket/useSensorStream";
+import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { KEY } from "@/shared/utils/queryKeys";
 import {
   healthScoreTone,
@@ -159,6 +167,14 @@ export default function BatteryRealtimeDetail({
 
   const { data: asset, isLoading } = useBatteryAsset(id);
   const { data: rt } = useBatteryAssetRealtime(id);
+  const { data: gateways } = useIotDevicesForStaff(
+    {
+      siteId: asset?.siteId ?? undefined,
+      pageNumber: 1,
+      pageSize: 100,
+    },
+    !!asset?.siteId,
+  );
   const stream = useSensorStream(id ? `asset:${id}` : null);
   // Prefer live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
   const live = stream.reading ?? rt ?? null;
@@ -192,6 +208,37 @@ export default function BatteryRealtimeDetail({
   }
 
   const statusCfg = STATUS_CONFIG[asset.status];
+  const gatewayItems = gateways?.items ?? [];
+  const gatewayOnline = gatewayItems.some(
+    (device) => device.status === IotDeviceStatusEnum.Active,
+  );
+  const gatewayConnecting = gatewayItems.some(
+    (device) => device.status === IotDeviceStatusEnum.Pending,
+  );
+  const gatewayBadge = !gateways
+    ? {
+        label: "Checking gateway",
+        className: "bg-zinc-100 text-zinc-600 border-zinc-200",
+      }
+    : gatewayOnline
+      ? {
+          label: "Gateway online",
+          className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        }
+      : gatewayConnecting
+        ? {
+            label: "Gateway connecting",
+            className: "bg-amber-50 text-amber-700 border-amber-200",
+          }
+        : gatewayItems.length > 0
+          ? {
+              label: "Gateway offline",
+              className: "bg-red-50 text-red-700 border-red-200",
+            }
+          : {
+              label: "No gateway",
+              className: "bg-zinc-100 text-zinc-600 border-zinc-200",
+            };
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -216,9 +263,29 @@ export default function BatteryRealtimeDetail({
                   "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
                   statusCfg.badge,
                 )}
+                title="Battery lifecycle status configured by an administrator"
               >
                 <span className={cn("size-1.5 rounded-full", statusCfg.dot)} />
-                {statusCfg.label}
+                Lifecycle: {statusCfg.label}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+                  gatewayBadge.className,
+                )}
+                title="Live connection status of the IoT gateway at this site"
+              >
+                <span
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    gatewayOnline
+                      ? "bg-emerald-500"
+                      : gatewayConnecting
+                        ? "bg-amber-500"
+                        : "bg-red-500",
+                  )}
+                />
+                {gatewayBadge.label}
               </span>
               {rt && rt.activeAlerts > 0 && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
@@ -274,8 +341,8 @@ export default function BatteryRealtimeDetail({
                   value={
                     asset.lastSensorReadingAt
                       ? new Date(asset.lastSensorReadingAt).toLocaleString(
-                        "vi-VN",
-                      )
+                          "vi-VN",
+                        )
                       : null
                   }
                 />
@@ -292,10 +359,10 @@ export default function BatteryRealtimeDetail({
               thresholds={
                 threshold
                   ? {
-                    socWarning: threshold.socWarningThreshold,
-                    socCritical: threshold.socCriticalThreshold,
-                    temperatureMax: threshold.temperatureMax,
-                  }
+                      socWarning: threshold.socWarningThreshold,
+                      socCritical: threshold.socCriticalThreshold,
+                      temperatureMax: threshold.temperatureMax,
+                    }
                   : undefined
               }
             />
