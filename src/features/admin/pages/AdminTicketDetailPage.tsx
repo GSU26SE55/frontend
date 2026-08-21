@@ -469,6 +469,50 @@ export default function AdminTicketDetailPage() {
               value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
             />
             <SideInfoRow label="Origin" value={ticket.origin} />
+            {ticket.isPeriodicMaintenance && (
+              <>
+                <SideInfoRow
+                  label="Maintenance cycle"
+                  value={
+                    <span
+                      className={
+                        ticket.isPeriodicMaintenanceOverdue
+                          ? "font-medium text-destructive"
+                          : undefined
+                      }
+                    >
+                      {ticket.isPeriodicMaintenanceOverdue
+                        ? "Periodic · overdue"
+                        : "Periodic"}
+                    </span>
+                  }
+                />
+                <SideInfoRow
+                  label="Maintenance due"
+                  value={
+                    ticket.periodicMaintenanceDueAtUtc
+                      ? format(
+                          new Date(ticket.periodicMaintenanceDueAtUtc),
+                          "MM/dd/yyyy HH:mm",
+                          { locale: enUS },
+                        )
+                      : null
+                  }
+                />
+                <SideInfoRow
+                  label="Visit schedule"
+                  value={
+                    ticket.scheduledStartAtUtc
+                      ? format(
+                          new Date(ticket.scheduledStartAtUtc),
+                          "MM/dd/yyyy HH:mm",
+                          { locale: enUS },
+                        )
+                      : "Awaiting Customer selection"
+                  }
+                />
+              </>
+            )}
             {/* Who is handling it — BE returns staffName inline so every role can read it,
                 no need to call /api/staff (that endpoint is Admin/Manager only). */}
             <SideInfoRow label="Primary handler" value={primaryHandlerName} />

@@ -113,6 +113,16 @@ export interface TicketDTO {
   scheduledStartAtUtc?: string | null;
   /** GH-1176: incremented on every assign/reschedule; used for optimistic activation. */
   scheduleVersion: number;
+  /** GH-1244: source ticket whose completed maintenance starts this periodic cycle. */
+  periodicMaintenanceSourceTicketId?: string | null;
+  /** GH-1244: planned maintenance due time calculated by the backend. */
+  periodicMaintenanceDueAtUtc?: string | null;
+  /** GH-1244: last time the Customer may select the initial visit schedule. */
+  periodicMaintenanceScheduleDeadlineAtUtc?: string | null;
+  /** GH-1244: backend-derived identity; false for ordinary tickets. */
+  isPeriodicMaintenance: boolean;
+  /** GH-1244: backend-derived due state; do not recalculate business rules on the client. */
+  isPeriodicMaintenanceOverdue: boolean;
   /** GH-1176: why the ticket is Pending — Scheduled (initial assignment) or Held (staff hold). */
   pendingContext?: PendingContextEnum | null;
   /** GH-1176: hold reason — only set when pendingContext=Held. */

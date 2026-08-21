@@ -882,6 +882,50 @@ export default function TicketDetailPage() {
               <div className="px-4 py-1 divide-y divide-border/50">
                 <SideInfoRow label="Category" value={ticket.category} />
                 <SideInfoRow label="Origin" value={ticket.origin} />
+                {ticket.isPeriodicMaintenance && (
+                  <>
+                    <SideInfoRow
+                      label="Maintenance cycle"
+                      value={
+                        <span
+                          className={
+                            ticket.isPeriodicMaintenanceOverdue
+                              ? "font-medium text-destructive"
+                              : undefined
+                          }
+                        >
+                          {ticket.isPeriodicMaintenanceOverdue
+                            ? "Periodic · overdue"
+                            : "Periodic"}
+                        </span>
+                      }
+                    />
+                    <SideInfoRow
+                      label="Maintenance due"
+                      value={
+                        ticket.periodicMaintenanceDueAtUtc
+                          ? format(
+                              new Date(ticket.periodicMaintenanceDueAtUtc),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : null
+                      }
+                    />
+                    <SideInfoRow
+                      label="Visit schedule"
+                      value={
+                        ticket.scheduledStartAtUtc
+                          ? format(
+                              new Date(ticket.scheduledStartAtUtc),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : "Awaiting Customer selection"
+                      }
+                    />
+                  </>
+                )}
                 {/* Who's handling it — the BE returns staffName, so every role can read it
                     without calling /api/staff (that endpoint is only open to Admin/Manager). */}
                 <SideInfoRow

@@ -214,9 +214,23 @@ export default function TicketDetailPage() {
   // actually have something to offer — otherwise clicking it lands on an empty target picker.
   // useAdminTicketList shares its query key (and 30s staleTime) with the ticket list page, so
   // this usually resolves from cache; useMergeCandidates is a plain useMemo, no extra request.
+  // TicketGetListQueryHandler hides Open tickets by default (that's the Queue's job), so a
+  // second call with status=Open is required — otherwise an Open source ticket (the only case
+  // canMerge even applies) can never find its Open auto-origin target (e.g. the AI-suggested one).
   const { data: mergeSourceList } = useAdminTicketList({ pageSize: 100 });
+  const { data: mergeSourceOpenList } = useAdminTicketList({
+    pageSize: 100,
+    status: TicketStatusEnum.Open,
+  });
+  const mergeSourceItems = useMemo(
+    () => [
+      ...(mergeSourceList?.items ?? []),
+      ...(mergeSourceOpenList?.items ?? []),
+    ],
+    [mergeSourceList?.items, mergeSourceOpenList?.items],
+  );
   const mergeCandidates = useMergeCandidates(
-    mergeSourceList?.items,
+    mergeSourceItems,
     id,
     ticket?.suspectedDuplicateOfTicketId,
   );
@@ -841,6 +855,64 @@ export default function TicketDetailPage() {
                   value={CATEGORY_LABEL[ticket.category] ?? ticket.category}
                 />
                 <SideInfoRow label="Origin" value={ticket.origin} />
+                {ticket.isPeriodicMaintenance && (
+                  <>
+                    <SideInfoRow
+                      label="Maintenance cycle"
+                      value={
+                        <span
+                          className={
+                            ticket.isPeriodicMaintenanceOverdue
+                              ? "font-medium text-destructive"
+                              : undefined
+                          }
+                        >
+                          {ticket.isPeriodicMaintenanceOverdue
+                            ? "Periodic · overdue"
+                            : "Periodic"}
+                        </span>
+                      }
+                    />
+                    <SideInfoRow
+                      label="Maintenance due"
+                      value={
+                        ticket.periodicMaintenanceDueAtUtc
+                          ? format(
+                              new Date(ticket.periodicMaintenanceDueAtUtc),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : null
+                      }
+                    />
+                    <SideInfoRow
+                      label="Visit schedule"
+                      value={
+                        ticket.scheduledStartAtUtc
+                          ? format(
+                              new Date(ticket.scheduledStartAtUtc),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : "Awaiting Customer selection"
+                      }
+                    />
+                    <SideInfoRow
+                      label="Selection deadline"
+                      value={
+                        ticket.periodicMaintenanceScheduleDeadlineAtUtc
+                          ? format(
+                              new Date(
+                                ticket.periodicMaintenanceScheduleDeadlineAtUtc,
+                              ),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : null
+                      }
+                    />
+                  </>
+                )}
                 <SideInfoRow
                   label="Primary Handler"
                   value={primaryHandlerName}
@@ -965,6 +1037,8 @@ export default function TicketDetailPage() {
         <AssignDialog
           ticketId={id}
           priority={ticket.priority}
+          scheduledStartAtUtc={ticket.scheduledStartAtUtc}
+          isPeriodicMaintenance={ticket.isPeriodicMaintenance}
           open
           onClose={() => setDialog(null)}
         />

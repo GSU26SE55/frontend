@@ -3,6 +3,7 @@
 // Label/title specific to admin only → keep inline here.
 
 import {
+  FileUp,
   History,
   Newspaper,
   LayoutTemplate,
@@ -68,6 +69,11 @@ export const ADMIN_NAV: NavSection[] = [
         icon: ShieldAlert,
       },
       { label: "Devices", path: "/admin/iot-devices", icon: Cpu },
+      {
+        label: "Third-party import",
+        path: "/admin/data-import",
+        icon: FileUp,
+      },
       // Hidden from nav per request — route kept intact, not deleted.
       // { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
     ],
