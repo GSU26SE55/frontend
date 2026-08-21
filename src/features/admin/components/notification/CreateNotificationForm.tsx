@@ -294,7 +294,7 @@ export default function CreateNotificationForm() {
         <Label htmlFor="notif-entityType">Entity Type</Label>
         <Input
           id="notif-entityType"
-          placeholder="e.g. Ticket, Battery (optional)"
+          placeholder="e.g. Ticket, Battery"
           {...register("entityType")}
         />
         {errors.entityType && (

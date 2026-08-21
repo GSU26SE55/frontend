@@ -319,19 +319,19 @@ export default function MergeCompareView({
           {/* ── 4. Sensor evidence ─────────────────────────────────────── */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">
-                Sensor evidence (±15 minutes around detection)
-              </CardTitle>
+              <CardTitle className="text-sm">Sensor evidence</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <CompareEvidencePanel
                 assetId={source.batteryAssetId}
                 detectedAt={source.detectedAt}
+                batteryTypeId={sourceAsset?.batteryTypeId}
                 title={source.code}
               />
               <CompareEvidencePanel
                 assetId={target.batteryAssetId}
                 detectedAt={target.detectedAt}
+                batteryTypeId={targetAsset?.batteryTypeId}
                 title={target.code}
               />
             </CardContent>

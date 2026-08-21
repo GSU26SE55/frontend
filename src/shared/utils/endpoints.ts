@@ -164,12 +164,6 @@ export const ENDPOINTS = {
     UNSUBSCRIBE: "/api/notification-unsubscribe",
   },
 
-  DEVICE_TOKENS: {
-    REGISTER: "/api/device-tokens",
-    UNREGISTER: "/api/device-tokens", // DELETE — body { token }
-    LIST: "/api/device-tokens",
-  },
-
   NOTIFICATION_PREFERENCES: {
     GET: "/api/notification-preferences",
     UPDATE: "/api/notification-preferences", // PUT — upsert preference của user hiện tại
@@ -284,11 +278,10 @@ export const ENDPOINTS = {
       SCHEDULE: (id: string) => `/api/admin/tickets/${id}/schedule`,
       APPROVE: (id: string) => `/api/admin/tickets/${id}/approve`,
       REJECT: (id: string) => `/api/admin/tickets/${id}/reject`,
-      // GH-1176: ESCALATE (force) removed; approve/reject Staff escalation request instead.
-      ESCALATE_APPROVE: (id: string) =>
-        `/api/admin/tickets/${id}/escalate/approve`,
-      ESCALATE_REJECT: (id: string) =>
-        `/api/admin/tickets/${id}/escalate/reject`,
+      // GH-1176: ESCALATE (force) removed; single decision endpoint (Approve bool distinguishes
+      // approve/reject) — matches BE TicketEscalationDecisionCommand / AdminTicketsController.
+      ESCALATION_DECISION: (id: string) =>
+        `/api/admin/tickets/${id}/escalation-decision`,
       DECLARE_INCIDENT: (id: string) =>
         `/api/admin/tickets/${id}/declare-incident`,
       // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).
@@ -614,6 +607,22 @@ export const ENDPOINTS = {
     ARCHIVE: (id: string) => `/api/admin/blog/${id}/archive`,
     DELETE: (id: string) => `/api/admin/blog/${id}`,
   },
+
+  // Nhập dữ liệu khách hàng và thiết bị từ bên thứ ba — Admin/Manager.
+  // Hoàn tác chỉ Admin: nó gỡ hàng loạt bản ghi trong một nhịp.
+  IMPORTS: {
+    TEMPLATE: (entityType: number | string) =>
+      `/api/imports/templates/${entityType}`,
+    CREATE_BATCH: "/api/imports/batches",
+    LIST_BATCHES: "/api/imports/batches",
+    BATCH_DETAIL: (id: string) => `/api/imports/batches/${id}`,
+    BATCH_ROWS: (id: string) => `/api/imports/batches/${id}/rows`,
+    // Đường dẫn kết thúc bằng ".csv" là có chủ ý — BE trả file đính kèm, không phải JSON.
+    BATCH_ERRORS_CSV: (id: string) => `/api/imports/batches/${id}/errors.csv`,
+    COMMIT_BATCH: (id: string) => `/api/imports/batches/${id}/commit`,
+    REVERT_BATCH: (id: string) => `/api/imports/batches/${id}/revert`,
+  },
+
 
   // Blog template — GHI chỉ Admin (đọc dùng BLOG_INTERNAL.TEMPLATES)
   BLOG_TEMPLATES_ADMIN: {

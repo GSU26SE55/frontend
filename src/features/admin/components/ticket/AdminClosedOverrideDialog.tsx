@@ -116,7 +116,9 @@ function OverrideEditForm({
           name="body"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Content</FormLabel>
+              <FormLabel>
+                Content <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Textarea rows={3} {...field} />
               </FormControl>
@@ -129,7 +131,9 @@ function OverrideEditForm({
           name="overrideReason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Override reason</FormLabel>
+              <FormLabel>
+                Override reason <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Textarea
                   rows={2}
@@ -186,7 +190,9 @@ function OverrideDeleteForm({
           name="overrideReason"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Override reason</FormLabel>
+              <FormLabel>
+                Override reason <span className="text-destructive">*</span>
+              </FormLabel>
               <FormControl>
                 <Textarea
                   rows={2}

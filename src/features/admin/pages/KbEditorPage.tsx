@@ -206,12 +206,7 @@ export default function KbEditorPage() {
 
           {isEdit && (
             <div className="space-y-1.5">
-              <Label htmlFor="kb-change-description">
-                Change description{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional)
-                </span>
-              </Label>
+              <Label htmlFor="kb-change-description">Change description</Label>
               <Input
                 id="kb-change-description"
                 {...register("changeDescription")}

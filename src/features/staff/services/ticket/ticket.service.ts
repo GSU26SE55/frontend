@@ -15,6 +15,7 @@ import type {
 import type {
   StaffTicketsParams,
   HoldTicketRequest,
+  ResumeTicketRequest,
   ResolveTicketRequest,
   EscalateTicketRequest,
   AddCommentRequest,
@@ -60,9 +61,10 @@ export const staffTicketService = {
     ),
 
   // GH-1176: resume is restricted to PendingContext=Held tickets (early resume by Primary Staff).
-  resume: (id: string) =>
+  resume: (id: string, data: ResumeTicketRequest) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.STAFF_TICKETS.RESUME(id),
+      data,
     ),
 
   // GH-1176: renamed from resolve (InProgress→Completed).

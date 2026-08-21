@@ -179,7 +179,7 @@ export default function CalibrationFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryAssetId">Battery Asset ID (optional)</Label>
+            <Label htmlFor="batteryAssetId">Battery Asset ID</Label>
             <Input
               id="batteryAssetId"
               {...register("batteryAssetId")}

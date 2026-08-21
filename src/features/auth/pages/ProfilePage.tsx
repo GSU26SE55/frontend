@@ -239,14 +239,9 @@ const ProfilePage = () => {
               </Badge>
             )}
           </div>
-          {account?.id && (
-            <p className="text-[11px] text-muted-foreground mb-1.5">
-              Account ID:{" "}
-              <span className="font-mono select-all text-foreground/70">
-                {account.id.slice(0, 8).toUpperCase()}…
-              </span>
-            </p>
-          )}
+          {/* Account ID intentionally not shown: a truncated GUID identifies the user
+              to nobody — the email right below already does that, and support looks
+              accounts up by email. */}
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Mail size={11} />
@@ -351,13 +346,19 @@ const ProfilePage = () => {
             />
           </div>
 
-          {/* Time zone */}
+          {/* Time zone — read-only: the system runs on a single time zone, and quiet hours
+              are resolved against it on the BE. A free-text box here let a typo through
+              ("Asia/Saigon", "GMT+7") that the BE silently falls back on, so the user got
+              notifications at hours they never chose. Still registered so the value the BE
+              stored travels back unchanged on save. */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Time zone</Label>
+            <Label className="text-xs text-muted-foreground">
+              Time zone (read-only)
+            </Label>
             <Input
               {...register("timeZone")}
-              className="h-9"
-              placeholder="Asia/Ho_Chi_Minh"
+              disabled
+              className="h-9 bg-muted/50 cursor-not-allowed"
             />
           </div>
 

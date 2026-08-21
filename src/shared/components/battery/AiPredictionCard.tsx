@@ -122,6 +122,19 @@ function getShortFeedbackLabel(fb: StaffFeedbackEnum): string {
   }
 }
 
+/**
+ * End-of-life SOH used by the AI model — NOT the battery type's `sohWarningThreshold`.
+ *
+ * This card renders the model's own verdict, and the model compares against `EOL_SOH = 80.0`
+ * baked into `anomaly_detector.py` (NASA 18650 convention, fixed by the trained weights).
+ * Colouring these numbers with the per-type threshold instead would show a red SOH next to a
+ * "Healthy" classification whenever a battery type is configured below 80 — the card would
+ * contradict the very prediction it is displaying. Every OTHER threshold in the UI must come
+ * from `threshold_configs`; this one is the deliberate exception, and it moves only if the
+ * model is retrained.
+ */
+const AI_EOL_SOH = 80;
+
 export default function AiPredictionCard({ assetId }: { assetId: string }) {
   const [isLongTerm, setIsLongTerm] = useState(false);
   const { data: sohData, isLoading: sohLoading } = useSohPredictions({
@@ -240,7 +253,7 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
                   <span>SOH:</span>
                   <strong
                     className={
-                      latestSoh < 80
+                      latestSoh < AI_EOL_SOH
                         ? "text-destructive font-semibold"
                         : "text-foreground font-semibold"
                     }
@@ -421,7 +434,7 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
                     Calculated SOH
                   </span>
                   <strong
-                    className={`text-3xl tracking-tight block ${sohLongData.sohPercent < 80 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}
+                    className={`text-3xl tracking-tight block ${sohLongData.sohPercent < AI_EOL_SOH ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}
                   >
                     {Number(sohLongData.sohPercent).toFixed(1)}%
                   </strong>

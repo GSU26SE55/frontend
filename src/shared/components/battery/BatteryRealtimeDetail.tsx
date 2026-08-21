@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Battery, HeartPulse, ShieldAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  Battery,
+  BatteryFull,
+  HeartPulse,
+  ShieldAlert,
+} from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -15,11 +21,15 @@ import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
-import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
+// Ẩn cùng tab "AI prediction" (xem TabsTrigger/TabsContent bên dưới). Comment thay vì xoá
+// để bật lại chỉ bằng bỏ ba khối comment, không phải tìm lại đường import.
+// import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/ticket/useSensorStream";
+import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { KEY } from "@/shared/utils/queryKeys";
 import {
   healthScoreTone,
@@ -40,39 +50,46 @@ const STATUS_CONFIG: Record<
   },
   [BatteryStatusEnum.Inactive]: {
     label: "Inactive",
-    dot: "bg-muted-foreground",
-    badge: "bg-muted text-muted-foreground border-border",
+    dot: "bg-zinc-400",
+    badge: "bg-zinc-100 text-zinc-600 border-zinc-200",
   },
   [BatteryStatusEnum.Decommissioned]: {
     label: "Decommissioned",
     dot: "bg-red-500",
-    badge: "bg-red-50 text-red-600 border-red-200",
+    badge: "bg-red-50 text-red-700 border-red-200",
   },
 };
 
-const fmtDate = (s: string) =>
-  format(new Date(s), "MM/dd/yyyy", { locale: enUS });
+function fmtDate(iso?: string | null) {
+  if (!iso) return "—";
+  try {
+    return format(new Date(iso), "MMM d, yyyy", { locale: enUS });
+  } catch {
+    return iso;
+  }
+}
 
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="flex items-start justify-between gap-3 py-2">
-      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
-      <span className="text-xs font-medium text-right leading-relaxed">
-        {value ?? <span className="text-muted-foreground/50">—</span>}
+    <div className="flex items-center justify-between py-1.5 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground text-right truncate max-w-[140px]">
+        {value || "—"}
       </span>
     </div>
   );
 }
 
-// SOH is the single most meaningful "is this battery still healthy" number (it IS
-// current/nominal capacity expressed as a %), so it gets top billing above Information
-// instead of being buried as one more stat tile among Voltage/Current/Temperature/SOC.
-function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
+// The percentage a battery can still hold relative to its nominal capacity — labelled
+// "Max capacity" for operators, but it IS the SOH the AI module predicts. It gets top
+// billing above Information instead of being buried as one more stat tile among
+// Voltage/Current/Temperature/SOC.
+function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   if (sohPercent == null) {
     return (
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 text-muted-foreground">
         <HeartPulse size={16} />
-        <span className="text-xs">SOH not available yet</span>
+        <span className="text-xs">Max capacity not available yet</span>
       </div>
     );
   }
@@ -81,29 +98,32 @@ function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
   return (
     <div className="px-4 pt-4 pb-3">
       <div
-        className="rounded-lg p-3 flex items-center gap-3"
-        style={{ backgroundColor: bg }}
+        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-all"
+        style={{
+          backgroundColor: bg,
+          borderColor: `${fg}35`,
+        }}
       >
         <div
-          className="size-9 rounded-full flex items-center justify-center shrink-0"
+          className="size-10 rounded-full flex items-center justify-center shrink-0 shadow-sm"
           style={{ backgroundColor: fg }}
         >
-          <HeartPulse size={16} className="text-white" />
+          <BatteryFull size={19} className="text-white" strokeWidth={2.3} />
         </div>
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-1 leading-none">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1 leading-none mb-1">
             <span
-              className="text-2xl font-bold tabular-nums"
+              className="text-2xl font-black tracking-tight tabular-nums"
               style={{ color: fg }}
             >
               {sohPercent.toFixed(0)}
             </span>
-            <span className="text-xs font-medium" style={{ color: fg }}>
+            <span className="text-xs font-bold" style={{ color: fg }}>
               %
             </span>
           </div>
           <span className="text-[11px] text-muted-foreground">
-            State of Health
+            Max capacity
           </span>
         </div>
       </div>
@@ -132,11 +152,9 @@ function CascadeRiskBadge({ assetId }: { assetId: string }) {
 
 interface BatteryRealtimeDetailProps {
   assetId: string;
-  // Admin injects CRUD buttons (Edit/Transfer/Delete/Set topology) + dialogs through this slot. Manager/Staff leave it empty.
+  // Admin injects CRUD buttons (Edit/Transfer/Delete) + dialogs through this slot;
+  // Admin and Staff also pass the BMS control here. Manager leaves it empty.
   headerActions?: ReactNode;
-  // Only Admin and Staff pass this safety-critical control. The API performs the
-  // same authorization check, so route composition is not the security boundary.
-  bmsControl?: ReactNode;
 }
 
 // Real-time battery detail page (read-only core) — shared by admin/manager/staff.
@@ -144,12 +162,19 @@ interface BatteryRealtimeDetailProps {
 export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
-  bmsControl,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
 
   const { data: asset, isLoading } = useBatteryAsset(id);
   const { data: rt } = useBatteryAssetRealtime(id);
+  const { data: gateways } = useIotDevicesForStaff(
+    {
+      siteId: asset?.siteId ?? undefined,
+      pageNumber: 1,
+      pageSize: 100,
+    },
+    !!asset?.siteId,
+  );
   const stream = useSensorStream(id ? `asset:${id}` : null);
   // Prefer live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
   const live = stream.reading ?? rt ?? null;
@@ -183,6 +208,37 @@ export default function BatteryRealtimeDetail({
   }
 
   const statusCfg = STATUS_CONFIG[asset.status];
+  const gatewayItems = gateways?.items ?? [];
+  const gatewayOnline = gatewayItems.some(
+    (device) => device.status === IotDeviceStatusEnum.Active,
+  );
+  const gatewayConnecting = gatewayItems.some(
+    (device) => device.status === IotDeviceStatusEnum.Pending,
+  );
+  const gatewayBadge = !gateways
+    ? {
+        label: "Checking gateway",
+        className: "bg-zinc-100 text-zinc-600 border-zinc-200",
+      }
+    : gatewayOnline
+      ? {
+          label: "Gateway online",
+          className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        }
+      : gatewayConnecting
+        ? {
+            label: "Gateway connecting",
+            className: "bg-amber-50 text-amber-700 border-amber-200",
+          }
+        : gatewayItems.length > 0
+          ? {
+              label: "Gateway offline",
+              className: "bg-red-50 text-red-700 border-red-200",
+            }
+          : {
+              label: "No gateway",
+              className: "bg-zinc-100 text-zinc-600 border-zinc-200",
+            };
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -207,9 +263,29 @@ export default function BatteryRealtimeDetail({
                   "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
                   statusCfg.badge,
                 )}
+                title="Battery lifecycle status configured by an administrator"
               >
                 <span className={cn("size-1.5 rounded-full", statusCfg.dot)} />
-                {statusCfg.label}
+                Lifecycle: {statusCfg.label}
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+                  gatewayBadge.className,
+                )}
+                title="Live connection status of the IoT gateway at this site"
+              >
+                <span
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    gatewayOnline
+                      ? "bg-emerald-500"
+                      : gatewayConnecting
+                        ? "bg-amber-500"
+                        : "bg-red-500",
+                  )}
+                />
+                {gatewayBadge.label}
               </span>
               {rt && rt.activeAlerts > 0 && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
@@ -225,7 +301,7 @@ export default function BatteryRealtimeDetail({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <RefreshButton queryKeys={[KEY.batteryAssets]} size="icon" />
+          <RefreshButton queryKeys={[KEY.batteryAssets]} />
           {headerActions}
         </div>
       </div>
@@ -236,7 +312,7 @@ export default function BatteryRealtimeDetail({
           {/* Left sidebar */}
           <div className="w-65 shrink-0 border-r border-border flex flex-col overflow-y-auto">
             {/* SOH — the single most important health indicator, shown first and prominently */}
-            <SohHighlight sohPercent={live?.sohPercent} />
+            <MaxCapacityHighlight sohPercent={live?.sohPercent} />
 
             <Separator />
 
@@ -290,7 +366,6 @@ export default function BatteryRealtimeDetail({
                   : undefined
               }
             />
-            {bmsControl}
           </div>
 
           {/* Right: chart / history tabs */}
@@ -301,7 +376,9 @@ export default function BatteryRealtimeDetail({
                   <TabsTrigger value="chart">Chart</TabsTrigger>
                   <TabsTrigger value="peak">Charge/discharge peak</TabsTrigger>
                   <TabsTrigger value="history">Sensor history</TabsTrigger>
-                  <TabsTrigger value="ai">AI prediction</TabsTrigger>
+                  {/* Tab "AI prediction" tạm ẩn theo yêu cầu — chưa cần cho luồng hiện tại.
+                      Giữ nguyên component + TabsContent bên dưới (cũng đã ẩn) để bật lại chỉ
+                      bằng cách bỏ hai khối comment này, không phải dựng lại từ đầu. */}
                 </TabsList>
               </div>
               <TabsContent
@@ -333,12 +410,13 @@ export default function BatteryRealtimeDetail({
                   fillHeight
                 />
               </TabsContent>
-              <TabsContent
+              {/* Ẩn cùng TabsTrigger "ai" ở trên — xem ghi chú tại đó. */}
+              {/* <TabsContent
                 value="ai"
                 className="min-h-0 overflow-y-auto m-0 p-5"
               >
                 <AiPredictionCard assetId={id} />
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
         </div>

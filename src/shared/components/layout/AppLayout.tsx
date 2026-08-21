@@ -2,12 +2,7 @@ import { Suspense, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
 import Sidebar, { type NavSection } from "./Sidebar";
-import {
-  APP_NAME,
-  INBOX_PATH,
-  SIDEBAR_LABELS,
-} from "@/shared/constants/sidebarLabels";
-import { useChatUnreadCount } from "@/shared/hooks/ticket/useChatUnreadCount";
+import { APP_NAME, INBOX_PATH } from "@/shared/constants/sidebarLabels";
 import { useUnreadCount } from "@/shared/hooks/notifications/useNotifications";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
@@ -124,25 +119,17 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
   // here is one place instead of three. Doesn't touch other items' existing badges
   // (e.g. Manager's queue) since it only maps the item with path INBOX_PATH.
   const { data: unreadCount = 0 } = useUnreadCount();
-  // Total unread chat across all tickets → badge on the "Tickets" item. Completely
-  // separate from the unreadCount above (notifications). Matched by LABEL rather than
-  // path: the ticket path has an /admin|/manager|/staff prefix, so there's no shared
-  // constant like INBOX_PATH.
-  const { data: chatUnread = 0 } = useChatUnreadCount();
   const sectionsWithBadge = useMemo(() => {
-    if (!unreadCount && !chatUnread) return sections;
+    if (!unreadCount) return sections;
     return sections.map((section) => ({
       ...section,
-      items: section.items.map((item) => {
-        if (unreadCount && item.path === INBOX_PATH)
-          return { ...item, badge: unreadCount > 99 ? "99+" : unreadCount };
-        // Don't overwrite another item's existing badge (e.g. Manager's "Queue").
-        if (chatUnread && item.label === SIDEBAR_LABELS.tickets && !item.badge)
-          return { ...item, badge: chatUnread > 99 ? "99+" : chatUnread };
-        return item;
-      }),
+      items: section.items.map((item) =>
+        item.path === INBOX_PATH
+          ? { ...item, badge: unreadCount > 99 ? "99+" : unreadCount }
+          : item,
+      ),
     }));
-  }, [sections, unreadCount, chatUnread]);
+  }, [sections, unreadCount]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

@@ -64,11 +64,11 @@ export default function TicketQueuePage() {
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Manager &middot; Ticket
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Queue
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Queue</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : (data?.totalItems ?? 0)} tickets awaiting a
+            {isLoading ? "..." : (data?.totalItems ?? 0)} ticket
+            {isLoading || data?.totalItems === 1 ? "" : "s"}
+            {hasActiveFilter ? " matching the current filters" : ""} awaiting a
             priority decision &mdash; review the priority and assign Staff.
           </p>
         </div>
@@ -139,6 +139,7 @@ export default function TicketQueuePage() {
           onReprioritize={setReprioritizeTarget}
           pageNumber={filters.pageNumber}
           pageSize={filters.pageSize}
+          detailBasePath="/manager/tickets/queue"
         />
       </Card>
 

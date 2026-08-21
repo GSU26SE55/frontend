@@ -2,14 +2,18 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   getPrimaryHandlerName,
   getSupporterNames,
+  getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
+import {
+  isTicketChatLocked,
+  TICKET_CHAT_LOCKED_NOTICE,
+} from "@/shared/utils/ticket.utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +42,6 @@ import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge"
 import TicketActivityTimeline from "@/features/admin/components/ticket/TicketActivityTimeline";
 import AdminClosedOverrideDialog from "@/features/admin/components/ticket/AdminClosedOverrideDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
-import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import type { TicketCommentDTO } from "@/shared/types/ticket/ticket.types";
 import {
   TicketCommentThread,
@@ -56,7 +59,6 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
-import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { slaBarColorClass } from "@/shared/lib/sla";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -120,6 +122,9 @@ export default function AdminTicketDetailPage() {
   // Handler names — taken straight from assignments (BE already includes staffName).
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
+  const previousPrimaryHandlerNames = getPreviousPrimaryHandlerNames(
+    ticket?.assignments,
+  );
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
@@ -153,8 +158,8 @@ export default function AdminTicketDetailPage() {
   const { mutate: deleteChat, isPending: deleteChatPending } =
     useDeleteTicketChat();
   const { mutate: markChatsRead } = useMarkTicketChatsRead();
-  const handleMarkRead = (chatIds: string[]) =>
-    markChatsRead({ ticketId, payload: { chatIds } });
+  const handleMarkRead = (chatIds: string[], onFailed: () => void) =>
+    markChatsRead({ ticketId, payload: { chatIds }, onFailed });
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId, chatId: chat.id, targetLanguage });
@@ -192,6 +197,12 @@ export default function AdminTicketDetailPage() {
   }
 
   const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
+  // Ticket finished (Completed/Closed/ClosedRejected). Two consequences:
+  //  - chat is archived: composer hidden, edit/delete locked in the thread (Admin's override
+  //    edit/delete still applies — that path exists precisely for closed tickets);
+  //  - the AI duplicate suggestion is dropped: a finished ticket can no longer be merged, and
+  //    the ones that got here BY being merged would otherwise still advertise "merge me".
+  const chatLocked = isTicketChatLocked(ticket.status);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -214,12 +225,6 @@ export default function AdminTicketDetailPage() {
               <TicketStatusBadge status={ticket.status} />
               {ticket.priority && (
                 <TicketPriorityBadge priority={ticket.priority} />
-              )}
-              {ticket.isIncident && (
-                <Badge variant="destructive" className="text-xs">
-                  <AlertTriangle size={10} className="mr-1" />
-                  Incident
-                </Badge>
               )}
             </div>
             <h1
@@ -255,11 +260,9 @@ export default function AdminTicketDetailPage() {
           <Tabs defaultValue="timeline" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
-                <TabsTrigger value="timeline">Activity history</TabsTrigger>
-                {/* `group` lets ChatUnreadBadge hide itself while this tab is active. */}
+                <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="comments" className="group">
                   Chat
-                  <ChatUnreadBadge ticketId={id ?? ""} />
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -275,7 +278,10 @@ export default function AdminTicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} assignments={ticket?.assignments} />
+                <TicketActivityTimeline
+                  activities={activities}
+                  assignments={ticket?.assignments}
+                />
               )}
             </TabsContent>
 
@@ -289,7 +295,7 @@ export default function AdminTicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  ticketClosed={ticket.status === TicketStatusEnum.Closed}
+                  ticketClosed={chatLocked}
                   ticketId={ticketId}
                   aiEnabled
                   onSelectSuggestion={(text) =>
@@ -319,16 +325,25 @@ export default function AdminTicketDetailPage() {
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">
-                <TypingIndicator names={typingNames} />
-                <AddCommentForm
-                  ticketId={ticketId}
-                  onTyping={sendTyping}
-                  isInternal={chatTab === "internal"}
-                  existingFileIds={existingFileIds}
-                  prefillText={composerPrefill.text}
-                  prefillVersion={composerPrefill.version}
-                  mentionCandidates={mentionCandidates}
-                />
+                {chatLocked ? (
+                  <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
+                    <Lock className="size-3.5" />
+                    {TICKET_CHAT_LOCKED_NOTICE}
+                  </p>
+                ) : (
+                  <>
+                    <TypingIndicator names={typingNames} />
+                    <AddCommentForm
+                      ticketId={ticketId}
+                      onTyping={sendTyping}
+                      isInternal={chatTab === "internal"}
+                      existingFileIds={existingFileIds}
+                      prefillText={composerPrefill.text}
+                      prefillVersion={composerPrefill.version}
+                      mentionCandidates={mentionCandidates}
+                    />
+                  </>
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -423,11 +438,11 @@ export default function AdminTicketDetailPage() {
             </div>
           )}
 
-          {/* Rejection reason */}
+          {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
           {ticket.rejectionReason && (
             <div className="p-4">
               <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                Rejection reason
+                Reason
               </p>
               <p className="text-xs leading-relaxed">
                 {ticket.rejectionReason}
@@ -454,43 +469,81 @@ export default function AdminTicketDetailPage() {
               value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
             />
             <SideInfoRow label="Origin" value={ticket.origin} />
+            {ticket.isPeriodicMaintenance && (
+              <>
+                <SideInfoRow
+                  label="Maintenance cycle"
+                  value={
+                    <span
+                      className={
+                        ticket.isPeriodicMaintenanceOverdue
+                          ? "font-medium text-destructive"
+                          : undefined
+                      }
+                    >
+                      {ticket.isPeriodicMaintenanceOverdue
+                        ? "Periodic · overdue"
+                        : "Periodic"}
+                    </span>
+                  }
+                />
+                <SideInfoRow
+                  label="Maintenance due"
+                  value={
+                    ticket.periodicMaintenanceDueAtUtc
+                      ? format(
+                          new Date(ticket.periodicMaintenanceDueAtUtc),
+                          "MM/dd/yyyy HH:mm",
+                          { locale: enUS },
+                        )
+                      : null
+                  }
+                />
+                <SideInfoRow
+                  label="Visit schedule"
+                  value={
+                    ticket.scheduledStartAtUtc
+                      ? format(
+                          new Date(ticket.scheduledStartAtUtc),
+                          "MM/dd/yyyy HH:mm",
+                          { locale: enUS },
+                        )
+                      : "Awaiting Customer selection"
+                  }
+                />
+              </>
+            )}
             {/* Who is handling it — BE returns staffName inline so every role can read it,
                 no need to call /api/staff (that endpoint is Admin/Manager only). */}
             <SideInfoRow label="Primary handler" value={primaryHandlerName} />
             {supporterNames.length > 0 && (
               <SideInfoRow
                 label="Supporters"
-                value={
-                  <span className="flex flex-wrap justify-end gap-1">
-                    {supporterNames.map((name) => (
-                      <Badge key={name} variant="secondary">
-                        {name}
-                      </Badge>
-                    ))}
-                  </span>
-                }
+                value={supporterNames.join(", ")}
+              />
+            )}
+            {previousPrimaryHandlerNames.length > 0 && (
+              <SideInfoRow
+                label="Previous handler"
+                value={previousPrimaryHandlerNames.join(", ")}
               />
             )}
             <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />
             <SideInfoRow label="Urgency" value={ticket.urgencyLevel ?? null} />
-            <SideInfoRow
-              label="Battery serial"
-              value={ticket.batterySerialNumber ?? null}
-            />
+            {/* Site-level ticket has no battery by design — see the Manager page for the full
+                reasoning. An empty row here reads as a load failure. */}
+            {!ticket.environmentalIncidentId && (
+              <SideInfoRow
+                label="Battery serial"
+                value={ticket.batterySerialNumber ?? null}
+              />
+            )}
             <SideInfoRow
               label="Created"
               value={format(new Date(ticket.createdAt), "MM/dd/yyyy HH:mm", {
                 locale: enUS,
               })}
             />
-            {ticket.detectedAt && (
-              <SideInfoRow
-                label="Detected at"
-                value={format(new Date(ticket.detectedAt), "MM/dd/yyyy HH:mm", {
-                  locale: enUS,
-                })}
-              />
-            )}
             {/* GH-866 — a single incident detection timestamp (replaces the old from/to pair). */}
             {ticket.detectedAt && (
               <SideInfoRow
@@ -512,7 +565,8 @@ export default function AdminTicketDetailPage() {
 
           {/* ── AI verify + suspected duplicate (only tickets created manually by a Customer) ── */}
           {ticket.origin === "ManualByCustomer" &&
-            (ticket.aiVerifyStatus || ticket.suspectedDuplicateOfTicketId) && (
+            (ticket.aiVerifyStatus ||
+              (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
               <div className="px-4 py-3 space-y-2">
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   AI check
@@ -535,7 +589,7 @@ export default function AdminTicketDetailPage() {
                     {ticket.aiVerifyReason}
                   </p>
                 )}
-                {ticket.suspectedDuplicateOfTicketId && (
+                {ticket.suspectedDuplicateOfTicketId && !chatLocked && (
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
                     <p className="font-medium">
                       ⚠ Suspected duplicate of another ticket

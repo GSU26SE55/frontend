@@ -17,6 +17,8 @@ import DeviceCommandDialog from "@/features/admin/components/iot/DeviceCommandDi
 import ConfirmActionDialog from "@/features/admin/components/common/ConfirmActionDialog";
 import CalibrationTable from "@/shared/components/iot/CalibrationTable";
 import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
 import {
   useRotateIotDeviceKey,
@@ -151,6 +153,7 @@ export default function IoTDeviceDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <RefreshButton queryKeys={[KEY.iotDevices, KEY.iotCalibrations]} />
           <Button
             variant="outline"
             size="sm"

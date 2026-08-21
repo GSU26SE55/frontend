@@ -197,7 +197,9 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
       key: "customer",
       header: "Customer",
       align: "left",
-      render: (r) => r.customerId,
+      // Falls back to the id when the name is missing (deleted account / read model lag) —
+      // a warranty about to expire still has to be visible.
+      render: (r) => r.customerName ?? r.customerId,
     },
   ];
 

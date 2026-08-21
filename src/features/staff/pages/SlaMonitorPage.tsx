@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, CheckCircle, Clock, TimerReset } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { KpiCard } from "@/shared/components/dashboard/KpiCard";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useStaffTickets } from "@/features/staff/hooks/ticket/useStaffTickets";
 import { useStaffTicketDashboardStats } from "@/shared/hooks/dashboard/useDashboardStats";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
@@ -23,7 +25,7 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 export default function SlaMonitorPage() {
   const navigate = useNavigate();
   // E — filter + sort server-side (replaces client-side filtering on a 100-item capped page).
-  const { data, isLoading, isError, refetch, isFetching } = useStaffTickets({
+  const { data, isLoading, isError } = useStaffTickets({
     pageNumber: 1,
     pageSize: 100,
     slaOpen: true,
@@ -51,17 +53,9 @@ export default function SlaMonitorPage() {
             Track SLA for the tickets assigned to you.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-        >
-          <TimerReset
-            className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
-          />
-          Refresh
-        </Button>
+        <RefreshButton
+          queryKeys={[KEY.staffTickets, KEY.staffTicketDashboard]}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

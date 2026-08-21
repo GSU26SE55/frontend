@@ -32,6 +32,7 @@ export const KEY = {
   iotDevices: "iotDevices",
   iotCalibrations: "iotCalibrations",
   iotFirmware: "iotFirmware",
+  importBatches: "importBatches",
   admin: {
     accounts: ["admin", "accounts"] as const,
     staff: ["admin", "staff"] as const,
@@ -473,5 +474,11 @@ export const QUERY_KEY = {
   ticketParticipants: {
     list: (tid: string) => [KEY.ticketParticipants, "list", tid] as const,
     history: (tid: string) => [KEY.ticketParticipants, "history", tid] as const,
+  },
+  importBatches: {
+    list: (params?: object) => [KEY.importBatches, "list", params] as const,
+    detail: (id: string) => [KEY.importBatches, "detail", id] as const,
+    rows: (id: string, params?: object) =>
+      [KEY.importBatches, "rows", id, params] as const,
   },
 } as const;

@@ -161,6 +161,10 @@ export interface IotDeviceCommandAcceptedDto {
 export interface IotDeviceCalibrationDto {
   id: string;
   iotDeviceId: string;
+  // Only populated by the "calibrations expiring" list — that table spans many devices, so
+  // each row has to name its own. The other calibration endpoints already sit inside a
+  // known device context and leave this null.
+  iotDeviceCode: string | null;
   channel: string;
   batteryAssetId: string | null;
   scale: number;

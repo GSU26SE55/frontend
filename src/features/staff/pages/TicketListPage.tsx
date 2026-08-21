@@ -52,7 +52,7 @@ export default function TicketListPage() {
             tickets assigned to you.
           </p>
         </div>
-        <RefreshButton queryKeys={[KEY.staffTickets]} size="icon" />
+        <RefreshButton queryKeys={[KEY.staffTickets]} />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

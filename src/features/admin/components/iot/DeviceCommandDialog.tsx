@@ -315,7 +315,7 @@ export default function DeviceCommandDialog({
             </summary>
             <div className="space-y-3 border-t border-dashed border-input p-3">
               <div className="space-y-1">
-                <Label htmlFor="cmdId">Command id (optional)</Label>
+                <Label htmlFor="cmdId">Command id</Label>
                 <Input
                   id="cmdId"
                   {...register("cmdId")}

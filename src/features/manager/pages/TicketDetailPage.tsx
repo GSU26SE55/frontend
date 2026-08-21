@@ -1,12 +1,17 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { ArrowLeft, Copy, PanelRightClose, PanelRightOpen } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  Lock,
+  PanelRightClose,
+  PanelRightOpen,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
@@ -25,13 +30,13 @@ import DeclareIncidentDialog from "@/features/manager/components/ticket/DeclareI
 import TicketActivityTimeline from "@/shared/components/ticket/TicketActivityTimeline";
 import AddCommentForm from "@/features/manager/components/ticket/AddCommentForm";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
-import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import {
   TicketCommentThread,
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
 import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
+import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -41,6 +46,10 @@ import {
   useAdminTicketList,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useMergeCandidates } from "@/shared/hooks/ticket/useMergeCandidates";
+import {
+  isTicketChatLocked,
+  TICKET_CHAT_LOCKED_NOTICE,
+} from "@/shared/utils/ticket.utils";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
 import {
@@ -60,6 +69,7 @@ import {
 import {
   getPrimaryHandlerName,
   getSupporterNames,
+  getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
@@ -129,6 +139,13 @@ function SideInfoRow({
 export default function TicketDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Reached from either /manager/tickets/:id (list) or /manager/tickets/queue/:id (queue) —
+  // same detail page, but Back must return to whichever list the user came from.
+  const isFromQueue = location.pathname.startsWith("/manager/tickets/queue/");
+  const backToListPath = isFromQueue
+    ? "/manager/tickets/queue"
+    : "/manager/tickets";
   const [dialog, setDialog] = useState<DialogType>(null);
   const [chatTab, setChatTab] = useState<ChatTab>("public");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -146,6 +163,9 @@ export default function TicketDetailPage() {
   // no need to look it up via staffList — the helper falls back to staffId when the name is missing.
   const primaryHandlerName = getPrimaryHandlerName(ticket?.assignments);
   const supporterNames = getSupporterNames(ticket?.assignments);
+  const previousPrimaryHandlerNames = getPreviousPrimaryHandlerNames(
+    ticket?.assignments,
+  );
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -177,8 +197,8 @@ export default function TicketDetailPage() {
   const { mutate: deleteChat, isPending: deleteChatPending } =
     useDeleteTicketChat();
   const { mutate: markChatsRead } = useMarkTicketChatsRead();
-  const handleMarkRead = (chatIds: string[]) =>
-    markChatsRead({ ticketId: id, payload: { chatIds } });
+  const handleMarkRead = (chatIds: string[], onFailed: () => void) =>
+    markChatsRead({ ticketId: id, payload: { chatIds }, onFailed });
   const { mutateAsync: translateChat } = useTranslateTicketChat();
   const handleTranslate = (chat: { id: string }, targetLanguage: string) =>
     translateChat({ ticketId: id, chatId: chat.id, targetLanguage });
@@ -194,9 +214,23 @@ export default function TicketDetailPage() {
   // actually have something to offer — otherwise clicking it lands on an empty target picker.
   // useAdminTicketList shares its query key (and 30s staleTime) with the ticket list page, so
   // this usually resolves from cache; useMergeCandidates is a plain useMemo, no extra request.
+  // TicketGetListQueryHandler hides Open tickets by default (that's the Queue's job), so a
+  // second call with status=Open is required — otherwise an Open source ticket (the only case
+  // canMerge even applies) can never find its Open auto-origin target (e.g. the AI-suggested one).
   const { data: mergeSourceList } = useAdminTicketList({ pageSize: 100 });
+  const { data: mergeSourceOpenList } = useAdminTicketList({
+    pageSize: 100,
+    status: TicketStatusEnum.Open,
+  });
+  const mergeSourceItems = useMemo(
+    () => [
+      ...(mergeSourceList?.items ?? []),
+      ...(mergeSourceOpenList?.items ?? []),
+    ],
+    [mergeSourceList?.items, mergeSourceOpenList?.items],
+  );
   const mergeCandidates = useMergeCandidates(
-    mergeSourceList?.items,
+    mergeSourceItems,
     id,
     ticket?.suspectedDuplicateOfTicketId,
   );
@@ -207,7 +241,7 @@ export default function TicketDetailPage() {
         <p className="text-destructive mb-4">
           Ticket not found or you don't have access.
         </p>
-        <Button variant="outline" onClick={() => navigate("/manager/tickets")}>
+        <Button variant="outline" onClick={() => navigate(backToListPath)}>
           Back to list
         </Button>
       </div>
@@ -225,6 +259,8 @@ export default function TicketDetailPage() {
 
   const status = ticket.status;
   // GH-1176: triage approval removed; only triage-reject (Open→ClosedRejected) remains.
+  // Ticket finished → chat is archived: composer hidden, edit/delete locked in the thread.
+  const chatLocked = isTicketChatLocked(status);
   const canTriageReject = status === TicketStatusEnum.Open;
   // GH-1176: assign Open→InProgress (current schedule) or Open→Pending (future schedule).
   const canAssign = status === TicketStatusEnum.Open;
@@ -263,7 +299,7 @@ export default function TicketDetailPage() {
             variant="ghost"
             size="icon-sm"
             className="-ml-1 shrink-0"
-            onClick={() => navigate("/manager/tickets")}
+            onClick={() => navigate(backToListPath)}
           >
             <ArrowLeft size={16} />
           </Button>
@@ -275,11 +311,6 @@ export default function TicketDetailPage() {
               <TicketStatusBadge status={ticket.status} />
               {ticket.priority && (
                 <TicketPriorityBadge priority={ticket.priority} />
-              )}
-              {ticket.isIncident && (
-                <Badge variant="destructive" className="text-xs">
-                  Incident
-                </Badge>
               )}
             </div>
             <h1
@@ -331,10 +362,7 @@ export default function TicketDetailPage() {
           )}
           {/* GH-1176: Manager approves/rejects Staff escalation request */}
           {canEscalateApprove && (
-            <Button
-              size="sm"
-              onClick={() => setDialog("escalate-approve")}
-            >
+            <Button size="sm" onClick={() => setDialog("escalate-approve")}>
               Approve escalation
             </Button>
           )}
@@ -394,10 +422,8 @@ export default function TicketDetailPage() {
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
-                {/* `group` so ChatUnreadBadge hides itself automatically when this tab is active. */}
                 <TabsTrigger value="comments" className="group">
                   Chat
-                  <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="kb">Guide</TabsTrigger>
@@ -417,6 +443,17 @@ export default function TicketDetailPage() {
                     : ticket.batteryAssetId
                       ? [ticket.batteryAssetId]
                       : [];
+                // No battery AND an incident id → site-level ticket. Checked before the empty
+                // fallback because "no battery attached" is the normal, correct shape here, not
+                // missing data, and the battery panel's empty state says the opposite.
+                if (ids.length === 0 && ticket.environmentalIncidentId)
+                  return (
+                    <EnvironmentalIncidentInfoPanel
+                      incidentId={ticket.environmentalIncidentId}
+                      description={ticket.description}
+                      basePath="/manager"
+                    />
+                  );
                 if (ids.length === 0)
                   return <BatteryAssetInfoPanel batteryAssetId={null} />;
                 return (
@@ -462,7 +499,7 @@ export default function TicketDetailPage() {
                   currentUserId={currentUserId}
                   activeTab={chatTab}
                   onTabChange={setChatTab}
-                  ticketClosed={status === TicketStatusEnum.Closed}
+                  ticketClosed={chatLocked}
                   ticketId={id}
                   aiEnabled
                   onSelectSuggestion={(text) =>
@@ -491,16 +528,25 @@ export default function TicketDetailPage() {
                 />
               </div>
               <div className="shrink-0 border-t border-border p-3">
-                <TypingIndicator names={typingNames} />
-                <AddCommentForm
-                  ticketId={id}
-                  onTyping={sendTyping}
-                  isInternal={chatTab === "internal"}
-                  existingFileIds={existingFileIds}
-                  prefillText={composerPrefill.text}
-                  prefillVersion={composerPrefill.version}
-                  mentionCandidates={mentionCandidates}
-                />
+                {chatLocked ? (
+                  <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
+                    <Lock className="size-3.5" />
+                    {TICKET_CHAT_LOCKED_NOTICE}
+                  </p>
+                ) : (
+                  <>
+                    <TypingIndicator names={typingNames} />
+                    <AddCommentForm
+                      ticketId={id}
+                      onTyping={sendTyping}
+                      isInternal={chatTab === "internal"}
+                      existingFileIds={existingFileIds}
+                      prefillText={composerPrefill.text}
+                      prefillVersion={composerPrefill.version}
+                      mentionCandidates={mentionCandidates}
+                    />
+                  </>
+                )}
               </div>
             </TabsContent>
 
@@ -516,7 +562,10 @@ export default function TicketDetailPage() {
                   ))}
                 </div>
               ) : (
-                <TicketActivityTimeline activities={activities} assignments={ticket.assignments} />
+                <TicketActivityTimeline
+                  activities={activities}
+                  assignments={ticket.assignments}
+                />
               )}
             </TabsContent>
 
@@ -572,7 +621,7 @@ export default function TicketDetailPage() {
                   before triaging, not scroll to the bottom to find it. */}
               {ticket.origin === "ManualByCustomer" &&
                 (ticket.aiVerifyStatus ||
-                  ticket.suspectedDuplicateOfTicketId) && (
+                  (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
                   <div className="px-4 py-3 space-y-2">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       AI check
@@ -608,7 +657,10 @@ export default function TicketDetailPage() {
                         {reVerify.isPending ? "Sending…" : "Re-check with AI"}
                       </Button>
                     )}
-                    {ticket.suspectedDuplicateOfTicketId && (
+                    {/* Dropped once the ticket is finished: it can no longer be merged, and a
+                        ticket that reached Closed BY being merged would otherwise keep
+                        advertising the duplicate it has already been folded into. */}
+                    {ticket.suspectedDuplicateOfTicketId && !chatLocked && (
                       <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
                         {/* Copy icon, not a warning triangle: this panel says "these two look
                             like the same thing", which is a different message from the merge
@@ -723,11 +775,11 @@ export default function TicketDetailPage() {
                 </div>
               )}
 
-              {/* Rejection reason */}
+              {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
               {ticket.rejectionReason && (
                 <div className="p-4">
                   <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                    Rejection reason
+                    Reason
                   </p>
                   <p className="text-xs leading-relaxed">
                     {ticket.rejectionReason}
@@ -803,6 +855,64 @@ export default function TicketDetailPage() {
                   value={CATEGORY_LABEL[ticket.category] ?? ticket.category}
                 />
                 <SideInfoRow label="Origin" value={ticket.origin} />
+                {ticket.isPeriodicMaintenance && (
+                  <>
+                    <SideInfoRow
+                      label="Maintenance cycle"
+                      value={
+                        <span
+                          className={
+                            ticket.isPeriodicMaintenanceOverdue
+                              ? "font-medium text-destructive"
+                              : undefined
+                          }
+                        >
+                          {ticket.isPeriodicMaintenanceOverdue
+                            ? "Periodic · overdue"
+                            : "Periodic"}
+                        </span>
+                      }
+                    />
+                    <SideInfoRow
+                      label="Maintenance due"
+                      value={
+                        ticket.periodicMaintenanceDueAtUtc
+                          ? format(
+                              new Date(ticket.periodicMaintenanceDueAtUtc),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : null
+                      }
+                    />
+                    <SideInfoRow
+                      label="Visit schedule"
+                      value={
+                        ticket.scheduledStartAtUtc
+                          ? format(
+                              new Date(ticket.scheduledStartAtUtc),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : "Awaiting Customer selection"
+                      }
+                    />
+                    <SideInfoRow
+                      label="Selection deadline"
+                      value={
+                        ticket.periodicMaintenanceScheduleDeadlineAtUtc
+                          ? format(
+                              new Date(
+                                ticket.periodicMaintenanceScheduleDeadlineAtUtc,
+                              ),
+                              "MM/dd/yyyy HH:mm",
+                              { locale: enUS },
+                            )
+                          : null
+                      }
+                    />
+                  </>
+                )}
                 <SideInfoRow
                   label="Primary Handler"
                   value={primaryHandlerName}
@@ -810,29 +920,22 @@ export default function TicketDetailPage() {
                 {supporterNames.length > 0 && (
                   <SideInfoRow
                     label="Supporters"
-                    value={
-                      <span className="flex flex-wrap justify-end gap-1">
-                        {supporterNames.map((name) => (
-                          <Badge key={name} variant="secondary">
-                            {name}
-                          </Badge>
-                        ))}
-                      </span>
-                    }
+                    value={supporterNames.join(", ")}
                   />
                 )}
-                <SideInfoRow
-                  label="Battery serial"
-                  value={ticket.batterySerialNumber ?? null}
-                />
-                {ticket.detectedAt && (
+                {previousPrimaryHandlerNames.length > 0 && (
                   <SideInfoRow
-                    label="Detected at"
-                    value={format(
-                      new Date(ticket.detectedAt),
-                      "MM/dd/yyyy HH:mm",
-                      { locale: enUS },
-                    )}
+                    label="Previous handler"
+                    value={previousPrimaryHandlerNames.join(", ")}
+                  />
+                )}
+                {/* Hidden on site-level tickets: the row can never hold a value there, and an
+                    empty "—" reads as data that failed to load rather than a field that does
+                    not apply. */}
+                {!ticket.environmentalIncidentId && (
+                  <SideInfoRow
+                    label="Battery serial"
+                    value={ticket.batterySerialNumber ?? null}
                   />
                 )}
                 {/* GH-866 — single incident detection timestamp (replaces the old from/to pair). */}
@@ -934,6 +1037,8 @@ export default function TicketDetailPage() {
         <AssignDialog
           ticketId={id}
           priority={ticket.priority}
+          scheduledStartAtUtc={ticket.scheduledStartAtUtc}
+          isPeriodicMaintenance={ticket.isPeriodicMaintenance}
           open
           onClose={() => setDialog(null)}
         />
@@ -953,7 +1058,11 @@ export default function TicketDetailPage() {
         <EscalateDialog ticketId={id} open onClose={() => setDialog(null)} />
       )}
       {dialog === "escalate-reject" && (
-        <EscalateRejectDialog ticketId={id} open onClose={() => setDialog(null)} />
+        <EscalateRejectDialog
+          ticketId={id}
+          open
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog === "reprioritize" && (
         <ReprioritizeDialog

@@ -8,7 +8,7 @@ export default function BatteryAssetDetailPage() {
   return (
     <BatteryRealtimeDetail
       assetId={id}
-      bmsControl={<BmsSwitchControlCard assetId={id} />}
+      headerActions={<BmsSwitchControlCard assetId={id} variant="popover" />}
     />
   );
 }
