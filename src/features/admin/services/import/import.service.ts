@@ -14,14 +14,15 @@ import type {
 import type { ImportEntityTypeEnum } from "@/shared/enums/import/import.enum";
 
 /**
- * Gói ba file thành một body multipart.
+ * Packs the three files into one multipart body.
  *
- * Chỉ đính kèm phần nào thực sự được chọn: gửi một trường rỗng khiến phía máy chủ nhận một file
- * dài 0 byte và báo "file rỗng" thay vì hiểu là người dùng không nạp loại dữ liệu đó.
+ * Only attaches the parts actually picked: sending an empty field makes the server receive a
+ * zero-byte file and report "empty file" instead of reading it as "this type was not supplied".
  */
 function toFormData(payload: CreateImportBatchPayload): FormData {
   const form = new FormData();
-  if (payload.customersFile) form.append("customersFile", payload.customersFile);
+  if (payload.customersFile)
+    form.append("customersFile", payload.customersFile);
   if (payload.sitesFile) form.append("sitesFile", payload.sitesFile);
   if (payload.assetsFile) form.append("assetsFile", payload.assetsFile);
   return form;
@@ -46,20 +47,23 @@ export const importService = {
     ),
 
   /**
-   * Gửi file lên để đọc và kiểm định. Trả 201 kèm bộ đếm; chưa ghi dữ liệu nghiệp vụ nào.
-   * 409 nghĩa là đúng nội dung này đã nạp trước đó; 422 nghĩa là file hỏng hoặc thiếu cột.
+   * Uploads the files to be parsed and validated. Returns 201 with the counters; no business
+   * data is written yet.
+   * 409 means this exact content was uploaded before; 422 means the file is malformed or is
+   * missing columns.
    */
   createBatch: (payload: CreateImportBatchPayload) =>
     axiosInstance.post<CommonResponse<ImportBatchDto>>(
       ENDPOINTS.IMPORTS.CREATE_BATCH,
       toFormData(payload),
-      // Gỡ Content-Type mặc định để trình duyệt tự đặt "multipart/form-data" kèm chuỗi ngăn cách.
-      // Instance axios dùng chung đặt sẵn "application/json"; giữ nguyên thì máy chủ trả 415 và
-      // không đọc được file nào. Cùng cách mà fileStorageService đang làm.
+      // Drop the default Content-Type so the browser sets "multipart/form-data" with its boundary.
+      // The shared axios instance presets "application/json"; leaving it makes the server answer 415
+      // and read no file at all. Same approach fileStorageService already uses.
       { headers: { "Content-Type": undefined } },
     ),
 
-  /** Trả 202 rồi thoát ngay — tiến trình nền mới là nơi ghi thật. Màn hình phải hỏi lại tiến độ. */
+  /** Returns 202 and exits at once — the background worker does the writing. The screen has to
+   *  poll for progress. */
   commitBatch: (id: string) =>
     axiosInstance.post<CommonResponse<ImportBatchDto>>(
       ENDPOINTS.IMPORTS.COMMIT_BATCH(id),
@@ -71,10 +75,11 @@ export const importService = {
     ),
 
   /**
-   * Tải file mẫu và file lỗi.
+   * Downloads the template and the error report.
    *
-   * Dùng `responseType: "blob"` vì hai endpoint này trả CSV, không trả bọc JSON như phần còn lại
-   * của hệ thống. Để mặc định thì axios cố đọc thành JSON và nội dung file bị hỏng.
+   * Uses `responseType: "blob"` because these two endpoints return CSV rather than the JSON
+   * envelope the rest of the system uses. On the default, axios tries to parse it as JSON and the
+   * file content is corrupted.
    */
   downloadTemplate: (entityType: ImportEntityTypeEnum) =>
     axiosInstance.get<Blob>(ENDPOINTS.IMPORTS.TEMPLATE(entityType), {
