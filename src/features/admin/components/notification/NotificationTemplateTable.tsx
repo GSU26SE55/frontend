@@ -14,6 +14,8 @@ import {
   notificationTypeLabel,
   notificationChannelLabel,
 } from "@/shared/constants/notificationLabels";
+import { renderWithSamples } from "@/features/admin/utils/handlebars";
+import { getVariableDoc } from "@/features/admin/constants/templateVariableDocs";
 import type { NotificationTemplateDto } from "@/features/admin/types/notification/notification-template.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
@@ -94,8 +96,15 @@ export default function NotificationTemplateTable({
                 )}
               </td>
               <td className="px-3 py-2.5 max-w-70">
+                {/* Hiện câu đã thay biến bằng giá trị mẫu. Cột này trước đây in nguyên
+                    `Ticket {{code}} has been resolved` — người vận hành không đọc được câu thật sự
+                    gửi đi trông ra sao, mà đó lại chính là thứ họ vào đây để kiểm tra.
+                    `title` giữ template gốc cho ai cần tra tên biến. */}
                 <span className="line-clamp-1" title={t.titleTemplate}>
-                  {t.titleTemplate}
+                  {renderWithSamples(
+                    t.titleTemplate,
+                    (n) => getVariableDoc(n)?.sample,
+                  )}
                 </span>
               </td>
               <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground text-xs">

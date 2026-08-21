@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, RefreshCw, HardDrive } from "lucide-react";
+import { Search, HardDrive } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,22 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-// IOT3-69 — DÙNG LẠI badge sẵn có thay vì viết bảng nhãn/màu thứ hai. Hai bảng màu cho cùng
-// một enum sẽ lệch nhau ngay lần thêm trạng thái đầu tiên, và người dùng sẽ thấy cùng một
-// thiết bị hiện hai kiểu ở hai trang.
-import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
+import IoTDeviceTable from "@/features/staff/components/iot/IoTDeviceTable";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
-import { formatRelativeTime } from "@/shared/utils/iotDeviceHealth";
 
 /**
  * IOT3-66 — danh sách thiết bị IoT cho Staff.
@@ -67,13 +56,12 @@ export default function IoTDevicesPage() {
     [keyword, status],
   );
 
-  const { data, isLoading, isError, isFetching, refetch } =
-    useIotDevicesForStaff(params);
+  const { data, isLoading, isError, refetch } = useIotDevicesForStaff(params);
   const items = data?.items ?? [];
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             Staff &middot; IoT
@@ -83,17 +71,7 @@ export default function IoTDevicesPage() {
             Status, firmware and last-seen time of the gateways in the field.
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-        >
-          <RefreshCw
-            className={isFetching ? "size-3.5 animate-spin" : "size-3.5"}
-          />
-          Refresh
-        </Button>
+        <RefreshButton queryKeys={[KEY.iotDevices]} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -150,57 +128,7 @@ export default function IoTDevicesPage() {
         </Card>
       ) : (
         <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Device code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Site</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Firmware</TableHead>
-                <TableHead>Last seen</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((d) => {
-                // Firmware đích khác bản đang chạy ⇒ đang chờ OTA. Không nói ra thì người trực
-                // sẽ tưởng thiết bị đã lên bản mới vì admin "đã bấm cập nhật rồi".
-                const otaPending =
-                  !!d.targetFirmwareVersion &&
-                  d.targetFirmwareVersion !== d.currentFirmwareVersion;
-                return (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-mono text-xs">
-                      <Link
-                        to={`/staff/iot-devices/${d.id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {d.deviceCode}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{d.displayName}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {d.siteName ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <IoTDeviceStatusBadge status={d.status} />
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {d.currentFirmwareVersion ?? "—"}
-                      {otaPending && (
-                        <span className="ml-1 text-amber-600">
-                          → {d.targetFirmwareVersion}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {formatRelativeTime(d.lastSeenAt)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <IoTDeviceTable items={items} />
         </Card>
       )}
     </div>

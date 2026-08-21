@@ -43,7 +43,7 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Report resolution</DialogTitle>
+          <DialogTitle>Complete</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,7 +52,10 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
               name="resolutionSummary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Resolution summary</FormLabel>
+                  <FormLabel>
+                    Resolution summary{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Describe how you resolved the issue..."
@@ -74,7 +77,7 @@ export function ResolveDialog({ open, onClose, onSubmit, isPending }: Props) {
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Processing..." : "Confirm resolution"}
+                {isPending ? "Processing..." : "Complete"}
               </Button>
             </DialogFooter>
           </form>

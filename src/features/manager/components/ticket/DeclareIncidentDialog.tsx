@@ -64,7 +64,10 @@ export default function DeclareIncidentDialog({
               name="incidentDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Incident description</FormLabel>
+                  <FormLabel>
+                    Incident description{" "}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Brief reason for declaring this incident..."

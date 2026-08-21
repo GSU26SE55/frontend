@@ -3,7 +3,6 @@ import {
   ImpactScopeEnum,
   UrgencyLevelEnum,
   TicketPriorityEnum,
-  EscalationReasonEnum,
 } from "@/shared/types/ticket/ticket.types";
 
 export const triageSchema = z
@@ -80,12 +79,13 @@ export const triageRejectSchema = z.object({
 
 export type TriageRejectFormValues = z.infer<typeof triageRejectSchema>;
 
-export const escalateSchema = z.object({
-  reason: z.nativeEnum(EscalationReasonEnum),
-  note: z.string().optional(),
+// Required by the BE (TicketEscalationDecisionCommand) — empty → 400.
+export const escalateApproveSchema = z.object({
+  reason: z.string().min(1, "A decision reason is required"),
+  keepCurrentPrimary: z.boolean(),
 });
 
-export type EscalateFormValues = z.infer<typeof escalateSchema>;
+export type EscalateApproveFormValues = z.infer<typeof escalateApproveSchema>;
 
 // TicketReprioritizeCommand — reason is required, and the BE caps it at 1000 characters.
 // Send Impact + Urgency and NOT priority: User Guide §3.9 states that priority is derived

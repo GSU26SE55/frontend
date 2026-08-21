@@ -3,6 +3,7 @@
 // Label/title specific to admin only → keep inline here.
 
 import {
+  FileUp,
   History,
   Newspaper,
   LayoutTemplate,
@@ -14,7 +15,6 @@ import {
   Settings,
   Bell,
   BellRing,
-  Inbox,
   Ticket,
   ScrollText,
   BookOpen,
@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
-  INBOX_PATH,
   SIDEBAR_LABELS,
   SIDEBAR_SECTION_TITLES,
 } from "@/shared/constants/sidebarLabels";
@@ -44,8 +43,6 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/analytics",
         icon: BarChart3,
       },
-      // Route shared across all roles (no /admin prefix) — BE filters by UserId in the JWT.
-      { label: SIDEBAR_LABELS.inbox, path: INBOX_PATH, icon: Inbox },
     ],
   },
   {
@@ -72,6 +69,11 @@ export const ADMIN_NAV: NavSection[] = [
         icon: ShieldAlert,
       },
       { label: "Devices", path: "/admin/iot-devices", icon: Cpu },
+      {
+        label: "Third-party import",
+        path: "/admin/data-import",
+        icon: FileUp,
+      },
       // Hidden from nav per request — route kept intact, not deleted.
       // { label: "Firmware OTA", path: "/admin/iot-firmware", icon: HardDrive },
     ],

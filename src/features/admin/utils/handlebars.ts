@@ -62,14 +62,56 @@ export function extractPlaceholders(
 }
 
 /**
- * Appends `{{name}}` to the end of the content being composed — used for the click-to-insert
- * button in the valid-variables table. Auto-adds a space when appending to the end of an unfinished
- * sentence, so the token doesn't stick to the preceding text.
+ * Chèn `{{name}}` vào ĐÚNG vị trí con trỏ, trả về cả chuỗi mới lẫn vị trí caret sau khi chèn để
+ * caller đặt lại con trỏ.
+ *
+ * Vì sao chèn tại con trỏ chứ không nối vào cuối: câu thông báo hầu như luôn có
+ * biến nằm GIỮA câu ("Ticket {{code}} vừa được tạo"). Nối vào cuối buộc người soạn phải tự cắt dán
+ * token về giữa — và đó đúng là thao tác làm hỏng cặp ngoặc, sinh ra biến sai tên mà Handlebars
+ * lặng lẽ render thành chuỗi rỗng.
+ *
+ * `selectionStart/End` là vùng đang bôi đen (bằng nhau nếu chỉ có caret); token thay thế phần bôi
+ * đen, đúng như hành vi gõ phím bình thường.
  */
-export function insertPlaceholder(current: string, name: string): string {
+export function insertPlaceholderAt(
+  current: string,
+  name: string,
+  selectionStart: number,
+  selectionEnd: number,
+): { value: string; caret: number } {
   const token = `{{${name}}}`;
-  if (!current) return token;
-  return /\s$/.test(current) ? current + token : `${current} ${token}`;
+  const before = current.slice(0, selectionStart);
+  const after = current.slice(selectionEnd);
+
+  // Tự thêm khoảng trắng để token không dính vào chữ liền kề ("ticketTK-1042").
+  const needsSpaceBefore = before !== "" && !/\s$/.test(before);
+  const needsSpaceAfter = after !== "" && !/^\s/.test(after);
+  const insert =
+    (needsSpaceBefore ? " " : "") + token + (needsSpaceAfter ? " " : "");
+
+  return {
+    value: before + insert + after,
+    caret: before.length + insert.length,
+  };
+}
+
+/**
+ * Thay mọi `{{bien}}` bằng giá trị mẫu tương ứng để dựng câu đọc thử.
+ *
+ * Đây CHỈ để hiển thị — chuỗi lưu xuống DB luôn là template gốc. Biến không tra được trong từ điển
+ * giữ nguyên dạng thô: hiện ra như vậy chính là tín hiệu cho người soạn biết mình vừa gõ một tên
+ * không có thật.
+ */
+export function renderWithSamples(
+  template: string,
+  sampleOf: (name: string) => string | undefined,
+): string {
+  return template.replace(HANDLEBARS_TOKEN, (whole, rawName: string) => {
+    const name = (rawName ?? "").trim();
+    if (!name || NON_VARIABLE_PREFIXES.has(name[0]) || /\s/.test(name))
+      return whole;
+    return sampleOf(name) ?? whole;
+  });
 }
 
 /**

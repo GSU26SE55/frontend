@@ -114,7 +114,7 @@ export default function NotificationGroupFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Group name{" "}
+                    Group name <span className="text-destructive">*</span>{" "}
                     <span className="text-xs font-normal text-muted-foreground">
                       ({field.value?.length ?? 0}/{GROUP_NAME_MAX})
                     </span>
@@ -145,7 +145,7 @@ export default function NotificationGroupFormDialog({
                   <FormControl>
                     <Textarea
                       rows={3}
-                      placeholder="What this group is for (optional)"
+                      placeholder="What this group is for"
                       {...field}
                       value={field.value ?? ""}
                     />

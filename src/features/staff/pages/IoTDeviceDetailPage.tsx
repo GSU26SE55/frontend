@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Link, useParams } from "react-router-dom";
 import {
   Area,
@@ -11,15 +12,31 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import {
   useIotDeviceHeartbeats,
   useIotDevicesForStaff,
 } from "@/shared/hooks/iot/useIotDeviceRead";
+import {
+  useIotDeviceDetail,
+  useRotateIotDeviceKey,
+  useRotateIotDeviceMqtt,
+} from "@/features/staff/hooks/iot/useIotDeviceMutations";
+import DeviceKeyRevealDialog from "@/features/staff/components/iot/DeviceKeyRevealDialog";
+import {
+  fromCreatedDto,
+  fromDetailDto,
+  type DeviceSecrets,
+} from "@/features/staff/components/iot/deviceSecrets";
+import ConfirmActionDialog from "@/features/staff/components/common/ConfirmActionDialog";
+import { handleErrorApi } from "@/shared/lib/errors";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import {
   CLOCK_SKEW_REJECT_SECONDS,
   WEAK_RSSI_DBM,
@@ -107,14 +124,23 @@ function Stat({
 export default function IoTDeviceDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
 
-  // Chưa có endpoint chi tiết dành cho Staff (`GET /{id}` là đường admin, trả cả apiKey), nên
-  // lấy thiết bị từ cùng danh sách trang trước đã nạp — TanStack Query trả ngay từ cache.
+  // Header/stat cards (status, siteName, lastSeenAt) still read from the staff list cache —
+  // it already carries everything they need and is loaded before this page is reached.
   const list = useIotDevicesForStaff({
     pageSize: 50,
     sortBy: "lastSeenAt",
     sortDir: "desc",
   });
   const device = list.data?.items.find((d) => d.id === id);
+
+  // Detail-only call for the quick actions below: `GET /api/admin/iot-devices/{id}` was opened
+  // to Staff so "View details" can show the re-readable apiKey/QR/MQTT, same as Admin.
+  const { data: detail } = useIotDeviceDetail(id);
+  const { mutate: rotateKey } = useRotateIotDeviceKey(id);
+  const { mutate: rotateMqtt } = useRotateIotDeviceMqtt(id);
+
+  const [revealed, setRevealed] = useState<DeviceSecrets | null>(null);
+  const [confirm, setConfirm] = useState<"rotate" | "rotate-mqtt" | null>(null);
 
   const heartbeats = useIotDeviceHeartbeats(id, { limit: 100 });
   const rows = useMemo(
@@ -123,6 +149,8 @@ export default function IoTDeviceDetailPage() {
   );
 
   const latest = heartbeats.data?.items[0];
+  const isDecommissioned =
+    device?.status === IotDeviceStatusEnum.Decommissioned;
 
   return (
     <div className="p-6 space-y-6 max-w-360 mx-auto">
@@ -148,22 +176,35 @@ export default function IoTDeviceDetailPage() {
             </div>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            heartbeats.refetch();
-            list.refetch();
-          }}
-          disabled={heartbeats.isFetching}
-        >
-          <RefreshCw
-            className={
-              heartbeats.isFetching ? "size-3.5 animate-spin" : "size-3.5"
-            }
-          />
-          Refresh
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          {/* Root key covers both the staff list and the heartbeat history. */}
+          <RefreshButton queryKeys={[KEY.iotDevices]} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => detail && setRevealed(fromDetailDto(detail))}
+          >
+            View details
+          </Button>
+          {!isDecommissioned && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirm("rotate-mqtt")}
+            >
+              Rotate MQTT key
+            </Button>
+          )}
+          {!isDecommissioned && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirm("rotate")}
+            >
+              Rotate key
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* ---- Số liệu mới nhất ---- */}
@@ -350,6 +391,51 @@ export default function IoTDeviceDetailPage() {
           Showing the 100 most recent samples.
         </p>
       )}
+
+      <DeviceKeyRevealDialog
+        open={!!revealed}
+        onOpenChange={(o) => !o && setRevealed(null)}
+        device={revealed}
+      />
+
+      {/* Two rotate commands, two very different warnings — see the Admin page's
+          IOT3-76 note: MQTT rotate self-heals via /provision, API key rotate does not. */}
+      <ConfirmActionDialog
+        open={confirm === "rotate-mqtt"}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title="Rotate MQTT key?"
+        description="Changes only the MQTT username/password. The API key STAYS THE SAME, so the device calls /provision itself to fetch the new password — NO site visit needed. While it waits, the device temporarily loses MQTT but keeps sending data over HTTPS."
+        actionLabel="Rotate MQTT key"
+        onConfirm={() => {
+          setConfirm(null);
+          rotateMqtt(undefined, {
+            onSuccess: (res) => {
+              if (res.data) setRevealed(fromCreatedDto(res.data));
+              toast.success(
+                "MQTT key rotated. The device will re-provision itself.",
+              );
+            },
+            onError: (error) => handleErrorApi({ error }),
+          });
+        }}
+      />
+      <ConfirmActionDialog
+        open={confirm === "rotate"}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title="Rotate API key?"
+        description="Changes BOTH the API key AND the MQTT key. The device loses both channels and CANNOT recover on its own — someone must go on site with a cable and flash the new API key. Use this only when the API key is suspected leaked; to change just the MQTT key use Rotate MQTT key."
+        actionLabel="Rotate"
+        onConfirm={() => {
+          setConfirm(null);
+          rotateKey(undefined, {
+            onSuccess: (res) => {
+              if (res.data) setRevealed(fromCreatedDto(res.data));
+              toast.success("API key rotated.");
+            },
+            onError: (error) => handleErrorApi({ error }),
+          });
+        }}
+      />
     </div>
   );
 }

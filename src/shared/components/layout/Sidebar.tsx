@@ -144,7 +144,7 @@ function Section({
                     <>
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge !== undefined && (
-                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none animate-pulse">
+                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none">
                           {item.badge}
                         </span>
                       )}

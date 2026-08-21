@@ -141,7 +141,7 @@ export function BlogEditorPanel({
 
       {!isEdit && templates && templates.length > 0 && (
         <div className="space-y-1.5">
-          <Label htmlFor="blog-template">Apply template (optional)</Label>
+          <Label htmlFor="blog-template">Apply template</Label>
           <select
             id="blog-template"
             disabled={!editable}

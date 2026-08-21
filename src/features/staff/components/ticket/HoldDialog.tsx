@@ -22,10 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { PauseReasonEnum } from "@/shared/types/ticket/ticket.types";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
   holdSchema,
   type HoldFormValues,
@@ -40,18 +41,22 @@ const PAUSE_REASON_LABELS: Record<PauseReasonEnum, string> = {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: HoldFormValues) => void;
+  onSubmit: (data: HoldFormValues) => Promise<unknown>;
   isPending: boolean;
 }
 
 export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
   const form = useForm<HoldFormValues>({
     resolver: zodResolver(holdSchema),
-    defaultValues: { rescheduledStartAtUtc: "" },
+    defaultValues: { rescheduledStartAt: "", note: "" },
   });
 
-  const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      handleErrorApi({ error, setError: form.setError });
+    }
   });
 
   return (
@@ -98,7 +103,7 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
             />
             <FormField
               control={form.control}
-              name="rescheduledStartAtUtc"
+              name="rescheduledStartAt"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
@@ -106,7 +111,12 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
                     <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input type="datetime-local" {...field} />
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      min={new Date()}
+                      className="w-full"
+                    />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
                     When the customer / blocker will be available. Work resumes
@@ -121,10 +131,12 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Note</FormLabel>
+                  <FormLabel>
+                    Note <span className="text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Add more detail if needed..."
+                      placeholder="Describe why this ticket is on hold..."
                       rows={3}
                       {...field}
                     />

@@ -15,7 +15,9 @@ import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
-import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
+// Ẩn cùng tab "AI prediction" (xem TabsTrigger/TabsContent bên dưới). Comment thay vì xoá
+// để bật lại chỉ bằng bỏ ba khối comment, không phải tìm lại đường import.
+// import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
@@ -64,15 +66,16 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-// SOH is the single most meaningful "is this battery still healthy" number (it IS
-// current/nominal capacity expressed as a %), so it gets top billing above Information
-// instead of being buried as one more stat tile among Voltage/Current/Temperature/SOC.
-function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
+// The percentage a battery can still hold relative to its nominal capacity — labelled
+// "Max capacity" for operators, but it IS the SOH the AI module predicts. It gets top
+// billing above Information instead of being buried as one more stat tile among
+// Voltage/Current/Temperature/SOC.
+function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   if (sohPercent == null) {
     return (
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 text-muted-foreground">
         <HeartPulse size={16} />
-        <span className="text-xs">SOH not available yet</span>
+        <span className="text-xs">Max capacity not available yet</span>
       </div>
     );
   }
@@ -103,7 +106,7 @@ function SohHighlight({ sohPercent }: { sohPercent?: number | null }) {
             </span>
           </div>
           <span className="text-[11px] text-muted-foreground">
-            State of Health
+            Max capacity
           </span>
         </div>
       </div>
@@ -132,11 +135,9 @@ function CascadeRiskBadge({ assetId }: { assetId: string }) {
 
 interface BatteryRealtimeDetailProps {
   assetId: string;
-  // Admin injects CRUD buttons (Edit/Transfer/Delete/Set topology) + dialogs through this slot. Manager/Staff leave it empty.
+  // Admin injects CRUD buttons (Edit/Transfer/Delete) + dialogs through this slot;
+  // Admin and Staff also pass the BMS control here. Manager leaves it empty.
   headerActions?: ReactNode;
-  // Only Admin and Staff pass this safety-critical control. The API performs the
-  // same authorization check, so route composition is not the security boundary.
-  bmsControl?: ReactNode;
 }
 
 // Real-time battery detail page (read-only core) — shared by admin/manager/staff.
@@ -144,7 +145,6 @@ interface BatteryRealtimeDetailProps {
 export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
-  bmsControl,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
 
@@ -225,7 +225,7 @@ export default function BatteryRealtimeDetail({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <RefreshButton queryKeys={[KEY.batteryAssets]} size="icon" />
+          <RefreshButton queryKeys={[KEY.batteryAssets]} />
           {headerActions}
         </div>
       </div>
@@ -236,7 +236,7 @@ export default function BatteryRealtimeDetail({
           {/* Left sidebar */}
           <div className="w-65 shrink-0 border-r border-border flex flex-col overflow-y-auto">
             {/* SOH — the single most important health indicator, shown first and prominently */}
-            <SohHighlight sohPercent={live?.sohPercent} />
+            <MaxCapacityHighlight sohPercent={live?.sohPercent} />
 
             <Separator />
 
@@ -290,7 +290,6 @@ export default function BatteryRealtimeDetail({
                   : undefined
               }
             />
-            {bmsControl}
           </div>
 
           {/* Right: chart / history tabs */}
@@ -301,7 +300,9 @@ export default function BatteryRealtimeDetail({
                   <TabsTrigger value="chart">Chart</TabsTrigger>
                   <TabsTrigger value="peak">Charge/discharge peak</TabsTrigger>
                   <TabsTrigger value="history">Sensor history</TabsTrigger>
-                  <TabsTrigger value="ai">AI prediction</TabsTrigger>
+                  {/* Tab "AI prediction" tạm ẩn theo yêu cầu — chưa cần cho luồng hiện tại.
+                      Giữ nguyên component + TabsContent bên dưới (cũng đã ẩn) để bật lại chỉ
+                      bằng cách bỏ hai khối comment này, không phải dựng lại từ đầu. */}
                 </TabsList>
               </div>
               <TabsContent
@@ -333,12 +334,13 @@ export default function BatteryRealtimeDetail({
                   fillHeight
                 />
               </TabsContent>
-              <TabsContent
+              {/* Ẩn cùng TabsTrigger "ai" ở trên — xem ghi chú tại đó. */}
+              {/* <TabsContent
                 value="ai"
                 className="min-h-0 overflow-y-auto m-0 p-5"
               >
                 <AiPredictionCard assetId={id} />
-              </TabsContent>
+              </TabsContent> */}
             </Tabs>
           </div>
         </div>

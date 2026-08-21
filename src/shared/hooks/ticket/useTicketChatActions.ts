@@ -81,14 +81,29 @@ export function useMarkTicketChatsRead() {
     }: {
       ticketId: string;
       payload: ChatMarkReadPayload;
+      onFailed?: () => void;
     }) => ticketChatActionsService.markRead(ticketId, payload),
-    // Once read → the badge must drop immediately, otherwise the user opens the tab but the count still shows stale.
     onSuccess: (_, { ticketId }) => {
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
-      });
+      // The delay is required, not cosmetic. A 200 here only means the read receipts were
+      // queued: TicketService writes them from ChatReadReceiptBulkWriter, which flushes on a
+      // 1s interval (FlushInterval in ChatReadReceiptBulkWriter.cs). Refetching straight away
+      // reads the database before that flush and gets back a count that has not dropped yet,
+      // then marks the query fresh — so the badge holds a stale number instead of clearing.
+      // This used to fire immediately, which is why the count appeared to climb as the user
+      // chatted.
+      //
+      // If the backend ever writes read receipts synchronously, drop the timeout.
+      setTimeout(() => {
+        qc.invalidateQueries({
+          queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
+        });
+        qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+      }, 1_500);
     },
-    onError: (error) => handleErrorApi({ error }),
+    // Mark-read is background housekeeping the user never asked for, so a failure must stay
+    // silent — no toast. onFailed hands the ids back to the thread so the next render retries
+    // them; BE answers 503 when its read-receipt queue is full, exactly the case worth retrying.
+    onError: (_error, { onFailed }) => onFailed?.(),
   });
 }
 

@@ -30,7 +30,9 @@ const GoogleLinkSection = ({ isLinked, bare }: GoogleLinkSectionProps) => {
       {!isLinked ? (
         // Provider scoped here (not app-wide) so the Google GSI script loads only when
         // the link button actually renders — keeps it off every other page.
-        <GoogleOAuthProvider clientId={env.VITE_GOOGLE_CLIENT_ID}>
+        // locale must sit on the provider (GoogleLogin reads it from context, not props);
+        // without it GSI follows the browser language and renders "Đăng nhập".
+        <GoogleOAuthProvider clientId={env.VITE_GOOGLE_CLIENT_ID} locale="en">
           <GoogleLogin
             onSuccess={(credentialResponse) => {
               if (credentialResponse.credential) {
