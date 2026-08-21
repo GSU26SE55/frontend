@@ -6,41 +6,82 @@ import {
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
-const BATCH_LABEL: Record<ImportBatchStatusEnum, { text: string; variant: BadgeVariant }> = {
-  [ImportBatchStatusEnum.Pending]: { text: "Chờ xử lý", variant: "secondary" },
-  [ImportBatchStatusEnum.Parsing]: { text: "Đang đọc file", variant: "secondary" },
-  [ImportBatchStatusEnum.Validating]: { text: "Đang kiểm định", variant: "secondary" },
-  [ImportBatchStatusEnum.ValidationFailed]: { text: "File không dùng được", variant: "destructive" },
-  [ImportBatchStatusEnum.ReadyToCommit]: { text: "Chờ ghi thật", variant: "outline" },
-  [ImportBatchStatusEnum.Committing]: { text: "Đang ghi", variant: "secondary" },
-  // Tách riêng khỏi "Đang ghi" có chủ ý: người vận hành cần phân biệt hệ thống đang bận với
-  // việc đang chờ AuthService trả tài khoản về — hai tình huống xử lý khác hẳn nhau.
-  [ImportBatchStatusEnum.AwaitingAccountSync]: { text: "Chờ cấp tài khoản", variant: "secondary" },
-  [ImportBatchStatusEnum.Completed]: { text: "Hoàn tất", variant: "default" },
-  [ImportBatchStatusEnum.CompletedWithErrors]: { text: "Xong, có dòng hỏng", variant: "outline" },
-  [ImportBatchStatusEnum.Reverting]: { text: "Đang hoàn tác", variant: "secondary" },
-  [ImportBatchStatusEnum.Reverted]: { text: "Đã hoàn tác", variant: "outline" },
-  [ImportBatchStatusEnum.Failed]: { text: "Hỏng", variant: "destructive" },
+const BATCH_LABEL: Record<
+  ImportBatchStatusEnum,
+  { text: string; variant: BadgeVariant }
+> = {
+  [ImportBatchStatusEnum.Pending]: { text: "Pending", variant: "secondary" },
+  [ImportBatchStatusEnum.Parsing]: {
+    text: "Parsing file",
+    variant: "secondary",
+  },
+  [ImportBatchStatusEnum.Validating]: {
+    text: "Validating",
+    variant: "secondary",
+  },
+  [ImportBatchStatusEnum.ValidationFailed]: {
+    text: "File unusable",
+    variant: "destructive",
+  },
+  [ImportBatchStatusEnum.ReadyToCommit]: {
+    text: "Ready to commit",
+    variant: "outline",
+  },
+  [ImportBatchStatusEnum.Committing]: { text: "Writing", variant: "secondary" },
+  // Deliberately kept apart from "Writing": the operator needs to tell a busy system from one
+  // waiting on AuthService to hand accounts back — the two call for different responses.
+  [ImportBatchStatusEnum.AwaitingAccountSync]: {
+    text: "Awaiting accounts",
+    variant: "secondary",
+  },
+  [ImportBatchStatusEnum.Completed]: { text: "Completed", variant: "default" },
+  [ImportBatchStatusEnum.CompletedWithErrors]: {
+    text: "Completed with errors",
+    variant: "outline",
+  },
+  [ImportBatchStatusEnum.Reverting]: {
+    text: "Reverting",
+    variant: "secondary",
+  },
+  [ImportBatchStatusEnum.Reverted]: { text: "Reverted", variant: "outline" },
+  [ImportBatchStatusEnum.Failed]: { text: "Failed", variant: "destructive" },
 };
 
-const ROW_LABEL: Record<ImportRowStatusEnum, { text: string; variant: BadgeVariant }> = {
-  [ImportRowStatusEnum.Pending]: { text: "Chờ", variant: "secondary" },
-  [ImportRowStatusEnum.Valid]: { text: "Hợp lệ", variant: "outline" },
-  [ImportRowStatusEnum.Invalid]: { text: "Không hợp lệ", variant: "destructive" },
-  [ImportRowStatusEnum.AwaitingAccount]: { text: "Chờ tài khoản", variant: "secondary" },
-  [ImportRowStatusEnum.Created]: { text: "Đã tạo", variant: "default" },
-  [ImportRowStatusEnum.Updated]: { text: "Đã cập nhật", variant: "default" },
-  [ImportRowStatusEnum.Skipped]: { text: "Bỏ qua", variant: "outline" },
-  [ImportRowStatusEnum.Failed]: { text: "Ghi hỏng", variant: "destructive" },
-  [ImportRowStatusEnum.Reverted]: { text: "Đã hoàn tác", variant: "outline" },
+const ROW_LABEL: Record<
+  ImportRowStatusEnum,
+  { text: string; variant: BadgeVariant }
+> = {
+  [ImportRowStatusEnum.Pending]: { text: "Pending", variant: "secondary" },
+  [ImportRowStatusEnum.Valid]: { text: "Valid", variant: "outline" },
+  [ImportRowStatusEnum.Invalid]: { text: "Invalid", variant: "destructive" },
+  [ImportRowStatusEnum.AwaitingAccount]: {
+    text: "Awaiting account",
+    variant: "secondary",
+  },
+  [ImportRowStatusEnum.Created]: { text: "Created", variant: "default" },
+  [ImportRowStatusEnum.Updated]: { text: "Updated", variant: "default" },
+  [ImportRowStatusEnum.Skipped]: { text: "Skipped", variant: "outline" },
+  [ImportRowStatusEnum.Failed]: {
+    text: "Write failed",
+    variant: "destructive",
+  },
+  [ImportRowStatusEnum.Reverted]: { text: "Reverted", variant: "outline" },
 };
 
-export function ImportBatchStatusBadge({ status }: { status: ImportBatchStatusEnum }) {
+export function ImportBatchStatusBadge({
+  status,
+}: {
+  status: ImportBatchStatusEnum;
+}) {
   const label = BATCH_LABEL[status];
   return <Badge variant={label.variant}>{label.text}</Badge>;
 }
 
-export function ImportRowStatusBadge({ status }: { status: ImportRowStatusEnum }) {
+export function ImportRowStatusBadge({
+  status,
+}: {
+  status: ImportRowStatusEnum;
+}) {
   const label = ROW_LABEL[status];
   return <Badge variant={label.variant}>{label.text}</Badge>;
 }

@@ -49,17 +49,25 @@ import type { CreateImportBatchPayload } from "@/shared/types/import/import.type
 import { handleErrorApi } from "@/shared/lib/errors";
 
 const TEMPLATES = [
-  { type: ImportEntityTypeEnum.Customer, label: "Khách hàng" },
+  { type: ImportEntityTypeEnum.Customer, label: "Customer" },
   { type: ImportEntityTypeEnum.Site, label: "Site" },
-  { type: ImportEntityTypeEnum.BatteryAsset, label: "Pin" },
+  { type: ImportEntityTypeEnum.BatteryAsset, label: "Battery asset" },
 ] as const;
 
 type FileSlot = keyof CreateImportBatchPayload;
 
 const FILE_SLOTS: { slot: FileSlot; label: string; hint: string }[] = [
-  { slot: "customersFile", label: "customers.csv", hint: "Khách hàng" },
-  { slot: "sitesFile", label: "sites.csv", hint: "Site — cần mã khách hàng" },
-  { slot: "assetsFile", label: "assets.csv", hint: "Pin — cần mã site" },
+  { slot: "customersFile", label: "customers.csv", hint: "Customers" },
+  {
+    slot: "sitesFile",
+    label: "sites.csv",
+    hint: "Sites — needs a customer code",
+  },
+  {
+    slot: "assetsFile",
+    label: "assets.csv",
+    hint: "Battery assets — needs a site code",
+  },
 ];
 
 export default function DataImportPage() {
@@ -72,7 +80,10 @@ export default function DataImportPage() {
     pageNumber: 1,
     pageSize: 10,
   });
-  const { data: activeBatch } = useImportBatch(activeBatchId ?? "", !!activeBatchId);
+  const { data: activeBatch } = useImportBatch(
+    activeBatchId ?? "",
+    !!activeBatchId,
+  );
   const { data: badRows } = useImportRows(
     activeBatchId ?? "",
     { pageNumber: 1, pageSize: 50, status: ImportRowStatusEnum.Invalid },
@@ -90,15 +101,20 @@ export default function DataImportPage() {
     [files],
   );
 
-  const progressPercent = activeBatch && activeBatch.validRows > 0
-    ? Math.min(100, Math.round((activeBatch.processedRows / activeBatch.validRows) * 100))
-    : 0;
+  const progressPercent =
+    activeBatch && activeBatch.validRows > 0
+      ? Math.min(
+          100,
+          Math.round((activeBatch.processedRows / activeBatch.validRows) * 100),
+        )
+      : 0;
 
-  const canCommit = activeBatch?.status === ImportBatchStatusEnum.ReadyToCommit
-    && activeBatch.validRows > 0;
+  const canCommit =
+    activeBatch?.status === ImportBatchStatusEnum.ReadyToCommit &&
+    activeBatch.validRows > 0;
 
-  // Khai kiểu rộng cho mảng: viết trực tiếp thì TypeScript suy ra kiểu hẹp theo đúng ba giá trị
-  // trong ngoặc, và includes() từ chối mọi trạng thái khác thay vì trả false.
+  // Widen the array type: written inline, TypeScript narrows it to exactly the three values
+  // listed, and includes() then rejects any other status instead of returning false.
   const REVERTABLE: ImportBatchStatusEnum[] = [
     ImportBatchStatusEnum.Completed,
     ImportBatchStatusEnum.CompletedWithErrors,
@@ -126,10 +142,12 @@ export default function DataImportPage() {
         resetFiles();
         if (batch.invalidRows > 0) {
           toast.warning(
-            `${batch.validRows}/${batch.totalRows} dòng hợp lệ. Tải danh sách dòng hỏng về sửa rồi nạp lại.`,
+            `${batch.validRows}/${batch.totalRows} rows valid. Download the failed rows, fix them and upload again.`,
           );
         } else {
-          toast.success(`${batch.totalRows} dòng hợp lệ. Chưa ghi gì — bấm "Ghi thật" để tiếp tục.`);
+          toast.success(
+            `${batch.totalRows} rows valid. Nothing written yet — press "Commit" to continue.`,
+          );
         }
       },
       onError: (error) => handleErrorApi({ error }),
@@ -139,7 +157,7 @@ export default function DataImportPage() {
   function handleCommit() {
     if (!activeBatchId) return;
     commitBatch.mutate(activeBatchId, {
-      onSuccess: () => toast.success("Đã nhận. Theo dõi tiến độ ngay bên dưới."),
+      onSuccess: () => toast.success("Accepted. Track the progress below."),
       onError: (error) => handleErrorApi({ error }),
     });
   }
@@ -148,7 +166,7 @@ export default function DataImportPage() {
     if (!revertTarget) return;
     revertBatch.mutate(revertTarget, {
       onSuccess: (response) => {
-        toast.success(response.message ?? "Đã hoàn tác.");
+        toast.success(response.message ?? "Reverted.");
         setRevertTarget(null);
       },
       onError: (error) => {
@@ -161,16 +179,16 @@ export default function DataImportPage() {
   return (
     <div className="space-y-6 p-6" data-testid="data-import-page">
       <div>
-        <h1 className="text-2xl font-semibold">Nhập dữ liệu từ bên thứ ba</h1>
+        <h1 className="text-2xl font-semibold">Third-party data import</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Tải file mẫu, điền dữ liệu, chạy thử để xem trước, rồi mới ghi thật. Bước chạy thử
-          không ghi bất kỳ bản ghi nghiệp vụ nào.
+          Download a template, fill it in, dry-run it to preview the result,
+          then commit. The dry-run writes no business records at all.
         </p>
       </div>
 
-      {/* Bước 1 — file mẫu */}
+      {/* Step 1 — templates */}
       <Card className="p-5">
-        <h2 className="mb-3 font-medium">Bước 1 — Tải file mẫu</h2>
+        <h2 className="mb-3 font-medium">Step 1 — Download a template</h2>
         <div className="flex flex-wrap gap-2">
           {TEMPLATES.map(({ type, label }) => (
             <Button
@@ -192,15 +210,17 @@ export default function DataImportPage() {
         </div>
       </Card>
 
-      {/* Bước 2 — chọn file + chạy thử */}
+      {/* Step 2 — pick files + dry run */}
       <Card className="p-5">
-        <h2 className="mb-3 font-medium">Bước 2 — Chọn file và chạy thử</h2>
+        <h2 className="mb-3 font-medium">Step 2 — Pick files and dry-run</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {FILE_SLOTS.map(({ slot, label, hint }) => (
             <div key={slot} className="space-y-1.5">
               <Label htmlFor={slot}>
                 {label}
-                <span className="text-muted-foreground ml-2 text-xs font-normal">{hint}</span>
+                <span className="text-muted-foreground ml-2 text-xs font-normal">
+                  {hint}
+                </span>
               </Label>
               <Input
                 id={slot}
@@ -210,7 +230,9 @@ export default function DataImportPage() {
                 ref={(element) => {
                   inputRefs.current[slot] = element;
                 }}
-                onChange={(event) => pickFile(slot, event.target.files?.[0] ?? null)}
+                onChange={(event) =>
+                  pickFile(slot, event.target.files?.[0] ?? null)
+                }
               />
             </div>
           ))}
@@ -222,38 +244,61 @@ export default function DataImportPage() {
             onClick={handleDryRun}
           >
             <FileUp className="mr-2 size-4" />
-            {createBatch.isPending ? "Đang kiểm định…" : "Chạy thử"}
+            {createBatch.isPending ? "Validating…" : "Dry run"}
           </Button>
           {!hasAnyFile && (
-            <span className="text-muted-foreground text-sm">Chọn ít nhất một file.</span>
+            <span className="text-muted-foreground text-sm">
+              Pick at least one file.
+            </span>
           )}
         </div>
       </Card>
 
-      {/* Bước 3 — kết quả + ghi thật */}
+      {/* Step 3 — result + commit */}
       {activeBatch && (
         <Card className="p-5" data-testid="active-batch">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-medium">Bước 3 — Kết quả lô đang chọn</h2>
+            <h2 className="font-medium">
+              Step 3 — Result for the selected batch
+            </h2>
             <ImportBatchStatusBadge status={activeBatch.status} />
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Tổng dòng" value={activeBatch.totalRows} testId="stat-total" />
-            <Stat label="Hợp lệ" value={activeBatch.validRows} testId="stat-valid" />
-            <Stat label="Không hợp lệ" value={activeBatch.invalidRows} testId="stat-invalid" />
-            <Stat label="Đã tạo" value={activeBatch.createdRows} testId="stat-created" />
+            <Stat
+              label="Total rows"
+              value={activeBatch.totalRows}
+              testId="stat-total"
+            />
+            <Stat
+              label="Valid"
+              value={activeBatch.validRows}
+              testId="stat-valid"
+            />
+            <Stat
+              label="Invalid"
+              value={activeBatch.invalidRows}
+              testId="stat-invalid"
+            />
+            <Stat
+              label="Created"
+              value={activeBatch.createdRows}
+              testId="stat-created"
+            />
           </div>
 
           {isImportBatchRunning(activeBatch.status) && (
             <div className="mt-4">
               <div className="text-muted-foreground mb-1 flex justify-between text-xs">
                 <span>
-                  {activeBatch.status === ImportBatchStatusEnum.AwaitingAccountSync
-                    ? "Đang chờ AuthService cấp tài khoản khách hàng…"
-                    : "Đang ghi dữ liệu…"}
+                  {activeBatch.status ===
+                  ImportBatchStatusEnum.AwaitingAccountSync
+                    ? "Waiting for AuthService to issue customer accounts…"
+                    : "Writing data…"}
                 </span>
-                <span>{activeBatch.processedRows}/{activeBatch.validRows}</span>
+                <span>
+                  {activeBatch.processedRows}/{activeBatch.validRows}
+                </span>
               </div>
               <div className="bg-muted h-2 w-full overflow-hidden rounded">
                 <div
@@ -266,15 +311,22 @@ export default function DataImportPage() {
           )}
 
           {activeBatch.errorSummary && (
-            <p className="text-destructive mt-3 text-sm" data-testid="batch-error-summary">
+            <p
+              className="text-destructive mt-3 text-sm"
+              data-testid="batch-error-summary"
+            >
               {activeBatch.errorSummary}
             </p>
           )}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button data-testid="commit-button" disabled={!canCommit || commitBatch.isPending} onClick={handleCommit}>
+            <Button
+              data-testid="commit-button"
+              disabled={!canCommit || commitBatch.isPending}
+              onClick={handleCommit}
+            >
               <Upload className="mr-2 size-4" />
-              Ghi thật
+              Commit
             </Button>
             {activeBatch.invalidRows > 0 && (
               <Button
@@ -287,7 +339,7 @@ export default function DataImportPage() {
                 }
               >
                 <Download className="mr-2 size-4" />
-                Tải dòng hỏng
+                Download failed rows
               </Button>
             )}
             {canRevert && (
@@ -297,33 +349,41 @@ export default function DataImportPage() {
                 onClick={() => setRevertTarget(activeBatch.id)}
               >
                 <RotateCcw className="mr-2 size-4" />
-                Hoàn tác
+                Revert
               </Button>
             )}
           </div>
 
           {!!badRows?.items.length && (
             <div className="mt-5">
-              <h3 className="mb-2 text-sm font-medium">Dòng không hợp lệ</h3>
+              <h3 className="mb-2 text-sm font-medium">Invalid rows</h3>
               <Table data-testid="invalid-rows-table">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Dòng</TableHead>
-                    <TableHead>Mã</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Lý do</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Row</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Reason</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {badRows.items.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell>{IMPORT_ENTITY_LABEL[row.entityType]}</TableCell>
+                      <TableCell>
+                        {IMPORT_ENTITY_LABEL[row.entityType]}
+                      </TableCell>
                       <TableCell>{row.rowNumber}</TableCell>
-                      <TableCell className="font-mono text-xs">{row.externalRef}</TableCell>
-                      <TableCell><ImportRowStatusBadge status={row.status} /></TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {row.externalRef}
+                      </TableCell>
+                      <TableCell>
+                        <ImportRowStatusBadge status={row.status} />
+                      </TableCell>
                       <TableCell className="text-destructive text-sm">
-                        {row.errors.map((error) => `${error.field}: ${error.detail}`).join(" · ")}
+                        {row.errors
+                          .map((error) => `${error.field}: ${error.detail}`)
+                          .join(" · ")}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -334,9 +394,9 @@ export default function DataImportPage() {
         </Card>
       )}
 
-      {/* Lịch sử */}
+      {/* History */}
       <Card className="p-5">
-        <h2 className="mb-3 font-medium">Các lô gần đây</h2>
+        <h2 className="mb-3 font-medium">Recent batches</h2>
         {batchesLoading ? (
           <Skeleton className="h-24 w-full" />
         ) : (
@@ -344,18 +404,20 @@ export default function DataImportPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>File</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Dòng</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Row</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {batches?.items.map((batch) => (
                 <TableRow key={batch.id} data-testid="batch-row">
                   <TableCell className="max-w-[280px] truncate">
-                    {batch.fileName ?? "(không tên)"}
+                    {batch.fileName ?? "(no name)"}
                   </TableCell>
-                  <TableCell><ImportBatchStatusBadge status={batch.status} /></TableCell>
+                  <TableCell>
+                    <ImportBatchStatusBadge status={batch.status} />
+                  </TableCell>
                   <TableCell>
                     {batch.validRows}/{batch.totalRows}
                   </TableCell>
@@ -365,15 +427,18 @@ export default function DataImportPage() {
                       size="sm"
                       onClick={() => setActiveBatchId(batch.id)}
                     >
-                      Xem
+                      View
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
               {!batches?.items.length && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground text-center">
-                    Chưa có lô nào.
+                  <TableCell
+                    colSpan={4}
+                    className="text-muted-foreground text-center"
+                  >
+                    No batches yet.
                   </TableCell>
                 </TableRow>
               )}
@@ -382,19 +447,26 @@ export default function DataImportPage() {
         )}
       </Card>
 
-      <AlertDialog open={!!revertTarget} onOpenChange={(open) => !open && setRevertTarget(null)}>
+      <AlertDialog
+        open={!!revertTarget}
+        onOpenChange={(open) => !open && setRevertTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hoàn tác lô này?</AlertDialogTitle>
+            <AlertDialogTitle>Revert this batch?</AlertDialogTitle>
             <AlertDialogDescription>
-              Site, pin và thiết bị do lô tạo ra sẽ bị gỡ. Tài khoản khách hàng được giữ lại có
-              chủ ý — chúng có thể đã được dùng để đăng nhập hoặc đã gắn với phiếu bảo trì.
+              Sites, battery assets and devices created by the batch are
+              removed. Customer accounts are kept on purpose — they may already
+              have been used to sign in or attached to a maintenance ticket.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Huỷ</AlertDialogCancel>
-            <AlertDialogAction data-testid="confirm-revert" onClick={handleRevert}>
-              Hoàn tác
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="confirm-revert"
+              onClick={handleRevert}
+            >
+              Revert
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -403,11 +475,21 @@ export default function DataImportPage() {
   );
 }
 
-function Stat({ label, value, testId }: { label: string; value: number; testId: string }) {
+function Stat({
+  label,
+  value,
+  testId,
+}: {
+  label: string;
+  value: number;
+  testId: string;
+}) {
   return (
     <div className="bg-muted/40 rounded-md p-3">
       <div className="text-muted-foreground text-xs">{label}</div>
-      <div className="text-xl font-semibold" data-testid={testId}>{value}</div>
+      <div className="text-xl font-semibold" data-testid={testId}>
+        {value}
+      </div>
     </div>
   );
 }

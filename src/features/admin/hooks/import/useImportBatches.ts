@@ -12,10 +12,10 @@ import type {
 } from "@/shared/types/import/import.types";
 
 /**
- * Nhịp hỏi lại khi lô đang chạy.
+ * Poll interval while a batch is running.
  *
- * Lô đi qua message bus để xin tài khoản khách hàng nên có quãng chờ thật; 2 giây đủ để thanh
- * tiến độ nhích trông tự nhiên mà không dội quá nhiều request lên máy chủ.
+ * A batch goes through the message bus to request customer accounts, so there is a real wait;
+ * 2 seconds is enough for the progress bar to move naturally without flooding the server.
  */
 const RUNNING_POLL_MS = 2_000;
 
@@ -23,9 +23,11 @@ export function useImportBatches(params?: ImportBatchListParams) {
   return useQuery({
     queryKey: QUERY_KEY.importBatches.list(params),
     queryFn: () => importService.getBatches(params).then((r) => r.data.data),
-    // Dừng hỏi lại ngay khi không còn lô nào đang chạy — danh sách lô cũ là dữ liệu tĩnh.
+    // Stop polling as soon as no batch is running — the list of old batches is static data.
     refetchInterval: (query) =>
-      query.state.data?.items.some((batch) => isImportBatchRunning(batch.status))
+      query.state.data?.items.some((batch) =>
+        isImportBatchRunning(batch.status),
+      )
         ? RUNNING_POLL_MS
         : false,
   });
@@ -50,7 +52,8 @@ export function useImportRows(
 ) {
   return useQuery({
     queryKey: QUERY_KEY.importBatches.rows(batchId, params),
-    queryFn: () => importService.getRows(batchId, params).then((r) => r.data.data),
+    queryFn: () =>
+      importService.getRows(batchId, params).then((r) => r.data.data),
     enabled: enabled && !!batchId,
   });
 }
@@ -83,7 +86,7 @@ export function useRevertImportBatch() {
     mutationFn: (id: string) =>
       importService.revertBatch(id).then((r) => r.data),
     onSuccess: () => {
-      // Hoàn tác gỡ site, pin và thiết bị nên ba danh sách kia cũng cũ theo.
+      // A revert removes sites, battery assets and devices, so those three lists go stale too.
       qc.invalidateQueries({ queryKey: [KEY.importBatches] });
       qc.invalidateQueries({ queryKey: [KEY.sites] });
       qc.invalidateQueries({ queryKey: [KEY.batteryAssets] });
@@ -93,10 +96,10 @@ export function useRevertImportBatch() {
 }
 
 /**
- * Tải một file do máy chủ sinh ra.
+ * Downloads a server-generated file.
  *
- * Tự tạo thẻ neo rồi bấm thay vì mở thẳng đường dẫn: hai endpoint này cần thẻ xác thực trong tiêu
- * đề, mà điều hướng cả trang thì trình duyệt không gửi tiêu đề đó đi.
+ * Builds an anchor and clicks it rather than navigating to the URL: these two endpoints need the
+ * auth token in a header, and a full-page navigation would not send that header.
  */
 function saveBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);

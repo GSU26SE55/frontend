@@ -1,14 +1,14 @@
 import { ImportEntityTypeEnum } from "@/shared/enums/import/import.enum";
 
 /**
- * Nhãn tiếng Việt cho từng loại dữ liệu nhập.
+ * Display labels for each import entity type.
  *
- * Để ở file riêng chứ không nằm cùng file component: quy tắc fast-refresh của dự án đòi một file
- * component chỉ được xuất ra component. Xuất kèm hằng số khiến toàn bộ trang phải nạp lại thay vì
- * cập nhật tại chỗ mỗi lần sửa.
+ * Kept in its own file rather than beside the component: the project's fast-refresh rule requires
+ * a component file to export only components. Exporting a constant alongside one forces a full
+ * page reload instead of an in-place update on every edit.
  */
 export const IMPORT_ENTITY_LABEL: Record<ImportEntityTypeEnum, string> = {
-  [ImportEntityTypeEnum.Customer]: "Khách hàng",
+  [ImportEntityTypeEnum.Customer]: "Customer",
   [ImportEntityTypeEnum.Site]: "Site",
-  [ImportEntityTypeEnum.BatteryAsset]: "Pin",
+  [ImportEntityTypeEnum.BatteryAsset]: "Battery asset",
 };
