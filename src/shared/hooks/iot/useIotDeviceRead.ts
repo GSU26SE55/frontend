@@ -5,18 +5,34 @@ import type {
   IotDeviceListParams,
   HeartbeatListParams,
 } from "@/shared/types/iot/iot.types";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+
+const LIVE_STATUS_POLL_MS = 5_000;
 
 /**
  * IOT3-66 — danh sách thiết bị IoT cho Staff.
  *
- * `staleTime` 30 giây: trạng thái đổi theo nhịp heartbeat (mặc định 60 s), làm mới dày hơn thế
- * chỉ tốn request mà không có số liệu mới.
+ * MQTT LWT can change the status without any browser action, so live device lists remain
+ * fresh and poll every 5 seconds until a device is Disabled or Decommissioned.
  */
-export function useIotDevicesForStaff(params?: IotDeviceListParams) {
+export function useIotDevicesForStaff(
+  params?: IotDeviceListParams,
+  enabled = true,
+) {
   return useQuery({
     queryKey: QUERY_KEY.iotDevices.staffList(params),
-    queryFn: () => iotDeviceReadService.getList(params).then((r) => r.data.data),
-    staleTime: 30_000,
+    queryFn: () =>
+      iotDeviceReadService.getList(params).then((r) => r.data.data),
+    enabled,
+    staleTime: 0,
+    refetchInterval: (query) =>
+      query.state.data?.items.some(
+        (device) =>
+          device.status !== IotDeviceStatusEnum.Disabled &&
+          device.status !== IotDeviceStatusEnum.Decommissioned,
+      )
+        ? LIVE_STATUS_POLL_MS
+        : false,
   });
 }
 

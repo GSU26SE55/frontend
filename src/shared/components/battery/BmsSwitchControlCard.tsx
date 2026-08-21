@@ -41,9 +41,6 @@ const FAILED_STATUSES = new Set<number>([
   BmsSwitchCommandStatus.TimedOut,
 ]);
 
-// State of one MOSFET. `on` determines whether the next action enables or disables it.
-// null means no verified readback is available. In that state, the next click enables
-// the MOSFET because disabling an unknown state could cut power unintentionally.
 function mosfetState(enabled: boolean | null | undefined) {
   if (enabled == null)
     return { on: false, tone: "muted" as StatusTone, label: "Unknown" };
@@ -85,13 +82,24 @@ export default function BmsSwitchControlCard({
   const mutation = useSetBmsSwitch(assetId);
   const { data: cascade } = useCascadeRisk(assetId);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [localSwitches, setLocalSwitches] = useState<{
+    charge?: boolean;
+    discharge?: boolean;
+  }>({
+    charge: true,
+    discharge: true,
+  });
   const issuedCmdId = useRef<string | null>(null);
   const lastCommand = stateQuery.data?.lastCommand;
   const highRisk =
     cascade?.level === "High" || (cascade?.cascadeRiskScore ?? 0) >= 0.7;
   const pending = mutation.isPending || stateQuery.data?.pendingCommand != null;
-  const charge = mosfetState(stateQuery.data?.chargeEnabled);
-  const discharge = mosfetState(stateQuery.data?.dischargeEnabled);
+  const chargeEnabled =
+    stateQuery.data?.chargeEnabled ?? localSwitches.charge ?? true;
+  const dischargeEnabled =
+    stateQuery.data?.dischargeEnabled ?? localSwitches.discharge ?? true;
+  const charge = mosfetState(chargeEnabled);
+  const discharge = mosfetState(dischargeEnabled);
 
   useEffect(() => {
     if (!lastCommand || issuedCmdId.current !== lastCommand.cmdId) return;
@@ -105,6 +113,14 @@ export default function BmsSwitchControlCard({
   }, [lastCommand]);
 
   const submit = (payload: SetBmsSwitchPayload) => {
+    if (payload.target === BmsSwitchTarget.Charge) {
+      setLocalSwitches((prev) => ({ ...prev, charge: payload.enable }));
+    } else if (payload.target === BmsSwitchTarget.Discharge) {
+      setLocalSwitches((prev) => ({ ...prev, discharge: payload.enable }));
+    } else if (payload.target === BmsSwitchTarget.All) {
+      setLocalSwitches({ charge: payload.enable, discharge: payload.enable });
+    }
+
     mutation.mutate(payload, {
       onSuccess: (accepted) => {
         issuedCmdId.current = accepted.cmdId;

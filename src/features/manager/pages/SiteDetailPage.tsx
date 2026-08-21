@@ -164,6 +164,7 @@ export default function ManagerSiteDetailPage() {
           </div>
           <Card>
             <SiteAssetsTable
+              siteId={id}
               data={assetsPage?.items ?? []}
               totalCount={assetsPage?.totalItems ?? 0}
               pageNumber={assetsParams.pageNumber ?? 1}

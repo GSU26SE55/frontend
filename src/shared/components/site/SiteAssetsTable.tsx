@@ -8,8 +8,9 @@ import {
   BatteryStatusEnum,
   type BatteryAssetDto,
 } from "@/shared/types/battery/battery.types";
-import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { toneClass } from "@/shared/theme/statusColors";
+import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
+import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Active",
@@ -26,22 +27,8 @@ const STATUS_VARIANT: Record<
   [BatteryStatusEnum.Decommissioned]: "destructive",
 };
 
-// `status` is the business lifecycle (Active/Suspended/Decommissioned), set by hand by the
-// admin — it does NOT auto-update based on connectivity. So an "Active" battery can still stop
-// sending data (broken wire, power loss, faulty sensor) without the DB's status column ever
-// knowing. An "Active" badge sitting next to a "Last reading" that's days stale is
-// self-contradictory on the very same row — cover that badge with "Disconnected" in that case.
-// The threshold matches the BE's default `OfflineThresholdMinutes` (see docs/api-battery.md,
-// offlineAssets section) — used for DISPLAY only, not the actual alert source.
-const OFFLINE_THRESHOLD_MINUTES = 10;
-
-function isReadingStale(lastSensorReadingAt: string | null | undefined) {
-  if (!lastSensorReadingAt) return true; // never had a reading → treat as disconnected
-  const ageMs = Date.now() - new Date(lastSensorReadingAt).getTime();
-  return ageMs > OFFLINE_THRESHOLD_MINUTES * 60_000;
-}
-
 interface SiteAssetsTableProps {
+  siteId: string;
   data: BatteryAssetDto[];
   totalCount: number;
   pageNumber: number;
@@ -53,6 +40,7 @@ interface SiteAssetsTableProps {
 }
 
 export default function SiteAssetsTable({
+  siteId,
   data,
   totalCount,
   pageNumber,
@@ -62,6 +50,17 @@ export default function SiteAssetsTable({
   onAssetClick,
 }: SiteAssetsTableProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
+  const { data: gateways } = useIotDevicesForStaff(
+    { siteId, pageNumber: 1, pageSize: 100 },
+    !!siteId,
+  );
+  const gatewayItems = gateways?.items ?? [];
+  const gatewayOnline = gatewayItems.some(
+    (device) => device.status === IotDeviceStatusEnum.Active,
+  );
+  const gatewayConnecting = gatewayItems.some(
+    (device) => device.status === IotDeviceStatusEnum.Pending,
+  );
 
   if (isLoading) {
     return (
@@ -95,22 +94,50 @@ export default function SiteAssetsTable({
     },
     {
       id: "status",
-      header: TABLE_COLUMNS.status,
-      cell: (asset) => {
-        const offline =
-          asset.status === BatteryStatusEnum.Active &&
-          isReadingStale(asset.lastSensorReadingAt);
-        return offline ? (
-          <Badge
-            variant="outline"
-            className={toneClass("p3")}
-            title="Status is Active on record, but there's no recent sensor reading"
-          >
-            Disconnected
-          </Badge>
-        ) : (
-          <Badge variant={STATUS_VARIANT[asset.status]}>
-            {STATUS_LABEL[asset.status]}
+      header: "Lifecycle",
+      cell: (asset) => (
+        <Badge variant={STATUS_VARIANT[asset.status]}>
+          {STATUS_LABEL[asset.status]}
+        </Badge>
+      ),
+    },
+    {
+      id: "connectivity",
+      header: "Connection",
+      cell: () => {
+        if (!gateways) {
+          return (
+            <span className="text-xs text-muted-foreground">Checking...</span>
+          );
+        }
+        if (gatewayOnline) {
+          return (
+            <Badge variant="outline" className={toneClass("ok")}>
+              Gateway online
+            </Badge>
+          );
+        }
+        if (gatewayConnecting) {
+          return (
+            <Badge variant="outline" className={toneClass("p2")}>
+              Connecting
+            </Badge>
+          );
+        }
+        if (gatewayItems.length > 0) {
+          return (
+            <Badge
+              variant="outline"
+              className={toneClass("p3")}
+              title="The site's IoT gateway is offline"
+            >
+              Gateway offline
+            </Badge>
+          );
+        }
+        return (
+          <Badge variant="outline" className={toneClass("muted")}>
+            No gateway
           </Badge>
         );
       },
