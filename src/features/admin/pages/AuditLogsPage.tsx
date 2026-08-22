@@ -46,6 +46,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { toneClass } from "@/shared/theme/statusColors";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -439,7 +440,7 @@ function AuditLogDetail({
 const DEFAULTS = {
   keyword: "",
   pageNumber: 1,
-  pageSize: 25,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function AuditLogsPage() {

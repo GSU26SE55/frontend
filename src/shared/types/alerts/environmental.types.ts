@@ -12,6 +12,8 @@ export {
 export interface EnvironmentalIncidentDto {
   id: string;
   siteId: string;
+  /** Customer who owns the site — resolved by the BE from Site.CustomerId. May be empty. */
+  customerName: string;
   incidentType: EnvironmentalIncidentTypeEnum;
   status: EnvironmentalIncidentStatusEnum;
   severity: AlertSeverityEnum;

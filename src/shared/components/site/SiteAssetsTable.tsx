@@ -1,8 +1,8 @@
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import {
   BatteryStatusEnum,
@@ -35,6 +35,7 @@ interface SiteAssetsTableProps {
   pageSize: number;
   isLoading?: boolean;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
   /** Click a battery → open details. Omit → row isn't clickable. */
   onAssetClick?: (asset: BatteryAssetDto) => void;
 }
@@ -47,6 +48,7 @@ export default function SiteAssetsTable({
   pageSize,
   isLoading,
   onPageChange,
+  onPageSizeChange,
   onAssetClick,
 }: SiteAssetsTableProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -180,27 +182,16 @@ export default function SiteAssetsTable({
       />
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(pageNumber - 1)}
-            disabled={pageNumber <= 1}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {pageNumber} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(pageNumber + 1)}
-            disabled={pageNumber >= totalPages}
-          >
-            Next
-          </Button>
-        </div>
+        <DataPagination
+          totalItems={totalCount}
+          pageNumber={pageNumber}
+          pageSize={pageSize}
+          totalPages={totalPages}
+          hasNextPage={pageNumber < totalPages}
+          hasPreviousPage={pageNumber > 1}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
       )}
     </div>
   );

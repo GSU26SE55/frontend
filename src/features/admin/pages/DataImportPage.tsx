@@ -47,6 +47,7 @@ import {
 } from "@/shared/enums/import/import.enum";
 import type { CreateImportBatchPayload } from "@/shared/types/import/import.types";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const TEMPLATES = [
   { type: ImportEntityTypeEnum.Customer, label: "Customer" },
@@ -78,7 +79,7 @@ export default function DataImportPage() {
 
   const { data: batches, isLoading: batchesLoading } = useImportBatches({
     pageNumber: 1,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
   });
   const { data: activeBatch } = useImportBatch(
     activeBatchId ?? "",
@@ -463,6 +464,7 @@ export default function DataImportPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               data-testid="confirm-revert"
               onClick={handleRevert}
             >

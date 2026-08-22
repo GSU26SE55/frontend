@@ -23,6 +23,20 @@ import type {
 } from "@/features/admin/types/account/admin.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
+// Module names arrive as raw identifiers (KNOWLEDGEBASE, TICKETSAGA). End users
+// should see words, so we title-case them and spell out the few compound names.
+const MODULE_LABELS: Record<string, string> = {
+  KNOWLEDGEBASE: "Knowledge base",
+  TICKETSAGA: "Ticket workflow",
+};
+
+function moduleLabel(module: string) {
+  return (
+    MODULE_LABELS[module.toUpperCase()] ??
+    module.charAt(0).toUpperCase() + module.slice(1).toLowerCase()
+  );
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -150,7 +164,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search permissions (code / description)..."
+                placeholder="Search permissions..."
                 className="pl-9 h-10"
               />
             </div>
@@ -223,8 +237,8 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                         >
                           {allChecked ? "✓" : someChecked ? "−" : ""}
                         </span>
-                        <span className="text-xs font-bold uppercase tracking-wider flex-1 min-w-0 truncate">
-                          {module}
+                        <span className="text-xs font-bold tracking-wide flex-1 min-w-0 truncate">
+                          {moduleLabel(module)}
                         </span>
                         <span className="text-[11px] font-semibold tabular-nums text-muted-foreground shrink-0">
                           {checkedInModule}/{perms.length}
@@ -258,14 +272,12 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                                 onChange={() => toggle(p.id)}
                               />
                               <div className="flex-1 min-w-0">
-                                <div className="text-[13px] font-mono leading-tight break-all">
-                                  {p.code}
+                                {/* End users read the description, not the code.
+                                    The code is only a fallback for permissions the
+                                    BE has not given a description yet. */}
+                                <div className="text-[13px] leading-snug">
+                                  {p.description || p.code}
                                 </div>
-                                {p.description && (
-                                  <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                                    {p.description}
-                                  </div>
-                                )}
                               </div>
                             </label>
                           );

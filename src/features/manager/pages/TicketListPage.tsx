@@ -24,6 +24,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // GH-1176: updated for 8-status canonical lifecycle.
 const STATUS_LABELS: Record<string, string> = {
@@ -59,7 +60,7 @@ const DEFAULTS = {
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 25,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function TicketListPage() {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Battery,
@@ -164,6 +164,30 @@ export default function BatteryRealtimeDetail({
   headerActions,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
+
+  // Tab + range live in the URL so a ticket can link straight to
+  // "?tab=history&from=…&to=…" and land on Sensor history already filtered to the ±2' window
+  // around detection. With an uncontrolled <Tabs defaultValue> that link always opened Chart.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const tab =
+    tabParam === "history" || tabParam === "peak" ? tabParam : "chart";
+  const rangeFrom = searchParams.get("from") ?? undefined;
+  const rangeTo = searchParams.get("to") ?? undefined;
+
+  const setTab = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
+  // Dropping the range keeps the reader on the current tab and restores the default view.
+  const clearRange = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("from");
+    next.delete("to");
+    setSearchParams(next, { replace: true });
+  };
 
   const { data: asset, isLoading } = useBatteryAsset(id);
   const { data: rt } = useBatteryAssetRealtime(id);
@@ -370,7 +394,7 @@ export default function BatteryRealtimeDetail({
 
           {/* Right: chart / history tabs */}
           <div className="flex-1 flex flex-col min-w-0">
-            <Tabs defaultValue="chart" className="h-full gap-0">
+            <Tabs value={tab} onValueChange={setTab} className="h-full gap-0">
               <div className="px-5 py-3 border-b border-border shrink-0">
                 <TabsList>
                   <TabsTrigger value="chart">Chart</TabsTrigger>
@@ -388,6 +412,9 @@ export default function BatteryRealtimeDetail({
                 <SensorChart
                   assetId={id}
                   batteryTypeId={asset?.batteryTypeId}
+                  from={rangeFrom}
+                  to={rangeTo}
+                  onClearRange={rangeFrom || rangeTo ? clearRange : undefined}
                   fillHeight
                 />
               </TabsContent>
@@ -398,6 +425,9 @@ export default function BatteryRealtimeDetail({
                 <ChargeDischargePeakChart
                   assetId={id}
                   batteryTypeId={asset?.batteryTypeId}
+                  from={rangeFrom}
+                  to={rangeTo}
+                  onClearRange={rangeFrom || rangeTo ? clearRange : undefined}
                 />
               </TabsContent>
               <TabsContent
@@ -407,6 +437,9 @@ export default function BatteryRealtimeDetail({
                 <SensorHistoryTable
                   assetId={id}
                   batteryTypeId={asset?.batteryTypeId}
+                  from={rangeFrom}
+                  to={rangeTo}
+                  onClearRange={rangeFrom || rangeTo ? clearRange : undefined}
                   fillHeight
                 />
               </TabsContent>

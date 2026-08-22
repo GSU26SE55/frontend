@@ -43,6 +43,7 @@ import {
   anomalyTypeLabel,
 } from "@/shared/constants/alertLabels";
 import { toneClass, SAGA_STATE_TONE } from "@/shared/theme/statusColors";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 function fmt(d?: string | null) {
   return d ? format(new Date(d), "MM/dd/yyyy HH:mm", { locale: enUS }) : "—";
@@ -72,7 +73,7 @@ export default function SagaDebugPage() {
 
   const [onlyFailed, setOnlyFailed] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [detail, setDetail] = useState<AlertTicketSagaDTO | null>(null);
 
   const { data, isLoading, isError } = useAlertTicketSagas({

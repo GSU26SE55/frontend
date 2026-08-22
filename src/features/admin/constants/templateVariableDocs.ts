@@ -1,216 +1,232 @@
 /**
- * Từ điển tên biến template → mô tả + giá trị mẫu.
+ * Dictionary of template variable name → description + sample value.
  *
- * Vì sao cần: endpoint `/variables` của BE (NotificationTemplateVariables.cs) chỉ trả về **tên
- * khoá** — `["ticketId", "code", "customerId", "priority", "screen"]`. Người soạn template nhìn
- * dãy chip `{{code}}` `{{screen}}` không đoán được cái nào là mã ticket hiển thị cho khách, cái
- * nào là GUID nội bộ, cái nào là đường dẫn deep-link. Handlebars lại render biến sai thành chuỗi
- * rỗng chứ không báo lỗi, nên đoán sai thì phải tới lúc khách nhận thông báo mới lộ.
+ * Why it's needed: the BE `/variables` endpoint (NotificationTemplateVariables.cs) returns **key
+ * names only** — `["ticketId", "code", "customerId", "priority", "screen"]`. An author looking at
+ * the chip row `{{code}}` `{{screen}}` cannot tell which one is the ticket code the customer sees,
+ * which is an internal GUID, and which is a deep-link path. Handlebars renders an unknown variable
+ * as an empty string instead of reporting an error, so a wrong guess only surfaces once the
+ * customer receives the notification.
  *
- * Bảng này tra theo tên khoá, **không phân biệt hoa thường** (BE dựng model bằng
- * OrdinalIgnoreCase nên `{{Code}}` và `{{code}}` đều chạy).
+ * Lookup is by key name and **case-insensitive** (the BE builds the model with OrdinalIgnoreCase,
+ * so `{{Code}}` and `{{code}}` both resolve).
  *
- * Khi consumer BE thêm khoá payload mới: thêm một dòng ở đây. Thiếu dòng cũng không vỡ gì —
- * chip vẫn hiện, chỉ là không có mô tả.
+ * When a BE consumer adds a new payload key: add a line here. A missing line breaks nothing — the
+ * chip still renders, it just has no description.
  */
 
 export interface TemplateVariableDoc {
-  /** Nhãn ngắn tiếng Việt — hiện cạnh tên biến. */
+  /** Short plain-language label — shown in place of the raw variable name. */
   label: string;
-  /** Giá trị thật sẽ được thay vào lúc gửi — giúp hình dung câu văn ra sao. */
+  /** The real value substituted at send time — helps picture how the sentence reads. */
   sample: string;
   /**
-   * Biến nên tránh dùng trong nội dung gửi cho người nhận: GUID nội bộ hoặc số enum trần.
-   * Vẫn cho chèn (có trường hợp cần), chỉ cảnh báo nhẹ.
+   * Variables to avoid in content sent to a recipient: internal GUIDs or bare enum numbers.
+   * Still insertable (sometimes needed), just flagged with a soft warning.
    */
   internal?: boolean;
 }
 
 export const TEMPLATE_VARIABLE_DOCS: Record<string, TemplateVariableDoc> = {
-  // ── Biến chung (builtin — mọi type đều có) ────────────────────────────────
-  title: { label: "Tiêu đề hệ thống tự sinh", sample: "Ticket mới TK-1042" },
+  // ── Common variables (builtin — available on every type) ─────────────────
+  title: { label: "System-generated title", sample: "New ticket TK-1042" },
   body: {
-    label: "Nội dung hệ thống tự sinh",
-    sample: "Ticket TK-1042 vừa được tạo",
+    label: "System-generated body",
+    sample: "Ticket TK-1042 has just been created",
   },
-  entitytype: { label: "Loại đối tượng liên quan", sample: "Ticket" },
+  entitytype: { label: "Related entity type", sample: "Ticket" },
   entityid: {
-    label: "ID đối tượng liên quan",
+    label: "Related entity ID",
     sample: "3f2b…c19a",
     internal: true,
   },
-  userid: { label: "ID người nhận", sample: "8a71…40de", internal: true },
-  createdat: { label: "Thời điểm tạo thông báo", sample: "17/08/2026 09:15" },
+  userid: { label: "Recipient ID", sample: "8a71…40de", internal: true },
+  createdat: { label: "Notification created at", sample: "17/08/2026 09:15" },
 
   // ── Ticket ───────────────────────────────────────────────────────────────
-  ticketid: { label: "ID ticket", sample: "3f2b…c19a", internal: true },
-  code: { label: "Mã ticket hiển thị", sample: "TK-1042" },
-  ticketcode: { label: "Mã ticket hiển thị", sample: "TK-1042" },
-  customerid: { label: "ID khách hàng", sample: "9c14…77bf", internal: true },
-  staffid: { label: "ID kỹ thuật viên", sample: "5e08…2a31", internal: true },
-  staffname: { label: "Tên kỹ thuật viên", sample: "Nguyễn Văn A" },
-  priority: { label: "Mức ưu tiên (số)", sample: "1", internal: true },
+  ticketid: { label: "Ticket ID", sample: "3f2b…c19a", internal: true },
+  code: { label: "Ticket code", sample: "TK-1042" },
+  ticketcode: { label: "Ticket code", sample: "TK-1042" },
+  customerid: { label: "Customer ID", sample: "9c14…77bf", internal: true },
+  staffid: { label: "Technician ID", sample: "5e08…2a31", internal: true },
+  staffname: { label: "Technician name", sample: "John Smith" },
+  priority: { label: "Priority (number)", sample: "1", internal: true },
   screen: {
-    label: "Màn hình mở khi bấm vào thông báo",
+    label: "Screen opened when the notification is tapped",
     sample: "ticket-detail",
   },
   resolvedbystaffid: {
-    label: "ID kỹ thuật viên xử lý xong",
+    label: "Resolving technician ID",
     sample: "5e08…2a31",
     internal: true,
   },
   sourceticketid: {
-    label: "ID ticket bị gộp",
+    label: "Merged-from ticket ID",
     sample: "3f2b…c19a",
     internal: true,
   },
   masterticketid: {
-    label: "ID ticket giữ lại sau gộp",
+    label: "Surviving ticket ID after merge",
     sample: "7d90…11cc",
     internal: true,
   },
   declaredbyuserid: {
-    label: "ID người khai báo sự cố",
+    label: "Reporter ID",
     sample: "8a71…40de",
     internal: true,
   },
 
-  // Trạng thái — luôn ưu tiên cặp *StatusName thay vì số trần.
-  oldstatus: { label: "Trạng thái cũ (số)", sample: "3", internal: true },
-  newstatus: { label: "Trạng thái mới (số)", sample: "4", internal: true },
-  oldstatusname: { label: "Trạng thái cũ", sample: "Đang xử lý" },
-  newstatusname: { label: "Trạng thái mới", sample: "Đã xử lý" },
+  // Status — always prefer the *StatusName pair over the bare number.
+  oldstatus: { label: "Previous status (number)", sample: "3", internal: true },
+  newstatus: { label: "New status (number)", sample: "4", internal: true },
+  oldstatusname: { label: "Previous status", sample: "In progress" },
+  newstatusname: { label: "New status", sample: "Resolved" },
 
-  // Lịch hẹn / tiến độ
-  scheduledstartatutc: { label: "Giờ hẹn bắt đầu", sample: "18/08/2026 08:00" },
+  // Schedule / progress
+  scheduledstartatutc: {
+    label: "Scheduled start time",
+    sample: "18/08/2026 08:00",
+  },
   previousscheduledstartatutc: {
-    label: "Giờ hẹn trước khi đổi",
+    label: "Previous scheduled start time",
     sample: "17/08/2026 14:00",
   },
-  workstartsimmediately: { label: "Bắt đầu làm ngay?", sample: "true" },
-  startedatutc: { label: "Giờ bắt đầu làm", sample: "18/08/2026 08:05" },
-  scheduleversion: { label: "Lần đổi lịch thứ mấy", sample: "2" },
-  activationreason: { label: "Lý do kích hoạt", sample: "ScheduleReached" },
-  closedat: { label: "Thời điểm đóng ticket", sample: "19/08/2026 17:30" },
-  isautoclosed: { label: "Tự động đóng?", sample: "true" },
-  rating: { label: "Số sao khách đánh giá", sample: "5" },
-  approvedat: { label: "Thời điểm duyệt", sample: "19/08/2026 10:00" },
-  rejectedat: { label: "Thời điểm từ chối", sample: "19/08/2026 10:00" },
-  isclosedrejected: { label: "Từ chối kèm đóng ticket?", sample: "false" },
-  reason: { label: "Lý do", sample: "Ngoài phạm vi bảo hành" },
-  note: { label: "Ghi chú thêm", sample: "Khách yêu cầu khảo sát lại" },
-  reopenreason: { label: "Lý do mở lại", sample: "Sự cố tái diễn" },
-  reopencount: { label: "Số lần mở lại", sample: "2" },
-  reopenedat: { label: "Thời điểm mở lại", sample: "20/08/2026 09:00" },
-  dayspending: { label: "Số ngày chờ", sample: "3" },
-  daysuntilratingdeadline: { label: "Số ngày còn để đánh giá", sample: "4" },
+  workstartsimmediately: { label: "Starts immediately?", sample: "true" },
+  startedatutc: { label: "Work started at", sample: "18/08/2026 08:05" },
+  scheduleversion: { label: "Reschedule count", sample: "2" },
+  activationreason: { label: "Activation reason", sample: "ScheduleReached" },
+  closedat: { label: "Ticket closed at", sample: "19/08/2026 17:30" },
+  isautoclosed: { label: "Auto-closed?", sample: "true" },
+  rating: { label: "Customer rating (stars)", sample: "5" },
+  approvedat: { label: "Approved at", sample: "19/08/2026 10:00" },
+  rejectedat: { label: "Rejected at", sample: "19/08/2026 10:00" },
+  isclosedrejected: { label: "Rejected and closed?", sample: "false" },
+  reason: { label: "Reason", sample: "Out of warranty scope" },
+  note: {
+    label: "Additional note",
+    sample: "Customer requested another survey",
+  },
+  reopenreason: { label: "Reopen reason", sample: "Issue recurred" },
+  reopencount: { label: "Reopen count", sample: "2" },
+  reopenedat: { label: "Reopened at", sample: "20/08/2026 09:00" },
+  dayspending: { label: "Days pending", sample: "3" },
+  daysuntilratingdeadline: { label: "Days left to rate", sample: "4" },
 
   // ── SLA ──────────────────────────────────────────────────────────────────
-  percentage: { label: "Phần trăm SLA đã dùng", sample: "80" },
-  warningat: { label: "Thời điểm cảnh báo", sample: "18/08/2026 12:00" },
-  breachedat: { label: "Thời điểm vi phạm SLA", sample: "18/08/2026 16:00" },
-  resumedat: { label: "Thời điểm chạy lại SLA", sample: "18/08/2026 13:00" },
-  prioritytier: { label: "Bậc ưu tiên", sample: "P1" },
+  percentage: { label: "SLA percentage used", sample: "80" },
+  warningat: { label: "Warning raised at", sample: "18/08/2026 12:00" },
+  breachedat: { label: "SLA breached at", sample: "18/08/2026 16:00" },
+  resumedat: { label: "SLA resumed at", sample: "18/08/2026 13:00" },
+  prioritytier: { label: "Priority tier", sample: "P1" },
 
-  // ── Pin / cảnh báo ───────────────────────────────────────────────────────
-  alertid: { label: "ID cảnh báo", sample: "b2e4…9017", internal: true },
-  batteryassetid: { label: "ID pin", sample: "c5a3…88f2", internal: true },
-  assetserialnumber: { label: "Số serial pin", sample: "BAT-2024-0917" },
-  anomalytype: { label: "Loại bất thường (số)", sample: "4", internal: true },
-  severity: { label: "Mức nghiêm trọng (số)", sample: "3", internal: true },
-  anomalytypename: { label: "Loại bất thường", sample: "Quá nhiệt" },
-  severityname: { label: "Mức nghiêm trọng", sample: "Nghiêm trọng" },
-  actualvalue: { label: "Giá trị đo được", sample: "62.4" },
-  thresholdvalue: { label: "Ngưỡng cho phép", sample: "55.0" },
-  unit: { label: "Đơn vị đo", sample: "°C" },
-  detectedat: { label: "Thời điểm phát hiện", sample: "17/08/2026 09:12" },
-  minutessincedetection: { label: "Số phút kể từ khi phát hiện", sample: "45" },
-  cascaderiskscore: { label: "Điểm rủi ro lan truyền", sample: "0.82" },
+  // ── Battery / alerts ─────────────────────────────────────────────────────
+  alertid: { label: "Alert ID", sample: "b2e4…9017", internal: true },
+  batteryassetid: { label: "Battery ID", sample: "c5a3…88f2", internal: true },
+  assetserialnumber: {
+    label: "Battery serial number",
+    sample: "BAT-2024-0917",
+  },
+  anomalytype: { label: "Anomaly type (number)", sample: "4", internal: true },
+  severity: { label: "Severity (number)", sample: "3", internal: true },
+  anomalytypename: { label: "Anomaly type", sample: "Overheating" },
+  severityname: { label: "Severity", sample: "Critical" },
+  actualvalue: { label: "Measured value", sample: "62.4" },
+  thresholdvalue: { label: "Threshold", sample: "55.0" },
+  unit: { label: "Unit", sample: "°C" },
+  detectedat: { label: "Detected at", sample: "17/08/2026 09:12" },
+  minutessincedetection: { label: "Minutes since detection", sample: "45" },
+  cascaderiskscore: { label: "Cascade risk score", sample: "0.82" },
   relatedticketid: {
-    label: "ID ticket liên quan",
+    label: "Related ticket ID",
     sample: "3f2b…c19a",
     internal: true,
   },
   correlationid: {
-    label: "ID lần chạy (tra log)",
+    label: "Correlation ID (for log lookup)",
     sample: "a19f…5c30",
     internal: true,
   },
-  errorcode: { label: "Mã lỗi", sample: "SAGA_TIMEOUT" },
-  failedat: { label: "Thời điểm thất bại", sample: "17/08/2026 09:20" },
-  failedatstage: { label: "Thất bại ở bước nào", sample: "CreateTicket" },
+  errorcode: { label: "Error code", sample: "SAGA_TIMEOUT" },
+  failedat: { label: "Failed at", sample: "17/08/2026 09:20" },
+  failedatstage: { label: "Failed at stage", sample: "CreateTicket" },
 
-  // ── Site / môi trường ────────────────────────────────────────────────────
-  incidentid: { label: "ID sự cố", sample: "d7c1…4e60", internal: true },
-  siteid: { label: "ID trạm", sample: "e3f8…2b47", internal: true },
-  sitename: { label: "Tên trạm", sample: "Trạm Bình Dương 1" },
-  incidenttype: { label: "Loại sự cố", sample: "Nhiệt độ cao" },
-  description: { label: "Mô tả sự cố", sample: "Nhiệt độ phòng vượt 45°C" },
-  wasfalsealarm: { label: "Báo động giả?", sample: "false" },
-  resolvedat: { label: "Thời điểm khắc phục xong", sample: "17/08/2026 11:40" },
+  // ── Site / environment ───────────────────────────────────────────────────
+  incidentid: { label: "Incident ID", sample: "d7c1…4e60", internal: true },
+  siteid: { label: "Site ID", sample: "e3f8…2b47", internal: true },
+  sitename: { label: "Site name", sample: "Binh Duong Site 1" },
+  incidenttype: { label: "Incident type", sample: "High temperature" },
+  description: {
+    label: "Incident description",
+    sample: "Room temperature exceeded 45°C",
+  },
+  wasfalsealarm: { label: "False alarm?", sample: "false" },
+  resolvedat: { label: "Resolved at", sample: "17/08/2026 11:40" },
 
   // ── IoT ──────────────────────────────────────────────────────────────────
   iotdeviceid: {
-    label: "ID thiết bị IoT",
+    label: "IoT device ID",
     sample: "f4a2…6d18",
     internal: true,
   },
-  devicecode: { label: "Mã thiết bị IoT", sample: "IOT-BD1-07" },
-  lastseenat: { label: "Lần cuối online", sample: "17/08/2026 08:50" },
-  offlinedurationseconds: { label: "Số giây mất kết nối", sample: "900" },
-  affectedbatterycount: { label: "Số pin bị ảnh hưởng", sample: "12" },
-  recoveredat: { label: "Thời điểm khôi phục", sample: "17/08/2026 09:05" },
+  devicecode: { label: "IoT device code", sample: "IOT-BD1-07" },
+  lastseenat: { label: "Last seen online", sample: "17/08/2026 08:50" },
+  offlinedurationseconds: {
+    label: "Offline duration (seconds)",
+    sample: "900",
+  },
+  affectedbatterycount: { label: "Affected battery count", sample: "12" },
+  recoveredat: { label: "Recovered at", sample: "17/08/2026 09:05" },
   lastofflineat: {
-    label: "Lần mất kết nối gần nhất",
+    label: "Last offline at",
     sample: "17/08/2026 08:50",
   },
-  rejectedreadingcount: { label: "Số bản ghi bị loại", sample: "148" },
+  rejectedreadingcount: { label: "Rejected reading count", sample: "148" },
   windowstartedat: {
-    label: "Bắt đầu cửa sổ theo dõi",
+    label: "Monitoring window started at",
     sample: "17/08/2026 06:00",
   },
   decommissionedat: {
-    label: "Thời điểm ngừng dùng",
+    label: "Decommissioned at",
     sample: "17/08/2026 09:30",
   },
 
-  // ── Trao đổi (chat) ──────────────────────────────────────────────────────
-  chatid: { label: "ID cuộc trao đổi", sample: "aa10…39fe", internal: true },
-  sendername: { label: "Tên người gửi", sample: "Trần Thị B" },
-  isinternal: { label: "Là ghi chú nội bộ?", sample: "false" },
-  isgroupmention: { label: "Nhắc cả nhóm?", sample: "true" },
-  reactiontype: { label: "Loại biểu cảm", sample: "Like" },
-  managuserid: { label: "ID quản lý", sample: "6b22…f803", internal: true },
-  manageruserid: { label: "ID quản lý", sample: "6b22…f803", internal: true },
-  oldtype: { label: "Vai trò cũ", sample: "Observer" },
-  newtype: { label: "Vai trò mới", sample: "Assignee" },
+  // ── Conversation (chat) ──────────────────────────────────────────────────
+  chatid: { label: "Conversation ID", sample: "aa10…39fe", internal: true },
+  sendername: { label: "Sender name", sample: "Jane Doe" },
+  isinternal: { label: "Internal note?", sample: "false" },
+  isgroupmention: { label: "Mentions the whole group?", sample: "true" },
+  reactiontype: { label: "Reaction type", sample: "Like" },
+  managuserid: { label: "Manager ID", sample: "6b22…f803", internal: true },
+  manageruserid: { label: "Manager ID", sample: "6b22…f803", internal: true },
+  oldtype: { label: "Previous role", sample: "Observer" },
+  newtype: { label: "New role", sample: "Assignee" },
 
-  // ── Tài khoản ────────────────────────────────────────────────────────────
-  accountid: { label: "ID tài khoản", sample: "8a71…40de", internal: true },
-  creationsource: { label: "Nguồn tạo tài khoản", sample: "AdminInvite" },
-  role: { label: "Vai trò", sample: "Staff" },
+  // ── Account ──────────────────────────────────────────────────────────────
+  accountid: { label: "Account ID", sample: "8a71…40de", internal: true },
+  creationsource: { label: "Account creation source", sample: "AdminInvite" },
+  role: { label: "Role", sample: "Staff" },
 
   // ── Blog ─────────────────────────────────────────────────────────────────
-  blogpostid: { label: "ID bài viết", sample: "cc39…7a44", internal: true },
+  blogpostid: { label: "Blog post ID", sample: "cc39…7a44", internal: true },
   errormessage: {
-    label: "Lỗi kỹ thuật gốc",
+    label: "Underlying technical error",
     sample: "Timeout after 60s",
     internal: true,
   },
 
-  // ── Bản tin gom (digest) ─────────────────────────────────────────────────
-  digest: { label: "Là bản tin gom?", sample: "true" },
-  count: { label: "Số thông báo được gom", sample: "7" },
-  from: { label: "Từ thời điểm", sample: "17/08/2026 08:00" },
-  to: { label: "Đến thời điểm", sample: "17/08/2026 12:00" },
+  // ── Digest ───────────────────────────────────────────────────────────────
+  digest: { label: "Is a digest?", sample: "true" },
+  count: { label: "Notifications bundled", sample: "7" },
+  from: { label: "From", sample: "17/08/2026 08:00" },
+  to: { label: "To", sample: "17/08/2026 12:00" },
   notificationids: {
-    label: "Danh sách ID thông báo",
-    sample: "3 ID…",
+    label: "Notification ID list",
+    sample: "3 IDs…",
     internal: true,
   },
 };
 
-/** Tra mô tả của một biến — không phân biệt hoa thường. `undefined` nếu chưa khai. */
+/** Look up a variable's description — case-insensitive. `undefined` if not declared. */
 export function getVariableDoc(name: string): TemplateVariableDoc | undefined {
   return TEMPLATE_VARIABLE_DOCS[name.toLowerCase()];
 }

@@ -75,7 +75,7 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Duplicate
+              Copy
             </Button>
           </>
         }

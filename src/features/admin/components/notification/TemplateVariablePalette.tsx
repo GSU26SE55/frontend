@@ -9,9 +9,9 @@ interface Props {
   type: NotificationTypeEnum;
   /** Variables the author has typed, taken from the content currently being entered. */
   typedNames: string[];
-  /** Chèn `{{name}}` vào đúng vị trí con trỏ trong ô đang chọn. */
+  /** Insert `{{name}}` at the cursor position in the currently targeted field. */
   onInsert: (name: string) => void;
-  /** Ô đang là đích chèn — quyết định chip bấm vào sẽ rơi vào Tiêu đề hay Nội dung. */
+  /** The current insert target — decides whether a clicked chip lands in Title or Body. */
   target: "titleTemplate" | "bodyTemplate";
   onTargetChange: (target: "titleTemplate" | "bodyTemplate") => void;
 }
@@ -27,7 +27,7 @@ interface Props {
  * wrote `assetSerialNumber`. The backend now returns 400 on save, but catching it here means the
  * author doesn't have to hit save to find out they mistyped.
  *
- * 17/08/2026 — each chip now leads with a **plain-language name** ("Mã ticket hiển thị") instead of
+ * 17/08/2026 — each chip now leads with a **plain-language name** ("Ticket code") instead of
  * the raw key, with `{{code}}` demoted to a caption underneath. The keys alone were unreadable: an
  * author looking at `{{code}}` `{{ticketId}}` `{{customerId}}` `{{screen}}` had no way to tell which
  * one is the ticket number the customer actually recognises and which is an internal GUID. The
@@ -72,9 +72,7 @@ export default function TemplateVariablePalette({
   if (isLoading) {
     return (
       <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
-        <p className="text-xs text-muted-foreground">
-          Đang tải danh sách biến…
-        </p>
+        <p className="text-xs text-muted-foreground">Loading variables…</p>
       </div>
     );
   }
@@ -93,7 +91,7 @@ export default function TemplateVariablePalette({
             key={name}
             type="button"
             onClick={() => onInsert(name)}
-            title={doc ? `${doc.label} — ví dụ: ${doc.sample}` : `Chèn ${name}`}
+            title={doc ? `${doc.label} — e.g. ${doc.sample}` : `Insert ${name}`}
             className={
               "group flex items-start gap-2 rounded-md border px-2 py-1.5 text-left transition-colors " +
               (used
@@ -101,8 +99,8 @@ export default function TemplateVariablePalette({
                 : "border-border bg-background hover:bg-accent")
             }
           >
-            {/* Dấu tick chỉ là chỉ báo "đã có trong nội dung" — bấm vẫn luôn là chèn thêm, vì
-                một biến hoàn toàn có thể xuất hiện hợp lệ ở cả tiêu đề lẫn nội dung. */}
+            {/* The check is only an "already in the content" indicator — clicking still always
+                inserts, since a variable can legitimately appear in both title and body. */}
             {used ? (
               <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
             ) : (
@@ -114,15 +112,15 @@ export default function TemplateVariablePalette({
                 {doc?.internal && (
                   <span
                     className="ml-1 rounded bg-muted px-1 text-[10px] font-normal text-muted-foreground"
-                    title="Mã nội bộ — người nhận đọc không hiểu, cân nhắc trước khi đưa vào nội dung"
+                    title="Internal value — meaningless to the recipient, think twice before putting it in the content"
                   >
-                    nội bộ
+                    internal
                   </span>
                 )}
               </span>
               {doc && (
                 <span className="block truncate text-[10px] text-muted-foreground">
-                  Ví dụ: {doc.sample}
+                  e.g. {doc.sample}
                 </span>
               )}
             </span>
@@ -134,16 +132,16 @@ export default function TemplateVariablePalette({
 
   return (
     <div className="space-y-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-      {/* Nút chọn ô đích. Trước đây chip chèn vào "ô vừa focus", nhưng sau khi bấm chip thì focus
-          đã rời khỏi ô — người dùng không có cách nào biết biến sắp rơi vào đâu, và thực tế đã
-          chèn nhầm sang ô kia. Nay đích hiện rõ ràng và giữ nguyên cho tới khi đổi. */}
+      {/* Target picker. Chips used to insert into "the last focused field", but clicking a chip
+          moves focus out of that field — the author had no way to tell where the variable would
+          land, and in practice it went into the wrong one. The target is now explicit and sticky. */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted-foreground">Chèn vào:</span>
+        <span className="text-xs text-muted-foreground">Insert into:</span>
         <div className="inline-flex rounded-md border border-border bg-background p-0.5">
           {(
             [
-              ["titleTemplate", "Tiêu đề"],
-              ["bodyTemplate", "Nội dung"],
+              ["titleTemplate", "Title"],
+              ["bodyTemplate", "Body"],
             ] as const
           ).map(([value, label]) => (
             <button
@@ -164,29 +162,29 @@ export default function TemplateVariablePalette({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Bấm một mục bên dưới để chèn vào vị trí con trỏ. Chỉ những mục này mới
-        có giá trị lúc gửi thật — thứ khác sẽ hiện ra trống.
+        Click an item below to insert it at the cursor. Only these items have a
+        value at send time — anything else renders empty.
       </p>
 
       {group.payload.length > 0 ? (
         <div>
           <p className="mb-1.5 text-xs font-medium">
-            Dữ liệu của loại thông báo này
+            Data for this notification type
           </p>
           {renderChips(group.payload)}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">
-          Loại thông báo này không kèm dữ liệu riêng — chỉ dùng được các biến
-          chung bên dưới.
+          This notification type carries no data of its own — only the common
+          items below are available.
         </p>
       )}
 
       <div>
         <p className="mb-1.5 text-xs font-medium">
-          Biến chung{" "}
+          Common items{" "}
           <span className="font-normal text-muted-foreground">
-            (loại nào cũng dùng được)
+            (available on every type)
           </span>
         </p>
         {renderChips(group.builtin)}
@@ -196,10 +194,10 @@ export default function TemplateVariablePalette({
         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-destructive" />
           <p className="text-xs text-destructive">
-            {/* Tên biến sai vẫn phải in ra nguyên văn — đây là thứ duy nhất giúp người soạn tìm
-                đúng chỗ để sửa trong nội dung. */}
-            Biến không hợp lệ: {unknown.join(", ")}. Biến này sẽ hiện ra trống
-            lúc gửi thật, và server sẽ từ chối lưu.
+            {/* The mistyped name must still be printed verbatim — it is the only thing that lets
+                the author find the spot to fix in the content. */}
+            Invalid variables: {unknown.join(", ")}. These render empty at send
+            time, and the server will reject the save.
           </p>
         </div>
       )}

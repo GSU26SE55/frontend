@@ -26,13 +26,14 @@ import NotificationGroupTable from "@/features/admin/components/notification/Not
 import NotificationGroupFormDialog from "@/features/admin/components/notification/NotificationGroupFormDialog";
 import NotificationGroupMembersDialog from "@/features/admin/components/notification/NotificationGroupMembersDialog";
 import type { NotificationGroupDto } from "@/features/admin/types/notification/notification-group.types";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // useUrlFilters strips empty keys from the URL and AUTOMATICALLY resets pageNumber to 1 whenever a
 // filter changes — this avoids the case of "sitting on page 5, filter now has only 1 page, table empty".
 const DEFAULTS = {
   search: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function NotificationGroupsPage() {
@@ -164,6 +165,7 @@ export default function NotificationGroupsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => {
                 if (deleteTarget) remove.mutate(deleteTarget.id);
                 setDeleteTarget(null);

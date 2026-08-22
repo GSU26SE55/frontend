@@ -13,6 +13,7 @@ export const TABLE_COLUMNS = {
   detectedAt: "Detected at",
   source: "Source",
   severity: "Severity",
+  customer: "Customer",
   expiresAt: "Expires",
   channel: "Channel",
   calibrated: "Calibrated",

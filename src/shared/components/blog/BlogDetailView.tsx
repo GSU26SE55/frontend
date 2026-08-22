@@ -110,8 +110,10 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
           <h1 className="text-2xl font-semibold tracking-tight">
             {post.title}
           </h1>
+          {/* Slug omitted: it is a URL detail the editor sets, not something a reader of
+              this page acts on — the title above already identifies the post. */}
           <p className="text-muted-foreground mt-1 font-mono text-xs">
-            /{post.slug} &middot; v{post.currentVersion} &middot;{" "}
+            v{post.currentVersion} &middot;{" "}
             {format(new Date(post.createdAt), "MM/dd/yyyy HH:mm")}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -161,8 +163,11 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
               >
                 <Archive className="size-3.5" /> Archive
               </Button>
+              {/* destructive, not outline: delete is the one irreversible action in this
+                  row, so it must not look like Publish or Archive sitting beside it.
+                  Matches the Delete button on the guide-article detail page. */}
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 disabled={removing}
                 onClick={() => setConfirmDelete(true)}
@@ -226,6 +231,7 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() =>
                 remove(post.id, {
                   onSuccess: () => navigate(`${basePath}/blog`),

@@ -10,6 +10,7 @@ import type {
   FalseAlarmIncidentPayload,
 } from "@/shared/types/alerts/environmental.types";
 import { MESSAGES } from "@/shared/constants/messages";
+import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
 
 // Incident list — site safety, near-realtime: staleTime 30s + poll 30s.
 export const useIncidentList = (params?: IncidentListParams) =>
@@ -105,4 +106,26 @@ export const useFalseAlarmIncident = () => {
       toast.success(MESSAGES.incident.falseAlarm);
     },
   });
+};
+
+// Unresolved count for the summary strip — mirrors useUnresolvedAlertCount. Open and
+// Acknowledged both still need action; Resolved and FalseAlarm are closed states. The BE
+// list endpoint takes one status at a time, so each gets its own pageSize-1 query and only
+// `totalItems` is read.
+export const useUnresolvedIncidentCount = () => {
+  const open = useIncidentList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: EnvironmentalIncidentStatusEnum.Open,
+  });
+  const acknowledged = useIncidentList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: EnvironmentalIncidentStatusEnum.Acknowledged,
+  });
+
+  return {
+    count: (open.data?.totalItems ?? 0) + (acknowledged.data?.totalItems ?? 0),
+    isLoading: open.isLoading || acknowledged.isLoading,
+  };
 };
