@@ -32,6 +32,7 @@ import {
   NotificationBatchSourceEnum,
   type NotificationBatchDto,
 } from "@/features/admin/types/notification/notification-group.types";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const ALL = "__all__";
 
@@ -42,7 +43,7 @@ const SOURCE_OPTIONS = Object.values(NotificationBatchSourceEnum).map(
 const DEFAULTS = {
   source: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function NotificationBatchesPage() {

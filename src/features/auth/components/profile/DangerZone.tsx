@@ -81,7 +81,10 @@ const DangerZone = () => {
               Temporarily deactivate the account
             </p>
           </div>
-          <Button variant="outline" onClick={() => setConfirmDeactivate(true)}>
+          <Button
+            variant="destructive"
+            onClick={() => setConfirmDeactivate(true)}
+          >
             Deactivate
           </Button>
         </div>

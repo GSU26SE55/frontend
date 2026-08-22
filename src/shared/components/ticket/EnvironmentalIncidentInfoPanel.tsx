@@ -1,18 +1,22 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { AlertTriangle, ExternalLink } from "lucide-react";
+import { AlertTriangle, Thermometer } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIncidentDetail } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
+import AmbientEvidencePanel from "@/shared/components/ticket/AmbientEvidencePanel";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { alertSeverityLabel } from "@/shared/constants/alertLabels";
 import {
   EnvironmentalIncidentStatusEnum,
   type EnvironmentalIncidentDto,
 } from "@/shared/types/alerts/environmental.types";
+
+/** ±2' — same width as the battery evidence window (`useReadingEvidence`). */
+const EVIDENCE_WINDOW_MS = 2 * 60 * 1_000;
 
 const STATUS_LABEL: Record<EnvironmentalIncidentStatusEnum, string> = {
   [EnvironmentalIncidentStatusEnum.Open]: "Open",
@@ -49,8 +53,11 @@ interface Props {
   incidentId: string;
   /** Ticket description — carries the raw sensor reading the firmware sent. */
   description?: string | null;
-  /** Route prefix for the incident list, e.g. "/manager" or "/staff". */
-  basePath: string;
+  /**
+   * Route prefix that owns a `sites/:id` page. Only Manager and Admin have one — pass nothing
+   * for Staff and the site link is omitted rather than rendered as a dead 404.
+   */
+  siteBasePath?: string;
 }
 
 /**
@@ -67,7 +74,7 @@ interface Props {
 export default function EnvironmentalIncidentInfoPanel({
   incidentId,
   description,
-  basePath,
+  siteBasePath,
 }: Props) {
   const { data: incident, isLoading, isError } = useIncidentDetail(incidentId);
 
@@ -87,20 +94,52 @@ export default function EnvironmentalIncidentInfoPanel({
     );
   }
 
+  // ±2' around detectedAt — the moment the condition was observed, which is the span worth
+  // reading the ambient log over.
+  //
+  // Not createdAt: on a manually-reported incident the record can be written long after the
+  // fact, so createdAt would point the window at whenever someone got round to filling in the
+  // form rather than at the event. The BE requires DetectedAt and rejects values more than 5
+  // minutes in the future (EnvironmentalIncidentCommands.ValidateAsync), so it is always set
+  // and always sane. Ambient readings are ingested continuously, independent of when the
+  // incident record lands, so the log covers detectedAt either way.
+  const anchorMs = new Date(incident.detectedAt).getTime();
+  const siteHref =
+    siteBasePath && incident.siteId && !Number.isNaN(anchorMs)
+      ? `${siteBasePath}/sites/${incident.siteId}?${new URLSearchParams({
+          tab: "ambient",
+          from: new Date(anchorMs - EVIDENCE_WINDOW_MS).toISOString(),
+          to: new Date(anchorMs + EVIDENCE_WINDOW_MS).toISOString(),
+        }).toString()}`
+      : null;
+
   return (
     <div>
       <Header incident={incident} />
 
-      <Link
-        to={`${basePath}/environmental-incidents`}
-        className={cn(
-          buttonVariants({ variant: "outline", size: "sm" }),
-          "w-full mb-3",
-        )}
-      >
-        <ExternalLink className="size-3.5" />
-        View incident record
-      </Link>
+      <div className="grid gap-2 mb-3">
+        {/*
+          Site readings around the detection time — the site-level counterpart of the battery
+          ticket's evidence table, and the reason this ticket is defensible.
+
+          The link carries the ±2' window and the tab, so one click lands on the Environment tab
+          already filtered instead of on today's full log where the reader has to find the
+          incident minute by hand. Rendered only where a site route exists: Staff has no
+          `sites/:id` page, so linking there would 404.
+        */}
+        {siteHref ? (
+          <Link
+            to={siteHref}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "w-full",
+            )}
+          >
+            <Thermometer className="size-3.5" />
+            Site readings at detection
+          </Link>
+        ) : null}
+      </div>
 
       <div className="divide-y divide-border/50">
         <InfoRow
@@ -149,6 +188,12 @@ export default function EnvironmentalIncidentInfoPanel({
       ) : null}
 
       <SensorEvidence notes={incident.notes} fallback={description} />
+
+      {/* Inline so Staff sees the readings too — they have no site page to link to. */}
+      <AmbientEvidencePanel
+        siteId={incident.siteId}
+        anchorAt={incident.detectedAt}
+      />
     </div>
   );
 }
@@ -249,7 +294,8 @@ function SensorEvidence({
 
       <p className="text-[11px] text-muted-foreground mt-1.5">
         Site-level incident — the fault is in the cabinet, not in one battery,
-        so there is no battery reading log to cross-check.
+        so it is cross-checked against the site's ambient readings below rather
+        than a per-battery log.
       </p>
     </div>
   );

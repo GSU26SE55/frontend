@@ -147,9 +147,6 @@ const AdminAlertsPage = lazy(() => import("@/features/admin/pages/AlertsPage"));
 const AdminEnvironmentalIncidentsPage = lazy(
   () => import("@/features/admin/pages/EnvironmentalIncidentsPage"),
 );
-const AdminAmbientConfigPage = lazy(
-  () => import("@/features/admin/pages/AmbientConfigPage"),
-);
 const AdminSmsGatewayPage = lazy(
   () => import("@/features/admin/pages/SmsGatewayPage"),
 );
@@ -189,9 +186,6 @@ const ManagerAlertsPage = lazy(
 const ManagerEnvironmentalIncidentsPage = lazy(
   () => import("@/features/manager/pages/EnvironmentalIncidentsPage"),
 );
-const ManagerAmbientConfigPage = lazy(
-  () => import("@/features/manager/pages/AmbientConfigPage"),
-);
 const StaffDashboardPage = lazy(
   () => import("@/features/staff/pages/DashboardPage"),
 );
@@ -207,7 +201,6 @@ const StaffMyMaintenanceLogsPage = lazy(
 const StaffSlaMonitorPage = lazy(
   () => import("@/features/staff/pages/SlaMonitorPage"),
 );
-const StaffAlertsPage = lazy(() => import("@/features/staff/pages/AlertsPage"));
 const AdminKbListPage = lazy(() => import("@/features/admin/pages/KbListPage"));
 const AdminKbDetailPage = lazy(
   () => import("@/features/admin/pages/KbDetailPage"),
@@ -258,14 +251,8 @@ const StaffBlogDetailPage = lazy(
 const StaffBlogEditorPage = lazy(
   () => import("@/features/staff/pages/BlogEditorPage"),
 );
-const StaffBatteryAlertsPage = lazy(
-  () => import("@/features/staff/pages/BatteryAlertsPage"),
-);
 const StaffBatteryAssetDetailPage = lazy(
   () => import("@/features/staff/pages/BatteryAssetDetailPage"),
-);
-const StaffEnvironmentalIncidentsPage = lazy(
-  () => import("@/features/staff/pages/EnvironmentalIncidentsPage"),
 );
 
 const router = createBrowserRouter([
@@ -395,7 +382,6 @@ const router = createBrowserRouter([
                 path: "environmental-incidents",
                 element: <AdminEnvironmentalIncidentsPage />,
               },
-              { path: "ambient", element: <AdminAmbientConfigPage /> },
               { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "sagas", element: <AdminSagaDebugPage /> },
               { path: "profile", element: <ProfilePage /> },
@@ -467,7 +453,6 @@ const router = createBrowserRouter([
                 path: "environmental-incidents",
                 element: <ManagerEnvironmentalIncidentsPage />,
               },
-              { path: "ambient", element: <ManagerAmbientConfigPage /> },
               {
                 path: "iot-calibrations",
                 element: <ManagerCalibrationsExpiringPage />,
@@ -512,15 +497,9 @@ const router = createBrowserRouter([
                 path: "iot-devices/:id",
                 element: <StaffIoTDeviceDetailPage />,
               },
-              { path: "alerts", element: <StaffAlertsPage /> },
-              { path: "battery-alerts", element: <StaffBatteryAlertsPage /> },
               {
                 path: "battery-assets/:id",
                 element: <StaffBatteryAssetDetailPage />,
-              },
-              {
-                path: "environmental-incidents",
-                element: <StaffEnvironmentalIncidentsPage />,
               },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },

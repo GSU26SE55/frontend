@@ -8,6 +8,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   ChartContainer,
   ChartTooltip,
@@ -123,18 +124,30 @@ function buildChartData(items: SensorReadingAggregateDto[] | undefined) {
 export default function ChargeDischargePeakChart({
   assetId,
   batteryTypeId,
+  from,
+  to,
+  onClearRange,
 }: {
   assetId: string;
   batteryTypeId?: string;
+  /** Explicit window (ISO) from a ticket link — overrides the preset range while set. */
+  from?: string;
+  to?: string;
+  onClearRange?: () => void;
 }) {
   const [range, setRange] = useState<RangeKey>("24h");
-  const hourly = isHourlyRange(range);
+  const pinned = !!from || !!to;
+  // A pinned window is a short, precise span (±2' around an incident), so it always uses the
+  // fine-grained aggregate — the hourly continuous-aggregate would collapse it into one bucket.
+  const hourly = !pinned && isHourlyRange(range);
   const cfg = RANGES[range];
 
   // Hooks can't be called conditionally → disable by passing an empty assetId (enabled: !!assetId).
   const shortQuery = useReadingAggregate(hourly ? "" : assetId, {
     hours: "hours" in cfg ? cfg.hours : 24,
-    interval: "interval" in cfg ? cfg.interval : "1h",
+    interval: pinned ? "1m" : "interval" in cfg ? cfg.interval : "1h",
+    from,
+    to,
   });
   const hourlyQuery = useReadingAggregateHourly(hourly ? assetId : "", {
     days: "days" in cfg ? cfg.days : 30,
@@ -148,22 +161,32 @@ export default function ChargeDischargePeakChart({
     <Card>
       <CardHeader className="pb-2 flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base">Charge/discharge peak (A)</CardTitle>
-        <Select
-          value={range}
-          onValueChange={(v) => setRange(v as RangeKey)}
-          items={RANGE_ITEMS}
-        >
-          <SelectTrigger size="sm" className="w-28">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {RANGE_ITEMS.map((i) => (
-              <SelectItem key={i.value} value={i.value}>
-                {i.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {/* The preset is meaningless while a window is pinned — disable rather than hide, so
+              the control doesn't disappear and reappear as the reader clears the range. */}
+          <Select
+            value={range}
+            onValueChange={(v) => setRange(v as RangeKey)}
+            items={RANGE_ITEMS}
+            disabled={pinned}
+          >
+            <SelectTrigger size="sm" className="w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RANGE_ITEMS.map((i) => (
+                <SelectItem key={i.value} value={i.value}>
+                  {i.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {pinned && onClearRange ? (
+            <Button variant="ghost" size="sm" onClick={onClearRange}>
+              Clear filters
+            </Button>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mb-3">

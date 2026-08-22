@@ -22,6 +22,7 @@ import {
   NotificationGroupKindEnum,
   type NotificationGroupDto,
 } from "@/features/admin/types/notification/notification-group.types";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 interface Props {
   open: boolean;
@@ -29,7 +30,7 @@ interface Props {
   group: NotificationGroupDto;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 export default function NotificationGroupMembersDialog({
   open,

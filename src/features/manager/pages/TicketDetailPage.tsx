@@ -37,6 +37,7 @@ import {
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
 import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
+import { getTicketSubject } from "@/shared/lib/ticketSubject";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -437,23 +438,19 @@ export default function TicketDetailPage() {
             >
               {/* A ticket can have multiple batteries attached — loop over each. Fallback to single battery (legacy). */}
               {(() => {
-                const ids =
-                  ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
-                    ? ticket.batteryAssetIds
-                    : ticket.batteryAssetId
-                      ? [ticket.batteryAssetId]
-                      : [];
-                // No battery AND an incident id → site-level ticket. Checked before the empty
-                // fallback because "no battery attached" is the normal, correct shape here, not
-                // missing data, and the battery panel's empty state says the opposite.
-                if (ids.length === 0 && ticket.environmentalIncidentId)
+                // Which subject this ticket is about — battery vs site — decided in one
+                // place (getTicketSubject) so both detail pages classify identically.
+                const subject = getTicketSubject(ticket);
+                if (subject.kind === "site")
                   return (
                     <EnvironmentalIncidentInfoPanel
-                      incidentId={ticket.environmentalIncidentId}
+                      incidentId={subject.incidentId}
                       description={ticket.description}
-                      basePath="/manager"
+                      siteBasePath="/manager"
                     />
                   );
+                const ids =
+                  subject.kind === "battery" ? subject.batteryAssetIds : [];
                 if (ids.length === 0)
                   return <BatteryAssetInfoPanel batteryAssetId={null} />;
                 return (
@@ -702,8 +699,11 @@ export default function TicketDetailPage() {
                 {ticket.slaTimer ? (
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
+                      {/* "Duration", not "Status": the value beside it is a live countdown to
+                          the deadline, not a state name. Admin's SLA panel does show
+                          slaTimer.status, so it keeps the Status label. */}
                       <span className="text-xs text-muted-foreground">
-                        Status
+                        Duration
                       </span>
                       <SlaCountdown slaTimer={ticket.slaTimer} />
                     </div>

@@ -61,6 +61,7 @@ import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKb
 import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
+import { getTicketSubject } from "@/shared/lib/ticketSubject";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -374,22 +375,20 @@ export default function TicketDetailPage() {
             >
               {/* A ticket can have multiple batteries attached — iterate each one. Fallback to a single battery (legacy). */}
               {(() => {
-                const ids =
-                  ticket.batteryAssetIds && ticket.batteryAssetIds.length > 0
-                    ? ticket.batteryAssetIds
-                    : ticket.batteryAssetId
-                      ? [ticket.batteryAssetId]
-                      : [];
-                // See the Manager page for why this precedes the empty fallback: on a site-level
-                // ticket "no battery" is the correct shape, not missing data.
-                if (ids.length === 0 && ticket.environmentalIncidentId)
+                // Same classification as the Manager page — see getTicketSubject for why
+                // "site" must be checked before the empty-battery fallback.
+                // No siteBasePath: Staff has no sites/:id route, so the readings render
+                // inline in the panel instead of behind a link.
+                const subject = getTicketSubject(ticket);
+                if (subject.kind === "site")
                   return (
                     <EnvironmentalIncidentInfoPanel
-                      incidentId={ticket.environmentalIncidentId}
+                      incidentId={subject.incidentId}
                       description={ticket.description}
-                      basePath="/staff"
                     />
                   );
+                const ids =
+                  subject.kind === "battery" ? subject.batteryAssetIds : [];
                 if (ids.length === 0)
                   return <BatteryAssetInfoPanel batteryAssetId={null} />;
                 return (
@@ -716,8 +715,11 @@ export default function TicketDetailPage() {
                         own progress bar would give the SLA block 2 bars drawing the same
                         ratio (the small one here + the "remaining" bar below). */}
                     <div className="flex items-center justify-between">
+                      {/* "Duration", not "Status": the value beside it is a live countdown to
+                          the deadline, not a state name. Admin's SLA panel does show
+                          slaTimer.status, so it keeps the Status label. */}
                       <span className="text-xs text-muted-foreground">
-                        Status
+                        Duration
                       </span>
                       <SlaCountdown
                         slaTimer={ticket.slaTimer}

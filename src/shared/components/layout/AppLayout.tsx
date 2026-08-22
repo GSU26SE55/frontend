@@ -1,9 +1,12 @@
 import { Suspense, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
-import Sidebar, { type NavSection } from "./Sidebar";
-import { APP_NAME, INBOX_PATH } from "@/shared/constants/sidebarLabels";
-import { useUnreadCount } from "@/shared/hooks/notifications/useNotifications";
+import Sidebar, { type NavSection, type NavBadge } from "./Sidebar";
+import { APP_NAME, SIDEBAR_LABELS } from "@/shared/constants/sidebarLabels";
+import { useUnresolvedAlertCount } from "@/shared/hooks/alerts/useAlerts";
+import { useUnresolvedIncidentCount } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
+import { useKbReviewCounts } from "@/shared/hooks/kb/useKbPendingReview";
+import { useBlogDraftCount } from "@/shared/hooks/blog/useBlog";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/account/session.types";
@@ -113,23 +116,71 @@ function Topbar() {
 export default function AppLayout({ sections }: { sections: NavSection[] }) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  // Namespaces the sidebar's saved section state per role — see Sidebar's `scopeKey`.
+  const role = useSessionStore((s) => s.user?.role);
 
-  // Unread-count badge on the "Inbox" item. Injected here (not in each nav config)
-  // because all 3 roles go through AppLayout and point to the same path — doing it
-  // here is one place instead of three. Doesn't touch other items' existing badges
-  // (e.g. Manager's queue) since it only maps the item with path INBOX_PATH.
-  const { data: unreadCount = 0 } = useUnreadCount();
+  // Badges injected here (not in each nav config) because all 3 roles go through
+  // AppLayout — doing it here is one place instead of three. Items with no entry below
+  // keep whatever badge their nav config already set (e.g. Manager's queue).
+  const alerts = useUnresolvedAlertCount();
+  const incidents = useUnresolvedIncidentCount();
+  // All of these return 0 for roles that cannot act on them (Staff) — the gate lives in
+  // the hooks themselves, so nothing here has to know about roles.
+  const kb = useKbReviewCounts();
+  const blogDrafts = useBlogDraftCount();
+
   const sectionsWithBadge = useMemo(() => {
-    if (!unreadCount) return sections;
+    // Matched by LABEL, because each role mounts these under its own prefix
+    // (Admin and Manager use /{role}/alerts). Labels come from SIDEBAR_LABELS,
+    // which the nav configs already share.
+    const cap = (n: number) => (n > 99 ? "99+" : n);
+
+    // Alerts, incidents and blog carry a single count each.
+    const single: Record<string, number> = {
+      // What still needs action: Open + Acknowledged.
+      [SIDEBAR_LABELS.batteryAlerts]: alerts.count,
+      [SIDEBAR_LABELS.envIncidents]: incidents.count,
+      // Posts nobody has published yet.
+      [SIDEBAR_LABELS.blog]: blogDrafts,
+    };
+
+    // Guide carries two, because they mean different things: articles awaiting
+    // approve/reject are a queue someone is blocked on (danger), while drafts are merely
+    // unfinished (muted). Collapsing them into one number would hide that difference.
+    const guideBadges: NavBadge[] = [];
+    if (kb.pendingReview)
+      guideBadges.push({
+        value: cap(kb.pendingReview),
+        // Amber, not red: an article awaiting approval is queued work, not an alarm —
+        // red is reserved for unresolved alerts and incidents.
+        tone: "warning",
+        title: `${kb.pendingReview} article(s) awaiting approval`,
+      });
+    if (kb.draft)
+      guideBadges.push({
+        value: cap(kb.draft),
+        tone: "muted",
+        title: `${kb.draft} draft article(s)`,
+      });
+
     return sections.map((section) => ({
       ...section,
-      items: section.items.map((item) =>
-        item.path === INBOX_PATH
-          ? { ...item, badge: unreadCount > 99 ? "99+" : unreadCount }
-          : item,
-      ),
+      items: section.items.map((item) => {
+        if (item.label === SIDEBAR_LABELS.knowledgeBase) {
+          return guideBadges.length ? { ...item, badge: guideBadges } : item;
+        }
+        const count = single[item.label];
+        return count ? { ...item, badge: cap(count) } : item;
+      }),
     }));
-  }, [sections, unreadCount]);
+  }, [
+    sections,
+    alerts.count,
+    incidents.count,
+    kb.pendingReview,
+    kb.draft,
+    blogDrafts,
+  ]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -138,6 +189,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
         sections={sectionsWithBadge}
         collapsed={collapsed}
         onToggle={() => setCollapsed((v) => !v)}
+        scopeKey={role ?? "anon"}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar />

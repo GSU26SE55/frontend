@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KbReferenceTypeLabel } from "@/shared/enums/kb/kb.enum";
-import { useAdminKbUsageStats } from "@/features/admin/hooks/kb/useAdminKb";
+import { useKbUsageStats } from "@/shared/hooks/kb/useKbUsageStats";
 
 interface Props {
   articleId: string;
@@ -25,9 +25,7 @@ function StatRow({ label, value }: { label: string; value: number }) {
 
 export function KbUsageStatsDialog({ articleId, open, onClose }: Props) {
   // Lazy: only fetch while the dialog is open (gated by passing an empty id when closed).
-  const { data, isLoading, isError } = useAdminKbUsageStats(
-    open ? articleId : "",
-  );
+  const { data, isLoading, isError } = useKbUsageStats(open ? articleId : "");
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>

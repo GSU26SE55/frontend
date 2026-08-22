@@ -30,6 +30,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const DEFAULTS = {
   keyword: "",
@@ -37,7 +38,7 @@ const DEFAULTS = {
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 type ConfirmState =
@@ -91,7 +92,7 @@ export default function BatteryTypesPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Battery infrastructure
+            Admin &middot; Configure
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Battery types &amp; Alert thresholds

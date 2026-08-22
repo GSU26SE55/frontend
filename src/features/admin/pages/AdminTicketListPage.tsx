@@ -28,8 +28,9 @@ import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_OPTIONS = Object.values(TicketStatusEnum) as TicketStatus[];
 const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];

@@ -15,20 +15,28 @@ export const SIDEBAR_LABELS = {
   blog: "Blog",
   batteryAlerts: "Battery alerts",
   envIncidents: "Environmental incidents",
-  ambient: "Site environment",
-  inbox: "Inbox",
   settings: "Settings",
 } as const;
 
-// Inbox path — shared by every role (no /admin|/manager|/staff prefix).
-// AppLayout matches this path to attach the unread badge, so the 3 nav configs and
-// AppLayout must reference the same constant: change the path in one place but not
-// the other and the badge silently disappears.
-export const INBOX_PATH = "/notifications";
-
-// Section group titles used by ≥2 roles (only "System" is shared by all 3).
-// Role-specific section titles ("Battery infrastructure"/"Management"/"Reports"…)
-// live in {role}Nav.ts.
+// Section group titles — shared by all three roles, so a role's sidebar differs only in
+// WHICH items land in each group, never in how the groups are named.
+//
+// Named with the project's own ITIL 4 vocabulary (see .claude/rules/design.md), so the
+// sidebar reads the same way the domain docs do:
+//   incidents     — what is going wrong right now: the two alert streams, both carrying
+//                   a red count.
+//   knowledge     — ITIL Knowledge Management. Guide is the internal, technical KB;
+//                   Blog is the customer-facing version generated from it
+//                   (BlogPostOriginEnum.AiGeneratedFromKb), so Guide is listed first —
+//                   the order follows the direction the content flows.
+//   assets        — the estate and the records about it (sites, devices, audit log).
+//                   Nothing is queued here; the reader came looking for something.
+//   notifications — the outbound message pipeline, in the order the job is done.
+//   system        — setup changed rarely. Collapsed by default.
 export const SIDEBAR_SECTION_TITLES = {
+  incidents: "Incidents",
+  knowledge: "Knowledge",
+  assets: "Assets",
+  notifications: "Notifications",
   system: "System",
 } as const;

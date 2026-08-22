@@ -68,6 +68,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -121,7 +122,7 @@ const DEFAULTS = {
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function AccountsPage() {

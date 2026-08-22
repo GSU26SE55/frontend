@@ -41,6 +41,7 @@ import {
   notificationTypeLabel,
   notificationChannelLabel,
 } from "@/shared/constants/notificationLabels";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const ALL = "__all__";
 
@@ -63,7 +64,7 @@ const DEFAULTS = {
   type: "",
   channel: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 const FILTER_DEFS = [

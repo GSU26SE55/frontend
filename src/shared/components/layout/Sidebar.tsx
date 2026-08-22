@@ -5,11 +5,33 @@ import { PanelLeftClose, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/logo.webp";
 
+/**
+ * A count pill on a nav item. `tone` picks the colour:
+ * - "danger" (red) — a real alarm someone must clear: unresolved battery alerts and
+ *   environmental incidents.
+ * - "warning" (amber) — work waiting on a person but not an emergency: guide articles
+ *   awaiting approval. Matches the amber used by the pending-approval notice and the
+ *   "Pending change" badge on the article cards, so one idea keeps one colour.
+ * - "muted" (grey) — merely unfinished work, e.g. drafts. A draft is nobody's alarm, so
+ *   it must not read as one.
+ */
+export interface NavBadge {
+  value: string | number;
+  tone?: "danger" | "warning" | "muted";
+  /** Tooltip text — says what the number means, since the pill itself is just a digit. */
+  title?: string;
+}
+
 export interface NavItem {
   label: string;
   path: string;
   icon: LucideIcon;
-  badge?: string | number;
+  /**
+   * One pill, or several shown side by side (e.g. Guide carries both "awaiting approval"
+   * and "drafts"). A bare string/number stays supported so existing nav configs and the
+   * Inbox badge keep working unchanged.
+   */
+  badge?: string | number | NavBadge[];
 }
 
 export interface NavSection {
@@ -24,6 +46,14 @@ interface SidebarProps {
   sections: NavSection[];
   collapsed: boolean;
   onToggle: () => void;
+  /**
+   * Namespaces the per-section open/closed state saved in localStorage. Section titles
+   * are NOT unique across roles ("System" is shared by all three), and localStorage is
+   * keyed by origin rather than by user — so without this, an Admin collapsing "System"
+   * (10 items) would leave it collapsed for the next Staff login on the same browser,
+   * and vice versa. Pass the role.
+   */
+  scopeKey: string;
 }
 
 // Active when pathname matches item.path exactly or is a child route of it (e.g. the
@@ -43,20 +73,50 @@ function isPathActive(
   );
 }
 
+// Sidebar state used to be saved under `sidebar-section-{title}`, with no role in the
+// key — so all three roles shared one entry and overwrote each other's. The keys are now
+// role-scoped; this drops the old unscoped ones so they do not sit in localStorage
+// forever. Runs once per page load, before any Section reads its state.
+let legacyKeysPurged = false;
+function purgeLegacySectionKeys() {
+  if (legacyKeysPurged) return;
+  legacyKeysPurged = true;
+  try {
+    for (const key of Object.keys(localStorage)) {
+      // Legacy keys are `sidebar-section-{Title}`; scoped ones are
+      // `sidebar-section-{SCOPE}-{Title}`. Scopes are uppercase roles (or "anon"), while
+      // every section title starts with an uppercase letter followed by lowercase — so a
+      // leading all-caps segment marks a scoped key. Matching the shape rather than
+      // listing roles keeps this correct if a new role is ever added.
+      if (!key.startsWith("sidebar-section-")) continue;
+      const rest = key.slice("sidebar-section-".length);
+      if (!/^([A-Z]{2,}|anon)-/.test(rest)) localStorage.removeItem(key);
+    }
+  } catch {
+    // localStorage can throw in private mode / when storage is full — a failed cleanup
+    // must never keep the sidebar from rendering.
+  }
+}
+
 // ── Collapsible section ─────────────────────────────────────────────────────
 function Section({
   section,
   sidebarCollapsed,
   allPaths,
   pathname,
+  scopeKey,
 }: {
   section: NavSection;
   sidebarCollapsed: boolean;
   allPaths: string[];
   pathname: string;
+  scopeKey: string;
 }) {
-  const storageKey = section.title ? `sidebar-section-${section.title}` : null;
+  const storageKey = section.title
+    ? `sidebar-section-${scopeKey}-${section.title}`
+    : null;
   const [open, setOpen] = useState(() => {
+    purgeLegacySectionKeys();
     if (storageKey) {
       const saved = localStorage.getItem(storageKey);
       if (saved !== null) return saved === "true";
@@ -100,21 +160,22 @@ function Section({
           </p>
         ))}
 
-      {/* Items — when the sidebar is collapsed, always show full icons regardless of
-          the section's open/close state (open only matters for hiding/showing labels
-          when the sidebar is expanded — collapsed has no label to close). */}
+      {/* Items — when the sidebar is collapsed, always show full icons regardless of the
+          section's open/close state (open only matters for hiding/showing labels when the
+          sidebar is expanded — collapsed has no label to close).
+
+          Collapse animates grid-template-rows 1fr → 0fr rather than a pixel maxHeight, so
+          nothing here has to guess how tall a row is. The previous `items.length * 42px`
+          was a magic number that clipped the list as soon as a label wrapped to a second
+          line or the font size changed. */}
       <div
-        className="overflow-hidden transition-all duration-200"
-        style={
-          sidebarCollapsed
-            ? undefined
-            : {
-                maxHeight: open ? `${section.items.length * 42}px` : "0px",
-                opacity: open ? 1 : 0,
-              }
-        }
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-200",
+          !sidebarCollapsed && !open && "grid-rows-[0fr] opacity-0",
+          (sidebarCollapsed || open) && "grid-rows-[1fr] opacity-100",
+        )}
       >
-        <ul className="space-y-0.5">
+        <ul className="space-y-0.5 overflow-hidden min-h-0">
           {section.items.map((item) => {
             const active = isPathActive(item.path, pathname, allPaths);
             return (
@@ -124,7 +185,9 @@ function Section({
                   replace
                   title={sidebarCollapsed ? item.label : undefined}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-all duration-150 relative overflow-hidden",
+                    // `group` is what makes the icon's group-hover:scale-105 fire — the
+                    // icon scales on hovering anywhere in the row, not just the icon.
+                    "group flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-all duration-150 relative overflow-hidden",
                     sidebarCollapsed && "justify-center px-2",
                     active
                       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-xs"
@@ -144,8 +207,27 @@ function Section({
                     <>
                       <span className="flex-1 truncate">{item.label}</span>
                       {item.badge !== undefined && (
-                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-[1px] rounded-full bg-destructive/10 text-destructive leading-none">
-                          {item.badge}
+                        <span className="shrink-0 flex items-center gap-1">
+                          {(Array.isArray(item.badge)
+                            ? item.badge
+                            : [{ value: item.badge, tone: "danger" as const }]
+                          ).map((b, i) => (
+                            <span
+                              key={i}
+                              title={b.title}
+                              className={cn(
+                                "text-[10px] font-bold px-1.5 py-[1px] rounded-full leading-none",
+                                b.tone === "muted" &&
+                                  "bg-muted text-muted-foreground",
+                                b.tone === "warning" &&
+                                  "bg-amber-500/10 text-amber-600 dark:text-amber-500",
+                                (!b.tone || b.tone === "danger") &&
+                                  "bg-destructive/10 text-destructive",
+                              )}
+                            >
+                              {b.value}
+                            </span>
+                          ))}
                         </span>
                       )}
                     </>
@@ -166,6 +248,7 @@ export default function Sidebar({
   sections,
   collapsed,
   onToggle,
+  scopeKey,
 }: SidebarProps) {
   const { pathname } = useLocation();
   const allPaths = sections.flatMap((s) => s.items.map((i) => i.path));
@@ -235,6 +318,7 @@ export default function Sidebar({
             sidebarCollapsed={collapsed}
             allPaths={allPaths}
             pathname={pathname}
+            scopeKey={scopeKey}
           />
         ))}
       </nav>

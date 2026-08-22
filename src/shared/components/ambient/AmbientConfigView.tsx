@@ -16,13 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -31,8 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import DataPagination from "@/shared/components/ui/DataPagination";
-import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { KEY } from "@/shared/utils/queryKeys";
+import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   useAmbientThresholdBySite,
@@ -45,9 +37,14 @@ import {
   type AmbientThresholdFormValues,
 } from "@/shared/schemas/ambient/ambient.schema";
 import { AmbientReadingSourceEnum } from "@/shared/enums/ambient/ambient.enum";
+import {
+  evaluateAmbientRow,
+  ambientLevelTextClass,
+  ambientLevelRowClass,
+} from "@/shared/lib/ambientThresholds";
 import type { AmbientThresholdUpsertPayload } from "@/shared/types/ambient/ambient.types";
-import type { SiteOption } from "@/shared/types/site/site.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
   [AmbientReadingSourceEnum.IotSensor]: "IoT sensor",
@@ -66,44 +63,39 @@ const fmt = (v?: number | null, unit = "") =>
 const formatDateTime = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
+// datetime-local (local time, no timezone) → ISO UTC for the API. "" → undefined.
+const toUtcIso = (local: string): string | undefined =>
+  local ? new Date(local).toISOString() : undefined;
+
+// ISO from the URL → the "YYYY-MM-DDTHH:mm" shape datetime-local needs, in LOCAL time.
+// Slicing the ISO string directly would show UTC and shift the window by the tz offset.
+const toLocalInput = (iso?: string): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 // ── Site selector (reused in 2 places) ─────────────────────────────────
 
-function SiteSelect({
-  sites,
-  value,
-  onChange,
-  className,
-}: {
-  sites: SiteOption[];
-  value: string;
-  onChange: (id: string) => void;
-  className?: string;
-}) {
-  return (
-    <Select
-      value={value || null}
-      items={sites.map((s) => ({ value: s.id, label: s.name }))}
-      onValueChange={(v: string | null) => onChange(v ?? "")}
-    >
-      <SelectTrigger className={className ?? "w-56"}>
-        <SelectValue placeholder="Select a site..." />
-      </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false}>
-        {sites.map((s) => (
-          <SelectItem key={s.id} value={s.id}>
-            {s.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
 // ── Site-scoped panel ─────────────────────────────────────────────────────
-// Used when siteId is already known (embedded in Site detail) → no site selector needed.
-// AmbientConfigView (the standalone page) reuses this exact panel after a site is picked.
+// The only entry point to ambient data: rendered by the "Environment" tab on the Site
+// detail page (admin + manager), where siteId is already known — so no site selector.
 
-export function AmbientSitePanel({ siteId }: { siteId: string }) {
+export function AmbientSitePanel({
+  siteId,
+  from,
+  to,
+  onClearWindow,
+}: {
+  siteId: string;
+  /** Start of a pre-applied time window (ISO) — set when a ticket links here. */
+  from?: string;
+  /** End of a pre-applied time window (ISO). */
+  to?: string;
+  onClearWindow?: () => void;
+}) {
   const [configOpen, setConfigOpen] = useState(false);
 
   return (
@@ -116,94 +108,18 @@ export function AmbientSitePanel({ siteId }: { siteId: string }) {
         </Button>
       </div>
 
-      <HistoryTable siteId={siteId} />
+      <HistoryTable
+        siteId={siteId}
+        from={from}
+        to={to}
+        onClearWindow={onClearWindow}
+      />
 
       <ThresholdPanel
         siteId={siteId}
         open={configOpen}
         onClose={() => setConfigOpen(false)}
       />
-    </div>
-  );
-}
-
-// ── Main view ─────────────────────────────────────────────────────────────
-
-export default function AmbientConfigView({
-  subtitle,
-  sites,
-}: {
-  subtitle: string;
-  sites: SiteOption[];
-}) {
-  const [siteId, setSiteId] = useState("");
-  const [configOpen, setConfigOpen] = useState(false);
-
-  return (
-    // min-h full so empty state can center; natural height when content loaded
-    <div className="flex flex-col min-h-[calc(100vh-65px)]">
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <div className="px-6 pt-5 pb-4 shrink-0 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            {subtitle}
-          </p>
-          <h1 className="text-xl font-semibold tracking-tight">
-            Site environment
-          </h1>
-        </div>
-        {/* Controls only visible when a site is already selected */}
-        {siteId && (
-          <div className="flex items-center gap-3 pt-1">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm whitespace-nowrap">Site</Label>
-              <SiteSelect sites={sites} value={siteId} onChange={setSiteId} />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setConfigOpen(true)}
-            >
-              <Settings2 size={14} />
-              Configure threshold
-            </Button>
-            <RefreshButton queryKeys={[KEY.ambient]} />
-          </div>
-        )}
-      </div>
-
-      {!siteId ? (
-        /* ── Empty state — selector centered on page ───────────────────── */
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6 pb-16">
-          <div>
-            <p className="text-sm font-medium">Select a site to get started</p>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-65">
-              Temperature, humidity, and reading history will show up here
-            </p>
-          </div>
-          <SiteSelect
-            sites={sites}
-            value={siteId}
-            onChange={setSiteId}
-            className="w-64"
-          />
-        </div>
-      ) : (
-        /* ── Content — natural height, no forced fill ──────────────────── */
-        <div className="px-6 pb-8 space-y-4">
-          <LatestStrip siteId={siteId} />
-          <HistoryTable siteId={siteId} />
-        </div>
-      )}
-
-      {/* ── Threshold drawer ──────────────────────────────────────────── */}
-      {siteId && (
-        <ThresholdPanel
-          siteId={siteId}
-          open={configOpen}
-          onClose={() => setConfigOpen(false)}
-        />
-      )}
     </div>
   );
 }
@@ -480,20 +396,104 @@ function NumField({
 
 // ── History table — natural height, no forced fill ──────────────────────
 
-function HistoryTable({ siteId }: { siteId: string }) {
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+function HistoryTable({
+  siteId,
+  from,
+  to,
+  onClearWindow,
+}: {
+  siteId: string;
+  from?: string;
+  to?: string;
+  onClearWindow?: () => void;
+}) {
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  // Manual range (datetime-local strings). The URL window from a ticket link is the initial
+  // value; typing in the pickers takes over from there, so one control drives the query
+  // instead of two competing sources.
+  const [fromLocal, setFromLocal] = useState(() => toLocalInput(from));
+  const [toLocalValue, setToLocalValue] = useState(() => toLocalInput(to));
+
+  // A new URL window (different incident) must win over whatever was typed for the previous
+  // one. Keyed off the incoming window and re-seeded on change, without an effect.
+  const urlKey = `${from ?? ""}|${to ?? ""}`;
+  const [seededFor, setSeededFor] = useState(urlKey);
+  if (seededFor !== urlKey) {
+    setSeededFor(urlKey);
+    setFromLocal(toLocalInput(from));
+    setToLocalValue(toLocalInput(to));
+  }
+
+  const effectiveFrom = toUtcIso(fromLocal);
+  const effectiveTo = toUtcIso(toLocalValue);
+  const hasRange = !!fromLocal || !!toLocalValue;
+
+  // Page must reset whenever the range changes, otherwise a reader on page 3 of the full log
+  // lands on an out-of-range page of a 4-row result and sees an empty table.
+  //
+  // Derived from the range rather than reset in an effect: an effect would render once with
+  // the stale page, fire a wasted query for it, then re-render — and `react-hooks/
+  // set-state-in-effect` rejects it.
+  const windowKey = `${effectiveFrom ?? ""}|${effectiveTo ?? ""}`;
+  const [page, setPage] = useState({ key: windowKey, number: 1 });
+  const pageNumber = page.key === windowKey ? page.number : 1;
+  const setPageNumber = (n: number) => setPage({ key: windowKey, number: n });
+
   const { data, isLoading } = useAmbientHistory({
     siteId,
+    from: effectiveFrom,
+    to: effectiveTo,
     pageNumber,
     pageSize,
   });
+  // Same config the "Alert threshold" drawer edits — rows are graded by the limits actually in
+  // force for this site, not by hardcoded numbers.
+  const { data: threshold } = useAmbientThresholdBySite(siteId);
   const items = data?.items ?? [];
 
   return (
     <div>
-      <div className="pb-3">
+      <div className="pb-3 flex items-center justify-between gap-3 flex-wrap">
         <h2 className="text-sm font-medium">Environmental data history</h2>
+
+        {/* Range controls sit on the heading row, matching Sensor history. */}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            From
+            <DateTimePicker
+              value={fromLocal}
+              onChange={setFromLocal}
+              max={toLocalValue ? new Date(toLocalValue) : new Date()}
+              className="h-8 w-44"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            To
+            <DateTimePicker
+              value={toLocalValue}
+              onChange={setToLocalValue}
+              min={fromLocal ? new Date(fromLocal) : undefined}
+              max={new Date()}
+              className="h-8 w-44"
+            />
+          </label>
+          {hasRange ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFromLocal("");
+                setToLocalValue("");
+                // Drop the URL window too — leaving it would re-seed the pickers on the next
+                // incoming render and silently undo the clear.
+                onClearWindow?.();
+              }}
+            >
+              Clear filters
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {/* Bordered table — height = content, no empty space */}
@@ -531,22 +531,42 @@ function HistoryTable({ siteId }: { siteId: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((r, index) => (
-                <TableRow key={r.time}>
-                  <TableCell className="text-center text-muted-foreground tabular-nums">
-                    {(pageNumber - 1) * pageSize + index + 1}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground tabular-nums">
-                    {formatDateTime(r.time)}
-                  </TableCell>
-                  <TableCell>{fmt(r.ambientTemperature, " °C")}</TableCell>
-                  <TableCell>{fmt(r.humidity, " %")}</TableCell>
-                  <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {SOURCE_LABELS[r.source] ?? "—"}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map((r, index) => {
+                const ev = evaluateAmbientRow(r, threshold);
+                return (
+                  <TableRow
+                    key={r.time}
+                    className={ambientLevelRowClass(ev.worst)}
+                  >
+                    <TableCell className="text-center text-muted-foreground tabular-nums">
+                      {(pageNumber - 1) * pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground tabular-nums">
+                      {formatDateTime(r.time)}
+                      {/* The combo rule fires on temp+humidity together and can flag a row
+                          where neither metric crossed its own line — label it, or the
+                          highlight looks like a mistake. */}
+                      {ev.combo ? (
+                        <span className="ml-1.5 text-[10px] text-amber-700 dark:text-amber-500">
+                          combo
+                        </span>
+                      ) : null}
+                    </TableCell>
+                    <TableCell
+                      className={ambientLevelTextClass(ev.temperature)}
+                    >
+                      {fmt(r.ambientTemperature, " °C")}
+                    </TableCell>
+                    <TableCell className={ambientLevelTextClass(ev.humidity)}>
+                      {fmt(r.humidity, " %")}
+                    </TableCell>
+                    <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {SOURCE_LABELS[r.source] ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
