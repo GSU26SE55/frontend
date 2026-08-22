@@ -14,13 +14,14 @@ import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const DEFAULTS = {
   keyword: "",
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function ManagerSiteListPage() {

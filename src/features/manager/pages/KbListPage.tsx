@@ -1,6 +1,17 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -21,6 +32,10 @@ import {
   useMarkManagerKbHelpful,
   useManagerDuplicateKbArticle,
 } from "@/features/manager/hooks/kb/useManagerKb";
+// Shared hook, not a manager-specific one: POST /api/admin/blog/generate-from-kb is open to
+// [Authorize(Roles = "Manager,Admin")], so both portals call the same endpoint.
+import { useGenerateBlogFromKb } from "@/shared/hooks/blog/useBlog";
+import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import KbArticleTable from "@/features/manager/components/kb/KbArticleTable";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
@@ -31,20 +46,12 @@ import {
   KB_CATEGORY_OPTIONS,
 } from "@/shared/enums/kb/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
-import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
-import { cn } from "@/lib/utils";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_OPTIONS = Object.values(KbArticleStatusEnum);
-
-const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
-  [KbArticleStatusEnum.Draft]: toneDot(KB_STATUS_TONE.Draft),
-  [KbArticleStatusEnum.PendingReview]: toneDot(KB_STATUS_TONE.PendingReview),
-  [KbArticleStatusEnum.Published]: toneDot(KB_STATUS_TONE.Published),
-  [KbArticleStatusEnum.Archived]: toneDot(KB_STATUS_TONE.Archived),
-};
 
 const DEFAULTS = {
   keyword: "",
@@ -92,6 +99,11 @@ export default function KbListPage() {
   const { mutate: archive } = useManagerArchiveKbArticle();
   const { mutate: markHelpful } = useMarkManagerKbHelpful();
   const { mutateAsync: duplicate } = useManagerDuplicateKbArticle();
+  const { mutate: generateBlog, isPending: generatingBlog } =
+    useGenerateBlogFromKb();
+  const [toGenerate, setToGenerate] = useState<KbArticleSummaryDTO | null>(
+    null,
+  );
 
   const handleCopy = async (id: string) => {
     const created = await duplicate(id);
@@ -214,15 +226,7 @@ export default function KbListPage() {
               <SelectItem value={null}>All statuses</SelectItem>
               {STATUS_OPTIONS.map((s) => (
                 <SelectItem key={s} value={s}>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "size-1.5 rounded-full shrink-0",
-                        STATUS_DOT[s],
-                      )}
-                    />
-                    {KbArticleStatusLabel[s]}
-                  </span>
+                  {KbArticleStatusLabel[s]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -258,6 +262,7 @@ export default function KbListPage() {
           onMarkHelpful={(a) => markHelpful(a.id)}
           onEdit={(a) => navigate(`/manager/kb/${a.id}/edit`)}
           onCopy={(a) => handleCopy(a.id)}
+          onGenerateBlog={(a) => setToGenerate(a)}
           sort={sort}
         />
       )}
@@ -274,6 +279,40 @@ export default function KbListPage() {
           onPageSizeChange={(s) => setFilter("pageSize", s)}
         />
       )}
+
+      <AlertDialog
+        open={!!toGenerate}
+        onOpenChange={(open) => !open && setToGenerate(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate blog?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toGenerate && (
+                <>
+                  AI will generate a blog post from{" "}
+                  <strong>{toGenerate.title}</strong>. The post is saved as a
+                  draft so you can review it before publishing. Each guide
+                  article can have only one blog — archive the old one before
+                  regenerating.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToGenerate(null)} />
+            <AlertDialogAction
+              disabled={generatingBlog}
+              onClick={() => {
+                if (toGenerate) generateBlog(toGenerate.id);
+                setToGenerate(null);
+              }}
+            >
+              Generate blog
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

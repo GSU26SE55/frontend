@@ -51,6 +51,12 @@ export const NotificationTypeEnum = {
   TicketScheduleChanged: 39,
   PeriodicMaintenanceReminder: 40,
   PeriodicMaintenanceScheduleChanged: 41,
+  // Guide (KB) review — bài KB chuyển sang PendingReview thì báo Manager/Admin, và người đề
+  // xuất được báo lại khi duyệt/từ chối. Trước đây luồng duyệt KB hoàn toàn im lặng: badge
+  // "chờ duyệt" ở sidebar là manh mối duy nhất mà nó cache 60s và không poll.
+  KbArticleReviewRequested: 42,
+  KbArticleReviewApproved: 43,
+  KbArticleReviewRejected: 44,
   System: 99,
 } as const;
 // ⚠️ The numbers follow the BE's `NotificationTypeEnum.cs`. The Sprint 6.2 group sits at 27–33

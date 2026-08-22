@@ -17,6 +17,12 @@ export interface AlertDto {
   // that case.
   batteryAssetId: string;
   batterySerialNumber: string;
+  /**
+   * Customer who owns this alert — resolved by the BE from BatteryAsset.CustomerId
+   * (battery-level) or Site.CustomerId (site-level). Empty string when the account cannot
+   * be resolved, so render a dash rather than assuming a name is always present.
+   */
+  customerName: string;
   // Non-null for site-level alerts; null for alerts tied to one specific battery.
   siteId: string | null;
   anomalyType: AnomalyTypeEnum;
@@ -40,6 +46,12 @@ export interface AlertListParams {
   batteryAssetId?: string;
   severity?: AlertSeverityEnum;
   status?: AlertStatusEnum;
+  anomalyType?: AnomalyTypeEnum;
+  // Drops the mirror alert the BE writes alongside every EnvironmentalIncident. That row
+  // belongs to the Environmental incidents screen, so the battery alert list asks the BE
+  // to leave it out — filtering it client-side instead would skew totalItems/pagination.
+  // Ignored by the BE when `anomalyType` is also sent.
+  excludeEnvironmentalIncidents?: boolean;
   from?: string;
   to?: string;
 }

@@ -42,6 +42,7 @@ import type { SiteAssetsFilterParams } from "@/shared/types/site/site.types";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
@@ -60,7 +61,7 @@ export default function SiteDetailPage() {
   const [confirm, setConfirm] = useState<ConfirmState>({ type: "none" });
   const [assetsParams, setAssetsParams] = useState<SiteAssetsFilterParams>({
     pageNumber: 1,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
   });
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
@@ -231,10 +232,17 @@ export default function SiteDetailPage() {
               data={assetsPage?.items ?? []}
               totalCount={assetsPage?.totalItems ?? 0}
               pageNumber={assetsParams.pageNumber ?? 1}
-              pageSize={assetsParams.pageSize ?? 10}
+              pageSize={assetsParams.pageSize ?? DEFAULT_PAGE_SIZE}
               isLoading={loadingAssets}
               onPageChange={(page) =>
                 setAssetsParams((p) => ({ ...p, pageNumber: page }))
+              }
+              onPageSizeChange={(size) =>
+                setAssetsParams((p) => ({
+                  ...p,
+                  pageNumber: 1,
+                  pageSize: size,
+                }))
               }
               onAssetClick={(asset) =>
                 navigate(`/admin/battery-assets/${asset.id}`)

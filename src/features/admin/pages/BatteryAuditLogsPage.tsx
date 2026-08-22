@@ -18,6 +18,7 @@ import type { BatteryAuditLogDto } from "@/features/admin/types/battery/battery-
 import type { PaginationResponse } from "@/shared/types/api.types";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import type { SortDirection } from "@/shared/hooks/useSortableData";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // YYYY-MM-DD → UTC range (BE filter from/to).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
@@ -93,7 +94,7 @@ function AuditPanel({
 function useAuditTabState() {
   const [filters, setFilters] = useState<AuditLogFilterValues>({});
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
 

@@ -13,6 +13,7 @@ import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const DEFAULTS = {
   hardwareRevision: "",
@@ -20,7 +21,7 @@ const DEFAULTS = {
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function IoTFirmwareReleasesPage() {

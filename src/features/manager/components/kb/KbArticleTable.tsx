@@ -17,8 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
+import { KbPendingChangeBadge } from "@/shared/components/kb/KbPendingChangeBadge";
 import {
-  Eye,
   ThumbsUp,
   EllipsisVertical,
   BookOpen,
@@ -39,7 +39,6 @@ const SORT_ITEMS = [
   { value: "title", label: "Title" },
   { value: "category", label: "Category" },
   { value: "status", label: "Status" },
-  { value: "viewCount", label: "Views" },
   { value: "helpfulCount", label: "Helpful" },
 ];
 
@@ -55,6 +54,8 @@ interface KbArticleTableProps {
   onEdit?: (article: KbArticleSummaryDTO) => void;
   /** Copy this row → create a similar new article (opens the create page pre-filled). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
+  /** Generate a blog post from this article — BE only accepts Published articles (409 otherwise). */
+  onGenerateBlog?: (article: KbArticleSummaryDTO) => void;
   /** Server-side sort — state from useUrlSort. */
   sort: ServerSortState;
 }
@@ -70,6 +71,7 @@ export default function KbArticleTable({
   onMarkHelpful,
   onEdit,
   onCopy,
+  onGenerateBlog,
   sort,
 }: KbArticleTableProps) {
   const navigate = useNavigate();
@@ -173,7 +175,7 @@ export default function KbArticleTable({
                     </DropdownMenuItem>
                     {onCopy && (
                       <DropdownMenuItem onClick={() => onCopy(article)}>
-                        Duplicate
+                        Copy
                       </DropdownMenuItem>
                     )}
                     {article.status === KbArticleStatusEnum.Draft &&
@@ -183,9 +185,26 @@ export default function KbArticleTable({
                         </DropdownMenuItem>
                       )}
                     {article.status === KbArticleStatusEnum.Published &&
+                      onGenerateBlog && (
+                        <DropdownMenuItem
+                          onClick={() => onGenerateBlog(article)}
+                        >
+                          Generate blog
+                        </DropdownMenuItem>
+                      )}
+                    {article.status === KbArticleStatusEnum.Published &&
                       onArchive && (
                         <DropdownMenuItem onClick={() => onArchive(article)}>
                           Archive
+                        </DropdownMenuItem>
+                      )}
+                    {/* Archiving is reversible: publish takes an archived article back into
+                        circulation. Without this entry an accidental archive could only be
+                        undone in the database. */}
+                    {article.status === KbArticleStatusEnum.Archived &&
+                      onPublish && (
+                        <DropdownMenuItem onClick={() => onPublish(article)}>
+                          Restore
                         </DropdownMenuItem>
                       )}
                     {onDelete && (
@@ -210,15 +229,16 @@ export default function KbArticleTable({
 
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               <KbStatusBadge status={article.status} />
+              <KbPendingChangeBadge
+                status={article.status}
+                reviewRequired={article.reviewRequired}
+              />
               <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {KbCategoryLabel[article.category] ?? article.category}
               </span>
             </div>
 
             <div className="mt-4 flex items-center justify-end gap-4 border-t border-border/60 pt-3">
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Eye className="size-3.5" /> {article.viewCount}
-              </span>
               {onMarkHelpful ? (
                 <button
                   type="button"

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useReadingAggregate } from "@/shared/hooks/battery/useReadingAggregate";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
+import { Button } from "@/components/ui/button";
 import type { SensorReadingInterval } from "@/shared/types/battery/sensor-reading-history.types";
 import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
 
@@ -78,6 +79,10 @@ type RangeKey = keyof typeof RANGES;
 interface SensorChartProps {
   assetId: string;
   batteryTypeId?: string;
+  /** Explicit window (ISO) from a ticket link — overrides the preset range while set. */
+  from?: string;
+  to?: string;
+  onClearRange?: () => void;
   fillHeight?: boolean;
 }
 
@@ -429,31 +434,64 @@ function buildChartData(
 export default function SensorChart({
   assetId,
   batteryTypeId,
+  from,
+  to,
+  onClearRange,
   fillHeight,
 }: SensorChartProps) {
   const [range, setRange] = useState<RangeKey>("1h");
+  const pinned = !!from || !!to;
   const { hours, interval } = RANGES[range];
-  const { data, isLoading } = useReadingAggregate(assetId, { hours, interval });
+
+  // Span the axis is drawn over. A pinned window is measured from its own endpoints, not from
+  // the preset — using `hours` there would stretch a ±2' window across a 1-hour axis and bunch
+  // every point into one corner.
+  const spanHours =
+    pinned && from && to
+      ? Math.max(
+          (new Date(to).getTime() - new Date(from).getTime()) / 3_600_000,
+          1 / 60,
+        )
+      : hours;
+
+  const { data, isLoading } = useReadingAggregate(assetId, {
+    hours,
+    // A few minutes of data needs minute buckets; the preset's coarser interval would flatten
+    // the window into a single point.
+    interval: pinned ? "1m" : interval,
+    from,
+    to,
+  });
   const { data: threshold } = useThresholdByType(batteryTypeId ?? "");
-  const chartData = buildChartData(data, hours);
+  const chartData = buildChartData(data, spanHours);
 
   const rangeSelect = (
-    <Select
-      value={range}
-      items={RANGE_SELECT_ITEMS}
-      onValueChange={(v) => setRange(v as RangeKey)}
-    >
-      <SelectTrigger size="sm" className="w-28">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {RANGE_SELECT_ITEMS.map((item) => (
-          <SelectItem key={item.value} value={item.value}>
-            {item.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      {/* Disabled rather than hidden while pinned, so the control doesn't vanish and reappear
+          as the reader clears the range. */}
+      <Select
+        value={range}
+        items={RANGE_SELECT_ITEMS}
+        onValueChange={(v) => setRange(v as RangeKey)}
+        disabled={pinned}
+      >
+        <SelectTrigger size="sm" className="w-28">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {RANGE_SELECT_ITEMS.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {pinned && onClearRange ? (
+        <Button variant="ghost" size="sm" onClick={onClearRange}>
+          Clear filters
+        </Button>
+      ) : null}
+    </div>
   );
 
   if (fillHeight) {

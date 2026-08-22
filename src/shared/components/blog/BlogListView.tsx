@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { EllipsisVertical, Plus, Search, X } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
@@ -18,17 +36,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import { useBlogList } from "@/shared/hooks/blog/useBlog";
+import {
+  useBlogList,
+  usePublishBlogPost,
+  useArchiveBlogPost,
+  useDeleteBlogPost,
+  isBlogEditable,
+} from "@/shared/hooks/blog/useBlog";
+import type { BlogPostListItemDTO } from "@/shared/types/blog/blog.types";
 import { BlogStatusBadge, BlogOriginBadge } from "./BlogStatusBadge";
 import {
   BLOG_STATUS_OPTIONS,
   BLOG_ORIGIN_OPTIONS,
-  type BlogPostStatusEnum,
+  // Value import, not `import type`: the card menu compares against Draft/Archived at
+  // runtime to decide which actions to offer.
+  BlogPostStatusEnum,
   type BlogPostOriginEnum,
 } from "@/shared/enums/blog/blog.enum";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 // Base UI Select renders the raw VALUE if Root doesn't receive an `items` value→label map.
 // Without this prop the filter shows "Draft"/"Published" instead of the display label.
@@ -57,10 +85,23 @@ interface BlogListViewProps {
   basePath: string;
   /** Breadcrumb label, e.g. "Staff". */
   roleLabel: string;
+  /**
+   * Only Manager/Admin have publish · archive · delete — same flag the detail view takes,
+   * so a card never offers an action the detail page would refuse.
+   */
+  canWorkflow?: boolean;
 }
 
-export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
+export function BlogListView({
+  basePath,
+  roleLabel,
+  canWorkflow,
+}: BlogListViewProps) {
   const navigate = useNavigate();
+  const { mutate: publish, isPending: publishing } = usePublishBlogPost();
+  const { mutate: archive, isPending: archiving } = useArchiveBlogPost();
+  const { mutate: remove, isPending: removing } = useDeleteBlogPost();
+  const [toDelete, setToDelete] = useState<BlogPostListItemDTO | null>(null);
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
@@ -193,9 +234,66 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
               onClick={() => navigate(`${basePath}/blog/${b.id}`)}
               className="hover:bg-accent/40 cursor-pointer p-4 transition-colors"
             >
-              <div className="flex flex-wrap items-center gap-1.5">
-                <BlogStatusBadge status={b.status} />
-                <BlogOriginBadge origin={b.origin} />
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <BlogStatusBadge status={b.status} />
+                  <BlogOriginBadge origin={b.origin} />
+                </div>
+                {/* Quick actions on the card, mirroring the guide list: without them every
+                    publish or archive meant opening the post first. stopPropagation keeps
+                    the menu from triggering the card's navigate-to-detail click. */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="-mt-1 -mr-1 size-8"
+                        />
+                      }
+                    >
+                      <EllipsisVertical className="size-4.5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem
+                        disabled={!isBlogEditable(b.status)}
+                        onClick={() =>
+                          navigate(`${basePath}/blog/${b.id}/edit`)
+                        }
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      {canWorkflow && (
+                        <>
+                          {b.status === BlogPostStatusEnum.Draft && (
+                            <DropdownMenuItem
+                              disabled={publishing}
+                              onClick={() => publish(b.id)}
+                            >
+                              Publish
+                            </DropdownMenuItem>
+                          )}
+                          {b.status !== BlogPostStatusEnum.Archived && (
+                            <DropdownMenuItem
+                              disabled={archiving}
+                              onClick={() => archive(b.id)}
+                            >
+                              Archive
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => setToDelete(b)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
               <h3 className="mt-1.5 line-clamp-2 text-sm font-medium leading-snug">
                 {b.title}
@@ -203,10 +301,12 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
               <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
                 {b.summary}
               </p>
-              <p className="text-muted-foreground mt-3 border-t border-border/60 pt-2.5 font-mono text-[11px]">
-                /{b.slug} &middot; v{b.currentVersion} &middot;{" "}
-                {format(new Date(b.createdAt), "MM/dd/yyyy")}
-              </p>
+              {/* Slug omitted, as on the detail page: it is a URL detail the editor sets,
+                  not something a reader scanning the list acts on. */}
+              <div className="text-muted-foreground mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-2.5 font-mono text-[11px]">
+                <span>v{b.currentVersion}</span>
+                <span>{format(new Date(b.createdAt), "MM/dd/yyyy")}</span>
+              </div>
             </Card>
           ))}
         </div>
@@ -224,6 +324,38 @@ export function BlogListView({ basePath, roleLabel }: BlogListViewProps) {
           onPageSizeChange={(s) => setFilter("pageSize", s)}
         />
       )}
+
+      <AlertDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && (
+                <>
+                  <strong>{toDelete.title}</strong> will be removed. This cannot
+                  be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToDelete(null)} />
+            <AlertDialogAction
+              variant="destructive"
+              disabled={removing}
+              onClick={() => {
+                if (toDelete) remove(toDelete.id);
+                setToDelete(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

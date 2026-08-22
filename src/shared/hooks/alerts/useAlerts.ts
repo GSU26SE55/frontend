@@ -4,6 +4,7 @@ import { alertService } from "@/shared/services/alerts/alert.service";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { AlertListParams } from "@/shared/types/alerts/alert.types";
+import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
 import { MESSAGES } from "@/shared/constants/messages";
 
 // Alert queue — near-realtime: staleTime 30s + poll 30s (per the cache table in fe.md)
@@ -77,4 +78,28 @@ export const useSubmitPrescriptionFeedback = () => {
     },
     onError: (error) => handleErrorApi({ error }),
   });
+};
+
+// Unresolved count for the summary strip. Open and Acknowledged both still need someone
+// to act, so each gets its own query and the caller sums them — the BE list endpoint takes
+// a single status, not a set. pageSize 1 keeps the payload to one row: only `totalItems`
+// is read. Counting the loaded page instead would be wrong — that only sees one page.
+export const useUnresolvedAlertCount = () => {
+  const open = useAlertList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: AlertStatusEnum.Open,
+    excludeEnvironmentalIncidents: true,
+  });
+  const acknowledged = useAlertList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: AlertStatusEnum.Acknowledged,
+    excludeEnvironmentalIncidents: true,
+  });
+
+  return {
+    count: (open.data?.totalItems ?? 0) + (acknowledged.data?.totalItems ?? 0),
+    isLoading: open.isLoading || acknowledged.isLoading,
+  };
 };

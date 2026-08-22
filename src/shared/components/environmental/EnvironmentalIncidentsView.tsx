@@ -65,6 +65,7 @@ import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const DEFAULTS = {
   status: "",
@@ -73,7 +74,7 @@ const DEFAULTS = {
   from: "",
   to: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 const STATUS_OPTIONS = [
@@ -276,6 +277,7 @@ export default function EnvironmentalIncidentsView({
                   {TABLE_COLUMNS.index}
                 </TableHead>
                 <TableHead>Site</TableHead>
+                <TableHead>{TABLE_COLUMNS.customer}</TableHead>
                 <TableHead>Incident type</TableHead>
                 <TableHead>{TABLE_COLUMNS.severity}</TableHead>
                 <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
@@ -295,6 +297,8 @@ export default function EnvironmentalIncidentsView({
                   <TableCell className="font-medium">
                     {siteName(incident.siteId)}
                   </TableCell>
+                  {/* Empty when the BE cannot resolve the account — show a dash. */}
+                  <TableCell>{incident.customerName || "—"}</TableCell>
                   <TableCell>
                     <IncidentTypeBadge incidentType={incident.incidentType} />
                   </TableCell>
@@ -391,6 +395,9 @@ function IncidentDetailDialog({
           </div>
         ) : (
           <dl className="grid grid-cols-3 gap-x-4 gap-y-3 text-sm py-2">
+            <DetailRow label="Customer">
+              {incident.customerName || "—"}
+            </DetailRow>
             <DetailRow label="Type">
               <IncidentTypeBadge incidentType={incident.incidentType} />
             </DetailRow>

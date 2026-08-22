@@ -96,10 +96,10 @@ export default function NotificationTemplateTable({
                 )}
               </td>
               <td className="px-3 py-2.5 max-w-70">
-                {/* Hiện câu đã thay biến bằng giá trị mẫu. Cột này trước đây in nguyên
-                    `Ticket {{code}} has been resolved` — người vận hành không đọc được câu thật sự
-                    gửi đi trông ra sao, mà đó lại chính là thứ họ vào đây để kiểm tra.
-                    `title` giữ template gốc cho ai cần tra tên biến. */}
+                {/* Shows the sentence with variables replaced by sample values. This column used to
+                    print the raw `Ticket {{code}} has been resolved` — an operator could not see how
+                    the sentence actually reads when sent, which is the very thing they come here to
+                    check. `title` keeps the raw template for anyone who needs the variable names. */}
                 <span className="line-clamp-1" title={t.titleTemplate}>
                   {renderWithSamples(
                     t.titleTemplate,

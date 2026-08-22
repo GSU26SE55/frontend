@@ -3,7 +3,6 @@ import { enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
-  Eye,
   ThumbsUp,
   CalendarDays,
   Clock,
@@ -156,16 +155,21 @@ export function KbArticleDetail({
             <ArrowLeft className="size-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground mb-0.5">
-              {breadcrumb} &middot;{" "}
-              <span className="font-mono">{article.code}</span>
-            </p>
+            {/* Status sits on the breadcrumb line next to the code, the way a ticket header
+                reads — it describes the article, so it belongs with the article's identity
+                rather than among the buttons that act on it. */}
+            <div className="flex flex-wrap items-center gap-2 mb-0.5">
+              <p className="text-xs text-muted-foreground">
+                {breadcrumb} &middot;{" "}
+                <span className="font-mono">{article.code}</span>
+              </p>
+              <KbStatusBadge status={article.status} />
+            </div>
             <h1 className="text-xl font-semibold tracking-tight leading-snug">
               {article.title}
             </h1>
           </div>
           <div className="flex items-center gap-2 shrink-0 pt-0.5">
-            <KbStatusBadge status={article.status} />
             <RefreshButton queryKeys={[KEY.kb]} />
             {actions}
             {onEdit && (
@@ -204,19 +208,15 @@ export function KbArticleDetail({
 
           {/* Right — sidebar metadata */}
           <div className="border border-border rounded-xl bg-card divide-y divide-border/60 sticky top-4">
-            {/* Stats */}
+            {/* Feedback — this is internal engineer documentation, not a public blog, so the
+                one number worth showing is whether the guide actually helped someone.
+                The view counter was dropped: no BE path ever increments ViewCount, so it
+                displayed a permanent 0 that read as "nobody uses this article". */}
             <div className="px-4 py-4">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Stats
+                Feedback
               </p>
               <div className="flex gap-5">
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Eye size={13} className="text-muted-foreground" />
-                  <span className="font-semibold tabular-nums">
-                    {article.viewCount}
-                  </span>
-                  <span className="text-muted-foreground text-xs">views</span>
-                </div>
                 <button
                   type="button"
                   disabled={!onMarkHelpful || helpfulPending}
@@ -240,7 +240,9 @@ export function KbArticleDetail({
                   <span className="font-semibold tabular-nums">
                     {article.helpfulCount}
                   </span>
-                  <span className="text-muted-foreground text-xs">helpful</span>
+                  <span className="text-muted-foreground text-xs">
+                    found this helpful
+                  </span>
                 </button>
               </div>
             </div>
