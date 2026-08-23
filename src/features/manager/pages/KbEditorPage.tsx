@@ -1,34 +1,15 @@
-import { useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
-import { Card } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Save } from "lucide-react";
-import { TagInput } from "@/shared/components/ui/TagInput";
-import {
-  kbArticleSchema,
-  type KbArticleFormInput,
-  type KbArticleFormValues,
-} from "@/features/manager/schemas/kb/kb-article.schema";
+  GuideEditorForm,
+  GuideEditorFormSkeleton,
+} from "@/shared/components/kb/GuideEditorForm";
 import {
   useManagerKbDetail,
   useManagerCreateKbArticle,
   useManagerUpdateKbArticle,
 } from "@/features/manager/hooks/kb/useManagerKb";
-import { KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
-import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
+import type { KbArticleFormValues } from "@/shared/schemas/kb/kb-article.schema";
+import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { handleErrorApi } from "@/shared/lib/errors";
 
 export default function KbEditorPage() {
@@ -36,7 +17,7 @@ export default function KbEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isEdit = !!id;
-  // Writing an article from a ticket → the image picker adds an extra "Photos from chat" tab for that ticket
+  // Writing an article from a ticket → the image picker adds an extra "Photos from chat" tab
   const ticketId = location.state?.ticketId as string | undefined;
   // Suggested category when created from a ticket (the ticket's category).
   const initialCategory = location.state?.category as
@@ -49,34 +30,6 @@ export default function KbEditorPage() {
   const { mutateAsync: update, isPending: updating } =
     useManagerUpdateKbArticle();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<KbArticleFormInput, unknown, KbArticleFormValues>({
-    resolver: zodResolver(kbArticleSchema),
-    defaultValues: {
-      category: initialCategory ?? TicketCategoryEnum.Charging,
-      title: "",
-      content: "",
-      tags: [],
-      changeDescription: "",
-    },
-  });
-
-  useEffect(() => {
-    if (!existing) return;
-    reset({
-      category: existing.category,
-      title: existing.title,
-      content: existing.content,
-      tags: existing.tags,
-      changeDescription: "",
-    });
-  }, [existing, reset]);
-
   const onSubmit = async (values: KbArticleFormValues) => {
     try {
       // KB is always internal (Customers view articles via Blog, not KB) → isInternalOnly=true.
@@ -86,164 +39,24 @@ export default function KbEditorPage() {
         navigate(`/manager/kb/${id}`);
       } else {
         const res = await create(payload);
-        if (res?.id) navigate(`/manager/kb/${res.id}`);
-        else navigate("/manager/kb");
+        navigate(res?.id ? `/manager/kb/${res.id}` : "/manager/kb");
       }
     } catch (error) {
       handleErrorApi({ error });
     }
   };
 
-  if (isEdit && isLoading) {
-    return (
-      <div className="p-6 space-y-4 max-w-5xl mx-auto">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-100 w-full" />
-      </div>
-    );
-  }
+  if (isEdit && isLoading) return <GuideEditorFormSkeleton />;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 p-6">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")}
-      >
-        <ArrowLeft className="size-3.5" /> Back
-      </Button>
-
-      <div>
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">
-          Manager &middot; Guide
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {isEdit ? "Edit article" : "New article"}
-        </h1>
-      </div>
-
-      <Card className="p-5">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="kb-title">
-              Title <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="kb-title"
-              {...register("title")}
-              placeholder="How to resolve..."
-            />
-            {errors.title && (
-              <p className="text-xs text-destructive">{errors.title.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="kb-category">
-              Category <span className="text-destructive">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="category"
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  items={KB_CATEGORY_OPTIONS}
-                >
-                  <SelectTrigger id="kb-category" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {KB_CATEGORY_OPTIONS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <Controller
-            control={control}
-            name="tags"
-            render={({ field }) => (
-              <div className="space-y-1.5">
-                <Label>
-                  Tags{" "}
-                  <span className="text-muted-foreground font-normal">
-                    (up to 10 tags)
-                  </span>
-                </Label>
-                <TagInput
-                  placeholder="overheat, charging, BMS..."
-                  value={field.value ?? []}
-                  onChange={field.onChange}
-                  maxTags={10}
-                  maxTagLength={50}
-                />
-              </div>
-            )}
-          />
-
-          <div className="space-y-1.5">
-            <Label>
-              Content <span className="text-destructive">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="content"
-              render={({ field }) => (
-                <RichTextEditor
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  ticketId={ticketId}
-                />
-              )}
-            />
-            {errors.content && (
-              <p className="text-xs text-destructive">
-                {errors.content.message}
-              </p>
-            )}
-          </div>
-
-          {isEdit && (
-            <div className="space-y-1.5">
-              <Label htmlFor="kb-change-description">Change description</Label>
-              <Input
-                id="kb-change-description"
-                {...register("changeDescription")}
-                placeholder="Reason/content of the edit..."
-              />
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() =>
-                navigate(isEdit ? `/manager/kb/${id}` : "/manager/kb")
-              }
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={creating || updating}>
-              <Save className="size-3.5" />
-              {isEdit
-                ? updating
-                  ? "Saving..."
-                  : "Save changes"
-                : creating
-                  ? "Creating..."
-                  : "Create article"}
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </div>
+    <GuideEditorForm
+      basePath="/manager/kb"
+      articleId={id}
+      existing={existing}
+      isSaving={creating || updating}
+      onSubmit={onSubmit}
+      ticketId={ticketId}
+      initialCategory={initialCategory}
+    />
   );
 }

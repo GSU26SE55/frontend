@@ -5,6 +5,7 @@ import { AuthCardSkeleton } from "./LayoutSkeleton";
 import { useAuthContext } from "@/shared/context/authContext";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { redirectByRole } from "@/shared/types/account/session.types";
+import { PageTransition } from "@/shared/motion/PageTransition";
 
 const AuthLayout = () => {
   const { isHydrating } = useAuthContext();
@@ -42,14 +43,15 @@ const AuthLayout = () => {
         </div>
       </div>
 
-      <div
-        key={location.pathname}
-        className="page-enter relative z-10 w-full max-w-105 rounded-2xl border border-border bg-card p-8 shadow-sm"
-      >
-        {/* Auth pages are code-split. The card box is rendered here, so only its contents
-            are skeletonized and the card keeps its size while the page chunk loads. */}
+      {/* Auth pages are code-split. The card box stays out here, so only its contents are
+          skeletonized and the card keeps its size while the page chunk loads. The
+          transition wraps the contents, so the sweep runs on the page rather than on the
+          skeleton standing in for it. */}
+      <div className="relative z-10 w-full max-w-105 rounded-2xl border border-border bg-card p-8 shadow-sm">
         <Suspense fallback={<AuthCardSkeleton />}>
-          <Outlet />
+          <PageTransition routeKey={location.pathname}>
+            <Outlet />
+          </PageTransition>
         </Suspense>
       </div>
 

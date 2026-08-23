@@ -1,8 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft } from "lucide-react";
 import { BlogEditorPanel } from "./BlogEditorPanel";
 import {
   useBlogDetail,
@@ -26,6 +23,9 @@ export function BlogEditorView({ basePath }: BlogEditorViewProps) {
   const { data: templates } = useBlogTemplates({ isActive: true });
   const { mutateAsync: create, isPending: creating } = useCreateBlogPost();
   const { mutateAsync: update, isPending: updating } = useUpdateBlogPost();
+
+  const cancelUrl =
+    isEdit && existing ? `${basePath}/blog/${existing.id}` : `${basePath}/blog`;
 
   const handleSubmit = async (values: BlogPostFormValues) => {
     if (isEdit && existing) {
@@ -57,56 +57,31 @@ export function BlogEditorView({ basePath }: BlogEditorViewProps) {
 
   if (isEdit && isLoading)
     return (
-      <div className="mx-auto max-w-4xl space-y-4 p-6">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-96 w-full" />
+      <div>
+        <div className="border-b border-border">
+          <div className="mx-auto flex h-14 w-full max-w-[1100px] items-center gap-3 px-6">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="ml-auto h-7 w-40" />
+          </div>
+        </div>
+        <div className="mx-auto grid w-full max-w-[1100px] gap-8 px-6 pt-8 lg:grid-cols-[1fr_300px]">
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-96 w-full" />
+          </div>
+          <Skeleton className="hidden h-72 w-full lg:block" />
+        </div>
       </div>
     );
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 p-6">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() =>
-          navigate(
-            isEdit && existing
-              ? `${basePath}/blog/${existing.id}`
-              : `${basePath}/blog`,
-          )
-        }
-      >
-        <ArrowLeft className="size-3.5" /> Back
-      </Button>
-
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {isEdit ? "Edit post" : "Create post"}
-        </h1>
-        {isEdit && existing && (
-          <p className="text-muted-foreground mt-1 text-sm">
-            Editing version v{existing.currentVersion}. Saving successfully will
-            create a new version.
-          </p>
-        )}
-      </div>
-
-      <Card className="p-5">
-        <BlogEditorPanel
-          existing={existing ?? undefined}
-          templates={templates}
-          isPending={creating || updating}
-          editable={!isEdit || isBlogEditable(existing?.status)}
-          onSubmit={handleSubmit}
-          onCancel={() =>
-            navigate(
-              isEdit && existing
-                ? `${basePath}/blog/${existing.id}`
-                : `${basePath}/blog`,
-            )
-          }
-        />
-      </Card>
-    </div>
+    <BlogEditorPanel
+      existing={existing ?? undefined}
+      templates={templates}
+      isPending={creating || updating}
+      editable={!isEdit || isBlogEditable(existing?.status)}
+      onSubmit={handleSubmit}
+      onCancel={() => navigate(cancelUrl)}
+    />
   );
 }

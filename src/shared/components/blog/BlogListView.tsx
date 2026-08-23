@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -227,21 +234,51 @@ export function BlogListView({
             : noData("blog posts")}
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((b) => (
-            <Card
-              key={b.id}
-              onClick={() => navigate(`${basePath}/blog/${b.id}`)}
-              className="hover:bg-accent/40 cursor-pointer p-4 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <BlogStatusBadge status={b.status} />
-                  <BlogOriginBadge origin={b.origin} />
-                </div>
-                {/* Quick actions on the card, mirroring the guide list: without them every
-                    publish or archive meant opening the post first. stopPropagation keeps
-                    the menu from triggering the card's navigate-to-detail click. */}
+        <div className="overflow-hidden rounded-lg border border-border">
+          {/* A table, not a card grid: a post list is a register - what is drafted, what
+              is live, what came from a guide - and those are columns, not boxes. */}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead className="w-32">Status</TableHead>
+                <TableHead className="w-36">Origin</TableHead>
+                <TableHead className="w-16 text-right">Ver.</TableHead>
+                <TableHead className="w-28 text-right">Created</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((b) => (
+                <TableRow
+                  key={b.id}
+                  onClick={() => navigate(`${basePath}/blog/${b.id}`)}
+                  className="cursor-pointer"
+                >
+                  <TableCell className="max-w-0">
+                    <p className="truncate font-medium" title={b.title}>
+                      {b.title}
+                    </p>
+                    {/* The summary rides under the title rather than taking a column of
+                        its own: it is a sentence, and a sentence in a cell either wraps
+                        the row to three lines or gets cut to nothing. */}
+                    <p className="truncate text-xs text-muted-foreground">
+                      {b.summary}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <BlogStatusBadge status={b.status} />
+                  </TableCell>
+                  <TableCell>
+                    <BlogOriginBadge origin={b.origin} />
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-xs text-muted-foreground">
+                    v{b.currentVersion}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right font-mono text-xs text-muted-foreground">
+                    {format(new Date(b.createdAt), "MM/dd/yyyy")}
+                  </TableCell>
+                  <TableCell className="text-right">
                 <div onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger
@@ -294,21 +331,11 @@ export function BlogListView({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </div>
-              <h3 className="mt-1.5 line-clamp-2 text-sm font-medium leading-snug">
-                {b.title}
-              </h3>
-              <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
-                {b.summary}
-              </p>
-              {/* Slug omitted, as on the detail page: it is a URL detail the editor sets,
-                  not something a reader scanning the list acts on. */}
-              <div className="text-muted-foreground mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-2.5 font-mono text-[11px]">
-                <span>v{b.currentVersion}</span>
-                <span>{format(new Date(b.createdAt), "MM/dd/yyyy")}</span>
-              </div>
-            </Card>
-          ))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 

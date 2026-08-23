@@ -1,19 +1,8 @@
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import {
-  BookOpen,
-  ThumbsUp,
-  CalendarDays,
-  Clock,
-  Hash,
-  ArrowLeft,
-  Tag,
-  RefreshCcw,
-  Pencil,
-} from "lucide-react";
+import { ArrowLeft, Pencil, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -21,7 +10,6 @@ import { KbStatusBadge } from "./KbStatusBadge";
 import { KbPendingReviewNotice } from "./KbPendingReviewNotice";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
 import type { KbArticleDTO } from "@/shared/types/kb/kb.types";
-import { cn } from "@/lib/utils";
 import { isHtmlContent } from "@/shared/lib/isHtmlContent";
 import { RichContentView } from "@/shared/components/editor/RichContentView";
 
@@ -42,6 +30,7 @@ function parseLines(text: string): string[] {
 }
 
 // ── Section content renderer ──────────────────────────────────────────────────
+// Also used by KbArticleSelector to preview an article inline.
 export function SectionContent({ text }: { text: string }) {
   // Articles written with rich text (Tiptap) → render sanitized HTML.
   // Older articles are still plain text → keep the old display logic below.
@@ -57,7 +46,7 @@ export function SectionContent({ text }: { text: string }) {
             key={i}
             className="flex gap-3 text-sm leading-relaxed text-foreground/80"
           >
-            <span className="shrink-0 mt-[1px] size-5.5 rounded-full border border-border bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground tabular-nums">
+            <span className="mt-[1px] flex size-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[11px] font-semibold tabular-nums text-muted-foreground">
               {i + 1}
             </span>
             <span>{step}</span>
@@ -67,48 +56,37 @@ export function SectionContent({ text }: { text: string }) {
     );
   }
   return (
-    <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
       {text}
     </p>
   );
 }
 
-// ── Sidebar metadata row ──────────────────────────────────────────────────────
-function MetaItem({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-2.5">
-      <Icon size={13} className="mt-[3px] shrink-0 text-muted-foreground" />
-      <div className="min-w-0">
-        <p className="text-[11px] text-muted-foreground mb-0.5">{label}</p>
-        <div className="text-[13px] font-medium leading-tight">{value}</div>
-      </div>
-    </div>
-  );
+/** Hairline between two metadata items. Reads as a separator without spending a character. */
+function MetaDivider() {
+  return <span aria-hidden className="h-3 w-px bg-border" />;
 }
 
 // ── Loading skeleton ──────────────────────────────────────────────────────────
 export function KbArticleDetailSkeleton() {
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-4">
-      <div className="flex items-center gap-3">
-        <Skeleton className="size-8 rounded-md" />
-        <div className="space-y-1.5 flex-1">
-          <Skeleton className="h-3 w-36" />
-          <Skeleton className="h-6 w-80" />
+    <div>
+      <div className="border-b border-border">
+        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 px-6">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="ml-auto h-7 w-64" />
         </div>
       </div>
-      <div className="grid lg:grid-cols-[180px_1fr_272px] gap-5 mt-2">
-        <Skeleton className="h-50 rounded-xl hidden lg:block" />
-        <Skeleton className="h-125 rounded-xl" />
-        <Skeleton className="h-80 rounded-xl" />
+      <div className="mx-auto w-full max-w-3xl space-y-4 px-6 pt-10">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-9 w-4/5" />
+        <Skeleton className="h-3 w-72" />
+        <div className="space-y-2.5 pt-6">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-3.5 w-full last:w-2/3" />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -118,8 +96,7 @@ export function KbArticleDetailSkeleton() {
 interface KbArticleDetailProps {
   article: KbArticleDTO;
   backUrl: string;
-  breadcrumb: string;
-  /** Publish / Archive buttons */
+  /** Publish / Archive / Versions and the rest of the role-specific toolbar. */
   actions?: React.ReactNode;
   /** When set → shows an "Edit" button that navigates to a dedicated edit page. */
   onEdit?: () => void;
@@ -129,10 +106,18 @@ interface KbArticleDetailProps {
   onViewVersions?: () => void;
 }
 
+/**
+ * One guide article, read as a document.
+ *
+ * The article is the whole point of the page, so it gets a single reading column at a
+ * comfortable measure instead of competing with a metadata rail. Everything that used to
+ * sit in that rail is either in the header strip (code, version, dates), in the footer
+ * (helpful, tags), or in the toolbar (the actions). Identity and actions stay pinned to
+ * the top so a long article never scrolls its own Edit button out of reach.
+ */
 export function KbArticleDetail({
   article,
   backUrl,
-  breadcrumb,
   actions,
   onEdit,
   onMarkHelpful,
@@ -140,175 +125,121 @@ export function KbArticleDetail({
   onViewVersions,
 }: KbArticleDetailProps) {
   const navigate = useNavigate();
+  const category = KbCategoryLabel[article.category] ?? article.category;
 
   return (
-    <>
-      <div className="p-6 max-w-6xl mx-auto space-y-5">
-        {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="flex items-start gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="mt-0.5 shrink-0"
-            onClick={() => navigate(backUrl)}
-          >
-            <ArrowLeft className="size-4" />
+    <div className="pb-24">
+      {/* ── Toolbar: identity on the left, actions on the right ──────────── */}
+      {/* The toolbar spans the page, not the reading column: the article wants a narrow
+          measure, the action row wants room to stay on one line. */}
+      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center gap-x-3 gap-y-2 px-6 py-2.5">
+          <Button variant="ghost" size="sm" onClick={() => navigate(backUrl)}>
+            <ArrowLeft className="size-3.5" />
+            Guide
           </Button>
-          <div className="flex-1 min-w-0">
-            {/* Status sits on the breadcrumb line next to the code, the way a ticket header
-                reads — it describes the article, so it belongs with the article's identity
-                rather than among the buttons that act on it. */}
-            <div className="flex flex-wrap items-center gap-2 mb-0.5">
-              <p className="text-xs text-muted-foreground">
-                {breadcrumb} &middot;{" "}
-                <span className="font-mono">{article.code}</span>
-              </p>
-              <KbStatusBadge status={article.status} />
-            </div>
-            <h1 className="text-xl font-semibold tracking-tight leading-snug">
-              {article.title}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 shrink-0 pt-0.5">
+          <span className="font-mono text-xs text-muted-foreground">
+            {article.code}
+          </span>
+          <KbStatusBadge status={article.status} />
+          <div className="ml-auto flex items-center gap-2">
             <RefreshButton queryKeys={[KEY.kb]} />
             {actions}
             {onEdit && (
-              <Button size="sm" className="gap-1.5" onClick={onEdit}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* ── Pending review / rejected notice ─────────────────────────── */}
-        <KbPendingReviewNotice
-          article={article}
-          onViewVersions={onViewVersions}
-        />
-
-        {/* ── Two-column body (content + meta) ──────────────────────────── */}
-        <div className="grid lg:grid-cols-[1fr_272px] gap-5 items-start">
-          {/* Left — article content */}
-          <div className="border border-border rounded-xl overflow-hidden bg-card">
-            <div className="px-6 py-5">
-              {/* Section header */}
-              <div className="flex items-center gap-2 mb-4">
-                <div className="size-7 rounded-md bg-muted flex items-center justify-center shrink-0">
-                  <BookOpen size={14} className="text-muted-foreground" />
-                </div>
-                <h2 className="text-base font-semibold text-foreground">
-                  Content
-                </h2>
-              </div>
-              {/* Content */}
-              <SectionContent text={article.content} />
-            </div>
-          </div>
-
-          {/* Right — sidebar metadata */}
-          <div className="border border-border rounded-xl bg-card divide-y divide-border/60 sticky top-4">
-            {/* Feedback — this is internal engineer documentation, not a public blog, so the
-                one number worth showing is whether the guide actually helped someone.
-                The view counter was dropped: no BE path ever increments ViewCount, so it
-                displayed a permanent 0 that read as "nobody uses this article". */}
-            <div className="px-4 py-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Feedback
-              </p>
-              <div className="flex gap-5">
-                <button
-                  type="button"
-                  disabled={!onMarkHelpful || helpfulPending}
-                  onClick={onMarkHelpful}
-                  className={cn(
-                    "flex items-center gap-1.5 text-sm",
-                    onMarkHelpful &&
-                      !helpfulPending &&
-                      "cursor-pointer hover:text-primary transition-colors",
-                    (!onMarkHelpful || helpfulPending) && "cursor-default",
-                  )}
-                  title={onMarkHelpful ? "Mark as helpful" : undefined}
-                >
-                  <ThumbsUp
-                    size={13}
-                    className={cn(
-                      "text-muted-foreground",
-                      onMarkHelpful && !helpfulPending && "hover:text-primary",
-                    )}
-                  />
-                  <span className="font-semibold tabular-nums">
-                    {article.helpfulCount}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    found this helpful
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Info */}
-            <div className="px-4 py-4 space-y-3.5">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Info
-              </p>
-              <MetaItem
-                icon={Hash}
-                label="Article code"
-                value={<span className="font-mono">{article.code}</span>}
-              />
-              <MetaItem
-                icon={Tag}
-                label="Category"
-                value={KbCategoryLabel[article.category] ?? article.category}
-              />
-              <MetaItem
-                icon={RefreshCcw}
-                label="Version"
-                value={`v${article.version}`}
-              />
-              <MetaItem
-                icon={CalendarDays}
-                label="Created"
-                value={format(new Date(article.createdAt), "MM/dd/yyyy", {
-                  locale: enUS,
-                })}
-              />
-              {article.updatedAt && (
-                <MetaItem
-                  icon={Clock}
-                  label="Last updated"
-                  value={format(
-                    new Date(article.updatedAt),
-                    "MM/dd/yyyy HH:mm",
-                    { locale: enUS },
-                  )}
-                />
-              )}
-            </div>
-
-            {/* Tags */}
-            {article.tags.length > 0 && (
-              <div className="px-4 py-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Tags
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {article.tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="text-[11px] font-normal px-2 py-0.5"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+              <>
+                <span aria-hidden className="mx-1 h-5 w-px bg-border" />
+                <Button size="sm" className="gap-1.5" onClick={onEdit}>
+                  <Pencil className="size-3.5" />
+                  Edit
+                </Button>
+              </>
             )}
           </div>
         </div>
       </div>
-    </>
+
+      <article className="mx-auto w-full max-w-3xl px-6">
+        {/* ── Article header ───────────────────────────────────────────── */}
+        <header className="pt-10">
+          <p className="text-sm font-medium text-primary">{category}</p>
+          <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight">
+            {article.title}
+          </h1>
+          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-y border-border py-2.5 text-xs text-muted-foreground">
+            <span className="tabular-nums">Version {article.version}</span>
+            <MetaDivider />
+            <span className="tabular-nums">
+              Added{" "}
+              {format(new Date(article.createdAt), "MMM d, yyyy", {
+                locale: enUS,
+              })}
+            </span>
+            {article.updatedAt && (
+              <>
+                <MetaDivider />
+                <span className="tabular-nums">
+                  Updated{" "}
+                  {format(new Date(article.updatedAt), "MMM d, yyyy HH:mm", {
+                    locale: enUS,
+                  })}
+                </span>
+              </>
+            )}
+            <MetaDivider />
+            <span className="tabular-nums">
+              {article.helpfulCount} found this helpful
+            </span>
+          </div>
+        </header>
+
+        {/* ── Pending review notice ────────────────────────────────────── */}
+        <div className="mt-5 empty:mt-0">
+          <KbPendingReviewNotice
+            article={article}
+            onViewVersions={onViewVersions}
+          />
+        </div>
+
+        {/* ── The article itself ───────────────────────────────────────── */}
+        <div className="mt-8 text-[15px]">
+          <SectionContent text={article.content} />
+        </div>
+
+        {/* ── Footer: feedback, then tags ──────────────────────────────── */}
+        <footer className="mt-14 border-t border-border pt-6">
+          <p className="text-sm font-medium">Was this guide useful?</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Marking it helpful is how the team finds out which guides are worth
+            keeping current.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3 gap-1.5"
+            disabled={!onMarkHelpful || helpfulPending}
+            onClick={onMarkHelpful}
+          >
+            <ThumbsUp className="size-3.5" />
+            Mark as helpful
+            <span className="tabular-nums text-muted-foreground">
+              {article.helpfulCount}
+            </span>
+          </Button>
+
+          {article.tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center gap-1.5">
+              {article.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </footer>
+      </article>
+    </div>
   );
 }

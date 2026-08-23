@@ -1,6 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -141,125 +148,144 @@ export default function KbArticleTable({
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {data.map((article) => (
-          <Card
-            key={article.id}
-            onClick={() => navigate(`${basePath}/${article.id}`)}
-            className="cursor-pointer p-5 transition-colors hover:bg-accent/40"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-mono text-xs text-muted-foreground">
-                {article.code}
-              </p>
-              <div onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="-mt-1 -mr-1 size-8"
-                      />
-                    }
-                  >
-                    <EllipsisVertical className="size-4.5" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-36">
-                    <DropdownMenuItem
-                      onClick={() =>
-                        onEdit
-                          ? onEdit(article)
-                          : navigate(`${basePath}/${article.id}/edit`)
-                      }
-                    >
-                      Edit
-                    </DropdownMenuItem>
-                    {onCopy && (
-                      <DropdownMenuItem onClick={() => onCopy(article)}>
-                        Copy
-                      </DropdownMenuItem>
-                    )}
-                    {article.status === KbArticleStatusEnum.Draft &&
-                      onPublish && (
-                        <DropdownMenuItem onClick={() => onPublish(article)}>
-                          Publish
-                        </DropdownMenuItem>
-                      )}
-                    {article.status === KbArticleStatusEnum.Published &&
-                      onGenerateBlog && (
-                        <DropdownMenuItem
-                          onClick={() => onGenerateBlog(article)}
-                        >
-                          Generate blog
-                        </DropdownMenuItem>
-                      )}
-                    {article.status === KbArticleStatusEnum.Published &&
-                      onArchive && (
-                        <DropdownMenuItem onClick={() => onArchive(article)}>
-                          Archive
-                        </DropdownMenuItem>
-                      )}
-                    {/* Archiving is reversible: publish takes an archived article back into
-                        circulation. Without this entry an accidental archive could only be
-                        undone in the database. */}
-                    {article.status === KbArticleStatusEnum.Archived &&
-                      onPublish && (
-                        <DropdownMenuItem onClick={() => onPublish(article)}>
-                          Restore
-                        </DropdownMenuItem>
-                      )}
-                    {onDelete && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => onDelete(article)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-
-            <h3 className="mt-2 line-clamp-2 text-base font-medium leading-snug">
-              {article.title}
-            </h3>
-
-            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-              <KbStatusBadge status={article.status} />
-              <KbPendingChangeBadge
-                status={article.status}
-                reviewRequired={article.reviewRequired}
-              />
-              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                {KbCategoryLabel[article.category] ?? article.category}
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-center justify-end gap-4 border-t border-border/60 pt-3">
-              {onMarkHelpful ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMarkHelpful(article);
-                  }}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+      {/* A table, not a card grid: these rows are a register that people scan and sort
+          by code, status and helpfulness - a grid of boxes makes every row cost the space
+          of a card and hides the columns they sort by. */}
+      <div className="overflow-hidden rounded-lg border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-28">Code</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead className="w-44">Category</TableHead>
+              <TableHead className="w-52">Status</TableHead>
+              <TableHead className="w-20 text-right">Helpful</TableHead>
+              <TableHead className="w-12" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((article) => (
+              <TableRow
+                key={article.id}
+                onClick={() => navigate(`${basePath}/${article.id}`)}
+                className="cursor-pointer"
+              >
+                <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                  {article.code}
+                </TableCell>
+                <TableCell
+                  className="max-w-0 truncate font-medium"
+                  title={article.title}
                 >
-                  <ThumbsUp className="size-3.5" /> {article.helpfulCount}
-                </button>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <ThumbsUp className="size-3.5" /> {article.helpfulCount}
-                </span>
-              )}
-            </div>
-          </Card>
-        ))}
+                  {article.title}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  {KbCategoryLabel[article.category] ?? article.category}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <KbStatusBadge status={article.status} />
+                    <KbPendingChangeBadge
+                      status={article.status}
+                      reviewRequired={article.reviewRequired}
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  {onMarkHelpful ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkHelpful(article);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      <ThumbsUp className="size-3.5" /> {article.helpfulCount}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <ThumbsUp className="size-3.5" /> {article.helpfulCount}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="-mt-1 -mr-1 size-8"
+                          />
+                        }
+                      >
+                        <EllipsisVertical className="size-4.5" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-36">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            onEdit
+                              ? onEdit(article)
+                              : navigate(`${basePath}/${article.id}/edit`)
+                          }
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        {onCopy && (
+                          <DropdownMenuItem onClick={() => onCopy(article)}>
+                            Copy
+                          </DropdownMenuItem>
+                        )}
+                        {article.status === KbArticleStatusEnum.Draft &&
+                          onPublish && (
+                            <DropdownMenuItem onClick={() => onPublish(article)}>
+                              Publish
+                            </DropdownMenuItem>
+                          )}
+                        {article.status === KbArticleStatusEnum.Published &&
+                          onGenerateBlog && (
+                            <DropdownMenuItem
+                              onClick={() => onGenerateBlog(article)}
+                            >
+                              Generate blog
+                            </DropdownMenuItem>
+                          )}
+                        {article.status === KbArticleStatusEnum.Published &&
+                          onArchive && (
+                            <DropdownMenuItem onClick={() => onArchive(article)}>
+                              Archive
+                            </DropdownMenuItem>
+                          )}
+                        {/* Archiving is reversible: publish takes an archived article back into
+                            circulation. Without this entry an accidental archive could only be
+                            undone in the database. */}
+                        {article.status === KbArticleStatusEnum.Archived &&
+                          onPublish && (
+                            <DropdownMenuItem onClick={() => onPublish(article)}>
+                              Restore
+                            </DropdownMenuItem>
+                          )}
+                        {onDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => onDelete(article)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

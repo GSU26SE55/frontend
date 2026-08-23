@@ -17,7 +17,6 @@ import { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import type { SortDirection } from "@/shared/hooks/useSortableData";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
-import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.Success]: "Success",
@@ -32,7 +31,9 @@ const RESULT_LABEL: Record<LoginAttemptResult, string> = {
 
 const LoginHistoryTable = () => {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  // 10 rather than the app-wide 25: this table lives inside the settings card, which has
+  // a fixed height — 25 rows push the pagination bar out of view.
+  const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
 

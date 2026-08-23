@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useId, useState, useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ShieldCheck,
   History,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DIST, DUR, EASE_OUT, SPRING } from "@/shared/motion/tokens";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ChangePasswordForm from "@/features/auth/components/password/ChangePasswordForm";
@@ -165,6 +167,10 @@ const AccountSettingsPage = () => {
   }, [isAdmin]);
 
   const current = menuItems.find((m) => m.key === active)!;
+  // Same travelling highlight as the sidebar: one panel that moves to the section you
+  // picked. `layoutId` is global, so it is scoped to this page's nav.
+  const navId = useId();
+  const reduced = useReducedMotion();
 
   return (
     <div className="p-6 space-y-5 max-w-275 mx-auto">
@@ -197,26 +203,40 @@ const AccountSettingsPage = () => {
                   setCredSub(null);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors mb-0.5 cursor-pointer",
+                  "relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors mb-0.5 cursor-pointer",
                   isActive
-                    ? "bg-background text-foreground font-semibold shadow-sm border border-border/50"
+                    ? "text-foreground font-semibold"
                     : "text-foreground/60 hover:bg-background/70 hover:text-foreground",
                   "danger" in item &&
                     item.danger &&
                     !isActive &&
                     "hover:bg-destructive/10 hover:text-destructive",
-                  "danger" in item &&
-                    item.danger &&
-                    isActive &&
-                    "bg-destructive/10 text-destructive border-destructive/20",
+                  "danger" in item && item.danger && isActive && "text-destructive",
                 )}
               >
-                <Icon size={14} className="shrink-0" />
-                <span className="flex-1 text-[13px] truncate">
+                {isActive && (
+                  <motion.span
+                    aria-hidden="true"
+                    {...(reduced
+                      ? {}
+                      : { layoutId: `${navId}-active`, transition: SPRING })}
+                    className={cn(
+                      "absolute inset-0 rounded-lg border",
+                      "danger" in item && item.danger
+                        ? "bg-destructive/10 border-destructive/20"
+                        : "bg-background border-border/50 shadow-sm",
+                    )}
+                  />
+                )}
+                <Icon size={14} className="relative shrink-0" />
+                <span className="relative flex-1 text-[13px] truncate">
                   {item.label}
                 </span>
                 {isActive && (
-                  <ChevronRight size={11} className="shrink-0 opacity-40" />
+                  <ChevronRight
+                    size={11}
+                    className="relative shrink-0 opacity-40"
+                  />
                 )}
               </button>
             );
@@ -225,6 +245,17 @@ const AccountSettingsPage = () => {
 
         {/* ── Content ── */}
         <main className="flex-1 min-w-0 overflow-y-auto">
+          {/* Keyed on the section, so switching sections replays the entrance instead of
+              swapping the panel's contents in place. */}
+          <motion.div
+            key={active}
+            initial={reduced ? false : { opacity: 0, y: DIST.sm }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: { duration: DUR.enter, ease: EASE_OUT },
+            }}
+          >
           {active === "profile" ? (
             <ProfilePage />
           ) : (
@@ -395,6 +426,7 @@ const AccountSettingsPage = () => {
               </div>
             </>
           )}
+          </motion.div>
         </main>
       </Card>
     </div>

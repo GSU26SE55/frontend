@@ -8,6 +8,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [
     react(),
+    // React Compiler ships only as a Babel plugin, so every source file is parsed twice:
+    // once by oxc for JSX, once by Babel for the compiler. Measured on this repo that is
+    // ~95% of the build (1.5s without it, 22-35s with), and it is what rolldown's
+    // PLUGIN_TIMINGS warning is pointing at. Turning off Babel's own source maps was
+    // tried and made no measurable difference — the cost is the parse, not the map.
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
   ],

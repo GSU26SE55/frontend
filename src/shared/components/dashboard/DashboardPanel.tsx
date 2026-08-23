@@ -15,57 +15,91 @@ import {
   RadialBar,
   RadialBarChart,
 } from "recharts";
+import { toneVars, type StatusTone } from "@/shared/theme/statusColors";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 
 /**
- * Compact building blocks for the "single-frame" dashboard (full-height bento, no scroll).
- * Shared by the Admin / Manager / Staff dashboards.
+ * Building blocks for the three role dashboards (admin, manager, staff), plus the
+ * analytics page.
+ *
+ * The headline numbers are printed on the page rather than boxed one-per-card: a row of
+ * identical bordered tiles gives every number the same weight, which is the opposite of
+ * what a dashboard is for. Hairlines separate them, colour marks the ones that are not
+ * fine, and each links to the page where you act on it.
  */
 
-// ── Compact KPI ───────────────────────────────────────────────────────────────
-export function DashboardKpi({
+// ── Page heading ──────────────────────────────────────────────────────────────
+export function DashboardHeading({
+  title,
+  status,
+  refreshKeys,
+}: {
+  title: string;
+  /** One plain sentence describing the current situation, built from the data. */
+  status: string;
+  refreshKeys: (string | readonly string[])[];
+}) {
+  return (
+    <header className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-[26px] font-semibold leading-tight tracking-tight">
+          {title}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">{status}</p>
+      </div>
+      <RefreshButton queryKeys={refreshKeys} label="Sync" />
+    </header>
+  );
+}
+
+// ── Headline numbers ──────────────────────────────────────────────────────────
+export function StatRail({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-y-5 border-y border-border py-5 sm:grid-cols-3 lg:grid-cols-5",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function Stat({
   label,
   value,
-  sub,
   hint,
-  icon,
-  accent,
+  tone,
   to,
 }: {
   label: string;
   value: string | number;
-  sub?: string;
+  /** Second line, e.g. "2 critical". Omit when there is nothing to add. */
   hint?: string;
-  icon?: React.ReactNode;
-  accent?: string;
+  /** Colours the number. Leave unset while the figure is nothing to act on. */
+  tone?: StatusTone;
   to?: string;
 }) {
   const body = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">
-          {label}
-        </span>
-        {icon ? (
-          <span className="text-muted-foreground shrink-0">{icon}</span>
-        ) : accent ? (
-          <span
-            className="w-2 h-2 rounded-full shrink-0"
-            style={{ background: accent }}
-          />
-        ) : null}
-      </div>
-      <div className="flex items-baseline gap-1.5 mt-1">
-        <span className="text-2xl lg:text-3xl font-bold tabular-nums leading-none text-foreground">
-          {value}
-        </span>
-        {sub && (
-          <span className="text-xs font-medium text-muted-foreground">
-            {sub}
-          </span>
-        )}
-      </div>
+      <span
+        className="text-[32px] font-semibold leading-none tabular-nums"
+        style={tone ? { color: toneVars(tone).fg } : undefined}
+      >
+        {value}
+      </span>
+      <span className="mt-2 block text-sm text-muted-foreground group-hover:text-foreground">
+        {label}
+      </span>
       {hint && (
-        <span className="text-xs text-muted-foreground/80 truncate mt-1">
+        <span className="mt-0.5 block text-xs text-muted-foreground/80">
           {hint}
         </span>
       )}
@@ -73,26 +107,18 @@ export function DashboardKpi({
   );
 
   const shell =
-    "bg-card rounded-xl border border-border p-4 flex flex-col justify-between gap-1 min-w-0 shadow-sm transition-all";
+    "group min-w-0 border-l border-border px-5 first:border-l-0 first:pl-0";
 
-  if (to) {
-    return (
-      <Link
-        to={to}
-        className={cn(
-          shell,
-          "hover:border-primary/60 hover:bg-muted/30 hover:shadow-md",
-        )}
-      >
-        {body}
-      </Link>
-    );
-  }
-
-  return <div className={shell}>{body}</div>;
+  return to ? (
+    <Link to={to} className={cn(shell, "block")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={shell}>{body}</div>
+  );
 }
 
-// ── Panel shell (flex-col card: header + flexible body) ───────────────────────
+// ── Panel shell ───────────────────────────────────────────────────────────────
 export function DashboardPanel({
   title,
   desc,
@@ -109,27 +135,29 @@ export function DashboardPanel({
   bodyClassName?: string;
 }) {
   return (
-    <div
+    <section
       className={cn(
-        "bg-card rounded-xl border border-border flex flex-col min-h-[260px] overflow-hidden shadow-sm",
+        "flex min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card",
         className,
       )}
     >
-      <div className="px-4 pt-4 pb-2.5 shrink-0 flex items-start justify-between gap-3 border-b border-border/40">
-        <div className="min-w-0">
-          <h3 className="text-sm lg:text-base font-semibold text-foreground leading-tight truncate">
-            {title}
-          </h3>
-          {desc && (
-            <p className="text-xs text-muted-foreground leading-tight mt-1 truncate">
-              {desc}
-            </p>
-          )}
-        </div>
-        {action && <div className="shrink-0">{action}</div>}
+      {/* Title and meta share one baseline: a panel caption, not a stacked header block
+          with its own divider under it. */}
+      <div className="flex shrink-0 items-baseline gap-3 px-4 pb-2 pt-3.5">
+        <h2 className="truncate text-sm font-medium text-foreground">
+          {title}
+        </h2>
+        {desc && (
+          <p className="ml-auto truncate text-xs text-muted-foreground">
+            {desc}
+          </p>
+        )}
+        {action && <div className="ml-auto shrink-0">{action}</div>}
       </div>
-      <div className={cn("flex-1 min-h-0 p-4", bodyClassName)}>{children}</div>
-    </div>
+      <div className={cn("min-h-0 flex-1 px-4 pb-4", bodyClassName)}>
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -152,20 +180,20 @@ export function DashboardDonut({
   centerLabel: string;
 }) {
   return (
-    <div className="flex items-center gap-5 h-full">
+    <div className="flex h-full items-center gap-5">
       <ChartContainer
         config={donutConfig}
-        className="h-full aspect-square max-w-40 lg:max-w-44 min-h-0 shrink-0"
+        className="aspect-square h-full min-h-0 max-w-40 shrink-0"
       >
         <PieChart>
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
-            innerRadius="66%"
+            innerRadius="68%"
             outerRadius="92%"
             strokeWidth={2}
-            stroke="var(--background)"
+            stroke="var(--card)"
           >
             {data.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
@@ -183,14 +211,14 @@ export function DashboardDonut({
                       <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="text-xl lg:text-2xl font-bold fill-foreground"
+                        className="fill-foreground text-xl font-semibold"
                       >
                         {centerValue}
                       </tspan>
                       <tspan
                         x={viewBox.cx}
                         y={(viewBox.cy ?? 0) + 16}
-                        className="text-xs font-medium fill-muted-foreground"
+                        className="fill-muted-foreground text-xs"
                       >
                         {centerLabel}
                       </tspan>
@@ -203,21 +231,24 @@ export function DashboardDonut({
           <ChartTooltip content={<ChartTooltipContent />} />
         </PieChart>
       </ChartContainer>
-      <ul className="flex-1 min-w-0 space-y-2.5">
+      {/* Legend rows read as a small table: swatch, name, number, hairline between. */}
+      <ul className="min-w-0 flex-1 divide-y divide-border/60">
         {data.map((b) => (
-          <li key={b.name} className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
+          <li
+            key={b.name}
+            className="flex items-center justify-between gap-3 py-2"
+          >
+            <div className="flex min-w-0 items-center gap-2.5">
               <span
-                className="size-3 rounded-full shrink-0 shadow-xs"
+                aria-hidden
+                className="size-2.5 shrink-0 rounded-[2px]"
                 style={{ background: b.fill }}
               />
-              <span className="text-xs lg:text-sm font-medium text-muted-foreground truncate">
+              <span className="truncate text-sm text-muted-foreground">
                 {b.name}
               </span>
             </div>
-            <span className="text-xs lg:text-sm font-bold tabular-nums text-foreground">
-              {b.value}
-            </span>
+            <span className="text-sm font-medium tabular-nums">{b.value}</span>
           </li>
         ))}
       </ul>
@@ -225,7 +256,7 @@ export function DashboardDonut({
   );
 }
 
-// ── Radial gauge (single value 0–100) ─────────────────────────────────────────
+// ── Radial gauge (single value 0-100) ─────────────────────────────────────────
 const gaugeConfig = { value: { label: "Gauge" } } satisfies ChartConfig;
 
 export function DashboardGauge({
@@ -242,17 +273,17 @@ export function DashboardGauge({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col h-full justify-between gap-2 min-h-0">
-      <div className="relative flex-1 min-h-[100px] w-full flex items-center justify-center">
+    <div className="flex h-full min-h-0 flex-col justify-between gap-2">
+      <div className="relative flex min-h-25 w-full flex-1 items-center justify-center">
         <ChartContainer
           config={gaugeConfig}
-          className="h-full aspect-square max-w-[150px] min-h-[100px] mx-auto"
+          className="mx-auto aspect-square h-full min-h-25 max-w-38"
         >
           <RadialBarChart
             data={[{ name: "v", value: percent, fill: color }]}
             startAngle={90}
             endAngle={-270}
-            innerRadius="76%"
+            innerRadius="78%"
             outerRadius="96%"
           >
             <PolarAngleAxis
@@ -264,19 +295,48 @@ export function DashboardGauge({
             <RadialBar dataKey="value" background cornerRadius={10} />
           </RadialBarChart>
         </ChartContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           <span
-            className="text-lg lg:text-xl font-bold tabular-nums leading-none tracking-tight"
+            className="text-2xl font-semibold leading-none tracking-tight tabular-nums"
             style={{ color }}
           >
             {valueText}
           </span>
-          <span className="text-[10px] lg:text-[11px] font-medium text-muted-foreground leading-none mt-1">
+          <span className="mt-1.5 text-xs leading-none text-muted-foreground">
             {caption}
           </span>
         </div>
       </div>
-      {footer && <div className="shrink-0 pt-0.5">{footer}</div>}
+      {footer && <div className="shrink-0">{footer}</div>}
+    </div>
+  );
+}
+
+/**
+ * Row of figures under a gauge. Hairlines instead of tinted boxes, so the gauge stays the
+ * loudest thing in the panel.
+ */
+export function GaugeFooter({
+  cells,
+}: {
+  cells: { value: number; label: string; tone?: StatusTone }[];
+}) {
+  return (
+    <div className="flex border-t border-border pt-3">
+      {cells.map((c) => (
+        <div
+          key={c.label}
+          className="flex-1 border-l border-border px-2 text-center first:border-l-0"
+        >
+          <p
+            className="text-base font-semibold tabular-nums"
+            style={c.tone ? { color: toneVars(c.tone).fg } : undefined}
+          >
+            {c.value}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{c.label}</p>
+        </div>
+      ))}
     </div>
   );
 }
