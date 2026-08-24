@@ -22,7 +22,12 @@ export default function ManagerAppLayout() {
         item.path === MANAGER_QUEUE_PATH
           ? {
               ...item,
-              badge: queueCount > 0 ? (queueCount > 99 ? "99+" : queueCount) : undefined,
+              badge:
+                queueCount > 0
+                  ? queueCount > 99
+                    ? "99+"
+                    : queueCount
+                  : undefined,
             }
           : item,
       ),

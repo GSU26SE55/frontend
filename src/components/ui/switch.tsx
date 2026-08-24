@@ -18,7 +18,9 @@ function Switch({
   const reduced = useReducedMotion();
   // Base UI keeps the checked state to itself, so mirror it — the thumb position is a
   // framer animation now, not a `data-checked:` class.
-  const [uncontrolled, setUncontrolled] = React.useState(defaultChecked ?? false);
+  const [uncontrolled, setUncontrolled] = React.useState(
+    defaultChecked ?? false,
+  );
   const isChecked = checked ?? uncontrolled;
   // Thumb travel = its own width minus the 2px inset, in px, because framer cannot
   // interpolate between `0` and a `calc()`. Matches the Tailwind sizes below.
@@ -35,7 +37,7 @@ function Switch({
         onCheckedChange?.(next, details);
       }}
       className={cn(
-        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[size=default]:h-4.6 data-[size=default]:w-8 data-[size=sm]:h-3.5 data-[size=sm]:w-6 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:bg-primary data-unchecked:bg-input dark:data-unchecked:bg-input/80 data-disabled:cursor-not-allowed data-disabled:opacity-50",
+        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border border-transparent transition-[background-color,border-color,box-shadow] duration-(--motion-state) ease-strong outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[size=default]:h-4.6 data-[size=default]:w-8 data-[size=sm]:h-3.5 data-[size=sm]:w-6 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:bg-primary data-unchecked:bg-input dark:data-unchecked:bg-input/80 data-disabled:cursor-not-allowed data-disabled:opacity-50",
         className,
       )}
       {...props}

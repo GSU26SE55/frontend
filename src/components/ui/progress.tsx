@@ -43,7 +43,12 @@ function ProgressIndicator({
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn(
+        // Progress is constant motion: `linear`, and only `width` — `transition-all`
+        // also eased the colour, so a bar that changed tone mid-fill read as a glitch.
+        "h-full bg-primary transition-[width] duration-300 ease-linear",
+        className,
+      )}
       {...props}
     />
   );

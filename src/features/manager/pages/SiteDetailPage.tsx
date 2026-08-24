@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Battery, Thermometer } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -80,7 +81,7 @@ export default function ManagerSiteDetailPage() {
 
   if (loadingSite) {
     return (
-      <div className="p-6 space-y-6 max-w-360 mx-auto">
+      <PageContainer>
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
         <Card className="p-6">
@@ -90,13 +91,13 @@ export default function ManagerSiteDetailPage() {
             ))}
           </div>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!site) {
     return (
-      <div className="p-6 max-w-360 mx-auto">
+      <PageContainer>
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
           <span className="text-sm">Site not found.</span>
@@ -104,12 +105,12 @@ export default function ManagerSiteDetailPage() {
             <ArrowLeft className="size-3.5" /> Back
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       {/* Back + header */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -224,6 +225,6 @@ export default function ManagerSiteDetailPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
+    </PageContainer>
   );
 }

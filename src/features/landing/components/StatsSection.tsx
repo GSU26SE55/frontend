@@ -3,6 +3,7 @@ import { animate, onScroll, stagger } from "animejs";
 import {
   createCleanupBag,
   prefersReducedMotion,
+  EASE,
 } from "@/features/landing/lib/animation";
 import statsBgImg from "@/assets/stats_bg.webp";
 
@@ -103,7 +104,7 @@ const StatsSection = () => {
       opacity: [0, 1],
       translateY: [20, 0],
       duration: 600,
-      ease: "outQuad",
+      ease: EASE.out,
       delay: stagger(120),
       autoplay: onScroll({ target: container, repeat: false }),
       onBegin: () => {
@@ -125,7 +126,7 @@ const StatsSection = () => {
               val: target,
               duration: 1400,
               delay: i * 120,
-              ease: "outExpo",
+              ease: EASE.out,
               onUpdate: () => {
                 valueEl.textContent = `${prefix}${counter.val.toFixed(decimals)}${suffix}`;
               },

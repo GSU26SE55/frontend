@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { animate, onScroll, stagger } from "animejs";
 import { Clock, Database, ShieldCheck, Zap } from "lucide-react";
 import Reveal from "@/features/landing/components/Reveal";
-import { prefersReducedMotion } from "@/features/landing/lib/animation";
+import { prefersReducedMotion, EASE } from "@/features/landing/lib/animation";
 
 const FEATURE_CARDS = [
   {
@@ -52,7 +52,7 @@ const FeatureCard = ({ card }: { card: (typeof FEATURE_CARDS)[number] }) => {
       style={{ opacity: 0 }}
       className={`
         group relative h-70 rounded-[22px] p-7 flex flex-col justify-between
-        transition-all duration-300 cursor-default
+        transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-enter) ease-strong cursor-default
         ${
           card.isDark
             ? "bg-[#080a0f] border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.4)] text-white"
@@ -116,7 +116,7 @@ const GovernanceSection = () => {
       opacity: [0, 1],
       translateY: [18, 0],
       duration: 550,
-      ease: "outQuad",
+      ease: EASE.out,
       delay: stagger(80),
       autoplay: onScroll({ target: grid, repeat: false }),
     });

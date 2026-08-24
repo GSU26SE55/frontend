@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   Select,
   SelectContent,
@@ -96,7 +97,7 @@ export default function AdminTicketListPage() {
   const { data, isLoading, isError, refetch } = useAdminTickets(params);
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       {/* Page header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -217,6 +218,6 @@ export default function AdminTicketListPage() {
           sort={sort}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

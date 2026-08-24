@@ -84,8 +84,6 @@ export default function StaffDashboardPage() {
   const nearBreach = staffStats?.nearBreachCount ?? 0;
   const breachedCount = staffStats?.breachedCount ?? 0;
   const resolvedCount = staffStats?.resolvedCount ?? 0;
-  const pausedCount = staffStats?.pausedCount ?? 0;
-  const monitoredCount = staffStats?.slaMonitoredCount ?? 0;
   const sla = staffStats?.sla;
   const slaTotal = sla ? sla.met + sla.breached : 0;
 
@@ -170,7 +168,7 @@ export default function StaffDashboardPage() {
   );
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-5 py-4 lg:overflow-hidden">
+    <div className="flex h-full flex-col overflow-y-auto py-6 pl-(--page-pl) pr-(--page-pr) lg:overflow-hidden">
       <div className="shrink-0">
         <DashboardHeading
           title="Your work"
@@ -178,14 +176,11 @@ export default function StaffDashboardPage() {
           refreshKeys={[KEY.staffTickets, KEY.staffTicketDashboard]}
         />
 
-        {/* Figures on a hairline rail: no card, no gradient, no shadow. */}
+        {/* Flat cards: no gradient, no shadow at rest — only a tone tints one. */}
         <StatRail className="mt-3">
           <Stat
             label="Handling now"
             value={statsLoading ? "--" : openCount}
-            hint={
-              monitoredCount > 0 ? `${monitoredCount} on an SLA timer` : undefined
-            }
             to="/staff/tickets"
           />
           <Stat
@@ -200,11 +195,7 @@ export default function StaffDashboardPage() {
             tone={breachedCount > 0 ? "p1" : undefined}
             to="/staff/tickets"
           />
-          <Stat
-            label="Resolved"
-            value={statsLoading ? "--" : resolvedCount}
-            hint={pausedCount > 0 ? `${pausedCount} paused` : "all time"}
-          />
+          <Stat label="Resolved" value={statsLoading ? "--" : resolvedCount} />
           {/* A percentage off one closed ticket is noise, so the rail shows the raw
               fraction until there is enough of a record to divide. */}
           <Stat
@@ -217,9 +208,6 @@ export default function StaffDashboardPage() {
                   : slaTotal < 5
                     ? `${sla?.met}/${slaTotal}`
                     : `${sla?.compliancePercent}%`
-            }
-            hint={
-              slaTotal >= 5 ? `${sla?.met} of ${slaTotal}` : "closed tickets"
             }
             tone={
               (sla?.breached ?? 0) > 0 ? "p1" : slaTotal > 0 ? "ok" : undefined

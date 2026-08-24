@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   createCleanupBag,
   prefersReducedMotion,
+  EASE,
 } from "@/features/landing/lib/animation";
 
 const TRUST_ITEMS = [
@@ -42,7 +43,7 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
       .filter((el): el is HTMLElement => el !== null);
 
     const tl = createTimeline({
-      defaults: { ease: "outQuad" },
+      defaults: { ease: EASE.out },
       autoplay: onScroll({ target: section, repeat: false }),
     });
 
@@ -62,7 +63,7 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
           scale: [1, 1.15],
           opacity: [0.5, 0.85],
           duration: 3200,
-          ease: "inOutSine",
+          ease: EASE.inOut,
           loop: true,
           alternate: true,
         }),
@@ -108,7 +109,7 @@ const FinalCtaSection = ({ onLogin }: { onLogin: () => void }) => {
         >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-emerald-300">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="ping-soft absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
             System operational

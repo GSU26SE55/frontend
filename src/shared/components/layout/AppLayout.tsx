@@ -62,7 +62,7 @@ function Topbar() {
       <div className="flex-1" />
 
       {/* System status dot inside a polished pill container */}
-      <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-all">
+      <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
         <span
           className="w-1.5 h-1.5 rounded-full pulse-dot shrink-0"
           style={{ backgroundColor: "var(--ok)" }}
@@ -79,7 +79,7 @@ function Topbar() {
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label="Account menu"
-          className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border border-border/80 bg-background/50 hover:bg-muted/70 hover:border-primary/30 hover:shadow-xs transition-all duration-200 cursor-pointer outline-none"
+          className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border border-border/80 bg-background/50 hover:bg-muted/70 hover:border-primary/30 hover:shadow-xs transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer outline-none"
         >
           <span className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0 shadow-inner">
             {initials}
@@ -205,11 +205,6 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // The page the shell landed on rises with everything else; navigating away and into
-  // another page comes in from the left, following the click across the nav.
-  const [entryPath] = useState(location.pathname);
-  const from = location.pathname === entryPath ? "bottom" : "left";
-
   if (!shellReady) return <LayoutSkeleton />;
 
   return (
@@ -233,7 +228,6 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
           <Suspense fallback={<PageSkeleton />}>
             <PageTransition
               routeKey={location.pathname}
-              from={from}
               className="h-full min-h-0"
             >
               <Outlet />

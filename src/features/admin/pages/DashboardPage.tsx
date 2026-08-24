@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   ChartContainer,
   ChartLegend,
@@ -133,6 +134,20 @@ export default function AdminDashboardPage() {
           ? toneVars("p3").fg
           : toneVars("p1").fg;
 
+  // ── Site health: the average health score across sites, and how many sit below the
+  // at-risk line. Read as a gauge so it matches "Batteries connected" above it. ──
+  const avgHealth = Math.round(siteStats?.avgHealth ?? 0);
+  const atRiskSites = siteStats?.atRiskCount ?? 0;
+  const healthySites = Math.max(0, totalSites - atRiskSites);
+  const healthColor =
+    totalSites === 0
+      ? "var(--muted-foreground)"
+      : avgHealth >= 90
+        ? toneVars("ok").fg
+        : avgHealth >= 80
+          ? toneVars("p3").fg
+          : toneVars("p1").fg;
+
   const problems: string[] = [];
   if (offlineBatt > 0)
     problems.push(`${plural(offlineBatt, "battery", "batteries")} offline`);
@@ -148,6 +163,8 @@ export default function AdminDashboardPage() {
         "environmental incidents",
       ),
     );
+  if (atRiskSites > 0)
+    problems.push(`${plural(atRiskSites, "site", "sites")} below 80% health`);
   const status = statsLoading
     ? "Reading the latest device data."
     : statusLine(
@@ -186,7 +203,7 @@ export default function AdminDashboardPage() {
   const showTopAlerting = statsLoading || topAlerting.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-6 py-8">
+    <PageContainer>
       <DashboardHeading
         title="System health"
         status={status}
@@ -202,7 +219,6 @@ export default function AdminDashboardPage() {
         <Stat
           label="Batteries online"
           value={statsLoading ? "--" : onlineBatt}
-          hint={totalBatt > 0 ? `of ${totalBatt}` : undefined}
           to="/admin/battery-assets"
         />
         <Stat
@@ -214,7 +230,6 @@ export default function AdminDashboardPage() {
         <Stat
           label="Open alerts"
           value={statsLoading ? "--" : openAlerts}
-          hint={criticalOpen > 0 ? `${criticalOpen} critical` : undefined}
           tone={criticalOpen > 0 ? "p1" : undefined}
           to="/admin/alerts"
         />
@@ -402,6 +417,37 @@ export default function AdminDashboardPage() {
           </DashboardPanel>
         )}
 
+        {/* [Gauge] average health across sites — the third cell of this row, so the grid
+            stays complete whether or not the ranking below has anything to show. */}
+        <DashboardPanel
+          title={OVERVIEW_PANELS.admin.siteHealth}
+          desc={`${plural(totalSites, "site", "sites")}`}
+          className="h-70"
+        >
+          {siteStatsLoading ? (
+            <Skeleton className="h-full w-full" />
+          ) : (
+            <DashboardGauge
+              percent={avgHealth}
+              valueText={totalSites > 0 ? `${avgHealth}%` : "—"}
+              caption="avg health"
+              color={healthColor}
+              footer={
+                <GaugeFooter
+                  cells={[
+                    { value: healthySites, label: "Healthy", tone: "ok" },
+                    {
+                      value: atRiskSites,
+                      label: "At risk",
+                      tone: atRiskSites > 0 ? "p1" : undefined,
+                    },
+                  ]}
+                />
+              }
+            />
+          )}
+        </DashboardPanel>
+
         {/* [Ranking] actionable list */}
         {showTopAlerting && (
           <TopAlertingPanel
@@ -415,6 +461,6 @@ export default function AdminDashboardPage() {
           />
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

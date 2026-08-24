@@ -59,12 +59,12 @@ export function BlogEditorView({ basePath }: BlogEditorViewProps) {
     return (
       <div>
         <div className="border-b border-border">
-          <div className="mx-auto flex h-14 w-full max-w-[1100px] items-center gap-3 px-6">
+          <div className="flex h-14 w-full items-center gap-3 pl-(--page-pl) pr-(--page-pr)">
             <Skeleton className="h-7 w-20" />
             <Skeleton className="ml-auto h-7 w-40" />
           </div>
         </div>
-        <div className="mx-auto grid w-full max-w-[1100px] gap-8 px-6 pt-8 lg:grid-cols-[1fr_300px]">
+        <div className="grid w-full gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-4">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-96 w-full" />

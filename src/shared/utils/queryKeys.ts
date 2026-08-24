@@ -127,8 +127,7 @@ export const QUERY_KEY = {
     realtime: (id: string) => [KEY.batteryAssets, "realtime", id] as const,
     cascadeRisk: (id: string) =>
       [KEY.batteryAssets, "cascade-risk", id] as const,
-    bmsSwitch: (id: string) =>
-      [KEY.batteryAssets, "bms-switch", id] as const,
+    bmsSwitch: (id: string) => [KEY.batteryAssets, "bms-switch", id] as const,
   },
   batteryTypes: {
     list: (params?: object) => [KEY.batteryTypes, "list", params] as const,
@@ -391,7 +390,8 @@ export const QUERY_KEY = {
     // IOT3-66/67 — đường Staff (`/api/iot-devices`), TÁCH khỏi `list` của admin
     // (`/api/admin/iot-devices`): hai endpoint khác nhau, hai hình dạng dữ liệu khác nhau,
     // dùng chung key là cache của bên này trả cho bên kia.
-    staffList: (params?: object) => [KEY.iotDevices, "staff-list", params] as const,
+    staffList: (params?: object) =>
+      [KEY.iotDevices, "staff-list", params] as const,
     heartbeats: (deviceId: string, params?: object) =>
       [KEY.iotDevices, "heartbeats", deviceId, params] as const,
   },

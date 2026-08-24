@@ -16,6 +16,7 @@ import {
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   Table,
   TableBody,
@@ -469,7 +470,7 @@ export default function AuditLogsPage() {
     : logs;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -621,6 +622,6 @@ export default function AuditLogsPage() {
           onClose={() => setSelected(null)}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

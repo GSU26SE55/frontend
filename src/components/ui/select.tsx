@@ -4,6 +4,12 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
+// Aliased straight to the primitive, NOT wrapped. `Select.Root` is generic over its
+// value type, and a wrapper component cannot forward that inference — re-declaring the
+// generics collapsed `Value` to `unknown` at every call site, so `onValueChange` handed
+// back the wrong thing and every selection fell through to the placeholder. The exit
+// animation therefore lives on the content (see SelectContent), where no generic is
+// involved, rather than on the root the way dialog/popover do it.
 const Select = SelectPrimitive.Root;
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
@@ -89,7 +95,17 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10",
+            // CSS transitions rather than the framer plumbing the other popups use: the
+            // root here is the bare generic primitive, so there is nowhere to hang an
+            // `actionsRef`. Base UI keeps the element mounted through `data-ending-style`,
+            // which is enough for a transition. Scales out of the trigger, except when
+            // `alignItemWithTrigger` parks the selected item over the trigger — scaling
+            // from a corner fights that placement, so those only fade.
+            "transition-[opacity,transform] duration-(--motion-enter) ease-strong",
+            "data-[starting-style]:opacity-0 data-[ending-style]:opacity-0",
+            "data-[align-trigger=false]:data-[starting-style]:scale-96",
+            "data-[align-trigger=false]:data-[ending-style]:scale-96",
             className,
           )}
           {...props}

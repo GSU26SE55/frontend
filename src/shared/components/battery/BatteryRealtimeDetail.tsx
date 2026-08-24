@@ -98,7 +98,7 @@ function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   return (
     <div className="px-4 pt-4 pb-3">
       <div
-        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-all"
+        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong"
         style={{
           backgroundColor: bg,
           borderColor: `${fg}35`,
@@ -208,7 +208,7 @@ export default function BatteryRealtimeDetail({
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 p-6 h-[calc(100vh-65px)]">
+      <div className="flex flex-col gap-4 py-6 h-[calc(100vh-65px)] pl-(--page-pl) pr-(--page-pr)">
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-lg" />
           <Skeleton className="h-6 w-48" />
@@ -267,7 +267,7 @@ export default function BatteryRealtimeDetail({
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <div className="px-6 py-3 flex items-center justify-between gap-4 shrink-0">
+      <div className="py-3 flex items-center justify-between gap-4 shrink-0 pl-(--page-pl) pr-(--page-pr)">
         <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"

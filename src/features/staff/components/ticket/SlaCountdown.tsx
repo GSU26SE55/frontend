@@ -3,6 +3,7 @@ import { SlaTimerStatusEnum } from "@/shared/types/ticket/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket/ticket.types";
 import { isNearBreachPercent } from "@/shared/lib/sla";
 import { toneClass } from "@/shared/theme/statusColors";
+import { cn } from "@/lib/utils";
 
 interface Props {
   slaTimer: SlaTimerDTO | null;
@@ -145,7 +146,7 @@ export function SlaCountdown({
         {!hideBar && (
           <div className="h-1.5 w-full rounded-full bg-muted">
             <div
-              className="h-1.5 rounded-full bg-muted-foreground transition-all"
+              className="h-1.5 rounded-full bg-muted-foreground transition-[width] duration-(--motion-enter) ease-linear"
               style={{ width: `${Math.min(100, remainingPercent)}%` }}
             />
           </div>
@@ -169,7 +170,14 @@ export function SlaCountdown({
       {!hideBar && (
         <div className="h-1.5 w-full rounded-full bg-muted">
           <div
-            className={`h-1.5 rounded-full transition-all ${barColor}`}
+            className={cn(
+              // Width is a countdown: constant motion, so `linear`. The colour flip at
+              // the near-breach threshold is a state change, so it eases — sharing one
+              // `transition-all` curve made the tone swap read as a glitch.
+              "h-1.5 rounded-full",
+              "[transition:width_var(--motion-enter)_linear,background-color_var(--motion-enter)_var(--motion-ease-out)]",
+              barColor,
+            )}
             style={{ width: `${Math.min(100, remainingPercent)}%` }}
           />
         </div>

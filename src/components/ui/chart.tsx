@@ -136,10 +136,7 @@ function ChartTooltipContent({
     nameKey?: string;
     labelKey?: string;
   } & Omit<
-    DefaultTooltipContentProps<
-      TooltipValueType,
-      TooltipNameType
-    >,
+    DefaultTooltipContentProps<TooltipValueType, TooltipNameType>,
     "accessibilityLayer"
   >) {
   const { config } = useChart();

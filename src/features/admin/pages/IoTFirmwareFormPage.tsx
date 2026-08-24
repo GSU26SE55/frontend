@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,7 +68,7 @@ export default function IoTFirmwareFormPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -232,6 +233,6 @@ export default function IoTFirmwareFormPage() {
           </div>
         </form>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

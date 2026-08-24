@@ -5,7 +5,8 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 export function useBmsSwitch(assetId: string) {
   return useQuery({
     queryKey: QUERY_KEY.batteryAssets.bmsSwitch(assetId),
-    queryFn: () => bmsSwitchService.getState(assetId).then((response) => response.data.data),
+    queryFn: () =>
+      bmsSwitchService.getState(assetId).then((response) => response.data.data),
     enabled: !!assetId,
     staleTime: 0,
     retry: false,

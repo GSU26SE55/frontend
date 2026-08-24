@@ -10,13 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -25,12 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
 import { KbPendingChangeBadge } from "@/shared/components/kb/KbPendingChangeBadge";
-import {
-  ThumbsUp,
-  EllipsisVertical,
-  BookOpen,
-  ArrowUpDown,
-} from "lucide-react";
+import { ThumbsUp, EllipsisVertical, BookOpen } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import {
   KbArticleStatusEnum,
@@ -38,16 +26,9 @@ import {
 } from "@/shared/enums/kb/kb.enum";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { noData, notFound } from "@/shared/constants/emptyStates";
-
-const NONE_SORT = "__none__";
-
-const SORT_ITEMS = [
-  { value: "code", label: "Code" },
-  { value: "title", label: "Title" },
-  { value: "category", label: "Category" },
-  { value: "status", label: "Status" },
-  { value: "helpfulCount", label: "Helpful" },
-];
+import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { Card } from "@/components/ui/card";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
@@ -64,6 +45,8 @@ interface KbArticleTableProps {
   /** Generate a blog post from this article — BE only accepts Published articles (409 otherwise). */
   onGenerateBlog?: (article: KbArticleSummaryDTO) => void;
   basePath?: string;
+  pageNumber: number;
+  pageSize: number;
   /** Sort server-side — state from useUrlSort. */
   sort: ServerSortState;
 }
@@ -81,95 +64,118 @@ export default function KbArticleTable({
   onCopy,
   onGenerateBlog,
   basePath = "/admin/kb",
+  pageNumber,
+  pageSize,
   sort,
 }: KbArticleTableProps) {
   const navigate = useNavigate();
 
+  // BE already sorts the whole dataset (SortBy/SortDir) → render items as-is.
+  const sortKey = sort.sortBy;
+  const sortDirection = sort.sortDir;
+  const toggleSort = sort.toggleSort;
+
   if (isLoading) {
     return (
-      <div className="space-y-3 p-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
-        ))}
-      </div>
+      <Card className="gap-0 py-0 overflow-hidden">
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      </Card>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="py-16 text-center flex flex-col items-center gap-3">
-        <BookOpen className="size-10 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">
-          {hasFilter ? notFound("articles") : noData("articles")}
-        </p>
-        {hasFilter && onResetFilter && (
-          <Button size="sm" variant="outline" onClick={onResetFilter}>
-            Clear filters
-          </Button>
-        )}
-      </div>
+      <Card className="gap-0 py-0 overflow-hidden">
+        <div className="py-16 text-center flex flex-col items-center gap-3">
+          <BookOpen className="size-10 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            {hasFilter ? notFound("articles") : noData("articles")}
+          </p>
+          {hasFilter && onResetFilter && (
+            <Button size="sm" variant="outline" onClick={onResetFilter}>
+              Clear filters
+            </Button>
+          )}
+        </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-end gap-2 px-1">
-        <span className="text-xs text-muted-foreground">Sort</span>
-        <Select
-          value={sort.sortBy ?? NONE_SORT}
-          onValueChange={(v) =>
-            sort.setSort(v && v !== NONE_SORT ? v : null, sort.sortDir)
-          }
-          items={[{ value: NONE_SORT, label: "Default" }, ...SORT_ITEMS]}
-        >
-          <SelectTrigger size="sm" className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="end">
-            <SelectItem value={NONE_SORT}>Default</SelectItem>
-            {SORT_ITEMS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={!sort.sortBy}
-          onClick={() =>
-            sort.sortBy &&
-            sort.setSort(sort.sortBy, sort.sortDir === "asc" ? "desc" : "asc")
-          }
-          title={sort.sortDir === "desc" ? "Descending" : "Ascending"}
-        >
-          <ArrowUpDown className="size-3.5" />
-        </Button>
-      </div>
-
       {/* A table, not a card grid: these rows are a register that people scan and sort
           by code, status and helpfulness - a grid of boxes makes every row cost the space
           of a card and hides the columns they sort by. */}
-      <div className="overflow-hidden rounded-lg border border-border">
+      <Card className="gap-0 py-0 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-28">Code</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead className="w-44">Category</TableHead>
-              <TableHead className="w-52">Status</TableHead>
-              <TableHead className="w-20 text-right">Helpful</TableHead>
-              <TableHead className="w-12" />
+              <TableHead className="w-12 text-center">
+                {TABLE_COLUMNS.index}
+              </TableHead>
+              <SortableTableHead
+                sortKey="code"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-28"
+              >
+                Code
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="title"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+              >
+                Title
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="category"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-44"
+              >
+                Category
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="status"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-52"
+              >
+                Status
+              </SortableTableHead>
+              <SortableTableHead
+                sortKey="helpfulCount"
+                activeSortKey={sortKey}
+                direction={sortDirection}
+                onSort={toggleSort}
+                className="w-20 text-right"
+              >
+                Helpful
+              </SortableTableHead>
+              <TableHead className="text-right">
+                {TABLE_COLUMNS.actions}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((article) => (
+            {data.map((article, index) => (
               <TableRow
                 key={article.id}
                 onClick={() => navigate(`${basePath}/${article.id}`)}
                 className="cursor-pointer"
               >
+                <TableCell className="text-center text-muted-foreground tabular-nums">
+                  {(pageNumber - 1) * pageSize + index + 1}
+                </TableCell>
                 <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
                   {article.code}
                 </TableCell>
@@ -240,7 +246,9 @@ export default function KbArticleTable({
                         )}
                         {article.status === KbArticleStatusEnum.Draft &&
                           onPublish && (
-                            <DropdownMenuItem onClick={() => onPublish(article)}>
+                            <DropdownMenuItem
+                              onClick={() => onPublish(article)}
+                            >
                               Publish
                             </DropdownMenuItem>
                           )}
@@ -254,7 +262,9 @@ export default function KbArticleTable({
                           )}
                         {article.status === KbArticleStatusEnum.Published &&
                           onArchive && (
-                            <DropdownMenuItem onClick={() => onArchive(article)}>
+                            <DropdownMenuItem
+                              onClick={() => onArchive(article)}
+                            >
                               Archive
                             </DropdownMenuItem>
                           )}
@@ -263,7 +273,9 @@ export default function KbArticleTable({
                             undone in the database. */}
                         {article.status === KbArticleStatusEnum.Archived &&
                           onPublish && (
-                            <DropdownMenuItem onClick={() => onPublish(article)}>
+                            <DropdownMenuItem
+                              onClick={() => onPublish(article)}
+                            >
                               Restore
                             </DropdownMenuItem>
                           )}
@@ -286,7 +298,7 @@ export default function KbArticleTable({
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
     </div>
   );
 }

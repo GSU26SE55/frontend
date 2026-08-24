@@ -38,25 +38,25 @@ const WorkflowSection = () => {
             const bgImage = WORKFLOW_IMAGES[index];
             return (
               <Reveal key={item.step} delay={index * 120}>
-                <div className="group relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-950 shadow-sm transition-all duration-500 hover:shadow-xl hover:border-slate-400/40">
+                <div className="group relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-950 shadow-sm transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong hover:shadow-xl hover:border-slate-400/40">
                   {/* Photo background with parallax scale on hover */}
                   <img
                     src={bgImage}
                     alt={item.title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 opacity-80"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-strong group-hover:scale-105 opacity-80"
                     loading="lazy"
                     decoding="async"
                   />
 
                   {/* Dark gradient overlay for typography readability */}
                   <div
-                    className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent transition-opacity duration-300 group-hover:opacity-95"
+                    className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent transition-opacity duration-(--motion-enter) ease-strong group-hover:opacity-95"
                     aria-hidden="true"
                   />
 
                   {/* Content overlay */}
                   <div className="absolute inset-0 p-8 flex flex-col justify-end z-10">
-                    <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                    <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-(--motion-enter) ease-strong">
                       {/* Glassmorphic step indicator */}
                       <span className="inline-flex items-center justify-center h-8 w-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 font-mono text-xs font-semibold text-white mb-4 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
                         {item.step}
@@ -66,10 +66,15 @@ const WorkflowSection = () => {
                         {item.title}
                       </h3>
 
-                      {/* Smooth slide-up fade-in description on hover */}
-                      <p className="mt-3 text-sm text-slate-200 leading-relaxed max-h-0 opacity-0 overflow-hidden group-hover:max-h-24 group-hover:opacity-100 transition-all duration-500 ease-out">
-                        {item.desc}
-                      </p>
+                      {/* Reveals on hover via grid-template-rows 0fr → 1fr rather than
+                          max-height: the row track animates without the browser
+                          re-measuring the text on every frame, and it settles at the
+                          content's real height instead of an arbitrary cap. */}
+                      <div className="mt-3 grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-(--motion-enter) ease-strong group-hover:grid-rows-[1fr] group-hover:opacity-100">
+                        <p className="overflow-hidden text-sm text-slate-200 leading-relaxed">
+                          {item.desc}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

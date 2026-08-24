@@ -47,7 +47,6 @@ export const ImportRowStatusEnum = {
 export type ImportRowStatusEnum =
   (typeof ImportRowStatusEnum)[keyof typeof ImportRowStatusEnum];
 
-
 /**
  * States in which the backend is actively moving the batch forward on its own.
  *

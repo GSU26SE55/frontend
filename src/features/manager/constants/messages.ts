@@ -9,7 +9,8 @@ export const MANAGER_MESSAGES = {
     resultApproved: "Resolution approved",
     resultRejected: "Resolution rejected — ticket back to In Progress",
     escalated: "Escalation request approved",
-    escalationRejected: "Escalation request rejected — ticket back to In Progress",
+    escalationRejected:
+      "Escalation request rejected — ticket back to In Progress",
     markedIncident: "Ticket marked as Incident",
     commentAdded: "Comment added",
     reprioritized: "Ticket priority changed",

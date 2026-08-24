@@ -11,6 +11,7 @@ import {
   useUnreadCount,
 } from "@/shared/hooks/notifications/useNotifications";
 import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { notificationTypeLabel } from "@/shared/constants/notificationLabels";
 import NotificationDetailPane from "@/shared/components/notification/NotificationDetailPane";
 import { cn } from "@/lib/utils";
@@ -101,7 +102,7 @@ export default function NotificationInboxPage() {
   }, [selectedId, items.length]);
 
   return (
-    <div className="p-4 md:p-6">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-semibold text-foreground">Inbox</h1>
@@ -268,6 +269,6 @@ export default function NotificationInboxPage() {
           />
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

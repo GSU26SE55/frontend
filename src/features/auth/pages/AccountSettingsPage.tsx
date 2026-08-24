@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { DIST, DUR, EASE_OUT, SPRING } from "@/shared/motion/tokens";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -173,7 +174,7 @@ const AccountSettingsPage = () => {
   const reduced = useReducedMotion();
 
   return (
-    <div className="p-6 space-y-5 max-w-275 mx-auto">
+    <PageContainer size="narrow">
       {/* Page header */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -211,7 +212,10 @@ const AccountSettingsPage = () => {
                     item.danger &&
                     !isActive &&
                     "hover:bg-destructive/10 hover:text-destructive",
-                  "danger" in item && item.danger && isActive && "text-destructive",
+                  "danger" in item &&
+                    item.danger &&
+                    isActive &&
+                    "text-destructive",
                 )}
               >
                 {isActive && (
@@ -256,180 +260,182 @@ const AccountSettingsPage = () => {
               transition: { duration: DUR.enter, ease: EASE_OUT },
             }}
           >
-          {active === "profile" ? (
-            <ProfilePage />
-          ) : (
-            <>
-              {/* Panel header */}
-              <div className="px-6 pt-5 pb-0">
-                <h2 className="text-base font-semibold">{current.label}</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {current.desc}
-                </p>
-                <Separator className="mt-3" />
-              </div>
+            {active === "profile" ? (
+              <ProfilePage />
+            ) : (
+              <>
+                {/* Panel header */}
+                <div className="px-6 pt-5 pb-0">
+                  <h2 className="text-base font-semibold">{current.label}</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {current.desc}
+                  </p>
+                  <Separator className="mt-3" />
+                </div>
 
-              {/* Panel body */}
-              <div className="px-6 pb-6 pt-5">
-                {/* Password & Email — choose an action then show the form */}
-                {active === "credentials" &&
-                  (credSub === null ? (
-                    <div className="flex flex-col items-center justify-center min-h-85 gap-6">
-                      <p className="text-sm text-muted-foreground">
-                        Choose the action you want to perform
-                      </p>
-                      <div className="flex gap-4">
-                        <button
-                          onClick={() => setCredSub("password")}
-                          className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all cursor-pointer group"
-                        >
-                          <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <Lock
-                              size={20}
-                              className="text-muted-foreground group-hover:text-primary transition-colors"
-                            />
-                          </div>
-                          <div className="text-center space-y-1">
-                            <p className="text-sm font-medium">
-                              Change password
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Update your current password
-                            </p>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setCredSub("email")}
-                          className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-all cursor-pointer group"
-                        >
-                          <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                            <KeyRound
-                              size={20}
-                              className="text-muted-foreground group-hover:text-primary transition-colors"
-                            />
-                          </div>
-                          <div className="text-center space-y-1">
-                            <p className="text-sm font-medium">Change email</p>
-                            <p className="text-xs text-muted-foreground">
-                              Change your email address
-                            </p>
-                          </div>
-                        </button>
+                {/* Panel body */}
+                <div className="px-6 pb-6 pt-5">
+                  {/* Password & Email — choose an action then show the form */}
+                  {active === "credentials" &&
+                    (credSub === null ? (
+                      <div className="flex flex-col items-center justify-center min-h-85 gap-6">
+                        <p className="text-sm text-muted-foreground">
+                          Choose the action you want to perform
+                        </p>
+                        <div className="flex gap-4">
+                          <button
+                            onClick={() => setCredSub("password")}
+                            className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer group"
+                          >
+                            <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                              <Lock
+                                size={20}
+                                className="text-muted-foreground group-hover:text-primary transition-colors"
+                              />
+                            </div>
+                            <div className="text-center space-y-1">
+                              <p className="text-sm font-medium">
+                                Change password
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Update your current password
+                              </p>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setCredSub("email")}
+                            className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer group"
+                          >
+                            <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                              <KeyRound
+                                size={20}
+                                className="text-muted-foreground group-hover:text-primary transition-colors"
+                              />
+                            </div>
+                            <div className="text-center space-y-1">
+                              <p className="text-sm font-medium">
+                                Change email
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Change your email address
+                              </p>
+                            </div>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center min-h-85">
-                      <div className="w-full max-w-md">
-                        <button
-                          onClick={() => setCredSub(null)}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
-                        >
-                          <ChevronRight size={12} className="rotate-180" />
-                          Back
-                        </button>
-                        {credSub === "password" ? (
-                          <>
-                            <p className="text-[13px] font-semibold mb-4">
-                              Change password
-                            </p>
-                            <ChangePasswordForm bare />
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-[13px] font-semibold mb-4">
-                              Change email address
-                            </p>
-                            <ChangeEmailForm bare />
-                          </>
-                        )}
+                    ) : (
+                      <div className="flex flex-col items-center min-h-85">
+                        <div className="w-full max-w-md">
+                          <button
+                            onClick={() => setCredSub(null)}
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
+                          >
+                            <ChevronRight size={12} className="rotate-180" />
+                            Back
+                          </button>
+                          {credSub === "password" ? (
+                            <>
+                              <p className="text-[13px] font-semibold mb-4">
+                                Change password
+                              </p>
+                              <ChangePasswordForm bare />
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-[13px] font-semibold mb-4">
+                                Change email address
+                              </p>
+                              <ChangeEmailForm bare />
+                            </>
+                          )}
+                        </div>
                       </div>
+                    ))}
+
+                  {/* Security */}
+                  {active === "security" && (
+                    <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
+                      <SecurityRow
+                        icon={Phone}
+                        title="Phone number"
+                        description="Verify your phone number to protect your account"
+                        statusBadge={
+                          <StatusBadge
+                            ok={!!account?.phoneConfirmed}
+                            labelOk="Verified"
+                            labelNo="Not verified"
+                          />
+                        }
+                      >
+                        <PhoneVerifySection bare />
+                      </SecurityRow>
+
+                      <SecurityRow
+                        icon={Lock}
+                        title="Two-factor authentication (2FA)"
+                        description="Add a security layer using an authenticator app"
+                        statusBadge={
+                          <StatusBadge
+                            ok={!!account?.twoFactorEnabled}
+                            labelOk="Enabled"
+                            labelNo="Disabled"
+                          />
+                        }
+                        action={
+                          <TwoFactorSetup
+                            isEnabled={account?.twoFactorEnabled ?? false}
+                            bare
+                          />
+                        }
+                      />
+
+                      <SecurityRow
+                        icon={Link2}
+                        title="Google link"
+                        description="Sign in quickly using your Google account"
+                        action={
+                          <GoogleLinkSection
+                            isLinked={!!account?.isGoogleLinked}
+                            bare
+                          />
+                        }
+                      />
+
+                      <SecurityRow
+                        icon={MonitorSmartphone}
+                        title="Trusted devices"
+                        description="Devices exempt from 2FA verification for 30 days"
+                      >
+                        <TrustedDevicesSection />
+                      </SecurityRow>
                     </div>
-                  ))}
+                  )}
 
-                {/* Security */}
-                {active === "security" && (
-                  <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
-                    <SecurityRow
-                      icon={Phone}
-                      title="Phone number"
-                      description="Verify your phone number to protect your account"
-                      statusBadge={
-                        <StatusBadge
-                          ok={!!account?.phoneConfirmed}
-                          labelOk="Verified"
-                          labelNo="Not verified"
-                        />
-                      }
-                    >
-                      <PhoneVerifySection bare />
-                    </SecurityRow>
+                  {active === "notifications" && (
+                    <div className="space-y-8">
+                      <NotificationPreferencesSection />
+                      <NotificationCategoryMatrixSection />
+                    </div>
+                  )}
 
-                    <SecurityRow
-                      icon={Lock}
-                      title="Two-factor authentication (2FA)"
-                      description="Add a security layer using an authenticator app"
-                      statusBadge={
-                        <StatusBadge
-                          ok={!!account?.twoFactorEnabled}
-                          labelOk="Enabled"
-                          labelNo="Disabled"
-                        />
-                      }
-                      action={
-                        <TwoFactorSetup
-                          isEnabled={account?.twoFactorEnabled ?? false}
-                          bare
-                        />
-                      }
-                    />
+                  {active === "systemNotifications" && (
+                    <div className="space-y-8">
+                      <PushTransportSettingsForm />
+                    </div>
+                  )}
 
-                    <SecurityRow
-                      icon={Link2}
-                      title="Google link"
-                      description="Sign in quickly using your Google account"
-                      action={
-                        <GoogleLinkSection
-                          isLinked={!!account?.isGoogleLinked}
-                          bare
-                        />
-                      }
-                    />
+                  {/* History — fills remaining height, table scrolls, pagination fixed */}
+                  {active === "history" && <LoginHistoryTable />}
 
-                    <SecurityRow
-                      icon={MonitorSmartphone}
-                      title="Trusted devices"
-                      description="Devices exempt from 2FA verification for 30 days"
-                    >
-                      <TrustedDevicesSection />
-                    </SecurityRow>
-                  </div>
-                )}
-
-                {active === "notifications" && (
-                  <div className="space-y-8">
-                    <NotificationPreferencesSection />
-                    <NotificationCategoryMatrixSection />
-                  </div>
-                )}
-
-                {active === "systemNotifications" && (
-                  <div className="space-y-8">
-                    <PushTransportSettingsForm />
-                  </div>
-                )}
-
-                {/* History — fills remaining height, table scrolls, pagination fixed */}
-                {active === "history" && <LoginHistoryTable />}
-
-                {/* Danger Zone */}
-                {active === "danger" && <DangerZone />}
-              </div>
-            </>
-          )}
+                  {/* Danger Zone */}
+                  {active === "danger" && <DangerZone />}
+                </div>
+              </>
+            )}
           </motion.div>
         </main>
       </Card>
-    </div>
+    </PageContainer>
   );
 };
 

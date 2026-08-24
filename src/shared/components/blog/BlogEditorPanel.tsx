@@ -154,7 +154,7 @@ export function BlogEditorPanel({
   return (
     <form onSubmit={handleSubmit(submit)} className="pb-24">
       <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="mx-auto flex w-full max-w-[1100px] flex-wrap items-center gap-x-3 gap-y-2 px-6 py-2.5">
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           {onCancel && (
             <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
               <ArrowLeft className="size-3.5" />
@@ -194,7 +194,7 @@ export function BlogEditorPanel({
       </div>
 
       {!editable && (
-        <div className="mx-auto w-full max-w-[1100px] px-6 pt-6">
+        <div className="w-full pt-6 pl-(--page-pl) pr-(--page-pr)">
           <p className="rounded-md border border-border bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
             This post is being generated or already archived, so it cannot be
             edited right now.
@@ -202,7 +202,7 @@ export function BlogEditorPanel({
         </div>
       )}
 
-      <div className="mx-auto grid w-full max-w-[1100px] items-start gap-8 px-6 pt-8 lg:grid-cols-[1fr_300px]">
+      <div className="grid w-full items-start gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* Left: the post itself */}
         <div className="min-w-0 space-y-5">
           <Field

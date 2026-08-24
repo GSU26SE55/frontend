@@ -19,7 +19,7 @@ import {
   TICKET_ROWS,
 } from "@/features/landing/landing.constants";
 import type { HeroDemoId } from "@/features/landing/types/landing.types";
-import { prefersReducedMotion } from "@/features/landing/lib/animation";
+import { prefersReducedMotion, EASE } from "@/features/landing/lib/animation";
 import heroImage from "@/assets/hero1.webp";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -141,7 +141,7 @@ const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
     const anim = animate(bars, {
       width: (_el: HTMLElement, i: number) => `${BATTERY_ROWS[i].soh}%`,
       duration: 900,
-      ease: "outQuad",
+      ease: EASE.out,
       delay: stagger(100, { start: 400 }),
     });
 
@@ -190,7 +190,7 @@ const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
             <div
               key={row.id}
               className={cn(
-                "rounded-lg border p-3 transition-colors duration-300",
+                "rounded-lg border p-3 transition-colors duration-(--motion-enter) ease-strong",
                 isHighlighted
                   ? row.status === "Critical"
                     ? "border-red-500/30 bg-red-500/[0.07]"
@@ -209,7 +209,7 @@ const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
                   <span className="relative flex h-2 w-2">
                     <span
                       className={cn(
-                        "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 transition-opacity duration-300",
+                        "ping-soft absolute inline-flex h-full w-full rounded-full bg-emerald-400 transition-opacity duration-(--motion-enter) ease-strong",
                         isHighlighted ? "opacity-60" : "opacity-0",
                       )}
                     />
@@ -427,7 +427,7 @@ const useCrossfade = <T extends HTMLElement>(dep: unknown) => {
       opacity: [0, 1],
       translateY: [8, 0],
       duration: 260,
-      ease: "outQuad",
+      ease: EASE.out,
     });
 
     return () => {
@@ -464,7 +464,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
     if (prefersReducedMotion()) return;
 
     const splitter = splitText(heading, { words: true });
-    const tl = createTimeline({ defaults: { ease: "outExpo" } });
+    const tl = createTimeline({ defaults: { ease: EASE.out } });
 
     tl.add(splitter.words, {
       opacity: [0, 1],
@@ -487,7 +487,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
       animate(heroImgRef.current, {
         scale: [1.12, 1],
         duration: 1800,
-        ease: "outQuad",
+        ease: EASE.out,
       });
     }
 
@@ -532,7 +532,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
       width,
       height,
       duration: 420,
-      ease: "outExpo",
+      ease: EASE.out,
     });
 
     return () => {
@@ -632,7 +632,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-white/35">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="ping-soft absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                     </span>
                     Live
@@ -690,7 +690,7 @@ const HeroSection = ({ onLogin }: { onLogin: () => void }) => {
                         }}
                         type="button"
                         className={cn(
-                          "relative z-10 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20",
+                          "relative z-10 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors duration-(--motion-state) ease-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20",
                           active
                             ? "text-white"
                             : "text-white/35 hover:text-white/65",

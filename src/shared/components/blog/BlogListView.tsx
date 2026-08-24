@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -62,6 +63,8 @@ import {
 } from "@/shared/enums/blog/blog.enum";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { Card } from "@/components/ui/card";
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
@@ -127,7 +130,7 @@ export function BlogListView({
   const items = data?.items ?? [];
 
   return (
-    <div className="mx-auto max-w-360 space-y-6 p-6">
+    <PageContainer>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-muted-foreground mb-0.5 text-xs font-medium">
@@ -234,27 +237,35 @@ export function BlogListView({
             : noData("blog posts")}
         </p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <Card className="gap-0 py-0 overflow-hidden">
           {/* A table, not a card grid: a post list is a register - what is drafted, what
               is live, what came from a guide - and those are columns, not boxes. */}
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">
+                  {TABLE_COLUMNS.index}
+                </TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead className="w-32">Status</TableHead>
                 <TableHead className="w-36">Origin</TableHead>
                 <TableHead className="w-16 text-right">Ver.</TableHead>
                 <TableHead className="w-28 text-right">Created</TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="text-right">
+                  {TABLE_COLUMNS.actions}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((b) => (
+              {items.map((b, index) => (
                 <TableRow
                   key={b.id}
                   onClick={() => navigate(`${basePath}/blog/${b.id}`)}
                   className="cursor-pointer"
                 >
+                  <TableCell className="text-center text-muted-foreground tabular-nums">
+                    {(filters.pageNumber - 1) * filters.pageSize + index + 1}
+                  </TableCell>
                   <TableCell className="max-w-0">
                     <p className="truncate font-medium" title={b.title}>
                       {b.title}
@@ -279,64 +290,64 @@ export function BlogListView({
                     {format(new Date(b.createdAt), "MM/dd/yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
-                <div onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="-mt-1 -mr-1 size-8"
-                        />
-                      }
-                    >
-                      <EllipsisVertical className="size-4.5" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
-                      <DropdownMenuItem
-                        disabled={!isBlogEditable(b.status)}
-                        onClick={() =>
-                          navigate(`${basePath}/blog/${b.id}/edit`)
-                        }
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      {canWorkflow && (
-                        <>
-                          {b.status === BlogPostStatusEnum.Draft && (
-                            <DropdownMenuItem
-                              disabled={publishing}
-                              onClick={() => publish(b.id)}
-                            >
-                              Publish
-                            </DropdownMenuItem>
-                          )}
-                          {b.status !== BlogPostStatusEnum.Archived && (
-                            <DropdownMenuItem
-                              disabled={archiving}
-                              onClick={() => archive(b.id)}
-                            >
-                              Archive
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="-mt-1 -mr-1 size-8"
+                            />
+                          }
+                        >
+                          <EllipsisVertical className="size-4.5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
                           <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setToDelete(b)}
+                            disabled={!isBlogEditable(b.status)}
+                            onClick={() =>
+                              navigate(`${basePath}/blog/${b.id}/edit`)
+                            }
                           >
-                            Delete
+                            Edit
                           </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                          {canWorkflow && (
+                            <>
+                              {b.status === BlogPostStatusEnum.Draft && (
+                                <DropdownMenuItem
+                                  disabled={publishing}
+                                  onClick={() => publish(b.id)}
+                                >
+                                  Publish
+                                </DropdownMenuItem>
+                              )}
+                              {b.status !== BlogPostStatusEnum.Archived && (
+                                <DropdownMenuItem
+                                  disabled={archiving}
+                                  onClick={() => archive(b.id)}
+                                >
+                                  Archive
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => setToDelete(b)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
 
       {data && data.totalPages > 1 && (
@@ -383,6 +394,6 @@ export function BlogListView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

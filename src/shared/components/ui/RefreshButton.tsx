@@ -3,7 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface RefreshButtonProps extends VariantProps<typeof buttonVariants> {

@@ -62,23 +62,18 @@ export function SectionContent({ text }: { text: string }) {
   );
 }
 
-/** Hairline between two metadata items. Reads as a separator without spending a character. */
-function MetaDivider() {
-  return <span aria-hidden className="h-3 w-px bg-border" />;
-}
-
 // ── Loading skeleton ──────────────────────────────────────────────────────────
 export function KbArticleDetailSkeleton() {
   return (
     <div>
       <div className="border-b border-border">
-        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 px-6">
+        <div className="flex h-14 w-full items-center gap-3 pl-(--page-pl) pr-(--page-pr)">
           <Skeleton className="h-7 w-24" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="ml-auto h-7 w-64" />
         </div>
       </div>
-      <div className="mx-auto w-full max-w-3xl space-y-4 px-6 pt-10">
+      <div className="w-full space-y-4 pt-10 pl-(--page-pl) pr-(--page-pr)">
         <Skeleton className="h-4 w-28" />
         <Skeleton className="h-9 w-4/5" />
         <Skeleton className="h-3 w-72" />
@@ -133,7 +128,7 @@ export function KbArticleDetail({
       {/* The toolbar spans the page, not the reading column: the article wants a narrow
           measure, the action row wants room to stay on one line. */}
       <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center gap-x-3 gap-y-2 px-6 py-2.5">
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           <Button variant="ghost" size="sm" onClick={() => navigate(backUrl)}>
             <ArrowLeft className="size-3.5" />
             Guide
@@ -158,88 +153,101 @@ export function KbArticleDetail({
         </div>
       </div>
 
-      <article className="mx-auto w-full max-w-3xl px-6">
-        {/* ── Article header ───────────────────────────────────────────── */}
-        <header className="pt-10">
-          <p className="text-sm font-medium text-primary">{category}</p>
-          <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight">
-            {article.title}
-          </h1>
-          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-y border-border py-2.5 text-xs text-muted-foreground">
-            <span className="tabular-nums">Version {article.version}</span>
-            <MetaDivider />
-            <span className="tabular-nums">
-              Added{" "}
-              {format(new Date(article.createdAt), "MMM d, yyyy", {
-                locale: enUS,
-              })}
-            </span>
+      {/* Two columns, matching the editor: the article body on the left, its title and
+          facts in a card on the right. The metadata used to be a run-on row above the
+          body, which pushed the first paragraph down the page and read as preamble. */}
+      <div className="grid w-full items-start gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* The body sits on the same card surface as the panel beside it: bare text on
+            the page background against a bordered card read as an unfinished column. */}
+        <article className="min-w-0 rounded-lg border border-border bg-card p-6">
+          <div className="mb-5 empty:mb-0 empty:hidden">
+            <KbPendingReviewNotice
+              article={article}
+              onViewVersions={onViewVersions}
+            />
+          </div>
+          <div className="text-[15px]">
+            <SectionContent text={article.content} />
+          </div>
+        </article>
+
+        <aside className="space-y-5 rounded-lg border border-border bg-card p-5 lg:sticky lg:top-20">
+          <div>
+            <p className="text-sm font-medium text-primary">{category}</p>
+            <h1 className="mt-2 text-xl font-semibold leading-tight tracking-tight">
+              {article.title}
+            </h1>
+          </div>
+
+          <dl className="space-y-2.5 border-t border-border pt-4 text-xs">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Version</dt>
+              <dd className="tabular-nums font-medium">{article.version}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Added</dt>
+              <dd className="tabular-nums font-medium">
+                {format(new Date(article.createdAt), "MMM d, yyyy", {
+                  locale: enUS,
+                })}
+              </dd>
+            </div>
             {article.updatedAt && (
-              <>
-                <MetaDivider />
-                <span className="tabular-nums">
-                  Updated{" "}
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-muted-foreground">Updated</dt>
+                <dd className="tabular-nums font-medium">
                   {format(new Date(article.updatedAt), "MMM d, yyyy HH:mm", {
                     locale: enUS,
                   })}
-                </span>
-              </>
+                </dd>
+              </div>
             )}
-            <MetaDivider />
-            <span className="tabular-nums">
-              {article.helpfulCount} found this helpful
-            </span>
-          </div>
-        </header>
-
-        {/* ── Pending review notice ────────────────────────────────────── */}
-        <div className="mt-5 empty:mt-0">
-          <KbPendingReviewNotice
-            article={article}
-            onViewVersions={onViewVersions}
-          />
-        </div>
-
-        {/* ── The article itself ───────────────────────────────────────── */}
-        <div className="mt-8 text-[15px]">
-          <SectionContent text={article.content} />
-        </div>
-
-        {/* ── Footer: feedback, then tags ──────────────────────────────── */}
-        <footer className="mt-14 border-t border-border pt-6">
-          <p className="text-sm font-medium">Was this guide useful?</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Marking it helpful is how the team finds out which guides are worth
-            keeping current.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 gap-1.5"
-            disabled={!onMarkHelpful || helpfulPending}
-            onClick={onMarkHelpful}
-          >
-            <ThumbsUp className="size-3.5" />
-            Mark as helpful
-            <span className="tabular-nums text-muted-foreground">
-              {article.helpfulCount}
-            </span>
-          </Button>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Found helpful</dt>
+              <dd className="tabular-nums font-medium">
+                {article.helpfulCount}
+              </dd>
+            </div>
+          </dl>
 
           {article.tags.length > 0 && (
-            <div className="mt-6 flex flex-wrap items-center gap-1.5">
-              {article.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs text-muted-foreground">Tags</p>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {article.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
-        </footer>
-      </article>
+
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-medium">Was this guide useful?</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Marking it helpful is how the team finds out which guides are
+              worth keeping current.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 gap-1.5"
+              disabled={!onMarkHelpful || helpfulPending}
+              onClick={onMarkHelpful}
+            >
+              <ThumbsUp className="size-3.5" />
+              Mark as helpful
+              <span className="tabular-nums text-muted-foreground">
+                {article.helpfulCount}
+              </span>
+            </Button>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

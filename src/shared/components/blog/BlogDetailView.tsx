@@ -46,11 +46,6 @@ import { BlogPostStatusEnum } from "@/shared/enums/blog/blog.enum";
 import type { BlogCompareParams } from "@/shared/types/blog/blog.types";
 import { ACTIONS } from "@/shared/constants/actions";
 
-/** Hairline between two metadata items. Reads as a separator without spending a character. */
-function MetaDivider() {
-  return <span aria-hidden className="h-3 w-px bg-border" />;
-}
-
 interface BlogDetailViewProps {
   basePath: string;
   /** Only Manager/Admin have publish, archive and delete. */
@@ -100,13 +95,13 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
     return (
       <div>
         <div className="border-b border-border">
-          <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-3 px-6">
+          <div className="flex h-14 w-full items-center gap-3 pl-(--page-pl) pr-(--page-pr)">
             <Skeleton className="h-7 w-20" />
             <Skeleton className="h-4 w-24" />
             <Skeleton className="ml-auto h-7 w-56" />
           </div>
         </div>
-        <div className="mx-auto w-full max-w-3xl space-y-4 px-6 pt-10">
+        <div className="w-full space-y-4 pt-10 pl-(--page-pl) pr-(--page-pr)">
           <Skeleton className="h-9 w-4/5" />
           <Skeleton className="h-3 w-64" />
           <div className="space-y-2.5 pt-6">
@@ -126,7 +121,7 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
       {/* The toolbar spans the page, not the reading column: the post wants a narrow
           measure, the action row wants room to stay on one line. */}
       <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center gap-x-3 gap-y-2 px-6 py-2.5">
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           <Button
             variant="ghost"
             size="sm"
@@ -202,44 +197,59 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
         </div>
       </div>
 
-      <article className="mx-auto w-full max-w-3xl px-6">
-        <header className="pt-10">
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+      {/* Two columns, matching the editor and the guide page: the post body on the
+          left, its title and facts in a card on the right. */}
+      <div className="grid w-full items-start gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* The body sits on the same card surface as the panel beside it: bare text on
+            the page background against a bordered card read as an unfinished column. */}
+        <article className="min-w-0 rounded-lg border border-border bg-card p-6">
+          {post.status === BlogPostStatusEnum.Generating && (
+            <p className="mb-5 rounded-md border border-info/40 bg-info/5 px-3 py-2.5 text-sm">
+              AI is writing this post. The page updates itself when it finishes.
+            </p>
+          )}
+
+          {post.status === BlogPostStatusEnum.GenerationFailed && (
+            <p className="mb-5 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-sm">
+              AI generation failed. Open the editor to write the post by hand.
+            </p>
+          )}
+
+          <div className="text-[15px]">
+            <RichContentView html={post.contentHtml} />
+          </div>
+        </article>
+
+        <aside className="space-y-5 rounded-lg border border-border bg-card p-5 lg:sticky lg:top-20">
+          <h1 className="text-xl font-semibold leading-tight tracking-tight">
             {post.title}
           </h1>
+
           {/* Slug omitted: it is a URL detail the editor sets, not something a reader of
               this page acts on. */}
-          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-y border-border py-2.5 text-xs tabular-nums text-muted-foreground">
-            <span>Version {post.currentVersion}</span>
-            <MetaDivider />
-            <span>
-              Written {format(new Date(post.createdAt), "MMM d, yyyy HH:mm")}
-            </span>
+          <dl className="space-y-2.5 border-t border-border pt-4 text-xs">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Version</dt>
+              <dd className="font-medium tabular-nums">
+                {post.currentVersion}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Written</dt>
+              <dd className="font-medium tabular-nums">
+                {format(new Date(post.createdAt), "MMM d, yyyy HH:mm")}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">Summary</p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+              {post.summary}
+            </p>
           </div>
-        </header>
-
-        {post.status === BlogPostStatusEnum.Generating && (
-          <p className="mt-5 rounded-md border border-info/40 bg-info/5 px-3 py-2.5 text-sm">
-            AI is writing this post. The page updates itself when it finishes.
-          </p>
-        )}
-
-        {post.status === BlogPostStatusEnum.GenerationFailed && (
-          <p className="mt-5 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-sm">
-            AI generation failed. Open the editor to write the post by hand.
-          </p>
-        )}
-
-        {/* Summary reads as the lede, in the reading column with the body rather than
-            boxed away from it. */}
-        <p className="mt-8 border-l-2 border-primary/40 pl-4 text-base leading-relaxed text-foreground/70">
-          {post.summary}
-        </p>
-
-        <div className="mt-8 text-[15px]">
-          <RichContentView html={post.contentHtml} />
-        </div>
-      </article>
+        </aside>
+      </div>
 
       <Dialog open={showVersions} onOpenChange={setShowVersions}>
         <DialogContent className="max-w-3xl">

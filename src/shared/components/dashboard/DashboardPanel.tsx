@@ -22,10 +22,10 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
  * Building blocks for the three role dashboards (admin, manager, staff), plus the
  * analytics page.
  *
- * The headline numbers are printed on the page rather than boxed one-per-card: a row of
- * identical bordered tiles gives every number the same weight, which is the opposite of
- * what a dashboard is for. Hairlines separate them, colour marks the ones that are not
- * fine, and each links to the page where you act on it.
+ * The headline numbers sit in their own cards. Every card is the same plain surface —
+ * the hierarchy is carried by the number's colour alone, so a row of tiles stays quiet
+ * and the one that needs attention is the one that is coloured. Each links to the page
+ * where you act on it.
  */
 
 // ── Page heading ──────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ export function StatRail({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-y-5 border-y border-border py-5 sm:grid-cols-3 lg:grid-cols-5",
+        "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5",
         className,
       )}
     >
@@ -75,14 +75,11 @@ export function StatRail({
 export function Stat({
   label,
   value,
-  hint,
   tone,
   to,
 }: {
   label: string;
   value: string | number;
-  /** Second line, e.g. "2 critical". Omit when there is nothing to add. */
-  hint?: string;
   /** Colours the number. Leave unset while the figure is nothing to act on. */
   tone?: StatusTone;
   to?: string;
@@ -98,16 +95,16 @@ export function Stat({
       <span className="mt-2 block text-sm text-muted-foreground group-hover:text-foreground">
         {label}
       </span>
-      {hint && (
-        <span className="mt-0.5 block text-xs text-muted-foreground/80">
-          {hint}
-        </span>
-      )}
     </>
   );
 
-  const shell =
-    "group min-w-0 border-l border-border px-5 first:border-l-0 first:pl-0";
+  // Every card is the same plain surface. Tinting the ones with a tone turned the row
+  // into a block of colour and drowned out the number, which is the part that matters.
+  const shell = cn(
+    "group min-w-0 rounded-lg border border-border bg-card p-4",
+    "transition-[border-color,box-shadow] duration-(--motion-state) ease-strong",
+    to && "hover:border-border-strong hover:shadow-sm",
+  );
 
   return to ? (
     <Link to={to} className={cn(shell, "block")}>

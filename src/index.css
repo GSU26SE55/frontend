@@ -84,6 +84,36 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md:
     0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+
+  /* Motion — the single source of truth. `shared/motion/tokens.ts` mirrors these for
+     framer-motion, which cannot read CSS variables. Change a value here and there.
+     Named `--motion-*` rather than `--ease-out`: Tailwind already ships an `--ease-out`
+     and redefining it would silently repoint every `ease-out` utility in the app. */
+  --motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* enters/exits */
+  --motion-ease-in-out: cubic-bezier(
+    0.77,
+    0,
+    0.175,
+    1
+  ); /* on-screen movement */
+  --motion-ease-drawer: cubic-bezier(
+    0.32,
+    0.72,
+    0,
+    1
+  ); /* iOS drawer curve (Ionic) */
+
+  --motion-state: 120ms; /* hover, press, checkbox, toggle */
+
+  /* Page gutters. The distance from the sidebar to the content, and from the content to
+     the right edge, for every routed page. Defined here rather than on the container so
+     that a child which needs to bleed to the page edge can cancel them with
+     `calc(var(--page-pl) * -1)` no matter how deeply it sits. Tighter on the left: the
+     sidebar already draws an edge there, so a full gutter reads as a gap. */
+  --page-pl: --spacing(4);
+  --page-pr: --spacing(6);
+  --motion-enter: 200ms; /* popover, toast, row expand */
+  --motion-layout: 320ms; /* route change, sheet, table rows arriving */
 }
 
 .dark {
@@ -163,6 +193,13 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;
+
+  /* Easing → Tailwind utilities: `ease-strong`, `ease-strong-in-out`, `ease-drawer`.
+     Durations have no such namespace in Tailwind 4, so they are used as arbitrary
+     values that still point at the token: `duration-(--motion-enter)`. */
+  --ease-strong: var(--motion-ease-out);
+  --ease-strong-in-out: var(--motion-ease-in-out);
+  --ease-drawer: var(--motion-ease-drawer);
 
   /* Semantic status colors → Tailwind utilities (bg-ok-soft, text-p1, border-p2...) */
   --color-ok: var(--ok);
@@ -314,33 +351,22 @@
   animation: typing-dot 1s ease-in-out infinite;
 }
 
-/* Page fade-in */
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
+/* Ping that starts from a real size. Tailwind's `animate-ping` scales from 0, and
+   nothing in the real world appears from nothing — 0.6 keeps the pulse while leaving
+   the dot visible at every frame. */
+@keyframes ping-soft {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.75;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.fade-up {
-  animation: fade-up 0.28s ease both;
-}
-
-
-/* Plain fade-in (no movement) — for secondary panels/content */
-@keyframes fade-in {
-  from {
+  75%,
+  100% {
+    transform: scale(2);
     opacity: 0;
   }
-  to {
-    opacity: 1;
-  }
 }
-.fade-in {
-  animation: fade-in 0.25s ease both;
+.ping-soft {
+  animation: ping-soft 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 /* Shimmer skeleton */
@@ -352,6 +378,8 @@
     background-position: 400px 0;
   }
 }
+/* Used by <Skeleton>. A travelling highlight reads as "loading" more clearly than a
+   whole block pulsing, and `background-position` is cheap — no layout, no paint. */
 .shimmer {
   background: linear-gradient(
     90deg,
@@ -392,15 +420,34 @@
   }
 }
 
-/* Respect motion-sensitive users — disable every infinitely-looping animation
-   (pulsing dots, shimmer skeleton, spinner, fade-up) + transitions. */
+/* Reduced motion means fewer and gentler animations, not none. Colour and opacity
+   transitions carry meaning — a status badge changing tone, a panel fading in — so they
+   are kept at full speed. What goes is looping decoration and travel: the infinite
+   pulses/shimmer/spin, and any transform-driven movement. framer-motion components read
+   the same preference through `useReducedMotion()` and drop their own transforms. */
 @media (prefers-reduced-motion: reduce) {
+  .pulse-dot,
+  .typing-dot,
+  .shimmer,
+  .animate-spin,
+  .animate-ping,
+  .ping-soft,
+  .animate-pulse,
+  .animate-aurora,
+  .animate-float-card {
+    animation: none !important;
+  }
+
+  /* Keep the spinner legible — it is the only signal that work is happening. */
+  .animate-spin {
+    animation: spin 1.6s linear infinite !important;
+  }
+
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property:
+      opacity, color, background-color, border-color, fill, stroke !important;
     scroll-behavior: auto !important;
   }
 }

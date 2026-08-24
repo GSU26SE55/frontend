@@ -1,26 +1,32 @@
-"use client"
+"use client";
 
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import {
   PopupPresence,
   PopupRoot,
   PopupSurface,
   usePopupRoot,
-} from "@/shared/motion/popup"
+} from "@/shared/motion/popup";
 
 function TooltipProvider({
-  delay = 0,
+  delay = 400,
+  closeDelay = 0,
   ...props
 }: TooltipPrimitive.Provider.Props) {
   return (
     <TooltipPrimitive.Provider
       data-slot="tooltip-provider"
+      // The first tooltip waits, so a pointer crossing a toolbar on its way elsewhere
+      // does not fire every label it passes. Once one is open Base UI keeps the group
+      // "warm" and neighbours open instantly — which is what makes a dense toolbar feel
+      // fast. `delay: 0` gave the opposite: no accidental-activation guard at all.
       delay={delay}
+      closeDelay={closeDelay}
       {...props}
     />
-  )
+  );
 }
 
 function Tooltip({
@@ -29,7 +35,7 @@ function Tooltip({
   onOpenChange,
   ...props
 }: TooltipPrimitive.Root.Props) {
-  const popup = usePopupRoot(open, defaultOpen)
+  const popup = usePopupRoot(open, defaultOpen);
   return (
     <PopupRoot value={popup.value}>
       <TooltipPrimitive.Root
@@ -38,17 +44,17 @@ function Tooltip({
         defaultOpen={defaultOpen}
         actionsRef={popup.actionsRef}
         onOpenChange={(next, details) => {
-          popup.sync(next)
-          onOpenChange?.(next, details)
+          popup.sync(next);
+          onOpenChange?.(next, details);
         }}
         {...props}
       />
     </PopupRoot>
-  )
+  );
 }
 
 function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
 function TooltipContent({
@@ -79,7 +85,7 @@ function TooltipContent({
             render={<PopupSurface variant="scale" side={side} />}
             className={cn(
               "z-50 inline-flex w-fit max-w-xs items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm",
-              className
+              className,
             )}
             {...props}
           >
@@ -89,7 +95,7 @@ function TooltipContent({
         </PopupPresence>
       </TooltipPrimitive.Positioner>
     </TooltipPrimitive.Portal>
-  )
+  );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };

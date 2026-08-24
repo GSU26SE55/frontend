@@ -1,9 +1,5 @@
 import * as React from "react";
-import {
-  motion,
-  useReducedMotion,
-  type HTMLMotionProps,
-} from "framer-motion";
+import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
@@ -49,12 +45,21 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
 
 function TableBody({ className, ...props }: HTMLMotionProps<"tbody">) {
   const reduced = useReducedMotion();
+  // Stagger the first paint only. Paging through a table is a "tens of times a day"
+  // action, and 20 rows at 25ms each puts half a second between the click and a
+  // readable table — the animation would be charging rent on the main task. After the
+  // first mount rows still fade, they just all arrive together.
+  const firstRender = React.useRef(true);
+  const stagger = firstRender.current ? 0.025 : 0;
+  React.useEffect(() => {
+    firstRender.current = false;
+  }, []);
   return (
     <motion.tbody
       data-slot="table-body"
       initial={reduced ? false : "hidden"}
       animate="shown"
-      variants={{ shown: { transition: { staggerChildren: 0.025 } } }}
+      variants={{ shown: { transition: { staggerChildren: stagger } } }}
       className={cn("[&_tr:last-child]:border-0", className)}
       {...props}
     />

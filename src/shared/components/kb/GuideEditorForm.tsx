@@ -61,12 +61,12 @@ export function GuideEditorFormSkeleton() {
   return (
     <div>
       <div className="border-b border-border">
-        <div className="mx-auto flex h-14 w-full max-w-[1100px] items-center gap-3 px-6">
+        <div className="flex h-14 w-full items-center gap-3 pl-(--page-pl) pr-(--page-pr)">
           <Skeleton className="h-7 w-20" />
           <Skeleton className="ml-auto h-7 w-40" />
         </div>
       </div>
-      <div className="mx-auto grid w-full max-w-[1100px] gap-8 px-6 pt-8 lg:grid-cols-[1fr_300px]">
+      <div className="grid w-full gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-4">
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-96 w-full" />
@@ -145,7 +145,7 @@ export function GuideEditorForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="pb-24">
       <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="mx-auto flex w-full max-w-[1100px] flex-wrap items-center gap-x-3 gap-y-2 px-6 py-2.5">
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           <Button
             type="button"
             variant="ghost"
@@ -185,7 +185,7 @@ export function GuideEditorForm({
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-[1100px] items-start gap-8 px-6 pt-8 lg:grid-cols-[1fr_300px]">
+      <div className="grid w-full items-start gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* Left: the article itself */}
         <div className="min-w-0 space-y-5">
           <Field

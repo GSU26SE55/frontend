@@ -33,10 +33,7 @@ export function usePopupRoot(openProp?: boolean, defaultOpen?: boolean) {
   const [uncontrolled, setUncontrolled] = React.useState(defaultOpen ?? false);
   const actionsRef = React.useRef<PopupActions | null>(null);
   const open = openProp ?? uncontrolled;
-  const value = React.useMemo<PopupCtx>(
-    () => ({ open, actionsRef }),
-    [open],
-  );
+  const value = React.useMemo<PopupCtx>(() => ({ open, actionsRef }), [open]);
   return { value, actionsRef, sync: setUncontrolled };
 }
 

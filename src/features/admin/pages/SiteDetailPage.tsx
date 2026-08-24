@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Battery, Thermometer, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,7 +79,7 @@ export default function SiteDetailPage() {
 
   if (loadingSite) {
     return (
-      <div className="p-6 space-y-6 max-w-360 mx-auto">
+      <PageContainer>
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
         <Card className="p-6">
@@ -88,13 +89,13 @@ export default function SiteDetailPage() {
             ))}
           </div>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!site) {
     return (
-      <div className="p-6 max-w-360 mx-auto">
+      <PageContainer>
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
           <span className="text-sm">Site not found.</span>
@@ -102,14 +103,14 @@ export default function SiteDetailPage() {
             <ArrowLeft className="size-3.5" /> Back
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   const isDecommissioned = site.status === SiteStatusEnum.Decommissioned;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       {/* Back + header */}
       <div>
         <Button
@@ -325,6 +326,6 @@ export default function SiteDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

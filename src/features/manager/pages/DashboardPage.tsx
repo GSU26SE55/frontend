@@ -38,7 +38,7 @@ import { categoryColor } from "@/shared/theme/chartPalette";
  * rows: the frame is full whether the queue holds four tickets or forty, and no panel is
  * sized by its own content, so nothing moves as data lands.
  *
- * Console density, not marketing density: figures sit on a hairline rail rather than in
+ * Console density, not marketing density: figures sit in flat cards rather than in
  * a gradient hero card, and every number is tabular.
  *
  * Does NOT show offline batteries / battery alerts / site health - that is Admin's
@@ -63,7 +63,6 @@ export default function ManagerDashboardPage() {
 
   // ── Tickets ──
   const sla = ticketStats?.sla;
-  const totalTickets = ticketStats?.total ?? 0;
   const openCount = ticketStats?.openCount ?? 0;
   const queueCount = queuePage?.totalItems ?? 0;
   const queueItems = queuePage?.items ?? [];
@@ -154,7 +153,6 @@ export default function ManagerDashboardPage() {
       fill: "var(--p1)",
     },
   ];
-  const oldest = ages.length ? Math.max(...ages) : 0;
 
   // Tickets Staff has Resolved, awaiting Manager's approve/reject decision.
   const awaitingApproval = statusCounts.Resolved ?? 0;
@@ -187,7 +185,7 @@ export default function ManagerDashboardPage() {
       );
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-5 py-4 lg:overflow-hidden">
+    <div className="flex h-full flex-col overflow-y-auto py-6 pl-(--page-pl) pr-(--page-pr) lg:overflow-hidden">
       <div className="shrink-0">
         <DashboardHeading
           title="Operations"
@@ -195,23 +193,17 @@ export default function ManagerDashboardPage() {
           refreshKeys={[KEY.ticketDashboard, KEY.manager.tickets]}
         />
 
-        {/* Figures on a hairline rail: no card, no gradient, no shadow. They are
-            readings, not five things to click. */}
+        {/* Flat cards: no gradient, no shadow at rest. Only the ones with a tone are
+            tinted, so the row still reads as readings rather than five equal buttons. */}
         <StatRail className="mt-3">
           <Stat
             label="Open tickets"
             value={ticketsLoading ? "--" : openCount}
-            hint={totalTickets > 0 ? `${totalTickets} all time` : undefined}
             to="/manager/tickets"
           />
           <Stat
             label="Waiting to be triaged"
             value={queueLoading ? "--" : queueCount}
-            hint={
-              oldest > 0
-                ? `oldest ${formatDistanceToNowStrict(new Date(now - oldest))}`
-                : undefined
-            }
             tone={queueCount > 0 ? "p3" : undefined}
             to="/manager/tickets/queue"
           />
@@ -239,9 +231,6 @@ export default function ManagerDashboardPage() {
                   : slaTotal < 5
                     ? `${sla?.met}/${slaTotal}`
                     : `${sla?.compliancePercent}%`
-            }
-            hint={
-              slaTotal >= 5 ? `${sla?.met} of ${slaTotal}` : "closed tickets"
             }
             tone={breached > 0 ? "p1" : slaTotal > 0 ? "ok" : undefined}
           />
@@ -353,7 +342,11 @@ export default function ManagerDashboardPage() {
                     value: busiestDay.count,
                     color: "var(--cat-3)",
                   },
-                  { label: "open now", value: openCount, color: "var(--cat-2)" },
+                  {
+                    label: "open now",
+                    value: openCount,
+                    color: "var(--cat-2)",
+                  },
                 ]}
               />
             </>

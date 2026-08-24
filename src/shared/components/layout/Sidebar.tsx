@@ -143,7 +143,9 @@ function Section({
     !!section.collapsible && !!section.title && !sidebarCollapsed;
 
   return (
-    <div className={cn("w-full", sidebarCollapsed && "flex flex-col items-center")}>
+    <div
+      className={cn("w-full", sidebarCollapsed && "flex flex-col items-center")}
+    >
       {/* Section header */}
       {section.title &&
         !sidebarCollapsed &&
@@ -182,10 +184,16 @@ function Section({
           animate="shown"
           variants={{
             shown: {
-              transition: { staggerChildren: 0.03, delayChildren: 0.05 * index },
+              transition: {
+                staggerChildren: 0.03,
+                delayChildren: 0.05 * index,
+              },
             },
           }}
-          className={cn("w-full space-y-0.5 overflow-hidden min-h-0", sidebarCollapsed && "flex flex-col items-center")}
+          className={cn(
+            "w-full space-y-0.5 overflow-hidden min-h-0",
+            sidebarCollapsed && "flex flex-col items-center",
+          )}
         >
           {section.items.map((item) => {
             const active = isPathActive(item.path, pathname, allPaths);
@@ -194,7 +202,7 @@ function Section({
                 to={item.path}
                 replace
                 className={cn(
-                  "group flex items-center rounded-lg transition-all duration-150 relative",
+                  "group flex items-center rounded-lg transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong relative",
                   sidebarCollapsed
                     ? "size-10 justify-center p-0"
                     : "w-full gap-2.5 px-2.5 py-1.75 text-[13px]",
@@ -281,7 +289,10 @@ function Section({
                     transition: { duration: DUR.enter, ease: EASE_OUT },
                   },
                 }}
-                className={cn("w-full", sidebarCollapsed && "flex justify-center")}
+                className={cn(
+                  "w-full",
+                  sidebarCollapsed && "flex justify-center",
+                )}
               >
                 {/* Collapsed, the label is the only thing telling you what an icon is —
                     a real tooltip instead of the browser's half-second `title`. */}
@@ -323,7 +334,7 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col shrink-0 h-screen border-r bg-sidebar text-sidebar-foreground transition-all duration-200",
+        "flex flex-col shrink-0 h-screen border-r bg-sidebar text-sidebar-foreground transition-[width] duration-(--motion-enter) ease-strong",
         collapsed ? "w-14 items-center" : "w-55",
       )}
     >
@@ -418,7 +429,7 @@ export default function Sidebar({
       <nav
         className={cn(
           "flex-1 overflow-y-auto py-3 space-y-3 w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          collapsed ? "flex flex-col items-center px-0" : "px-2"
+          collapsed ? "flex flex-col items-center px-0" : "px-2",
         )}
       >
         {sections.map((section, si) => (

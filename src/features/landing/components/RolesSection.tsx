@@ -5,20 +5,21 @@ import type { RoleItem } from "@/features/landing/types/landing.types";
 import {
   createCleanupBag,
   prefersReducedMotion,
+  EASE,
 } from "@/features/landing/lib/animation";
 
 const RoleCard = ({ role }: { role: RoleItem; index: number }) => (
   <div
     data-anim="role-card"
     style={{ opacity: 0 }}
-    className="group h-full cursor-default rounded-md border border-white/10 bg-white/[0.04] p-6 transition-colors duration-300 hover:border-emerald-400/30"
+    className="group h-full cursor-default rounded-md border border-white/10 bg-white/[0.04] p-6 transition-colors duration-(--motion-enter) ease-strong hover:border-emerald-400/30"
   >
     <div className="mb-8 flex items-center justify-between">
-      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-white text-slate-950 transition-transform duration-300 group-hover:scale-110">
+      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-white text-slate-950 transition-transform duration-(--motion-enter) ease-strong group-hover:scale-110">
         <role.icon className="size-5" />
       </div>
 
-      <span className="rounded-sm border border-white/10 px-2 py-1 font-mono text-xs font-medium text-slate-300 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-emerald-400/50">
+      <span className="rounded-sm border border-white/10 px-2 py-1 font-mono text-xs font-medium text-slate-300 transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-enter) ease-strong group-hover:-translate-y-0.5 group-hover:border-emerald-400/50">
         {role.role}
       </span>
     </div>
@@ -45,7 +46,7 @@ const RolesSection = () => {
           opacity: [0, 1],
           translateY: [20, 0],
           duration: 600,
-          ease: "outQuad",
+          ease: EASE.out,
           autoplay: onScroll({ target: header, repeat: false }),
         }),
       );
@@ -61,7 +62,7 @@ const RolesSection = () => {
           translateX: (_el: HTMLElement, i: number) =>
             i === 0 ? [-40, 0] : [40, 0],
           duration: 600,
-          ease: "outQuad",
+          ease: EASE.out,
           delay: stagger(100),
           autoplay: onScroll({ target: section, repeat: false }),
         }),

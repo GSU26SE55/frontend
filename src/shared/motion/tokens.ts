@@ -1,7 +1,12 @@
-// The motion system. Three durations, two travel distances, one curve, one spring.
+// The motion system. Three durations, two travel distances, three curves, one spring.
 // Anything not on this list is ad hoc — add it here first.
+//
+// These MIRROR the `--ease-*` / `--duration-*` custom properties in `index.css`.
+// framer-motion cannot read CSS variables, so the values are duplicated rather than
+// referenced — keep the two in sync. CSS-driven motion should use the CSS tokens
+// (`ease-out-strong`, `duration-enter`, ...); JS-driven motion uses these.
 
-/** Seconds, for framer-motion `transition.duration`. */
+/** Seconds, for framer-motion `transition.duration`. Mirrors `--duration-*`. */
 export const DUR = {
   /** 120ms — hover, press, checkbox, toggle. */
   state: 0.12,
@@ -22,8 +27,13 @@ export const DIST = {
   md: 16,
 } as const;
 
-/** Enters. */
-export const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+/** Enters and exits. Mirrors `--ease-out`. */
+export const EASE_OUT: [number, number, number, number] = [0.23, 1, 0.32, 1];
+
+/** On-screen movement — morphing, sliding between two places. Mirrors `--ease-in-out`. */
+export const EASE_IN_OUT: [number, number, number, number] = [
+  0.77, 0, 0.175, 1,
+];
 
 /** `layoutId` shared elements and toggles — nothing else gets a spring. */
 export const SPRING = { type: "spring", stiffness: 400, damping: 32 } as const;

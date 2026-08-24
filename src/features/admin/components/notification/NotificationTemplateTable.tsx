@@ -1,7 +1,14 @@
 import { EllipsisVertical } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +29,8 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 interface Props {
   templates: NotificationTemplateDto[];
   isLoading: boolean;
+  pageNumber: number;
+  pageSize: number;
   activatingId?: string | null;
   deletingId?: string | null;
   onPreview: (template: NotificationTemplateDto) => void;
@@ -33,6 +42,8 @@ interface Props {
 export default function NotificationTemplateTable({
   templates,
   isLoading,
+  pageNumber,
+  pageSize,
   activatingId,
   deletingId,
   onPreview,
@@ -59,109 +70,103 @@ export default function NotificationTemplateTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/40 text-left">
-            <th className="px-4 py-2.5 font-medium">Type</th>
-            <th className="px-3 py-2.5 font-medium">Channel</th>
-            <th className="px-3 py-2.5 font-medium text-center">Version</th>
-            <th className="px-3 py-2.5 font-medium">Title</th>
-            <th className="px-3 py-2.5 font-medium">Updated</th>
-            <th className="px-3 py-2.5 font-medium text-right">
-              {TABLE_COLUMNS.actions}
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/60">
-          {templates.map((t) => (
-            <tr
-              key={t.id}
-              // Older versions are dimmed: the list mixes all versions together, and without this
-              // distinction an admin could easily think they're editing the live version when it's
-              // actually one that's been superseded.
-              className={`hover:bg-muted/30 ${t.isActive ? "" : "text-muted-foreground"}`}
-            >
-              {/* BE returns a number; the English label is defined by FE (notificationLabels.ts). */}
-              <td className="px-4 py-2.5 font-medium whitespace-nowrap">
-                {notificationTypeLabel(t.type)}
-              </td>
-              <td className="px-3 py-2.5 whitespace-nowrap">
-                {notificationChannelLabel(t.channel)}
-              </td>
-              <td className="px-3 py-2.5 text-center whitespace-nowrap">
-                <span className="tabular-nums">v{t.version}</span>
-                {t.isActive && (
-                  <Badge className="ml-2 text-[10px]">Active</Badge>
-                )}
-              </td>
-              <td className="px-3 py-2.5 max-w-70">
-                {/* Shows the sentence with variables replaced by sample values. This column used to
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-12 text-center">
+            {TABLE_COLUMNS.index}
+          </TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Channel</TableHead>
+          <TableHead className="text-center">Version</TableHead>
+          <TableHead>Title</TableHead>
+          <TableHead>Updated</TableHead>
+          <TableHead className="text-right">{TABLE_COLUMNS.actions}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {templates.map((t, index) => (
+          <TableRow
+            key={t.id}
+            // Older versions are dimmed: the list mixes all versions together, and without this
+            // distinction an admin could easily think they're editing the live version when it's
+            // actually one that's been superseded.
+            className={t.isActive ? "" : "text-muted-foreground"}
+          >
+            <TableCell className="text-center text-muted-foreground tabular-nums">
+              {(pageNumber - 1) * pageSize + index + 1}
+            </TableCell>
+            {/* BE returns a number; the English label is defined by FE (notificationLabels.ts). */}
+            <TableCell className="font-medium">
+              {notificationTypeLabel(t.type)}
+            </TableCell>
+            <TableCell>{notificationChannelLabel(t.channel)}</TableCell>
+            <TableCell className="text-center tabular-nums">
+              v{t.version}
+            </TableCell>
+            <TableCell className="max-w-70 whitespace-normal">
+              {/* Shows the sentence with variables replaced by sample values. This column used to
                     print the raw `Ticket {{code}} has been resolved` — an operator could not see how
                     the sentence actually reads when sent, which is the very thing they come here to
                     check. `title` keeps the raw template for anyone who needs the variable names. */}
-                <span className="line-clamp-1" title={t.titleTemplate}>
-                  {renderWithSamples(
-                    t.titleTemplate,
-                    (n) => getVariableDoc(n)?.sample,
-                  )}
-                </span>
-              </td>
-              <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground text-xs">
-                {format(
-                  new Date(t.updatedAt ?? t.createdAt),
-                  "MM/dd/yyyy HH:mm",
+              <span className="line-clamp-1" title={t.titleTemplate}>
+                {renderWithSamples(
+                  t.titleTemplate,
+                  (n) => getVariableDoc(n)?.sample,
                 )}
-              </td>
-              <td className="px-3 py-2.5 text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button variant="ghost" size="icon" className="size-7" />
-                    }
-                  >
-                    <EllipsisVertical className="size-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-36">
-                    <DropdownMenuItem onClick={() => onPreview(t)}>
-                      Preview
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(t)}>
-                      Edit
-                    </DropdownMenuItem>
+              </span>
+            </TableCell>
+            <TableCell className="text-muted-foreground text-xs">
+              {format(new Date(t.updatedAt ?? t.createdAt), "MM/dd/yyyy HH:mm")}
+            </TableCell>
+            <TableCell className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="ghost" size="icon" className="size-7" />
+                  }
+                >
+                  <EllipsisVertical className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36">
+                  <DropdownMenuItem onClick={() => onPreview(t)}>
+                    Preview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(t)}>
+                    Edit
+                  </DropdownMenuItem>
 
-                    {/* Only inactive versions have anything to activate (rolling back a version). */}
-                    {!t.isActive && (
-                      <DropdownMenuItem
-                        disabled={activatingId === t.id}
-                        onClick={() => onActivate(t)}
-                      >
-                        {activatingId === t.id ? "Activating…" : "Activate"}
-                      </DropdownMenuItem>
-                    )}
+                  {/* Only inactive versions have anything to activate (rolling back a version). */}
+                  {!t.isActive && (
+                    <DropdownMenuItem
+                      disabled={activatingId === t.id}
+                      onClick={() => onActivate(t)}
+                    >
+                      {activatingId === t.id ? "Activating…" : "Activate"}
+                    </DropdownMenuItem>
+                  )}
 
-                    {/* The active version CANNOT be deleted — BE also blocks it (409). Hide the
+                  {/* The active version CANNOT be deleted — BE also blocks it (409). Hide the
                         button instead of letting it be clicked and error: losing the active version
                         would make the dispatcher silently fall back to a hardcoded string. */}
-                    {!t.isActive && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          disabled={deletingId === t.id}
-                          onClick={() => onDelete(t)}
-                        >
-                          {deletingId === t.id ? "Deleting…" : "Delete"}
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                  {!t.isActive && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        disabled={deletingId === t.id}
+                        onClick={() => onDelete(t)}
+                      >
+                        {deletingId === t.id ? "Deleting…" : "Delete"}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

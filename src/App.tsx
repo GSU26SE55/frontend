@@ -34,14 +34,12 @@ function DismissSplash() {
   useEffect(() => {
     const splash = document.getElementById("splash");
     if (!splash) return;
-    const elapsed =
-      Date.now() -
-      ((window as unknown as Record<string, number>).__splashStart || 0);
-    const remaining = Math.max(0, 2200 - elapsed);
-    const timer = setTimeout(() => {
-      splash.classList.add("fade-out");
-      setTimeout(() => splash.remove(), 500);
-    }, remaining);
+    // The splash exists to cover the blank frame before React paints — nothing more.
+    // It used to be held for a minimum of 2200ms, which meant a fast load was made to
+    // wait ~2s on purpose. It now leaves as soon as the app is up: the app being ready
+    // IS the cue. The 300ms is the CSS fade in index.html finishing.
+    splash.classList.add("fade-out");
+    const timer = setTimeout(() => splash.remove(), 300);
     return () => clearTimeout(timer);
   }, []);
   return null;
