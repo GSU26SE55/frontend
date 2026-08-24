@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AlertTriangle, Check, Plus } from "lucide-react";
+import { AlertTriangle, ChevronDown, Check, Plus } from "lucide-react";
 import { useTemplateVariables } from "@/features/admin/hooks/notification/useNotificationTemplates";
 import { getVariableDoc } from "@/features/admin/constants/templateVariableDocs";
 import type { NotificationTypeEnum } from "@/shared/enums/notification/notification.enum";
@@ -7,8 +7,10 @@ import type { NotificationTypeEnum } from "@/shared/enums/notification/notificat
 interface Props {
   /** The notification type being composed — decides which set of variables is valid. */
   type: NotificationTypeEnum;
-  /** Variables the author has typed, taken from the content currently being entered. */
+  /** Variables typed across BOTH fields — used only for the "invalid variable" warning. */
   typedNames: string[];
+  /** Variables typed in the CURRENTLY TARGETED field only — decides which chip shows a check. */
+  typedNamesInTarget: string[];
   /** Insert `{{name}}` at the cursor position in the currently targeted field. */
   onInsert: (name: string) => void;
   /** The current insert target — decides whether a clicked chip lands in Title or Body. */
@@ -37,6 +39,7 @@ interface Props {
 export default function TemplateVariablePalette({
   type,
   typedNames,
+  typedNamesInTarget,
   onInsert,
   target,
   onTargetChange,
@@ -62,11 +65,13 @@ export default function TemplateVariablePalette({
     return typedNames.filter((n) => !allowedLower.has(n.toLowerCase()));
   }, [typedNames, allowedLower]);
 
-  // Which variables are already in the content — the chip shows a check instead of a plus so the
-  // author can see at a glance what's left to add.
+  // Which variables are already in the TARGETED field — the chip shows a check instead of a plus
+  // so the author can see at a glance what's left to add. Scoped to the target field (not both
+  // fields combined): Title and Body are separate strings, so a variable used in Body must not
+  // show as "already added" while the author is composing Title.
   const usedLower = useMemo(
-    () => new Set(typedNames.map((n) => n.toLowerCase())),
-    [typedNames],
+    () => new Set(typedNamesInTarget.map((n) => n.toLowerCase())),
+    [typedNamesInTarget],
   );
 
   if (isLoading) {
@@ -80,6 +85,24 @@ export default function TemplateVariablePalette({
   // Couldn't fetch the catalog (network loss, 403) — silently skip rather than blocking the author
   // from saving. The backend is still the final gate, so skipping here won't let a broken template into the DB.
   if (!group) return null;
+
+  // Split each group into what a recipient can actually read vs. raw internal IDs (GUIDs, bare
+  // enum numbers). Internal chips are still selectable — some templates legitimately need an ID
+  // for a deep link — but they're demoted into a collapsed "Internal / debug only" section so the
+  // default view only offers chips a human sentence can use, instead of an author reaching for
+  // "Ticket ID" when they meant "Ticket code" (this exact mix-up shipped an unreadable template).
+  const splitInternal = (names: string[]) => {
+    const readable: string[] = [];
+    const internal: string[] = [];
+    for (const name of names) {
+      (getVariableDoc(name)?.internal ? internal : readable).push(name);
+    }
+    return { readable, internal };
+  };
+
+  const payloadSplit = splitInternal(group.payload);
+  const builtinSplit = splitInternal(group.builtin);
+  const allInternal = [...payloadSplit.internal, ...builtinSplit.internal];
 
   const renderChips = (names: string[]) => (
     <div className="grid gap-1.5 sm:grid-cols-2">
@@ -109,14 +132,6 @@ export default function TemplateVariablePalette({
             <span className="min-w-0">
               <span className="block truncate text-xs font-medium">
                 {doc?.label ?? name}
-                {doc?.internal && (
-                  <span
-                    className="ml-1 rounded bg-muted px-1 text-[10px] font-normal text-muted-foreground"
-                    title="Internal value — meaningless to the recipient, think twice before putting it in the content"
-                  >
-                    internal
-                  </span>
-                )}
               </span>
               {doc && (
                 <span className="block truncate text-[10px] text-muted-foreground">
@@ -166,12 +181,12 @@ export default function TemplateVariablePalette({
         value at send time — anything else renders empty.
       </p>
 
-      {group.payload.length > 0 ? (
+      {payloadSplit.readable.length > 0 ? (
         <div>
           <p className="mb-1.5 text-xs font-medium">
             Data for this notification type
           </p>
-          {renderChips(group.payload)}
+          {renderChips(payloadSplit.readable)}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">
@@ -187,8 +202,22 @@ export default function TemplateVariablePalette({
             (available on every type)
           </span>
         </p>
-        {renderChips(group.builtin)}
+        {renderChips(builtinSplit.readable)}
       </div>
+
+      {allInternal.length > 0 && (
+        <details className="group/internal">
+          <summary className="flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-muted-foreground select-none">
+            <ChevronDown className="size-3.5 shrink-0 -rotate-90 transition-transform group-open/internal:rotate-0" />
+            Internal / debug only ({allInternal.length})
+          </summary>
+          <p className="mt-1.5 mb-1.5 text-[11px] text-muted-foreground">
+            Raw IDs and codes — meaningless to the recipient. Rarely needed
+            (e.g. a deep-link path); prefer the readable fields above.
+          </p>
+          {renderChips(allInternal)}
+        </details>
+      )}
 
       {unknown.length > 0 && (
         <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5">
