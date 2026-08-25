@@ -19,6 +19,16 @@ import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types"
 const toUtc = (local: string): string | undefined =>
   local ? new Date(local).toISOString() : undefined;
 
+// ISO → the "yyyy-MM-ddTHH:mm" shape the picker expects, in LOCAL time. Slicing the ISO string
+// directly would render UTC and shift the window by the timezone offset.
+const toLocalInput = (iso?: string): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const num = (v: number | null, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
 
@@ -144,19 +154,40 @@ function buildColumns(
 interface SensorHistoryTableProps {
   assetId: string;
   batteryTypeId?: string;
+  /** Pre-applied range start (ISO) — set when a ticket links here with an incident window. */
+  from?: string;
+  /** Pre-applied range end (ISO). */
+  to?: string;
+  /** Clears the URL-supplied range; omitted when there is none. */
+  onClearRange?: () => void;
   fillHeight?: boolean;
 }
 
 export default function SensorHistoryTable({
   assetId,
   batteryTypeId,
+  from: urlFrom,
+  to: urlTo,
+  onClearRange,
   fillHeight,
 }: SensorHistoryTableProps) {
   // Server-side sort (Direction B). Default null → BE returns time desc + normal cursor.
   const sort = useServerSort();
-  // Date range filter (datetime-local, local time).
-  const [fromLocal, setFromLocal] = useState("");
-  const [toLocal, setToLocal] = useState("");
+  // Date range filter (datetime-local, local time). Seeded from the URL window when a ticket
+  // links here; typing then takes over, so one control drives the query rather than two.
+  const [fromLocal, setFromLocal] = useState(() => toLocalInput(urlFrom));
+  const [toLocal, setToLocal] = useState(() => toLocalInput(urlTo));
+
+  // A new URL window (different ticket) must win over whatever was typed for the previous one.
+  // Re-seeded on key change instead of in an effect — an effect would render once with the
+  // stale range and fire a wasted query, and `react-hooks/set-state-in-effect` rejects it.
+  const urlKey = `${urlFrom ?? ""}|${urlTo ?? ""}`;
+  const [seededFor, setSeededFor] = useState(urlKey);
+  if (seededFor !== urlKey) {
+    setSeededFor(urlKey);
+    setFromLocal(toLocalInput(urlFrom));
+    setToLocal(toLocalInput(urlTo));
+  }
 
   const from = toUtc(fromLocal);
   const to = toUtc(toLocal);
@@ -196,25 +227,28 @@ export default function SensorHistoryTable({
       ? "Charge/discharge current threshold not configured — the Current (A) column isn't cross-checked."
       : null;
 
-  const filterBar = (
-    <div className="flex flex-wrap items-end gap-3 px-5 py-3 border-b border-border">
-      <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+  // Range controls, sized to sit inline on the title row rather than in their own band. The
+  // labels moved beside each field (was stacked above) so the whole control keeps the header's
+  // height instead of forcing the row taller than the title next to it.
+  const rangeControls = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         From
         <DateTimePicker
           value={fromLocal}
           onChange={setFromLocal}
           max={toLocal ? new Date(toLocal) : new Date()}
-          className="h-8 w-52"
+          className="h-8 w-44"
         />
       </label>
-      <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         To
         <DateTimePicker
           value={toLocal}
           onChange={setToLocal}
           min={fromLocal ? new Date(fromLocal) : undefined}
           max={new Date()}
-          className="h-8 w-52"
+          className="h-8 w-44"
         />
       </label>
       {hasFilter && (
@@ -224,16 +258,22 @@ export default function SensorHistoryTable({
           onClick={() => {
             setFromLocal("");
             setToLocal("");
+            // Drop the URL window too — leaving it would re-seed the pickers on the next
+            // render and silently undo the clear.
+            onClearRange?.();
           }}
         >
           Clear filters
         </Button>
       )}
-      {rangeMissing && (
-        <span className="text-[11px] text-amber-600 dark:text-amber-500 pb-1.5">
-          Select both "From" and "To" to sort by this column.
-        </span>
-      )}
+    </div>
+  );
+
+  // Kept out of the header row: it appears only while a sort is blocked, and letting it push
+  // the pickers around mid-interaction made the row jump.
+  const rangeHint = rangeMissing && (
+    <div className="px-5 pb-2 text-[11px] text-amber-600 dark:text-amber-500">
+      Select both "From" and "To" to sort by this column.
     </div>
   );
 
@@ -280,15 +320,18 @@ export default function SensorHistoryTable({
   if (fillHeight) {
     return (
       <div className="flex flex-col h-full">
-        <div className="px-5 py-3 border-b border-border shrink-0 flex items-center justify-between gap-2">
-          <span className="text-sm font-medium">Sensor history</span>
-          {threshold && (
-            <span className="text-[11px] text-muted-foreground">
-              Colored by the safe threshold of {threshold.batteryTypeName}
-            </span>
-          )}
+        <div className="px-5 py-3 border-b border-border shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium">Sensor history</span>
+            {threshold && (
+              <span className="text-[11px] text-muted-foreground">
+                Colored by the safe threshold of {threshold.batteryTypeName}
+              </span>
+            )}
+          </div>
+          {rangeControls}
         </div>
-        {filterBar}
+        {rangeHint}
         <div className="flex-1 min-h-0 overflow-y-auto">{tableContent}</div>
       </div>
     );
@@ -296,11 +339,12 @@ export default function SensorHistoryTable({
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <CardTitle className="text-base">Sensor history</CardTitle>
+        {rangeControls}
       </CardHeader>
       <CardContent className="px-0">
-        {filterBar}
+        {rangeHint}
         <div className="px-6">{tableContent}</div>
       </CardContent>
     </Card>

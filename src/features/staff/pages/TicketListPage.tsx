@@ -14,6 +14,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { TicketCard } from "@/features/staff/components/ticket/TicketCard";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // GH-1176: updated for 8-status canonical lifecycle visible to Staff.
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
@@ -26,7 +27,7 @@ const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
 const DEFAULTS = {
   status: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function TicketListPage() {

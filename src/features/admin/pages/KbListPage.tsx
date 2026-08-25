@@ -45,20 +45,12 @@ import {
   KB_CATEGORY_OPTIONS,
 } from "@/shared/enums/kb/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
-import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
-import { cn } from "@/lib/utils";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_OPTIONS = Object.values(KbArticleStatusEnum);
-
-const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
-  [KbArticleStatusEnum.Draft]: toneDot(KB_STATUS_TONE.Draft),
-  [KbArticleStatusEnum.PendingReview]: toneDot(KB_STATUS_TONE.PendingReview),
-  [KbArticleStatusEnum.Published]: toneDot(KB_STATUS_TONE.Published),
-  [KbArticleStatusEnum.Archived]: toneDot(KB_STATUS_TONE.Archived),
-};
 
 const DEFAULTS = {
   keyword: "",
@@ -235,15 +227,7 @@ export default function KbListPage() {
               <SelectItem value={null}>All statuses</SelectItem>
               {STATUS_OPTIONS.map((s) => (
                 <SelectItem key={s} value={s}>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "size-1.5 rounded-full shrink-0",
-                        STATUS_DOT[s],
-                      )}
-                    />
-                    {KbArticleStatusLabel[s]}
-                  </span>
+                  {KbArticleStatusLabel[s]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -304,7 +288,7 @@ export default function KbListPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Generate blog with AI?</AlertDialogTitle>
+            <AlertDialogTitle>Generate blog?</AlertDialogTitle>
             <AlertDialogDescription>
               {toGenerate && (
                 <>

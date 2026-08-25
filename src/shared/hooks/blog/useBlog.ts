@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { blogService } from "@/shared/services/blog/blog.service";
 import { QUERY_KEY, KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { checkRole } from "@/shared/lib/authz";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { UserRole } from "@/shared/types/account/session.types";
 import {
   BlogPostStatusEnum,
   BLOG_GENERATION_TERMINAL_STATUSES,
@@ -211,4 +214,34 @@ export function isBlogEditable(status?: BlogPostStatusEnum) {
     status !== BlogPostStatusEnum.Generating &&
     status !== BlogPostStatusEnum.Archived
   );
+}
+
+/**
+ * How many blog posts sit in Draft — drives the sidebar badge on the Blog item.
+ *
+ * Manager/Admin only: those two roles decide what gets published, so the number is a
+ * to-do for them. Staff would see a count they cannot act on, so the query is disabled
+ * and the badge reads 0 — see AppLayout.
+ *
+ * PageSize 1 keeps the payload to one row; only `totalItems` is read. Counting the
+ * loaded page instead would under-report as soon as there is more than one page.
+ */
+export function useBlogDraftCount() {
+  const user = useSessionStore((s) => s.user);
+  const canReview = checkRole(user, UserRole.MANAGER, UserRole.ADMIN);
+
+  const { data } = useQuery({
+    queryKey: QUERY_KEY.blog.list({
+      status: BlogPostStatusEnum.Draft,
+      countOnly: true,
+    }),
+    queryFn: () =>
+      blogService
+        .getList({ page: 1, pageSize: 1, status: BlogPostStatusEnum.Draft })
+        .then((r) => r.data.data),
+    enabled: canReview,
+    staleTime: 60_000,
+  });
+
+  return canReview ? (data?.totalItems ?? 0) : 0;
 }

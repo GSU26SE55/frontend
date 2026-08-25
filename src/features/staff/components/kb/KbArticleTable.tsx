@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { KbStatusBadge } from "@/shared/components/kb/KbStatusBadge";
-import { Eye, ThumbsUp, BookOpen, Copy, ArrowUpDown } from "lucide-react";
+import { KbPendingChangeBadge } from "@/shared/components/kb/KbPendingChangeBadge";
+import { ThumbsUp, BookOpen, Copy, ArrowUpDown } from "lucide-react";
 import type { KbArticleSummaryDTO } from "@/shared/types/kb/kb.types";
 import { KbCategoryLabel } from "@/shared/enums/kb/kb.enum";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
@@ -23,7 +24,6 @@ const SORT_ITEMS = [
   { value: "title", label: "Title" },
   { value: "category", label: "Category" },
   { value: "status", label: "Status" },
-  { value: "viewCount", label: "Views" },
   { value: "helpfulCount", label: "Helpful" },
 ];
 
@@ -33,7 +33,7 @@ interface KbArticleTableProps {
   hasFilter?: boolean;
   onResetFilter?: () => void;
   onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
-  /** Duplicate this row → create a similar article (opens the create page pre-filled). */
+  /** Copy this row → create a similar article (opens the create page pre-filled). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
   /** Server-side sort — state comes from useUrlSort. */
   sort: ServerSortState;
@@ -129,7 +129,7 @@ export default function KbArticleTable({
                   variant="ghost"
                   size="icon"
                   className="-mt-1 -mr-1 size-8"
-                  title="Duplicate"
+                  title="Copy"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCopy(article);
@@ -146,15 +146,16 @@ export default function KbArticleTable({
 
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               <KbStatusBadge status={article.status} />
+              <KbPendingChangeBadge
+                status={article.status}
+                reviewRequired={article.reviewRequired}
+              />
               <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {KbCategoryLabel[article.category] ?? article.category}
               </span>
             </div>
 
             <div className="mt-4 flex items-center justify-end gap-4 border-t border-border/60 pt-3">
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Eye className="size-3.5" /> {article.viewCount}
-              </span>
               {onMarkHelpful ? (
                 <button
                   type="button"

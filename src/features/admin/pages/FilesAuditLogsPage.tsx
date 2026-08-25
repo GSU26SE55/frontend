@@ -9,6 +9,7 @@ import AuditLogFilterBar, {
   type AuditLogFilterValues,
 } from "@/features/admin/components/account/AuditLogFilterBar";
 import { FileAuditActionCode } from "@/features/admin/enums/file-audit.enum";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // YYYY-MM-DD → UTC range (BE filter from/to).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
@@ -22,7 +23,7 @@ const rangeValid = (f: AuditLogFilterValues) =>
 export default function FilesAuditLogsPage() {
   const [filters, setFilters] = useState<AuditLogFilterValues>({});
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const onFilterChange = <K extends keyof AuditLogFilterValues>(
     key: K,

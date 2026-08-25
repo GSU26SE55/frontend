@@ -114,23 +114,24 @@ export default function NotificationTemplateFormDialog({
     useWatch({ control: form.control, name: "type" }) ??
     NotificationTypeEnum.TicketCreated;
 
-  // Ô đích của việc chèn biến. Trước đây suy ra từ "ô vừa focus", nhưng bấm chip là focus đã rời
-  // khỏi ô nên người dùng không nhìn thấy đích ở đâu — và thực tế đã chèn nhầm sang ô kia. Nay đích
-  // là một lựa chọn hiện rõ trên màn hình, giữ nguyên cho tới khi người dùng đổi.
+  // Insert target. This used to be inferred from "the last focused field", but clicking a chip
+  // moves focus out of the field, so the author could not see where the variable would land — and
+  // in practice it went into the wrong one. The target is now an explicit, sticky on-screen choice.
   const [target, setTarget] = useState<"titleTemplate" | "bodyTemplate">(
     "bodyTemplate",
   );
 
-  // Cần ref để đọc vị trí con trỏ lúc chèn, và đặt lại con trỏ ngay sau token vừa chèn.
+  // Refs are needed to read the caret position on insert, and to move the caret just past the
+  // token that was inserted.
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   /**
-   * Chèn biến vào ô đang chọn, tại đúng vị trí con trỏ.
+   * Insert a variable into the targeted field, at the caret position.
    *
-   * Sau khi chèn phải trả con trỏ về ngay sau token: nếu không, ô mất focus và lần chèn kế tiếp lại
-   * rơi về đầu chuỗi (selectionStart của một input vừa mất focus là 0) — người dùng bấm hai biến
-   * liên tiếp sẽ thấy biến thứ hai nhảy lên đầu câu.
+   * The caret must be restored just past the token afterwards: otherwise the field loses focus and
+   * the next insert falls back to the start of the string (selectionStart of a just-blurred input is
+   * 0) — clicking two variables in a row would send the second one to the front of the sentence.
    */
   const handleInsert = (name: string) => {
     const el = target === "titleTemplate" ? titleRef.current : bodyRef.current;
@@ -142,15 +143,16 @@ export default function NotificationTemplateFormDialog({
     const { value, caret } = insertPlaceholderAt(current, name, start, end);
     form.setValue(target, value, { shouldDirty: true, shouldValidate: true });
 
-    // Đợi React ghi giá trị mới vào DOM rồi mới đặt caret.
+    // Wait for React to write the new value into the DOM before placing the caret.
     requestAnimationFrame(() => {
       el?.focus();
       el?.setSelectionRange(caret, caret);
     });
   };
 
-  // Câu đọc thử — thay biến bằng giá trị mẫu để người soạn thấy ngay câu văn thật sự trông ra sao,
-  // thay vì phải tự dịch `{{code}}` trong đầu. Chỉ để xem; giá trị lưu xuống DB vẫn là template gốc.
+  // Preview sentence — variables replaced with sample values so the author sees how the sentence
+  // actually reads instead of mentally expanding `{{code}}`. Display only; what is saved to the DB
+  // is still the raw template.
   const previewOf = (text: string) =>
     renderWithSamples(text, (n) => getVariableDoc(n)?.sample);
 
@@ -178,8 +180,9 @@ export default function NotificationTemplateFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Bảng biến khá cao (tới 20 chip), cộng thêm 2 ô soạn thảo là vượt màn hình laptop —
-          trước đây phần cuối bảng và cả nút Lưu bị cắt mất, không cuộn tới được. */}
+      {/* The variable palette is tall (up to 20 chips), and together with the two editor fields it
+          overflows a laptop screen — the bottom of the palette and the Save button used to be cut
+          off with no way to scroll to them. */}
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
@@ -209,8 +212,8 @@ export default function NotificationTemplateFormDialog({
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            {/* Chỉ vùng nội dung cuộn — nút Lưu/Huỷ luôn nằm trong tầm mắt, không phải cuộn xuống
-                đáy bảng biến mới bấm được. */}
+            {/* Only the content area scrolls — Save/Cancel stay in view instead of requiring a
+                scroll to the bottom of the palette to reach them. */}
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 pb-2">
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
@@ -298,7 +301,7 @@ export default function NotificationTemplateFormDialog({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="VD: Ticket mới"
+                        placeholder="e.g. New ticket"
                         {...field}
                         ref={titleRef}
                         onFocus={() => setTarget("titleTemplate")}
@@ -306,7 +309,7 @@ export default function NotificationTemplateFormDialog({
                     </FormControl>
                     {field.value && (
                       <p className="text-xs text-muted-foreground">
-                        Đọc thử: {previewOf(field.value)}
+                        Preview: {previewOf(field.value)}
                       </p>
                     )}
                     <FormMessage />
@@ -328,7 +331,7 @@ export default function NotificationTemplateFormDialog({
                     <FormControl>
                       <Textarea
                         rows={5}
-                        placeholder="VD: Ticket vừa được tạo."
+                        placeholder="e.g. A ticket has just been created."
                         {...field}
                         ref={bodyRef}
                         onFocus={() => setTarget("bodyTemplate")}
@@ -336,7 +339,7 @@ export default function NotificationTemplateFormDialog({
                     </FormControl>
                     {field.value && (
                       <p className="text-xs text-muted-foreground">
-                        Đọc thử: {previewOf(field.value)}
+                        Preview: {previewOf(field.value)}
                       </p>
                     )}
                     <FormMessage />

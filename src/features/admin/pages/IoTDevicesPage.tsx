@@ -21,6 +21,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const STATUS_LABELS: Record<IotDeviceStatusEnum, string> = {
   [IotDeviceStatusEnum.Pending]: "Pending provision",
@@ -37,7 +38,7 @@ const DEFAULTS = {
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function IoTDevicesPage() {

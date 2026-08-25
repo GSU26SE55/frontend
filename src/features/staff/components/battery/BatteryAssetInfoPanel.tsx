@@ -37,6 +37,9 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
+/** ±2' — mirrors useReadingEvidence / the ambient evidence window. */
+const EVIDENCE_WINDOW_MS = 2 * 60 * 1_000;
+
 interface Props {
   batteryAssetId?: string | null;
   /** Incident detection time (ticket.detectedAt) — used to show the warning evidence log. */
@@ -73,6 +76,17 @@ export default function BatteryAssetInfoPanel({
     );
   }
 
+  // ±2' around detection — the same width as the evidence table below, and as the site-level
+  // ambient panel, so "around detection" means one thing across the whole app.
+  const detectedMs = detectedAt ? new Date(detectedAt).getTime() : NaN;
+  const realtimeQuery = Number.isNaN(detectedMs)
+    ? ""
+    : `?${new URLSearchParams({
+        tab: "history",
+        from: new Date(detectedMs - EVIDENCE_WINDOW_MS).toISOString(),
+        to: new Date(detectedMs + EVIDENCE_WINDOW_MS).toISOString(),
+      }).toString()}`;
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
@@ -85,9 +99,11 @@ export default function BatteryAssetInfoPanel({
         </Badge>
       </div>
 
-      {/* Open the real-time detail page (live telemetry + chart + AI) for the battery linked to this ticket. */}
+      {/* Open the real-time detail page for this battery. When the ticket carries a detection
+          time, the link lands on Sensor history already filtered to the ±2' window around it —
+          the same span as the evidence table above, so the two agree. */}
       <Link
-        to={`/staff/battery-assets/${batteryAssetId}`}
+        to={`/staff/battery-assets/${batteryAssetId}${realtimeQuery}`}
         className={cn(
           buttonVariants({ variant: "outline", size: "sm" }),
           "w-full mb-3",

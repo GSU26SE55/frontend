@@ -1,6 +1,6 @@
 // Panel names (the title of <DashboardPanel>) on the Overview page of all 3 roles.
 // These are the panels inside the role's default page (/admin, /manager, /staff) —
-// NOT the sidebar "sections" (Battery infrastructure / Support / Users).
+// NOT the sidebar "sections" (Needs action / Look up / Notifications / Configure).
 // Kept in one place so renaming a panel touches one spot instead of 3 pages.
 // Usage: title={OVERVIEW_PANELS.admin.alerts7d}
 

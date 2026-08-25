@@ -139,7 +139,7 @@ export default function RolesPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Users
+            Admin &middot; Configure
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Roles & Permissions

@@ -25,8 +25,9 @@ import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KbCategoryCode, KB_CATEGORY_OPTIONS } from "@/shared/enums/kb/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const DEFAULTS = {
   keyword: "",
