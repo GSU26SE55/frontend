@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { EllipsisVertical } from "lucide-react";
 import {
@@ -127,6 +127,8 @@ function DeviceActionsMenu({ device }: { device: IotDeviceDto }) {
 }
 
 export default function IoTDeviceTable({ items }: Props) {
+  const navigate = useNavigate();
+
   return (
     <Table>
       <TableHeader>
@@ -148,14 +150,13 @@ export default function IoTDeviceTable({ items }: Props) {
             !!d.targetFirmwareVersion &&
             d.targetFirmwareVersion !== d.currentFirmwareVersion;
           return (
-            <TableRow key={d.id}>
+            <TableRow
+              key={d.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => navigate(`/staff/iot-devices/${d.id}`)}
+            >
               <TableCell className="font-mono text-xs">
-                <Link
-                  to={`/staff/iot-devices/${d.id}`}
-                  className="text-primary hover:underline"
-                >
-                  {d.deviceCode}
-                </Link>
+                {d.deviceCode}
               </TableCell>
               <TableCell>{d.displayName}</TableCell>
               <TableCell className="text-muted-foreground">
@@ -175,7 +176,10 @@ export default function IoTDeviceTable({ items }: Props) {
               <TableCell className="text-muted-foreground text-xs">
                 {formatRelativeTime(d.lastSeenAt)}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell
+                className="text-right"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <DeviceActionsMenu device={d} />
               </TableCell>
             </TableRow>

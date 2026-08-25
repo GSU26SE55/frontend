@@ -314,12 +314,10 @@ export default function BatteryAssetForm({
               render={({ field }) => (
                 <Select
                   value={field.value || null}
-                  items={
-                    visibleSites.map((s) => ({
-                      value: s.id,
-                      label: s.name,
-                    }))
-                  }
+                  items={visibleSites.map((s) => ({
+                    value: s.id,
+                    label: s.name,
+                  }))}
                   onValueChange={(value) => {
                     field.onChange(value ?? "");
                     const site = sites.find((item) => item.id === value);
@@ -432,8 +430,8 @@ export default function BatteryAssetForm({
             />
             {!isEdit && (
               <p className="text-xs text-muted-foreground">
-                Auto-filled from the selected site's address — you can search for a
-                different place.
+                Auto-filled from the selected site's address — you can search
+                for a different place.
               </p>
             )}
           </div>

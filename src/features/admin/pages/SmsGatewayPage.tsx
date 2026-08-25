@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MessageSquare, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,7 +50,7 @@ export default function SmsGatewayPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -137,6 +138,6 @@ export default function SmsGatewayPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

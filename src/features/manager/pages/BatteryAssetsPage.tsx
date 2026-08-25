@@ -1,5 +1,6 @@
 import { Battery, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,7 +63,7 @@ export default function BatteryAssetsPage() {
   const totalItems = data?.totalItems ?? 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -155,6 +156,6 @@ export default function BatteryAssetsPage() {
         onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
-    </div>
+    </PageContainer>
   );
 }

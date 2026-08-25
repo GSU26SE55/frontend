@@ -94,7 +94,7 @@ export default function SagaDebugPage() {
   const items = data?.items ?? [];
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="space-y-4 py-6 pl-(--page-pl) pr-(--page-pr)">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-semibold">Saga: Alert → Ticket</h1>

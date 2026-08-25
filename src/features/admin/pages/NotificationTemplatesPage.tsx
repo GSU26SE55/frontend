@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { FileText, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -29,7 +30,6 @@ import {
   useDeleteTemplate,
 } from "@/features/admin/hooks/notification/useNotificationTemplates";
 import NotificationTemplateTable from "@/features/admin/components/notification/NotificationTemplateTable";
-import TemplateCoveragePanel from "@/features/admin/components/notification/TemplateCoveragePanel";
 import NotificationTemplatePreviewDialog from "@/features/admin/components/notification/NotificationTemplatePreviewDialog";
 import NotificationTemplateFormDialog from "@/features/admin/components/notification/NotificationTemplateFormDialog";
 import type { NotificationTemplateDto } from "@/features/admin/types/notification/notification-template.types";
@@ -108,23 +108,21 @@ export default function NotificationTemplatesPage() {
   const totalItems = data?.totalItems ?? 0;
 
   return (
-    <div className="p-6 space-y-5 max-w-350 mx-auto">
-      <div className="flex items-start justify-between gap-3">
+    <PageContainer>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            <FileText className="inline size-3 mr-1 -mt-0.5" />
-            Notifications
+            Admin &middot; Notifications
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Notification templates
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Draft, preview, test-send, and roll back versions. Editing content
-            creates a new version; each (type × channel) pair has exactly one
-            version in use.
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : totalItems} templates &mdash; manage
+            notification content.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.admin.notificationTemplates]} />
           <Button size="sm" onClick={() => setFormState({ target: null })}>
             <Plus className="size-3.5" /> Create template
@@ -132,46 +130,44 @@ export default function NotificationTemplatesPage() {
         </div>
       </div>
 
-      <TemplateCoveragePanel />
+      <div className="flex items-center gap-3 flex-wrap">
+        {FILTER_DEFS.map((f) => (
+          <div key={f.key} className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{f.label}</span>
+            <Select
+              value={filters[f.key] || ALL}
+              // Select returns null when deselected → normalize to an empty string (no filter).
+              onValueChange={(v) => setFilter(f.key, !v || v === ALL ? "" : v)}
+              items={[
+                { value: ALL, label: "All" },
+                ...f.options.map((o) => ({
+                  value: String(o.value),
+                  label: o.label,
+                })),
+              ]}
+            >
+              <SelectTrigger size="sm" className="w-52">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                <SelectItem value={ALL}>All</SelectItem>
+                {f.options.map((o) => (
+                  <SelectItem key={o.value} value={String(o.value)}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ))}
+      </div>
 
-      <Card className="rounded-xl overflow-hidden py-0 gap-0">
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-border">
-          {FILTER_DEFS.map((f) => (
-            <div key={f.key} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{f.label}</span>
-              <Select
-                value={filters[f.key] || ALL}
-                // Select returns null when deselected → normalize to an empty string (no filter).
-                onValueChange={(v) =>
-                  setFilter(f.key, !v || v === ALL ? "" : v)
-                }
-                items={[
-                  { value: ALL, label: "All" },
-                  ...f.options.map((o) => ({
-                    value: String(o.value),
-                    label: o.label,
-                  })),
-                ]}
-              >
-                <SelectTrigger className="w-52 h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent alignItemWithTrigger={false}>
-                  <SelectItem value={ALL}>All</SelectItem>
-                  {f.options.map((o) => (
-                    <SelectItem key={o.value} value={String(o.value)}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
-
+      <Card className="gap-0 py-0 overflow-hidden">
         <NotificationTemplateTable
           templates={templates}
           isLoading={isLoading}
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
           activatingId={activate.isPending ? activate.variables : null}
           deletingId={remove.isPending ? remove.variables : null}
           onPreview={setPreviewTarget}
@@ -244,6 +240,6 @@ export default function NotificationTemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

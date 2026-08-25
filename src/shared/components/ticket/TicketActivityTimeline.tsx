@@ -1,5 +1,8 @@
 import { ActorRoleEnum } from "@/shared/types/ticket/ticket.types";
-import type { TicketActivityDTO, TicketAssignmentDTO } from "@/shared/types/ticket/ticket.types";
+import type {
+  TicketActivityDTO,
+  TicketAssignmentDTO,
+} from "@/shared/types/ticket/ticket.types";
 import {
   getActivityMeta,
   activityToneStyle,
@@ -24,7 +27,7 @@ interface Props {
 function formatActivityValue(
   action: string,
   val?: string | null,
-  assignments?: TicketAssignmentDTO[] | null
+  assignments?: TicketAssignmentDTO[] | null,
 ): string | null {
   if (!val || !val.trim()) return null;
   if (val === "Resolved") return "Completed";
@@ -43,13 +46,14 @@ function renderValueDetails(
   action: string,
   oldVal?: string | null,
   newVal?: string | null,
-  assignments?: TicketAssignmentDTO[] | null
+  assignments?: TicketAssignmentDTO[] | null,
 ) {
   const formattedOld = formatActivityValue(action, oldVal, assignments);
   const formattedNew = formatActivityValue(action, newVal, assignments);
 
   if (!formattedOld && !formattedNew) return null;
-  if (formattedOld && formattedNew) return `(${formattedOld} → ${formattedNew})`;
+  if (formattedOld && formattedNew)
+    return `(${formattedOld} → ${formattedNew})`;
   if (formattedNew) return `(${formattedNew})`;
   return `(${formattedOld})`;
 }
@@ -81,7 +85,7 @@ export default function TicketActivityTimeline({
           act.action,
           act.oldValue,
           act.newValue,
-          assignments
+          assignments,
         );
 
         return (

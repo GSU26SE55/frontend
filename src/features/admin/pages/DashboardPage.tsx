@@ -1,12 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import {
-  MapPin,
-  BatteryCharging,
-  BellRing,
-  ShieldAlert,
-  WifiOff,
-} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   ChartContainer,
   ChartLegend,
@@ -16,17 +10,21 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
-  DashboardKpi,
+  DashboardHeading,
   DashboardPanel,
   DashboardDonut,
   DashboardGauge,
+  GaugeFooter,
+  Stat,
+  StatRail,
 } from "@/shared/components/dashboard/DashboardPanel";
 import { TopAlertingPanel } from "@/shared/components/dashboard/TopAlertingPanel";
 import { useBatteryDashboardStats } from "@/shared/hooks/dashboard/useBatteryDashboard";
 import { useSiteDashboardStats } from "@/shared/hooks/dashboard/useDashboardStats";
-import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { TicketHealthCard } from "@/features/admin/components/ticket/TicketHealthCard";
 import { KEY } from "@/shared/utils/queryKeys";
+import { plural, statusLine } from "@/shared/utils/plural";
+import { toneVars } from "@/shared/theme/statusColors";
 import {
   Area,
   AreaChart,
@@ -46,17 +44,13 @@ import { OVERVIEW_PANELS } from "@/shared/constants/overviewPanels";
  * Does NOT show SLA / ticket pipeline — that is the Manager's coordination surface.
  * Admin needs to know "is the system healthy", not "how far along is the ticket".
  *
- * Layout: ONE FIXED FRAME, the page does not scroll (`overflow-hidden`). The
- * remaining height is split into exactly 2 panel rows via `grid-rows-2` +
- * `flex-1 min-h-0`; any panel that is a list scrolls INSIDE itself instead of
- * stretching the page.
- *
- * Each panel uses a different chart shape (area / gauge / horizontal bar / donut /
- * leaderboard) so the kind of information is recognizable from the shape alone.
+ * The page opens with a sentence stating whether anything is wrong, then the headline
+ * numbers, then panels. Each panel uses a different chart shape (area, gauge, horizontal
+ * bar, donut, ranking) so the kind of information is recognisable from the shape alone.
  */
 
 const alertChartConfig = {
-  critical: { label: "Critical", color: "var(--destructive)" },
+  critical: { label: "Critical", color: "var(--p1)" },
   warning: { label: "Warning", color: "var(--p3)" },
   info: { label: "Info", color: "var(--muted-foreground)" },
 } satisfies ChartConfig;
@@ -135,10 +129,48 @@ export default function AdminDashboardPage() {
     totalBatt === 0
       ? "var(--muted-foreground)"
       : onlinePct >= 90
-        ? "var(--ok)"
+        ? toneVars("ok").fg
         : onlinePct >= 70
-          ? "var(--p3)"
-          : "var(--p1)";
+          ? toneVars("p3").fg
+          : toneVars("p1").fg;
+
+  // ── Site health: the average health score across sites, and how many sit below the
+  // at-risk line. Read as a gauge so it matches "Batteries connected" above it. ──
+  const avgHealth = Math.round(siteStats?.avgHealth ?? 0);
+  const atRiskSites = siteStats?.atRiskCount ?? 0;
+  const healthySites = Math.max(0, totalSites - atRiskSites);
+  const healthColor =
+    totalSites === 0
+      ? "var(--muted-foreground)"
+      : avgHealth >= 90
+        ? toneVars("ok").fg
+        : avgHealth >= 80
+          ? toneVars("p3").fg
+          : toneVars("p1").fg;
+
+  const problems: string[] = [];
+  if (offlineBatt > 0)
+    problems.push(`${plural(offlineBatt, "battery", "batteries")} offline`);
+  if (criticalOpen > 0)
+    problems.push(
+      `${plural(criticalOpen, "critical alert", "critical alerts")} open`,
+    );
+  if (activeIncidents > 0)
+    problems.push(
+      plural(
+        activeIncidents,
+        "environmental incident",
+        "environmental incidents",
+      ),
+    );
+  if (atRiskSites > 0)
+    problems.push(`${plural(atRiskSites, "site", "sites")} below 80% health`);
+  const status = statsLoading
+    ? "Reading the latest device data."
+    : statusLine(
+        problems,
+        "Every device is reporting and no alert is critical.",
+      );
 
   const alertSeries = stats?.alertTrend7Days ?? [];
 
@@ -165,77 +197,67 @@ export default function AdminDashboardPage() {
     }))
     .filter((d) => d.value > 0);
 
-  // ── Visibility: empty panels are hidden entirely, so no blank cells inside the fixed frame ──
+  // ── Visibility: empty panels are hidden entirely rather than left as blank cells ──
   const showAnomaly = statsLoading || anomalyData.length > 0;
   const showBattStatus = statsLoading || battByStatus.length > 0;
   const showTopAlerting = statsLoading || topAlerting.length > 0;
 
   return (
-    <div className="h-full flex flex-col gap-2.5 p-3 lg:p-4 overflow-y-auto lg:overflow-hidden">
-      {/* ── Header ── */}
-      <div className="flex justify-end shrink-0">
-        <RefreshButton
-          queryKeys={[KEY.siteDashboard, KEY.batteryDashboard]}
-          label="Sync"
-        />
-      </div>
+    <PageContainer>
+      <DashboardHeading
+        title="System health"
+        status={status}
+        refreshKeys={[KEY.siteDashboard, KEY.batteryDashboard]}
+      />
 
-      {/* ── KPI strip — clickable, jumps straight to the matching page ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:gap-2.5 shrink-0">
-        <DashboardKpi
+      <StatRail className="mt-6">
+        <Stat
           label="Sites"
           value={siteStatsLoading ? "--" : totalSites}
-          icon={<MapPin className="size-4" />}
           to="/admin/sites"
         />
-        <DashboardKpi
+        <Stat
           label="Batteries online"
           value={statsLoading ? "--" : onlineBatt}
-          icon={<BatteryCharging className="size-4" />}
           to="/admin/battery-assets"
         />
-        <DashboardKpi
+        <Stat
           label="Batteries offline"
           value={statsLoading ? "--" : offlineBatt}
-          icon={<WifiOff className="size-4" />}
-          accent={offlineBatt > 0 ? "var(--p3)" : undefined}
+          tone={offlineBatt > 0 ? "p3" : undefined}
           to="/admin/iot-devices"
         />
-        <DashboardKpi
+        <Stat
           label="Open alerts"
           value={statsLoading ? "--" : openAlerts}
-          icon={<BellRing className="size-4" />}
-          accent={criticalOpen > 0 ? "var(--p1)" : undefined}
+          tone={criticalOpen > 0 ? "p1" : undefined}
           to="/admin/alerts"
         />
-        <DashboardKpi
+        <Stat
           label="Environmental incidents"
           value={statsLoading ? "--" : activeIncidents}
-          icon={<ShieldAlert className="size-4" />}
-          accent={activeIncidents > 0 ? "var(--p1)" : undefined}
+          tone={activeIncidents > 0 ? "p1" : undefined}
           to="/admin/environmental-incidents"
         />
-      </div>
+      </StatRail>
 
-      {/* ── Service health (thin strip) ── */}
-      <div className="shrink-0">
+      <div className="mt-6">
         <TicketHealthCard />
       </div>
 
-      {/* ── Bento Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5 lg:gap-3 flex-1 min-h-0">
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
         {/* [Area] trend over time */}
         <DashboardPanel
           title={OVERVIEW_PANELS.admin.alerts7d}
           desc="By severity"
-          className="lg:col-span-2 min-h-[180px] lg:min-h-0"
+          className="h-80 lg:col-span-2"
         >
           {statsLoading ? (
             <Skeleton className="h-full w-full" />
           ) : (
             <ChartContainer
               config={alertChartConfig}
-              className="h-full w-full aspect-auto min-h-0"
+              className="aspect-auto h-full min-h-0 w-full"
             >
               <AreaChart
                 data={alertSeries}
@@ -276,12 +298,12 @@ export default function AdminDashboardPage() {
                       <stop
                         offset="5%"
                         stopColor={`var(--color-${k})`}
-                        stopOpacity={0.45}
+                        stopOpacity={0.4}
                       />
                       <stop
                         offset="95%"
                         stopColor={`var(--color-${k})`}
-                        stopOpacity={0.04}
+                        stopOpacity={0.03}
                       />
                     </linearGradient>
                   ))}
@@ -305,8 +327,8 @@ export default function AdminDashboardPage() {
         {/* [Gauge] a single ratio */}
         <DashboardPanel
           title="Batteries connected"
-          desc={`${onlineBatt}/${totalBatt} devices reporting data`}
-          className="min-h-[180px] lg:min-h-0"
+          desc={`${onlineBatt} of ${totalBatt} reporting`}
+          className="h-80"
         >
           {statsLoading ? (
             <Skeleton className="h-full w-full" />
@@ -317,32 +339,16 @@ export default function AdminDashboardPage() {
               caption="online"
               color={onlineColor}
               footer={
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="rounded-lg bg-muted/40 py-2 px-1">
-                    <p
-                      className="text-base font-bold tabular-nums"
-                      style={{ color: "var(--ok)" }}
-                    >
-                      {onlineBatt}
-                    </p>
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Online
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-muted/40 py-2 px-1">
-                    <p
-                      className="text-base font-bold tabular-nums"
-                      style={{
-                        color: offlineBatt > 0 ? "var(--p3)" : undefined,
-                      }}
-                    >
-                      {offlineBatt}
-                    </p>
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Offline
-                    </p>
-                  </div>
-                </div>
+                <GaugeFooter
+                  cells={[
+                    { value: onlineBatt, label: "Online", tone: "ok" },
+                    {
+                      value: offlineBatt,
+                      label: "Offline",
+                      tone: offlineBatt > 0 ? "p3" : undefined,
+                    },
+                  ]}
+                />
               }
             />
           )}
@@ -352,15 +358,15 @@ export default function AdminDashboardPage() {
         {showAnomaly && (
           <DashboardPanel
             title={OVERVIEW_PANELS.admin.alertsByType}
-            desc="Top types · color by severity"
-            className="min-h-[160px] lg:min-h-0"
+            desc="Colour by severity"
+            className="h-70"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
             ) : (
               <ChartContainer
                 config={anomalyChartConfig}
-                className="h-full w-full aspect-auto min-h-0"
+                className="aspect-auto h-full min-h-0 w-full"
               >
                 <BarChart
                   accessibilityLayer
@@ -375,13 +381,13 @@ export default function AdminDashboardPage() {
                     width={100}
                     tickLine={false}
                     axisLine={false}
-                    tick={{ fontSize: 11.5, fontWeight: 500 }}
+                    tick={{ fontSize: 11.5 }}
                   />
                   <ChartTooltip
                     cursor={false}
                     content={<ChartTooltipContent hideLabel />}
                   />
-                  <Bar dataKey="value" radius={4} maxBarSize={18}>
+                  <Bar dataKey="value" radius={4} maxBarSize={16}>
                     {anomalyData.map((d) => (
                       <Cell key={d.label} fill={d.color} />
                     ))}
@@ -391,12 +397,13 @@ export default function AdminDashboardPage() {
             )}
           </DashboardPanel>
         )}
+
         {/* [Donut] composition breakdown */}
         {showBattStatus && (
           <DashboardPanel
             title={OVERVIEW_PANELS.admin.batteryByStatus}
             desc={`${totalBatt} batteries`}
-            className="min-h-[160px] lg:min-h-0"
+            className="h-70"
           >
             {statsLoading ? (
               <Skeleton className="h-full w-full" />
@@ -410,7 +417,38 @@ export default function AdminDashboardPage() {
           </DashboardPanel>
         )}
 
-        {/* [Leaderboard] actionable list */}
+        {/* [Gauge] average health across sites — the third cell of this row, so the grid
+            stays complete whether or not the ranking below has anything to show. */}
+        <DashboardPanel
+          title={OVERVIEW_PANELS.admin.siteHealth}
+          desc={`${plural(totalSites, "site", "sites")}`}
+          className="h-70"
+        >
+          {siteStatsLoading ? (
+            <Skeleton className="h-full w-full" />
+          ) : (
+            <DashboardGauge
+              percent={avgHealth}
+              valueText={totalSites > 0 ? `${avgHealth}%` : "—"}
+              caption="avg health"
+              color={healthColor}
+              footer={
+                <GaugeFooter
+                  cells={[
+                    { value: healthySites, label: "Healthy", tone: "ok" },
+                    {
+                      value: atRiskSites,
+                      label: "At risk",
+                      tone: atRiskSites > 0 ? "p1" : undefined,
+                    },
+                  ]}
+                />
+              }
+            />
+          )}
+        </DashboardPanel>
+
+        {/* [Ranking] actionable list */}
         {showTopAlerting && (
           <TopAlertingPanel
             title={OVERVIEW_PANELS.admin.topAlerting}
@@ -419,10 +457,10 @@ export default function AdminDashboardPage() {
             onSelect={(a) =>
               navigate(`/admin/battery-assets/${a.batteryAssetId}`)
             }
-            className="min-h-[160px] lg:min-h-0"
+            className="h-70"
           />
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -6,9 +6,35 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
+import {
+  PopupPresence,
+  PopupRoot,
+  PopupSurface,
+  usePopupRoot,
+} from "@/shared/motion/popup";
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+function Dialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: DialogPrimitive.Root.Props) {
+  const popup = usePopupRoot(open, defaultOpen);
+  return (
+    <PopupRoot value={popup.value}>
+      <DialogPrimitive.Root
+        data-slot="dialog"
+        open={open}
+        defaultOpen={defaultOpen}
+        actionsRef={popup.actionsRef}
+        onOpenChange={(next, details) => {
+          popup.sync(next);
+          onOpenChange?.(next, details);
+        }}
+        {...props}
+      />
+    </PopupRoot>
+  );
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -30,10 +56,8 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
-      className={cn(
-        "fixed inset-0 isolate z-50 bg-black/60 duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
-        className,
-      )}
+      render={<PopupSurface variant="fade" />}
+      className={cn("fixed inset-0 isolate z-50 bg-black/60", className)}
       {...props}
     />
   );
@@ -50,33 +74,40 @@ function DialogContent({
   overlayClassName?: string;
 }) {
   return (
-    <DialogPortal>
-      <DialogOverlay className={overlayClassName} />
-      <DialogPrimitive.Popup
-        data-slot="dialog-content"
-        className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-5 rounded-2xl bg-card p-6 text-card-foreground border border-border/80 shadow-2xl shadow-black/20 duration-200 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-4 right-4 rounded-full size-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                size="icon-sm"
-              />
-            }
-          >
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Popup>
+    <DialogPortal keepMounted>
+      {/* One presence for both parts: the backdrop and the panel must leave together,
+          and the popup may only unmount once the slower of the two has finished. */}
+      <PopupPresence>
+        <DialogOverlay key="overlay" className={overlayClassName} />
+        <DialogPrimitive.Popup
+          key="popup"
+          data-slot="dialog-content"
+          render={<PopupSurface variant="dialog" />}
+          style={{ translate: "-50% -50%" }}
+          className={cn(
+            "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] gap-5 rounded-2xl bg-card p-6 text-card-foreground border border-border/80 shadow-2xl shadow-black/20 outline-none sm:max-w-lg",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              data-slot="dialog-close"
+              render={
+                <Button
+                  variant="ghost"
+                  className="absolute top-4 right-4 rounded-full size-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                  size="icon-sm"
+                />
+              }
+            >
+              <XIcon className="size-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Popup>
+      </PopupPresence>
     </DialogPortal>
   );
 }

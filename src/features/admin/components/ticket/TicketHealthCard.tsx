@@ -1,21 +1,24 @@
-import { Activity } from "lucide-react";
 import { useTicketHealth } from "@/features/admin/hooks/ticket/useTicketHealth";
-import { toneFill } from "@/shared/theme/statusColors";
+import { toneFill, type StatusTone } from "@/shared/theme/statusColors";
 
-function statusTone(status?: string) {
+function statusTone(status?: string): StatusTone {
   switch (status) {
     case "Healthy":
-      return toneFill("ok");
+      return "ok";
     case "Warning":
-      return toneFill("p3");
+      return "p3";
     case "Degraded":
-      return toneFill("p1");
+      return "p1";
     default:
-      return toneFill("muted");
+      return "muted";
   }
 }
 
-function HealthPill({
+/**
+ * One service reading: what it is, the number behind it, and the verdict as a pill.
+ * The verdict carries the only colour, so a healthy row stays quiet.
+ */
+function HealthItem({
   label,
   status,
   detail,
@@ -27,16 +30,16 @@ function HealthPill({
   loading?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+    <div className="flex min-w-0 items-center gap-3 border-l border-border px-4 py-2.5 first:border-l-0 first:pl-0">
       <div className="min-w-0">
-        <p className="text-xs font-medium truncate">{label}</p>
+        <p className="truncate text-sm">{label}</p>
         {detail && (
-          <p className="text-[11px] text-muted-foreground truncate">{detail}</p>
+          <p className="truncate text-xs text-muted-foreground">{detail}</p>
         )}
       </div>
       <span
-        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusTone(
-          status,
+        className={`ml-auto shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${toneFill(
+          statusTone(status),
         )}`}
       >
         {loading ? "…" : (status ?? "N/A")}
@@ -45,45 +48,41 @@ function HealthPill({
   );
 }
 
+/**
+ * Ticket service health, read as one strip rather than a card of cards: on the dashboard
+ * this is a footnote to the numbers above it, not a panel competing with them.
+ */
 export function TicketHealthCard() {
   const { health, syncLag, saga } = useTicketHealth();
 
   return (
-    <div className="shrink-0 rounded-xl border border-border p-3">
-      <div className="flex items-center gap-1.5 mb-2">
-        <Activity className="size-3.5 text-muted-foreground" />
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Ticket Service Health
-        </h2>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <HealthPill
-          label="Service"
-          status={health.data?.status}
-          loading={health.isLoading}
-          detail={health.data?.service}
-        />
-        <HealthPill
-          label="Sync lag"
-          status={syncLag.data?.status}
-          loading={syncLag.isLoading}
-          detail={
-            syncLag.data
-              ? `max ${Math.round(syncLag.data.maxLagSeconds)}s`
-              : undefined
-          }
-        />
-        <HealthPill
-          label="Saga"
-          status={saga.data?.status}
-          loading={saga.isLoading}
-          detail={
-            saga.data
-              ? `${saga.data.failedLast24h} failed/24h · ${saga.data.stuckOver15min} stuck`
-              : undefined
-          }
-        />
-      </div>
+    <div className="grid grid-cols-1 border-b border-border pb-1 sm:grid-cols-3">
+      <HealthItem
+        label="Ticket service"
+        status={health.data?.status}
+        loading={health.isLoading}
+        detail={health.data?.service}
+      />
+      <HealthItem
+        label="Sync lag"
+        status={syncLag.data?.status}
+        loading={syncLag.isLoading}
+        detail={
+          syncLag.data
+            ? `max ${Math.round(syncLag.data.maxLagSeconds)}s`
+            : undefined
+        }
+      />
+      <HealthItem
+        label="Saga"
+        status={saga.data?.status}
+        loading={saga.isLoading}
+        detail={
+          saga.data
+            ? `${saga.data.failedLast24h} failed in 24h, ${saga.data.stuckOver15min} stuck`
+            : undefined
+        }
+      />
     </div>
   );
 }

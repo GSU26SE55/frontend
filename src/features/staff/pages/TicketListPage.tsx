@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { useStaffTickets } from "@/features/staff/hooks/ticket/useStaffTickets";
@@ -41,7 +42,7 @@ export default function TicketListPage() {
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -89,7 +90,7 @@ export default function TicketListPage() {
       {isLoading && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-36 rounded-xl" />
+            <Skeleton key={i} className="h-36 rounded-none" />
           ))}
         </div>
       )}
@@ -126,6 +127,6 @@ export default function TicketListPage() {
           />
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

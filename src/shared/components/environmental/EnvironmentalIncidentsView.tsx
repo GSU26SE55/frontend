@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,7 +137,7 @@ export default function EnvironmentalIncidentsView({
   const totalItems = data?.totalItems ?? 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -334,7 +335,7 @@ export default function EnvironmentalIncidentsView({
         siteName={siteName}
         onClose={() => setSelectedId(null)}
       />
-    </div>
+    </PageContainer>
   );
 }
 

@@ -1,5 +1,6 @@
 import { MapPin, Search } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export default function ManagerSiteListPage() {
   const totalItems = data?.totalItems ?? 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -106,6 +107,6 @@ export default function ManagerSiteListPage() {
         onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
-    </div>
+    </PageContainer>
   );
 }

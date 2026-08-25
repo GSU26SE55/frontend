@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -111,7 +112,7 @@ export default function KbListPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -131,7 +132,7 @@ export default function KbListPage() {
         </div>
       </div>
 
-      <div className="sticky top-0 z-10 -mx-6 px-6 py-3 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 space-y-3">
+      <div className="sticky top-0 z-10 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] pl-(--page-pl) pr-(--page-pr) bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -254,6 +255,8 @@ export default function KbListPage() {
       ) : (
         <KbArticleTable
           data={data?.items ?? []}
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
           isLoading={isLoading}
           hasFilter={hasActiveFilter}
           onResetFilter={resetFilters}
@@ -313,6 +316,6 @@ export default function KbListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

@@ -17,6 +17,7 @@ export interface BatteryTypeListParams {
   pageSize?: number;
   keyword?: string;
   includeDeleted?: boolean;
+  chemistry?: BatteryChemistryEnum;
   sortBy?: string;
   sortDir?: string;
 }

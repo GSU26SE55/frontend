@@ -221,7 +221,7 @@ export default function BmsSwitchControlCard({
               setConfirmation({ target: row.target, enable: !row.state.on })
             }
             className={cn(
-              "grid size-8 shrink-0 place-items-center rounded-full transition-all",
+              "grid size-8 shrink-0 place-items-center rounded-full transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-state) ease-strong",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               toneClass(row.state.tone),
               pending

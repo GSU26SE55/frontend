@@ -1,6 +1,9 @@
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { TicketActivityDTO, TicketAssignmentDTO } from "@/shared/types/ticket/ticket.types";
+import type {
+  TicketActivityDTO,
+  TicketAssignmentDTO,
+} from "@/shared/types/ticket/ticket.types";
 import {
   getActivityMeta,
   activityToneStyle,
@@ -18,7 +21,7 @@ interface Props {
 function formatActivityValue(
   action: string,
   val?: string | null,
-  assignments?: TicketAssignmentDTO[] | null
+  assignments?: TicketAssignmentDTO[] | null,
 ): string | null {
   if (!val || !val.trim()) return null;
   if (val === "Resolved") return "Completed";
@@ -69,12 +72,12 @@ export default function TicketActivityTimeline({
         const formattedOld = formatActivityValue(
           activity.action,
           activity.oldValue,
-          assignments
+          assignments,
         );
         const formattedNew = formatActivityValue(
           activity.action,
           activity.newValue,
-          assignments
+          assignments,
         );
 
         return (
@@ -97,14 +100,13 @@ export default function TicketActivityTimeline({
                 </time>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {actorName ? `${actorName} · ` : ""}{activity.actorRole}
+                {actorName ? `${actorName} · ` : ""}
+                {activity.actorRole}
               </p>
               {(formattedOld || formattedNew) && (
                 <p className="text-xs text-muted-foreground mt-1">
                   {formattedOld && (
-                    <span className="line-through mr-1">
-                      {formattedOld}
-                    </span>
+                    <span className="line-through mr-1">{formattedOld}</span>
                   )}
                   {formattedNew && <span>{formattedNew}</span>}
                 </p>

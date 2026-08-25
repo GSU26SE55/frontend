@@ -112,13 +112,7 @@ export default function AssignDialog({
         form.setValue("priority", priority);
       }
     }
-  }, [
-    open,
-    priority,
-    form,
-    customerSchedule,
-    isCustomerScheduleActive,
-  ]);
+  }, [open, priority, form, customerSchedule, isCustomerScheduleActive]);
 
   const selectedPriority =
     useWatch({

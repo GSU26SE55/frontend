@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
 import Sidebar, { type NavSection, type NavBadge } from "./Sidebar";
@@ -12,7 +12,7 @@ import { useLogout } from "@/features/auth/hooks/useLogout";
 import { UserRole } from "@/shared/types/account/session.types";
 import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 import NotificationBell from "./NotificationBell";
-import { PageSkeleton } from "./LayoutSkeleton";
+import LayoutSkeleton, { PageSkeleton } from "./LayoutSkeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +20,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { motion, useReducedMotion } from "framer-motion";
+import { PageTransition } from "@/shared/motion/PageTransition";
+import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
 
 // ── Topbar ───────────────────────────────────────────────────────────────────
 function Topbar() {
+  const reduced = useReducedMotion();
   const { user } = useSessionStore();
   const { mutate: logout } = useLogout();
 
@@ -45,11 +49,20 @@ function Topbar() {
           : (user?.role ?? "");
 
   return (
-    <header className="h-14 border-b border-border/60 bg-background/85 backdrop-blur-md flex items-center px-5 gap-3 sticky top-0 z-20 shrink-0">
+    <motion.header
+      // Rises once when the shell mounts, alongside the sidebar and the page.
+      initial={reduced ? false : { opacity: 0, y: DIST.sm }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        transition: { duration: DUR.enter, ease: EASE_OUT },
+      }}
+      className="h-14 border-b border-border/60 bg-background/85 backdrop-blur-md flex items-center px-5 gap-3 sticky top-0 z-20 shrink-0"
+    >
       <div className="flex-1" />
 
       {/* System status dot inside a polished pill container */}
-      <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-all">
+      <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
         <span
           className="w-1.5 h-1.5 rounded-full pulse-dot shrink-0"
           style={{ backgroundColor: "var(--ok)" }}
@@ -66,7 +79,7 @@ function Topbar() {
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label="Account menu"
-          className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border border-border/80 bg-background/50 hover:bg-muted/70 hover:border-primary/30 hover:shadow-xs transition-all duration-200 cursor-pointer outline-none"
+          className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border border-border/80 bg-background/50 hover:bg-muted/70 hover:border-primary/30 hover:shadow-xs transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer outline-none"
         >
           <span className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0 shadow-inner">
             {initials}
@@ -105,7 +118,7 @@ function Topbar() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </header>
+    </motion.header>
   );
 }
 
@@ -182,6 +195,18 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     blogDrafts,
   ]);
 
+  // Hold the shell on its skeleton for a beat before painting the real thing. Landing
+  // straight from the login redirect, the chunk and the badge queries are usually in
+  // flight for about this long anyway; the wait gives the entrance something to reveal
+  // instead of the whole console snapping in fully formed.
+  const [shellReady, setShellReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setShellReady(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!shellReady) return <LayoutSkeleton />;
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
@@ -194,16 +219,20 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar />
         <main className="flex-1 overflow-y-auto">
-          {/* key by route → the page-enter animation replays on every navigation.
+          {/* Route pages are code-split (React.lazy in src/router/index.tsx). Keeping the
+              boundary inside <main> means the sidebar and topbar stay painted while a page
+              chunk downloads — the layout never unmounts, so no flicker on navigation.
+              The transition sits INSIDE it: otherwise the sweep plays on the skeleton and
+              the real page pops in afterwards without moving.
               h-full + min-h-0 preserve the flex layout of full-height pages. */}
-          <div key={location.pathname} className="page-enter h-full min-h-0">
-            {/* Route pages are code-split (React.lazy in src/router/index.tsx). Keeping the
-                boundary inside <main> means the sidebar and topbar stay painted while a page
-                chunk downloads — the layout never unmounts, so no flicker on navigation. */}
-            <Suspense fallback={<PageSkeleton />}>
+          <Suspense fallback={<PageSkeleton />}>
+            <PageTransition
+              routeKey={location.pathname}
+              className="h-full min-h-0"
+            >
               <Outlet />
-            </Suspense>
-          </div>
+            </PageTransition>
+          </Suspense>
         </main>
       </div>
     </div>

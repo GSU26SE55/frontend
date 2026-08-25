@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Eye, EyeOff, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,17 +108,17 @@ export default function IoTDeviceDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-360 mx-auto space-y-4">
+      <PageContainer>
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-64 w-full" />
-      </div>
+      </PageContainer>
     );
   }
   if (!device) {
     return (
-      <div className="p-6 max-w-360 mx-auto">
+      <PageContainer>
         <p className="text-muted-foreground">Device not found.</p>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -130,7 +131,7 @@ export default function IoTDeviceDetailPage() {
   const canSendCommand = !isDisabled && !isDecommissioned && !isPending;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Button
@@ -361,6 +362,6 @@ export default function IoTDeviceDetailPage() {
           });
         }}
       />
-    </div>
+    </PageContainer>
   );
 }

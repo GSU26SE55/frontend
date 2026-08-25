@@ -4,9 +4,35 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ACTIONS } from "@/shared/constants/actions";
+import {
+  PopupPresence,
+  PopupRoot,
+  PopupSurface,
+  usePopupRoot,
+} from "@/shared/motion/popup";
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
+function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: AlertDialogPrimitive.Root.Props) {
+  const popup = usePopupRoot(open, defaultOpen);
+  return (
+    <PopupRoot value={popup.value}>
+      <AlertDialogPrimitive.Root
+        data-slot="alert-dialog"
+        open={open}
+        defaultOpen={defaultOpen}
+        actionsRef={popup.actionsRef}
+        onOpenChange={(next, details) => {
+          popup.sync(next);
+          onOpenChange?.(next, details);
+        }}
+        {...props}
+      />
+    </PopupRoot>
+  );
 }
 
 function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
@@ -28,10 +54,8 @@ function AlertDialogOverlay({
   return (
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
-      className={cn(
-        "fixed inset-0 isolate z-50 bg-black/60 duration-200 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
-        className,
-      )}
+      render={<PopupSurface variant="fade" />}
+      className={cn("fixed inset-0 isolate z-50 bg-black/60", className)}
       {...props}
     />
   );
@@ -46,19 +70,24 @@ function AlertDialogContent({
   size?: "default" | "sm";
 }) {
   return (
-    <AlertDialogPortal>
-      <AlertDialogOverlay />
-      <AlertDialogPrimitive.Popup
-        data-slot="alert-dialog-content"
-        data-size={size}
-        className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-5 rounded-2xl bg-card p-6 text-card-foreground border border-border/80 shadow-2xl shadow-black/20 duration-200 outline-none data-[size=default]:max-w-md data-[size=sm]:max-w-sm sm:data-[size=default]:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </AlertDialogPrimitive.Popup>
+    <AlertDialogPortal keepMounted>
+      <PopupPresence>
+        <AlertDialogOverlay key="overlay" />
+        <AlertDialogPrimitive.Popup
+          key="popup"
+          data-slot="alert-dialog-content"
+          data-size={size}
+          render={<PopupSurface variant="dialog" />}
+          style={{ translate: "-50% -50%" }}
+          className={cn(
+            "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full gap-5 rounded-2xl bg-card p-6 text-card-foreground border border-border/80 shadow-2xl shadow-black/20 outline-none data-[size=default]:max-w-md data-[size=sm]:max-w-sm sm:data-[size=default]:max-w-md",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </AlertDialogPrimitive.Popup>
+      </PopupPresence>
     </AlertDialogPortal>
   );
 }

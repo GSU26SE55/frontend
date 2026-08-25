@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { BatteryCharging, Repeat2 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import {
+  SlaTimerStatusEnum,
   TicketAssignmentRoleEnum,
   TicketAssignmentRoleLabel,
 } from "@/shared/enums/ticket/ticket.enum";
@@ -27,37 +28,34 @@ export function TicketCard({ ticket }: Props) {
     ? ticket.assignments?.find((a) => a.staffId === accountId)?.role
     : undefined;
 
+  // The two states that mean "this one, now": a site incident, or a clock that has
+  // already run out. Both light the tile up, because to the person scanning the board
+  // they mean the same thing.
+  const alert =
+    ticket.isIncident ||
+    ticket.slaTimer?.status === SlaTimerStatusEnum.Breached;
+
   return (
     <Link to={`/staff/tickets/${ticket.id}`} className="block h-full">
-      {/* h-full + flex: cards in the same row have equal height. Without it, a card
-          with an SLA is noticeably taller than one without, and the grid looks uneven. */}
-      {/* Incident ticket: red border + faint red background across the whole card. This
-          is the most severe level, and it must be recognizable from a distance while
-          scanning the grid, not only after reading down to the inner chip. */}
-      {/* Incident ticket: the CARD BORDER pulses red continuously — an "needs attention"
-          signal following monitoring-system convention. Used instead of a static badge
-          because motion catches peripheral vision, visible even before looking straight
-          at the card. */}
-      <Card
-        className={`flex h-full flex-col transition-shadow cursor-pointer hover:shadow-md ${
-          // Background at only 2% — just enough to stand out from a regular card, but
-          // must stay LIGHT so the pulsing red border still shows through. A darker
-          // background would blend the two together and the border's motion would
-          // nearly disappear.
-          ticket.isIncident ? "incident-pulse bg-destructive/2" : ""
-        }`}
+      {/* Flat tile, not a rounded card: square corners and one hairline, so the board
+          reads as a table of work rather than a row of product cards. h-full + flex keeps
+          tiles in a row the same height — without it a tile with an SLA is taller than
+          one without and the grid looks ragged. */}
+      <article
+        className={cn(
+          "flex h-full cursor-pointer flex-col gap-3 border border-border bg-card p-4 transition-colors",
+          alert ? "alert-card" : "hover:bg-muted/40",
+        )}
       >
-        <CardHeader className="pb-2">
-          {/* Row 1: ticket code + 2 badges. Row 2: title takes up the FULL width.
-              Previously the title shared a column with the badges, so it got squeezed
-              and wrapped to 2 lines even when the card had room to spare on the right. */}
+        <div>
+          {/* Row 1: ticket code + badges. Row 2: title takes the FULL width — sharing a
+              column with the badges squeezed it into two lines with room to spare. */}
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground font-mono truncate">
+            <p className="truncate font-mono text-xs text-muted-foreground">
               {ticket.code}
             </p>
-            {/* Role badge joins the EXISTING badge row rather than adding a new one — an extra
-                row would change the card's height and shift the SLA line, the same problem the
-                signal row below is fixed for. */}
+            {/* The role badge joins the EXISTING badge row rather than adding a new one:
+                an extra row would change the tile's height and shift the SLA line. */}
             <div className="flex shrink-0 items-center gap-1.5">
               {myRole && (
                 <span
@@ -77,22 +75,21 @@ export function TicketCard({ ticket }: Props) {
               <TicketStatusBadge status={ticket.status} />
             </div>
           </div>
-          {/* The title is the card's main focal point — noticeably larger and bolder
-              than the rest; sized the same as secondary info, nothing would draw the eye. */}
+          {/* The title is the tile's focal point — noticeably larger and bolder than the
+              rest; sized like the secondary info, nothing would draw the eye. */}
           <p
-            className="mt-1.5 text-base font-semibold leading-snug line-clamp-2"
+            className="mt-1.5 line-clamp-2 text-base font-semibold leading-snug"
             title={ticket.title}
           >
             {ticket.title}
           </p>
-        </CardHeader>
+        </div>
 
-        <CardContent className="flex flex-1 flex-col justify-between gap-3 pt-0">
+        <div className="flex flex-1 flex-col justify-between gap-3">
           <div className="space-y-2">
             {/* Fault type + battery serial — the two things Staff need first (what,
-                where). Uses filled chips instead of plain gray text: at 11-12px with
-                no color or background, they'd sink below the title and become nearly
-                invisible during a quick scan. */}
+                where). Filled chips instead of plain grey text: at 11-12px with no colour
+                behind them they sink below the title and vanish in a quick scan. */}
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
                 {KbCategoryLabel[ticket.category] ?? ticket.category}
@@ -108,13 +105,9 @@ export function TicketCard({ ticket }: Props) {
               )}
             </div>
 
-            {/* Signals that need attention — filled chips so they stand out from
-                the white background.
-                NO "Incident" chip here: that severity level is shown by the pulsing
-                card border.
-                The row is ALWAYS rendered with a reserved height. `hasUnreadChat` flips to true
-                the moment a message arrives; if the row appeared only then, the card would grow
-                a line taller, the grid would reflow and the SLA clock at the bottom would jump. */}
+            {/* Signals that need attention. The row is ALWAYS rendered with a reserved
+                height: it fills in as data arrives, and if it appeared only then the tile
+                would grow a line taller and the SLA clock at the bottom would jump. */}
             <div className="flex min-h-6 flex-wrap items-center gap-1.5">
               {ticket.reopenCount > 0 && (
                 <span
@@ -128,28 +121,27 @@ export function TicketCard({ ticket }: Props) {
             </div>
           </div>
 
-          {/* SLA always sits at the card's bottom thanks to justify-between — every
-              clock lines up when scanning down a column. Separated with a border so
-              it doesn't blend into the block above. */}
-          <div className="border-t pt-2">
+          {/* SLA always sits at the bottom thanks to justify-between — every clock lines
+              up when scanning down a column. */}
+          <div className="border-t border-border pt-2">
             {ticket.slaTimer ? (
               <div className="space-y-1">
                 <SlaCountdown slaTimer={ticket.slaTimer} />
                 <p className="text-xs text-muted-foreground">
                   Due{" "}
-                  <span className="font-medium text-foreground tabular-nums">
+                  <span className="font-medium tabular-nums text-foreground">
                     {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
                   </span>
                 </p>
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                No SLA yet — in queue
+                No SLA yet - in queue
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </article>
     </Link>
   );
 }

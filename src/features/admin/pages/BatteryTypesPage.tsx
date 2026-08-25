@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { BatteryCharging, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
+import { RevealInline } from "@/shared/motion/RevealInline";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -23,7 +32,10 @@ import {
 import BatteryTypeTable from "@/features/admin/components/battery/BatteryTypeTable";
 import BatteryTypeFormDialog from "@/features/admin/components/battery/BatteryTypeFormDialog";
 import ThresholdConfigDialog from "@/features/admin/components/battery/ThresholdConfigDialog";
-import type { BatteryTypeDto } from "@/features/admin/types/battery/battery-type.types";
+import {
+  BatteryChemistryEnum,
+  type BatteryTypeDto,
+} from "@/features/admin/types/battery/battery-type.types";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
@@ -32,8 +44,17 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
+const CHEMISTRY_LABELS: Record<BatteryChemistryEnum, string> = {
+  [BatteryChemistryEnum.LI_FE_PO4]: "LiFePO4",
+  [BatteryChemistryEnum.NMC]: "NMC",
+  [BatteryChemistryEnum.NCA]: "NCA",
+  [BatteryChemistryEnum.LCO]: "LCO",
+  [BatteryChemistryEnum.OTHER]: "Other",
+};
+
 const DEFAULTS = {
   keyword: "",
+  chemistry: "",
   includeDeleted: false,
   sortBy: "",
   sortDir: "",
@@ -66,6 +87,9 @@ export default function BatteryTypesPage() {
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
     keyword: filters.keyword || undefined,
+    chemistry: filters.chemistry
+      ? (Number(filters.chemistry) as BatteryChemistryEnum)
+      : undefined,
     includeDeleted: filters.includeDeleted || undefined,
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
@@ -88,7 +112,7 @@ export default function BatteryTypesPage() {
   const closeConfirm = () => setConfirmState({ type: "none" });
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -120,6 +144,30 @@ export default function BatteryTypesPage() {
             className="pl-8"
           />
         </div>
+        <Select
+          value={filters.chemistry || null}
+          items={[
+            { value: null, label: "All chemistries" },
+            ...Object.entries(CHEMISTRY_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          ]}
+          onValueChange={(v) => setFilter("chemistry", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue placeholder="Chemistry" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All chemistries</SelectItem>
+            {Object.entries(CHEMISTRY_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <Checkbox
             checked={!!filters.includeDeleted}
@@ -131,11 +179,11 @@ export default function BatteryTypesPage() {
             {filters.includeDeleted ? "Hide deleted" : "Show deleted"}
           </span>
         </label>
-        {hasActiveFilter && (
+        <RevealInline show={hasActiveFilter}>
           <Button size="sm" variant="ghost" onClick={resetFilters}>
             Clear filters
           </Button>
-        )}
+        </RevealInline>
       </div>
 
       <Card className="gap-0 py-0 overflow-hidden">
@@ -252,6 +300,6 @@ export default function BatteryTypesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

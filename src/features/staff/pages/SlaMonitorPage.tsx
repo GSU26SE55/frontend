@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,7 +43,7 @@ export default function SlaMonitorPage() {
   const pausedCount = staffStats?.pausedCount ?? 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -180,6 +181,6 @@ export default function SlaMonitorPage() {
         <Badge variant="outline">Warning</Badge>
         <span>Ticket has at most 25% of its SLA time left.</span>
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,5 +1,8 @@
 import { Inbox, type LucideIcon } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+
 import { Button } from "@/components/ui/button";
+import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
 
 interface EmptyStateProps {
   /** Illustration icon. Defaults to Inbox. */
@@ -24,25 +27,52 @@ export function EmptyState({
   action,
   className,
 }: EmptyStateProps) {
+  const reduced = useReducedMotion();
+
+  // An empty state is a small disappointment — the one place in a dense dashboard where
+  // a beat of stagger is affordable. Decorative only: the CTA is clickable throughout.
+  const item = {
+    hidden: { opacity: 0, y: DIST.sm },
+    shown: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: DUR.enter, ease: EASE_OUT },
+    },
+  };
+
   return (
-    <div
+    <motion.div
+      initial={reduced ? false : "hidden"}
+      animate="shown"
+      variants={{ shown: { transition: { staggerChildren: 0.05 } } }}
       className={`flex flex-col items-center justify-center gap-2 py-12 text-center ${className ?? ""}`}
     >
-      <Icon className="size-8 text-muted-foreground/40" />
-      <p className="text-sm font-medium text-foreground">{title}</p>
+      <motion.div variants={item}>
+        <Icon className="size-8 text-muted-foreground/40" />
+      </motion.div>
+      <motion.p variants={item} className="text-sm font-medium text-foreground">
+        {title}
+      </motion.p>
       {description && (
-        <p className="text-xs text-muted-foreground max-w-sm">{description}</p>
+        <motion.p
+          variants={item}
+          className="text-xs text-muted-foreground max-w-sm"
+        >
+          {description}
+        </motion.p>
       )}
       {action && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-1"
-          onClick={action.onClick}
-        >
-          {action.label}
-        </Button>
+        <motion.div variants={item}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-1"
+            onClick={action.onClick}
+          >
+            {action.label}
+          </Button>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

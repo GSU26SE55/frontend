@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Send, Wand2 } from "lucide-react";
+import { Bell, Send, Wand2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -278,26 +278,26 @@ export default function NotificationTemplatePreviewDialog({
           )}
 
           {rendered && (
-            <div className="space-y-3 border border-border rounded-xl p-4">
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Title</p>
-                <p className="text-sm font-medium break-words">
-                  {rendered.title || (
-                    <span className="text-muted-foreground italic">
-                      (empty)
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Body</p>
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  {rendered.body || (
-                    <span className="text-muted-foreground italic">
-                      (empty)
-                    </span>
-                  )}
-                </p>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="flex items-start gap-3 rounded-md border bg-background p-3.5">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Bell className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-foreground break-words">
+                    {rendered.title || (
+                      <span className="italic text-muted-foreground">
+                        (empty)
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[12.5px] text-muted-foreground whitespace-pre-wrap break-words">
+                    {rendered.body || <span className="italic">(empty)</span>}
+                  </p>
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    Just now
+                  </p>
+                </div>
               </div>
             </div>
           )}

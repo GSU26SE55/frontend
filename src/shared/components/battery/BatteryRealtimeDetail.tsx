@@ -24,7 +24,6 @@ import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
 // Ẩn cùng tab "AI prediction" (xem TabsTrigger/TabsContent bên dưới). Comment thay vì xoá
 // để bật lại chỉ bằng bỏ ba khối comment, không phải tìm lại đường import.
 // import AiPredictionCard from "@/shared/components/battery/AiPredictionCard";
-import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { LiveTelemetryCard } from "@/shared/components/dashboard/LiveTelemetryCard";
 import { useSensorStream } from "@/shared/hooks/ticket/useSensorStream";
@@ -36,29 +35,6 @@ import {
   toneVars,
   CASCADE_RISK_TONE,
 } from "@/shared/theme/statusColors";
-
-// ── Config ────────────────────────────────────────────────────────────────
-
-const STATUS_CONFIG: Record<
-  BatteryStatusEnum,
-  { label: string; dot: string; badge: string }
-> = {
-  [BatteryStatusEnum.Active]: {
-    label: "Active",
-    dot: "bg-emerald-500",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  },
-  [BatteryStatusEnum.Inactive]: {
-    label: "Inactive",
-    dot: "bg-zinc-400",
-    badge: "bg-zinc-100 text-zinc-600 border-zinc-200",
-  },
-  [BatteryStatusEnum.Decommissioned]: {
-    label: "Decommissioned",
-    dot: "bg-red-500",
-    badge: "bg-red-50 text-red-700 border-red-200",
-  },
-};
 
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
@@ -98,7 +74,7 @@ function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   return (
     <div className="px-4 pt-4 pb-3">
       <div
-        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-all"
+        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong"
         style={{
           backgroundColor: bg,
           borderColor: `${fg}35`,
@@ -208,7 +184,7 @@ export default function BatteryRealtimeDetail({
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 p-6 h-[calc(100vh-65px)]">
+      <div className="flex flex-col gap-4 py-6 h-[calc(100vh-65px)] pl-(--page-pl) pr-(--page-pr)">
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-lg" />
           <Skeleton className="h-6 w-48" />
@@ -231,7 +207,6 @@ export default function BatteryRealtimeDetail({
     );
   }
 
-  const statusCfg = STATUS_CONFIG[asset.status];
   const gatewayItems = gateways?.items ?? [];
   const gatewayOnline = gatewayItems.some(
     (device) => device.status === IotDeviceStatusEnum.Active,
@@ -267,7 +242,7 @@ export default function BatteryRealtimeDetail({
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <div className="px-6 py-3 flex items-center justify-between gap-4 shrink-0">
+      <div className="py-3 flex items-center justify-between gap-4 shrink-0 pl-(--page-pl) pr-(--page-pr)">
         <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
@@ -282,16 +257,6 @@ export default function BatteryRealtimeDetail({
               <h1 className="text-xl font-semibold font-mono tracking-tight leading-none">
                 {asset.serialNumber}
               </h1>
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
-                  statusCfg.badge,
-                )}
-                title="Battery lifecycle status configured by an administrator"
-              >
-                <span className={cn("size-1.5 rounded-full", statusCfg.dot)} />
-                Lifecycle: {statusCfg.label}
-              </span>
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",

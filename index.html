@@ -27,7 +27,7 @@
         align-items: center;
         justify-content: center;
         background: #f8fafc;
-        transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
       }
       #splash.dark {
         background: #1a1d2e;
@@ -65,7 +65,6 @@
         var t = localStorage.getItem("theme");
         var isDark = t === "dark" || (!t && matchMedia("(prefers-color-scheme:dark)").matches);
         if (isDark) document.getElementById("splash").classList.add("dark");
-        window.__splashStart = Date.now();
       })();
     </script>
     <div id="root"></div>

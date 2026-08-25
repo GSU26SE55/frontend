@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +29,7 @@ export default function IoTCalibrationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-0.5">
           Staff &middot; IoT
@@ -105,6 +106,6 @@ export default function IoTCalibrationsPage() {
           />
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

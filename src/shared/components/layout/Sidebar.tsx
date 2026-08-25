@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { PanelLeftClose, ChevronDown } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, ChevronDown } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { DIST, DUR, EASE_OUT, SPRING } from "@/shared/motion/tokens";
 import logoImg from "@/assets/logo.webp";
 
 /**
@@ -83,11 +90,6 @@ function purgeLegacySectionKeys() {
   legacyKeysPurged = true;
   try {
     for (const key of Object.keys(localStorage)) {
-      // Legacy keys are `sidebar-section-{Title}`; scoped ones are
-      // `sidebar-section-{SCOPE}-{Title}`. Scopes are uppercase roles (or "anon"), while
-      // every section title starts with an uppercase letter followed by lowercase — so a
-      // leading all-caps segment marks a scoped key. Matching the shape rather than
-      // listing roles keeps this correct if a new role is ever added.
       if (!key.startsWith("sidebar-section-")) continue;
       const rest = key.slice("sidebar-section-".length);
       if (!/^([A-Z]{2,}|anon)-/.test(rest)) localStorage.removeItem(key);
@@ -101,12 +103,16 @@ function purgeLegacySectionKeys() {
 // ── Collapsible section ─────────────────────────────────────────────────────
 function Section({
   section,
+  index,
+  navId,
   sidebarCollapsed,
   allPaths,
   pathname,
   scopeKey,
 }: {
   section: NavSection;
+  index: number;
+  navId: string;
   sidebarCollapsed: boolean;
   allPaths: string[];
   pathname: string;
@@ -132,11 +138,14 @@ function Section({
     });
   };
 
+  const reduced = useReducedMotion();
   const isCollapsible =
     !!section.collapsible && !!section.title && !sidebarCollapsed;
 
   return (
-    <div>
+    <div
+      className={cn("w-full", sidebarCollapsed && "flex flex-col items-center")}
+    >
       {/* Section header */}
       {section.title &&
         !sidebarCollapsed &&
@@ -160,83 +169,147 @@ function Section({
           </p>
         ))}
 
-      {/* Items — when the sidebar is collapsed, always show full icons regardless of the
-          section's open/close state (open only matters for hiding/showing labels when the
-          sidebar is expanded — collapsed has no label to close).
-
-          Collapse animates grid-template-rows 1fr → 0fr rather than a pixel maxHeight, so
-          nothing here has to guess how tall a row is. The previous `items.length * 42px`
-          was a magic number that clipped the list as soon as a label wrapped to a second
-          line or the font size changed. */}
+      {/* Items */}
       <div
         className={cn(
-          "grid transition-[grid-template-rows,opacity] duration-200",
+          "w-full grid transition-[grid-template-rows,opacity] duration-200",
           !sidebarCollapsed && !open && "grid-rows-[0fr] opacity-0",
           (sidebarCollapsed || open) && "grid-rows-[1fr] opacity-100",
         )}
       >
-        <ul className="space-y-0.5 overflow-hidden min-h-0">
+        {/* Items rise into place on mount, bottom item last. The sidebar never remounts
+            on navigation, so this plays once when the shell loads, not on every route. */}
+        <motion.ul
+          initial={reduced ? false : "hidden"}
+          animate="shown"
+          variants={{
+            shown: {
+              transition: {
+                staggerChildren: 0.03,
+                delayChildren: 0.05 * index,
+              },
+            },
+          }}
+          className={cn(
+            "w-full space-y-0.5 overflow-hidden min-h-0",
+            sidebarCollapsed && "flex flex-col items-center",
+          )}
+        >
           {section.items.map((item) => {
             const active = isPathActive(item.path, pathname, allPaths);
-            return (
-              <li key={item.path} className="relative">
-                <Link
-                  to={item.path}
-                  replace
-                  title={sidebarCollapsed ? item.label : undefined}
-                  className={cn(
-                    // `group` is what makes the icon's group-hover:scale-105 fire — the
-                    // icon scales on hovering anywhere in the row, not just the icon.
-                    "group flex items-center gap-2.5 rounded-md px-2.5 py-1.75 text-[13px] transition-all duration-150 relative overflow-hidden",
-                    sidebarCollapsed && "justify-center px-2",
-                    active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-xs"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                  )}
-                >
-                  <item.icon
-                    size={15}
-                    className={cn(
-                      "shrink-0 transition-transform duration-200",
-                      active
-                        ? "text-primary scale-110"
-                        : "text-muted-foreground group-hover:scale-105",
-                    )}
+            const link = (
+              <Link
+                to={item.path}
+                replace
+                className={cn(
+                  "group flex items-center rounded-lg transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong relative",
+                  sidebarCollapsed
+                    ? "size-10 justify-center p-0"
+                    : "w-full gap-2.5 px-2.5 py-1.75 text-[13px]",
+                  active
+                    ? "text-sidebar-accent-foreground font-medium"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                )}
+              >
+                {/* One highlight for the whole nav: it travels to the item you picked
+                    instead of fading out here and fading in there. */}
+                {active && (
+                  <motion.span
+                    aria-hidden="true"
+                    {...(reduced
+                      ? {}
+                      : { layoutId: `${navId}-active`, transition: SPRING })}
+                    className="absolute inset-0 rounded-lg bg-sidebar-accent shadow-xs"
                   />
-                  {!sidebarCollapsed && (
-                    <>
-                      <span className="flex-1 truncate">{item.label}</span>
-                      {item.badge !== undefined && (
-                        <span className="shrink-0 flex items-center gap-1">
-                          {(Array.isArray(item.badge)
-                            ? item.badge
-                            : [{ value: item.badge, tone: "danger" as const }]
-                          ).map((b, i) => (
-                            <span
-                              key={i}
-                              title={b.title}
-                              className={cn(
-                                "text-[10px] font-bold px-1.5 py-[1px] rounded-full leading-none",
-                                b.tone === "muted" &&
-                                  "bg-muted text-muted-foreground",
-                                b.tone === "warning" &&
-                                  "bg-amber-500/10 text-amber-600 dark:text-amber-500",
-                                (!b.tone || b.tone === "danger") &&
-                                  "bg-destructive/10 text-destructive",
-                              )}
-                            >
-                              {b.value}
-                            </span>
-                          ))}
-                        </span>
-                      )}
-                    </>
+                )}
+                <item.icon
+                  size={sidebarCollapsed ? 18 : 15}
+                  className={cn(
+                    "relative shrink-0 transition-transform duration-200",
+                    active
+                      ? cn("text-primary", !sidebarCollapsed && "scale-110")
+                      : "text-muted-foreground group-hover:scale-105",
                   )}
-                </Link>
-              </li>
+                />
+                {!sidebarCollapsed && (
+                  <>
+                    {/* Labels mount when the rail expands, so they slide out from behind
+                        the icon rather than snapping into existence at full width. */}
+                    <motion.span
+                      className="relative flex-1 truncate"
+                      initial={reduced ? false : { opacity: 0, x: -DIST.sm }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                        transition: { duration: DUR.enter, ease: EASE_OUT },
+                      }}
+                    >
+                      {item.label}
+                    </motion.span>
+                    {item.badge !== undefined && (
+                      <motion.span
+                        className="relative shrink-0 flex items-center gap-1"
+                        initial={reduced ? false : { opacity: 0, scale: 0.6 }}
+                        animate={{ opacity: 1, scale: 1, transition: SPRING }}
+                      >
+                        {(Array.isArray(item.badge)
+                          ? item.badge
+                          : [{ value: item.badge, tone: "danger" as const }]
+                        ).map((b, i) => (
+                          <span
+                            key={i}
+                            title={b.title}
+                            className={cn(
+                              "text-[10px] font-bold px-1.5 py-[1px] rounded-full leading-none",
+                              b.tone === "muted" &&
+                                "bg-muted text-muted-foreground",
+                              b.tone === "warning" &&
+                                "bg-amber-500/10 text-amber-600 dark:text-amber-500",
+                              (!b.tone || b.tone === "danger") &&
+                                "bg-destructive/10 text-destructive",
+                            )}
+                          >
+                            {b.value}
+                          </span>
+                        ))}
+                      </motion.span>
+                    )}
+                  </>
+                )}
+              </Link>
+            );
+            return (
+              <motion.li
+                key={item.path}
+                variants={{
+                  hidden: { opacity: 0, y: DIST.md },
+                  shown: {
+                    opacity: 1,
+                    y: 0,
+                    transition: { duration: DUR.enter, ease: EASE_OUT },
+                  },
+                }}
+                className={cn(
+                  "w-full",
+                  sidebarCollapsed && "flex justify-center",
+                )}
+              >
+                {/* Collapsed, the label is the only thing telling you what an icon is —
+                    a real tooltip instead of the browser's half-second `title`. */}
+                {sidebarCollapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger render={link} />
+                    <TooltipContent side="right" sideOffset={10}>
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  link
+                )}
+              </motion.li>
             );
           })}
-        </ul>
+        </motion.ul>
       </div>
     </div>
   );
@@ -252,34 +325,72 @@ export default function Sidebar({
 }: SidebarProps) {
   const { pathname } = useLocation();
   const allPaths = sections.flatMap((s) => s.items.map((i) => i.path));
+  // `layoutId` is global — scope it per nav so two sidebars could never fight over one
+  // highlight.
+  const navId = useId();
+  const [logoHovered, setLogoHovered] = useState(false);
+  const reduced = useReducedMotion();
 
   return (
     <aside
       className={cn(
-        "flex flex-col shrink-0 h-screen border-r bg-sidebar text-sidebar-foreground transition-all duration-200",
-        collapsed ? "w-14" : "w-55",
+        "flex flex-col shrink-0 h-screen border-r bg-sidebar text-sidebar-foreground transition-[width] duration-(--motion-enter) ease-strong",
+        collapsed ? "w-14 items-center" : "w-55",
       )}
     >
       {/* ── Logo header ── */}
       <div
         className={cn(
-          "flex items-center h-14 border-b shrink-0",
-          collapsed ? "justify-center" : "px-4 gap-2.5",
+          "flex items-center h-14 border-b shrink-0 w-full",
+          collapsed ? "justify-center px-0" : "px-4 gap-2.5",
         )}
       >
         {collapsed ? (
-          <button
-            className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted transition-colors p-0.5 group"
-            onClick={onToggle}
-            title="Expand sidebar"
-            aria-label="Expand sidebar"
-          >
-            <img
-              src={logoImg}
-              alt="Logo"
-              className="h-7 w-7 shrink-0 object-contain group-hover:scale-105 transition-transform"
-            />
-          </button>
+          // Collapsed, the logo IS the open button — but nothing said so. Pointing at it
+          // now swaps the mark for the panel icon, so the affordance shows itself.
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  className="relative size-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors p-0.5"
+                  onClick={onToggle}
+                  aria-label="Expand sidebar"
+                  onPointerEnter={() => setLogoHovered(true)}
+                  onPointerLeave={() => setLogoHovered(false)}
+                  onFocus={() => setLogoHovered(true)}
+                  onBlur={() => setLogoHovered(false)}
+                />
+              }
+            >
+              <AnimatePresence initial={false}>
+                <motion.span
+                  key={logoHovered ? "toggle" : "logo"}
+                  aria-hidden="true"
+                  className="absolute inset-0 grid place-items-center"
+                  initial={reduced ? false : { opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1, transition: SPRING }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.7,
+                    transition: { duration: DUR.state, ease: EASE_OUT },
+                  }}
+                >
+                  {logoHovered ? (
+                    <PanelLeftOpen size={17} />
+                  ) : (
+                    <img
+                      src={logoImg}
+                      alt="Logo"
+                      className="h-7 w-7 shrink-0 object-contain"
+                    />
+                  )}
+                </motion.span>
+              </AnimatePresence>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={10}>
+              Expand sidebar
+            </TooltipContent>
+          </Tooltip>
         ) : (
           <>
             <img
@@ -294,26 +405,38 @@ export default function Sidebar({
               </div>
             </div>
 
-            <button
-              className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-              onClick={onToggle}
-              title="Collapse"
-              aria-label="Collapse sidebar"
-            >
-              <PanelLeftClose size={15} />
-            </button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    onClick={onToggle}
+                    aria-label="Collapse sidebar"
+                  />
+                }
+              >
+                <PanelLeftClose size={15} />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={8}>
+                Collapse sidebar
+              </TooltipContent>
+            </Tooltip>
           </>
         )}
       </div>
 
       {/* ── Navigation ── */}
       <nav
-        className="flex-1 overflow-y-auto py-3 px-2 space-y-3"
-        style={{ scrollbarGutter: "stable" }}
+        className={cn(
+          "flex-1 overflow-y-auto py-3 space-y-3 w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          collapsed ? "flex flex-col items-center px-0" : "px-2",
+        )}
       >
         {sections.map((section, si) => (
           <Section
             key={si}
+            index={si}
+            navId={navId}
             section={section}
             sidebarCollapsed={collapsed}
             allPaths={allPaths}
@@ -322,20 +445,6 @@ export default function Sidebar({
           />
         ))}
       </nav>
-
-      {/* ── Footer ──
-      <div className="border-t p-2">
-        <button
-          className={cn(
-            "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
-            collapsed && "justify-center px-2",
-          )}
-          title={collapsed ? "Help" : undefined}
-        >
-          <HelpCircle size={14} className="shrink-0" />
-          {!collapsed && "Help & shortcuts"}
-        </button>
-      </div> */}
     </aside>
   );
 }

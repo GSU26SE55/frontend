@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+
 /**
  * Minimal full-screen spinner, for routes that render without any layout around them
  * (the landing page, the Google OAuth callback, the unsubscribe page, …). Those have no
@@ -7,7 +9,9 @@
  */
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
-    <div className="size-8 animate-spin rounded-full border-b-2 border-primary" />
+    {/* The same Loader2 the other 50-odd loading states use. A hand-rolled border-b
+        circle span spinning at a different rate read as a second, unrelated spinner. */}
+    <Loader2 className="size-8 animate-spin text-primary" />
   </div>
 );
 

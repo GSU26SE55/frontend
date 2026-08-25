@@ -1,9 +1,9 @@
-import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardPanel } from "@/shared/components/dashboard/DashboardPanel";
+import { toneVars } from "@/shared/theme/statusColors";
 
 /**
- * Ranking table of batteries with the most open alerts — shared between Admin & Manager.
+ * Ranking of the batteries raising the most open alerts, shared between Admin and Manager.
  * The two roles only differ in the navigation TARGET, so it accepts `onSelect`
  * instead of navigating itself. The caller still decides whether to render it (hidden when empty).
  */
@@ -20,7 +20,7 @@ export function TopAlertingPanel({
   assets,
   isLoading,
   onSelect,
-  className = "min-h-[260px]",
+  className,
 }: {
   title: string;
   assets: TopAlertingAsset[];
@@ -28,6 +28,8 @@ export function TopAlertingPanel({
   onSelect: (asset: TopAlertingAsset) => void;
   className?: string;
 }) {
+  const worst = assets[0]?.alertCount ?? 0;
+
   return (
     <DashboardPanel
       title={title}
@@ -42,34 +44,49 @@ export function TopAlertingPanel({
           ))}
         </div>
       ) : (
-        <ol className="space-y-1.5">
-          {assets.map((a, i) => (
-            <li key={a.batteryAssetId}>
-              <button
-                className="flex items-center gap-3 w-full text-left rounded-lg px-2 py-2 group hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
-                onClick={() => onSelect(a)}
-              >
-                <span className="w-4 shrink-0 text-right text-xs font-bold font-mono-num text-muted-foreground/70">
-                  {i + 1}
-                </span>
-                <span className="flex-1 min-w-0 text-xs lg:text-sm font-medium truncate group-hover:text-primary transition-colors">
-                  {a.serialNumber}
-                </span>
-                {a.criticalCount > 0 && (
-                  <span
-                    className="rounded-md px-2 py-0.5 text-xs font-semibold shrink-0"
-                    style={{ background: "var(--p1-soft)", color: "var(--p1)" }}
-                  >
-                    {a.criticalCount} critical
-                  </span>
-                )}
-                <span className="text-xs lg:text-sm font-bold font-mono-num tabular-nums w-6 text-right shrink-0">
-                  {a.alertCount}
-                </span>
-                <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary shrink-0" />
-              </button>
-            </li>
-          ))}
+        <ol className="divide-y divide-border/60">
+          {assets.map((a) => {
+            // Bar length is relative to the worst offender, so the ranking is readable
+            // without printing a scale nobody would use.
+            const width = worst > 0 ? (a.alertCount / worst) * 100 : 0;
+            return (
+              <li key={a.batteryAssetId}>
+                <button
+                  type="button"
+                  className="group w-full py-2 text-left"
+                  onClick={() => onSelect(a)}
+                >
+                  <div className="flex items-baseline gap-3">
+                    <span className="min-w-0 flex-1 truncate text-sm group-hover:text-primary">
+                      {a.serialNumber}
+                    </span>
+                    {a.criticalCount > 0 && (
+                      <span
+                        className="shrink-0 text-xs tabular-nums"
+                        style={{ color: toneVars("p1").fg }}
+                      >
+                        {a.criticalCount} critical
+                      </span>
+                    )}
+                    <span className="w-6 shrink-0 text-right text-sm font-medium tabular-nums">
+                      {a.alertCount}
+                    </span>
+                  </div>
+                  <div
+                    aria-hidden
+                    className="mt-1.5 h-0.5 rounded-full transition-[width]"
+                    style={{
+                      width: `${width}%`,
+                      background:
+                        a.criticalCount > 0
+                          ? toneVars("p1").fg
+                          : toneVars("p3").fg,
+                    }}
+                  />
+                </button>
+              </li>
+            );
+          })}
         </ol>
       )}
     </DashboardPanel>
