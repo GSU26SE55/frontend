@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { BatteryCharging, Repeat2, TriangleAlert } from "lucide-react";
+import { BatteryCharging, Repeat2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import {
@@ -29,10 +29,11 @@ export function TicketCard({ ticket }: Props) {
     : undefined;
 
   // The two states that mean "this one, now": a site incident, or a clock that has
-  // already run out. Both get the same treatment, because to the person scanning the
-  // board they mean the same thing.
-  const breached = ticket.slaTimer?.status === SlaTimerStatusEnum.Breached;
-  const alert = ticket.isIncident || breached;
+  // already run out. Both light the tile up, because to the person scanning the board
+  // they mean the same thing.
+  const alert =
+    ticket.isIncident ||
+    ticket.slaTimer?.status === SlaTimerStatusEnum.Breached;
 
   return (
     <Link to={`/staff/tickets/${ticket.id}`} className="block h-full">
@@ -43,12 +44,7 @@ export function TicketCard({ ticket }: Props) {
       <article
         className={cn(
           "flex h-full cursor-pointer flex-col gap-3 border border-border bg-card p-4 transition-colors",
-          alert
-            ? // An alert tile carries the accent on its leading edge plus a wash, no
-              // outline: a ring around the whole tile reads as the CONTAINER being in an
-              // error state, the edge reads as a property of the ticket.
-              "border-l-4 border-l-p1 bg-p1-soft hover:bg-p1/15"
-            : "hover:bg-muted/40",
+          alert ? "alert-card" : "hover:bg-muted/40",
         )}
       >
         <div>
@@ -61,14 +57,6 @@ export function TicketCard({ ticket }: Props) {
             {/* The role badge joins the EXISTING badge row rather than adding a new one:
                 an extra row would change the tile's height and shift the SLA line. */}
             <div className="flex shrink-0 items-center gap-1.5">
-              {/* Says WHY the tile is red. The edge accent alone is easy to read as
-                  decoration; a word is not. */}
-              {alert && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-p1 px-1.5 py-0.5 text-xs font-semibold text-white">
-                  <TriangleAlert className="size-3" aria-hidden />
-                  {ticket.isIncident ? "Incident" : "Overdue"}
-                </span>
-              )}
               {myRole && (
                 <span
                   className={

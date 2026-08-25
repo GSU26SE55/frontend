@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { SlaTimerStatusEnum } from "@/shared/types/ticket/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket/ticket.types";
-import { isNearBreachPercent } from "@/shared/lib/sla";
+import {
+  isNearBreachPercent,
+  formatSlaRemaining,
+  formatSlaDueAt,
+} from "@/shared/lib/sla";
 import { toneClass } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
 
@@ -25,14 +29,6 @@ interface Props {
   compact?: boolean;
 }
 
-function formatSeconds(seconds: number): string {
-  if (seconds <= 0) return "00:00:00";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  return [h, m, s].map((v) => String(v).padStart(2, "0")).join(":");
-}
-
 export function SlaCountdown({
   slaTimer,
   hideBar = false,
@@ -43,9 +39,7 @@ export function SlaCountdown({
   const remainingPercent = slaTimer?.remainingPercent ?? 0;
 
   const [remaining, setRemaining] = useState(() =>
-    dueAt
-      ? Math.max(0, Math.floor((new Date(dueAt).getTime() - Date.now()) / 1000))
-      : 0,
+    dueAt ? Math.max(0, new Date(dueAt).getTime() - Date.now()) : 0,
   );
 
   useEffect(() => {
@@ -58,7 +52,7 @@ export function SlaCountdown({
       return;
     }
     const id = setInterval(() => {
-      const diff = Math.floor((new Date(dueAt).getTime() - Date.now()) / 1000);
+      const diff = new Date(dueAt).getTime() - Date.now();
       setRemaining(Math.max(0, diff));
       if (diff <= 0) clearInterval(id);
     }, 1000);
@@ -103,8 +97,9 @@ export function SlaCountdown({
             ? toneClass("p1")
             : toneClass("muted")
         }`}
+        title={`Due ${formatSlaDueAt(dueAt)}`}
       >
-        {formatSeconds(remaining)}
+        {formatSlaRemaining(remaining)}
       </span>
     );
   }
@@ -165,7 +160,7 @@ export function SlaCountdown({
       <span
         className={`text-base font-semibold tabular-nums ${isWarning ? "text-destructive" : "text-foreground"}`}
       >
-        {formatSeconds(remaining)}
+        {formatSlaRemaining(remaining)}
       </span>
       {!hideBar && (
         <div className="h-1.5 w-full rounded-full bg-muted">

@@ -434,7 +434,8 @@
   .ping-soft,
   .animate-pulse,
   .animate-aurora,
-  .animate-float-card {
+  .animate-float-card,
+  .alert-card {
     animation: none !important;
   }
 
@@ -520,4 +521,37 @@
 }
 .rich-content hr {
   border-top: 1px solid var(--border);
+}
+
+
+/* Ticket tile in alarm: a site incident, or an SLA clock that already ran out.
+   The whole surface carries the colour, not just an edge — at a glance across a
+   board the tile itself is the signal.
+
+   The static tint lives on the class, the breathing only inside the
+   no-preference query: a reduced-motion user still gets a red tile, they just
+   do not get the pulse. Only `background-color` animates, so it is a paint with
+   no layout work, and it stays legible at every frame — the text never fades. */
+/* #FEE2E2 — reached through `--p1-soft`, which IS that value in light mode and swaps
+   to a translucent red in dark. A hardcoded hex here would glare on a dark board. */
+.alert-card {
+  --alert-card-bg: var(--p1-soft);
+  background-color: var(--alert-card-bg);
+  border-color: color-mix(in oklab, var(--p1) 25%, transparent);
+}
+
+@keyframes alert-card-pulse {
+  0%,
+  100% {
+    background-color: var(--alert-card-bg);
+  }
+  50% {
+    background-color: color-mix(in oklab, var(--alert-card-bg) 88%, var(--p1));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .alert-card {
+    animation: alert-card-pulse 1.8s ease-in-out infinite;
+  }
 }

@@ -29,10 +29,64 @@ export function slaComplianceColor(
   return "var(--p1)";
 }
 
+/** Same 3-band scale as `slaBarColorClass`, as a text color — SVG strokes pick it up via `currentColor`. */
+export function slaTextColorClass(remainingPercent?: number | null): string {
+  const pct = remainingPercent ?? 0;
+  if (pct > SLA_CAUTION_PERCENT) return "text-sla-ok";
+  if (pct > SLA_WARNING_PERCENT) return "text-sla-caution";
+  return "text-sla-warning";
+}
+
 /** Tailwind class for the SLA progress bar based on % remaining (semantic token — correct in dark mode). */
 export function slaBarColorClass(remainingPercent?: number | null): string {
   const pct = remainingPercent ?? 0;
   if (pct > SLA_CAUTION_PERCENT) return "bg-sla-ok";
   if (pct > SLA_WARNING_PERCENT) return "bg-sla-caution";
   return "bg-sla-warning";
+}
+
+/**
+ * Countdown text for an SLA timer — "11d 17:45:55".
+ *
+ * Days are split out on purpose: a P3 ticket with a multi-day target rendered as
+ * "281:45:55", which nobody reads as "11 days". Under 24h the format is unchanged.
+ */
+export function formatSlaRemaining(ms: number): string {
+  if (ms <= 0) return "00:00:00";
+  const totalSecs = Math.floor(ms / 1000);
+  const days = Math.floor(totalSecs / 86400);
+  const hms = [
+    Math.floor((totalSecs % 86400) / 3600),
+    Math.floor((totalSecs % 3600) / 60),
+    totalSecs % 60,
+  ]
+    .map((v) => String(v).padStart(2, "0"))
+    .join(":");
+  return days > 0 ? `${days}d ${hms}` : hms;
+}
+
+/** Deadline shown under the countdown — "09/05 17:00". Year omitted: SLA windows are days, not months. */
+export function formatSlaDueAt(dueAt: string): string {
+  const d = new Date(dueAt);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+
+/**
+ * Coarsest useful unit only — "11d", "17h", "45m", "30s". For list rows, where the
+ * cell answers "how urgent" at a glance; the exact countdown and deadline live on
+ * the detail page (and in the chip's title). Granularity tightens as it runs out,
+ * so a near-breach ticket still reads in minutes.
+ */
+export function formatSlaRemainingCompact(ms: number): string {
+  const totalSecs = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(totalSecs / 86400);
+  if (days > 0) return `${days}d`;
+  const hours = Math.floor(totalSecs / 3600);
+  if (hours > 0) return `${hours}h`;
+  const mins = Math.floor(totalSecs / 60);
+  if (mins > 0) return `${mins}m`;
+  return `${totalSecs}s`;
 }
