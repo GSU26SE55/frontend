@@ -58,16 +58,6 @@ export function useAdminKbSuggest(ticketId?: string) {
   });
 }
 
-// GET /api/knowledge-base/{id}/usage-stats (Manager/Admin).
-export function useAdminKbUsageStats(id: string) {
-  return useQuery({
-    queryKey: QUERY_KEY.kb.usageStats(id),
-    queryFn: () => adminKbService.getUsageStats(id).then((r) => r.data.data),
-    enabled: !!id,
-    staleTime: 5 * 60_000,
-  });
-}
-
 // create/update are used in a form → the component handles errors via try/catch + setError
 export function useCreateKbArticle() {
   const qc = useQueryClient();

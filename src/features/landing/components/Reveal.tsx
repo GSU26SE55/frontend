@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { animate, onScroll } from "animejs";
 import { cn } from "@/lib/utils";
-import { prefersReducedMotion } from "@/features/landing/lib/animation";
+import { prefersReducedMotion, EASE } from "@/features/landing/lib/animation";
 
 type RevealProps = {
   children: ReactNode;
@@ -20,7 +20,7 @@ const Reveal = ({
   translateX = 0,
   translateY = 28,
   duration = 700,
-  ease = "outQuart",
+  ease = EASE.out,
 }: RevealProps) => {
   const ref = useRef<HTMLDivElement>(null);
 

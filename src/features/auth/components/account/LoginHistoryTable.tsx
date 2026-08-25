@@ -9,9 +9,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import DataPagination from "@/shared/components/ui/DataPagination";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, Monitor } from "lucide-react";
+import { Monitor } from "lucide-react";
 import { useLoginHistory } from "@/features/auth/hooks/account/useLoginHistory";
 import { LoginAttemptResult } from "@/shared/enums/account/audit.enum";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
@@ -29,10 +29,11 @@ const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.AccountNotVerified]: "Not verified",
 };
 
-const PAGE_SIZE = 10;
-
 const LoginHistoryTable = () => {
   const [page, setPage] = useState(1);
+  // 10 rather than the app-wide 25: this table lives inside the settings card, which has
+  // a fixed height — 25 rows push the pagination bar out of view.
+  const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
 
@@ -52,7 +53,7 @@ const LoginHistoryTable = () => {
 
   const { data, isLoading } = useLoginHistory({
     pageNumber: page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     sortBy: sortBy || undefined,
     sortDir: sortBy ? sortDir : undefined,
   });
@@ -113,7 +114,7 @@ const LoginHistoryTable = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              Array.from({ length: pageSize }).map((_, i) => (
                 <TableRow key={i}>
                   <TableCell>
                     <Skeleton className="h-4 w-6" />
@@ -145,7 +146,7 @@ const LoginHistoryTable = () => {
               items.map((item, index) => (
                 <TableRow key={item.id} className="text-sm">
                   <TableCell className="text-center text-muted-foreground tabular-nums">
-                    {(page - 1) * PAGE_SIZE + index + 1}
+                    {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="tabular-nums text-xs text-muted-foreground">
                     {format(new Date(item.createdAt), "MM/dd/yyyy HH:mm")}
@@ -175,30 +176,19 @@ const LoginHistoryTable = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-1">
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-7"
-          disabled={page <= 1 || isLoading}
-          onClick={() => setPage(page - 1)}
-        >
-          <ChevronLeft size={13} />
-        </Button>
-        <span className="text-xs text-muted-foreground px-2 tabular-nums min-w-12 text-center">
-          {page} / {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          className="size-7"
-          disabled={!data?.hasNextPage || isLoading}
-          onClick={() => setPage(page + 1)}
-        >
-          <ChevronRight size={13} />
-        </Button>
-      </div>
+      <DataPagination
+        totalItems={data?.totalItems ?? 0}
+        pageNumber={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        hasNextPage={data?.hasNextPage ?? false}
+        hasPreviousPage={page > 1}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </div>
   );
 };

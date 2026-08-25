@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
@@ -18,6 +19,7 @@ import type { BatteryAuditLogDto } from "@/features/admin/types/battery/battery-
 import type { PaginationResponse } from "@/shared/types/api.types";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import type { SortDirection } from "@/shared/hooks/useSortableData";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // YYYY-MM-DD → UTC range (BE filter from/to).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
@@ -93,7 +95,7 @@ function AuditPanel({
 function useAuditTabState() {
   const [filters, setFilters] = useState<AuditLogFilterValues>({});
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
 
@@ -219,7 +221,7 @@ function AlertAuditTab() {
 
 export default function BatteryAuditLogsPage() {
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -250,6 +252,6 @@ export default function BatteryAuditLogsPage() {
           <AlertAuditTab />
         </TabsContent>
       </Tabs>
-    </div>
+    </PageContainer>
   );
 }

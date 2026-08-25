@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Send, Wand2 } from "lucide-react";
+import { Bell, Send, Wand2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -49,9 +49,9 @@ export default function NotificationTemplatePreviewDialog({
   // few seconds, exactly while the user is still waiting for the mail, so it gets missed.
   const [sentTo, setSentTo] = useState<string | null>(null);
 
-  // 17/08/2026 — chế độ "nhập JSON thô" đã bị gỡ. Nó tồn tại như lối thoát cho template dùng block
-  // helper (cần bool/number đúng kiểu), nhưng không template nào trong 82 cái đang dùng, còn người
-  // vận hành thì phải nhìn thấy một ô JSON không liên quan gì tới việc họ đang làm.
+  // 17/08/2026 — the "raw JSON input" mode was removed. It existed as an escape hatch for templates
+  // using block helpers (which need real bool/number types), but none of the 82 templates use one,
+  // while every operator had to look at a JSON field irrelevant to what they were doing.
   const [vars, setVars] = useState<Record<string, string>>({});
 
   const preview = usePreviewTemplate();
@@ -77,9 +77,9 @@ export default function NotificationTemplatePreviewDialog({
   const outOfQuota = remaining === 0;
 
   /**
-   * Gom dữ liệu mẫu từ các ô đang nhập.
-   * Ô để trống ⇒ BỎ QUA (không gửi khoá đó) — biến không có giá trị sẽ render ra trống, đó chính là
-   * cách phát hiện template đang gọi sai tên biến.
+   * Collect the sample data from the input fields.
+   * An empty field ⇒ SKIPPED (the key is not sent) — a variable with no value renders empty, which
+   * is exactly how a template calling the wrong variable name gets spotted.
    */
   const buildSampleData = (): Record<string, unknown> | undefined => {
     const entries = placeholders
@@ -148,17 +148,18 @@ export default function NotificationTemplatePreviewDialog({
             {notificationChannelLabel(template.channel)} · v{template.version}
           </DialogTitle>
           <DialogDescription>
-            Xem thử nội dung với dữ liệu mẫu — không gửi đi đâu cả. Ô để trống
-            sẽ hiện ra trống, đó là cách phát hiện mẫu đang gọi sai tên biến.
+            Preview the content with sample data — nothing is sent anywhere. An
+            empty field renders empty, which is how you spot a template calling
+            the wrong variable name.
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">Dữ liệu mẫu</span>
-              {/* Điền tay từng ô chỉ để đọc thử một câu là chỗ mất công nhất ở màn này — phần lớn
-                  người dùng chỉ muốn xem câu chữ đọc có xuôi không. */}
+              <span className="text-sm font-medium">Sample data</span>
+              {/* Filling every field by hand just to read one sentence is the most tedious part of
+                  this screen — most users only want to check that the wording reads well. */}
               {placeholders.length > 0 && (
                 <Button
                   type="button"
@@ -168,20 +169,20 @@ export default function NotificationTemplatePreviewDialog({
                   onClick={fillSampleValues}
                 >
                   <Wand2 className="size-3.5" />
-                  Điền mẫu
+                  Fill samples
                 </Button>
               )}
             </div>
 
             {placeholders.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Mẫu này không dùng biến nào — bấm "Xem thử" để hiển thị ngay.
+                This template uses no variables — click "Preview" to render it.
               </p>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {placeholders.map((name) => {
-                  // Nhãn là tên tiếng Việt — tên biến thô không hiện ra nữa, người dùng nghiệp
-                  // vụ không cần biết template gọi khoá gì.
+                  // The label is the plain-language name — the raw variable name is no longer
+                  // shown, since a business user does not need to know the key the template calls.
                   const doc = getVariableDoc(name);
                   return (
                     <div key={name} className="space-y-1.5">
@@ -200,9 +201,11 @@ export default function NotificationTemplatePreviewDialog({
                             [name]: e.target.value,
                           }))
                         }
-                        // Giá trị mẫu làm placeholder cũng là một dạng tài liệu: người dùng thấy
-                        // ngay biến này mang giá trị kiểu gì lúc gửi thật.
-                        placeholder={doc ? `VD: ${doc.sample}` : "(để trống)"}
+                        // The sample value as placeholder doubles as documentation: the user sees
+                        // straight away what kind of value this variable carries when actually sent.
+                        placeholder={
+                          doc ? `e.g. ${doc.sample}` : "(leave empty)"
+                        }
                       />
                     </div>
                   );
@@ -211,7 +214,7 @@ export default function NotificationTemplatePreviewDialog({
             )}
             <div className="flex items-center gap-2">
               <Button type="submit" disabled={preview.isPending}>
-                {preview.isPending ? "Đang dựng…" : "Xem thử"}
+                {preview.isPending ? "Rendering…" : "Preview"}
               </Button>
               <Button
                 type="button"
@@ -220,18 +223,18 @@ export default function NotificationTemplatePreviewDialog({
                 onClick={onTestSend}
                 title={
                   !canTestSend
-                    ? "Chỉ mẫu kênh Email mới gửi thử được"
+                    ? "Only Email templates can be test-sent"
                     : outOfQuota
-                      ? "Đã dùng hết 5 lượt gửi thử trong giờ này"
-                      : "Gửi vào email của chính bạn"
+                      ? "All 5 test sends for this hour have been used"
+                      : "Send to your own email address"
                 }
               >
                 <Send className="size-3.5" />
-                {testSend.isPending ? "Đang gửi…" : "Gửi thử cho tôi"}
+                {testSend.isPending ? "Sending…" : "Send a test to me"}
               </Button>
               {remaining !== null && (
                 <span className="text-xs text-muted-foreground">
-                  Còn {remaining} lượt gửi trong giờ này
+                  {remaining} test sends left this hour
                 </span>
               )}
             </div>
@@ -242,12 +245,13 @@ export default function NotificationTemplatePreviewDialog({
                 gray without saying why. */}
             {!canTestSend ? (
               <p className="text-xs text-muted-foreground">
-                Chỉ mẫu kênh Email mới gửi thử được — mẫu này thuộc kênh{" "}
+                Only Email templates can be test-sent — this template is on the{" "}
                 {notificationChannelLabel(template.channel)}.
               </p>
             ) : outOfQuota ? (
               <p className="text-xs text-muted-foreground">
-                Đã dùng hết 5 lượt gửi thử trong giờ này. Thử lại vào giờ sau.
+                All 5 test sends for this hour have been used. Try again next
+                hour.
               </p>
             ) : null}
 
@@ -259,9 +263,9 @@ export default function NotificationTemplatePreviewDialog({
                 {/* Sent ≠ received. Spell out where to check when the email never shows up —
                     the most common cause is the account still carrying the default seed email. */}
                 <p className="mt-1 text-muted-foreground">
-                  Email được gửi tới địa chỉ của tài khoản bạn đang đăng nhập.
-                  Không thấy? Kiểm tra hộp thư rác, và đối chiếu địa chỉ ở trên
-                  với hòm thư bạn đang mở.
+                  The email goes to the address of the account you are signed in
+                  as. Don't see it? Check the spam folder, and compare the
+                  address above with the inbox you have open.
                 </p>
               </div>
             )}
@@ -274,26 +278,26 @@ export default function NotificationTemplatePreviewDialog({
           )}
 
           {rendered && (
-            <div className="space-y-3 border border-border rounded-xl p-4">
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Tiêu đề</p>
-                <p className="text-sm font-medium break-words">
-                  {rendered.title || (
-                    <span className="text-muted-foreground italic">
-                      (trống)
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Nội dung</p>
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  {rendered.body || (
-                    <span className="text-muted-foreground italic">
-                      (trống)
-                    </span>
-                  )}
-                </p>
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="flex items-start gap-3 rounded-md border bg-background p-3.5">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Bell className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-semibold text-foreground break-words">
+                    {rendered.title || (
+                      <span className="italic text-muted-foreground">
+                        (empty)
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[12.5px] text-muted-foreground whitespace-pre-wrap break-words">
+                    {rendered.body || <span className="italic">(empty)</span>}
+                  </p>
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    Just now
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -301,7 +305,7 @@ export default function NotificationTemplatePreviewDialog({
 
         <DialogFooter className="mt-4 border-t pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
-            Đóng
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

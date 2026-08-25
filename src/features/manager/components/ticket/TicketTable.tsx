@@ -20,7 +20,6 @@ interface Props {
   tickets: TicketDTO[];
   isLoading: boolean;
   // GH-1176: showTriage/onTriage removed (triage approval removed).
-  onReprioritize?: (ticket: TicketDTO) => void;
   pageNumber?: number;
   pageSize?: number;
   /**
@@ -47,7 +46,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 export default function TicketTable({
   tickets,
   isLoading,
-  onReprioritize,
   pageNumber = 1,
   pageSize = 0,
   sort,
@@ -172,7 +170,7 @@ export default function TicketTable({
       id: "sla",
       header: TABLE_COLUMNS.sla,
       stopRowClick: true,
-      cell: (t) => <SlaCountdown slaTimer={t.slaTimer} />,
+      cell: (t) => <SlaCountdown slaTimer={t.slaTimer} compact />,
     },
     {
       id: "createdAt",
@@ -183,24 +181,6 @@ export default function TicketTable({
       cell: (t) => new Date(t.createdAt).toLocaleDateString("vi-VN"),
     },
   ];
-
-  // GH-1176: triage approval removed; queue shows Open tickets with reprioritize action only.
-  if (onReprioritize) {
-    columns.push({
-      id: "triage",
-      header: "",
-      stopRowClick: true,
-      cell: (t) =>
-        onReprioritize ? (
-          <button
-            className="rounded border px-2 py-1 text-xs hover:bg-muted"
-            onClick={() => onReprioritize(t)}
-          >
-            Review priority
-          </button>
-        ) : null,
-    });
-  }
 
   return (
     <Card className="gap-0 py-0 overflow-hidden">

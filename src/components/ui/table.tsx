@@ -1,6 +1,22 @@
 import * as React from "react";
+import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
+
+// Rows rise into place, one after the other, when a table mounts or its data
+// swaps (page 2, a new filter). Ordering comes from framer's variant propagation —
+// `TableBody` staggers whatever `TableRow` children it has, so no row needs its index.
+// Cost is one motion component per row: fine for the paginated tables here, worth a
+// second look if a table ever renders hundreds of rows unpaginated.
+const ROW_VARIANTS = {
+  hidden: { opacity: 0, y: DIST.md },
+  shown: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: DUR.layout, ease: EASE_OUT },
+  },
+};
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -27,10 +43,23 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   );
 }
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+function TableBody({ className, ...props }: HTMLMotionProps<"tbody">) {
+  const reduced = useReducedMotion();
+  // Stagger the first paint only. Paging through a table is a "tens of times a day"
+  // action, and 20 rows at 25ms each puts half a second between the click and a
+  // readable table — the animation would be charging rent on the main task. After the
+  // first mount rows still fade, they just all arrive together.
+  const firstRender = React.useRef(true);
+  const stagger = firstRender.current ? 0.025 : 0;
+  React.useEffect(() => {
+    firstRender.current = false;
+  }, []);
   return (
-    <tbody
+    <motion.tbody
       data-slot="table-body"
+      initial={reduced ? false : "hidden"}
+      animate="shown"
+      variants={{ shown: { transition: { staggerChildren: stagger } } }}
       className={cn("[&_tr:last-child]:border-0", className)}
       {...props}
     />
@@ -50,10 +79,14 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   );
 }
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+// Only rows inside `TableBody` animate: a variant child with no motion parent (a header
+// or footer row) has nothing to inherit the "hidden"/"shown" labels from, so it renders
+// as a plain row.
+function TableRow({ className, ...props }: HTMLMotionProps<"tr">) {
   return (
-    <tr
+    <motion.tr
       data-slot="table-row"
+      variants={ROW_VARIANTS}
       className={cn(
         "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
         className,

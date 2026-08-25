@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { ArrowLeft, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getPrimaryHandlerName,
@@ -178,10 +179,10 @@ export default function AdminTicketDetailPage() {
 
   if (loadingDetail) {
     return (
-      <div className="p-6 space-y-3">
+      <PageContainer className="space-y-3">
         <Skeleton className="h-12 w-full rounded-xl" />
         <Skeleton className="h-[calc(100vh-150px)] w-full rounded-xl" />
-      </div>
+      </PageContainer>
     );
   }
 
@@ -382,7 +383,7 @@ export default function AdminTicketDetailPage() {
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${slaBarCls}`}
+                    className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
                     style={{
                       width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
                     }}

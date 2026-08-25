@@ -103,7 +103,7 @@ export default function MergeCompareView({
 
   if (isLoadingSource || !source) {
     return (
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 py-6 pl-(--page-pl) pr-(--page-pr)">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-64 w-full" />
       </div>

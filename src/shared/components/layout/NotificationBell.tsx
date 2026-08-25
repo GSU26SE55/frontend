@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale";
 import {
@@ -16,6 +17,7 @@ import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
 import { notificationDeepLink } from "@/shared/utils/notificationDeepLink";
 import type { NotificationDto } from "@/shared/types/notification/notification.types";
 import { cn } from "@/lib/utils";
+import { DUR, EASE_OUT, SPRING } from "@/shared/motion/tokens";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,7 @@ export default function NotificationBell() {
   const markAllRead = useMarkAllRead();
 
   const badge = unreadCount > 99 ? "99+" : String(unreadCount);
+  const reduced = useReducedMotion();
 
   const handleItemClick = (n: NotificationDto) => {
     // Deep-link = the real content can be opened. Only then is it "Opened" (proof
@@ -75,14 +78,26 @@ export default function NotificationBell() {
           title="Notifications"
         >
           <Bell size={17} />
-          {unreadCount > 0 && (
-            <span
-              className="absolute -top-0.5 -right-0.5 min-w-3.75 h-3.75 px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold leading-none"
-              style={{ backgroundColor: "var(--p1)" }}
-            >
-              {badge}
-            </span>
-          )}
+          {/* Keyed on the count so a new notification re-pops the pill — the number
+              changing under a static badge is easy to miss. */}
+          <AnimatePresence initial={false}>
+            {unreadCount > 0 && (
+              <motion.span
+                key={badge}
+                className="absolute -top-0.5 -right-0.5 min-w-3.75 h-3.75 px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold leading-none"
+                style={{ backgroundColor: "var(--p1)" }}
+                initial={reduced ? false : { scale: 0.4, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1, transition: SPRING }}
+                exit={{
+                  scale: 0.4,
+                  opacity: 0,
+                  transition: { duration: DUR.state, ease: EASE_OUT },
+                }}
+              >
+                {badge}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">

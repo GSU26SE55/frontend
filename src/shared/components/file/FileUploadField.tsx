@@ -375,7 +375,7 @@ export default function FileUploadField({
                         disabled={fetchingMetadata}
                         onClick={() => handleSelectExisting(fileId)}
                         className={cn(
-                          "group relative aspect-square overflow-hidden rounded-md border-2 bg-muted transition-all duration-200 outline-none",
+                          "group relative aspect-square overflow-hidden rounded-md border-2 bg-muted transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong outline-none",
                           isSelected
                             ? "border-primary ring-2 ring-primary/20 shadow-sm"
                             : "border-border hover:border-muted-foreground/60",

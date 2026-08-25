@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -167,7 +168,7 @@ const ProfilePage = () => {
   // ── Loading state ────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-6 space-y-5">
+      <PageContainer size="narrow">
         <Skeleton className="h-28 w-full rounded-xl" />
         <Skeleton className="h-4 w-32" />
         <div className="grid sm:grid-cols-2 gap-4">
@@ -175,7 +176,7 @@ const ProfilePage = () => {
             <Skeleton key={i} className="h-9 rounded-lg" />
           ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 

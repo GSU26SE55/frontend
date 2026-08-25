@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -9,6 +10,7 @@ import AuditLogFilterBar, {
   type AuditLogFilterValues,
 } from "@/features/admin/components/account/AuditLogFilterBar";
 import { FileAuditActionCode } from "@/features/admin/enums/file-audit.enum";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // YYYY-MM-DD → UTC range (BE filter from/to).
 const toUtcStart = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
@@ -22,7 +24,7 @@ const rangeValid = (f: AuditLogFilterValues) =>
 export default function FilesAuditLogsPage() {
   const [filters, setFilters] = useState<AuditLogFilterValues>({});
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const onFilterChange = <K extends keyof AuditLogFilterValues>(
     key: K,
@@ -49,7 +51,7 @@ export default function FilesAuditLogsPage() {
   );
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -93,6 +95,6 @@ export default function FilesAuditLogsPage() {
           onPageSizeChange={setPageSize}
         />
       </div>
-    </div>
+    </PageContainer>
   );
 }

@@ -630,7 +630,7 @@ export function TicketCommentThread({
   return (
     <div className="flex flex-col">
       {/* Public / Internal tab split — sticks to the top on scroll, background covers messages underneath */}
-      <div className="sticky -top-6 z-20 -mx-6 -mt-6 bg-background px-6 pt-6 flex items-center gap-1 border-b border-border pb-2 shrink-0">
+      <div className="sticky -top-6 z-20 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] -mt-6 bg-background pl-(--page-pl) pr-(--page-pr) pt-6 flex items-center gap-1 border-b border-border pb-2 shrink-0">
         <Tabs value={tab} onValueChange={(v) => setTab(v as ChatTab)}>
           <TabsList>
             <TabsTrigger value="public">

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +15,7 @@ export default function MyMaintenanceLogsPage() {
   const { data: groups = [], isLoading, isError } = useStaffMaintenanceLogs();
 
   return (
-    <div className="p-6 space-y-4">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold">My maintenance history</h1>
@@ -90,6 +91,6 @@ export default function MyMaintenanceLogsPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

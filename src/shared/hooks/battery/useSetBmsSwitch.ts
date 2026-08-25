@@ -8,7 +8,9 @@ export function useSetBmsSwitch(assetId: string) {
 
   return useMutation({
     mutationFn: (payload: SetBmsSwitchPayload) =>
-      bmsSwitchService.setSwitch(assetId, payload).then((response) => response.data.data!),
+      bmsSwitchService
+        .setSwitch(assetId, payload)
+        .then((response) => response.data.data!),
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: QUERY_KEY.batteryAssets.bmsSwitch(assetId),

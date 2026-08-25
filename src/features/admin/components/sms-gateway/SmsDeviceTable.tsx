@@ -121,7 +121,7 @@ export default function SmsDeviceTable({
       stopRowClick: true,
       cell: (d) => (
         <Button
-          variant="ghost"
+          variant="destructive"
           size="sm"
           disabled={!d.isActive}
           onClick={() => onRevoke(d)}

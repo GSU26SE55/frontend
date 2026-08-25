@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import {
   createCleanupBag,
   prefersReducedMotion,
+  EASE,
 } from "@/features/landing/lib/animation";
 import solarOnlyImg from "@/assets/solar_only.webp";
 import solarBatteryImg from "@/assets/solar_battery.webp";
@@ -54,7 +55,7 @@ const ProductSection = () => {
           opacity: [0, 1],
           translateY: [40, 0],
           duration: 800,
-          ease: "outQuart",
+          ease: EASE.out,
           autoplay: onScroll({ target: header, repeat: false }),
         }),
       );
@@ -66,7 +67,7 @@ const ProductSection = () => {
           opacity: [0, 1],
           translateX: [30, 0],
           duration: 800,
-          ease: "outQuart",
+          ease: EASE.out,
           autoplay: onScroll({ target: ctaLink, repeat: false }),
         }),
       );
@@ -84,7 +85,7 @@ const ProductSection = () => {
       const badge = card.querySelector<HTMLElement>("[data-anim='card-badge']");
 
       const tl = createTimeline({
-        defaults: { ease: "outExpo" },
+        defaults: { ease: EASE.out },
         autoplay: onScroll({ target: card, repeat: false }),
       });
 
@@ -107,7 +108,7 @@ const ProductSection = () => {
       if (badge) {
         tl.add(
           badge,
-          { opacity: [0, 1], scale: [0, 1], duration: 600, ease: "outBack" },
+          { opacity: [0, 1], scale: [0.9, 1], duration: 600, ease: EASE.out },
           "-=500",
         );
       }
@@ -149,10 +150,10 @@ const ProductSection = () => {
           <div data-anim="cta-link">
             <a
               href="#login"
-              className="inline-flex items-center gap-1.5 font-medium text-slate-900 border-b border-slate-900 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all duration-300 group"
+              className="inline-flex items-center gap-1.5 font-medium text-slate-900 border-b border-slate-900 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong group"
             >
               Get Personalized Quote
-              <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="size-4 transition-transform duration-(--motion-enter) ease-strong group-hover:translate-x-1" />
             </a>
           </div>
         </div>
@@ -174,7 +175,7 @@ const ProductSection = () => {
                     data-anim="card-img"
                     src={item.image}
                     alt={item.title}
-                    className="h-full w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+                    className="h-full w-auto object-contain transition-transform duration-300 ease-strong group-hover:scale-105"
                     loading="lazy"
                     decoding="async"
                   />
@@ -182,7 +183,7 @@ const ProductSection = () => {
                   {isMonitoring && (
                     <div
                       data-anim="card-badge"
-                      className="absolute bottom-4 left-4 z-20 w-16 aspect-square bg-white border border-slate-950/10 rounded-xl shadow-md p-1.5 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-rotate-3"
+                      className="absolute bottom-4 left-4 z-20 w-16 aspect-square bg-white border border-slate-950/10 rounded-xl shadow-md p-1.5 flex items-center justify-center transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-enter) ease-strong hover:scale-110 hover:-rotate-3"
                     >
                       <img
                         src={solarMonitoringImg}
@@ -197,7 +198,7 @@ const ProductSection = () => {
 
                 {/* Content */}
                 <div className="flex flex-col flex-1 mt-6">
-                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors duration-300">
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors duration-(--motion-enter) ease-strong">
                     {item.title}
                   </h3>
                   <p className="mt-2 text-sm text-slate-500 leading-relaxed min-h-10 lg:min-h-12">

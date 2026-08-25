@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
@@ -153,7 +154,7 @@ export default function IoTDeviceDetailPage() {
     device?.status === IotDeviceStatusEnum.Decommissioned;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link
@@ -436,6 +437,6 @@ export default function IoTDeviceDetailPage() {
           });
         }}
       />
-    </div>
+    </PageContainer>
   );
 }

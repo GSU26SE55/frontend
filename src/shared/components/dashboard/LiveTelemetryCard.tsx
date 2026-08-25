@@ -56,6 +56,7 @@ function StatTile({
   className,
   style,
   title,
+  horizontal,
 }: {
   label: string;
   value: string;
@@ -63,7 +64,31 @@ function StatTile({
   className?: string;
   style?: React.CSSProperties;
   title?: string;
+  horizontal?: boolean;
 }) {
+  if (horizontal) {
+    return (
+      <div
+        className={cn(
+          "rounded-lg p-3 flex items-center justify-between",
+          className,
+        )}
+        style={style}
+        title={title}
+      >
+        <span className="text-base font-bold opacity-60">{label}</span>
+        <div className="flex items-baseline gap-1 leading-none">
+          <span className="text-2xl font-bold tabular-nums tracking-tight">
+            {value}
+          </span>
+          {unit && (
+            <span className="text-xs font-medium opacity-60">{unit}</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn("rounded-lg p-3 flex flex-col gap-1", className)}
@@ -207,6 +232,7 @@ export function LiveTelemetryCard({
               value={data.cycleCount != null ? String(data.cycleCount) : "—"}
               unit=""
               className="bg-muted/50 text-foreground col-span-2"
+              horizontal
             />
           </div>
 

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Download, FileUp, RotateCcw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,7 @@ import {
 } from "@/shared/enums/import/import.enum";
 import type { CreateImportBatchPayload } from "@/shared/types/import/import.types";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const TEMPLATES = [
   { type: ImportEntityTypeEnum.Customer, label: "Customer" },
@@ -78,7 +80,7 @@ export default function DataImportPage() {
 
   const { data: batches, isLoading: batchesLoading } = useImportBatches({
     pageNumber: 1,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
   });
   const { data: activeBatch } = useImportBatch(
     activeBatchId ?? "",
@@ -177,7 +179,7 @@ export default function DataImportPage() {
   }
 
   return (
-    <div className="space-y-6 p-6" data-testid="data-import-page">
+    <PageContainer data-testid="data-import-page">
       <div>
         <h1 className="text-2xl font-semibold">Third-party data import</h1>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -302,7 +304,7 @@ export default function DataImportPage() {
               </div>
               <div className="bg-muted h-2 w-full overflow-hidden rounded">
                 <div
-                  className="bg-primary h-full transition-all"
+                  className="bg-primary h-full transition-[width] duration-300 ease-linear"
                   style={{ width: `${progressPercent}%` }}
                   data-testid="progress-bar"
                 />
@@ -463,6 +465,7 @@ export default function DataImportPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               data-testid="confirm-revert"
               onClick={handleRevert}
             >
@@ -471,7 +474,7 @@ export default function DataImportPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }
 

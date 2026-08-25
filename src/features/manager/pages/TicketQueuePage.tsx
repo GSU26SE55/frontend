@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   Select,
   SelectContent,
@@ -10,17 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 import TicketTable from "@/features/manager/components/ticket/TicketTable";
 // GH-1176: TriageDialog (approval) removed; queue shows Open tickets awaiting assignment.
-import ReprioritizeDialog from "@/features/manager/components/ticket/ReprioritizeDialog";
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import {
   TicketPriorityEnum,
   TicketCategoryEnum,
 } from "@/shared/types/ticket/ticket.types";
-import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Maintenance",
@@ -40,15 +39,13 @@ const DEFAULTS = {
   priority: "",
   category: "",
   pageNumber: 1,
-  pageSize: 25,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function TicketQueuePage() {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
   // GH-1176: triageTarget removed (triage approval removed; queue is Open tickets only).
-  const [reprioritizeTarget, setReprioritizeTarget] =
-    useState<TicketDTO | null>(null);
 
   const { data, isLoading } = useAdminTicketQueue({
     priority: (filters.priority as TicketPriorityEnum) || undefined,
@@ -58,7 +55,7 @@ export default function TicketQueuePage() {
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -136,7 +133,6 @@ export default function TicketQueuePage() {
         <TicketTable
           tickets={data?.items ?? []}
           isLoading={isLoading}
-          onReprioritize={setReprioritizeTarget}
           pageNumber={filters.pageNumber}
           pageSize={filters.pageSize}
           detailBasePath="/manager/tickets/queue"
@@ -153,16 +149,6 @@ export default function TicketQueuePage() {
         onPageChange={(p) => setFilter("pageNumber", p)}
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
-
-      {reprioritizeTarget && (
-        <ReprioritizeDialog
-          ticketId={reprioritizeTarget.id}
-          currentImpact={reprioritizeTarget.impactScope}
-          currentUrgency={reprioritizeTarget.urgencyLevel}
-          open={!!reprioritizeTarget}
-          onClose={() => setReprioritizeTarget(null)}
-        />
-      )}
-    </div>
+    </PageContainer>
   );
 }

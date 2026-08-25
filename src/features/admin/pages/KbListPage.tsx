@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
+import { RevealInline } from "@/shared/motion/RevealInline";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -45,20 +47,12 @@ import {
   KB_CATEGORY_OPTIONS,
 } from "@/shared/enums/kb/kb.enum";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
-import { toneDot, KB_STATUS_TONE } from "@/shared/theme/statusColors";
-import { cn } from "@/lib/utils";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_OPTIONS = Object.values(KbArticleStatusEnum);
-
-const STATUS_DOT: Record<KbArticleStatusEnum, string> = {
-  [KbArticleStatusEnum.Draft]: toneDot(KB_STATUS_TONE.Draft),
-  [KbArticleStatusEnum.PendingReview]: toneDot(KB_STATUS_TONE.PendingReview),
-  [KbArticleStatusEnum.Published]: toneDot(KB_STATUS_TONE.Published),
-  [KbArticleStatusEnum.Archived]: toneDot(KB_STATUS_TONE.Archived),
-};
 
 const DEFAULTS = {
   keyword: "",
@@ -120,7 +114,7 @@ export default function KbListPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -140,7 +134,7 @@ export default function KbListPage() {
         </div>
       </div>
 
-      <div className="sticky top-0 z-10 -mx-6 px-6 py-3 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 space-y-3">
+      <div className="sticky top-0 z-10 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] pl-(--page-pl) pr-(--page-pr) bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -235,25 +229,17 @@ export default function KbListPage() {
               <SelectItem value={null}>All statuses</SelectItem>
               {STATUS_OPTIONS.map((s) => (
                 <SelectItem key={s} value={s}>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "size-1.5 rounded-full shrink-0",
-                        STATUS_DOT[s],
-                      )}
-                    />
-                    {KbArticleStatusLabel[s]}
-                  </span>
+                  {KbArticleStatusLabel[s]}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {hasActiveFilter && (
+          <RevealInline show={hasActiveFilter}>
             <Button size="sm" variant="ghost" onClick={resetFilters}>
               Clear filters
             </Button>
-          )}
+          </RevealInline>
         </div>
 
         {(search.value.length === 1 || tagSearch.value.length === 1) && (
@@ -271,6 +257,8 @@ export default function KbListPage() {
       ) : (
         <KbArticleTable
           data={data?.items ?? []}
+          pageNumber={filters.pageNumber}
+          pageSize={filters.pageSize}
           isLoading={isLoading}
           hasFilter={hasActiveFilter}
           onResetFilter={resetFilters}
@@ -304,7 +292,7 @@ export default function KbListPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Generate blog with AI?</AlertDialogTitle>
+            <AlertDialogTitle>Generate blog?</AlertDialogTitle>
             <AlertDialogDescription>
               {toGenerate && (
                 <>
@@ -363,6 +351,6 @@ export default function KbListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

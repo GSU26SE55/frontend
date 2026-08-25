@@ -15,12 +15,12 @@ import {
 import {
   Upload,
   Archive,
+  BarChart3,
   History,
   Trash2,
   Copy,
-  BarChart3,
 } from "lucide-react";
-import { KbUsageStatsDialog } from "@/features/admin/components/kb/KbUsageStatsDialog";
+import { KbUsageStatsDialog } from "@/shared/components/kb/KbUsageStatsDialog";
 import {
   useAdminKbDetail,
   usePublishKbArticle,
@@ -58,8 +58,8 @@ export default function KbDetailPage() {
   const { mutateAsync: duplicate, isPending: copyingTemplate } =
     useDuplicateKbArticle();
 
-  const [verOpen, setVerOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [verOpen, setVerOpen] = useState(false);
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
     null,
   );
@@ -82,7 +82,6 @@ export default function KbDetailPage() {
       <KbArticleDetail
         article={article}
         backUrl="/admin/kb"
-        breadcrumb="Admin · Guide"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
         onViewVersions={() => setVerOpen(true)}
@@ -118,7 +117,7 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Duplicate
+              Copy
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions

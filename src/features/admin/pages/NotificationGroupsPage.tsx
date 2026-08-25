@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Plus, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,13 +27,14 @@ import NotificationGroupTable from "@/features/admin/components/notification/Not
 import NotificationGroupFormDialog from "@/features/admin/components/notification/NotificationGroupFormDialog";
 import NotificationGroupMembersDialog from "@/features/admin/components/notification/NotificationGroupMembersDialog";
 import type { NotificationGroupDto } from "@/features/admin/types/notification/notification-group.types";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 // useUrlFilters strips empty keys from the URL and AUTOMATICALLY resets pageNumber to 1 whenever a
 // filter changes — this avoids the case of "sitting on page 5, filter now has only 1 page, table empty".
 const DEFAULTS = {
   search: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function NotificationGroupsPage() {
@@ -67,43 +69,41 @@ export default function NotificationGroupsPage() {
   const groups = data?.items ?? [];
 
   return (
-    <div className="p-6 space-y-5 max-w-300 mx-auto">
-      <div className="flex items-start justify-between gap-4">
+    <PageContainer>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            <Users className="inline size-3 mr-1 -mt-0.5" />
-            Notifications
+            Admin &middot; Notifications
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Notification groups
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Group recipients together to send in bulk with one command. The
-            recipient count shown already <b>excludes</b> deactivated accounts.
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : (data?.totalItems ?? 0)} groups &mdash; manage
+            recipient groups.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <RefreshButton queryKeys={[KEY.admin.notificationGroups]} />
-          <Button onClick={() => setFormState({ target: null })}>
-            <Plus className="mr-1 size-4" />
-            Create group
+          <Button size="sm" onClick={() => setFormState({ target: null })}>
+            <Plus className="size-3.5" /> Create group
           </Button>
         </div>
       </div>
 
-      <Card className="rounded-xl overflow-hidden">
-        <div className="p-3 border-b border-border">
-          <Input
-            placeholder="Search by group name…"
-            value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-              setFilter("search", e.target.value);
-            }}
-            className="h-9 max-w-xs"
-          />
-        </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Input
+          placeholder="Search by group name…"
+          value={searchInput}
+          onChange={(e) => {
+            setSearchInput(e.target.value);
+            setFilter("search", e.target.value);
+          }}
+          className="w-full sm:max-w-xs"
+        />
+      </div>
 
+      <Card className="gap-0 py-0 overflow-hidden">
         <NotificationGroupTable
           groups={groups}
           isLoading={isLoading}
@@ -111,22 +111,20 @@ export default function NotificationGroupsPage() {
           onDelete={setDeleteTarget}
           onMembers={setMembersTarget}
         />
-
-        {data && data.totalItems > 0 && (
-          <div className="border-t border-border p-3">
-            <DataPagination
-              pageNumber={data.pageNumber}
-              pageSize={data.pageSize}
-              totalItems={data.totalItems}
-              totalPages={data.totalPages}
-              hasNextPage={data.hasNextPage}
-              hasPreviousPage={data.hasPreviousPage}
-              onPageChange={(p) => setFilter("pageNumber", p)}
-              onPageSizeChange={(s) => setFilter("pageSize", s)}
-            />
-          </div>
-        )}
       </Card>
+
+      {data && data.totalItems > 0 && (
+        <DataPagination
+          pageNumber={data.pageNumber}
+          pageSize={data.pageSize}
+          totalItems={data.totalItems}
+          totalPages={data.totalPages}
+          hasNextPage={data.hasNextPage}
+          hasPreviousPage={data.hasPreviousPage}
+          onPageChange={(p) => setFilter("pageNumber", p)}
+          onPageSizeChange={(s) => setFilter("pageSize", s)}
+        />
+      )}
 
       {formState && (
         <NotificationGroupFormDialog
@@ -164,6 +162,7 @@ export default function NotificationGroupsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => {
                 if (deleteTarget) remove.mutate(deleteTarget.id);
                 setDeleteTarget(null);
@@ -174,6 +173,6 @@ export default function NotificationGroupsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

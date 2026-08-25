@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { History } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -32,6 +32,7 @@ import {
   NotificationBatchSourceEnum,
   type NotificationBatchDto,
 } from "@/features/admin/types/notification/notification-group.types";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const ALL = "__all__";
 
@@ -42,7 +43,7 @@ const SOURCE_OPTIONS = Object.values(NotificationBatchSourceEnum).map(
 const DEFAULTS = {
   source: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function NotificationBatchesPage() {
@@ -65,51 +66,52 @@ export default function NotificationBatchesPage() {
   const batches: NotificationBatchDto[] = data?.items ?? [];
 
   return (
-    <div className="p-6 space-y-5 max-w-300 mx-auto">
-      <div className="flex items-start justify-between gap-4">
+    <PageContainer>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            <History className="inline size-3 mr-1 -mt-0.5" />
-            Notifications
+            Admin &middot; Notifications
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             Send history
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Each row is <b>one send</b>, regardless of how many recipients.
-            Click a row to see how many were delivered and how many were read.
+          <p className="text-sm text-muted-foreground mt-1">
+            {isLoading ? "..." : (data?.totalItems ?? 0)} sends &mdash; view
+            notification send history.
           </p>
         </div>
-        <RefreshButton queryKeys={[KEY.admin.notificationBatches]} />
+        <div className="flex gap-2">
+          <RefreshButton queryKeys={[KEY.admin.notificationBatches]} />
+        </div>
       </div>
 
-      <Card className="rounded-xl overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-border p-3">
-          <Select
-            value={filters.source || ALL}
-            items={[
-              { value: ALL, label: "All sources" },
-              ...SOURCE_OPTIONS.map((o) => ({
-                value: String(o.value),
-                label: o.label,
-              })),
-            ]}
-            onValueChange={(v) => setFilter("source", !v || v === ALL ? "" : v)}
-          >
-            <SelectTrigger className="h-9 w-52">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent alignItemWithTrigger={false}>
-              <SelectItem value={ALL}>All sources</SelectItem>
-              {SOURCE_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={String(o.value)}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Select
+          value={filters.source || ALL}
+          items={[
+            { value: ALL, label: "All sources" },
+            ...SOURCE_OPTIONS.map((o) => ({
+              value: String(o.value),
+              label: o.label,
+            })),
+          ]}
+          onValueChange={(v) => setFilter("source", !v || v === ALL ? "" : v)}
+        >
+          <SelectTrigger size="sm" className="w-52">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={ALL}>All sources</SelectItem>
+            {SOURCE_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={String(o.value)}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
+      <Card className="gap-0 py-0 overflow-hidden">
         {isLoading ? (
           <p className="px-4 py-10 text-center text-sm text-muted-foreground">
             Loading…
@@ -176,22 +178,20 @@ export default function NotificationBatchesPage() {
             </TableBody>
           </Table>
         )}
-
-        {data && data.totalItems > 0 && (
-          <div className="border-t border-border p-3">
-            <DataPagination
-              pageNumber={data.pageNumber}
-              pageSize={data.pageSize}
-              totalItems={data.totalItems}
-              totalPages={data.totalPages}
-              hasNextPage={data.hasNextPage}
-              hasPreviousPage={data.hasPreviousPage}
-              onPageChange={(p) => setFilter("pageNumber", p)}
-              onPageSizeChange={(s) => setFilter("pageSize", s)}
-            />
-          </div>
-        )}
       </Card>
+
+      {data && data.totalItems > 0 && (
+        <DataPagination
+          pageNumber={data.pageNumber}
+          pageSize={data.pageSize}
+          totalItems={data.totalItems}
+          totalPages={data.totalPages}
+          hasNextPage={data.hasNextPage}
+          hasPreviousPage={data.hasPreviousPage}
+          onPageChange={(p) => setFilter("pageNumber", p)}
+          onPageSizeChange={(s) => setFilter("pageSize", s)}
+        />
+      )}
 
       {detailId && (
         <NotificationBatchDetailDialog
@@ -200,6 +200,6 @@ export default function NotificationBatchesPage() {
           onOpenChange={(open) => !open && setDetailId(null)}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

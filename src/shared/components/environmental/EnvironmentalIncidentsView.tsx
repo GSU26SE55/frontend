@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,6 +66,7 @@ import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const DEFAULTS = {
   status: "",
@@ -73,7 +75,7 @@ const DEFAULTS = {
   from: "",
   to: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 const STATUS_OPTIONS = [
@@ -135,7 +137,7 @@ export default function EnvironmentalIncidentsView({
   const totalItems = data?.totalItems ?? 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
@@ -276,6 +278,7 @@ export default function EnvironmentalIncidentsView({
                   {TABLE_COLUMNS.index}
                 </TableHead>
                 <TableHead>Site</TableHead>
+                <TableHead>{TABLE_COLUMNS.customer}</TableHead>
                 <TableHead>Incident type</TableHead>
                 <TableHead>{TABLE_COLUMNS.severity}</TableHead>
                 <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
@@ -295,6 +298,8 @@ export default function EnvironmentalIncidentsView({
                   <TableCell className="font-medium">
                     {siteName(incident.siteId)}
                   </TableCell>
+                  {/* Empty when the BE cannot resolve the account — show a dash. */}
+                  <TableCell>{incident.customerName || "—"}</TableCell>
                   <TableCell>
                     <IncidentTypeBadge incidentType={incident.incidentType} />
                   </TableCell>
@@ -330,7 +335,7 @@ export default function EnvironmentalIncidentsView({
         siteName={siteName}
         onClose={() => setSelectedId(null)}
       />
-    </div>
+    </PageContainer>
   );
 }
 
@@ -391,6 +396,9 @@ function IncidentDetailDialog({
           </div>
         ) : (
           <dl className="grid grid-cols-3 gap-x-4 gap-y-3 text-sm py-2">
+            <DetailRow label="Customer">
+              {incident.customerName || "—"}
+            </DetailRow>
             <DetailRow label="Type">
               <IncidentTypeBadge incidentType={incident.incidentType} />
             </DetailRow>

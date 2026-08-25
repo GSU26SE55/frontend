@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Upload, Archive, History, Copy } from "lucide-react";
+import { Upload, Archive, BarChart3, History, Copy } from "lucide-react";
+import { KbUsageStatsDialog } from "@/shared/components/kb/KbUsageStatsDialog";
 import {
   useManagerKbDetail,
   useManagerPublishKbArticle,
@@ -38,6 +39,7 @@ export default function KbDetailPage() {
   const { mutateAsync: duplicate, isPending: copyingTemplate } =
     useManagerDuplicateKbArticle();
 
+  const [statsOpen, setStatsOpen] = useState(false);
   const [verOpen, setVerOpen] = useState(false);
   const [compareParams, setCompareParams] = useState<KbCompareParams | null>(
     null,
@@ -61,7 +63,6 @@ export default function KbDetailPage() {
       <KbArticleDetail
         article={article}
         backUrl="/manager/kb"
-        breadcrumb="Manager · Guide"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
         onViewVersions={() => setVerOpen(true)}
@@ -88,7 +89,16 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Duplicate
+              Copy
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setStatsOpen(true)}
+            >
+              <BarChart3 className="size-3.5" />
+              Stats
             </Button>
             {article.status === KbArticleStatusEnum.PendingReview && (
               <KbReviewActions
@@ -138,6 +148,12 @@ export default function KbDetailPage() {
         onRollback={(versionId) =>
           rollback({ id: article.id, payload: { toVersionId: versionId } })
         }
+      />
+
+      <KbUsageStatsDialog
+        articleId={article.id}
+        open={statsOpen}
+        onClose={() => setStatsOpen(false)}
       />
     </>
   );

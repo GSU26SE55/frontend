@@ -4,7 +4,7 @@ import { iotDeviceService } from "@/features/admin/services/iot/iot-device.servi
 import type { IotDeviceListParams } from "@/shared/types/iot/iot.types";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 
-const PROVISION_STATUS_POLL_MS = 5_000;
+const LIVE_STATUS_POLL_MS = 5_000;
 
 export function useIotDevices(params?: IotDeviceListParams) {
   return useQuery({
@@ -12,9 +12,11 @@ export function useIotDevices(params?: IotDeviceListParams) {
     queryFn: () => iotDeviceService.getList(params).then((r) => r.data.data),
     refetchInterval: (query) =>
       query.state.data?.items.some(
-        (device) => device.status === IotDeviceStatusEnum.Pending,
+        (device) =>
+          device.status !== IotDeviceStatusEnum.Disabled &&
+          device.status !== IotDeviceStatusEnum.Decommissioned,
       )
-        ? PROVISION_STATUS_POLL_MS
+        ? LIVE_STATUS_POLL_MS
         : false,
   });
 }

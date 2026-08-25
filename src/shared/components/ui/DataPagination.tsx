@@ -8,6 +8,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { PAGE_SIZE_OPTIONS } from "@/shared/constants/pagination";
 import {
   Select,
   SelectContent,
@@ -15,8 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 interface DataPaginationProps {
   totalItems: number;

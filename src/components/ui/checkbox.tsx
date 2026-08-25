@@ -1,11 +1,14 @@
 "use client";
 
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
+import { SPRING } from "@/shared/motion/tokens";
 
 function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
+  const reduced = useReducedMotion();
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
@@ -15,9 +18,17 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
       )}
       {...props}
     >
+      {/* The indicator is unmounted while unchecked, so mounting is the tick: it pops
+          in with the same spring the switch thumb uses. */}
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
+        className="grid place-content-center text-current [&>svg]:size-3.5"
+        render={
+          <motion.span
+            initial={reduced ? false : { scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, transition: SPRING }}
+          />
+        }
       >
         <CheckIcon />
       </CheckboxPrimitive.Indicator>

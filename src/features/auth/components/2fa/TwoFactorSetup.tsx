@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ import type {
   CrossDeviceRequestResponseData,
 } from "@/features/auth/types/account.types";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
+import { DUR, EASE_OUT } from "@/shared/motion/tokens";
 
 interface TwoFactorSetupProps {
   isEnabled: boolean;
@@ -40,6 +42,7 @@ const BackupCodesList = ({ codes }: { codes: string[] }) => (
 );
 
 const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
+  const reducedMotion = useReducedMotion();
   const queryClient = useQueryClient();
 
   // enroll wizard state
@@ -224,7 +227,18 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
           </DialogHeader>
           {initData && (
             <div className="flex flex-col items-center gap-4">
-              <QRCodeSVG value={initData.otpAuthUri} size={200} />
+              {/* Setting up 2FA happens once. The code scaling in from 0.96 marks it
+                  as a moment rather than having it blink into existence. */}
+              <motion.div
+                initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  transition: { duration: DUR.enter, ease: EASE_OUT },
+                }}
+              >
+                <QRCodeSVG value={initData.otpAuthUri} size={200} />
+              </motion.div>
               <p className="text-xs text-muted-foreground break-all">
                 Secret: {initData.secret}
               </p>
@@ -372,7 +386,16 @@ const TwoFactorSetup = ({ isEnabled, bare }: TwoFactorSetupProps) => {
                 open the confirmation link just sent to your email to finish on
                 the second device.
               </p>
-              <QRCodeSVG value={crossData.otpAuthUri} size={200} />
+              <motion.div
+                initial={reducedMotion ? false : { opacity: 0, scale: 0.96 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  transition: { duration: DUR.enter, ease: EASE_OUT },
+                }}
+              >
+                <QRCodeSVG value={crossData.otpAuthUri} size={200} />
+              </motion.div>
               <p className="text-xs text-muted-foreground break-all">
                 Secret: {crossData.secret}
               </p>

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Battery, Thermometer } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { KEY } from "@/shared/utils/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import {
 } from "@/features/manager/hooks/site/useSites";
 import type { SiteAssetsFilterParams } from "@/shared/types/site/site.types";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
@@ -38,9 +40,34 @@ export default function ManagerSiteDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  // Tab + evidence window live in the URL, not in local state. A ticket links straight to
+  // "?tab=ambient&from=…&to=…" to land the reader on the Environment tab already filtered to
+  // the incident window; with an uncontrolled <Tabs defaultValue>, that link opened the
+  // Battery list every time and the from/to pair had nothing reading it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") === "ambient" ? "ambient" : "assets";
+  const ambientFrom = searchParams.get("from") ?? undefined;
+  const ambientTo = searchParams.get("to") ?? undefined;
+
+  const setTab = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
+  // Dropping the window keeps the reader on the Environment tab and restores the full log.
+  const clearAmbientWindow = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("from");
+    next.delete("to");
+    // No longer emitted, but still cleared: a bookmarked link from before may carry it.
+    next.delete("windowLabel");
+    setSearchParams(next, { replace: true });
+  };
+
   const [assetsParams, setAssetsParams] = useState<SiteAssetsFilterParams>({
     pageNumber: 1,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
   });
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
@@ -54,7 +81,7 @@ export default function ManagerSiteDetailPage() {
 
   if (loadingSite) {
     return (
-      <div className="p-6 space-y-6 max-w-360 mx-auto">
+      <PageContainer>
         <Skeleton className="h-5 w-24" />
         <Skeleton className="h-8 w-64" />
         <Card className="p-6">
@@ -64,13 +91,13 @@ export default function ManagerSiteDetailPage() {
             ))}
           </div>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!site) {
     return (
-      <div className="p-6 max-w-360 mx-auto">
+      <PageContainer>
         <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
           <MapPin className="size-8 opacity-30" />
           <span className="text-sm">Site not found.</span>
@@ -78,12 +105,12 @@ export default function ManagerSiteDetailPage() {
             <ArrowLeft className="size-3.5" /> Back
           </Button>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       {/* Back + header */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -111,7 +138,7 @@ export default function ManagerSiteDetailPage() {
       </div>
 
       {/* Batteries + Environment */}
-      <Tabs defaultValue="assets">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="assets">
             <Battery className="size-3.5" /> Battery list
@@ -164,13 +191,21 @@ export default function ManagerSiteDetailPage() {
           </div>
           <Card>
             <SiteAssetsTable
+              siteId={id}
               data={assetsPage?.items ?? []}
               totalCount={assetsPage?.totalItems ?? 0}
               pageNumber={assetsParams.pageNumber ?? 1}
-              pageSize={assetsParams.pageSize ?? 10}
+              pageSize={assetsParams.pageSize ?? DEFAULT_PAGE_SIZE}
               isLoading={loadingAssets}
               onPageChange={(page) =>
                 setAssetsParams((p) => ({ ...p, pageNumber: page }))
+              }
+              onPageSizeChange={(size) =>
+                setAssetsParams((p) => ({
+                  ...p,
+                  pageNumber: 1,
+                  pageSize: size,
+                }))
               }
               onAssetClick={(asset) =>
                 navigate(`/manager/battery-assets/${asset.id}`)
@@ -180,9 +215,16 @@ export default function ManagerSiteDetailPage() {
         </TabsContent>
 
         <TabsContent value="ambient" className="mt-4">
-          <AmbientSitePanel siteId={id} />
+          <AmbientSitePanel
+            siteId={id}
+            from={ambientFrom}
+            to={ambientTo}
+            onClearWindow={
+              ambientFrom || ambientTo ? clearAmbientWindow : undefined
+            }
+          />
         </TabsContent>
       </Tabs>
-    </div>
+    </PageContainer>
   );
 }

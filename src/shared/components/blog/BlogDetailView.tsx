@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -45,13 +44,21 @@ import {
 } from "@/shared/hooks/blog/useBlog";
 import { BlogPostStatusEnum } from "@/shared/enums/blog/blog.enum";
 import type { BlogCompareParams } from "@/shared/types/blog/blog.types";
+import { ACTIONS } from "@/shared/constants/actions";
 
 interface BlogDetailViewProps {
   basePath: string;
-  /** Only Manager/Admin have publish · archive · delete. */
+  /** Only Manager/Admin have publish, archive and delete. */
   canWorkflow?: boolean;
 }
 
+/**
+ * One blog post, read the way a reader would meet it.
+ *
+ * The post is the page, so it gets a single reading column and the summary sits above the
+ * body as a lede rather than being boxed with it. Identity and actions stay pinned to the
+ * top, which keeps Publish reachable from the bottom of a long post.
+ */
 export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -86,9 +93,23 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
 
   if (isLoading || !post)
     return (
-      <div className="mx-auto max-w-4xl space-y-4 p-6">
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-64 w-full" />
+      <div>
+        <div className="border-b border-border">
+          <div className="flex h-14 w-full items-center gap-3 pl-(--page-pl) pr-(--page-pr)">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="ml-auto h-7 w-56" />
+          </div>
+        </div>
+        <div className="w-full space-y-4 pt-10 pl-(--page-pl) pr-(--page-pr)">
+          <Skeleton className="h-9 w-4/5" />
+          <Skeleton className="h-3 w-64" />
+          <div className="space-y-2.5 pt-6">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="h-3.5 w-full last:w-2/3" />
+            ))}
+          </div>
+        </div>
       </div>
     );
 
@@ -96,104 +117,139 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
   const canPublish = post.status === BlogPostStatusEnum.Draft;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 p-6">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(`${basePath}/blog`)}
-      >
-        <ArrowLeft className="size-3.5" /> Blog list
-      </Button>
+    <div className="pb-24">
+      {/* The toolbar spans the page, not the reading column: the post wants a narrow
+          measure, the action row wants room to stay on one line. */}
+      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`${basePath}/blog`)}
+          >
+            <ArrowLeft className="size-3.5" />
+            Blog
+          </Button>
+          <BlogStatusBadge status={post.status} />
+          <BlogOriginBadge origin={post.origin} />
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {post.title}
-          </h1>
-          <p className="text-muted-foreground mt-1 font-mono text-xs">
-            /{post.slug} &middot; v{post.currentVersion} &middot;{" "}
-            {format(new Date(post.createdAt), "MM/dd/yyyy HH:mm")}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <BlogStatusBadge status={post.status} />
-            <BlogOriginBadge origin={post.origin} />
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowVersions(true)}
+            >
+              <History className="size-3.5" /> History
+            </Button>
+
+            {canWorkflow && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={!canPublish || publishing}
+                  onClick={() => publish(post.id)}
+                >
+                  <Upload className="size-3.5" /> Publish
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={
+                    archiving || post.status === BlogPostStatusEnum.Archived
+                  }
+                  onClick={() => archive(post.id)}
+                >
+                  <Archive className="size-3.5" /> Archive
+                </Button>
+                {/* destructive, not outline: delete is the one irreversible action in this
+                    row, so it must not look like Publish or Archive sitting beside it. */}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={removing}
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="size-3.5" /> {ACTIONS.DELETE}
+                </Button>
+              </>
+            )}
+
+            <span aria-hidden className="mx-1 h-5 w-px bg-border" />
+            <Button
+              size="sm"
+              className="gap-1.5"
+              disabled={!editable}
+              title={
+                editable
+                  ? undefined
+                  : "Post is being generated or already archived"
+              }
+              onClick={() => navigate(`${basePath}/blog/${post.id}/edit`)}
+            >
+              <Pencil className="size-3.5" /> {ACTIONS.EDIT}
+            </Button>
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowVersions(true)}
-          >
-            <History className="size-3.5" /> History
-          </Button>
-          <Button
-            size="sm"
-            disabled={!editable}
-            title={
-              editable
-                ? undefined
-                : "Post is being generated or already archived"
-            }
-            onClick={() => navigate(`${basePath}/blog/${post.id}/edit`)}
-          >
-            <Pencil className="size-3.5" /> Edit
-          </Button>
-
-          {canWorkflow && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!canPublish || publishing}
-                onClick={() => publish(post.id)}
-              >
-                <Upload className="size-3.5" /> Publish
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={
-                  archiving || post.status === BlogPostStatusEnum.Archived
-                }
-                onClick={() => archive(post.id)}
-              >
-                <Archive className="size-3.5" /> Archive
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={removing}
-                onClick={() => setConfirmDelete(true)}
-              >
-                <Trash2 className="size-3.5" /> Delete
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
-      {post.status === BlogPostStatusEnum.Generating && (
-        <Card className="border-info/40 bg-info/5 p-3 text-sm">
-          AI is generating content. The page will update automatically when
-          done.
-        </Card>
-      )}
+      {/* Two columns, matching the editor and the guide page: the post body on the
+          left, its title and facts in a card on the right. */}
+      <div className="grid w-full items-start gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* The body sits on the same card surface as the panel beside it: bare text on
+            the page background against a bordered card read as an unfinished column. */}
+        <article className="min-w-0 rounded-lg border border-border bg-card p-6">
+          {post.status === BlogPostStatusEnum.Generating && (
+            <p className="mb-5 rounded-md border border-info/40 bg-info/5 px-3 py-2.5 text-sm">
+              AI is writing this post. The page updates itself when it finishes.
+            </p>
+          )}
 
-      {post.status === BlogPostStatusEnum.GenerationFailed && (
-        <Card className="border-destructive/40 bg-destructive/5 p-3 text-sm">
-          AI content generation failed. You can still click{" "}
-          <strong>Edit</strong> to write it manually.
-        </Card>
-      )}
+          {post.status === BlogPostStatusEnum.GenerationFailed && (
+            <p className="mb-5 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-sm">
+              AI generation failed. Open the editor to write the post by hand.
+            </p>
+          )}
 
-      <Card className="p-5">
-        <p className="text-muted-foreground mb-3 text-sm italic">
-          {post.summary}
-        </p>
-        <RichContentView html={post.contentHtml} />
-      </Card>
+          <div className="text-[15px]">
+            <RichContentView html={post.contentHtml} />
+          </div>
+        </article>
+
+        <aside className="space-y-5 rounded-lg border border-border bg-card p-5 lg:sticky lg:top-20">
+          <h1 className="text-xl font-semibold leading-tight tracking-tight">
+            {post.title}
+          </h1>
+
+          {/* Slug omitted: it is a URL detail the editor sets, not something a reader of
+              this page acts on. */}
+          <dl className="space-y-2.5 border-t border-border pt-4 text-xs">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Version</dt>
+              <dd className="font-medium tabular-nums">
+                {post.currentVersion}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">Written</dt>
+              <dd className="font-medium tabular-nums">
+                {format(new Date(post.createdAt), "MMM d, yyyy HH:mm")}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">Summary</p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground/80">
+              {post.summary}
+            </p>
+          </div>
+        </aside>
+      </div>
 
       <Dialog open={showVersions} onOpenChange={setShowVersions}>
         <DialogContent className="max-w-3xl">
@@ -217,22 +273,23 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
             <AlertDialogDescription>
-              The post &ldquo;{post.title}&rdquo; will be deleted. This cannot
-              be undone from the UI.
+              <strong>{post.title}</strong> will be deleted. This cannot be
+              undone from the UI.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{ACTIONS.CANCEL}</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() =>
                 remove(post.id, {
                   onSuccess: () => navigate(`${basePath}/blog`),
                 })
               }
             >
-              Delete
+              {ACTIONS.DELETE}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -4,7 +4,11 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="skeleton"
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={
+        // `shimmer` (a travelling highlight) rather than `animate-pulse`: a whole block
+        // fading in and out reads as "broken", a highlight sweeping across reads as "loading".
+        cn("shimmer rounded-md bg-muted", className)
+      }
       {...props}
     />
   );

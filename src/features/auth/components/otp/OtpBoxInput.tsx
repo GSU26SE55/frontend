@@ -1,5 +1,8 @@
 import { useRef, type KeyboardEvent, type ClipboardEvent } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+
 import { cn } from "@/lib/utils";
+import { DUR, EASE_OUT } from "@/shared/motion/tokens";
 
 interface OtpBoxInputProps {
   value: string;
@@ -20,6 +23,7 @@ const OtpBoxInput = ({
 }: OtpBoxInputProps) => {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const digits = Array.from({ length }, (_, i) => value[i] ?? "");
+  const reduced = useReducedMotion();
 
   const handleChange = (index: number, raw: string) => {
     const digit = raw.replace(/\D/g, "").slice(-1);
@@ -59,10 +63,31 @@ const OtpBoxInput = ({
   };
 
   return (
-    <div className="flex justify-center gap-2">
+    // A wrong code shakes the row once. Entering a one-time code is rare and the
+    // failure is worth making unmissable — the delight budget spends fine here.
+    <motion.div
+      className="flex justify-center gap-2"
+      animate={
+        hasError && !reduced
+          ? {
+              transform: [
+                "translateX(0px)",
+                "translateX(-4px)",
+                "translateX(4px)",
+                "translateX(-2px)",
+                "translateX(0px)",
+              ],
+            }
+          : { transform: "translateX(0px)" }
+      }
+      transition={{ duration: 0.3, ease: EASE_OUT }}
+    >
       {digits.map((digit, index) => (
-        <input
+        <motion.input
           key={index}
+          // A filled box nudges up in scale so the row shows progress at a glance.
+          animate={{ scale: digit ? 1.04 : 1 }}
+          transition={{ duration: DUR.state, ease: EASE_OUT }}
           ref={(el) => {
             refs.current[index] = el;
           }}
@@ -88,7 +113,7 @@ const OtpBoxInput = ({
           )}
         />
       ))}
-    </div>
+    </motion.div>
   );
 };
 

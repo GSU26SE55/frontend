@@ -48,7 +48,6 @@ export default function KbDetailPage() {
       <KbArticleDetail
         article={article}
         backUrl="/staff/kb"
-        breadcrumb="Staff · Guide"
         onMarkHelpful={() => markHelpful(article.id)}
         helpfulPending={helpfulPending}
         onViewVersions={() => setVerOpen(true)}
@@ -75,7 +74,7 @@ export default function KbDetailPage() {
               }}
             >
               <Copy className="size-3.5" />
-              Duplicate
+              Copy
             </Button>
           </>
         }

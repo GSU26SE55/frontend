@@ -2,11 +2,13 @@ import { useEffect, useReducer } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Check, ChevronLeft } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import ForgotPasswordForm from "@/features/auth/components/password/ForgotPasswordForm";
 import ResetOtpVerifyForm from "@/features/auth/components/otp/ResetOtpVerifyForm";
 import ResetPasswordForm from "@/features/auth/components/password/ResetPasswordForm";
 import { cn } from "@/lib/utils";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
+import { DUR, SPRING } from "@/shared/motion/tokens";
 
 // Fallback if BE doesn't return expiresInSeconds (api-auth.md: resetToken TTL 900s = 15 minutes)
 const RESET_TOKEN_TTL_FALLBACK_S = 900;
@@ -108,6 +110,7 @@ const ForgotPasswordPage = () => {
   }, [state.step, state.tokenExpiry]);
 
   const formattedCountdown = `${Math.floor(state.countdown / 60)}:${String(state.countdown % 60).padStart(2, "0")}`;
+  const reduced = useReducedMotion();
 
   return (
     <div className="space-y-6">
@@ -122,7 +125,7 @@ const ForgotPasswordPage = () => {
               <div className="flex flex-col items-center gap-1.5">
                 <div
                   className={cn(
-                    "flex size-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-200",
+                    "flex size-8 items-center justify-center rounded-full text-xs font-bold transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-enter) ease-strong",
                     isCompleted
                       ? "bg-emerald-600 text-white"
                       : isActive
@@ -130,11 +133,29 @@ const ForgotPasswordPage = () => {
                         : "bg-slate-100 text-slate-400",
                   )}
                 >
-                  {isCompleted ? (
-                    <Check className="size-3.5 stroke-[2.5]" />
-                  ) : (
-                    stepNum
-                  )}
+                  <AnimatePresence mode="wait" initial={false}>
+                    {isCompleted ? (
+                      <motion.span
+                        key="check"
+                        initial={reduced ? false : { scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1, transition: SPRING }}
+                      >
+                        <Check className="size-3.5 stroke-[2.5]" />
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="num"
+                        initial={reduced ? false : { scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1, transition: SPRING }}
+                        exit={{
+                          opacity: 0,
+                          transition: { duration: DUR.state },
+                        }}
+                      >
+                        {stepNum}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <span
                   className={cn(
@@ -146,12 +167,18 @@ const ForgotPasswordPage = () => {
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    "mb-5 h-px w-14 mx-1 transition-colors duration-300",
-                    state.step > stepNum ? "bg-emerald-500" : "bg-slate-200",
-                  )}
-                />
+                /* Draws left-to-right with clip-path instead of swapping colour: the
+                   line reads as progress being made, not as a value flipping. */
+                <div className="relative mb-5 mx-1 h-px w-14 bg-slate-200">
+                  <div
+                    className={cn(
+                      "absolute inset-0 bg-emerald-500 transition-[clip-path] duration-(--motion-layout) ease-strong-in-out",
+                      state.step > stepNum
+                        ? "[clip-path:inset(0_0_0_0)]"
+                        : "[clip-path:inset(0_100%_0_0)]",
+                    )}
+                  />
+                </div>
               )}
             </div>
           );

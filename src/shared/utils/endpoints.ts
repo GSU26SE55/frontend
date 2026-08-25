@@ -623,7 +623,6 @@ export const ENDPOINTS = {
     REVERT_BATCH: (id: string) => `/api/imports/batches/${id}/revert`,
   },
 
-
   // Blog template — GHI chỉ Admin (đọc dùng BLOG_INTERNAL.TEMPLATES)
   BLOG_TEMPLATES_ADMIN: {
     CREATE: "/api/admin/blog/templates",

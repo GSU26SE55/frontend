@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RichTextEditor } from "@/shared/components/editor/RichTextEditor";
 import { slugify } from "@/shared/lib/slugify";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -17,6 +25,35 @@ import type {
   BlogPostDTO,
   BlogTemplateDTO,
 } from "@/shared/types/blog/blog.types";
+import { ACTIONS } from "@/shared/constants/actions";
+
+/** Field label plus its error line. Label above, error below, same rhythm on every field. */
+function Field({
+  label,
+  htmlFor,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  hint?: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={htmlFor}>
+        {label}
+        {hint && (
+          <span className="font-normal text-muted-foreground"> {hint}</span>
+        )}
+      </Label>
+      {children}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
 
 interface BlogEditorPanelProps {
   /** Has a value = edit mode; undefined = create new. */
@@ -30,6 +67,15 @@ interface BlogEditorPanelProps {
   editable?: boolean;
 }
 
+/**
+ * The blog editor.
+ *
+ * Writing a post is a long scroll, so Save is pinned to the toolbar rather than parked at
+ * the bottom of the form: the content field is the tall one, and the writer should not
+ * have to travel to the end of it to keep their work. Everything that describes the post
+ * rather than being it (slug, summary, template, change note) sits in a side column so the
+ * title and body read as one continuous document.
+ */
 export function BlogEditorPanel({
   existing,
   templates,
@@ -40,6 +86,7 @@ export function BlogEditorPanel({
 }: BlogEditorPanelProps) {
   const isEdit = !!existing;
   const [slugTouched, setSlugTouched] = useState(isEdit);
+  const [templateId, setTemplateId] = useState<string | null>(null);
 
   const {
     register,
@@ -82,8 +129,9 @@ export function BlogEditorPanel({
     setValue("slug", slugify(title ?? ""));
   }, [title, isEdit, slugTouched, setValue]);
 
-  const applyTemplate = (templateId: string) => {
-    const tpl = templates?.find((t) => t.id === templateId);
+  const applyTemplate = (id: string | null) => {
+    setTemplateId(id);
+    const tpl = templates?.find((t) => t.id === id);
     if (tpl) setValue("contentHtml", tpl.contentHtml);
   };
 
@@ -97,111 +145,164 @@ export function BlogEditorPanel({
     }
   };
 
+  const activeTemplates = templates?.filter((t) => t.isActive) ?? [];
+  const templateItems = [
+    { value: null, label: "No template" },
+    ...activeTemplates.map((t) => ({ value: t.id, label: t.name })),
+  ];
+
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="blog-title">Title</Label>
-        <Input
-          id="blog-title"
-          {...register("title")}
-          disabled={!editable}
-          placeholder="Post title"
-        />
-        {errors.title && (
-          <p className="text-destructive text-xs">{errors.title.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="blog-slug">Slug</Label>
-        <Input
-          id="blog-slug"
-          {...register("slug", { onChange: () => setSlugTouched(true) })}
-          disabled={!editable}
-          placeholder="post-url-slug"
-        />
-        {errors.slug && (
-          <p className="text-destructive text-xs">{errors.slug.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="blog-summary">Summary</Label>
-        <Textarea
-          id="blog-summary"
-          rows={3}
-          {...register("summary")}
-          disabled={!editable}
-          placeholder="Short description shown in the list"
-        />
-        {errors.summary && (
-          <p className="text-destructive text-xs">{errors.summary.message}</p>
-        )}
-      </div>
-
-      {!isEdit && templates && templates.length > 0 && (
-        <div className="space-y-1.5">
-          <Label htmlFor="blog-template">Apply template</Label>
-          <select
-            id="blog-template"
-            disabled={!editable}
-            defaultValue=""
-            onChange={(e) => applyTemplate(e.target.value)}
-            className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
-          >
-            <option value="">— No template —</option>
-            {templates
-              .filter((t) => t.isActive)
-              .map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-          </select>
-        </div>
-      )}
-
-      <div className="space-y-1.5">
-        <Label>Content</Label>
-        <Controller
-          control={control}
-          name="contentHtml"
-          render={({ field }) => (
-            <RichTextEditor
-              value={field.value ?? ""}
-              onChange={field.onChange}
-              disabled={!editable}
-            />
+    <form onSubmit={handleSubmit(submit)} className="pb-24">
+      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
+          {onCancel && (
+            <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+              <ArrowLeft className="size-3.5" />
+              {ACTIONS.BACK}
+            </Button>
           )}
-        />
-        {errors.contentHtml && (
-          <p className="text-destructive text-xs">
-            {errors.contentHtml.message}
-          </p>
-        )}
+          <span className="text-sm font-medium">
+            {isEdit ? "Edit post" : "New post"}
+          </span>
+          {existing && (
+            <span className="text-xs tabular-nums text-muted-foreground">
+              Saving creates version {existing.currentVersion + 1}
+            </span>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onCancel}
+              >
+                {ACTIONS.CANCEL}
+              </Button>
+            )}
+            <Button type="submit" size="sm" disabled={isPending || !editable}>
+              {isEdit
+                ? isPending
+                  ? "Saving"
+                  : ACTIONS.SAVE_CHANGES
+                : isPending
+                  ? "Creating"
+                  : "Create post"}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {isEdit && (
-        <div className="space-y-1.5">
-          <Label htmlFor="blog-change-note">Change note</Label>
-          <Input
-            id="blog-change-note"
-            {...register("changeNote")}
-            disabled={!editable}
-            placeholder="Short description of this change (saved to history)"
-          />
+      {!editable && (
+        <div className="w-full pt-6 pl-(--page-pl) pr-(--page-pr)">
+          <p className="rounded-md border border-border bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
+            This post is being generated or already archived, so it cannot be
+            edited right now.
+          </p>
         </div>
       )}
 
-      <div className="flex justify-end gap-2">
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        )}
-        <Button type="submit" disabled={isPending || !editable}>
-          {isEdit ? "Save changes" : "Create post"}
-        </Button>
+      <div className="grid w-full items-start gap-8 pt-8 pl-(--page-pl) pr-(--page-pr) lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Left: the post itself */}
+        <div className="min-w-0 space-y-5">
+          <Field
+            label="Title"
+            htmlFor="blog-title"
+            error={errors.title?.message}
+          >
+            <Input
+              id="blog-title"
+              {...register("title")}
+              disabled={!editable}
+              placeholder="What is this post about?"
+              className="h-10 text-base font-medium"
+            />
+          </Field>
+
+          <Field label="Content" error={errors.contentHtml?.message}>
+            <Controller
+              control={control}
+              name="contentHtml"
+              render={({ field }) => (
+                <RichTextEditor
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  disabled={!editable}
+                />
+              )}
+            />
+          </Field>
+        </div>
+
+        {/* Right: everything that describes the post rather than being it */}
+        <aside className="space-y-5 rounded-lg border border-border bg-card p-5 lg:sticky lg:top-20">
+          <Field label="Slug" htmlFor="blog-slug" error={errors.slug?.message}>
+            <Input
+              id="blog-slug"
+              {...register("slug", { onChange: () => setSlugTouched(true) })}
+              disabled={!editable}
+              placeholder="post-url-slug"
+              className="font-mono text-xs"
+            />
+          </Field>
+
+          <Field
+            label="Summary"
+            htmlFor="blog-summary"
+            error={errors.summary?.message}
+          >
+            <Textarea
+              id="blog-summary"
+              rows={4}
+              {...register("summary")}
+              disabled={!editable}
+              placeholder="The line readers see before they open the post"
+            />
+          </Field>
+
+          {!isEdit && activeTemplates.length > 0 && (
+            <Field label="Template">
+              <Select
+                value={templateId}
+                items={templateItems}
+                onValueChange={(v: string | null) => applyTemplate(v)}
+              >
+                <SelectTrigger
+                  id="blog-template"
+                  className="w-full"
+                  disabled={!editable}
+                >
+                  <SelectValue placeholder="No template" />
+                </SelectTrigger>
+                <SelectContent alignItemWithTrigger={false}>
+                  <SelectItem value={null}>No template</SelectItem>
+                  {activeTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Picking one replaces the content you have written.
+              </p>
+            </Field>
+          )}
+
+          {isEdit && (
+            <Field label="Change note" htmlFor="blog-change-note">
+              <Input
+                id="blog-change-note"
+                {...register("changeNote")}
+                disabled={!editable}
+                placeholder="What changed, and why"
+              />
+              <p className="text-xs text-muted-foreground">
+                Saved to the version history.
+              </p>
+            </Field>
+          )}
+        </aside>
       </div>
     </form>
   );

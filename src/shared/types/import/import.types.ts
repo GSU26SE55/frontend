@@ -69,4 +69,3 @@ export interface CreateImportBatchPayload {
   sitesFile?: File | null;
   assetsFile?: File | null;
 }
-

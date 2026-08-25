@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
+import { RevealInline } from "@/shared/motion/RevealInline";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,6 +70,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -121,7 +124,7 @@ const DEFAULTS = {
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function AccountsPage() {
@@ -183,7 +186,7 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -224,11 +227,11 @@ export default function AccountsPage() {
             className="pl-8"
           />
         </div>
-        {hasActiveFilter && (
+        <RevealInline show={hasActiveFilter}>
           <Button size="sm" variant="ghost" onClick={resetFilters}>
             Clear filters
           </Button>
-        )}
+        </RevealInline>
       </div>
 
       {/* Table */}
@@ -579,6 +582,6 @@ export default function AccountsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageContainer>
   );
 }

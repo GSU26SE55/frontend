@@ -65,6 +65,10 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationTypeEnum, string> = {
     "Periodic maintenance reminder",
   [NotificationTypeEnum.PeriodicMaintenanceScheduleChanged]:
     "Periodic maintenance schedule changed",
+  [NotificationTypeEnum.KbArticleReviewRequested]:
+    "Guide article awaiting approval",
+  [NotificationTypeEnum.KbArticleReviewApproved]: "Guide change approved",
+  [NotificationTypeEnum.KbArticleReviewRejected]: "Guide change rejected",
   [NotificationTypeEnum.System]: "System notification",
 };
 

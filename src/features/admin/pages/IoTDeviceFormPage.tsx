@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import IoTDeviceForm from "@/features/admin/components/iot/IoTDeviceForm";
@@ -26,7 +27,7 @@ export default function IoTDeviceFormPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -69,6 +70,6 @@ export default function IoTDeviceFormPage() {
         onOpenChange={(o) => !o && handleSecretsClose()}
         device={created ? fromCreatedDto(created) : null}
       />
-    </div>
+    </PageContainer>
   );
 }

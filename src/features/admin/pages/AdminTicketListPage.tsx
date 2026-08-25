@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   Select,
   SelectContent,
@@ -28,8 +29,9 @@ import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
+import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const STATUS_OPTIONS = Object.values(TicketStatusEnum) as TicketStatus[];
 const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
@@ -95,7 +97,7 @@ export default function AdminTicketListPage() {
   const { data, isLoading, isError, refetch } = useAdminTickets(params);
 
   return (
-    <div className="p-6 space-y-6 max-w-360 mx-auto">
+    <PageContainer>
       {/* Page header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
@@ -216,6 +218,6 @@ export default function AdminTicketListPage() {
           sort={sort}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

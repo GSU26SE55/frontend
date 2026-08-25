@@ -70,7 +70,7 @@ const LandingFooter = () => {
             {/* Status indicator */}
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="ping-soft absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
               </span>
               All systems operational
@@ -129,7 +129,7 @@ const LandingFooter = () => {
                 placeholder="Your email…"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 min-w-0 rounded-lg bg-white/[0.04] border border-white/[0.1] px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                className="flex-1 min-w-0 rounded-lg bg-white/[0.04] border border-white/[0.1] px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong"
               />
               <button
                 type="submit"
