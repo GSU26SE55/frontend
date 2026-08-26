@@ -20,6 +20,7 @@ import {
 } from "@/features/landing/landing.constants";
 import type { HeroDemoId } from "@/features/landing/types/landing.types";
 import { prefersReducedMotion, EASE } from "@/features/landing/lib/animation";
+import { perTarget } from "@/shared/motion/animeCompat";
 import heroImage from "@/assets/hero1.webp";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -139,7 +140,7 @@ const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
     }
 
     const anim = animate(bars, {
-      width: (_el: HTMLElement, i: number) => `${BATTERY_ROWS[i].soh}%`,
+      width: perTarget((_el, i) => `${BATTERY_ROWS[i].soh}%`),
       duration: 900,
       ease: EASE.out,
       delay: stagger(100, { start: 400 }),
