@@ -9,7 +9,6 @@ import {
   Ticket,
   Clock,
   BookOpen,
-  Wrench,
   // SlidersHorizontal, // unused while "Device calibration" nav entry is hidden
   HardDrive,
 } from "lucide-react";
@@ -43,11 +42,8 @@ export const STAFF_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      {
-        label: "Maintenance history",
-        path: "/staff/maintenance-logs",
-        icon: Wrench,
-      },
+      // Bỏ "Maintenance history" khỏi sidebar: bảo trì đã có hai chỗ đúng ngữ cảnh hơn —
+      // định kỳ nằm trong từng cục pin, báo cáo tiến độ nằm trong ticket.
       // IOT3-68 — đặt CẠNH calibration: cùng một người, cùng một lúc, cùng một thiết bị.
       {
         label: "IoT Devices",
