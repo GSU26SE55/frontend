@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { animate, onScroll, stagger } from "animejs";
 import { ROLES } from "@/features/landing/landing.constants";
+import { perTarget } from "@/shared/motion/animeCompat";
 import type { RoleItem } from "@/features/landing/types/landing.types";
 import {
   createCleanupBag,
@@ -59,8 +60,7 @@ const RolesSection = () => {
       bag.add(
         animate(cards, {
           opacity: [0, 1],
-          translateX: (_el: HTMLElement, i: number) =>
-            i === 0 ? [-40, 0] : [40, 0],
+          translateX: perTarget((_el, i) => (i === 0 ? [-40, 0] : [40, 0])),
           duration: 600,
           ease: EASE.out,
           delay: stagger(100),
