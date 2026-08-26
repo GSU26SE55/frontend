@@ -5,7 +5,7 @@ import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
-import SlaCountdown from "./SlaCountdown";
+import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import {

@@ -9,6 +9,8 @@ import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge"
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
+import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const CATEGORY_LABELS: Record<string, string> = {
   Maintenance: "Maintenance",
@@ -73,15 +75,6 @@ export default function AdminTicketTable({
       cell: (t) => <span title={t.title}>{t.title}</span>,
     },
     {
-      id: "category",
-      header: "Category",
-      sortKey: "category",
-      sortValue: (t) => CATEGORY_LABELS[t.category] ?? t.category,
-      headClassName: "w-32",
-      cellClassName: "text-sm text-muted-foreground",
-      cell: (t) => CATEGORY_LABELS[t.category] ?? t.category,
-    },
-    {
       id: "status",
       header: "Status",
       sortKey: "status",
@@ -96,6 +89,22 @@ export default function AdminTicketTable({
       sortValue: (t) => t.priority ?? "",
       headClassName: "w-32",
       cell: (t) => <TicketPriorityBadge priority={t.priority} />,
+    },
+    {
+      id: "category",
+      header: "Category",
+      sortKey: "category",
+      sortValue: (t) => CATEGORY_LABELS[t.category] ?? t.category,
+      headClassName: "w-32",
+      cellClassName: "text-sm text-muted-foreground",
+      cell: (t) => CATEGORY_LABELS[t.category] ?? t.category,
+    },
+    {
+      id: "sla",
+      header: TABLE_COLUMNS.sla,
+      headClassName: "w-24",
+      stopRowClick: true,
+      cell: (t) => <SlaCountdown slaTimer={t.slaTimer} compact />,
     },
     {
       id: "createdAt",

@@ -18,7 +18,7 @@ import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import SlaCountdown from "@/features/manager/components/ticket/SlaCountdown";
+import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 // GH-1176: TriageDialog (approval) removed.
 import AssignDialog from "@/features/manager/components/ticket/AssignDialog";
 import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog";
@@ -433,7 +433,8 @@ export default function TicketDetailPage() {
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="logs">
-                  Logs{maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
+                  Logs
+                  {maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
                 </TabsTrigger>
                 <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>

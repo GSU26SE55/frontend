@@ -134,19 +134,8 @@ export default function AdminDashboardPage() {
           ? toneVars("p3").fg
           : toneVars("p1").fg;
 
-  // ── Site health: the average health score across sites, and how many sit below the
-  // at-risk line. Read as a gauge so it matches "Batteries connected" above it. ──
-  const avgHealth = Math.round(siteStats?.avgHealth ?? 0);
+  // ── Sites below the at-risk health line — surfaced in the problems banner. ──
   const atRiskSites = siteStats?.atRiskCount ?? 0;
-  const healthySites = Math.max(0, totalSites - atRiskSites);
-  const healthColor =
-    totalSites === 0
-      ? "var(--muted-foreground)"
-      : avgHealth >= 90
-        ? toneVars("ok").fg
-        : avgHealth >= 80
-          ? toneVars("p3").fg
-          : toneVars("p1").fg;
 
   const problems: string[] = [];
   if (offlineBatt > 0)
@@ -417,38 +406,8 @@ export default function AdminDashboardPage() {
           </DashboardPanel>
         )}
 
-        {/* [Gauge] average health across sites — the third cell of this row, so the grid
-            stays complete whether or not the ranking below has anything to show. */}
-        <DashboardPanel
-          title={OVERVIEW_PANELS.admin.siteHealth}
-          desc={`${plural(totalSites, "site", "sites")}`}
-          className="h-70"
-        >
-          {siteStatsLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : (
-            <DashboardGauge
-              percent={avgHealth}
-              valueText={totalSites > 0 ? `${avgHealth}%` : "—"}
-              caption="avg health"
-              color={healthColor}
-              footer={
-                <GaugeFooter
-                  cells={[
-                    { value: healthySites, label: "Healthy", tone: "ok" },
-                    {
-                      value: atRiskSites,
-                      label: "At risk",
-                      tone: atRiskSites > 0 ? "p1" : undefined,
-                    },
-                  ]}
-                />
-              }
-            />
-          )}
-        </DashboardPanel>
-
-        {/* [Ranking] actionable list */}
+        {/* [Ranking] actionable list — the third cell of this row, now that the
+            site-health gauge no longer sits above it. */}
         {showTopAlerting && (
           <TopAlertingPanel
             title={OVERVIEW_PANELS.admin.topAlerting}

@@ -15,7 +15,6 @@ export const OVERVIEW_PANELS = {
     // panel (online/offline) sitting right next to it on the dashboard.
     batteryByStatus: "Batteries by operational status",
     topAlerting: "Most-alerting batteries",
-    siteHealth: "Site health",
     telemetry24h: "Average telemetry · 24h",
   },
   manager: {
