@@ -125,6 +125,8 @@ export const QUERY_KEY = {
     list: (params?: object) => [KEY.batteryAssets, "list", params] as const,
     detail: (id: string) => [KEY.batteryAssets, "detail", id] as const,
     realtime: (id: string) => [KEY.batteryAssets, "realtime", id] as const,
+    maintenanceCycles: (id: string) =>
+      [KEY.batteryAssets, "maintenanceCycles", id] as const,
     cascadeRisk: (id: string) =>
       [KEY.batteryAssets, "cascade-risk", id] as const,
     bmsSwitch: (id: string) => [KEY.batteryAssets, "bms-switch", id] as const,

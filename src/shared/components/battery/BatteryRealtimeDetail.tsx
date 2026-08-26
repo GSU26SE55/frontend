@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  Battery,
-  BatteryFull,
-  HeartPulse,
-  ShieldAlert,
-} from "lucide-react";
+import { ArrowLeft, Battery, HeartPulse, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -14,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import BatteryMaintenanceHistory from "@/shared/components/battery/BatteryMaintenanceHistory";
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { useBatteryAssetRealtime } from "@/shared/hooks/battery/useBatteryAssetRealtime";
@@ -63,7 +58,7 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
 function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   if (sohPercent == null) {
     return (
-      <div className="px-4 pt-4 pb-3 flex items-center gap-2 text-muted-foreground">
+      <div className="px-4 pt-3 pb-2.5 flex items-center gap-2 text-muted-foreground">
         <HeartPulse size={16} />
         <span className="text-xs">Max capacity not available yet</span>
       </div>
@@ -72,36 +67,27 @@ function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   const tone = healthScoreTone(sohPercent);
   const { fg, bg } = toneVars(tone);
   return (
-    <div className="px-4 pt-4 pb-3">
+    <div className="px-4 pt-3 pb-2.5">
       <div
-        className="rounded-xl p-3.5 flex items-center gap-3.5 border transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong"
+        className="rounded-xl px-3.5 py-3.5 flex items-center gap-3 border transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong"
         style={{
           backgroundColor: bg,
-          borderColor: `${fg}35`,
+          borderColor: `${fg}55`,
         }}
       >
-        <div
-          className="size-10 rounded-full flex items-center justify-center shrink-0 shadow-sm"
-          style={{ backgroundColor: fg }}
+        <span
+          className="text-sm font-semibold flex-1 min-w-0 truncate"
+          style={{ color: fg }}
         >
-          <BatteryFull size={19} className="text-white" strokeWidth={2.3} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1 leading-none mb-1">
-            <span
-              className="text-2xl font-black tracking-tight tabular-nums"
-              style={{ color: fg }}
-            >
-              {sohPercent.toFixed(0)}
-            </span>
-            <span className="text-xs font-bold" style={{ color: fg }}>
-              %
-            </span>
-          </div>
-          <span className="text-[11px] text-muted-foreground">
-            Max capacity
-          </span>
-        </div>
+          Max capacity
+        </span>
+        <span
+          className="text-3xl font-black tracking-tight tabular-nums leading-none"
+          style={{ color: fg }}
+        >
+          {sohPercent.toFixed(0)}
+          <span className="text-base font-bold ml-0.5">%</span>
+        </span>
       </div>
     </div>
   );
@@ -133,6 +119,12 @@ interface BatteryRealtimeDetailProps {
   headerActions?: ReactNode;
 }
 
+// Whitelist — an unknown ?tab= falls back to Chart. Every TabsTrigger value must be
+// listed here: because the tab is controlled from the URL, a missing entry makes the
+// trigger snap straight back to Chart instead of opening.
+const TAB_VALUES = ["chart", "peak", "history", "maintenance"] as const;
+type TabValue = (typeof TAB_VALUES)[number];
+
 // Real-time battery detail page (read-only core) — shared by admin/manager/staff.
 // CRUD/topology is Admin-only, injected through the headerActions slot.
 export default function BatteryRealtimeDetail({
@@ -146,8 +138,9 @@ export default function BatteryRealtimeDetail({
   // around detection. With an uncontrolled <Tabs defaultValue> that link always opened Chart.
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const tab =
-    tabParam === "history" || tabParam === "peak" ? tabParam : "chart";
+  const tab = TAB_VALUES.includes(tabParam as TabValue)
+    ? (tabParam as TabValue)
+    : "chart";
   const rangeFrom = searchParams.get("from") ?? undefined;
   const rangeTo = searchParams.get("to") ?? undefined;
 
@@ -365,6 +358,9 @@ export default function BatteryRealtimeDetail({
                   <TabsTrigger value="chart">Chart</TabsTrigger>
                   <TabsTrigger value="peak">Charge/discharge peak</TabsTrigger>
                   <TabsTrigger value="history">Sensor history</TabsTrigger>
+                  <TabsTrigger value="maintenance">
+                    Maintenance history
+                  </TabsTrigger>
                   {/* Tab "AI prediction" tạm ẩn theo yêu cầu — chưa cần cho luồng hiện tại.
                       Giữ nguyên component + TabsContent bên dưới (cũng đã ẩn) để bật lại chỉ
                       bằng cách bỏ hai khối comment này, không phải dựng lại từ đầu. */}
@@ -407,6 +403,12 @@ export default function BatteryRealtimeDetail({
                   onClearRange={rangeFrom || rangeTo ? clearRange : undefined}
                   fillHeight
                 />
+              </TabsContent>
+              <TabsContent
+                value="maintenance"
+                className="min-h-0 overflow-y-auto m-0 p-5"
+              >
+                <BatteryMaintenanceHistory assetId={id} />
               </TabsContent>
               {/* Ẩn cùng TabsTrigger "ai" ở trên — xem ghi chú tại đó. */}
               {/* <TabsContent

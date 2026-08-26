@@ -13,6 +13,7 @@ import {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
+  SlaFilterEnum,
 } from "@/shared/types/ticket/ticket.types";
 import type {
   TicketStatusEnum as TicketStatus,
@@ -36,6 +37,7 @@ const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 const STATUS_OPTIONS = Object.values(TicketStatusEnum) as TicketStatus[];
 const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
 const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
+const SLA_OPTIONS = Object.values(SlaFilterEnum);
 
 const STATUS_LABELS: Record<TicketStatus, string> = {
   [TicketStatusEnum.Open]: "Open",
@@ -55,6 +57,15 @@ const PRIORITY_LABELS: Record<TicketPriority, string> = {
   [TicketPriorityEnum.Urgent]: "Urgent",
 };
 
+// Three SLA situations worth chasing. Deliberately not the raw SlaTimerStatusEnum: Running and
+// Met need no action, and "Warning" is not a stored status at all — it is a running timer that
+// has already fired its warning. Breached is the only one where the countdown reached 0.
+const SLA_LABELS: Record<SlaFilterEnum, string> = {
+  [SlaFilterEnum.Paused]: "SLA paused",
+  [SlaFilterEnum.Warning]: "SLA warning",
+  [SlaFilterEnum.Breached]: "SLA breached",
+};
+
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   Charging: "Charging fault",
   Overheat: "Overheat",
@@ -69,6 +80,7 @@ const DEFAULTS = {
   status: "",
   priority: "",
   category: "",
+  sla: "",
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
@@ -88,6 +100,7 @@ export default function AdminTicketListPage() {
     status: (filters.status as TicketStatus) || undefined,
     priority: (filters.priority as TicketPriority) || undefined,
     category: (filters.category as TicketCategory) || undefined,
+    sla: (filters.sla as SlaFilterEnum) || undefined,
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
@@ -188,6 +201,24 @@ export default function AdminTicketListPage() {
             {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.sla || null}
+          items={SLA_OPTIONS.map((v) => ({ value: v, label: SLA_LABELS[v] }))}
+          onValueChange={(v: string | null) => setFilter("sla", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-36">
+            <SelectValue placeholder="All SLA" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All SLA</SelectItem>
+            {SLA_OPTIONS.map((v) => (
+              <SelectItem key={v} value={v}>
+                {SLA_LABELS[v]}
               </SelectItem>
             ))}
           </SelectContent>

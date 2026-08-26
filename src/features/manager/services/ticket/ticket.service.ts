@@ -31,6 +31,7 @@ function toListParams(params?: AdminTicketListParams) {
     Priority: params.priority,
     Category: params.category,
     BatteryAssetId: params.batteryAssetId,
+    Sla: params.sla,
     IsDescending: params.isDescending,
     PageNumber: params.pageNumber,
     PageSize: params.pageSize,

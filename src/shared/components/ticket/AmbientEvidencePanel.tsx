@@ -95,13 +95,6 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
                     >
                       <td className="px-2 py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">
                         {formatDateTime(r.time)}
-                        {/* The combo rule can fire while both metrics sit under their own
-                            limits, so it needs saying — otherwise the row looks mis-coloured. */}
-                        {ev.combo ? (
-                          <span className="ml-1.5 text-[10px] text-amber-700 dark:text-amber-500">
-                            combo
-                          </span>
-                        ) : null}
                       </td>
                       <td
                         className={`px-2 py-1.5 text-right tabular-nums ${ambientLevelTextClass(ev.temperature)}`}

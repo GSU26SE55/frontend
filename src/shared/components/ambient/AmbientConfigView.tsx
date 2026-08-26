@@ -543,14 +543,6 @@ function HistoryTable({
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground tabular-nums">
                       {formatDateTime(r.time)}
-                      {/* The combo rule fires on temp+humidity together and can flag a row
-                          where neither metric crossed its own line — label it, or the
-                          highlight looks like a mistake. */}
-                      {ev.combo ? (
-                        <span className="ml-1.5 text-[10px] text-amber-700 dark:text-amber-500">
-                          combo
-                        </span>
-                      ) : null}
                     </TableCell>
                     <TableCell
                       className={ambientLevelTextClass(ev.temperature)}

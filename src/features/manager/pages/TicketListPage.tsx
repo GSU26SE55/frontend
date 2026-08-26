@@ -16,6 +16,7 @@ import {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
+  SlaFilterEnum,
 } from "@/shared/types/ticket/ticket.types";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
@@ -53,11 +54,21 @@ const CATEGORY_LABELS: Record<string, string> = {
   Performance: "Performance",
 };
 
+// Three SLA situations worth chasing. Deliberately not the raw SlaTimerStatusEnum: Running and
+// Met need no action, and "Warning" is not a stored status at all — it is a running timer that
+// has already fired its warning. Breached is the only one where the countdown reached 0.
+const SLA_LABELS: Record<SlaFilterEnum, string> = {
+  [SlaFilterEnum.Paused]: "SLA paused",
+  [SlaFilterEnum.Warning]: "SLA warning",
+  [SlaFilterEnum.Breached]: "SLA breached",
+};
+
 const DEFAULTS = {
   keyword: "",
   status: "",
   priority: "",
   category: "",
+  sla: "",
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
@@ -77,6 +88,7 @@ export default function TicketListPage() {
     status: (filters.status as TicketStatusEnum) || undefined,
     priority: (filters.priority as TicketPriorityEnum) || undefined,
     category: (filters.category as TicketCategoryEnum) || undefined,
+    sla: (filters.sla as SlaFilterEnum) || undefined,
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
@@ -179,6 +191,27 @@ export default function TicketListPage() {
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
                 {CATEGORY_LABELS[c] ?? c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.sla || null}
+          items={Object.values(SlaFilterEnum).map((v) => ({
+            value: v,
+            label: SLA_LABELS[v],
+          }))}
+          onValueChange={(v: string | null) => setFilter("sla", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-36">
+            <SelectValue placeholder="All SLA" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All SLA</SelectItem>
+            {Object.values(SlaFilterEnum).map((v) => (
+              <SelectItem key={v} value={v}>
+                {SLA_LABELS[v]}
               </SelectItem>
             ))}
           </SelectContent>
