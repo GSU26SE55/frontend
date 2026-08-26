@@ -36,6 +36,7 @@ import {
 } from "@/features/admin/hooks/ticket/useAdminTickets";
 import AddCommentForm from "@/features/admin/components/ticket/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import MaintenanceLogCard from "@/shared/components/ticket/MaintenanceLogCard";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import MergeTicketDialog from "@/features/admin/components/ticket/MergeTicketDialog";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
@@ -129,6 +130,9 @@ export default function AdminTicketDetailPage() {
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
   const { data: comments = [] } = useAdminTicketComments(ticketId);
+
+  // Read-only for these roles — the Logs tab and its count both read from here.
+  const maintenanceLogs = ticket?.maintenanceLogs ?? [];
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -265,6 +269,9 @@ export default function AdminTicketDetailPage() {
                 <TabsTrigger value="comments" className="group">
                   Chat
                 </TabsTrigger>
+                <TabsTrigger value="logs">
+                  Logs{maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -283,6 +290,25 @@ export default function AdminTicketDetailPage() {
                   activities={activities}
                   assignments={ticket?.assignments}
                 />
+              )}
+            </TabsContent>
+
+
+            {/* Maintenance logs — read-only here: the BE only lets a log's own author edit it. */}
+            <TabsContent
+              value="logs"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              {maintenanceLogs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No maintenance logs yet.
+                </p>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                  {maintenanceLogs.map((log) => (
+                    <MaintenanceLogCard key={log.id} log={log} />
+                  ))}
+                </div>
               )}
             </TabsContent>
 

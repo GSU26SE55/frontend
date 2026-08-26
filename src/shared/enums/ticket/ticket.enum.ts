@@ -209,3 +209,16 @@ export const ParticipantTypeEnum = {
 } as const;
 export type ParticipantTypeEnum =
   (typeof ParticipantTypeEnum)[keyof typeof ParticipantTypeEnum];
+
+/**
+ * SLA filter for the ticket list (BE query param `Sla`) — NOT a stored state.
+ * `SlaTimerStatusEnum` is the column on the timer; these are the three situations
+ * Admin/Manager filter on. All three keep the ticket's own status (usually InProgress);
+ * only `Breached` means the countdown actually reached 0.
+ */
+export const SlaFilterEnum = {
+  Paused: "Paused",
+  Warning: "Warning",
+  Breached: "Breached",
+} as const;
+export type SlaFilterEnum = (typeof SlaFilterEnum)[keyof typeof SlaFilterEnum];

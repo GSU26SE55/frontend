@@ -7,6 +7,7 @@ import type {
   UrgencyLevelEnum,
   EscalationReasonEnum,
   SlaTimerStatusEnum,
+  SlaFilterEnum,
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
@@ -29,6 +30,7 @@ export {
   PauseReasonEnum,
   EscalationReasonEnum,
   SlaTimerStatusEnum,
+  SlaFilterEnum,
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
   ActorRoleEnum,
@@ -213,6 +215,8 @@ export interface MaintenanceLogDTO {
   id: string;
   ticketId: string;
   staffId: string;
+  /** Resolved by the BE from StaffAccount. Null when that account can no longer be looked up. */
+  staffName?: string | null;
   logType: MaintenanceLogTypeEnum;
   summary?: string | null;
   diagnosisDetails?: string | null;
@@ -288,6 +292,8 @@ export interface AdminTicketListParams {
   priority?: TicketPriorityEnum;
   category?: TicketCategoryEnum;
   batteryAssetId?: string;
+  /** BE query param `Sla` — Paused | Warning | Breached. Independent of `status`. */
+  sla?: SlaFilterEnum;
   isDescending?: boolean;
   pageNumber?: number;
   pageSize?: number;

@@ -1,4 +1,7 @@
-import type { EscalationReasonEnum } from "@/shared/types/ticket/ticket.types";
+import type {
+  EscalationReasonEnum,
+  MaintenanceLogTypeEnum,
+} from "@/shared/types/ticket/ticket.types";
 
 /**
  * Display labels for escalation reasons.
@@ -14,3 +17,16 @@ export const ESCALATION_REASON_LABEL: Record<EscalationReasonEnum, string> = {
   SlaBreach: "SLA breach",
   CustomerComplaint: "Customer complaint",
 };
+
+/**
+ * Display labels for maintenance log types. The raw enum leaks into the UI otherwise —
+ * "PartReplacement" / "RemoteSupport" read as identifiers, not as words.
+ */
+export const MAINTENANCE_LOG_TYPE_LABEL: Record<MaintenanceLogTypeEnum, string> =
+  {
+    RemoteSupport: "Remote support",
+    OnSite: "On site",
+    PartReplacement: "Part replacement",
+    Inspection: "Inspection",
+    Completion: "Completion",
+  };

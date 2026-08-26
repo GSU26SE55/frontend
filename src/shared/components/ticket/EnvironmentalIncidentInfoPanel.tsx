@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIncidentDetail } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
+import { useSiteDetail } from "@/shared/hooks/site/useSites";
 import AmbientEvidencePanel from "@/shared/components/ticket/AmbientEvidencePanel";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { alertSeverityLabel } from "@/shared/constants/alertLabels";
@@ -77,6 +78,9 @@ export default function EnvironmentalIncidentInfoPanel({
   siteBasePath,
 }: Props) {
   const { data: incident, isLoading, isError } = useIncidentDetail(incidentId);
+  // Called before the early returns — hooks cannot run conditionally. `enabled` inside keeps it
+  // idle until the incident lands and hands over a siteId.
+  const { data: site } = useSiteDetail(incident?.siteId);
 
   if (isLoading) return <Skeleton className="h-48 w-full" />;
 
@@ -136,7 +140,7 @@ export default function EnvironmentalIncidentInfoPanel({
             )}
           >
             <Thermometer className="size-3.5" />
-            Site readings at detection
+            Log readings around detection time
           </Link>
         ) : null}
       </div>
@@ -156,26 +160,11 @@ export default function EnvironmentalIncidentInfoPanel({
             locale: enUS,
           })}
         />
-        <InfoRow
-          label="Acknowledged"
-          value={
-            incident.acknowledgedAt
-              ? format(new Date(incident.acknowledgedAt), "HH:mm MM/dd/yyyy", {
-                  locale: enUS,
-                })
-              : null
-          }
-        />
-        <InfoRow
-          label="Resolved"
-          value={
-            incident.resolvedAt
-              ? format(new Date(incident.resolvedAt), "HH:mm MM/dd/yyyy", {
-                  locale: enUS,
-                })
-              : null
-          }
-        />
+        {/* Who and where, not the acknowledge/resolve clock: the status badge in the header
+            already says where the incident stands, and on an Open one both timestamps are
+            empty — a column of dashes where the Manager needs to know whose site is affected. */}
+        <InfoRow label="Customer" value={incident.customerName || null} />
+        <InfoRow label="Site" value={site?.name ?? null} />
       </div>
 
       {incident.resolutionNote ? (

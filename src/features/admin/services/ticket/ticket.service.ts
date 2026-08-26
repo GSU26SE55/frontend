@@ -15,6 +15,7 @@ import type {
   TicketStatusEnum,
   TicketPriorityEnum,
   TicketCategoryEnum,
+  SlaFilterEnum,
   MergeTicketPayload,
 } from "@/shared/types/ticket/ticket.types";
 
@@ -23,6 +24,8 @@ export interface GetAdminTicketsParams {
   status?: TicketStatusEnum;
   priority?: TicketPriorityEnum;
   category?: TicketCategoryEnum;
+  /** BE query param `Sla` — Paused | Warning | Breached. Independent of `status`. */
+  sla?: SlaFilterEnum;
   isDescending?: boolean;
   sortBy?: string;
   sortDir?: string;
@@ -37,6 +40,7 @@ function toQueryParams(params?: GetAdminTicketsParams) {
     Status: params.status,
     Priority: params.priority,
     Category: params.category,
+    Sla: params.sla,
     IsDescending: params.isDescending,
     SortBy: params.sortBy,
     SortDir: params.sortDir,
