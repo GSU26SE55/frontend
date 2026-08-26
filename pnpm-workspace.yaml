@@ -23,3 +23,6 @@ trustPolicyExclude:
   # 9.3.0 has provenance and satisfies recharts' "8.x.x || 9.x.x" — this entry
   # can be dropped once the lockfile is refreshed to pick it up.
   - react-redux@9.2.0
+
+minimumReleaseAgeExclude:
+  - '@testing-library/user-event@14.6.6'
