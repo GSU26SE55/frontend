@@ -411,6 +411,9 @@ export const ENDPOINTS = {
   },
 
   BATTERY_ASSETS: {
+    // Lịch sử bảo trì định kỳ ở tầng tài sản (khác maintenance log của ticket).
+    MAINTENANCE_CYCLES: (id: string) =>
+      `/api/battery-assets/${id}/maintenance-cycles`,
     LIST: "/api/battery-assets",
     DETAIL: (id: string) => `/api/battery-assets/${id}`,
     REALTIME: (id: string) => `/api/battery-assets/${id}/realtime`,

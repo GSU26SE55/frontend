@@ -21,7 +21,7 @@ interface Props {
    */
   hideBar?: boolean;
   /**
-   * Render as a single-line chip — MATCHES `manager/components/ticket/SlaCountdown`.
+   * Render as a single-line chip — MATCHES `shared/components/ticket/SlaCountdown`.
    *
    * Used in the SLA block on the detail page so both roles look the same. Defaults
    * to `false`, keeping the multi-line layout for TicketCard and SlaMonitorPage.
