@@ -38,6 +38,7 @@ import {
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
 import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
+import MaintenanceLogCard from "@/shared/components/ticket/MaintenanceLogCard";
 import { getTicketSubject } from "@/shared/lib/ticketSubject";
 import {
   useManagerTicketDetail,
@@ -168,6 +169,9 @@ export default function TicketDetailPage() {
   const previousPrimaryHandlerNames = getPreviousPrimaryHandlerNames(
     ticket?.assignments,
   );
+
+  // Read-only for these roles — the Logs tab and its count both read from here.
+  const maintenanceLogs = ticket?.maintenanceLogs ?? [];
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -428,6 +432,9 @@ export default function TicketDetailPage() {
                   Chat
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
+                <TabsTrigger value="logs">
+                  Logs{maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
+                </TabsTrigger>
                 <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>
             </div>
@@ -568,6 +575,25 @@ export default function TicketDetailPage() {
             </TabsContent>
 
             {/* KB */}
+
+            {/* Maintenance logs — read-only here: the BE only lets a log's own author edit it. */}
+            <TabsContent
+              value="logs"
+              className="min-h-0 overflow-y-auto m-0 p-6"
+            >
+              {maintenanceLogs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No maintenance logs yet.
+                </p>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                  {maintenanceLogs.map((log) => (
+                    <MaintenanceLogCard key={log.id} log={log} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel
                 ticketId={id}

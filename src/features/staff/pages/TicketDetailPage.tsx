@@ -8,7 +8,6 @@ import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   getPrimaryHandler,
   getPrimaryHandlerName,
@@ -52,6 +51,7 @@ import { AddCommentForm } from "@/features/staff/components/ticket/AddCommentFor
 import { MaintenanceLogDialog } from "@/features/staff/components/ticket/MaintenanceLogDialog";
 import { EditMaintenanceLogDialog } from "@/features/staff/components/ticket/EditMaintenanceLogDialog";
 import TicketAttachments from "@/shared/components/ticket/TicketAttachments";
+import MaintenanceLogCard from "@/shared/components/ticket/MaintenanceLogCard";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import {
   TicketCommentThread,
@@ -364,7 +364,6 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="logs">
                   Logs{logs.length > 0 && ` (${logs.length})`}
                 </TabsTrigger>
-                <TabsTrigger value="sub-issues">Sub Issue</TabsTrigger>
                 <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>
             </div>
@@ -528,83 +527,23 @@ export default function TicketDetailPage() {
                   No maintenance logs yet.
                 </p>
               ) : (
-                <div className="space-y-3">
+                // Several compact cards per row instead of one full-width band each —
+                // a ticket can carry many logs, and one column made the tab a long scroll.
+                <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
                   {logs.map((log) => (
-                    <div
+                    <MaintenanceLogCard
                       key={log.id}
-                      className="border border-border rounded-lg p-4 space-y-2 text-sm"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge variant="outline">{log.logType}</Badge>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-muted-foreground">
-                            {format(
-                              new Date(log.startedAt),
-                              "MM/dd/yyyy HH:mm",
-                              { locale: enUS },
-                            )}
-                          </p>
-                          {canEditLog && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => setEditingLog(log)}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      {log.summary && (
-                        <p className="font-medium">{log.summary}</p>
-                      )}
-                      {log.diagnosisDetails && (
-                        <p className="text-muted-foreground">
-                          Diagnosis: {log.diagnosisDetails}
-                        </p>
-                      )}
-                      {log.actionsTaken && (
-                        <p className="text-muted-foreground">
-                          Actions: {log.actionsTaken}
-                        </p>
-                      )}
-                      {log.durationMinutes > 0 && (
-                        <p className="text-muted-foreground">
-                          Duration: {log.durationMinutes} min
-                        </p>
-                      )}
-                      {log.attachmentFileIds &&
-                        log.attachmentFileIds.length > 0 && (
-                          <TicketAttachments
-                            fileIds={log.attachmentFileIds}
-                            label="Attached photos"
-                            compact
-                          />
-                        )}
-                      {log.beforePhotosFileIds &&
-                        log.beforePhotosFileIds.length > 0 && (
-                          <TicketAttachments
-                            fileIds={log.beforePhotosFileIds}
-                            label="Before photos"
-                            compact
-                          />
-                        )}
-                      {log.afterPhotosFileIds &&
-                        log.afterPhotosFileIds.length > 0 && (
-                          <TicketAttachments
-                            fileIds={log.afterPhotosFileIds}
-                            label="After photos"
-                            compact
-                          />
-                        )}
-                    </div>
+                      log={log}
+                      onEdit={canEditLog ? () => setEditingLog(log) : undefined}
+                    />
                   ))}
                 </div>
               )}
             </TabsContent>
 
-            {/* Sub Issue — staff break the ticket down into smaller tasks themselves */}
+            {/* Sub Issue — staff break the ticket down into smaller tasks themselves.
+                Its TabsTrigger is deliberately absent, so this panel is unreachable for now;
+                the content stays so re-enabling it is one line back in the TabsList. */}
             <TabsContent
               value="sub-issues"
               className="min-h-0 overflow-y-auto m-0 p-6"
