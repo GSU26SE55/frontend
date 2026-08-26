@@ -116,7 +116,6 @@ export interface TicketDTO {
   /** GH-1176: incremented on every assign/reschedule; used for optimistic activation. */
   scheduleVersion: number;
   /** GH-1244: source ticket whose completed maintenance starts this periodic cycle. */
-  periodicMaintenanceSourceTicketId?: string | null;
   /** GH-1244: planned maintenance due time calculated by the backend. */
   periodicMaintenanceDueAtUtc?: string | null;
   /** GH-1244: last time the Customer may select the initial visit schedule. */
