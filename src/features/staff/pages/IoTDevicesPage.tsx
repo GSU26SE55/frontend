@@ -88,7 +88,11 @@ export default function IoTDevicesPage() {
         {/* onValueChange của shadcn Select trả `string | null` (null khi bỏ chọn);
             `setStatus` chỉ nhận string. Quy null về "all" thay vì ép kiểu — bỏ chọn
             nghĩa là không lọc nữa, đúng bằng "All statuses". */}
-        <Select value={status} onValueChange={(v) => setStatus(v ?? "all")}>
+        <Select
+          value={status}
+          onValueChange={(v) => setStatus(v ?? "all")}
+          items={STATUS_OPTIONS}
+        >
           <SelectTrigger className="w-52">
             <SelectValue />
           </SelectTrigger>
