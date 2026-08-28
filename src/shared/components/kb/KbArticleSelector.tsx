@@ -243,7 +243,7 @@ export function KbArticleSelector({
               <Button
                 size="sm"
                 variant={!categoryFilter ? "default" : "outline"}
-                className="h-6 text-[11px] px-2"
+                className="h-6 text-2xs px-2"
                 onClick={() => setCategoryFilter(null)}
               >
                 All
@@ -253,7 +253,7 @@ export function KbArticleSelector({
                   key={opt.value}
                   size="sm"
                   variant={categoryFilter === opt.value ? "default" : "outline"}
-                  className="h-6 text-[11px] px-2"
+                  className="h-6 text-2xs px-2"
                   onClick={() =>
                     setCategoryFilter(
                       categoryFilter === opt.value ? null : opt.value,
@@ -265,7 +265,7 @@ export function KbArticleSelector({
               ))}
             </div>
 
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               {searching ? "Searching..." : `${articles.length} results`}
               {value.length > 0 && ` · ${value.length} selected`}
             </p>
@@ -298,7 +298,7 @@ export function KbArticleSelector({
                         <span className="shrink-0 whitespace-nowrap text-xs font-mono text-muted-foreground">
                           {article.code}
                         </span>
-                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-3xs text-muted-foreground">
                           {KbCategoryLabel[article.category] ??
                             article.category}
                         </span>
@@ -320,14 +320,14 @@ export function KbArticleSelector({
               {previewArticle ? (
                 <div className="space-y-3 overflow-y-auto">
                   <div className="space-y-1">
-                    <p className="text-[11px] font-mono text-muted-foreground">
+                    <p className="text-2xs font-mono text-muted-foreground">
                       {previewArticle.code}
                     </p>
                     <p className="text-sm font-semibold leading-snug">
                       {previewArticle.title}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-[11px] font-normal">
+                  <Badge variant="outline" className="text-2xs font-normal">
                     {KbCategoryLabel[previewArticle.category] ??
                       previewArticle.category}
                   </Badge>
@@ -359,7 +359,7 @@ export function KbArticleSelector({
                       ) : previewDetail ? (
                         <div className="space-y-3 pt-1">
                           <div>
-                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                            <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                               Content
                             </p>
                             <SectionContent text={previewDetail.content} />
@@ -370,7 +370,7 @@ export function KbArticleSelector({
                                 <Badge
                                   key={tag}
                                   variant="secondary"
-                                  className="text-[11px] font-normal px-2 py-0.5"
+                                  className="text-2xs font-normal px-2 py-0.5"
                                 >
                                   {tag}
                                 </Badge>

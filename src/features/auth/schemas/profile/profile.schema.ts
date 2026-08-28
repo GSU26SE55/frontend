@@ -8,7 +8,10 @@ import {
 export const profileSchema = z.object({
   fullName: fullNameField,
   phoneNumber: optionalPhoneField,
-  address: z.string().optional(),
+  address: z
+    .string()
+    .max(500, "Address must be at most 500 characters")
+    .optional(),
   birthDate: birthDateField,
   timeZone: z.string().optional(),
 });

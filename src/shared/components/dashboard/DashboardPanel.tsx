@@ -42,7 +42,7 @@ export function DashboardHeading({
   return (
     <header className="flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-[26px] font-semibold leading-tight tracking-tight">
+        <h1 className="text-2xl font-semibold leading-tight tracking-tight">
           {title}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{status}</p>
@@ -87,7 +87,7 @@ export function Stat({
   const body = (
     <>
       <span
-        className="text-[32px] font-semibold leading-none tabular-nums"
+        className="text-3xl font-semibold leading-none tabular-nums"
         style={tone ? { color: toneVars(tone).fg } : undefined}
       >
         {value}

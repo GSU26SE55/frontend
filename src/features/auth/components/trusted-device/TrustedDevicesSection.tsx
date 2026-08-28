@@ -21,7 +21,7 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import type { TrustedDeviceDto } from "@/features/auth/types/trusted-device/trusted-device.types";
 
 const fmt = (iso?: string | null) =>
-  iso ? format(new Date(iso), "MM/dd/yyyy HH:mm") : "—";
+  iso ? format(new Date(iso), "dd/MM/yyyy HH:mm") : "—";
 
 // #AUTH-48: manage trusted devices — list + revoke one / revoke all
 const TrustedDevicesSection = () => {
@@ -90,7 +90,7 @@ const TrustedDevicesSection = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-medium truncate">{d.label}</p>
                   {d.isCurrentDevice && (
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-3xs">
                       This device
                     </Badge>
                   )}

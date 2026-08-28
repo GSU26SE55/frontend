@@ -32,7 +32,7 @@ const LandingPage = () => {
 
       <main id="main-content">
         <HeroSection onLogin={() => navigate("/login")} />
-        <ProductSection />
+        <ProductSection onLogin={() => navigate("/login")} />
         <WorkflowSection />
         <StatsSection />
         <RolesSection />

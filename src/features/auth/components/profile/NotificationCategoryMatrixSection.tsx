@@ -149,7 +149,7 @@ export default function NotificationCategoryMatrixSection() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1">
-        <p className="text-[13px] font-semibold">Notifications by category</p>
+        <p className="text-2sm font-semibold">Notifications by category</p>
         <p className="text-xs text-muted-foreground">
           Turn off individual categories without losing the rest. A channel
           turned off above still overrides any setting here.
@@ -170,7 +170,7 @@ export default function NotificationCategoryMatrixSection() {
                   >
                     {col.label}
                     {globalOff && (
-                      <span className="block text-[10px] font-normal text-muted-foreground">
+                      <span className="block text-3xs font-normal text-muted-foreground">
                         off
                       </span>
                     )}
@@ -194,14 +194,14 @@ export default function NotificationCategoryMatrixSection() {
                         {CATEGORY_LABEL[cat.category] ?? cat.categoryName}
                       </span>
                       {inherited && (
-                        <Badge variant="secondary" className="text-[10px]">
+                        <Badge variant="secondary" className="text-3xs">
                           Inherited
                         </Badge>
                       )}
                     </div>
                     {types.length > 0 && (
                       <p
-                        className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1"
+                        className="text-2xs text-muted-foreground mt-0.5 line-clamp-1"
                         title={types.join(", ")}
                       >
                         {types.length} notification types

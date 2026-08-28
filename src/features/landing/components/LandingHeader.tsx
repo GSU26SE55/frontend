@@ -88,7 +88,7 @@ const LandingHeader = ({ scrolled, onLogin }: LandingHeaderProps) => {
           {/* <span
             data-anim="header-item"
             className={cn(
-              "hidden lg:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong",
+              "hidden lg:inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-2xs font-semibold tracking-wide transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong",
               scrolled
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : "border-emerald-400/30 bg-emerald-500/10 text-emerald-300",

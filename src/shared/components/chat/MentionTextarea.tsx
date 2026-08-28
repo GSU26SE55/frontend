@@ -204,7 +204,7 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
                   )}
                 >
                   <Avatar className="h-6 w-6 shrink-0">
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback className="text-3xs">
                       {initials(c.displayName)}
                     </AvatarFallback>
                   </Avatar>
@@ -213,14 +213,14 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, Props>(
                       show a warning so the composer can decide for themselves. */}
                   {isInternal && c.canViewInternal === false && (
                     <span
-                      className="shrink-0 text-[10px] text-amber-600 dark:text-amber-400"
+                      className="shrink-0 text-3xs text-amber-600 dark:text-amber-400"
                       title="This person can't view internal chat"
                     >
                       can't view
                     </span>
                   )}
                   {c.role && (
-                    <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+                    <span className="ml-auto shrink-0 text-3xs text-muted-foreground">
                       {c.role}
                     </span>
                   )}

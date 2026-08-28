@@ -3,7 +3,10 @@ import { Outlet, useLocation } from "react-router-dom";
 import { ChevronDown, LogOut } from "lucide-react";
 import Sidebar, { type NavSection, type NavBadge } from "./Sidebar";
 import { APP_NAME, SIDEBAR_LABELS } from "@/shared/constants/sidebarLabels";
-import { useUnresolvedAlertCount } from "@/shared/hooks/alerts/useAlerts";
+import {
+  useUnresolvedAlertCount,
+  useUnresolvedDeviceAlertCount,
+} from "@/shared/hooks/alerts/useAlerts";
 import { useUnresolvedIncidentCount } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { useKbReviewCounts } from "@/shared/hooks/kb/useKbPendingReview";
 import { useBlogDraftCount } from "@/shared/hooks/blog/useBlog";
@@ -62,7 +65,7 @@ function Topbar() {
       <div className="flex-1" />
 
       {/* System status dot inside a polished pill container */}
-      <div className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
+      <div className="hidden sm:flex items-center gap-1.5 text-2xs font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
         <span
           className="w-1.5 h-1.5 rounded-full pulse-dot shrink-0"
           style={{ backgroundColor: "var(--ok)" }}
@@ -81,14 +84,14 @@ function Topbar() {
           aria-label="Account menu"
           className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border border-border/80 bg-background/50 hover:bg-muted/70 hover:border-primary/30 hover:shadow-xs transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer outline-none"
         >
-          <span className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 shrink-0 shadow-inner">
+          <span className="w-6.5 h-6.5 rounded-full flex items-center justify-center text-3xs font-bold bg-primary/10 text-primary border border-primary/20 shrink-0 shadow-inner">
             {initials}
           </span>
           <div className="text-left leading-tight hidden sm:block">
-            <div className="text-[12.5px] font-medium text-foreground">
+            <div className="text-xs font-medium text-foreground">
               {user?.fullName ?? "—"}
             </div>
-            <div className="text-[9.5px] text-muted-foreground font-medium uppercase tracking-wider">
+            <div className="text-3xs text-muted-foreground font-medium uppercase tracking-wider">
               {roleLabel}
             </div>
           </div>
@@ -100,10 +103,10 @@ function Topbar() {
           className="w-52 p-1.5 shadow-lg border border-border/60"
         >
           <div className="px-2.5 py-2">
-            <div className="text-[13px] font-semibold text-foreground truncate">
+            <div className="text-2sm font-semibold text-foreground truncate">
               {user?.fullName}
             </div>
-            <div className="text-[11px] text-muted-foreground truncate">
+            <div className="text-2xs text-muted-foreground truncate">
               {user?.email}
             </div>
           </div>
@@ -136,6 +139,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
   // AppLayout — doing it here is one place instead of three. Items with no entry below
   // keep whatever badge their nav config already set (e.g. Manager's queue).
   const alerts = useUnresolvedAlertCount();
+  const deviceAlerts = useUnresolvedDeviceAlertCount();
   const incidents = useUnresolvedIncidentCount();
   // All of these return 0 for roles that cannot act on them (Staff) — the gate lives in
   // the hooks themselves, so nothing here has to know about roles.
@@ -153,6 +157,9 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
       // What still needs action: Open + Acknowledged.
       [SIDEBAR_LABELS.batteryAlerts]: alerts.count,
       [SIDEBAR_LABELS.envIncidents]: incidents.count,
+      // Counted by the same Open+Acknowledged rule; its query is the exact opposite of the
+      // battery one, so the two badges partition the alert table rather than overlap.
+      [SIDEBAR_LABELS.deviceAlerts]: deviceAlerts.count,
       // Posts nobody has published yet.
       [SIDEBAR_LABELS.blog]: blogDrafts,
     };
@@ -189,6 +196,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
   }, [
     sections,
     alerts.count,
+    deviceAlerts.count,
     incidents.count,
     kb.pendingReview,
     kb.draft,

@@ -45,10 +45,10 @@ const AcceptInvitePage = () => {
   if (!token) {
     return (
       <div className="space-y-3 text-center">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Invalid link
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           The invitation link is invalid or has expired. Please contact an Admin
           to have it resent.
         </p>
@@ -65,10 +65,10 @@ const AcceptInvitePage = () => {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Activate account
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Set a password to finish activating your account
         </p>
       </div>
@@ -77,7 +77,7 @@ const AcceptInvitePage = () => {
         <div className="space-y-1.5">
           <Label
             htmlFor="password"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground"
           >
             Password
           </Label>
@@ -87,13 +87,13 @@ const AcceptInvitePage = () => {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="new-password"
-              className="h-10 pr-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+              className="h-10 pr-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
               {...register("password")}
             />
             <button
               type="button"
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? (
@@ -111,7 +111,7 @@ const AcceptInvitePage = () => {
         <div className="space-y-1.5">
           <Label
             htmlFor="confirmPassword"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground"
           >
             Confirm password
           </Label>
@@ -121,13 +121,13 @@ const AcceptInvitePage = () => {
               type={showConfirm ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="new-password"
-              className="h-10 pr-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+              className="h-10 pr-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
               {...register("confirmPassword")}
             />
             <button
               type="button"
               aria-label={showConfirm ? "Hide password" : "Show password"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               onClick={() => setShowConfirm((v) => !v)}
             >
               {showConfirm ? (

@@ -7,6 +7,7 @@ import RoleRoute from "./RoleRoute";
 import SmartHome from "./SmartHome";
 import { UserRole } from "@/shared/types/account/session.types";
 import AuthLayout from "@/shared/components/layout/AuthLayout";
+import ErrorPage from "@/shared/components/layout/ErrorPage";
 
 // Everything below is code-split. Static imports here would put all ~100 pages, all four role
 // layouts and every dependency they reach (recharts, TipTap, SignalR, anime.js …) into a single
@@ -26,7 +27,6 @@ const StaffAppLayout = lazyPage(() => import("./StaffAppLayout"));
 const ManagerAppLayout = lazyPage(
   () => import("@/features/manager/components/layout/ManagerAppLayout"),
 );
-const RoleAwareAppLayout = lazyPage(() => import("./RoleAwareAppLayout"));
 
 // Pages.
 const GoogleCallbackPage = lazyPage(
@@ -36,15 +36,21 @@ const UseMobileAppPage = lazyPage(
   () => import("@/features/auth/pages/UseMobileAppPage"),
 );
 const LoginPage = lazyPage(() => import("@/features/auth/pages/LoginPage"));
-const Login2faPage = lazyPage(() => import("@/features/auth/pages/Login2faPage"));
+const Login2faPage = lazyPage(
+  () => import("@/features/auth/pages/Login2faPage"),
+);
 const ReactivatePage = lazyPage(
   () => import("@/features/auth/pages/ReactivatePage"),
 );
 const CrossDeviceConfirmPage = lazyPage(
   () => import("@/features/auth/pages/CrossDeviceConfirmPage"),
 );
-const RegisterPage = lazyPage(() => import("@/features/auth/pages/RegisterPage"));
-const OtpVerifyPage = lazyPage(() => import("@/features/auth/pages/OtpVerifyPage"));
+const RegisterPage = lazyPage(
+  () => import("@/features/auth/pages/RegisterPage"),
+);
+const OtpVerifyPage = lazyPage(
+  () => import("@/features/auth/pages/OtpVerifyPage"),
+);
 const ForgotPasswordPage = lazyPage(
   () => import("@/features/auth/pages/ForgotPasswordPage"),
 );
@@ -133,7 +139,9 @@ const StaffIoTDevicesPage = lazyPage(
 const StaffIoTDeviceDetailPage = lazyPage(
   () => import("@/features/staff/pages/IoTDeviceDetailPage"),
 );
-const AccountsPage = lazyPage(() => import("@/features/admin/pages/AccountsPage"));
+const AccountsPage = lazyPage(
+  () => import("@/features/admin/pages/AccountsPage"),
+);
 const RolesPage = lazyPage(() => import("@/features/admin/pages/RolesPage"));
 const AdminTicketListPage = lazyPage(
   () => import("@/features/admin/pages/AdminTicketListPage"),
@@ -144,7 +152,12 @@ const AdminSagaDebugPage = lazyPage(
 const AdminTicketDetailPage = lazyPage(
   () => import("@/features/admin/pages/AdminTicketDetailPage"),
 );
-const AdminAlertsPage = lazyPage(() => import("@/features/admin/pages/AlertsPage"));
+const AdminAlertsPage = lazyPage(
+  () => import("@/features/admin/pages/AlertsPage"),
+);
+const AdminDeviceAlertsPage = lazyPage(
+  () => import("@/features/admin/pages/DeviceAlertsPage"),
+);
 const AdminEnvironmentalIncidentsPage = lazyPage(
   () => import("@/features/admin/pages/EnvironmentalIncidentsPage"),
 );
@@ -184,6 +197,9 @@ const ManagerMergeComparePage = lazyPage(
 const ManagerAlertsPage = lazyPage(
   () => import("@/features/manager/pages/AlertsPage"),
 );
+const ManagerDeviceAlertsPage = lazyPage(
+  () => import("@/features/manager/pages/DeviceAlertsPage"),
+);
 const ManagerEnvironmentalIncidentsPage = lazyPage(
   () => import("@/features/manager/pages/EnvironmentalIncidentsPage"),
 );
@@ -202,7 +218,9 @@ const StaffMyMaintenanceLogsPage = lazyPage(
 const StaffSlaMonitorPage = lazyPage(
   () => import("@/features/staff/pages/SlaMonitorPage"),
 );
-const AdminKbListPage = lazyPage(() => import("@/features/admin/pages/KbListPage"));
+const AdminKbListPage = lazyPage(
+  () => import("@/features/admin/pages/KbListPage"),
+);
 const AdminKbDetailPage = lazyPage(
   () => import("@/features/admin/pages/KbDetailPage"),
 );
@@ -218,7 +236,9 @@ const ManagerKbDetailPage = lazyPage(
 const ManagerKbEditorPage = lazyPage(
   () => import("@/features/manager/pages/KbEditorPage"),
 );
-const StaffKbListPage = lazyPage(() => import("@/features/staff/pages/KbListPage"));
+const StaffKbListPage = lazyPage(
+  () => import("@/features/staff/pages/KbListPage"),
+);
 const StaffKbDetailPage = lazyPage(
   () => import("@/features/staff/pages/KbDetailPage"),
 );
@@ -303,31 +323,16 @@ const router = createBrowserRouter([
   {
     path: "/unauthorized",
     element: (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-semibold text-destructive">403</h1>
-          <p className="mt-2 text-muted-foreground">
-            You do not have permission to access this page.
-          </p>
-        </div>
-      </div>
+      <ErrorPage
+        code="403"
+        message="You do not have permission to access this page."
+        tone="destructive"
+      />
     ),
   },
   {
     element: <ProtectedRoute />,
     children: [
-      {
-        path: "/settings",
-        element: <RoleAwareAppLayout />,
-        children: [{ index: true, element: <AccountSettingsPage /> }],
-      },
-      {
-        // Inbox shared across every role (like /settings) — the content is already
-        // filtered by the UserId in the JWT on the BE, so no need to duplicate the route per role.
-        path: "/notifications",
-        element: <RoleAwareAppLayout />,
-        children: [{ index: true, element: <NotificationInboxPage /> }],
-      },
       {
         // #AUTH-51: Device B confirm — only requires login (any role), bypasses AppLayout
         // (and therefore its Suspense boundary, so it needs its own).
@@ -383,6 +388,7 @@ const router = createBrowserRouter([
                 path: "environmental-incidents",
                 element: <AdminEnvironmentalIncidentsPage />,
               },
+              { path: "device-alerts", element: <AdminDeviceAlertsPage /> },
               { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "sagas", element: <AdminSagaDebugPage /> },
               { path: "profile", element: <ProfilePage /> },
@@ -406,6 +412,7 @@ const router = createBrowserRouter([
                 element: <NotificationBatchesPage />,
               },
               { path: "settings", element: <AccountSettingsPage /> },
+              { path: "inbox", element: <NotificationInboxPage /> },
             ],
           },
         ],
@@ -454,12 +461,14 @@ const router = createBrowserRouter([
                 path: "environmental-incidents",
                 element: <ManagerEnvironmentalIncidentsPage />,
               },
+              { path: "device-alerts", element: <ManagerDeviceAlertsPage /> },
               {
                 path: "iot-calibrations",
                 element: <ManagerCalibrationsExpiringPage />,
               },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
+              { path: "inbox", element: <NotificationInboxPage /> },
             ],
           },
         ],
@@ -504,6 +513,7 @@ const router = createBrowserRouter([
               },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
+              { path: "inbox", element: <NotificationInboxPage /> },
             ],
           },
         ],
@@ -511,8 +521,11 @@ const router = createBrowserRouter([
     ],
   },
   {
+    // An unmatched path is a wrong address, NOT a permission failure. Sending it to
+    // /unauthorized told a full-rights Admin who mistyped a URL that they were denied
+    // access to a page that does not exist — hiding the typo behind an access error.
     path: "*",
-    element: <Navigate to="/unauthorized" replace />,
+    element: <ErrorPage code="404" message="This page does not exist." />,
   },
 ]);
 

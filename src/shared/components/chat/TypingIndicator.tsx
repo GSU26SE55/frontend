@@ -17,7 +17,7 @@ export default function TypingIndicator({ names }: Props) {
       : `${names.length} people are typing`;
 
   return (
-    <div className="flex items-center gap-1.5 px-1 pb-1 text-[11px] text-muted-foreground italic leading-none">
+    <div className="flex items-center gap-1.5 px-1 pb-1 text-2xs text-muted-foreground italic leading-none">
       <span className="truncate">{label}</span>
       <span className="flex items-center gap-0.75">
         {[0, 1, 2].map((i) => (

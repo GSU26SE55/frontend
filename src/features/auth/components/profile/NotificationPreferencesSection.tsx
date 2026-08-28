@@ -136,7 +136,7 @@ export default function NotificationPreferencesSection() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Notification channels */}
       <div className="space-y-3">
-        <p className="text-[13px] font-semibold">Notification channels</p>
+        <p className="text-2sm font-semibold">Notification channels</p>
         <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
           {CHANNELS.map((ch) => (
             <div
@@ -167,7 +167,7 @@ export default function NotificationPreferencesSection() {
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold">Quiet hours</p>
+            <p className="text-2sm font-semibold">Quiet hours</p>
             <p className="text-xs text-muted-foreground">
               Pause notifications during this time range (supports overnight).
             </p>

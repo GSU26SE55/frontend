@@ -14,6 +14,7 @@ import type {
   SensorReadingSortKey,
 } from "@/shared/types/battery/sensor-reading-history.types";
 import type { ThresholdConfigDto } from "@/shared/types/battery/threshold.types";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 // datetime-local (local time, no timezone) → ISO UTC for the API. "" → undefined.
 const toUtc = (local: string): string | undefined =>
@@ -48,22 +49,31 @@ function socTone(soc: number, warn: number, crit: number): StatusTone {
   return "ok";
 }
 
-function voltageTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
+function voltageTone(
+  v: number,
+  t?: ThresholdConfigDto | null,
+): StatusTone | null {
   return t ? rangeTone(v, t.voltageMin, t.voltageMax) : null;
 }
-function temperatureTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
+function temperatureTone(
+  v: number,
+  t?: ThresholdConfigDto | null,
+): StatusTone | null {
   return t ? rangeTone(v, t.temperatureMin, t.temperatureMax) : null;
 }
 // currentMaxCharge/currentMaxDischarge are optional in ThresholdConfigDto.
 // Not configured → do NOT color the Current column (return null), rather than guessing
 // a default threshold: a color derived from a made-up threshold would diverge from the
 // BE's real-threshold alerts, misleading the viewer into thinking it was cross-checked.
-function currentTone(v: number, t?: ThresholdConfigDto): StatusTone | null {
+function currentTone(
+  v: number,
+  t?: ThresholdConfigDto | null,
+): StatusTone | null {
   if (!t) return null; // no threshold configured → the whole table stays uncolored (stay consistent)
   if (t.currentMaxCharge == null || t.currentMaxDischarge == null) return null;
   return rangeTone(v, -t.currentMaxDischarge, t.currentMaxCharge);
 }
-function socOf(v: number, t?: ThresholdConfigDto): StatusTone | null {
+function socOf(v: number, t?: ThresholdConfigDto | null): StatusTone | null {
   return t ? socTone(v, t.socWarningThreshold, t.socCriticalThreshold) : null;
 }
 
@@ -84,7 +94,7 @@ function ToneNum({
 }
 
 function buildColumns(
-  threshold?: ThresholdConfigDto,
+  threshold?: ThresholdConfigDto | null,
 ): ColumnDef<SensorReadingDto>[] {
   return [
     {
@@ -94,7 +104,7 @@ function buildColumns(
       sortKey: "time",
       sortValue: (r) => new Date(r.time).getTime(),
       cellClassName: "tabular-nums",
-      cell: (r) => new Date(r.time).toLocaleString("vi-VN"),
+      cell: (r) => formatDateTime(r.time),
     },
     {
       id: "voltage",
@@ -232,7 +242,7 @@ export default function SensorHistoryTable({
   // height instead of forcing the row taller than the title next to it.
   const rangeControls = (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <label className="flex items-center gap-1.5 text-2xs text-muted-foreground">
         From
         <DateTimePicker
           value={fromLocal}
@@ -241,7 +251,7 @@ export default function SensorHistoryTable({
           className="h-8 w-44"
         />
       </label>
-      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <label className="flex items-center gap-1.5 text-2xs text-muted-foreground">
         To
         <DateTimePicker
           value={toLocal}
@@ -272,13 +282,13 @@ export default function SensorHistoryTable({
   // Kept out of the header row: it appears only while a sort is blocked, and letting it push
   // the pickers around mid-interaction made the row jump.
   const rangeHint = rangeMissing && (
-    <div className="px-5 pb-2 text-[11px] text-amber-600 dark:text-amber-500">
+    <div className="px-5 pb-2 text-2xs text-amber-600 dark:text-amber-500">
       Select both "From" and "To" to sort by this column.
     </div>
   );
 
   const thresholdNotice = missingThresholdNote && (
-    <div className="flex items-start gap-2 px-5 py-2.5 border-b border-border text-[11px] text-amber-600 dark:text-amber-500">
+    <div className="flex items-start gap-2 px-5 py-2.5 border-b border-border text-2xs text-amber-600 dark:text-amber-500">
       <TriangleAlert className="size-3.5 shrink-0 mt-px" />
       <span>{missingThresholdNote}</span>
     </div>
@@ -324,7 +334,7 @@ export default function SensorHistoryTable({
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm font-medium">Sensor history</span>
             {threshold && (
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-2xs text-muted-foreground">
                 Colored by the safe threshold of {threshold.batteryTypeName}
               </span>
             )}

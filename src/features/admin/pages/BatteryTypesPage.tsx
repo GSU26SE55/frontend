@@ -43,6 +43,7 @@ import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { noData, notFound } from "@/shared/constants/emptyStates";
 
 const CHEMISTRY_LABELS: Record<BatteryChemistryEnum, string> = {
   [BatteryChemistryEnum.LI_FE_PO4]: "LiFePO4",
@@ -196,7 +197,11 @@ export default function BatteryTypesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <BatteryCharging className="size-8 opacity-30" />
-            <span className="text-sm">No battery types yet.</span>
+            <span className="text-sm">
+              {hasActiveFilter
+                ? notFound("battery types")
+                : noData("battery types")}
+            </span>
           </div>
         ) : (
           <BatteryTypeTable

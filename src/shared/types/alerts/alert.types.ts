@@ -18,6 +18,16 @@ export interface AlertDto {
   batteryAssetId: string;
   batterySerialNumber: string;
   /**
+   * Device-level alerts (DeviceOffline, IotDataIntegrityViolation) carry no battery, so these
+   * are what identifies them. Empty string for battery/site alerts — same convention as
+   * `batterySerialNumber`.
+   */
+  iotDeviceId: string | null;
+  iotDeviceCode: string;
+  iotDeviceName: string;
+  /** Site the alert belongs to. Empty when the alert has no site. */
+  siteName: string;
+  /**
    * Customer who owns this alert — resolved by the BE from BatteryAsset.CustomerId
    * (battery-level) or Site.CustomerId (site-level). Empty string when the account cannot
    * be resolved, so render a dash rather than assuming a name is always present.
@@ -52,6 +62,13 @@ export interface AlertListParams {
   // to leave it out — filtering it client-side instead would skew totalItems/pagination.
   // Ignored by the BE when `anomalyType` is also sent.
   excludeEnvironmentalIncidents?: boolean;
+  // Keeps the Battery alerts and Device alerts lists disjoint. `iotOnly` returns ONLY
+  // DeviceOffline + IotDataIntegrityViolation (the Device alerts screen); its opposite drops
+  // them (the Battery alerts screen). Filtering server-side rather than client-side, because
+  // filtering a page after the BE has already cut it skews totalItems and pagination.
+  // Both are ignored by the BE when `anomalyType` is also sent.
+  iotOnly?: boolean;
+  excludeIotDeviceAlerts?: boolean;
   from?: string;
   to?: string;
 }

@@ -241,7 +241,9 @@ export default function BatteryAssetForm({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="serialNumber">Serial Number *</Label>
+            <Label htmlFor="serialNumber">
+              Serial Number <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="serialNumber"
               {...register("serialNumber")}
@@ -255,7 +257,9 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryTypeId">Battery type *</Label>
+            <Label htmlFor="batteryTypeId">
+              Battery type <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="batteryTypeId"
@@ -279,7 +283,9 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Customer *</Label>
+            <Label htmlFor="customerId">
+              Customer <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="customerId"
@@ -369,7 +375,9 @@ export default function BatteryAssetForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="installDate">Install date *</Label>
+              <Label htmlFor="installDate">
+                Install date <span className="text-destructive">*</span>
+              </Label>
               <Controller
                 control={control}
                 name="installDate"

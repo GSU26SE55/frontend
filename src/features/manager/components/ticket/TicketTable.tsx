@@ -15,6 +15,7 @@ import {
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { formatDate } from "@/shared/utils/datetime";
 
 interface Props {
   tickets: TicketDTO[];
@@ -178,7 +179,7 @@ export default function TicketTable({
       sortKey: "createdAt",
       sortValue: (t) => new Date(t.createdAt).getTime(),
       cellClassName: "text-xs text-muted-foreground",
-      cell: (t) => new Date(t.createdAt).toLocaleDateString("vi-VN"),
+      cell: (t) => formatDate(t.createdAt),
     },
   ];
 

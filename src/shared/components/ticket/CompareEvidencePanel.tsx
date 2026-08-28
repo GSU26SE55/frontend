@@ -90,7 +90,7 @@ export default function CompareEvidencePanel({
               {rows.map((w) => (
                 <tr key={w.reading.time} className="border-t">
                   <td className="px-2 py-1.5 whitespace-nowrap">
-                    {format(new Date(w.reading.time), "HH:mm:ss MM/dd")}
+                    {format(new Date(w.reading.time), "HH:mm:ss dd/MM")}
                   </td>
                   <td className="px-2 py-1.5 text-right">
                     {w.reading.temperature.toFixed(1)}

@@ -80,7 +80,7 @@ export default function SubIssuePanel({ ticketId }: Props) {
         <p className="text-sm text-muted-foreground">
           {items.length > 0
             ? `${doneCount}/${items.length} done`
-            : noData("sub issue")}
+            : noData("sub issues")}
         </p>
         <Button
           size="sm"

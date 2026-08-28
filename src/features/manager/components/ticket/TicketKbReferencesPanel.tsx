@@ -205,7 +205,7 @@ export default function TicketKbReferencesPanel({
         <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" />
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+            <h4 className="text-2xs font-semibold uppercase tracking-wider text-primary">
               Suggested for this ticket
             </h4>
           </div>
@@ -216,13 +216,13 @@ export default function TicketKbReferencesPanel({
                 className="flex items-center gap-2 rounded-md bg-background px-2.5 py-1.5"
               >
                 <div className="min-w-0 flex-1">
-                  <span className="mr-1.5 font-mono text-[11px] text-muted-foreground">
+                  <span className="mr-1.5 font-mono text-2xs text-muted-foreground">
                     {item.code}
                   </span>
                   <span className="truncate text-xs">{item.title}</span>
                   {item.isInternalOnly && (
                     <span
-                      className={`ml-1.5 rounded px-1 py-0.5 text-[9.5px] font-medium ${toneFill("muted")}`}
+                      className={`ml-1.5 rounded px-1 py-0.5 text-3xs font-medium ${toneFill("muted")}`}
                     >
                       Internal
                     </span>
@@ -231,7 +231,7 @@ export default function TicketKbReferencesPanel({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+                  className="h-6 shrink-0 gap-1 px-2 text-2xs"
                   disabled={adding || afterResolveOnly}
                   title={
                     afterResolveOnly
@@ -272,7 +272,7 @@ export default function TicketKbReferencesPanel({
                 />
 
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-medium text-muted-foreground">
+                  <p className="text-2xs font-medium text-muted-foreground">
                     Reference type
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -293,7 +293,7 @@ export default function TicketKbReferencesPanel({
                       );
                     })}
                   </div>
-                  <p className="text-[11px] text-muted-foreground italic">
+                  <p className="text-2xs text-muted-foreground italic">
                     {REF_TYPE_DESC[effectiveRefType]}
                   </p>
                 </div>
@@ -351,10 +351,10 @@ export default function TicketKbReferencesPanel({
             return (
               <div key={type} className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {KbReferenceTypeLabel[type]}
                   </h4>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-2xs text-muted-foreground">
                     ({items.length})
                   </span>
                 </div>
@@ -369,7 +369,7 @@ export default function TicketKbReferencesPanel({
                             </span>
                             <span
                               className={cn(
-                                "rounded border px-1.5 py-0.5 text-[10px] font-medium",
+                                "rounded border px-1.5 py-0.5 text-3xs font-medium",
                                 REF_TYPE_BADGE[type],
                               )}
                             >

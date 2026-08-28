@@ -59,7 +59,7 @@ const ResetPasswordForm = ({
             type={showNew ? "text" : "password"}
             placeholder="••••••••"
             autoComplete="new-password"
-            className="h-10 pr-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+            className="h-10 pr-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
             {...register("newPassword")}
           />
           <button
@@ -90,7 +90,7 @@ const ResetPasswordForm = ({
             type={showConfirm ? "text" : "password"}
             placeholder="••••••••"
             autoComplete="new-password"
-            className="h-10 pr-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+            className="h-10 pr-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
             {...register("confirmPassword")}
           />
           <button

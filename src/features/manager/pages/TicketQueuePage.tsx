@@ -20,20 +20,7 @@ import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  Maintenance: "Maintenance",
-  Repair: "Repair",
-  Inspection: "Inspection",
-  Emergency: "Emergency",
-  Replacement: "Replacement",
-  Upgrade: "Upgrade",
-  Other: "Other",
-  Charging: "Charging fault",
-  Overheat: "Overheat",
-  NoPower: "No power",
-  Performance: "Performance",
-};
+import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 
 const DEFAULTS = {
   priority: "",
@@ -103,7 +90,7 @@ export default function TicketQueuePage() {
           value={filters.category || null}
           items={Object.values(TicketCategoryEnum).map((c) => ({
             value: c,
-            label: CATEGORY_LABELS[c] ?? c,
+            label: TICKET_CATEGORY_LABEL[c] ?? c,
           }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
@@ -116,7 +103,7 @@ export default function TicketQueuePage() {
             <SelectItem value={null}>All categories</SelectItem>
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
-                {CATEGORY_LABELS[c] ?? c}
+                {TICKET_CATEGORY_LABEL[c] ?? c}
               </SelectItem>
             ))}
           </SelectContent>

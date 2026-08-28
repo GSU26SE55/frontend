@@ -89,7 +89,12 @@ export const useTriageRejectTicket = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.queue() });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -106,7 +111,12 @@ export const useAssignTicket = (id: string) => {
       // #697 — Primary → PrimaryAssignee, Supporter → Collaborator in chat.
       qc.invalidateQueries({ queryKey: QUERY_KEY.ticketParticipants.list(id) });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -125,7 +135,12 @@ export const useReassignTicket = (id: string) => {
         queryKey: QUERY_KEY.ticketParticipants.history(id),
       });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -152,7 +167,12 @@ export const useRejectTicket = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -171,7 +191,12 @@ export const useEscalateApproveTicket = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -188,7 +213,12 @@ export const useEscalateRejectTicket = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 
@@ -241,7 +271,12 @@ export const useDeclareIncident = (id: string) => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.list() });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No handleErrorApi here: this backs a form, so the dialog catches the error and
+    // feeds it to setError — otherwise EntityError's per-field messages collapse into a
+    // single toast and the user cannot tell which input the BE rejected.
+    onError: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
+    },
   });
 };
 

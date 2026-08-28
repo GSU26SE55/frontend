@@ -62,15 +62,7 @@ import {
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
 import { slaBarColorClass } from "@/shared/lib/sla";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  Charging: "Charging fault",
-  Overheat: "Overheat",
-  NoPower: "No power",
-  Performance: "Performance",
-  Repair: "Repair",
-  Other: "Other",
-};
+import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 
 function SideInfoRow({
   label,
@@ -270,7 +262,8 @@ export default function AdminTicketDetailPage() {
                   Chat
                 </TabsTrigger>
                 <TabsTrigger value="logs">
-                  Logs{maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
+                  Logs
+                  {maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -292,7 +285,6 @@ export default function AdminTicketDetailPage() {
                 />
               )}
             </TabsContent>
-
 
             {/* Maintenance logs — read-only here: the BE only lets a log's own author edit it. */}
             <TabsContent
@@ -380,7 +372,7 @@ export default function AdminTicketDetailPage() {
         <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
           <div className="p-4">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               SLA
             </p>
             {ticket.slaTimer ? (
@@ -396,7 +388,7 @@ export default function AdminTicketDetailPage() {
                     Deadline
                   </span>
                   <span className="text-xs font-medium tabular-nums">
-                    {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
+                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -423,7 +415,7 @@ export default function AdminTicketDetailPage() {
 
           {/* Status + processing time */}
           <div className="p-4">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Status
             </p>
             <div className="space-y-2.5">
@@ -446,10 +438,10 @@ export default function AdminTicketDetailPage() {
           {/* Description */}
           {ticket.description && (
             <div className="p-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Description
               </p>
-              <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {ticket.description}
               </p>
             </div>
@@ -458,7 +450,7 @@ export default function AdminTicketDetailPage() {
           {/* Attachments */}
           {ticket.attachmentFileIds && ticket.attachmentFileIds.length > 0 && (
             <div className="p-4">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Attachments
               </p>
               <TicketAttachments fileIds={ticket.attachmentFileIds} />
@@ -468,7 +460,7 @@ export default function AdminTicketDetailPage() {
           {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
           {ticket.rejectionReason && (
             <div className="p-4">
-              <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
+              <p className="text-3xs font-semibold text-destructive uppercase tracking-wider mb-2">
                 Reason
               </p>
               <p className="text-xs leading-relaxed">
@@ -480,10 +472,10 @@ export default function AdminTicketDetailPage() {
           {/* Resolution */}
           {ticket.resolutionSummary && (
             <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
-              <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
+              <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                 Resolution
               </p>
-              <p className="text-xs leading-relaxed whitespace-pre-wrap">
+              <p className="text-base leading-relaxed whitespace-pre-wrap">
                 {ticket.resolutionSummary}
               </p>
             </div>
@@ -493,37 +485,30 @@ export default function AdminTicketDetailPage() {
           <div className="px-4 py-1">
             <SideInfoRow
               label="Category"
-              value={CATEGORY_LABELS[ticket.category] ?? ticket.category}
+              value={TICKET_CATEGORY_LABEL[ticket.category] ?? ticket.category}
             />
             <SideInfoRow label="Origin" value={ticket.origin} />
             {ticket.isPeriodicMaintenance && (
               <>
                 <SideInfoRow
-                  label="Maintenance cycle"
-                  value={
-                    <span
-                      className={
-                        ticket.isPeriodicMaintenanceOverdue
-                          ? "font-medium text-destructive"
-                          : undefined
-                      }
-                    >
-                      {ticket.isPeriodicMaintenanceOverdue
-                        ? "Periodic · overdue"
-                        : "Periodic"}
-                    </span>
-                  }
-                />
-                <SideInfoRow
                   label="Maintenance due"
                   value={
-                    ticket.periodicMaintenanceDueAtUtc
-                      ? format(
+                    ticket.periodicMaintenanceDueAtUtc ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        {format(
                           new Date(ticket.periodicMaintenanceDueAtUtc),
-                          "MM/dd/yyyy HH:mm",
+                          "dd/MM/yyyy HH:mm",
                           { locale: enUS },
-                        )
-                      : null
+                        )}
+                        {/* Quá hạn là tin cần biết ngay, nhưng nó nói về CÁI HẠN NÀY — nên đứng
+                            cạnh ngày, không tách thành một hàng "Periodic · overdue" riêng. */}
+                        {ticket.isPeriodicMaintenanceOverdue && (
+                          <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-3xs font-semibold uppercase tracking-wide text-destructive">
+                            Overdue
+                          </span>
+                        )}
+                      </span>
+                    ) : null
                   }
                 />
                 <SideInfoRow
@@ -532,10 +517,10 @@ export default function AdminTicketDetailPage() {
                     ticket.scheduledStartAtUtc
                       ? format(
                           new Date(ticket.scheduledStartAtUtc),
-                          "MM/dd/yyyy HH:mm",
+                          "dd/MM/yyyy HH:mm",
                           { locale: enUS },
                         )
-                      : "Awaiting Customer selection"
+                      : null
                   }
                 />
               </>
@@ -567,7 +552,7 @@ export default function AdminTicketDetailPage() {
             )}
             <SideInfoRow
               label="Created"
-              value={format(new Date(ticket.createdAt), "MM/dd/yyyy HH:mm", {
+              value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
                 locale: enUS,
               })}
             />
@@ -575,7 +560,7 @@ export default function AdminTicketDetailPage() {
             {ticket.detectedAt && (
               <SideInfoRow
                 label="Detected at"
-                value={format(new Date(ticket.detectedAt), "MM/dd/yyyy HH:mm", {
+                value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
                   locale: enUS,
                 })}
               />
@@ -583,7 +568,7 @@ export default function AdminTicketDetailPage() {
             {ticket.updatedAt && (
               <SideInfoRow
                 label="Updated"
-                value={format(new Date(ticket.updatedAt), "MM/dd/yyyy HH:mm", {
+                value={format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm", {
                   locale: enUS,
                 })}
               />
@@ -595,7 +580,7 @@ export default function AdminTicketDetailPage() {
             (ticket.aiVerifyStatus ||
               (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
               <div className="px-4 py-3 space-y-2">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                   AI check
                 </p>
                 {ticket.aiVerifyStatus && (

@@ -114,12 +114,12 @@ export default function PushTransportSettingsForm() {
                     )}
                   </div>
 
-                  <p className="text-[11px] leading-relaxed text-muted-foreground line-clamp-3">
+                  <p className="text-2xs leading-relaxed text-muted-foreground line-clamp-3">
                     {opt.description}
                   </p>
 
                   {isCurrent && (
-                    <span className="inline-flex w-fit items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex w-fit items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/5 px-1.5 py-0.5 text-3xs font-semibold text-emerald-600 dark:text-emerald-400">
                       <span className="size-1.5 rounded-full bg-emerald-500" />
                       Active now
                     </span>

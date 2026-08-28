@@ -147,14 +147,14 @@ export default function SiteAssetsTable({
     {
       id: "installDate",
       header: "Install date",
-      cell: (asset) => format(new Date(asset.installDate), "MM/dd/yyyy"),
+      cell: (asset) => format(new Date(asset.installDate), "dd/MM/yyyy"),
     },
     {
       id: "lastSensorReadingAt",
       header: "Last reading",
       cell: (asset) =>
         asset.lastSensorReadingAt
-          ? format(new Date(asset.lastSensorReadingAt), "MM/dd/yyyy HH:mm")
+          ? format(new Date(asset.lastSensorReadingAt), "dd/MM/yyyy HH:mm")
           : "—",
     },
   ];

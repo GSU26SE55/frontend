@@ -255,13 +255,13 @@ export default function NotificationTemplateFormDialog({
                     <Bell className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-foreground">
+                    <p className="text-2sm font-semibold text-foreground">
                       {title ? previewOf(title) : "—"}
                     </p>
-                    <p className="mt-0.5 text-[12.5px] text-muted-foreground whitespace-pre-wrap">
+                    <p className="mt-0.5 text-xs text-muted-foreground whitespace-pre-wrap">
                       {body ? previewOf(body) : "—"}
                     </p>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    <p className="mt-1.5 text-2xs text-muted-foreground">
                       Just now
                     </p>
                   </div>

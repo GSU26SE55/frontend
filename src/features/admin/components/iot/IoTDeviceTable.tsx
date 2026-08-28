@@ -27,6 +27,7 @@ import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 interface Props {
   items: IotDeviceDto[];
@@ -133,9 +134,7 @@ export default function IoTDeviceTable({
                 {item.currentFirmwareVersion ?? "—"}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {item.lastSeenAt
-                  ? new Date(item.lastSeenAt).toLocaleString("vi-VN")
-                  : "Never"}
+                {item.lastSeenAt ? formatDateTime(item.lastSeenAt) : "Never"}
               </TableCell>
               <TableCell
                 className="text-right"

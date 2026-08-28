@@ -35,7 +35,7 @@ export function StaffSuggestionPanel({
     <section className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
       <header className="mb-2 flex items-center gap-1.5">
         <Sparkles className="size-3.5 text-primary" aria-hidden />
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+        <h3 className="text-2xs font-semibold uppercase tracking-wider text-primary">
           AI-suggested staff
         </h3>
       </header>
@@ -49,7 +49,7 @@ export function StaffSuggestionPanel({
 
       {/* Network/permission error — different from "AI not responding" (BE returns 200 + aiAvailable=false). */}
       {isError && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-2xs text-muted-foreground">
           Couldn't load suggestions. You can still assign manually below.
         </p>
       )}
@@ -60,7 +60,7 @@ export function StaffSuggestionPanel({
             className="mt-0.5 size-3.5 shrink-0 text-amber-600"
             aria-hidden
           />
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-2xs text-muted-foreground">
             {data.note ||
               "Couldn't get suggestions from AI yet. You can still assign manually."}
           </p>
@@ -70,7 +70,7 @@ export function StaffSuggestionPanel({
       {/* Empty list but AI did run — `note` explains why (missing tier, over capacity…).
           This is NOT an error, so it isn't displayed as one. */}
       {data?.aiAvailable && data.items.length === 0 && (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-2xs text-muted-foreground">
           {data.note || "No staff match this ticket."}
         </p>
       )}
@@ -102,29 +102,26 @@ export function StaffSuggestionPanel({
                         </span>
                         <Badge
                           variant="secondary"
-                          className="px-1 py-0 text-[9.5px]"
+                          className="px-1 py-0 text-3xs"
                         >
                           {SKILL_TIER_LABELS[s.skillTier] ??
                             `Tier ${s.skillTier}`}
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className="px-1 py-0 text-[9.5px]"
-                        >
+                        <Badge variant="outline" className="px-1 py-0 text-3xs">
                           {Math.round(s.score * 100)}% match
                         </Badge>
                       </div>
 
                       {/* The reason matters most — without it the Manager has no
                           basis to trust the ranking order. */}
-                      <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                      <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
                         {s.reason}
                       </p>
 
                       {s.maxConcurrentTickets > 0 && (
                         <div className="mt-1.5 flex items-center gap-1.5">
                           <Progress value={loadPercent} className="h-1 w-16" />
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-3xs text-muted-foreground">
                             {s.activeTickets}/{s.maxConcurrentTickets}
                           </span>
                         </div>
@@ -136,7 +133,7 @@ export function StaffSuggestionPanel({
                         type="button"
                         size="sm"
                         variant={isSelected ? "default" : "outline"}
-                        className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+                        className="h-6 shrink-0 gap-1 px-2 text-2xs"
                         onClick={() => onPick(s)}
                       >
                         <UserCheck className="size-3" aria-hidden />
@@ -150,14 +147,12 @@ export function StaffSuggestionPanel({
           </ul>
 
           {data.note && (
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              {data.note}
-            </p>
+            <p className="mt-2 text-2xs text-muted-foreground">{data.note}</p>
           )}
         </>
       )}
 
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="mt-2 text-2xs text-muted-foreground">
         Just a suggestion — you can still pick any staff member below.
       </p>
     </section>

@@ -81,7 +81,9 @@ export default function CreateSmsDeviceDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="deviceName">Device name *</Label>
+            <Label htmlFor="deviceName">
+              Device name <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="deviceName"
               {...register("deviceName")}
@@ -95,7 +97,9 @@ export default function CreateSmsDeviceDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="deviceCode">Device code *</Label>
+            <Label htmlFor="deviceCode">
+              Device code <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="deviceCode"
               {...register("deviceCode")}
@@ -109,7 +113,9 @@ export default function CreateSmsDeviceDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="dailyLimit">Daily SMS limit *</Label>
+            <Label htmlFor="dailyLimit">
+              Daily SMS limit <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="dailyLimit"
               type="number"

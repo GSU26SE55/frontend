@@ -29,7 +29,7 @@ const dash = (v: string | number | null | undefined) =>
 const fmtDate = (v: string | null) => {
   if (!v) return "—";
   try {
-    return format(parseISO(v), "MM/dd/yyyy");
+    return format(parseISO(v), "dd/MM/yyyy");
   } catch {
     return v;
   }

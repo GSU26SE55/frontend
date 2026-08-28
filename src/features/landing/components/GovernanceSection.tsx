@@ -68,7 +68,7 @@ const FeatureCard = ({ card }: { card: (typeof FEATURE_CARDS)[number] }) => {
           <Icon className={`size-5 ${card.iconColor}`} />
         </div>
         <span
-          className={`rounded-full px-2.5 py-1 font-mono text-[10px] font-semibold tracking-wider ${
+          className={`rounded-full px-2.5 py-1 font-mono text-3xs font-semibold tracking-wider ${
             card.isDark
               ? "bg-white/[0.07] text-slate-300 border border-white/[0.1]"
               : "bg-slate-100 text-slate-500 border border-slate-200"

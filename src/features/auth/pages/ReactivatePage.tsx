@@ -63,10 +63,10 @@ const ReactivatePage = () => {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Restore account
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           {step === "request"
             ? "Enter the email of the deleted account (within 90 days)."
             : `Enter the OTP sent to ${email}.`}
@@ -132,7 +132,7 @@ const ReactivatePage = () => {
           </Button>
           <button
             type="button"
-            className="w-full text-center text-sm text-slate-500 hover:text-emerald-600"
+            className="w-full text-center text-sm text-muted-foreground hover:text-emerald-600"
             onClick={() => setStep("request")}
           >
             Change email
@@ -140,7 +140,7 @@ const ReactivatePage = () => {
         </form>
       )}
 
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-muted-foreground">
         <Link
           to="/login"
           className="font-semibold text-emerald-600 hover:text-emerald-700"

@@ -134,7 +134,7 @@ export default function CreateNotificationForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-xl">
       <div className="space-y-1.5">
         <Label>
-          Recipient <span className="text-red-500">*</span>
+          Recipient <span className="text-destructive">*</span>
         </Label>
         <Controller
           name="userId"
@@ -186,7 +186,7 @@ export default function CreateNotificationForm() {
         {errors.userId && (
           <p className="text-xs text-red-500">{errors.userId.message}</p>
         )}
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-2xs text-muted-foreground">
           Pick a user from the account list — no need to type a UUID by hand.
         </p>
       </div>
@@ -194,7 +194,7 @@ export default function CreateNotificationForm() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>
-            Type <span className="text-red-500">*</span>
+            Type <span className="text-destructive">*</span>
           </Label>
           <Controller
             name="type"
@@ -228,7 +228,7 @@ export default function CreateNotificationForm() {
 
         <div className="space-y-1.5">
           <Label>
-            Channel <span className="text-red-500">*</span>
+            Channel <span className="text-destructive">*</span>
           </Label>
           <Controller
             name="channel"
@@ -263,7 +263,7 @@ export default function CreateNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="notif-title">
-          Title <span className="text-red-500">*</span>
+          Title <span className="text-destructive">*</span>
         </Label>
         <Input
           id="notif-title"
@@ -277,7 +277,7 @@ export default function CreateNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="notif-body">
-          Body <span className="text-red-500">*</span>
+          Body <span className="text-destructive">*</span>
         </Label>
         <Textarea
           id="notif-body"

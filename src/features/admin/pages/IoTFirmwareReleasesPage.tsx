@@ -16,6 +16,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { noData, notFound } from "@/shared/constants/emptyStates";
 
 const DEFAULTS = {
   hardwareRevision: "",
@@ -105,7 +106,11 @@ export default function IoTFirmwareReleasesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <HardDrive className="size-8 opacity-30" />
-            <span className="text-sm">No firmware releases yet.</span>
+            <span className="text-sm">
+              {hasActiveFilter
+                ? notFound("firmware releases")
+                : noData("firmware releases")}
+            </span>
           </div>
         ) : (
           <IoTFirmwareTable items={items} sort={sort} />

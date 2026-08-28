@@ -20,7 +20,10 @@ export const blogPostSchema = z.object({
       /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
       "Slug may only contain lowercase letters, digits and hyphens",
     ),
-  summary: z.string().min(1, "Summary is required"),
+  summary: z
+    .string()
+    .min(1, "Summary is required")
+    .max(1000, "Summary must be at most 1000 characters"),
   contentHtml: contentHtmlField,
   changeNote: z.string().optional(),
   blogTemplateId: z.string().optional(),

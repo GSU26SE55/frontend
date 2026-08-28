@@ -10,7 +10,6 @@ import {
 } from "@/features/staff/hooks/kb/useStaffKb";
 import type { KbArticleFormValues } from "@/shared/schemas/kb/kb-article.schema";
 import type { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
-import { handleErrorApi } from "@/shared/lib/errors";
 
 export default function KbEditorPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,19 +27,17 @@ export default function KbEditorPage() {
   const { mutateAsync: create, isPending: creating } = useStaffKbCreate();
   const { mutateAsync: update, isPending: updating } = useStaffKbUpdate();
 
+  // No try-catch: the rejection has to reach GuideEditorForm, which owns setError and
+  // routes EntityError to the field the BE rejected.
   const onSubmit = async (values: KbArticleFormValues) => {
-    try {
-      // KB is always internal (Customers view via Blog, not KB) → isInternalOnly=true.
-      const payload = { ...values, isInternalOnly: true };
-      if (isEdit) {
-        await update({ id, payload });
-        navigate(`/staff/kb/${id}`);
-      } else {
-        const res = await create(payload);
-        navigate(res?.id ? `/staff/kb/${res.id}` : "/staff/kb");
-      }
-    } catch (error) {
-      handleErrorApi({ error });
+    // KB is always internal (Customers view via Blog, not KB) → isInternalOnly=true.
+    const payload = { ...values, isInternalOnly: true };
+    if (isEdit) {
+      await update({ id, payload });
+      navigate(`/staff/kb/${id}`);
+    } else {
+      const res = await create(payload);
+      navigate(res?.id ? `/staff/kb/${res.id}` : "/staff/kb");
     }
   };
 

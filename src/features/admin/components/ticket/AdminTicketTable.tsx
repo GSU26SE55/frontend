@@ -11,20 +11,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  Maintenance: "Maintenance",
-  Repair: "Repair",
-  Inspection: "Inspection",
-  Emergency: "Emergency",
-  Replacement: "Replacement",
-  Upgrade: "Upgrade",
-  Other: "Other",
-  Charging: "Charging fault",
-  Overheat: "Overheat",
-  NoPower: "No power",
-  Performance: "Performance",
-};
+import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 
 interface Props {
   data?: PaginationResponse<TicketDTO>;
@@ -94,10 +81,10 @@ export default function AdminTicketTable({
       id: "category",
       header: "Category",
       sortKey: "category",
-      sortValue: (t) => CATEGORY_LABELS[t.category] ?? t.category,
+      sortValue: (t) => TICKET_CATEGORY_LABEL[t.category] ?? t.category,
       headClassName: "w-32",
       cellClassName: "text-sm text-muted-foreground",
-      cell: (t) => CATEGORY_LABELS[t.category] ?? t.category,
+      cell: (t) => TICKET_CATEGORY_LABEL[t.category] ?? t.category,
     },
     {
       id: "sla",
@@ -113,7 +100,7 @@ export default function AdminTicketTable({
       sortValue: (t) => new Date(t.createdAt).getTime(),
       headClassName: "w-36",
       cellClassName: "text-sm text-muted-foreground",
-      cell: (t) => format(new Date(t.createdAt), "MM/dd/yyyy HH:mm"),
+      cell: (t) => format(new Date(t.createdAt), "dd/MM/yyyy HH:mm"),
     },
   ];
 

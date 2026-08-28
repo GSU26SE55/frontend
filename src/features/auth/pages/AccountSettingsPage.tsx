@@ -84,12 +84,12 @@ function StatusBadge({
   labelNo: string;
 }) {
   return ok ? (
-    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
+    <span className="inline-flex items-center gap-1 text-3xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
       <span className="size-1.5 rounded-full bg-emerald-500" />
       {labelOk}
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
+    <span className="inline-flex items-center gap-1 text-3xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
       <span className="size-1.5 rounded-full bg-muted-foreground/40" />
       {labelNo}
     </span>
@@ -233,7 +233,7 @@ const AccountSettingsPage = () => {
                   />
                 )}
                 <Icon size={14} className="relative shrink-0" />
-                <span className="relative flex-1 text-[13px] truncate">
+                <span className="relative flex-1 text-2sm truncate">
                   {item.label}
                 </span>
                 {isActive && (
@@ -335,14 +335,14 @@ const AccountSettingsPage = () => {
                           </button>
                           {credSub === "password" ? (
                             <>
-                              <p className="text-[13px] font-semibold mb-4">
+                              <p className="text-2sm font-semibold mb-4">
                                 Change password
                               </p>
                               <ChangePasswordForm bare />
                             </>
                           ) : (
                             <>
-                              <p className="text-[13px] font-semibold mb-4">
+                              <p className="text-2sm font-semibold mb-4">
                                 Change email address
                               </p>
                               <ChangeEmailForm bare />

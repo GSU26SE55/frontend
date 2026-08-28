@@ -19,6 +19,7 @@ import {
   ScrollText,
   BookOpen,
   ShieldAlert,
+  Router,
   MessageSquare,
   BarChart3,
   Cpu,
@@ -69,6 +70,11 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/environmental-incidents",
         icon: ShieldAlert,
       },
+      {
+        label: SIDEBAR_LABELS.deviceAlerts,
+        path: "/admin/device-alerts",
+        icon: Router,
+      },
     ],
   },
   {
@@ -88,7 +94,15 @@ export const ADMIN_NAV: NavSection[] = [
         path: "/admin/battery-types",
         icon: BatteryCharging,
       },
-      { label: SIDEBAR_LABELS.sites, path: "/admin/sites", icon: MapPin },
+      {
+        label: SIDEBAR_LABELS.sites,
+        path: "/admin/sites",
+        icon: MapPin,
+        // Battery pages are reached THROUGH a site (Sites → site detail → battery
+        // detail) and have no nav entry of their own, so without this the sidebar shows
+        // nothing active on /admin/battery-assets/:id.
+        activePaths: ["/admin/battery-assets"],
+      },
       { label: "Devices", path: "/admin/iot-devices", icon: Cpu },
     ],
   },

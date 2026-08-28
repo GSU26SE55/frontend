@@ -90,7 +90,9 @@ export default function IoTFirmwareFormPage() {
       <Card className="p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
           <div className="space-y-1">
-            <Label htmlFor="file">Firmware file (.bin) *</Label>
+            <Label htmlFor="file">
+              Firmware file (.bin) <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="file"
               type="file"
@@ -111,7 +113,9 @@ export default function IoTFirmwareFormPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="version">Version (SemVer) *</Label>
+              <Label htmlFor="version">
+                Version (SemVer) <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="version"
                 {...register("version")}
@@ -125,7 +129,9 @@ export default function IoTFirmwareFormPage() {
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="hardwareRevision">Hardware revision *</Label>
+              <Label htmlFor="hardwareRevision">
+                Hardware revision <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="hardwareRevision"
                 {...register("hardwareRevision")}

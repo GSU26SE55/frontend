@@ -94,7 +94,7 @@ export default function SiteTable({
       header: "Install date",
       sortKey: "installDate",
       sortValue: (site) => new Date(site.installDate).getTime(),
-      cell: (site) => format(new Date(site.installDate), "MM/dd/yyyy"),
+      cell: (site) => format(new Date(site.installDate), "dd/MM/yyyy"),
     },
     {
       id: "actions",

@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,16 +20,25 @@ const ForgotPasswordForm = ({ onSuccess }: ForgotPasswordFormProps) => {
     register,
     handleSubmit,
     getValues,
+    setError,
     formState: { errors },
   } = useForm<ForgotPasswordStep1Values>({
     resolver: zodResolver(forgotPasswordStep1Schema),
   });
 
-  const { mutate, isPending } = useForgotPassword(() =>
+  const { mutateAsync: mutate, isPending } = useForgotPassword(() =>
     onSuccess(getValues("email")),
   );
 
-  const onSubmit = (data: ForgotPasswordStep1Values) => mutate(data);
+  const onSubmit = async (data: ForgotPasswordStep1Values) => {
+    try {
+      await mutate(data);
+    } catch (error) {
+      // EntityError (400 + listErrors) → the message appears under the input the BE
+      // rejected — a wrong or expired code belongs beside the OTP box, not in a toast.
+      handleErrorApi({ error, setError });
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -39,7 +49,7 @@ const ForgotPasswordForm = ({ onSuccess }: ForgotPasswordFormProps) => {
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
-          className="h-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+          className="h-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
           {...register("email")}
         />
         {errors.email && (

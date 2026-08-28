@@ -100,7 +100,7 @@ export default function ChatReactionBar({
                 disabled={pending}
                 onClick={() => toggle(type, mine)}
                 className={cn(
-                  "flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] tabular-nums transition-colors disabled:opacity-60",
+                  "flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-2xs tabular-nums transition-colors disabled:opacity-60",
                   mine
                     ? "border-primary/40 bg-primary/10 text-primary"
                     : "border-border bg-muted/50 text-muted-foreground hover:bg-muted",
@@ -108,7 +108,7 @@ export default function ChatReactionBar({
               />
             }
           >
-            <span className="text-[13px] leading-none">
+            <span className="text-2sm leading-none">
               {REACTION_META[type].emoji}
             </span>
             <span>{count}</span>

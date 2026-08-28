@@ -227,7 +227,7 @@ export default function ManagerDashboardPage() {
               ticketsLoading
                 ? "--"
                 : slaTotal === 0
-                  ? "no data"
+                  ? "0"
                   : slaTotal < 5
                     ? `${sla?.met}/${slaTotal}`
                     : `${sla?.compliancePercent}%`
@@ -423,11 +423,15 @@ export default function ManagerDashboardPage() {
               </div>
               {/* Priority sits under the ring instead of taking its own row of cards:
                   three numbers do not need three panels. */}
+              {/* Working DAYS, not hours: SlaCalculator derives the budget from the working-day
+                  count (1/3/7) times the 07:00–17:00 window, so the real deadlines are 10h/30h/70h
+                  — the old "4h/24h/72h" labels here were the GitHub-issue priority thresholds from
+                  the team's internal process, a different scale that had leaked into ticket UI. */}
               <ChartFooterStats
                 items={[
-                  { label: "P1 · 4h SLA", value: p1, color: "var(--p1)" },
-                  { label: "P2 · 24h SLA", value: p2, color: "var(--p2)" },
-                  { label: "P3 · 72h SLA", value: p3, color: "var(--p3)" },
+                  { label: "P1 · 1d SLA", value: p1, color: "var(--p1)" },
+                  { label: "P2 · 3d SLA", value: p2, color: "var(--p2)" },
+                  { label: "P3 · 7d SLA", value: p3, color: "var(--p3)" },
                 ]}
               />
             </>

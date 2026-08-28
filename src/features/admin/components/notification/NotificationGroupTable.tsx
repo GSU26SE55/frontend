@@ -65,7 +65,7 @@ export default function NotificationGroupTable({
                 <div className="flex items-center gap-1.5">
                   <span className="font-medium">{g.name}</span>
                   {g.isSystem && (
-                    <Badge variant="secondary" className="gap-1 text-[10px]">
+                    <Badge variant="secondary" className="gap-1 text-3xs">
                       <Lock className="size-2.5" />
                       system
                     </Badge>

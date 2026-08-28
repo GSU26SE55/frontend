@@ -1,19 +1,8 @@
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
-import {
-  TicketCategoryEnum,
-  TicketOriginEnum,
-} from "@/shared/enums/ticket/ticket.enum";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  [TicketCategoryEnum.Charging]: "Charging",
-  [TicketCategoryEnum.Overheat]: "Overheating",
-  [TicketCategoryEnum.NoPower]: "No power",
-  [TicketCategoryEnum.Performance]: "Performance",
-  [TicketCategoryEnum.Repair]: "Repair",
-  [TicketCategoryEnum.Other]: "Other",
-};
+import { TicketOriginEnum } from "@/shared/enums/ticket/ticket.enum";
+import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 
 const ORIGIN_LABELS: Record<string, string> = {
   [TicketOriginEnum.ManualByCustomer]: "Created by customer",
@@ -25,7 +14,7 @@ const ORIGIN_LABELS: Record<string, string> = {
 const EMPTY = "—";
 
 const fmtDate = (v?: string | null) =>
-  v ? format(new Date(v), "MM/dd/yyyy HH:mm", { locale: enUS }) : EMPTY;
+  v ? format(new Date(v), "dd/MM/yyyy HH:mm", { locale: enUS }) : EMPTY;
 
 export interface CompareRow {
   label: string;
@@ -81,8 +70,8 @@ export function buildCompareRows(
     },
     row(
       "Category",
-      CATEGORY_LABELS[source.category] ?? source.category,
-      CATEGORY_LABELS[target.category] ?? target.category,
+      TICKET_CATEGORY_LABEL[source.category] ?? source.category,
+      TICKET_CATEGORY_LABEL[target.category] ?? target.category,
     ),
     // Status already shows as a badge on both header cards — do not repeat the raw enum here.
     row(
