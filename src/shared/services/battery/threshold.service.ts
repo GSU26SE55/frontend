@@ -19,8 +19,10 @@ export const thresholdService = {
       ENDPOINTS.THRESHOLDS.LIST,
       { params },
     ),
+  // data is null when the battery type has no threshold configured yet — BE returns
+  // 200 for that (a successful query with an empty result), not 404.
   getByType: (batteryTypeId: string, params?: ThresholdByTypeParams) =>
-    axiosInstance.get<CommonResponse<ThresholdConfigDto>>(
+    axiosInstance.get<CommonResponse<ThresholdConfigDto | null>>(
       ENDPOINTS.THRESHOLDS.BY_TYPE(batteryTypeId),
       { params },
     ),

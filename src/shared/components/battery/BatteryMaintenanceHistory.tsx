@@ -6,15 +6,19 @@ import {
   TrendingDown,
   TrendingUp,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import { useBatteryMaintenanceHistory } from "@/shared/hooks/battery/useBatteryMaintenanceHistory";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { redirectByRole } from "@/shared/types/account/session.types";
 import type { MaintenanceCycleDTO } from "@/shared/types/battery/maintenance-cycle.types";
 
 const fmtDate = (value?: string | null) =>
-  value ? format(new Date(value), "MM/dd/yyyy", { locale: enUS }) : "—";
+  value ? format(new Date(value), "dd/MM/yyyy", { locale: enUS }) : "—";
 
 /** Kỳ tiếp theo — đọc thẳng từ asset, không suy ra từ danh sách kỳ. */
 function NextCycleBanner({ assetId }: { assetId: string }) {
@@ -29,7 +33,7 @@ function NextCycleBanner({ assetId }: { assetId: string }) {
   return (
     <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+        <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
           Last checkpoint
         </p>
         <p className="text-sm tabular-nums">
@@ -39,7 +43,7 @@ function NextCycleBanner({ assetId }: { assetId: string }) {
         </p>
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+        <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
           Next due
         </p>
         <p className="text-sm tabular-nums">
@@ -47,7 +51,7 @@ function NextCycleBanner({ assetId }: { assetId: string }) {
         </p>
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+        <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
           Cycle
         </p>
         <p className="text-sm tabular-nums">
@@ -79,7 +83,14 @@ function SohDelta({
   previous?: number | null;
 }) {
   if (current == null)
-    return <span className="text-sm text-muted-foreground">—</span>;
+    return (
+      <span className="flex items-baseline gap-2">
+        <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+          SoH
+        </span>
+        <span className="text-sm text-muted-foreground">—</span>
+      </span>
+    );
 
   // Làm tròn TRƯỚC khi so sánh: 81.13 - 81.13 có thể ra -0 trong dấu phẩy động, và
   // (-0).toFixed(1) in ra "-0.0" — một mức sụt giả không hề tồn tại.
@@ -91,42 +102,69 @@ function SohDelta({
 
   return (
     <div className="flex items-baseline gap-2">
+      {/* "92.4%" một mình không nói lên nó là gì — nhãn đứng ngay trước con số, cỡ nhỏ
+          và nhạt để vẫn đọc ra chỉ số trước, tên chỉ số sau. */}
+      <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+        SoH
+      </span>
       <span className="text-lg font-semibold tabular-nums">{current}%</span>
-      {changed && (
-        <span
-          className={`flex items-center gap-0.5 text-xs tabular-nums ${
-            delta < 0 ? "text-destructive" : "text-muted-foreground"
-          }`}
-        >
-          {delta < 0 ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
-          {delta > 0 ? "+" : ""}
-          {delta.toFixed(1)}
-        </span>
-      )}
+      {/* Khung giữ chỗ có bề rộng cố định: kỳ đầu tiên không có gì để so, và nếu ô này
+          biến mất thì con số phần trăm của hàng đó trôi sang phải, lệch cột với các hàng
+          khác trong cùng danh sách. */}
+      <span className="flex w-12 shrink-0 items-center justify-end gap-0.5 text-xs tabular-nums">
+        {changed && (
+          <span
+            className={`flex items-center gap-0.5 ${
+              delta < 0 ? "text-destructive" : "text-muted-foreground"
+            }`}
+          >
+            {delta < 0 ? <TrendingDown size={12} /> : <TrendingUp size={12} />}
+            {delta > 0 ? "+" : ""}
+            {delta.toFixed(1)}
+          </span>
+        )}
+      </span>
     </div>
   );
 }
 
+/**
+ * Một ô chỉ số trong hàng tổng kết kỳ.
+ *
+ * Con số tách khỏi đơn vị/chú thích để mắt bắt được giá trị trước: ở cỡ chữ đồng đều,
+ * "46.2°C avg · 68.5°C peak" đọc như một câu, không như một số đo. `value` giữ cỡ lớn
+ * và đậm, `sub` lùi về cỡ nhỏ và nhạt bên dưới.
+ */
 function Stat({
   label,
   value,
+  sub,
   tone,
 }: {
   label: string;
   value: string;
+  /** Dòng phụ dưới con số — đơn vị, giá trị đỉnh, phần diễn giải. */
+  sub?: string;
   /** "warn" tô đỏ — dùng cho chỉ số cần chú ý, không phải cho mọi số. */
   tone?: "warn";
 }) {
   return (
-    <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+    <div className="min-w-0 rounded-lg bg-muted/40 px-3 py-2.5">
+      <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
         {label}
       </p>
       <p
-        className={`text-sm tabular-nums ${tone === "warn" ? "text-destructive" : ""}`}
+        className={`mt-1 truncate text-base font-semibold tabular-nums ${
+          tone === "warn" ? "text-destructive" : ""
+        }`}
       >
         {value}
       </p>
+      {sub && (
+        <p className="truncate text-xs tabular-nums text-muted-foreground">
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
@@ -151,25 +189,20 @@ function CycleDetail({ cycle }: { cycle: MaintenanceCycleDTO }) {
     );
   }
 
-  const temp =
-    cycle.avgTemperatureCelsius != null
-      ? `${cycle.avgTemperatureCelsius}°C avg · ${cycle.maxTemperatureCelsius}°C peak`
-      : "—";
-  const voltage =
-    cycle.minVoltage != null
-      ? `${cycle.minVoltage}V – ${cycle.maxVoltage}V`
-      : "—";
-  const alerts =
-    cycle.alertCount == null
-      ? "—"
-      : cycle.criticalAlertCount
-        ? `${cycle.alertCount} (${cycle.criticalAlertCount} critical)`
-        : `${cycle.alertCount}`;
+  const hasTemp = cycle.avgTemperatureCelsius != null;
+  const hasVoltage = cycle.minVoltage != null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 border-t border-border px-4 py-3 sm:grid-cols-4">
-      <Stat label="Temperature" value={temp} />
-      <Stat label="Voltage range" value={voltage} />
+    <div className="grid grid-cols-2 gap-2 border-t border-border px-4 py-3 sm:grid-cols-4">
+      <Stat
+        label="Temperature"
+        value={hasTemp ? `${cycle.avgTemperatureCelsius}°C` : "—"}
+        sub={hasTemp ? `peak ${cycle.maxTemperatureCelsius}°C` : undefined}
+      />
+      <Stat
+        label="Voltage range"
+        value={hasVoltage ? `${cycle.minVoltage} – ${cycle.maxVoltage}V` : "—"}
+      />
       <Stat
         label="Charge cycles"
         value={
@@ -178,7 +211,12 @@ function CycleDetail({ cycle }: { cycle: MaintenanceCycleDTO }) {
       />
       <Stat
         label="Alerts"
-        value={alerts}
+        value={cycle.alertCount == null ? "—" : `${cycle.alertCount}`}
+        sub={
+          cycle.criticalAlertCount
+            ? `${cycle.criticalAlertCount} critical`
+            : undefined
+        }
         tone={cycle.criticalAlertCount ? "warn" : undefined}
       />
     </div>
@@ -193,6 +231,13 @@ function CycleRow({
   previousSoh?: number | null;
 }) {
   const [open, setOpen] = useState(false);
+  // Trang này dùng chung cho Admin/Manager/Staff, mỗi role có cây route riêng — lấy tiền tố
+  // từ chính role đang đăng nhập thay vì hardcode "/admin".
+  const role = useSessionStore((state) => state.user?.role);
+  const ticketHref =
+    cycle.ticketId && role
+      ? `${redirectByRole(role)}/tickets/${cycle.ticketId}`
+      : null;
 
   return (
     <div className="rounded-xl border border-border">
@@ -216,7 +261,23 @@ function CycleRow({
           <SohDelta current={cycle.sohPercentAtCycle} previous={previousSoh} />
         </div>
       </button>
-      {open && <CycleDetail cycle={cycle} />}
+      {open && (
+        <>
+          <CycleDetail cycle={cycle} />
+          {/* Chỉ hiện khi đã nối được ticket — kỳ chưa có ticket thì không dựng link chết. */}
+          {ticketHref && (
+            <div className="flex justify-end border-t border-border px-4 py-2.5">
+              <Link
+                to={ticketHref}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+              >
+                <ExternalLink size={13} />
+                Open maintenance ticket
+              </Link>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

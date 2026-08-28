@@ -80,7 +80,7 @@ export function BlogVersionHistory({
                     Version {v.versionNumber}
                   </span>
                   <span className="text-muted-foreground text-xs">
-                    {format(new Date(v.createdAt), "MM/dd/yyyy HH:mm")}
+                    {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
                   </span>
                 </div>
                 <p className="truncate text-sm">{v.title}</p>

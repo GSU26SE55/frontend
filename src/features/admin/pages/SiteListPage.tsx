@@ -32,7 +32,7 @@ import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { loadFailed, noData, notFound } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const DEFAULTS = {
@@ -156,7 +156,10 @@ export default function SiteListPage() {
         ) : isError ? (
           <ErrorState message={loadFailed("site")} onRetry={() => refetch()} />
         ) : items.length === 0 ? (
-          <EmptyState icon={MapPin} title={noData("site")} />
+          <EmptyState
+            icon={MapPin}
+            title={hasActiveFilter ? notFound("sites") : noData("sites")}
+          />
         ) : (
           <SiteTable
             data={items}

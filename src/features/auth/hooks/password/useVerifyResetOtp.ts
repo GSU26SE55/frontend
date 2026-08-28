@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { authService } from "@/features/auth/services/auth.service";
-import { handleErrorApi } from "@/shared/lib/errors";
 import type { VerifyResetOtpPayload } from "@/features/auth/types/auth.types";
 
 export const useVerifyResetOtp = (
@@ -18,5 +17,7 @@ export const useVerifyResetOtp = (
       }
       onSuccess?.(res.data.resetToken, res.data.expiresInSeconds);
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No onError: this backs a form, so the component catches the rejection and maps
+    // it with setError — a bad email or an expired code belongs under its input, not
+    // in a toast that does not say which field failed.
   });

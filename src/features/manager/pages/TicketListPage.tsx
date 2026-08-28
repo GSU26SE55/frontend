@@ -27,32 +27,10 @@ import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
-
-// GH-1176: updated for 8-status canonical lifecycle.
-const STATUS_LABELS: Record<string, string> = {
-  Open: "Awaiting assignment",
-  Pending: "Pending",
-  InProgress: "In progress",
-  Request: "Escalation request",
-  ReAssign: "Pending reassignment",
-  Completed: "Completed",
-  Closed: "Closed",
-  ClosedRejected: "Rejected",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  Maintenance: "Maintenance",
-  Repair: "Repair",
-  Inspection: "Inspection",
-  Emergency: "Emergency",
-  Replacement: "Replacement",
-  Upgrade: "Upgrade",
-  Other: "Other",
-  Charging: "Charging fault",
-  Overheat: "Overheat",
-  NoPower: "No power",
-  Performance: "Performance",
-};
+import {
+  TICKET_STATUS_LABEL,
+  TICKET_CATEGORY_LABEL,
+} from "@/shared/constants/ticketLabels";
 
 // Three SLA situations worth chasing. Deliberately not the raw SlaTimerStatusEnum: Running and
 // Met need no action, and "Warning" is not a stored status at all — it is a running timer that
@@ -128,7 +106,7 @@ export default function TicketListPage() {
           value={filters.status || null}
           items={Object.values(TicketStatusEnum).map((s) => ({
             value: s,
-            label: STATUS_LABELS[s] ?? s,
+            label: TICKET_STATUS_LABEL[s] ?? s,
           }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
@@ -141,7 +119,7 @@ export default function TicketListPage() {
             <SelectItem value={null}>All statuses</SelectItem>
             {Object.values(TicketStatusEnum).map((s) => (
               <SelectItem key={s} value={s}>
-                {STATUS_LABELS[s] ?? s}
+                {TICKET_STATUS_LABEL[s] ?? s}
               </SelectItem>
             ))}
           </SelectContent>
@@ -177,7 +155,7 @@ export default function TicketListPage() {
           value={filters.category || null}
           items={Object.values(TicketCategoryEnum).map((c) => ({
             value: c,
-            label: CATEGORY_LABELS[c] ?? c,
+            label: TICKET_CATEGORY_LABEL[c] ?? c,
           }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
@@ -190,7 +168,7 @@ export default function TicketListPage() {
             <SelectItem value={null}>All categories</SelectItem>
             {Object.values(TicketCategoryEnum).map((c) => (
               <SelectItem key={c} value={c}>
-                {CATEGORY_LABELS[c] ?? c}
+                {TICKET_CATEGORY_LABEL[c] ?? c}
               </SelectItem>
             ))}
           </SelectContent>

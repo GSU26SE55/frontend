@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import { isPast } from "date-fns";
 import {
   Dialog,
@@ -42,6 +43,7 @@ import {
   isEligiblePrimaryHandler,
   staffOptionLabel,
 } from "@/shared/utils/ticket/staffTier";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 interface Props {
   ticketId: string;
@@ -162,8 +164,11 @@ export default function AssignDialog({
       });
       form.reset();
       onClose();
-    } catch {
-      // Error handled by mutation onError (handleErrorApi)
+    } catch (error) {
+      // EntityError (400 + listErrors) → the message lands on the offending input;
+      // anything else → toast. The hook deliberately does not call handleErrorApi for
+      // form mutations, so swallowing the error here would leave the user with nothing.
+      handleErrorApi({ error, setError: form.setError });
     }
   };
 
@@ -334,8 +339,8 @@ export default function AssignDialog({
                   ) : isCustomerScheduleExpired && customerSchedule ? (
                     <p className="text-xs text-amber-700">
                       The Customer schedule expired at{" "}
-                      {customerSchedule.toLocaleString("vi-VN")}. Choose a new
-                      time and record the Customer contact below.
+                      {formatDateTime(customerSchedule)}. Choose a new time and
+                      record the Customer contact below.
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">

@@ -240,7 +240,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                         <span className="text-xs font-bold tracking-wide flex-1 min-w-0 truncate">
                           {moduleLabel(module)}
                         </span>
-                        <span className="text-[11px] font-semibold tabular-nums text-muted-foreground shrink-0">
+                        <span className="text-2xs font-semibold tabular-nums text-muted-foreground shrink-0">
                           {checkedInModule}/{perms.length}
                         </span>
                       </button>
@@ -275,7 +275,7 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                                 {/* End users read the description, not the code.
                                     The code is only a fallback for permissions the
                                     BE has not given a description yet. */}
-                                <div className="text-[13px] leading-snug">
+                                <div className="text-2sm leading-snug">
                                   {p.description || p.code}
                                 </div>
                               </div>

@@ -154,14 +154,14 @@ export default function BatteryAuditLogTable({
               {(pageNumber - 1) * pageSize + index + 1}
             </TableCell>
             <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
-              {format(new Date(log.occurredAt), "MM/dd/yyyy HH:mm:ss", {
+              {format(new Date(log.occurredAt), "dd/MM/yyyy HH:mm:ss", {
                 locale: enUS,
               })}
             </TableCell>
             <TableCell>
               <div className="flex flex-col">
                 <span className="font-medium text-sm">{log.actionCode}</span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-2xs text-muted-foreground">
                   {log.actionCategory}
                 </span>
               </div>
@@ -169,7 +169,7 @@ export default function BatteryAuditLogTable({
             <TableCell>
               <Badge
                 variant="outline"
-                className={`text-[10.5px] ${
+                className={`text-3xs ${
                   SEVERITY_STYLE[log.severity] ??
                   "bg-muted text-muted-foreground border-border"
                 }`}
@@ -187,7 +187,7 @@ export default function BatteryAuditLogTable({
             </TableCell>
             <TableCell className="text-center">
               <span
-                className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${
+                className={`inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.5 rounded-full ${
                   log.isSuccess ? toneClass("ok") : toneClass("p1")
                 }`}
               >

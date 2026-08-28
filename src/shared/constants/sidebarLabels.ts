@@ -14,7 +14,12 @@ export const SIDEBAR_LABELS = {
   knowledgeBase: "Guide",
   blog: "Blog",
   batteryAlerts: "Battery alerts",
-  envIncidents: "Environmental incidents",
+  // Reads as one family with the two lines around it. The route, types and BE endpoint
+  // still say "incident" — only the label changed, so nothing else had to move.
+  envIncidents: "Environmental alerts",
+  // IoT gateway connectivity + data integrity. Separate from battery alerts because the
+  // subject is the device, not any one battery — these rows carry no battery serial.
+  deviceAlerts: "Device alerts",
   settings: "Settings",
 } as const;
 

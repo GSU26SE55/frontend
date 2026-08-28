@@ -67,7 +67,7 @@ function Sign({ type }: { type: "eq" | "del" | "add" | "empty" }) {
   return (
     <td
       className={cn(
-        "select-none w-6 px-1 py-1 text-center align-top font-mono text-[13px] font-bold",
+        "select-none w-6 px-1 py-1 text-center align-top font-mono text-2sm font-bold",
         type === "eq" && "bg-muted/40 text-transparent",
       )}
       style={{
@@ -102,7 +102,7 @@ function CodeCell({
   return (
     <td
       className={cn(
-        "px-3 py-1 align-top whitespace-pre-wrap break-words text-[13px] font-mono leading-5",
+        "px-3 py-1 align-top whitespace-pre-wrap break-words text-2sm font-mono leading-5",
         type === "eq" && "bg-background",
       )}
       style={{ backgroundColor: rowBg(type) }}
@@ -222,7 +222,7 @@ function SectionBlock({
           <ChevronRight className="size-4 text-muted-foreground shrink-0" />
         )}
         <FileText className="size-4 text-muted-foreground shrink-0" />
-        <span className="text-[13px] font-semibold text-foreground flex-1">
+        <span className="text-2sm font-semibold text-foreground flex-1">
           {label}
         </span>
         {diff.isChanged ? (
@@ -255,7 +255,7 @@ function SectionBlock({
             </div>
           </div>
         ) : (
-          <span className="text-[11px] text-muted-foreground font-medium">
+          <span className="text-2xs text-muted-foreground font-medium">
             No changes
           </span>
         )}
@@ -270,7 +270,7 @@ function SectionBlock({
           ) : isHtml ? (
             <div className="grid gap-3 p-3 md:grid-cols-2">
               <section className="min-w-0">
-                <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-[11px] font-medium">
+                <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-2xs font-medium">
                   Old version
                 </header>
                 <div className="max-h-[50vh] overflow-auto rounded-b-md border border-t-0 p-3">
@@ -278,7 +278,7 @@ function SectionBlock({
                 </div>
               </section>
               <section className="min-w-0">
-                <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-[11px] font-medium">
+                <header className="bg-muted/50 text-muted-foreground rounded-t-md border px-3 py-1.5 text-2xs font-medium">
                   New version
                 </header>
                 <div className="max-h-[50vh] overflow-auto rounded-b-md border border-t-0 p-3">
@@ -321,7 +321,7 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
     <div className="space-y-3">
       {/* Toolbar — GitHub-style comparison header */}
       <div className="flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/30 px-4 py-2.5">
-        <div className="flex items-center gap-2 text-[13px]">
+        <div className="flex items-center gap-2 text-2sm">
           <span className="text-muted-foreground">Comparing</span>
           <code className="rounded border border-border bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.fromVersion}
@@ -330,7 +330,7 @@ export function KbDiffViewer({ diff }: { diff: KbArticleDiffDTO }) {
           <code className="rounded border border-border bg-background px-2 py-0.5 font-mono text-xs font-semibold">
             {diff.toVersion}
           </code>
-          <span className="ml-3 flex items-center gap-1.5 font-mono font-semibold text-[13px]">
+          <span className="ml-3 flex items-center gap-1.5 font-mono font-semibold text-2sm">
             <span style={{ color: "var(--diff-add)" }}>+{total.added}</span>
             <span style={{ color: "var(--diff-del)" }}>−{total.removed}</span>
           </span>

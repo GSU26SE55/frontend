@@ -95,7 +95,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Email <span className="text-red-500">*</span>
+                Email <span className="text-destructive">*</span>
               </Label>
               <Input
                 type="email"
@@ -108,7 +108,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Full name <span className="text-red-500">*</span>
+                Full name <span className="text-destructive">*</span>
               </Label>
               <Input placeholder="John Doe" {...register("fullName")} />
               {errors.fullName && (
@@ -119,7 +119,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>
-                Password <span className="text-red-500">*</span>
+                Password <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -148,7 +148,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>
-                Confirm password <span className="text-red-500">*</span>
+                Confirm password <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -206,7 +206,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Role <span className="text-red-500">*</span>
+                Role <span className="text-destructive">*</span>
               </Label>
               <Controller
                 name="roleId"

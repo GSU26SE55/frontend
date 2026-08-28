@@ -31,12 +31,14 @@ import { ACTIONS } from "@/shared/constants/actions";
 function Field({
   label,
   htmlFor,
+  required,
   hint,
   error,
   children,
 }: {
   label: string;
   htmlFor?: string;
+  required?: boolean;
   hint?: string;
   error?: string;
   children: React.ReactNode;
@@ -45,6 +47,7 @@ function Field({
     <div className="space-y-1.5">
       <Label htmlFor={htmlFor}>
         {label}
+        {required && <span className="text-destructive"> *</span>}
         {hint && (
           <span className="font-normal text-muted-foreground"> {hint}</span>
         )}
@@ -208,6 +211,7 @@ export function BlogEditorPanel({
           <Field
             label="Title"
             htmlFor="blog-title"
+            required
             error={errors.title?.message}
           >
             <Input
@@ -219,7 +223,7 @@ export function BlogEditorPanel({
             />
           </Field>
 
-          <Field label="Content" error={errors.contentHtml?.message}>
+          <Field label="Content" required error={errors.contentHtml?.message}>
             <Controller
               control={control}
               name="contentHtml"
@@ -236,7 +240,12 @@ export function BlogEditorPanel({
 
         {/* Right: everything that describes the post rather than being it */}
         <aside className="space-y-5 rounded-lg border border-border bg-card p-5 lg:sticky lg:top-20">
-          <Field label="Slug" htmlFor="blog-slug" error={errors.slug?.message}>
+          <Field
+            label="Slug"
+            htmlFor="blog-slug"
+            required
+            error={errors.slug?.message}
+          >
             <Input
               id="blog-slug"
               {...register("slug", { onChange: () => setSlugTouched(true) })}
@@ -249,6 +258,7 @@ export function BlogEditorPanel({
           <Field
             label="Summary"
             htmlFor="blog-summary"
+            required
             error={errors.summary?.message}
           >
             <Textarea

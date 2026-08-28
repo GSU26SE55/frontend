@@ -182,12 +182,12 @@ export default function EditStaffProfileDialog({
                   <div className="space-y-1.5">
                     <Label>
                       Max concurrent tickets{" "}
-                      <span className="text-red-500">*</span>
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       type="number"
                       min={1}
-                      max={20}
+                      max={50}
                       placeholder="3"
                       {...profileForm.register("maxConcurrentTickets", {
                         valueAsNumber: true,
@@ -213,7 +213,7 @@ export default function EditStaffProfileDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label>
-                      Skill tier <span className="text-red-500">*</span>
+                      Skill tier <span className="text-destructive">*</span>
                     </Label>
                     <select
                       {...profileForm.register("skillTier", {
@@ -306,7 +306,7 @@ export default function EditStaffProfileDialog({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>
-                      Skill code <span className="text-red-500">*</span>
+                      Skill code <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       {...skillForm.register("skillCode")}
@@ -320,7 +320,7 @@ export default function EditStaffProfileDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label>
-                      Level (1–5) <span className="text-red-500">*</span>
+                      Level (1–5) <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       type="number"

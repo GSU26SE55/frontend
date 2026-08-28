@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +55,7 @@ export function EditMaintenanceLogDialog({
   open,
   onClose,
 }: Props) {
-  const { mutate, isPending } = useUpdateMaintenanceLog(ticketId);
+  const { mutateAsync, isPending } = useUpdateMaintenanceLog(ticketId);
 
   const form = useForm<MaintenanceLogUpdateFormValues>({
     resolver: zodResolver(maintenanceLogUpdateSchema),
@@ -82,8 +83,16 @@ export function EditMaintenanceLogDialog({
     }
   }, [open, log, form]);
 
-  const onSubmit = (data: MaintenanceLogUpdateFormValues) => {
-    mutate({ logId: log.id, data }, { onSuccess: onClose });
+  const onSubmit = async (data: MaintenanceLogUpdateFormValues) => {
+    try {
+      await mutateAsync({ logId: log.id, data });
+      onClose();
+    } catch (error) {
+      // EntityError (400 + listErrors) → message lands on the field the BE rejected;
+      // anything else → toast. `mutate` swallowed the rejection, leaving the dialog open
+      // with nothing to explain why.
+      handleErrorApi({ error, setError: form.setError });
+    }
   };
 
   return (

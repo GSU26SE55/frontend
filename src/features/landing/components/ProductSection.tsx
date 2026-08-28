@@ -34,7 +34,7 @@ const PRODUCT_ITEMS = [
   },
 ] as const;
 
-const ProductSection = () => {
+const ProductSection = ({ onLogin }: { onLogin: () => void }) => {
   const sectionRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
@@ -148,13 +148,17 @@ const ProductSection = () => {
             </h2>
           </div>
           <div data-anim="cta-link">
-            <a
-              href="#login"
-              className="inline-flex items-center gap-1.5 font-medium text-slate-900 border-b border-slate-900 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong group"
+            {/* Was href="#login" — an anchor with no matching id anywhere on the page, so
+                clicking did nothing. The real destination is the /login route, which the
+                header and hero already reach through this same onLogin prop. */}
+            <button
+              type="button"
+              onClick={onLogin}
+              className="inline-flex items-center gap-1.5 font-medium text-slate-900 border-b border-slate-900 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong group cursor-pointer"
             >
               Get Personalized Quote
               <ArrowRight className="size-4 transition-transform duration-(--motion-enter) ease-strong group-hover:translate-x-1" />
-            </a>
+            </button>
           </div>
         </div>
 

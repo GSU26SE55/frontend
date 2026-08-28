@@ -91,7 +91,7 @@ export function KbVersionHistory({
                   <span className="text-sm font-mono">
                     v{v.majorVersion}.{v.minorVersion}
                   </span>
-                  <Badge variant="secondary" className="text-[10px]">
+                  <Badge variant="secondary" className="text-3xs">
                     {KbVersionStatusLabel[v.status as KbVersionStatusEnum] ??
                       v.status}
                   </Badge>
@@ -101,9 +101,9 @@ export function KbVersionHistory({
                     {v.changeDescription}
                   </p>
                 )}
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   {v.changedBy} ·{" "}
-                  {format(new Date(v.createdAt), "MM/dd/yyyy HH:mm")}
+                  {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
                 </p>
               </div>
               {onRollback && (

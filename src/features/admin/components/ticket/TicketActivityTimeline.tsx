@@ -96,7 +96,7 @@ export default function TicketActivityTimeline({
                   {meta.label}
                 </p>
                 <time className="text-xs text-muted-foreground whitespace-nowrap">
-                  {format(new Date(activity.createdAt), "MM/dd/yyyy HH:mm")}
+                  {format(new Date(activity.createdAt), "dd/MM/yyyy HH:mm")}
                 </time>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">

@@ -149,7 +149,7 @@ const LoginHistoryTable = () => {
                     {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="tabular-nums text-xs text-muted-foreground">
-                    {format(new Date(item.createdAt), "MM/dd/yyyy HH:mm")}
+                    {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm")}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -158,7 +158,7 @@ const LoginHistoryTable = () => {
                           ? "default"
                           : "destructive"
                       }
-                      className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                      className="text-2xs px-2 py-0.5 rounded-full font-medium"
                     >
                       {RESULT_LABEL[item.result] ?? item.resultName}
                     </Badge>

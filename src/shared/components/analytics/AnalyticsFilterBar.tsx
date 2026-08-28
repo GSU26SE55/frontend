@@ -40,7 +40,7 @@ export function AnalyticsFilterBar({
   return (
     <div className="flex flex-wrap items-end gap-3 bg-card rounded-lg border border-border p-3">
       <div className="flex flex-col gap-1">
-        <Label className="text-[11px] text-muted-foreground">Site</Label>
+        <Label className="text-2xs text-muted-foreground">Site</Label>
         <Select
           value={filter.siteId ?? ALL_SITES}
           onValueChange={(v) =>
@@ -69,7 +69,7 @@ export function AnalyticsFilterBar({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label className="text-[11px] text-muted-foreground">From date</Label>
+        <Label className="text-2xs text-muted-foreground">From date</Label>
         <DatePicker
           className="w-40"
           value={filter.from}
@@ -79,7 +79,7 @@ export function AnalyticsFilterBar({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label className="text-[11px] text-muted-foreground">To date</Label>
+        <Label className="text-2xs text-muted-foreground">To date</Label>
         <DatePicker
           className="w-40"
           value={filter.to}
@@ -89,7 +89,7 @@ export function AnalyticsFilterBar({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label className="text-[11px] text-muted-foreground">Granularity</Label>
+        <Label className="text-2xs text-muted-foreground">Granularity</Label>
         <Select
           value={filter.granularity ?? ReportGranularityEnum.Day}
           onValueChange={(v) =>
@@ -118,7 +118,7 @@ export function AnalyticsFilterBar({
       </div>
 
       {invalidRange && (
-        <p className="text-[11px] text-destructive w-full">
+        <p className="text-2xs text-destructive w-full">
           "From date" must be before "To date".
         </p>
       )}

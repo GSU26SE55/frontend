@@ -204,7 +204,7 @@ export default function StaffDashboardPage() {
               statsLoading
                 ? "--"
                 : slaTotal === 0
-                  ? "no data"
+                  ? "0"
                   : slaTotal < 5
                     ? `${sla?.met}/${slaTotal}`
                     : `${sla?.compliancePercent}%`

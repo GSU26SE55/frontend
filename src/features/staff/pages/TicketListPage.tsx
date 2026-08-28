@@ -16,14 +16,17 @@ import { TicketCard } from "@/features/staff/components/ticket/TicketCard";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { TICKET_STATUS_LABEL } from "@/shared/constants/ticketLabels";
 
-// GH-1176: updated for 8-status canonical lifecycle visible to Staff.
+// GH-1176: the 4 statuses of the 8-status lifecycle a Staff can filter on. Which statuses
+// appear is Staff-specific; the wording is not — it comes from the shared map so this filter
+// cannot drift from the badge rendered on the very rows it filters.
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: TicketStatusEnum.Pending, label: "Pending" },
-  { value: TicketStatusEnum.InProgress, label: "In progress" },
-  { value: TicketStatusEnum.Request, label: "Escalation request" },
-  { value: TicketStatusEnum.Completed, label: "Completed" },
-];
+  TicketStatusEnum.Pending,
+  TicketStatusEnum.InProgress,
+  TicketStatusEnum.Request,
+  TicketStatusEnum.Completed,
+].map((value) => ({ value, label: TICKET_STATUS_LABEL[value] }));
 
 const DEFAULTS = {
   status: "",

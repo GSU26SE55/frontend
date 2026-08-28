@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 export const editStaffProfileSchema = z.object({
-  employeeCode: z.string().optional(),
-  department: z.string().optional(),
+  employeeCode: z.string().max(50, "Must be at most 50 characters").optional(),
+  department: z.string().max(100, "Must be at most 100 characters").optional(),
   maxConcurrentTickets: z
     .number()
     .int("Must be an integer")
     .min(1, "Must be at least 1")
-    .max(20, "Must be at most 20"),
+    .max(50, "Must be at most 50"),
   isAvailable: z.boolean(),
   skillTier: z
     .number()
@@ -18,7 +18,10 @@ export const editStaffProfileSchema = z.object({
 });
 
 export const addSkillSchema = z.object({
-  skillCode: z.string().min(1, "Skill code is required"),
+  skillCode: z
+    .string()
+    .min(1, "Skill code is required")
+    .max(64, "Must be at most 64 characters"),
   skillLevel: z
     .number()
     .int("Must be an integer")

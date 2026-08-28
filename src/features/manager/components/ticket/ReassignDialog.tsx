@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
   Dialog,
   DialogContent,
@@ -94,8 +95,11 @@ export default function ReassignDialog({
       await mutateAsync({ ...values, scheduledStartAtUtc: isoDate });
       form.reset();
       onClose();
-    } catch {
-      // Error handled by mutation onError
+    } catch (error) {
+      // EntityError (400 + listErrors) → the message lands on the offending input;
+      // anything else → toast. The hook deliberately does not call handleErrorApi for
+      // form mutations, so swallowing the error here would leave the user with nothing.
+      handleErrorApi({ error, setError: form.setError });
     }
   };
 

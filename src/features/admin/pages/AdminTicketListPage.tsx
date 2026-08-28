@@ -31,6 +31,11 @@ import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import {
+  TICKET_STATUS_LABEL,
+  TICKET_PRIORITY_LABEL,
+  TICKET_CATEGORY_LABEL,
+} from "@/shared/constants/ticketLabels";
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
@@ -39,24 +44,6 @@ const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
 const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
 const SLA_OPTIONS = Object.values(SlaFilterEnum);
 
-const STATUS_LABELS: Record<TicketStatus, string> = {
-  [TicketStatusEnum.Open]: "Open",
-  [TicketStatusEnum.Pending]: "Pending",
-  [TicketStatusEnum.InProgress]: "In progress",
-  [TicketStatusEnum.Request]: "Escalation request",
-  [TicketStatusEnum.ReAssign]: "Pending reassignment",
-  [TicketStatusEnum.Completed]: "Completed",
-  [TicketStatusEnum.Closed]: "Closed",
-  [TicketStatusEnum.ClosedRejected]: "Closed - rejected",
-};
-
-const PRIORITY_LABELS: Record<TicketPriority, string> = {
-  [TicketPriorityEnum.P1Critical]: "P1 Critical",
-  [TicketPriorityEnum.P2High]: "P2 High",
-  [TicketPriorityEnum.P3Normal]: "P3 Normal",
-  [TicketPriorityEnum.Urgent]: "Urgent",
-};
-
 // Three SLA situations worth chasing. Deliberately not the raw SlaTimerStatusEnum: Running and
 // Met need no action, and "Warning" is not a stored status at all — it is a running timer that
 // has already fired its warning. Breached is the only one where the countdown reached 0.
@@ -64,15 +51,6 @@ const SLA_LABELS: Record<SlaFilterEnum, string> = {
   [SlaFilterEnum.Paused]: "SLA paused",
   [SlaFilterEnum.Warning]: "SLA warning",
   [SlaFilterEnum.Breached]: "SLA breached",
-};
-
-const CATEGORY_LABELS: Record<TicketCategory, string> = {
-  Charging: "Charging fault",
-  Overheat: "Overheat",
-  NoPower: "No power",
-  Performance: "Performance",
-  Other: "Other",
-  Repair: "Repair",
 };
 
 const DEFAULTS = {
@@ -141,7 +119,7 @@ export default function AdminTicketListPage() {
           value={filters.status || null}
           items={STATUS_OPTIONS.map((s) => ({
             value: s,
-            label: STATUS_LABELS[s],
+            label: TICKET_STATUS_LABEL[s],
           }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
@@ -154,7 +132,7 @@ export default function AdminTicketListPage() {
             <SelectItem value={null}>All statuses</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
-                {STATUS_LABELS[s]}
+                {TICKET_STATUS_LABEL[s]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -164,7 +142,7 @@ export default function AdminTicketListPage() {
           value={filters.priority || null}
           items={PRIORITY_OPTIONS.map((p) => ({
             value: p,
-            label: PRIORITY_LABELS[p],
+            label: TICKET_PRIORITY_LABEL[p],
           }))}
           onValueChange={(v: string | null) =>
             setFilter("priority", v || undefined)
@@ -177,7 +155,7 @@ export default function AdminTicketListPage() {
             <SelectItem value={null}>All priorities</SelectItem>
             {PRIORITY_OPTIONS.map((p) => (
               <SelectItem key={p} value={p}>
-                {PRIORITY_LABELS[p]}
+                {TICKET_PRIORITY_LABEL[p]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -187,7 +165,7 @@ export default function AdminTicketListPage() {
           value={filters.category || null}
           items={CATEGORY_OPTIONS.map((c) => ({
             value: c,
-            label: CATEGORY_LABELS[c],
+            label: TICKET_CATEGORY_LABEL[c],
           }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
@@ -200,7 +178,7 @@ export default function AdminTicketListPage() {
             <SelectItem value={null}>All categories</SelectItem>
             {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c} value={c}>
-                {CATEGORY_LABELS[c]}
+                {TICKET_CATEGORY_LABEL[c]}
               </SelectItem>
             ))}
           </SelectContent>

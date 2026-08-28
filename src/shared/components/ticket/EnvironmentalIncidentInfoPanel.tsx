@@ -156,7 +156,7 @@ export default function EnvironmentalIncidentInfoPanel({
         />
         <InfoRow
           label="Detected at"
-          value={format(new Date(incident.detectedAt), "HH:mm MM/dd/yyyy", {
+          value={format(new Date(incident.detectedAt), "HH:mm dd/MM/yyyy", {
             locale: enUS,
           })}
         />
@@ -169,7 +169,7 @@ export default function EnvironmentalIncidentInfoPanel({
 
       {incident.resolutionNote ? (
         <div className="mt-4">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
             Resolution note
           </p>
           <p className="text-xs">{incident.resolutionNote}</p>
@@ -191,13 +191,13 @@ function Header({ incident }: { incident?: EnvironmentalIncidentDto }) {
   return (
     <div className="flex items-center gap-2 mb-2">
       <AlertTriangle className="size-4 text-muted-foreground" />
-      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+      <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
         Environmental incident
       </p>
       {incident ? (
         <Badge
           variant={statusVariant(incident.status)}
-          className="ml-auto text-[11px] font-normal"
+          className="ml-auto text-2xs font-normal"
         >
           {STATUS_LABEL[incident.status] ?? incident.status}
         </Badge>
@@ -249,7 +249,7 @@ function SensorEvidence({
 
   return (
     <div className="mt-5">
-      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+      <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
         Sensor evidence
       </p>
 
@@ -269,7 +269,7 @@ function SensorEvidence({
               </span>
             </span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1.5">
+          <p className="text-2xs text-muted-foreground mt-1.5">
             Measured {reading.measured} against a limit of {reading.limit} —
             over threshold.
           </p>
@@ -281,7 +281,7 @@ function SensorEvidence({
         </p>
       )}
 
-      <p className="text-[11px] text-muted-foreground mt-1.5">
+      <p className="text-2xs text-muted-foreground mt-1.5">
         Site-level incident — the fault is in the cabinet, not in one battery,
         so it is cross-checked against the site's ambient readings below rather
         than a per-battery log.

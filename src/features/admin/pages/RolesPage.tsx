@@ -66,6 +66,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { loadFailed, notFound } from "@/shared/constants/emptyStates";
+import { formatDate } from "@/shared/utils/datetime";
 
 const STATUS_VARIANT: Record<
   number,
@@ -212,9 +213,9 @@ export default function RolesPage() {
             ))}
           </div>
         ) : isError ? (
-          <ErrorState message={loadFailed("role")} onRetry={() => refetch()} />
+          <ErrorState message={loadFailed("roles")} onRetry={() => refetch()} />
         ) : filteredRoles.length === 0 ? (
-          <EmptyState icon={Shield} title={notFound("role")} />
+          <EmptyState icon={Shield} title={notFound("roles")} />
         ) : (
           <Table>
             <TableHeader>
@@ -271,7 +272,7 @@ export default function RolesPage() {
                       <Badge variant={s.variant}>{s.label}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {new Date(role.createdAt).toLocaleDateString("vi-VN")}
+                      {formatDate(role.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

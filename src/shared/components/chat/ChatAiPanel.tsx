@@ -124,7 +124,7 @@ export default function ChatAiPanel({ ticketId, onSuggestions }: Props) {
           <DialogHeader>
             <DialogTitle>Thread summary (AI)</DialogTitle>
           </DialogHeader>
-          <p className="text-sm whitespace-pre-wrap break-words">{summary}</p>
+          <p className="text-base whitespace-pre-wrap break-words">{summary}</p>
         </DialogContent>
       </Dialog>
     </div>

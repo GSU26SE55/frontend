@@ -101,7 +101,7 @@ function StatTile({
         </span>
         {unit && <span className="text-xs font-medium opacity-60">{unit}</span>}
       </div>
-      <span className="text-[11px] opacity-60">{label}</span>
+      <span className="text-2xs opacity-60">{label}</span>
     </div>
   );
 }
@@ -181,7 +181,7 @@ export function LiveTelemetryCard({
   return (
     <div className="px-4 py-4 flex-1">
       <div className="flex items-center gap-2 mb-4">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
           Realtime
         </p>
         {dotCls && (
@@ -243,30 +243,26 @@ export function LiveTelemetryCard({
               pack is idle (neither charging nor discharging). */}
           <div className="rounded-lg bg-muted/50 px-3 py-2 mt-1 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Peak {stats?.window === "today" ? "today" : "1 hour"}
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-3xs text-muted-foreground">
                 {stats
                   ? `${stats.chargeSampleCount + stats.dischargeSampleCount} samples`
                   : "no data yet"}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10.5px] text-muted-foreground">
-                Charge
-              </span>
-              <span className="text-[10.5px] font-medium font-mono-num">
+              <span className="text-3xs text-muted-foreground">Charge</span>
+              <span className="text-3xs font-medium font-mono-num">
                 {stats
                   ? `${fmtNum(stats.minChargeCurrent, 2)} – ${fmtNum(stats.maxChargeCurrent, 2)} A`
                   : "—"}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10.5px] text-muted-foreground">
-                Discharge
-              </span>
-              <span className="text-[10.5px] font-medium font-mono-num">
+              <span className="text-3xs text-muted-foreground">Discharge</span>
+              <span className="text-3xs font-medium font-mono-num">
                 {stats
                   ? `${fmtNum(stats.minDischargeCurrent, 2)} – ${fmtNum(stats.maxDischargeCurrent, 2)} A`
                   : "—"}

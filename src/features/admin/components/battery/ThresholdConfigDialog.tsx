@@ -28,7 +28,10 @@ import {
 import { useUpsertThreshold } from "@/features/admin/hooks/battery/useThresholdsMutation";
 import { thresholdService } from "@/features/admin/services/battery/threshold.service";
 import type { BatteryTypeDto } from "@/features/admin/types/battery/battery-type.types";
-import type { UpsertThresholdPayload } from "@/features/admin/types/battery/threshold.types";
+import type {
+  ThresholdConfigDto,
+  UpsertThresholdPayload,
+} from "@/features/admin/types/battery/threshold.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface ThresholdConfigDialogProps {
@@ -41,6 +44,21 @@ const reqNum = { valueAsNumber: true } as const;
 const optNum = {
   setValueAs: (v: unknown) => (v === "" || v == null ? undefined : Number(v)),
 } as const;
+
+/**
+ * Which field a cross-field message is really about, for the half that does not carry it.
+ * `upsertThresholdSchema` reports each min/max and warning/critical breach on the second
+ * field only — repeating the same sentence under both halves read as two problems — so
+ * the first half looks here to know it should turn red too.
+ */
+const PAIRED_FIELDS: Partial<
+  Record<keyof UpsertThresholdFormValues, keyof UpsertThresholdFormValues>
+> = {
+  voltageMin: "voltageMax",
+  temperatureMin: "temperatureMax",
+  socWarningThreshold: "socCriticalThreshold",
+  sohWarningThreshold: "sohCriticalThreshold",
+};
 
 export default function ThresholdConfigDialog({
   open,
@@ -85,7 +103,7 @@ export default function ThresholdConfigDialog({
   // Uses setValue per field instead of reset(): reset() runs the zod resolver's validation
   // synchronously, and a required-number field going to `undefined` fails that validation —
   // observed via getValues() logging that reset() silently kept the previous values in that case.
-  const applyConfig = (source: typeof config) => {
+  const applyConfig = (source: ThresholdConfigDto | null | undefined) => {
     for (const key of THRESHOLD_FIELDS) {
       setValue(key, source?.[key], {
         shouldValidate: false,
@@ -145,7 +163,7 @@ export default function ThresholdConfigDialog({
     try {
       const source = await thresholdService
         .getByType(sourceTypeId)
-        .then((r) => r.data.data);
+        .then((r) => r.data.data ?? null);
       applyConfig(source);
     } catch (error) {
       handleErrorApi({ error });
@@ -179,20 +197,33 @@ export default function ThresholdConfigDialog({
     name: keyof UpsertThresholdFormValues,
     label: string,
     optional = false,
-  ) => (
-    <div className="space-y-1">
-      <Label htmlFor={name}>{optional ? label : `${label} *`}</Label>
-      <Input
-        id={name}
-        type="number"
-        step="any"
-        {...register(name, optional ? optNum : reqNum)}
-      />
-      {errors[name] && (
-        <p className="text-sm text-destructive">{errors[name]?.message}</p>
-      )}
-    </div>
-  );
+  ) => {
+    // Most fields have no partner; only the first half of a min/max pair does.
+    const partner = PAIRED_FIELDS[name];
+    return (
+      <div className="space-y-1">
+        <Label htmlFor={name}>
+          {label}
+          {!optional && <span className="text-destructive"> *</span>}
+        </Label>
+        <Input
+          id={name}
+          type="number"
+          step="any"
+          // Also red when the PARTNER of a min/max pair is the one carrying the message,
+          // so a reader who typed the minimum too high does not face a clean minimum box
+          // and a complaint pointing at the maximum.
+          aria-invalid={
+            !!errors[name] || (partner && !!errors[partner]) || undefined
+          }
+          {...register(name, optional ? optNum : reqNum)}
+        />
+        {errors[name] && (
+          <p className="text-sm text-destructive">{errors[name]?.message}</p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

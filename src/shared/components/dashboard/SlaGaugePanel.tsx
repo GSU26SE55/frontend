@@ -35,6 +35,12 @@ export function SlaGaugePanel({
   className?: string;
 }) {
   const percent = sla?.compliancePercent ?? 0;
+  // met + breached = the timers that actually finished. The BE returns compliancePercent = 100
+  // when that denominator is 0 (nothing has closed yet), so an untouched system rendered a full
+  // green 100% ring — "no record yet" drawn as a perfect score. Zero finished timers means there
+  // is nothing to be compliant with: show no data, the way the "SLA met" stat tile already does.
+  const settled = sla ? sla.met + sla.breached : 0;
+  const hasRecord = settled > 0;
 
   return (
     <DashboardPanel title={title} desc={desc} className={className}>
@@ -42,10 +48,14 @@ export function SlaGaugePanel({
         <Skeleton className="h-full w-full" />
       ) : (
         <DashboardGauge
-          percent={percent}
-          valueText={sla ? `${percent}%` : "—"}
+          percent={hasRecord ? percent : 0}
+          valueText={hasRecord ? `${percent}%` : "0"}
           caption="met"
-          color={slaComplianceColor(sla?.compliancePercent)}
+          // No record → the fn's own null branch gives the muted grey, so the ring reads
+          // as "nothing measured" rather than a green pass.
+          color={slaComplianceColor(
+            hasRecord ? sla?.compliancePercent : undefined,
+          )}
           footer={
             <GaugeFooter
               cells={[

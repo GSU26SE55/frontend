@@ -39,15 +39,15 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
   };
 
   const inputCls =
-    "h-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400";
+    "h-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400";
 
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Create account
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Fill in your details to start using the system
         </p>
       </div>
@@ -57,7 +57,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
         <div className="space-y-1.5">
           <Label
             htmlFor="fullName"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground"
           >
             Full name
           </Label>
@@ -75,7 +75,10 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
 
         {/* Email */}
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+          <Label
+            htmlFor="email"
+            className="text-sm font-medium text-foreground"
+          >
             Email
           </Label>
           <Input
@@ -95,7 +98,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
         <div className="space-y-1.5">
           <Label
             htmlFor="phoneNumber"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground"
           >
             Phone number
           </Label>
@@ -116,7 +119,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
         <div className="space-y-1.5">
           <Label
             htmlFor="password"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground"
           >
             Password
           </Label>
@@ -133,7 +136,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide" : "Show"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {showPassword ? (
                 <EyeOff className="size-4" />
@@ -151,7 +154,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
         <div className="space-y-1.5">
           <Label
             htmlFor="confirmPassword"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-foreground"
           >
             Confirm password
           </Label>
@@ -168,7 +171,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
               type="button"
               onClick={() => setShowConfirm((v) => !v)}
               aria-label={showConfirm ? "Hide" : "Show"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {showConfirm ? (
                 <EyeOff className="size-4" />
@@ -199,7 +202,7 @@ const RegisterForm = ({ onLogin, onOtpSent }: RegisterFormProps = {}) => {
           )}
         </Button>
 
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           {onLogin ? (
             <button

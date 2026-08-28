@@ -15,8 +15,34 @@ import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { notificationTypeLabel } from "@/shared/constants/notificationLabels";
 import NotificationDetailPane from "@/shared/components/notification/NotificationDetailPane";
 import { cn } from "@/lib/utils";
+import { motion, useReducedMotion } from "framer-motion";
+import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
 
 const PAGE_SIZE = 20;
+
+// The inbox has no <Table>, so it misses the staggered row entrance every other list
+// screen gets from `TableBody` — the two panels used to snap in fully formed while the
+// rest of the app arrived. These mirror the table's motion: panels rise once on mount,
+// then rows fade in one after the other.
+const PANEL_VARIANTS = {
+  hidden: { opacity: 0, y: DIST.sm },
+  shown: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: DUR.enter, ease: EASE_OUT },
+  },
+};
+
+// Matches `TableRow` in components/ui/table.tsx: a fade with no travel. The list scrolls
+// inside `overflow-y-auto`, so translating rows would make the container paint a
+// scrollbar on mount and drop it once they landed.
+const ROW_VARIANTS = {
+  hidden: { opacity: 0 },
+  shown: {
+    opacity: 1,
+    transition: { duration: DUR.layout, ease: EASE_OUT },
+  },
+};
 
 export default function NotificationInboxPage() {
   // The selected notification id lives in the URL (?id=) rather than only in state: an F5
@@ -25,7 +51,7 @@ export default function NotificationInboxPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get("id");
   const [unreadOnly, setUnreadOnly] = useState(false);
-
+  const reduced = useReducedMotion();
   const params = useMemo(
     () => ({
       pageSize: PAGE_SIZE,
@@ -116,7 +142,7 @@ export default function NotificationInboxPage() {
           <button
             onClick={() => markAllRead.mutate()}
             disabled={markAllRead.isPending}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-[12px] hover:bg-muted transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-xs hover:bg-muted transition-colors disabled:opacity-50"
           >
             <CheckCheck size={13} />
             Mark all as read
@@ -126,7 +152,12 @@ export default function NotificationInboxPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 h-[calc(100vh-11rem)]">
         {/* Left: infinite-scrolling list */}
-        <div className="flex flex-col border border-border rounded-xl bg-card overflow-hidden">
+        <motion.div
+          initial={reduced ? false : "hidden"}
+          animate="shown"
+          variants={PANEL_VARIANTS}
+          className="flex flex-col border border-border rounded-xl bg-card overflow-hidden"
+        >
           <div className="flex gap-1 p-2 border-b border-border">
             {(
               [
@@ -138,7 +169,7 @@ export default function NotificationInboxPage() {
                 key={label}
                 onClick={() => setUnreadOnly(value)}
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-[12px] transition-colors",
+                  "px-2.5 py-1 rounded-md text-xs transition-colors",
                   unreadOnly === value
                     ? "bg-muted font-medium text-foreground"
                     : "text-muted-foreground hover:bg-muted/60",
@@ -167,12 +198,22 @@ export default function NotificationInboxPage() {
                 </p>
               </div>
             ) : (
-              <>
+              <motion.div
+                initial={reduced ? false : "hidden"}
+                animate="shown"
+                variants={{
+                  // 25ms apart, matching TableBody. Only the container carries
+                  // initial/animate: a child that declares its own `initial` opts out of
+                  // variant propagation and would sit at "hidden" (invisible) forever.
+                  shown: { transition: { staggerChildren: 0.025 } },
+                }}
+              >
                 {items.map((n) => {
                   const unread = isUnreadStatus(n.status);
                   return (
-                    <button
+                    <motion.button
                       key={n.id}
+                      variants={ROW_VARIANTS}
                       ref={n.id === selectedId ? selectedRowRef : undefined}
                       onClick={() => handleSelect(n.id, unread)}
                       aria-current={n.id === selectedId}
@@ -201,7 +242,7 @@ export default function NotificationInboxPage() {
                           <div className="flex items-center justify-between gap-2">
                             <span
                               className={cn(
-                                "text-[10px] truncate",
+                                "text-3xs truncate",
                                 unread
                                   ? "text-primary font-medium"
                                   : "text-muted-foreground",
@@ -209,7 +250,7 @@ export default function NotificationInboxPage() {
                             >
                               {notificationTypeLabel(n.type)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">
+                            <span className="text-3xs text-muted-foreground shrink-0">
                               {formatDistanceToNow(new Date(n.createdAt), {
                                 addSuffix: true,
                                 locale: enUS,
@@ -218,7 +259,7 @@ export default function NotificationInboxPage() {
                           </div>
                           <div
                             className={cn(
-                              "text-[12.5px] truncate text-foreground",
+                              "text-xs truncate text-foreground",
                               unread ? "font-semibold" : "font-medium",
                             )}
                           >
@@ -226,7 +267,7 @@ export default function NotificationInboxPage() {
                           </div>
                           <div
                             className={cn(
-                              "text-[11.5px] line-clamp-1",
+                              "text-2xs line-clamp-1",
                               unread
                                 ? "text-foreground/80"
                                 : "text-muted-foreground",
@@ -236,7 +277,7 @@ export default function NotificationInboxPage() {
                           </div>
                         </div>
                       </div>
-                    </button>
+                    </motion.button>
                   );
                 })}
 
@@ -244,30 +285,37 @@ export default function NotificationInboxPage() {
                 {isFetchingNextPage && (
                   <div
                     role="status"
-                    className="px-4 py-3 text-center text-[11px] text-muted-foreground"
+                    className="px-4 py-3 text-center text-2xs text-muted-foreground"
                   >
                     Loading more…
                   </div>
                 )}
                 {!hasNextPage && items.length > 0 && (
-                  <div className="px-4 py-3 text-center text-[11px] text-muted-foreground">
+                  <div className="px-4 py-3 text-center text-2xs text-muted-foreground">
                     All notifications shown
                   </div>
                 )}
-              </>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Right: detail */}
-        <div className="border border-border rounded-xl bg-card overflow-hidden">
+        <motion.div
+          initial={reduced ? false : "hidden"}
+          animate="shown"
+          variants={PANEL_VARIANTS}
+          // A beat behind the list, so the eye lands on the list first.
+          transition={{ delay: 0.06 }}
+          className="border border-border rounded-xl bg-card overflow-hidden"
+        >
           <NotificationDetailPane
             notification={selected}
             // Only show a loading state when there's NOTHING to render yet; if a version
             // from the list already exists, render it while the background request runs.
             isLoading={detailLoading && !selected}
           />
-        </div>
+        </motion.div>
       </div>
     </PageContainer>
   );

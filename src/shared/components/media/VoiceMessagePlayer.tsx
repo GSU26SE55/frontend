@@ -146,7 +146,7 @@ export default function VoiceMessagePlayer({
 
         <span
           className={cn(
-            "min-w-[38px] text-right text-[11px] font-semibold tabular-nums",
+            "min-w-[38px] text-right text-2xs font-semibold tabular-nums",
             timeText,
           )}
         >
@@ -155,7 +155,7 @@ export default function VoiceMessagePlayer({
       </div>
 
       {isError && (
-        <p className={cn("text-[11px]", timeText)}>Failed to load audio</p>
+        <p className={cn("text-2xs", timeText)}>Failed to load audio</p>
       )}
 
       {!!transcript?.trim() && (
@@ -164,7 +164,7 @@ export default function VoiceMessagePlayer({
             type="button"
             onClick={() => setShowTranscript((v) => !v)}
             className={cn(
-              "flex items-center gap-0.5 text-[11px] font-medium underline underline-offset-2 hover:opacity-80",
+              "flex items-center gap-0.5 text-2xs font-medium underline underline-offset-2 hover:opacity-80",
               timeText,
             )}
           >

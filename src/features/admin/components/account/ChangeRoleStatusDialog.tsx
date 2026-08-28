@@ -82,7 +82,7 @@ export default function ChangeRoleStatusDialog({ open, onClose, role }: Props) {
           </p>
           <div className="space-y-1.5">
             <Label>
-              Status <span className="text-red-500">*</span>
+              Status <span className="text-destructive">*</span>
             </Label>
             <Controller
               name="status"

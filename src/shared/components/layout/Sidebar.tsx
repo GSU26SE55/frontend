@@ -39,6 +39,14 @@ export interface NavItem {
    * Inbox badge keep working unchanged.
    */
   badge?: string | number | NavBadge[];
+  /**
+   * Extra route subtrees this item owns but does not link to. Some detail pages live
+   * under a path the nav never names — battery detail is /{role}/battery-assets/:id but
+   * is reached through Sites, so nothing in the nav is a prefix of it and the whole
+   * sidebar would show no active item there. Listing the subtree here keeps the item
+   * that owns the page highlighted. Matched exactly like `path` (self or child route).
+   */
+  activePaths?: string[];
 }
 
 export interface NavSection {
@@ -64,19 +72,24 @@ interface SidebarProps {
 }
 
 // Active when pathname matches item.path exactly or is a child route of it (e.g. the
-// "Tickets" item /manager/tickets stays active on the detail page /manager/tickets/:id).
+// "Tickets" item /manager/tickets stays active on the detail page /manager/tickets/:id),
+// or matches one of the extra subtrees the item claims via `activePaths`.
 // When another sidebar item has a MORE SPECIFIC path that also matches (e.g. "Queue"
 // /manager/tickets/queue is a child of "Tickets"), only the more specific item is
 // active — avoids two items lighting up at once when on /manager/tickets/queue.
 function isPathActive(
-  path: string,
+  item: NavItem,
   pathname: string,
   allPaths: string[],
 ): boolean {
   const matches = (p: string) => pathname === p || pathname.startsWith(`${p}/`);
-  if (!matches(path)) return false;
+  // The path the match came through — an `activePaths` subtree is checked for a more
+  // specific sibling against ITSELF, not against item.path, which it sits outside of.
+  const matched = [item.path, ...(item.activePaths ?? [])].find(matches);
+  if (matched === undefined) return false;
   return !allPaths.some(
-    (other) => other !== path && other.startsWith(`${path}/`) && matches(other),
+    (other) =>
+      other !== matched && other.startsWith(`${matched}/`) && matches(other),
   );
 }
 
@@ -154,7 +167,7 @@ function Section({
             onClick={handleToggle}
             className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-md mb-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors group"
           >
-            <span className="text-[10.5px] font-semibold uppercase tracking-widest">
+            <span className="text-3xs font-semibold uppercase tracking-widest">
               {section.title}
             </span>
             <ChevronDown
@@ -164,7 +177,7 @@ function Section({
             />
           </button>
         ) : (
-          <p className="px-2.5 py-1.5 mb-0.5 text-[10.5px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <p className="px-2.5 py-1.5 mb-0.5 text-3xs font-semibold uppercase tracking-widest text-muted-foreground">
             {section.title}
           </p>
         ))}
@@ -196,7 +209,7 @@ function Section({
           )}
         >
           {section.items.map((item) => {
-            const active = isPathActive(item.path, pathname, allPaths);
+            const active = isPathActive(item, pathname, allPaths);
             const link = (
               <Link
                 to={item.path}
@@ -205,7 +218,7 @@ function Section({
                   "group flex items-center rounded-lg transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong relative",
                   sidebarCollapsed
                     ? "size-10 justify-center p-0"
-                    : "w-full gap-2.5 px-2.5 py-1.75 text-[13px]",
+                    : "w-full gap-2.5 px-2.5 py-1.75 text-2sm",
                   active
                     ? "text-sidebar-accent-foreground font-medium"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
@@ -260,7 +273,7 @@ function Section({
                             key={i}
                             title={b.title}
                             className={cn(
-                              "text-[10px] font-bold px-1.5 py-[1px] rounded-full leading-none",
+                              "text-3xs font-bold px-1.5 py-[1px] rounded-full leading-none",
                               b.tone === "muted" &&
                                 "bg-muted text-muted-foreground",
                               b.tone === "warning" &&
@@ -324,7 +337,11 @@ export default function Sidebar({
   scopeKey,
 }: SidebarProps) {
   const { pathname } = useLocation();
-  const allPaths = sections.flatMap((s) => s.items.map((i) => i.path));
+  // Every path any item can be active on — both linked paths and claimed subtrees — so
+  // the more-specific-sibling check above sees the claimed ones too.
+  const allPaths = sections.flatMap((s) =>
+    s.items.flatMap((i) => [i.path, ...(i.activePaths ?? [])]),
+  );
   // `layoutId` is global — scope it per nav so two sidebars could never fight over one
   // highlight.
   const navId = useId();
@@ -400,7 +417,7 @@ export default function Sidebar({
             />
 
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] text-muted-foreground tracking-wide uppercase">
+              <div className="text-3xs text-muted-foreground tracking-wide uppercase">
                 {appName}
               </div>
             </div>

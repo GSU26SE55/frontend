@@ -156,7 +156,7 @@ function CommentBubbleContent({
           {isPending && (
             <p
               className={cn(
-                "mt-1.5 flex items-center gap-1 text-[11px]",
+                "mt-1.5 flex items-center gap-1 text-2xs",
                 statusHint,
               )}
             >
@@ -167,7 +167,7 @@ function CommentBubbleContent({
           {isFailed && (
             <div
               className={cn(
-                "mt-1.5 flex items-center gap-2 text-[11px]",
+                "mt-1.5 flex items-center gap-2 text-2xs",
                 statusHint,
               )}
             >
@@ -201,7 +201,7 @@ function CommentBubbleContent({
         {isOwn && canShowActions && actionsMenu}
         <div
           className={cn(
-            "rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words",
+            "rounded-2xl px-3 py-2 text-base whitespace-pre-wrap break-words",
             isOwn
               ? "rounded-br-sm bg-primary text-primary-foreground"
               : "rounded-bl-sm bg-muted text-foreground",
@@ -653,7 +653,7 @@ export function TicketCommentThread({
       </div>
 
       {/* Contextual note for the current tab */}
-      <p className="text-[11px] text-muted-foreground px-1 pt-2 pb-1 shrink-0">
+      <p className="text-2xs text-muted-foreground px-1 pt-2 pb-1 shrink-0">
         {tab === "public"
           ? "Public comments — visible to the customer."
           : "Internal comments — visible only to staff working the ticket."}
@@ -699,7 +699,7 @@ export function TicketCommentThread({
                     className="flex items-center gap-2 py-1"
                   >
                     <div className="h-px flex-1 bg-destructive" />
-                    <span className="rounded-full bg-destructive px-2.5 py-0.5 text-[11px] font-bold text-white">
+                    <span className="rounded-full bg-destructive px-2.5 py-0.5 text-2xs font-bold text-white">
                       {unreadCount > 1
                         ? `${unreadCount} unread messages`
                         : "Unread message"}
@@ -714,7 +714,7 @@ export function TicketCommentThread({
                 {c.id === newAfterId && c.id !== unreadAnchorId && (
                   <div className="flex items-center gap-2 py-0.5">
                     <div className="h-px flex-1 bg-primary/35" />
-                    <span className="text-[10px] font-semibold text-primary/90">
+                    <span className="text-3xs font-semibold text-primary/90">
                       New messages
                     </span>
                     <div className="h-px flex-1 bg-primary/35" />
@@ -736,14 +736,14 @@ export function TicketCommentThread({
                   >
                     <div className="flex items-center gap-1.5 px-1 mb-0.5">
                       {!isOwn && (
-                        <span className="text-[11px] font-medium text-muted-foreground">
+                        <span className="text-2xs font-medium text-muted-foreground">
                           {name}
                         </span>
                       )}
                       {c.isInternal && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] h-4 px-1.5 gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-300"
+                          className="text-3xs h-4 px-1.5 gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-300"
                         >
                           <Lock className="size-2.5" />
                           Internal
@@ -814,7 +814,7 @@ export function TicketCommentThread({
                       <button
                         type="button"
                         onClick={() => toggleShowOriginal(c.id)}
-                        className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1 mt-0.5"
+                        className="text-3xs text-muted-foreground underline underline-offset-2 hover:text-foreground px-1 mt-0.5"
                       >
                         {showingOriginal
                           ? `View translation (${LANGUAGE_LABEL[translation.lang] ?? translation.lang})`
@@ -824,10 +824,10 @@ export function TicketCommentThread({
                     <Tooltip>
                       <TooltipTrigger
                         render={
-                          <span className="text-[10px] text-muted-foreground px-1 mt-0.5 cursor-default" />
+                          <span className="text-3xs text-muted-foreground px-1 mt-0.5 cursor-default" />
                         }
                       >
-                        {format(new Date(c.createdAt), "MM/dd/yyyy HH:mm", {
+                        {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
                           locale: enUS,
                         })}
                         {!!c.editCount && c.editCount > 0 && " · edited"}
@@ -835,7 +835,7 @@ export function TicketCommentThread({
                       <TooltipContent>
                         {format(
                           new Date(c.createdAt),
-                          "EEEE, MM/dd/yyyy HH:mm:ss",
+                          "EEEE, dd/MM/yyyy HH:mm:ss",
                           { locale: enUS },
                         )}
                       </TooltipContent>
@@ -858,7 +858,7 @@ export function TicketCommentThread({
           {aiSuggestions.length > 0 && (
             <div className="flex items-end gap-2 justify-end">
               <div className="flex max-w-[85%] flex-col items-end gap-1.5">
-                <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground px-1">
+                <span className="flex items-center gap-1 text-2xs font-medium text-muted-foreground px-1">
                   <Sparkles className="size-3" />
                   Reply suggestions (AI) — click to insert into the input
                 </span>
@@ -867,7 +867,7 @@ export function TicketCommentThread({
                     key={i}
                     type="button"
                     onClick={() => pickSuggestion(s)}
-                    className="w-full rounded-2xl rounded-br-md border border-primary/30 bg-primary/5 px-3 py-2 text-right text-sm whitespace-pre-wrap break-words transition-colors hover:bg-primary/10 hover:border-primary/50"
+                    className="w-full rounded-2xl rounded-br-md border border-primary/30 bg-primary/5 px-3 py-2 text-right text-base whitespace-pre-wrap break-words transition-colors hover:bg-primary/10 hover:border-primary/50"
                   >
                     {s}
                   </button>
@@ -875,7 +875,7 @@ export function TicketCommentThread({
                 <button
                   type="button"
                   onClick={() => setAiSuggestions([])}
-                  className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground px-1"
+                  className="text-2xs text-muted-foreground underline underline-offset-2 hover:text-foreground px-1"
                 >
                   Dismiss suggestions
                 </button>
@@ -1015,11 +1015,11 @@ function PendingBubble({
   return (
     <div className="flex items-end gap-2 justify-end">
       <div className="flex max-w-[75%] flex-col items-end">
-        <div className="rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm whitespace-pre-wrap wrap-break-word text-primary-foreground">
+        <div className="rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-base whitespace-pre-wrap wrap-break-word text-primary-foreground">
           {renderTextWithMentions(message.payload.body, true)}
         </div>
         {attachCount > 0 && (
-          <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
+          <span className="text-3xs text-muted-foreground px-1 mt-0.5">
             {attachCount} attachments
           </span>
         )}
@@ -1028,14 +1028,14 @@ function PendingBubble({
             {/* Has failReason = the BE rejected it due to content (e.g. duplicate message) →
                 resending would fail too, so state the reason instead of prompting a pointless retry. */}
             {message.failReason ? (
-              <span className="text-[10px] text-destructive">
+              <span className="text-3xs text-destructive">
                 ⚠ {message.failReason}
               </span>
             ) : (
               <button
                 type="button"
                 onClick={() => onRetry?.(message.tempId)}
-                className="text-[10px] text-destructive hover:underline"
+                className="text-3xs text-destructive hover:underline"
               >
                 ⚠ Send failed · Tap to retry
               </button>
@@ -1043,13 +1043,13 @@ function PendingBubble({
             <button
               type="button"
               onClick={() => onDiscard?.(message.tempId)}
-              className="text-[10px] text-muted-foreground hover:underline"
+              className="text-3xs text-muted-foreground hover:underline"
             >
               Discard
             </button>
           </span>
         ) : (
-          <span className="text-[10px] text-muted-foreground px-1 mt-0.5">
+          <span className="text-3xs text-muted-foreground px-1 mt-0.5">
             Sending…
           </span>
         )}

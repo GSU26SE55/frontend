@@ -15,7 +15,7 @@ export type ReactivateRequestFormValues = z.infer<
 
 // #AUTH-50 step 2 — submit email + 6-digit OTP
 export const reactivateVerifySchema = z.object({
-  email: emailField.max(256),
+  email: emailField,
   otp: otpField("OTP must be 6 digits"),
 });
 export type ReactivateVerifyFormValues = z.infer<typeof reactivateVerifySchema>;

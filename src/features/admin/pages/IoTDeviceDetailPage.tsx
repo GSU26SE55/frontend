@@ -30,6 +30,7 @@ import { useIotCalibrations } from "@/shared/hooks/iot/useIotCalibrations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -233,13 +234,13 @@ export default function IoTDeviceDetailPage() {
             />
             <Field
               label="Key issued at"
-              value={new Date(device.apiKeyIssuedAt).toLocaleString("vi-VN")}
+              value={formatDateTime(device.apiKeyIssuedAt)}
             />
             <Field
               label="Key revoked"
               value={
                 device.apiKeyRevokedAt
-                  ? new Date(device.apiKeyRevokedAt).toLocaleString("vi-VN")
+                  ? formatDateTime(device.apiKeyRevokedAt)
                   : "Still valid"
               }
             />
@@ -250,9 +251,7 @@ export default function IoTDeviceDetailPage() {
             <Field
               label="Last heartbeat"
               value={
-                device.lastSeenAt
-                  ? new Date(device.lastSeenAt).toLocaleString("vi-VN")
-                  : "Never"
+                device.lastSeenAt ? formatDateTime(device.lastSeenAt) : "Never"
               }
             />
             <Field
@@ -261,7 +260,7 @@ export default function IoTDeviceDetailPage() {
             />
             <Field
               label="Created at"
-              value={new Date(device.createdAt).toLocaleString("vi-VN")}
+              value={formatDateTime(device.createdAt)}
             />
             <div className="col-span-2 md:col-span-3">
               <Field label="Notes" value={device.notes} />

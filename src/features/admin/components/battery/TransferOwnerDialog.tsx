@@ -71,7 +71,9 @@ export default function TransferOwnerDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="newCustomerId">New customer *</Label>
+            <Label htmlFor="newCustomerId">
+              New customer <span className="text-destructive">*</span>
+            </Label>
             <select
               id="newCustomerId"
               {...register("newCustomerId")}

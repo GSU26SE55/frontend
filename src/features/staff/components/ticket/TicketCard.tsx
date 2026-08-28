@@ -130,7 +130,7 @@ export function TicketCard({ ticket }: Props) {
                 <p className="text-xs text-muted-foreground">
                   Due{" "}
                   <span className="font-medium tabular-nums text-foreground">
-                    {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
+                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                   </span>
                 </p>
               </div>

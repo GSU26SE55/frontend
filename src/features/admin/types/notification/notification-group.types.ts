@@ -24,6 +24,8 @@ export const GROUP_DESCRIPTION_MAX = 512;
 export const BROADCAST_TITLE_MAX = 200;
 /** Matches `body varchar(2000)`. */
 export const BROADCAST_BODY_MAX = 2000;
+/** Matches `NotificationBroadcastCommand.MaxTargets` — groups + recipients per send. */
+export const BROADCAST_TARGETS_MAX = 200;
 
 export interface NotificationGroupDto {
   id: string;

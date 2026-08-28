@@ -89,7 +89,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label>
-              Full name <span className="text-red-500">*</span>
+              Full name <span className="text-destructive">*</span>
             </Label>
             <Input placeholder="Nguyen Van A" {...register("fullName")} />
             {errors.fullName && (

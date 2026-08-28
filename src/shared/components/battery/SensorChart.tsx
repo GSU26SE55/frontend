@@ -176,7 +176,7 @@ function MetricMiniChart({
   metric: (typeof METRICS)[number];
   chartData: ReturnType<typeof buildChartData>;
   dotProps: { r: number; strokeWidth: number } | false;
-  threshold?: ThresholdConfigDto;
+  threshold?: ThresholdConfigDto | null;
 }) {
   const values = numericValues(chartData, metric.key);
   const isCurrent = metric.key === "avgCurrent";
@@ -242,7 +242,7 @@ function MetricMiniChart({
           </span>
         )}
         {dangerZone && (
-          <span className="text-[10px] text-muted-foreground/70 shrink-0">
+          <span className="text-3xs text-muted-foreground/70 shrink-0">
             Safe: {dangerZone.min}–{dangerZone.max}
             {metric.unit}
           </span>
@@ -354,7 +354,7 @@ function ChartBody({
   isLoading: boolean;
   chartData: ReturnType<typeof buildChartData>;
   containerClassName: string;
-  threshold?: ThresholdConfigDto;
+  threshold?: ThresholdConfigDto | null;
 }) {
   if (isLoading) {
     return (
@@ -381,7 +381,7 @@ function ChartBody({
   return (
     <div className={`${containerClassName} flex flex-col`}>
       {isSparse && (
-        <p className="text-[11px] text-muted-foreground text-center pb-1 shrink-0">
+        <p className="text-2xs text-muted-foreground text-center pb-1 shrink-0">
           Collecting data — showing the {chartData.length} most recent readings
         </p>
       )}

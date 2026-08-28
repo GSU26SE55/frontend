@@ -71,7 +71,7 @@ function SlaRing({
         />
       </svg>
       <span
-        className={`absolute text-[11px] font-semibold tabular-nums ${toneClassName}`}
+        className={`absolute text-2xs font-semibold tabular-nums ${toneClassName}`}
       >
         {label}
       </span>

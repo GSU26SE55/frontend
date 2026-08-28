@@ -26,13 +26,44 @@ export const ambientThresholdSchema = z
       "comboHumidityThreshold",
     ] as const;
 
+    // Range per metric. Neither side checked these before — the BE
+    // (UpsertAmbientThresholdConfigCommand) validates only SiteId and the
+    // critical/warning ordering — so "500" in a field the form labels "(%)" was
+    // written straight to AmbientThresholdConfig, leaving a threshold that can never
+    // trip. Humidity is a percentage; the temperature range is wide enough for any
+    // real site while still rejecting a typo of the wrong magnitude.
+    const RANGES: Record<
+      (typeof numericFields)[number],
+      { min: number; max: number; unit: string }
+    > = {
+      highAmbientTempWarning: { min: -50, max: 150, unit: "°C" },
+      highAmbientTempCritical: { min: -50, max: 150, unit: "°C" },
+      highHumidityWarning: { min: 0, max: 100, unit: "%" },
+      highHumidityCritical: { min: 0, max: 100, unit: "%" },
+      comboTempThreshold: { min: -50, max: 150, unit: "°C" },
+      comboHumidityThreshold: { min: 0, max: 100, unit: "%" },
+    };
+
     for (const field of numericFields) {
       const raw = data[field];
-      if (raw && raw.trim() !== "" && Number.isNaN(Number(raw))) {
+      if (!raw || raw.trim() === "") continue;
+
+      const value = Number(raw);
+      if (Number.isNaN(value)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: [field],
           message: "Invalid number",
+        });
+        continue;
+      }
+
+      const { min, max, unit } = RANGES[field];
+      if (value < min || value > max) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `Must be between ${min} and ${max} ${unit}`,
         });
       }
     }

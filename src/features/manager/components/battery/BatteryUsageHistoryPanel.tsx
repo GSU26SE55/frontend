@@ -1,6 +1,7 @@
 import { Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useManagerReadingHistory } from "@/features/manager/hooks/battery/useReadingHistory";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const num = (v: number | null | undefined, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
@@ -20,7 +21,7 @@ export default function BatteryUsageHistoryPanel({ batteryAssetId }: Props) {
     <div>
       <div className="flex items-center gap-2 mb-2">
         <Activity className="size-4 text-muted-foreground" />
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
           Recent usage history
         </p>
       </div>
@@ -56,7 +57,7 @@ export default function BatteryUsageHistoryPanel({ batteryAssetId }: Props) {
               {readings.map((r) => (
                 <tr key={r.time}>
                   <td className="px-2 py-1.5 tabular-nums text-muted-foreground">
-                    {new Date(r.time).toLocaleString("vi-VN")}
+                    {formatDateTime(r.time)}
                   </td>
                   <td className="px-2 py-1.5 text-right tabular-nums">
                     {num(r.voltage)}

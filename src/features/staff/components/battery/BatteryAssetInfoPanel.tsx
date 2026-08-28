@@ -91,10 +91,10 @@ export default function BatteryAssetInfoPanel({
     <div>
       <div className="flex items-center gap-2 mb-2">
         <BatteryFull className="size-4 text-muted-foreground" />
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
           Battery device information
         </p>
-        <Badge variant="outline" className="ml-auto text-[11px] font-normal">
+        <Badge variant="outline" className="ml-auto text-2xs font-normal">
           {STATUS_LABEL[asset.status] ?? asset.status}
         </Badge>
       </div>
@@ -119,7 +119,7 @@ export default function BatteryAssetInfoPanel({
         <InfoRow label="Customer" value={asset.customerName} />
         <InfoRow
           label="Install date"
-          value={format(new Date(asset.installDate), "MM/dd/yyyy", {
+          value={format(new Date(asset.installDate), "dd/MM/yyyy", {
             locale: enUS,
           })}
         />
@@ -129,7 +129,7 @@ export default function BatteryAssetInfoPanel({
             <>
               {WARRANTY_LABEL[asset.warrantyStatus] ?? asset.warrantyStatus}
               {asset.warrantyEndDate &&
-                ` (until ${format(new Date(asset.warrantyEndDate), "MM/dd/yyyy")})`}
+                ` (until ${format(new Date(asset.warrantyEndDate), "dd/MM/yyyy")})`}
             </>
           }
         />

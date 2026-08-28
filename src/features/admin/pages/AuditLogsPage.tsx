@@ -48,6 +48,7 @@ import { KEY } from "@/shared/utils/queryKeys";
 import { toneClass } from "@/shared/theme/statusColors";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { noData, notFound } from "@/shared/constants/emptyStates";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -184,10 +185,10 @@ const CATEGORY_LABEL: Record<ActionCategory, string> = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const fmt = (dt: string) =>
-  format(new Date(dt), "MM/dd/yyyy HH:mm:ss", { locale: enUS });
+  format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: enUS });
 
 const fmtFull = (dt: string) =>
-  format(new Date(dt), "EEEE, MM/dd/yyyy 'at' HH:mm:ss", { locale: enUS });
+  format(new Date(dt), "EEEE, dd/MM/yyyy 'at' HH:mm:ss", { locale: enUS });
 
 function parseMetadata(raw?: string): Record<string, string> | null {
   if (!raw) return null;
@@ -230,7 +231,7 @@ function DetailRow({
         <Icon size={14} className="text-muted-foreground" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
+        <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
           {label}
         </p>
         <div className={`text-sm break-all ${mono ? "font-mono text-xs" : ""}`}>
@@ -269,12 +270,12 @@ function AuditLogDetail({
               <DrawerTitle className="text-base font-semibold leading-tight">
                 {ACTION_LABELS[log.actionName] ?? log.actionName}
               </DrawerTitle>
-              <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
+              <p className="text-2xs text-muted-foreground font-mono mt-0.5">
                 {log.actionName} · #{log.action}
               </p>
             </div>
             <span
-              className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+              className={`shrink-0 inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full ${
                 log.isSuccess ? toneClass("ok") : toneClass("p1")
               }`}
             >
@@ -377,7 +378,7 @@ function AuditLogDetail({
                       <p className="text-sm">
                         {ua.browser} · {ua.os}
                       </p>
-                      <p className="text-[11px] text-muted-foreground font-mono break-all leading-relaxed">
+                      <p className="text-2xs text-muted-foreground font-mono break-all leading-relaxed">
                         {ua.full}
                       </p>
                     </div>
@@ -409,7 +410,7 @@ function AuditLogDetail({
                 <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border">
                   {Object.entries(metadata).map(([k, v]) => (
                     <div key={k} className="flex items-start gap-3 px-3 py-2.5">
-                      <span className="text-[11px] font-mono text-muted-foreground shrink-0 pt-0.5 w-28 truncate">
+                      <span className="text-2xs font-mono text-muted-foreground shrink-0 pt-0.5 w-28 truncate">
                         {k}
                       </span>
                       <span className="text-xs font-mono break-all">
@@ -522,7 +523,9 @@ export default function AuditLogsPage() {
         ) : filtered.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ScrollText size={32} className="opacity-30" />
-            <span className="text-sm">No audit logs yet.</span>
+            <span className="text-sm">
+              {hasActiveFilter ? notFound("audit logs") : noData("audit logs")}
+            </span>
           </div>
         ) : (
           <Table className="table-fixed">
@@ -557,7 +560,7 @@ export default function AuditLogsPage() {
                       <div className="flex items-center gap-2">
                         <Badge
                           variant="outline"
-                          className={`text-[10.5px] font-medium px-1.5 py-0 border shrink-0 ${CATEGORY_STYLE[category]}`}
+                          className={`text-3xs font-medium px-1.5 py-0 border shrink-0 ${CATEGORY_STYLE[category]}`}
                         >
                           {CATEGORY_LABEL[category]}
                         </Badge>
@@ -568,7 +571,7 @@ export default function AuditLogsPage() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        className={`inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.5 rounded-full ${
                           log.isSuccess ? toneClass("ok") : toneClass("p1")
                         }`}
                       >

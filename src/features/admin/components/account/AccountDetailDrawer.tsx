@@ -93,7 +93,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
   };
 
   const fmt = (dt: string) =>
-    format(new Date(dt), "MM/dd/yyyy HH:mm", { locale: enUS });
+    format(new Date(dt), "dd/MM/yyyy HH:mm", { locale: enUS });
 
   return (
     <>
@@ -115,7 +115,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                     {account.fullName}
                   </span>
                 </DrawerTitle>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
+                <p className="text-2xs text-muted-foreground mt-0.5">
                   {account.email}
                 </p>
               </div>
@@ -130,7 +130,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
               <TabsTrigger value="sessions">
                 Sessions{" "}
                 {activeSessions.length > 0 && (
-                  <span className="ml-1.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full px-1.5 py-0.5">
+                  <span className="ml-1.5 text-3xs font-bold bg-emerald-100 text-emerald-700 rounded-full px-1.5 py-0.5">
                     {activeSessions.length}
                   </span>
                 )}
@@ -187,12 +187,12 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
                           {st.label}
                         </span>
                         {s.isCurrent && (
-                          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">
+                          <span className="text-3xs bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">
                             Current session
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-muted-foreground space-y-0.5">
+                      <div className="text-2xs text-muted-foreground space-y-0.5">
                         {s.ipAddress && <div>IP: {s.ipAddress}</div>}
                         {s.userAgent && (
                           <div className="truncate max-w-xs">
@@ -234,7 +234,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
               ) : (
                 <table className="w-full text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-border text-left text-[10.5px] text-muted-foreground uppercase tracking-wider">
+                    <tr className="border-b border-border text-left text-3xs text-muted-foreground uppercase tracking-wider">
                       <th className="py-2 pr-3">#</th>
                       <th className="py-2 pr-3">Result</th>
                       <th className="py-2 pr-3">IP</th>
