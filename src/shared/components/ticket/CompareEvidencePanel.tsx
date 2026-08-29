@@ -5,7 +5,6 @@ import {
   useReadingEvidence,
   toWarningRows,
 } from "@/shared/hooks/battery/useReadingEvidence";
-import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 
 interface Props {
   assetId?: string | null;
@@ -24,34 +23,10 @@ interface Props {
 export default function CompareEvidencePanel({
   assetId,
   detectedAt,
-  batteryTypeId,
   title,
 }: Props) {
   const { data, isLoading } = useReadingEvidence(assetId, detectedAt);
-  const { data: threshold } = useThresholdByType(
-    batteryTypeId ?? "",
-    undefined,
-    !!batteryTypeId,
-  );
-  const rows = toWarningRows(
-    data?.items ?? [],
-    threshold
-      ? {
-          temperatureMax: threshold.temperatureMax,
-          temperatureMin: threshold.temperatureMin,
-          // Voltage bounds were missing here. They are required by EvidenceThresholds, so the file
-          // did not type-check — and because the whole project shares one tsc pass, that single
-          // omission blocked `npm run build` for everyone. The behavioural half is worse: without
-          // these two, toWarningRows never produced an Overvoltage/Undervoltage reason, so the
-          // evidence panel silently hid exactly the readings an operator opens it to look for.
-          voltageMax: threshold.voltageMax,
-          voltageMin: threshold.voltageMin,
-          socWarningThreshold: threshold.socWarningThreshold,
-          currentMaxCharge: threshold.currentMaxCharge,
-          currentMaxDischarge: threshold.currentMaxDischarge,
-        }
-      : undefined,
-  );
+  const rows = toWarningRows(data?.items ?? []);
 
   // Hook has enabled: !!assetId && !!detectedAt → never fetches without a timestamp.
   const disabled = !assetId || !detectedAt;

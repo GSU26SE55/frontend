@@ -1,3 +1,5 @@
+import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+
 // SLA thresholds UNIFIED across the app (fixes the inconsistency between staff ≤25% vs
 // manager <1h vs bar >50/>20). Uses remainingPercent (relative) so it's correct for every priority.
 //
@@ -104,4 +106,24 @@ export function formatSlaRemainingCompact(ms: number): string {
   const mins = Math.floor(totalSecs / 60);
   if (mins > 0) return `${mins}m`;
   return `${totalSecs}s`;
+}
+
+/**
+ * Is the SLA clock still counting?
+ *
+ * Only `Running` and `Paused` are live states — every other status is terminal:
+ * `Met`/`Breached` are outcomes already decided, and `Stopped` means the clock was
+ * cancelled (StopSlaAsync on reject/merge/declare-incident, or the ticket turning
+ * Urgent). The BE agrees: `SlaCalculator.GetRemainingPercent` returns 0 for anything
+ * that is not Running/Paused, so a terminal timer has no meaningful % left.
+ *
+ * The detail sidebars use this to decide whether to draw the "Remaining %" row and the
+ * progress bar at all. Without it a rejected ticket rendered a full green bar counting
+ * down to a deadline nobody is held to any more.
+ */
+export function isSlaClockLive(status?: SlaTimerStatusEnum | null): boolean {
+  return (
+    status === SlaTimerStatusEnum.Running ||
+    status === SlaTimerStatusEnum.Paused
+  );
 }

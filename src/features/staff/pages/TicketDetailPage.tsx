@@ -18,7 +18,7 @@ import {
   TicketStatusEnum,
   MaintenanceLogTypeEnum,
 } from "@/shared/types/ticket/ticket.types";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
 import {
   isTicketChatLocked,
   TICKET_CHAT_LOCKED_NOTICE,
@@ -691,22 +691,30 @@ export default function TicketDetailPage() {
                         {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Remaining
-                      </span>
-                      <span className="text-xs font-medium">
-                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                        style={{
-                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                        }}
-                      />
-                    </div>
+                    {/* Live-clock only — see the Manager panel. A Stopped/Met/Breached timer
+                        has remainingPercent = 0 from the BE, so the bar would either read as
+                        an empty red near-breach or, on stale data, a full green clock on a
+                        ticket nobody is working any more. */}
+                    {isSlaClockLive(ticket.slaTimer.status) && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Remaining
+                          </span>
+                          <span className="text-xs font-medium">
+                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                            style={{
+                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">

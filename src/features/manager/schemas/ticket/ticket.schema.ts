@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredSelect } from "@/shared/schemas/common.schema";
 import {
   ImpactScopeEnum,
   UrgencyLevelEnum,
@@ -91,8 +92,14 @@ export type EscalateApproveFormValues = z.infer<typeof escalateApproveSchema>;
 // Send Impact + Urgency and NOT priority: User Guide §3.9 states that priority is derived
 // from the Impact × Urgency matrix rather than entered directly. The BE recalculates it.
 export const reprioritizeSchema = z.object({
-  impact: z.nativeEnum(ImpactScopeEnum),
-  urgency: z.nativeEnum(UrgencyLevelEnum),
+  impact: requiredSelect(
+    z.nativeEnum(ImpactScopeEnum),
+    "Select an impact scope",
+  ),
+  urgency: requiredSelect(
+    z.nativeEnum(UrgencyLevelEnum),
+    "Select an urgency level",
+  ),
   reason: z
     .string()
     .trim()

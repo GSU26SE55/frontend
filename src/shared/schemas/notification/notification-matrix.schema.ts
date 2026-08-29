@@ -12,10 +12,14 @@ export const notificationCategoryRowSchema = z.object({
   inAppEnabled: z.boolean(),
 });
 
-// The form keeps all 6 rows (the BE always returns 6); only the changed rows
-// are filtered out at submit time.
+// The form keeps one row per category; only the changed rows are filtered out at
+// submit time. Counted from the enum rather than hard-coded: the BE only requires at
+// least one row, so a category added server-side used to make the whole form
+// unsubmittable instead of simply showing the extra row.
+const CATEGORY_COUNT = Object.keys(NotificationCategoryEnum).length;
+
 export const notificationMatrixSchema = z.object({
-  items: z.array(notificationCategoryRowSchema).length(6),
+  items: z.array(notificationCategoryRowSchema).length(CATEGORY_COUNT),
 });
 
 export type NotificationCategoryRowValues = z.infer<

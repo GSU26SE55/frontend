@@ -4,6 +4,7 @@
 // the BE still returns 403 for anything that slips through. If the BE rule changes,
 // this file has to change with it.
 
+import { displayNameOrShortId } from "@/shared/utils/displayId";
 import {
   StaffSkillTierEnum,
   StaffSkillTierLabel,
@@ -59,13 +60,17 @@ const PRIORITY_SHORT_LABEL: Record<TicketPriorityEnum, string> = {
 /**
  * One-line label for a staff option in the dropdown: "Name · Tier 2".
  * Drops the tier part when the BE has not returned `skillTier` — never shows "Tier undefined".
+ *
+ * A missing name shows a shortened id rather than the full GUID: the Manager has to be able
+ * to tell two unnamed options apart, but a 36-character id in a dropdown is unreadable and
+ * reads as corruption.
  */
 export function staffOptionLabel(staff: {
   accountId: string;
   fullName?: string | null;
   skillTier?: number;
 }): string {
-  const name = staff.fullName ?? staff.accountId;
+  const name = displayNameOrShortId(staff.fullName, staff.accountId);
   if (staff.skillTier === undefined) return name;
   return `${name} · ${StaffSkillTierShortLabel[staff.skillTier] ?? `Tier ${staff.skillTier}`}`;
 }

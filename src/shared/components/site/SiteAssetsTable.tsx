@@ -11,6 +11,7 @@ import {
 import { toneClass } from "@/shared/theme/statusColors";
 import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Active",
@@ -38,6 +39,19 @@ interface SiteAssetsTableProps {
   onPageSizeChange?: (size: number) => void;
   /** Click a battery → open details. Omit → row isn't clickable. */
   onAssetClick?: (asset: BatteryAssetDto) => void;
+  /**
+   * Shows the trailing chevron that hints the row opens detail. Defaults to true whenever
+   * `onAssetClick` is set. Set false when the Actions column already covers what an operator
+   * needs at a glance and the chevron would just be visual noise.
+   */
+  showDetailChevron?: boolean;
+  /**
+   * Renders the row's quick-action controls — an Actions column, so per-asset actions (e.g. the
+   * Admin edit/delete dropdown, or the Manager BMS switch) don't require opening the detail page.
+   * Callers (Admin/Manager pages) decide what they're each authorized for; this shared table only
+   * lays out the column and stops the click from also firing `onAssetClick`. Omit → no column.
+   */
+  renderActions?: (asset: BatteryAssetDto) => React.ReactNode;
 }
 
 export default function SiteAssetsTable({
@@ -50,6 +64,8 @@ export default function SiteAssetsTable({
   onPageChange,
   onPageSizeChange,
   onAssetClick,
+  showDetailChevron = true,
+  renderActions,
 }: SiteAssetsTableProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
   const { data: gateways } = useIotDevicesForStaff(
@@ -159,7 +175,18 @@ export default function SiteAssetsTable({
     },
   ];
 
-  if (onAssetClick) {
+  if (renderActions) {
+    columns.push({
+      id: "actions",
+      header: TABLE_COLUMNS.actions,
+      headClassName: "text-right",
+      cellClassName: "text-right",
+      stopRowClick: true,
+      cell: (asset) => renderActions(asset),
+    });
+  }
+
+  if (onAssetClick && showDetailChevron) {
     columns.push({
       id: "chevron",
       header: "",

@@ -19,6 +19,8 @@ import {
   SlaFilterEnum,
 } from "@/shared/types/ticket/ticket.types";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { TicketSourceFilterEnum } from "@/shared/enums/ticket/ticket.enum";
+import { TICKET_SOURCE_LABEL } from "@/shared/utils/ticket/ticketSource";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
@@ -47,6 +49,7 @@ const DEFAULTS = {
   priority: "",
   category: "",
   sla: "",
+  source: "",
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
@@ -67,6 +70,7 @@ export default function TicketListPage() {
     priority: (filters.priority as TicketPriorityEnum) || undefined,
     category: (filters.category as TicketCategoryEnum) || undefined,
     sla: (filters.sla as SlaFilterEnum) || undefined,
+    source: (filters.source as TicketSourceFilterEnum) || undefined,
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
@@ -190,6 +194,29 @@ export default function TicketListPage() {
             {Object.values(SlaFilterEnum).map((v) => (
               <SelectItem key={v} value={v}>
                 {SLA_LABELS[v]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.source || null}
+          items={Object.values(TicketSourceFilterEnum).map((v) => ({
+            value: v,
+            label: TICKET_SOURCE_LABEL[v],
+          }))}
+          onValueChange={(v: string | null) =>
+            setFilter("source", v || undefined)
+          }
+        >
+          <SelectTrigger size="sm" className="w-44">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All sources</SelectItem>
+            {Object.values(TicketSourceFilterEnum).map((v) => (
+              <SelectItem key={v} value={v}>
+                {TICKET_SOURCE_LABEL[v]}
               </SelectItem>
             ))}
           </SelectContent>

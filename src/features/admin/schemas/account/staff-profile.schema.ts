@@ -14,7 +14,8 @@ export const editStaffProfileSchema = z.object({
     .int("Must be an integer")
     .min(1, "Must be at least 1")
     .max(3, "Must be at most 3"),
-  notes: z.string().max(500, "Must be at most 500 characters").optional(),
+  // UpdateStaffProfileCommand allows 1000 — the 500 here rejected notes the BE accepts.
+  notes: z.string().max(1000, "Must be at most 1000 characters").optional(),
 });
 
 export const addSkillSchema = z.object({

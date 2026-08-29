@@ -19,6 +19,7 @@ import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
+import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
 import { useSiteCascadeSummary } from "@/features/manager/hooks/battery/useSiteCascadeSummary";
 import {
   useSiteDetail,
@@ -210,6 +211,13 @@ export default function ManagerSiteDetailPage() {
               onAssetClick={(asset) =>
                 navigate(`/manager/battery-assets/${asset.id}`)
               }
+              showDetailChevron={false}
+              // Manager has no CRUD on battery assets (Edit/Transfer/Delete are Admin-only) —
+              // the only quick action available is the BMS charge/discharge switch, same scope
+              // as the header control on the detail page.
+              renderActions={(asset) => (
+                <BmsSwitchControlCard assetId={asset.id} variant="popover" />
+              )}
             />
           </Card>
         </TabsContent>

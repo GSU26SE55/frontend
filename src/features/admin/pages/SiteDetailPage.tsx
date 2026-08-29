@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Battery, Thermometer, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  Battery,
+  Thermometer,
+  Plus,
+  EllipsisVertical,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +24,13 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -28,9 +42,13 @@ import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
+import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
 import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
 import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
+import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
 import { useSiteCascadeSummary } from "@/features/admin/hooks/battery/useSiteCascadeSummary";
+import { useBatteryAsset } from "@/features/admin/hooks/battery/useBatteryAsset";
+import { useDeleteBatteryAsset } from "@/features/admin/hooks/battery/useDeleteBatteryAsset";
 import {
   useSiteDetail,
   useSiteDashboard,
@@ -40,10 +58,13 @@ import {
 } from "@/features/admin/hooks/site/useSites";
 import { SiteStatusEnum } from "@/shared/types/site/site.types";
 import type { SiteAssetsFilterParams } from "@/shared/types/site/site.types";
+import type { BatteryAssetDto } from "@/shared/types/battery/battery.types";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
+import { toast } from "sonner";
 
 const ASSET_STATUS_ALL = "all";
 const ASSET_STATUS_LABELS: Record<BatteryStatusEnum, string> = {
@@ -64,6 +85,19 @@ export default function SiteDetailPage() {
     pageNumber: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
+
+  // Per-asset quick actions (Actions column in the battery list below).
+  // editAssetId only stores the id — the list row is the lightweight list DTO, so the edit
+  // form fetches the full detail DTO it needs (useBatteryAsset) once an id is set.
+  const [editAssetId, setEditAssetId] = useState<string | null>(null);
+  const [transferTarget, setTransferTarget] = useState<BatteryAssetDto | null>(
+    null,
+  );
+  const [deleteAssetTarget, setDeleteAssetTarget] =
+    useState<BatteryAssetDto | null>(null);
+  const [bmsAssetId, setBmsAssetId] = useState<string | null>(null);
+  const { data: editAssetDetail } = useBatteryAsset(editAssetId);
+  const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
   const { data: dashboard } = useSiteDashboard(id);
@@ -248,6 +282,37 @@ export default function SiteDetailPage() {
               onAssetClick={(asset) =>
                 navigate(`/admin/battery-assets/${asset.id}`)
               }
+              showDetailChevron={false}
+              renderActions={(asset) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button variant="ghost" size="icon" className="size-7" />
+                    }
+                  >
+                    <EllipsisVertical className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-36">
+                    <DropdownMenuItem onClick={() => setBmsAssetId(asset.id)}>
+                      BMS
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setEditAssetId(asset.id)}>
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTransferTarget(asset)}>
+                      Transfer
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteAssetTarget(asset)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             />
           </Card>
         </TabsContent>
@@ -270,6 +335,72 @@ export default function SiteDetailPage() {
         onOpenChange={setAssetFormOpen}
         lockedSiteId={id}
       />
+
+      {/* Edit a battery from the Actions column below — waits for the full detail DTO
+          (the list row only carries the lightweight list DTO) before opening. */}
+      {editAssetId && editAssetDetail && (
+        <BatteryAssetForm
+          open
+          onOpenChange={(open) => !open && setEditAssetId(null)}
+          editData={editAssetDetail}
+        />
+      )}
+
+      {transferTarget && (
+        <TransferOwnerDialog
+          open
+          onOpenChange={(open) => !open && setTransferTarget(null)}
+          assetId={transferTarget.id}
+          currentCustomerId={transferTarget.customerId}
+        />
+      )}
+
+      {bmsAssetId && (
+        <BmsSwitchControlCard
+          assetId={bmsAssetId}
+          variant="dialog"
+          open
+          onOpenChange={(open) => !open && setBmsAssetId(null)}
+        />
+      )}
+
+      {/* Delete a battery asset from the Actions column below. */}
+      <AlertDialog
+        open={deleteAssetTarget !== null}
+        onOpenChange={(open) => !open && setDeleteAssetTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this battery?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteAssetTarget && (
+                <>
+                  Delete battery{" "}
+                  <strong>{deleteAssetTarget.serialNumber}</strong>? This cannot
+                  be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteAssetTarget(null)} />
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (deleteAssetTarget) {
+                  deleteAsset(deleteAssetTarget.id, {
+                    onSuccess: () =>
+                      toast.success(ADMIN_MESSAGES.common.deleted),
+                  });
+                }
+                setDeleteAssetTarget(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete confirm */}
       <AlertDialog

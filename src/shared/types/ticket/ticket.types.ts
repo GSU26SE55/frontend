@@ -74,7 +74,20 @@ export interface SlaTimerDTO {
   warningSentAt?: string | null;
   breachAt?: string | null;
   status: SlaTimerStatusEnum;
+  /**
+   * % SLA còn lại. CHỈ có nghĩa khi status là Running/Paused — BE
+   * (SlaCalculator.GetRemainingPercent) trả 0 cho Met/Breached/Stopped, nên đừng
+   * vẽ thanh progress từ nó mà không kiểm tra `isSlaClockLive(status)` trước.
+   */
   remainingPercent: number;
+  /** Số lần đã pause — BE trả về nhưng client chưa dùng. */
+  pauseEpisodesCount?: number;
+  /** Budget SLA theo ngày làm việc của priority (P1=1 · P2=3 · P3=7). */
+  slaWorkingDays?: number;
+  /** Budget SLA quy ra giờ làm việc (P1=10h · P2=30h · P3=70h). */
+  slaWorkingHours?: number;
+  /** Số phút làm việc còn lại tới dueAt. Cùng quy ước với remainingPercent: 0 khi timer đã kết thúc. */
+  remainingWorkingMinutes?: number;
 }
 
 export interface TicketDTO {
@@ -227,6 +240,13 @@ export interface TicketCommentDTO {
   readReceipts?: ChatReaderDto[];
   /** = readReceipts.length, precomputed by the BE for a quick "Seen by N" label. */
   readCount?: number;
+  /**
+   * Pinned to the top of the thread. Staff/Manager/Admin only, and the BE caps a ticket at
+   * 3 pinned messages — a 4th pin comes back as a 400 rather than silently replacing one.
+   */
+  isPinned?: boolean;
+  pinnedAt?: string | null;
+  pinnedByUserId?: string | null;
   // Voice chat (created via POST /chats/voice): Pending/Processing = transcribing (body is
   // temporarily empty), Completed = body holds the transcript, Failed = error → allow retry.
   // null for ordinary text chat.

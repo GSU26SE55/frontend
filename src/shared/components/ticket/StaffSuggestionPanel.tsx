@@ -27,7 +27,12 @@ export function StaffSuggestionPanel({
   ticketId,
   onPick,
   selectedStaffId,
-  topN = 5,
+  // Only the 3 best matches. `topN` reaches the BE as a query param, so this also keeps the
+  // AI from ranking candidates nobody reads. Matches KbSuggestionPanel next to it: the panel
+  // sits directly above the assignment form for a quick read-then-decide, and a longer list
+  // dilutes the ranking instead of helping — the Manager can still pick anyone from the
+  // dropdown below.
+  topN = 3,
 }: Props) {
   const { data, isLoading, isError } = useStaffSuggestions(ticketId, { topN });
 

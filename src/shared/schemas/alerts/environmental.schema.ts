@@ -1,13 +1,20 @@
 import { z } from "zod";
+import { requiredSelect } from "@/shared/schemas/common.schema";
 import { EnvironmentalIncidentTypeEnum } from "@/shared/enums/alerts/environmental.enum";
 import { AlertSeverityEnum } from "@/shared/enums/alerts/alert.enum";
 
 // POST /api/environmental-incidents/manual — manual report authenticated by JWT.
 // BE validates: SiteId not Guid.Empty; IncidentType/Severity must be valid; Notes ≤ 1000.
 export const manualIncidentSchema = z.object({
-  siteId: z.string().uuid("Invalid site"),
-  incidentType: z.nativeEnum(EnvironmentalIncidentTypeEnum),
-  severity: z.nativeEnum(AlertSeverityEnum),
+  siteId: requiredSelect(z.string().uuid("Invalid site"), "Select a site"),
+  incidentType: requiredSelect(
+    z.nativeEnum(EnvironmentalIncidentTypeEnum),
+    "Select an incident type",
+  ),
+  severity: requiredSelect(
+    z.nativeEnum(AlertSeverityEnum),
+    "Select a severity",
+  ),
   // The field must be named `notes` — matches BE `Notes`, not `note`.
   notes: z
     .string()

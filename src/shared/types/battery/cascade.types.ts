@@ -8,9 +8,17 @@ export {
   CascadeRiskLevel,
 } from "@/shared/enums/battery/cascade.enum";
 
-// The BE returns the string name in responses → union of the enum's keys.
+// The name unions the UI works with. The BE is NOT consistent about which form it sends for
+// these two fields — cascade risk comes back as the numeric enum value — so responses are
+// normalised to the name in cascade.service before any component sees them.
 export type ElectricalTopologyName = keyof typeof ElectricalTopologyEnum; // "Independent" | "SeriesString" | ...
 export type CascadeRiskLevelName = keyof typeof CascadeRiskLevel; // "Low" | "Medium" | "High"
+
+/**
+ * Shape as it arrives on the wire, before {@link normalizeCascadeRisk}: each enum field is
+ * either the numeric value or the string name, depending on the endpoint.
+ */
+export type RawEnum<TName extends string> = TName | number;
 
 export interface CascadeRiskDto {
   batteryAssetId: string;
@@ -22,6 +30,15 @@ export interface CascadeRiskDto {
   cascadeRiskUpdatedAt: string | null; // null if never computed
 }
 
+/** {@link CascadeRiskDto} exactly as the BE sends it — enums may still be numeric. */
+export interface RawCascadeRiskDto extends Omit<
+  CascadeRiskDto,
+  "level" | "electricalTopology"
+> {
+  level: RawEnum<CascadeRiskLevelName>;
+  electricalTopology: RawEnum<ElectricalTopologyName>;
+}
+
 export interface SiteCascadeRiskSummaryDto {
   siteId: string;
   totalAssets: number;
@@ -30,6 +47,14 @@ export interface SiteCascadeRiskSummaryDto {
   lowRiskCount: number;
   maxScore: number; // 0 if the site is empty
   highRiskAssets: CascadeRiskDto[]; // sorted by score desc, may be empty
+}
+
+/** {@link SiteCascadeRiskSummaryDto} as the BE sends it — nested assets not yet normalised. */
+export interface RawSiteCascadeRiskSummaryDto extends Omit<
+  SiteCascadeRiskSummaryDto,
+  "highRiskAssets"
+> {
+  highRiskAssets: RawCascadeRiskDto[];
 }
 
 // POST /topology — send an INT 1..4 (not the string name).

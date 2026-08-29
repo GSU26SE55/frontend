@@ -2,7 +2,11 @@ import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { TicketOriginEnum } from "@/shared/enums/ticket/ticket.enum";
-import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
+import {
+  TICKET_CATEGORY_LABEL,
+  TICKET_PRIORITY_LABEL,
+} from "@/shared/constants/ticketLabels";
+import { displayName } from "@/shared/utils/displayId";
 
 const ORIGIN_LABELS: Record<string, string> = {
   [TicketOriginEnum.ManualByCustomer]: "Created by customer",
@@ -54,16 +58,23 @@ export function buildCompareRows(
     row("Ticket code", source.code, target.code),
     row(
       "Battery (serial)",
-      source.batterySerialNumber ?? source.batteryAssetId ?? "",
-      target.batterySerialNumber ?? target.batteryAssetId ?? "",
+      // Serial or nothing — a ticket with no battery (BE sends an empty batteryAssetId for
+      // "not tied to a specific battery") must read as "—", not as a GUID pretending to be
+      // a serial number.
+      displayName(source.batterySerialNumber, ""),
+      displayName(target.batterySerialNumber, ""),
       (source.batteryAssetId ?? "") !== (target.batteryAssetId ?? ""),
     ),
     {
       label: "Customer",
       // Show the name (once it has loaded), but compare on customerId — the name may not
       // have finished fetching, and two different customers can share a name.
-      source: customerNames?.source || source.customerId || EMPTY,
-      target: customerNames?.target || target.customerId || EMPTY,
+      //
+      // A missing name shows the placeholder, NOT the raw customerId: the id is meaningless
+      // to the Manager reviewing this merge, and rendering it made a data gap (an unresolved
+      // name, e.g. a ticket with no battery to read the customer from) look like real content.
+      source: displayName(customerNames?.source, EMPTY),
+      target: displayName(customerNames?.target, EMPTY),
       isDiff: source.customerId !== target.customerId,
       isCritical: true,
     },
@@ -75,8 +86,8 @@ export function buildCompareRows(
     // Status already shows as a badge on both header cards — do not repeat the raw enum here.
     row(
       "Priority",
-      source.priority ?? "Not triaged",
-      target.priority ?? "Not triaged",
+      source.priority ? TICKET_PRIORITY_LABEL[source.priority] : "Not triaged",
+      target.priority ? TICKET_PRIORITY_LABEL[target.priority] : "Not triaged",
     ),
     row(
       "Origin",

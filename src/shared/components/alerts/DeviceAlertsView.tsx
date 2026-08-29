@@ -56,6 +56,7 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { noData, notFound } from "@/shared/constants/emptyStates";
 import { formatDateTime } from "@/shared/utils/datetime";
+import { shortId } from "@/shared/utils/displayId";
 
 const DEFAULTS = {
   severity: "",
@@ -398,9 +399,10 @@ function DeviceAlertDetailDialog({
                   to={`${basePath}/tickets/${alert.ticketId}`}
                   className="font-mono-num text-xs text-primary hover:underline"
                 >
-                  {/* Falls back to the raw id while the code loads, or when the ticket
-                      cannot be read — never leaves the row blank. */}
-                  {ticketCode ?? alert.ticketId}
+                  {/* Falls back to a SHORTENED id while the code loads, or when the ticket
+                      cannot be read — never leaves the link blank, and never prints a full
+                      GUID where a TKT-code belongs. The link itself still uses the full id. */}
+                  {ticketCode ?? shortId(alert.ticketId)}
                 </Link>
               ) : (
                 "—"

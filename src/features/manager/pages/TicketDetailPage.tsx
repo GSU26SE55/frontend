@@ -77,7 +77,7 @@ import {
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -772,22 +772,32 @@ export default function TicketDetailPage() {
                         {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Remaining
-                      </span>
-                      <span className="text-xs font-medium">
-                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                        style={{
-                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                        }}
-                      />
-                    </div>
+                    {/* "Remaining %" and the bar are only meaningful while the clock is
+                        actually counting. On a terminal timer (Stopped after a reject/merge,
+                        or an already decided Met/Breached) the BE returns remainingPercent = 0,
+                        and drawing the bar anyway rendered a rejected ticket as if it still had
+                        an SLA running against it. The countdown above already states the
+                        outcome, so the ratio rows just drop out. */}
+                    {isSlaClockLive(ticket.slaTimer.status) && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Remaining
+                          </span>
+                          <span className="text-xs font-medium">
+                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                            style={{
+                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
