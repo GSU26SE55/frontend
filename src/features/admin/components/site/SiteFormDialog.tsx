@@ -140,7 +140,9 @@ export default function SiteFormDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Site name *</Label>
+            <Label htmlFor="name">
+              Site name <span className="text-destructive">*</span>
+            </Label>
             <Input id="name" {...register("name")} />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -148,7 +150,9 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Customer *</Label>
+            <Label htmlFor="customerId">
+              Customer <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="customerId"
@@ -176,7 +180,9 @@ export default function SiteFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="installDate">Install date *</Label>
+            <Label htmlFor="installDate">
+              Install date <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="installDate"

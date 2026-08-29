@@ -41,10 +41,10 @@ const LoginForm = () => {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Log in
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Enter your email and password to continue
         </p>
       </div>
@@ -52,7 +52,10 @@ const LoginForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email */}
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+          <Label
+            htmlFor="email"
+            className="text-sm font-medium text-foreground"
+          >
             Email
           </Label>
           <Input
@@ -60,7 +63,7 @@ const LoginForm = () => {
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
-            className="h-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+            className="h-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
             {...register("email")}
           />
           {errors.email && (
@@ -73,13 +76,13 @@ const LoginForm = () => {
           <div className="flex items-center justify-between">
             <Label
               htmlFor="password"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-foreground"
             >
               Password
             </Label>
             <Link
               to="/forgot-password"
-              className="text-xs text-slate-400 hover:text-emerald-600 transition-colors"
+              className="text-xs text-muted-foreground hover:text-emerald-600 transition-colors"
             >
               Forgot password?
             </Link>
@@ -90,13 +93,13 @@ const LoginForm = () => {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="current-password"
-              className="h-10 pr-10 border-slate-200 bg-slate-50 placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
+              className="h-10 pr-10 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400"
               {...register("password")}
             />
             <button
               type="button"
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? (
@@ -130,10 +133,12 @@ const LoginForm = () => {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white px-3 text-xs text-slate-400">or</span>
+            <span className="rounded-full border border-border bg-card px-3 py-0.5 text-xs font-semibold text-muted-foreground">
+              or
+            </span>
           </div>
         </div>
 
@@ -141,7 +146,7 @@ const LoginForm = () => {
         <Button
           type="button"
           variant="outline"
-          className="h-10 w-full rounded-lg border-slate-200 bg-white font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+          className="h-10 w-full rounded-lg border-border bg-card font-semibold text-foreground hover:bg-muted cursor-pointer"
           onClick={handleGoogleLogin}
         >
           <svg
@@ -169,7 +174,7 @@ const LoginForm = () => {
           Log in with Google
         </Button>
 
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link
             to="/register"
@@ -179,11 +184,11 @@ const LoginForm = () => {
           </Link>
         </p>
 
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-muted-foreground">
           Account deleted?{" "}
           <Link
             to="/reactivate"
-            className="font-medium text-slate-500 hover:text-emerald-600 underline-offset-4 hover:underline"
+            className="font-medium text-muted-foreground hover:text-emerald-600 underline-offset-4 hover:underline"
           >
             Restore account
           </Link>

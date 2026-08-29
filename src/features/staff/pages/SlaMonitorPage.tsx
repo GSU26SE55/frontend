@@ -22,6 +22,7 @@ import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 export default function SlaMonitorPage() {
   const navigate = useNavigate();
@@ -156,7 +157,7 @@ export default function SlaMonitorPage() {
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {ticket.slaTimer
-                      ? new Date(ticket.slaTimer.dueAt).toLocaleString("vi-VN")
+                      ? formatDateTime(ticket.slaTimer.dueAt)
                       : "-"}
                   </TableCell>
                   <TableCell className="text-right">

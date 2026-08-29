@@ -122,9 +122,12 @@ export default function BmsSwitchControlCard({
     }
 
     mutation.mutate(payload, {
+      // No "command sent" toast: acceptance is not the outcome the operator is waiting
+      // for, and pairing it with the confirmation toast that follows meant every switch
+      // produced two notifications. The wait is already visible in the control itself,
+      // which stays disabled and pending until the BMS answers.
       onSuccess: (accepted) => {
         issuedCmdId.current = accepted.cmdId;
-        toast.message("Command sent; waiting for BMS confirmation.");
       },
       onError: (error) => toast.error(failureMessage(error)),
     });
@@ -236,10 +239,10 @@ export default function BmsSwitchControlCard({
             )}
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-medium leading-tight">{row.label}</p>
+            <p className="text-2sm font-medium leading-tight">{row.label}</p>
             {/* Keep the state to one word. Detailed errors use a toast instead of
                 taking another line inside this compact panel. */}
-            <p className="text-[11px] leading-tight text-muted-foreground">
+            <p className="text-2xs leading-tight text-muted-foreground">
               {pending ? "Waiting for BMS" : row.state.label}
             </p>
           </div>
@@ -261,7 +264,7 @@ export default function BmsSwitchControlCard({
             BMS
           </PopoverTrigger>
           <PopoverContent align="end" className="w-64 gap-1.5">
-            <p className="flex items-center gap-1.5 text-[13px] font-medium leading-tight">
+            <p className="flex items-center gap-1.5 text-2sm font-medium leading-tight">
               <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
               BMS Control
             </p>
@@ -271,7 +274,7 @@ export default function BmsSwitchControlCard({
       ) : (
         <Card className="m-3 mt-0 gap-1.5 border-amber-300/70 bg-amber-50/30 py-2 dark:border-amber-900/60 dark:bg-amber-950/10">
           <CardHeader className="px-2.5 pb-0">
-            <CardTitle className="flex items-center gap-1.5 text-[13px] leading-tight">
+            <CardTitle className="flex items-center gap-1.5 text-2sm leading-tight">
               <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
               BMS Control
             </CardTitle>

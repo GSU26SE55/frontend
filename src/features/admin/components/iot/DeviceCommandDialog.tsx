@@ -147,7 +147,9 @@ export default function DeviceCommandDialog({
           {mode === "guided" ? (
             <>
               <div className="space-y-2">
-                <Label>Select a command</Label>
+                <Label>
+                  Select a command <span className="text-destructive">*</span>
+                </Label>
                 <div
                   role="radiogroup"
                   aria-label="Select a command"
@@ -198,7 +200,10 @@ export default function DeviceCommandDialog({
 
               {type === "set_interval" && (
                 <div className="space-y-2">
-                  <Label htmlFor="pollingSeconds">Sampling interval</Label>
+                  <Label htmlFor="pollingSeconds">
+                    Sampling interval{" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
                   <div className="flex flex-wrap gap-1.5">
                     {POLLING_PRESETS.map((preset) => (
                       <Button
@@ -255,7 +260,9 @@ export default function DeviceCommandDialog({
           ) : (
             <>
               <div className="space-y-1">
-                <Label htmlFor="rawType">Command name</Label>
+                <Label htmlFor="rawType">
+                  Command name <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="rawType"
                   placeholder="vd: set_interval"

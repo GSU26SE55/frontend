@@ -95,7 +95,9 @@ export default function ManualIncidentDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="siteId">Site *</Label>
+            <Label htmlFor="siteId">
+              Site <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="siteId"
@@ -126,7 +128,9 @@ export default function ManualIncidentDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="incidentType">Incident type *</Label>
+            <Label htmlFor="incidentType">
+              Incident type <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="incidentType"
@@ -160,7 +164,9 @@ export default function ManualIncidentDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="severity">Severity *</Label>
+            <Label htmlFor="severity">
+              Severity <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="severity"

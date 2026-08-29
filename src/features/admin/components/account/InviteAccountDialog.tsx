@@ -84,7 +84,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="invite-email">
-              Email <span className="text-red-500">*</span>
+              Email <span className="text-destructive">*</span>
             </Label>
             <Input
               id="invite-email"
@@ -98,7 +98,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="invite-fullName">
-              Full name <span className="text-red-500">*</span>
+              Full name <span className="text-destructive">*</span>
             </Label>
             <Input
               id="invite-fullName"
@@ -124,7 +124,7 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label>
-              Role <span className="text-red-500">*</span>
+              Role <span className="text-destructive">*</span>
             </Label>
             <Controller
               name="roleId"

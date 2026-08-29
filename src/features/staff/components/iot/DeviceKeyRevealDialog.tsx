@@ -198,7 +198,7 @@ export default function DeviceKeyRevealDialog({
                   configuration, reboots and switches to Active.
                 </li>
               </ol>
-              <p className="max-w-60 text-center text-[11px] leading-relaxed text-muted-foreground">
+              <p className="max-w-60 text-center text-2xs leading-relaxed text-muted-foreground">
                 No APK needed. When the customer moves or changes router, just
                 reconnect to SolarGW and enter the new Wi-Fi; the IoT key is
                 kept, so there is no need to scan the QR again.

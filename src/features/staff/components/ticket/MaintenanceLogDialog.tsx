@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,9 @@ const LOG_TYPE_LABELS: Record<string, string> = {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: MaintenanceLogFormValues) => void;
+  /** Returns the mutation's promise so this dialog can map a rejection onto its
+   *  own fields — a void callback leaves the error nowhere to go. */
+  onSubmit: (data: MaintenanceLogFormValues) => Promise<unknown>;
   isPending: boolean;
   title?: string;
   submitLabel?: string;
@@ -88,8 +91,15 @@ export function MaintenanceLogDialog({
     }
   }, [open, form, fixedLogType]);
 
-  const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // EntityError (400 + listErrors) → message lands on the field the BE rejected;
+      // anything else → toast. The mutation no longer reports errors itself, precisely so
+      // they can be mapped here.
+      handleErrorApi({ error, setError: form.setError });
+    }
   });
 
   const searchArticles = useCallback(

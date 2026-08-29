@@ -40,11 +40,11 @@ import { AmbientReadingSourceEnum } from "@/shared/enums/ambient/ambient.enum";
 import {
   evaluateAmbientRow,
   ambientLevelTextClass,
-  ambientLevelRowClass,
 } from "@/shared/lib/ambientThresholds";
 import type { AmbientThresholdUpsertPayload } from "@/shared/types/ambient/ambient.types";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
   [AmbientReadingSourceEnum.IotSensor]: "IoT sensor",
@@ -59,9 +59,6 @@ const toNumOrNull = (val?: string): number | null => {
 
 const fmt = (v?: number | null, unit = "") =>
   v === null || v === undefined ? "—" : `${v}${unit}`;
-
-const formatDateTime = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
 // datetime-local (local time, no timezone) → ISO UTC for the API. "" → undefined.
 const toUtcIso = (local: string): string | undefined =>
@@ -176,7 +173,7 @@ function MetricItem({
     <div className="flex items-center gap-2.5">
       {icon}
       <div>
-        <p className="text-[11px] text-muted-foreground leading-none mb-0.5">
+        <p className="text-2xs text-muted-foreground leading-none mb-0.5">
           {label}
         </p>
         <p className="text-sm font-semibold leading-tight">{value}</p>
@@ -254,7 +251,10 @@ function ThresholdFormBody({
           threshold.comboHumidityThreshold?.toString() ?? "",
         enabled: threshold.enabled,
       });
-    } else if (isError) {
+    } else if (threshold === null || isError) {
+      // threshold === null: BE says the site has no config yet (200 + data: null) → create
+      // mode with empty fields. isError is kept for a genuine failure (403/500), which lands
+      // on the same blank form rather than on stale values from a previously viewed site.
       reset({
         siteId,
         highAmbientTempWarning: "",
@@ -292,7 +292,7 @@ function ThresholdFormBody({
       <input type="hidden" {...register("siteId")} />
 
       <div>
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Temperature
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -310,7 +310,7 @@ function ThresholdFormBody({
       </div>
 
       <div>
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Humidity
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -328,7 +328,7 @@ function ThresholdFormBody({
       </div>
 
       <div>
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Combo rule
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -459,7 +459,7 @@ function HistoryTable({
 
         {/* Range controls sit on the heading row, matching Sensor history. */}
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <label className="flex items-center gap-1.5 text-2xs text-muted-foreground">
             From
             <DateTimePicker
               value={fromLocal}
@@ -468,7 +468,7 @@ function HistoryTable({
               className="h-8 w-44"
             />
           </label>
-          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <label className="flex items-center gap-1.5 text-2xs text-muted-foreground">
             To
             <DateTimePicker
               value={toLocalValue}
@@ -534,10 +534,7 @@ function HistoryTable({
               {items.map((r, index) => {
                 const ev = evaluateAmbientRow(r, threshold);
                 return (
-                  <TableRow
-                    key={r.time}
-                    className={ambientLevelRowClass(ev.worst)}
-                  >
+                  <TableRow key={r.time}>
                     <TableCell className="text-center text-muted-foreground tabular-nums">
                       {(pageNumber - 1) * pageSize + index + 1}
                     </TableCell>

@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import {
@@ -54,10 +55,14 @@ import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { noData, notFound } from "@/shared/constants/emptyStates";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const DEFAULTS = {
   severity: "",
   status: "",
+  from: "",
+  to: "",
   pageNumber: 1,
   pageSize: DEFAULT_PAGE_SIZE,
 };
@@ -84,9 +89,6 @@ const isSiteLevel = (alert: AlertDto) => alert.batteryAssetId === "";
 
 const alertSubject = (alert: AlertDto) =>
   isSiteLevel(alert) ? "Site level" : alert.batterySerialNumber;
-
-const formatDateTime = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
 // Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable)
 const formatMeasure = (value?: number | null, unit?: string | null) =>
@@ -120,9 +122,19 @@ export default function AlertsView({
     status: filters.status
       ? (Number(filters.status) as AlertStatusEnum)
       : undefined,
+    from: filters.from || undefined,
+    // `to` is date-only from the input → send end-of-day so the selected day is fully
+    // covered (avoids excluding alerts that fall on the `to` day itself). Same as
+    // EnvironmentalIncidentsView.
+    to: filters.to ? `${filters.to}T23:59:59` : undefined,
     // Environmental incidents have their own screen; the mirror alert the BE writes for
     // each one would otherwise show up here as a serial-less "0 incident / 0 incident" row.
     excludeEnvironmentalIncidents: true,
+    // Device-level alerts (connection lost, data-integrity violation) belong to the gateway,
+    // not to any one battery, so they carry no serial. They have their own screen now — see
+    // DeviceAlertsView. Excluding them here is what makes the two lists disjoint and clears
+    // the serial-less rows out of this table.
+    excludeIotDeviceAlerts: true,
   });
   const items = data?.items ?? [];
   const totalItems = data?.totalItems ?? 0;
@@ -192,6 +204,19 @@ export default function AlertsView({
           </SelectContent>
         </Select>
 
+        <DatePicker
+          className="w-40"
+          value={filters.from}
+          onChange={(v) => setFilter("from", v)}
+          max={filters.to}
+        />
+        <DatePicker
+          className="w-40"
+          value={filters.to}
+          onChange={(v) => setFilter("to", v)}
+          min={filters.from}
+        />
+
         {hasActiveFilter && (
           <Button size="sm" variant="ghost" onClick={resetFilters}>
             Clear filters
@@ -209,7 +234,9 @@ export default function AlertsView({
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <BellRing className="size-8 opacity-30" />
-            <span className="text-sm">No alerts yet.</span>
+            <span className="text-sm">
+              {hasActiveFilter ? notFound("alerts") : noData("alerts")}
+            </span>
           </div>
         ) : (
           <Table>

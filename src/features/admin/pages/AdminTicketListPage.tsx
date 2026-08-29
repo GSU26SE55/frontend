@@ -15,6 +15,8 @@ import {
   TicketCategoryEnum,
   SlaFilterEnum,
 } from "@/shared/types/ticket/ticket.types";
+import { TicketSourceFilterEnum } from "@/shared/enums/ticket/ticket.enum";
+import { TICKET_SOURCE_LABEL } from "@/shared/utils/ticket/ticketSource";
 import type {
   TicketStatusEnum as TicketStatus,
   TicketPriorityEnum as TicketPriority,
@@ -31,6 +33,11 @@ import { Card } from "@/components/ui/card";
 import { KEY } from "@/shared/utils/queryKeys";
 import { loadFailed } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import {
+  TICKET_STATUS_LABEL,
+  TICKET_PRIORITY_LABEL,
+  TICKET_CATEGORY_LABEL,
+} from "@/shared/constants/ticketLabels";
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
@@ -38,24 +45,7 @@ const STATUS_OPTIONS = Object.values(TicketStatusEnum) as TicketStatus[];
 const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
 const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
 const SLA_OPTIONS = Object.values(SlaFilterEnum);
-
-const STATUS_LABELS: Record<TicketStatus, string> = {
-  [TicketStatusEnum.Open]: "Open",
-  [TicketStatusEnum.Pending]: "Pending",
-  [TicketStatusEnum.InProgress]: "In progress",
-  [TicketStatusEnum.Request]: "Escalation request",
-  [TicketStatusEnum.ReAssign]: "Pending reassignment",
-  [TicketStatusEnum.Completed]: "Completed",
-  [TicketStatusEnum.Closed]: "Closed",
-  [TicketStatusEnum.ClosedRejected]: "Closed - rejected",
-};
-
-const PRIORITY_LABELS: Record<TicketPriority, string> = {
-  [TicketPriorityEnum.P1Critical]: "P1 Critical",
-  [TicketPriorityEnum.P2High]: "P2 High",
-  [TicketPriorityEnum.P3Normal]: "P3 Normal",
-  [TicketPriorityEnum.Urgent]: "Urgent",
-};
+const SOURCE_OPTIONS = Object.values(TicketSourceFilterEnum);
 
 // Three SLA situations worth chasing. Deliberately not the raw SlaTimerStatusEnum: Running and
 // Met need no action, and "Warning" is not a stored status at all — it is a running timer that
@@ -66,21 +56,13 @@ const SLA_LABELS: Record<SlaFilterEnum, string> = {
   [SlaFilterEnum.Breached]: "SLA breached",
 };
 
-const CATEGORY_LABELS: Record<TicketCategory, string> = {
-  Charging: "Charging fault",
-  Overheat: "Overheat",
-  NoPower: "No power",
-  Performance: "Performance",
-  Other: "Other",
-  Repair: "Repair",
-};
-
 const DEFAULTS = {
   keyword: "",
   status: "",
   priority: "",
   category: "",
   sla: "",
+  source: "",
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
@@ -101,6 +83,7 @@ export default function AdminTicketListPage() {
     priority: (filters.priority as TicketPriority) || undefined,
     category: (filters.category as TicketCategory) || undefined,
     sla: (filters.sla as SlaFilterEnum) || undefined,
+    source: (filters.source as TicketSourceFilterEnum) || undefined,
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
@@ -141,7 +124,7 @@ export default function AdminTicketListPage() {
           value={filters.status || null}
           items={STATUS_OPTIONS.map((s) => ({
             value: s,
-            label: STATUS_LABELS[s],
+            label: TICKET_STATUS_LABEL[s],
           }))}
           onValueChange={(v: string | null) =>
             setFilter("status", v || undefined)
@@ -154,7 +137,7 @@ export default function AdminTicketListPage() {
             <SelectItem value={null}>All statuses</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
-                {STATUS_LABELS[s]}
+                {TICKET_STATUS_LABEL[s]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -164,7 +147,7 @@ export default function AdminTicketListPage() {
           value={filters.priority || null}
           items={PRIORITY_OPTIONS.map((p) => ({
             value: p,
-            label: PRIORITY_LABELS[p],
+            label: TICKET_PRIORITY_LABEL[p],
           }))}
           onValueChange={(v: string | null) =>
             setFilter("priority", v || undefined)
@@ -177,7 +160,7 @@ export default function AdminTicketListPage() {
             <SelectItem value={null}>All priorities</SelectItem>
             {PRIORITY_OPTIONS.map((p) => (
               <SelectItem key={p} value={p}>
-                {PRIORITY_LABELS[p]}
+                {TICKET_PRIORITY_LABEL[p]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -187,7 +170,7 @@ export default function AdminTicketListPage() {
           value={filters.category || null}
           items={CATEGORY_OPTIONS.map((c) => ({
             value: c,
-            label: CATEGORY_LABELS[c],
+            label: TICKET_CATEGORY_LABEL[c],
           }))}
           onValueChange={(v: string | null) =>
             setFilter("category", v || undefined)
@@ -200,7 +183,7 @@ export default function AdminTicketListPage() {
             <SelectItem value={null}>All categories</SelectItem>
             {CATEGORY_OPTIONS.map((c) => (
               <SelectItem key={c} value={c}>
-                {CATEGORY_LABELS[c]}
+                {TICKET_CATEGORY_LABEL[c]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -219,6 +202,29 @@ export default function AdminTicketListPage() {
             {SLA_OPTIONS.map((v) => (
               <SelectItem key={v} value={v}>
                 {SLA_LABELS[v]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.source || null}
+          items={SOURCE_OPTIONS.map((v) => ({
+            value: v,
+            label: TICKET_SOURCE_LABEL[v],
+          }))}
+          onValueChange={(v: string | null) =>
+            setFilter("source", v || undefined)
+          }
+        >
+          <SelectTrigger size="sm" className="w-44">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All sources</SelectItem>
+            {SOURCE_OPTIONS.map((v) => (
+              <SelectItem key={v} value={v}>
+                {TICKET_SOURCE_LABEL[v]}
               </SelectItem>
             ))}
           </SelectContent>

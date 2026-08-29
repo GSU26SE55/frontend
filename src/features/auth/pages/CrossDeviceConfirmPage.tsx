@@ -15,12 +15,18 @@ import {
 import { useConfirmCrossDevice2fa } from "@/features/auth/hooks/2fa/useConfirmCrossDevice2fa";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { redirectByRole } from "@/shared/types/account/session.types";
 
 // #AUTH-51: Device B — confirm 2FA setup using the token from email + TOTP.
 const CrossDeviceConfirmPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token") ?? "";
+  // Settings lives inside each role's layout (/admin/settings, ...) — this page sits
+  // outside AppLayout, so it has to build the role-prefixed path itself.
+  const role = useSessionStore((s) => s.user?.role);
+  const settingsPath = role ? `${redirectByRole(role)}/settings` : "/login";
   const [done, setDone] = useState(false);
 
   const { mutateAsync, isPending } = useConfirmCrossDevice2fa();
@@ -64,7 +70,7 @@ const CrossDeviceConfirmPage = () => {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate("/settings")}
+                onClick={() => navigate(settingsPath)}
               >
                 Go to security settings
               </Button>
@@ -81,7 +87,7 @@ const CrossDeviceConfirmPage = () => {
                 backup codes now, to avoid losing access if you lose your
                 Authenticator.
               </p>
-              <Button className="w-full" onClick={() => navigate("/settings")}>
+              <Button className="w-full" onClick={() => navigate(settingsPath)}>
                 Go to security settings
               </Button>
             </div>

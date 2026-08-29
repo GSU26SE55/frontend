@@ -30,8 +30,10 @@ export const ambientService = {
       CommonResponse<PaginationResponse<AmbientThresholdConfigDto>>
     >(ENDPOINTS.AMBIENT.THRESHOLD_LIST, { params }),
 
+  // data is null when the site has no ambient threshold configured yet — BE returns
+  // 200 for that (a successful query with an empty result), not 404.
   getThresholdBySite: (siteId: string) =>
-    axiosInstance.get<CommonResponse<AmbientThresholdConfigDto>>(
+    axiosInstance.get<CommonResponse<AmbientThresholdConfigDto | null>>(
       ENDPOINTS.AMBIENT.THRESHOLD_BY_SITE(siteId),
     ),
 

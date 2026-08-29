@@ -38,10 +38,13 @@ import { AccountStatusEnum } from "@/shared/enums/account/account.enum";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
 // ── Maps ─────────────────────────────────────────────────────────────────────
+// "Staff" everywhere: the JWT, the sidebar, the account table and the permission matrix all
+// say Staff, so labelling the same person "Technician" only on their own profile read as a
+// second, different role. (The Technician role in the seeder is marked Deprecated.)
 const ROLE_LABEL: Record<string, string> = {
   Admin: "Admin",
   Manager: "Manager",
-  Staff: "Technician",
+  Staff: "Staff",
   Customer: "Customer",
 };
 
@@ -227,14 +230,14 @@ const ProfilePage = () => {
               {account?.fullName || "—"}
             </h3>
             {account?.role && (
-              <Badge variant="secondary" className="text-[11px] font-medium">
+              <Badge variant="secondary" className="text-2xs font-medium">
                 {ROLE_LABEL[account.role] ?? account.role}
               </Badge>
             )}
             {statusCfg && (
               <Badge
                 variant={statusCfg.variant}
-                className="text-[11px] font-medium"
+                className="text-2xs font-medium"
               >
                 {statusCfg.label}
               </Badge>
@@ -263,14 +266,14 @@ const ProfilePage = () => {
             {account?.createdAt && (
               <span className="flex items-center gap-1">
                 <CalendarDays size={11} />
-                Joined {format(new Date(account.createdAt), "MM/dd/yyyy")}
+                Joined {format(new Date(account.createdAt), "dd/MM/yyyy")}
               </span>
             )}
             {account?.lastLoginAt && (
               <span className="flex items-center gap-1">
                 <Clock size={11} />
                 Last login{" "}
-                {format(new Date(account.lastLoginAt), "MM/dd/yyyy HH:mm")}
+                {format(new Date(account.lastLoginAt), "dd/MM/yyyy HH:mm")}
               </span>
             )}
             {account?.twoFactorEnabled && (
@@ -286,7 +289,7 @@ const ProfilePage = () => {
       {/* ── Editable info form ── */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <p className="text-[13px] font-semibold mb-3">Personal information</p>
+          <p className="text-2sm font-semibold mb-3">Personal information</p>
           <Separator />
         </div>
 
@@ -378,7 +381,7 @@ const ProfilePage = () => {
         {account?.staffProfile && (
           <div className="space-y-3">
             <div>
-              <p className="text-[13px] font-semibold mb-3 flex items-center gap-1.5">
+              <p className="text-2sm font-semibold mb-3 flex items-center gap-1.5">
                 <Briefcase size={13} />
                 Staff information
               </p>

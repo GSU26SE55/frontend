@@ -179,7 +179,7 @@ export default function KbListPage() {
         </div>
 
         {(search.value.length === 1 || tagSearch.value.length === 1) && (
-          <p className="text-[11px] text-muted-foreground -mt-1.5">
+          <p className="text-2xs text-muted-foreground -mt-1.5">
             Enter at least 2 characters to search
           </p>
         )}

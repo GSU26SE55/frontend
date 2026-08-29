@@ -29,7 +29,7 @@ import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
-import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { loadFailed, noData, notFound } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 const STATUS_LABELS: Record<BatteryStatusEnum, string> = {
@@ -252,7 +252,14 @@ export default function BatteryAssetsPage() {
             onRetry={() => refetch()}
           />
         ) : items.length === 0 ? (
-          <EmptyState icon={Battery} title={noData("battery assets")} />
+          <EmptyState
+            icon={Battery}
+            title={
+              hasActiveFilter
+                ? notFound("battery assets")
+                : noData("battery assets")
+            }
+          />
         ) : (
           <BatteryAssetTable
             items={items}

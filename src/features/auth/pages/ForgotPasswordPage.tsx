@@ -130,7 +130,7 @@ const ForgotPasswordPage = () => {
                       ? "bg-emerald-600 text-white"
                       : isActive
                         ? "bg-emerald-600 text-white ring-4 ring-emerald-100"
-                        : "bg-slate-100 text-slate-400",
+                        : "bg-muted text-muted-foreground",
                   )}
                 >
                   <AnimatePresence mode="wait" initial={false}>
@@ -159,8 +159,8 @@ const ForgotPasswordPage = () => {
                 </div>
                 <span
                   className={cn(
-                    "text-[11px] font-medium whitespace-nowrap",
-                    isActive ? "text-slate-900" : "text-slate-400",
+                    "text-2xs font-medium whitespace-nowrap",
+                    isActive ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
                   {s.label}
@@ -169,7 +169,7 @@ const ForgotPasswordPage = () => {
               {i < STEPS.length - 1 && (
                 /* Draws left-to-right with clip-path instead of swapping colour: the
                    line reads as progress being made, not as a value flipping. */
-                <div className="relative mb-5 mx-1 h-px w-14 bg-slate-200">
+                <div className="relative mb-5 mx-1 h-px w-14 bg-border">
                   <div
                     className={cn(
                       "absolute inset-0 bg-emerald-500 transition-[clip-path] duration-(--motion-layout) ease-strong-in-out",
@@ -187,10 +187,12 @@ const ForgotPasswordPage = () => {
 
       {/* Title + description */}
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           {STEP_META[state.step].title}
         </h1>
-        <p className="text-sm text-slate-500">{STEP_META[state.step].desc}</p>
+        <p className="text-sm text-muted-foreground">
+          {STEP_META[state.step].desc}
+        </p>
         {state.step === 3 && state.countdown > 0 && (
           <p className="text-xs font-semibold text-amber-500">
             Code expires in: {formattedCountdown}
@@ -231,7 +233,7 @@ const ForgotPasswordPage = () => {
       <div className="pt-1 text-center">
         <Link
           to="/login"
-          className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-emerald-600 transition-colors"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-emerald-600 transition-colors"
         >
           <ChevronLeft className="size-3.5" />
           Back to log in

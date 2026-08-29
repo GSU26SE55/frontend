@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -18,14 +18,11 @@ import {
   useTicketKbRefs,
   useAddTicketKbRef,
   useRemoveTicketKbRef,
-} from "@/features/staff/hooks/ticket/useTicketKbRefs";
-import { staffKbService } from "@/features/staff/services/kb/kb.service";
+} from "@/shared/hooks/ticket/useTicketKbRefs";
 import { useKbSuggestions } from "@/shared/hooks/useSuggestions";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
-  KbArticleStatusEnum,
-  KbCategoryCode,
 } from "@/shared/enums/kb/kb.enum";
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import {
@@ -33,6 +30,10 @@ import {
   type KbArticleSearchParams,
 } from "@/shared/components/kb/KbArticleSelector";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb/kb.enum";
+import type {
+  KbArticleDTO,
+  KbArticleSummaryDTO,
+} from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
 import { toneFill } from "@/shared/theme/statusColors";
 
@@ -67,6 +68,17 @@ interface TicketKbReferencesPanelProps {
   canAdd?: boolean;
   /** Ticket is Resolved — only the 2 after-resolve types are recorded (matches BE guard H). */
   afterResolveOnly?: boolean;
+  /**
+   * Route prefix owning a `kb/:id` page — "/admin", "/manager" or "/staff". Shared cannot
+   * know which console it is rendering in, and a hardcoded prefix would 404 in the others.
+   */
+  basePath: string;
+  /** Published-article search, backed by the caller's own KB service. */
+  searchArticles: (
+    params: KbArticleSearchParams,
+  ) => Promise<KbArticleSummaryDTO[]>;
+  /** Full article for the preview pane, backed by the caller's own KB service. */
+  getArticleDetail: (id: string) => Promise<KbArticleDTO>;
 }
 
 export default function TicketKbReferencesPanel({
@@ -74,6 +86,9 @@ export default function TicketKbReferencesPanel({
   defaultCategory,
   canAdd = true,
   afterResolveOnly = false,
+  basePath,
+  searchArticles,
+  getArticleDetail,
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
@@ -95,24 +110,6 @@ export default function TicketKbReferencesPanel({
       (s) => !attachedIds.has(s.kbArticleId),
     );
   }, [aiSuggest, refs]);
-
-  const searchArticles = useCallback(
-    ({ q, category }: KbArticleSearchParams) =>
-      staffKbService
-        .getList({
-          q,
-          category: category ? KbCategoryCode[category] : undefined,
-          status: KbArticleStatusEnum.Published,
-          pageSize: 20,
-        })
-        .then((r) => r.data.data?.items ?? []),
-    [],
-  );
-
-  const getArticleDetail = useCallback(
-    (id: string) => staffKbService.getDetail(id).then((r) => r.data.data!),
-    [],
-  );
 
   const [showAdd, setShowAdd] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -197,7 +194,7 @@ export default function TicketKbReferencesPanel({
                 : undefined
             }
             onClick={() =>
-              navigate("/staff/kb/new", {
+              navigate(`${basePath}/kb/new`, {
                 state: { ticketId, category: defaultCategory },
               })
             }
@@ -233,11 +230,11 @@ export default function TicketKbReferencesPanel({
         <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" />
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+            <h4 className="text-2xs font-semibold uppercase tracking-wider text-primary">
               AI-suggested articles
             </h4>
             {aiSuggest?.aiAvailable === false && (
-              <span className="ml-auto text-[10px] text-muted-foreground">
+              <span className="ml-auto text-3xs text-muted-foreground">
                 AI temporarily unavailable
               </span>
             )}
@@ -246,7 +243,7 @@ export default function TicketKbReferencesPanel({
           {/* Make clear these are SUGGESTIONS, not already-attached articles — avoids
               the impression that the system auto-attached them to the ticket. */}
           {suggested.length > 0 && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Articles that may be related to this incident. Click{" "}
               <span className="font-medium">Attach</span> if you actually used
               it while resolving — until then it isn't recorded on the ticket.
@@ -254,13 +251,13 @@ export default function TicketKbReferencesPanel({
           )}
 
           {loadingSuggest && (
-            <p className="text-[11px] text-muted-foreground">Analyzing...</p>
+            <p className="text-2xs text-muted-foreground">Analyzing...</p>
           )}
 
           {/* No matching article — still needs to be stated, with the AI's `note` if
               present (e.g. "no published articles yet") to explain why. */}
           {!loadingSuggest && suggested.length === 0 && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               {aiSuggest?.aiAvailable === false
                 ? aiSuggest.note ||
                   'Couldn\'t get suggestions from AI. You can search manually with the "Attach article" button.'
@@ -278,19 +275,19 @@ export default function TicketKbReferencesPanel({
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                      <span className="font-mono text-[11px] text-muted-foreground">
+                      <span className="font-mono text-2xs text-muted-foreground">
                         {item.code}
                       </span>
                       <span className="text-xs font-medium">{item.title}</span>
                       <span
-                        className={`rounded px-1 py-0.5 text-[9.5px] font-semibold ${toneFill("muted")}`}
+                        className={`rounded px-1 py-0.5 text-3xs font-semibold ${toneFill("muted")}`}
                       >
                         {Math.round(item.score * 100)}% match
                       </span>
                     </div>
                     {/* Reason — the basis for the technician to trust the ranking order. */}
                     {item.reason && (
-                      <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                      <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
                         {item.reason}
                       </p>
                     )}
@@ -298,7 +295,7 @@ export default function TicketKbReferencesPanel({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-6 shrink-0 gap-1 px-2 text-[11px]"
+                    className="h-6 shrink-0 gap-1 px-2 text-2xs"
                     disabled={!canAdd || adding || afterResolveOnly}
                     title={
                       afterResolveOnly
@@ -341,7 +338,7 @@ export default function TicketKbReferencesPanel({
                 />
 
                 <div className="space-y-1.5">
-                  <p className="text-[11px] font-medium text-muted-foreground">
+                  <p className="text-2xs font-medium text-muted-foreground">
                     Reference type
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -362,7 +359,7 @@ export default function TicketKbReferencesPanel({
                       );
                     })}
                   </div>
-                  <p className="text-[11px] text-muted-foreground italic">
+                  <p className="text-2xs text-muted-foreground italic">
                     {REF_TYPE_DESC[effectiveRefType]}
                   </p>
                 </div>
@@ -427,10 +424,10 @@ export default function TicketKbReferencesPanel({
             return (
               <div key={type} className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {KbReferenceTypeLabel[type]}
                   </h4>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-2xs text-muted-foreground">
                     ({items.length})
                   </span>
                 </div>
@@ -445,7 +442,7 @@ export default function TicketKbReferencesPanel({
                             </span>
                             <span
                               className={cn(
-                                "rounded border px-1.5 py-0.5 text-[10px] font-medium",
+                                "rounded border px-1.5 py-0.5 text-3xs font-medium",
                                 REF_TYPE_BADGE[type],
                               )}
                             >
@@ -469,7 +466,7 @@ export default function TicketKbReferencesPanel({
                             size="icon"
                             className="size-7"
                             onClick={() =>
-                              navigate(`/staff/kb/${ref.kbArticleId}`)
+                              navigate(`${basePath}/kb/${ref.kbArticleId}`)
                             }
                             title="View article"
                           >

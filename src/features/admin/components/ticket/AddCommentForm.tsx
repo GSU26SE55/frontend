@@ -93,9 +93,16 @@ export default function AddCommentForm({
   }, [form, prefillText, prefillVersion]);
 
   const onSubmit = async (values: AddCommentFormValues) => {
-    await mutateAsync({ ...values, isInternal });
-    form.reset();
-    setResetCount((c) => c + 1);
+    try {
+      await mutateAsync({ ...values, isInternal });
+      form.reset();
+      setResetCount((c) => c + 1);
+    } catch {
+      // The mutation's onError already toasts, and a chat composer has no labelled
+      // fields to map an EntityError onto. Catching still matters: the rejection would
+      // otherwise escape handleSubmit unhandled. The draft is deliberately left in the
+      // box so a failed send can be retried without retyping.
+    }
   };
 
   const { isRecording, elapsedSeconds, waveform, start, stop, cancel } =

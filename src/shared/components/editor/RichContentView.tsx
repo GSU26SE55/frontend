@@ -62,7 +62,10 @@ export function RichContentView({ html, className }: RichContentViewProps) {
   return (
     <div
       ref={containerRef}
-      className={cn("rich-content text-sm leading-relaxed", className)}
+      // text-base, not text-sm: this renders whole KB articles and blog posts — the only
+      // continuous prose in the app, read a paragraph at a time rather than scanned like a
+      // table cell. Chrome around it stays denser.
+      className={cn("rich-content text-base leading-relaxed", className)}
       dangerouslySetInnerHTML={{ __html: clean }}
     />
   );

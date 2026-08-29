@@ -35,14 +35,14 @@ interface DatePickerProps {
   max?: string;
 }
 
-const TYPED_DATE_FORMAT = "MM/dd/yyyy";
+const TYPED_DATE_FORMAT = "dd/MM/yyyy";
 
-/** Replaces <Input type="date"> — value/onChange keep the "yyyy-MM-dd" string format so the schema/state at call sites doesn't change. Supports both typing "MM/dd/yyyy" directly and picking from the calendar popover. */
+/** Replaces <Input type="date"> — value/onChange keep the "yyyy-MM-dd" string format so the schema/state at call sites doesn't change. Supports both typing "dd/MM/yyyy" directly and picking from the calendar popover. */
 export function DatePicker({
   id,
   value,
   onChange,
-  placeholder = "MM/DD/YYYY",
+  placeholder = "DD/MM/YYYY",
   disabled,
   className,
   min,
@@ -153,14 +153,14 @@ interface DateTimePickerProps {
   max?: Date;
 }
 
-const TYPED_DATETIME_FORMAT = "MM/dd/yyyy HH:mm";
+const TYPED_DATETIME_FORMAT = "dd/MM/yyyy HH:mm";
 
-/** Replaces <Input type="datetime-local"> — value/onChange keep the "yyyy-MM-ddTHH:mm" string format. Supports both typing "MM/dd/yyyy HH:mm" directly and picking from the calendar popover. */
+/** Replaces <Input type="datetime-local"> — value/onChange keep the "yyyy-MM-ddTHH:mm" string format. Supports both typing "dd/MM/yyyy HH:mm" directly and picking from the calendar popover. */
 export function DateTimePicker({
   id,
   value,
   onChange,
-  placeholder = "MM/DD/YYYY HH:mm",
+  placeholder = "DD/MM/YYYY HH:mm",
   disabled,
   className,
   min,

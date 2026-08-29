@@ -38,12 +38,16 @@ export const useAmbientThresholdList = (params?: AmbientThresholdListParams) =>
   });
 
 // Threshold by site — config UI: staleTime 10 minutes.
-// retry:false — an unconfigured site returns 404 (expected) → form falls back to create mode.
+// Resolves to `null` for a site with no config yet: BE returns 200 with data = null for
+// that case, so the form reads it as "create mode" from data rather than from isError.
+// The `?? null` pins the resolved type — `undefined` would read as "no data" to React Query.
 export const useAmbientThresholdBySite = (siteId: string) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.thresholdBySite(siteId),
     queryFn: () =>
-      ambientService.getThresholdBySite(siteId).then((r) => r.data.data),
+      ambientService
+        .getThresholdBySite(siteId)
+        .then((r) => r.data.data ?? null),
     enabled: !!siteId,
     staleTime: 10 * 60_000,
     retry: false,

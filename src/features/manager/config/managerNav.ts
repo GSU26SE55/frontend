@@ -12,6 +12,7 @@ import {
   Clock,
   BookOpen,
   ShieldAlert,
+  Router,
   BarChart3,
   // SlidersHorizontal, // unused while "Calibrations expiring" nav entry is hidden
 } from "lucide-react";
@@ -63,6 +64,11 @@ export const MANAGER_NAV: NavSection[] = [
         path: "/manager/environmental-incidents",
         icon: ShieldAlert,
       },
+      {
+        label: SIDEBAR_LABELS.deviceAlerts,
+        path: "/manager/device-alerts",
+        icon: Router,
+      },
     ],
   },
   {
@@ -72,7 +78,14 @@ export const MANAGER_NAV: NavSection[] = [
     items: [
       // Batteries are reached through Sites (Sites → site detail → battery detail).
       // The /manager/battery-assets/:id route is kept for deep-links from alerts/tickets.
-      { label: SIDEBAR_LABELS.sites, path: "/manager/sites", icon: MapPin },
+      // It has no nav entry of its own, so Sites claims it — otherwise the sidebar shows
+      // no active item on a battery detail page.
+      {
+        label: SIDEBAR_LABELS.sites,
+        path: "/manager/sites",
+        icon: MapPin,
+        activePaths: ["/manager/battery-assets"],
+      },
       // Ẩn tạm Calibrations expiring khỏi sidebar — không xoá, chờ yêu cầu bật lại.
       // {
       //   label: "Calibrations expiring",

@@ -23,7 +23,10 @@ export const createAccountSchema = z
     confirmPassword: z.string(),
     phoneNumber: optionalPhoneField,
     dateOfBirth: birthDateField,
-    address: z.string().optional(),
+    address: z
+      .string()
+      .max(500, "Address must be at most 500 characters")
+      .optional(),
     roleId: z.string().min(1, "Select a role"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -35,7 +38,10 @@ export const editAccountSchema = z.object({
   fullName: fullNameField,
   phoneNumber: optionalPhoneField,
   dateOfBirth: birthDateField,
-  address: z.string().optional(),
+  address: z
+    .string()
+    .max(500, "Address must be at most 500 characters")
+    .optional(),
 });
 
 export const changeAccountStatusSchema = z.object({

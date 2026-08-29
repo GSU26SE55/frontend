@@ -2,18 +2,23 @@ import * as React from "react";
 import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 
 import { cn } from "@/lib/utils";
-import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
+import { DUR, EASE_OUT } from "@/shared/motion/tokens";
 
-// Rows rise into place, one after the other, when a table mounts or its data
+// Rows fade into place, one after the other, when a table mounts or its data
 // swaps (page 2, a new filter). Ordering comes from framer's variant propagation —
 // `TableBody` staggers whatever `TableRow` children it has, so no row needs its index.
 // Cost is one motion component per row: fine for the paginated tables here, worth a
 // second look if a table ever renders hundreds of rows unpaginated.
+//
+// A fade only, with no travel — for the same reason `PageTransition` dropped its slide.
+// The rows used to arrive from `y: DIST.md`, but the container below is `overflow-x-auto`,
+// and per spec a non-visible `overflow-x` forces `overflow-y` to compute to `auto` too.
+// The translated rows overflowed that box vertically, so every table painted a scrollbar
+// on mount and dropped it once the rows landed — a visible flicker on all three roles.
 const ROW_VARIANTS = {
-  hidden: { opacity: 0, y: DIST.md },
+  hidden: { opacity: 0 },
   shown: {
     opacity: 1,
-    y: 0,
     transition: { duration: DUR.layout, ease: EASE_OUT },
   },
 };

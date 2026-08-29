@@ -90,12 +90,37 @@ export const useUnresolvedAlertCount = () => {
     pageSize: 1,
     status: AlertStatusEnum.Open,
     excludeEnvironmentalIncidents: true,
+    excludeIotDeviceAlerts: true,
   });
   const acknowledged = useAlertList({
     pageNumber: 1,
     pageSize: 1,
     status: AlertStatusEnum.Acknowledged,
     excludeEnvironmentalIncidents: true,
+    excludeIotDeviceAlerts: true,
+  });
+
+  return {
+    count: (open.data?.totalItems ?? 0) + (acknowledged.data?.totalItems ?? 0),
+    isLoading: open.isLoading || acknowledged.isLoading,
+  };
+};
+
+// Same shape as useUnresolvedAlertCount, for the Device alerts badge. The two filters are
+// exact opposites, so a device alert is counted by this badge and not by the battery one —
+// no alert is counted twice and none is missed.
+export const useUnresolvedDeviceAlertCount = () => {
+  const open = useAlertList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: AlertStatusEnum.Open,
+    iotOnly: true,
+  });
+  const acknowledged = useAlertList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: AlertStatusEnum.Acknowledged,
+    iotOnly: true,
   });
 
   return {

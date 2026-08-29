@@ -81,7 +81,7 @@ function LegendItem({
   label: string;
 }) {
   return (
-    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+    <span className="flex items-center gap-1.5 text-2xs text-muted-foreground">
       <svg width="14" height="2" className="shrink-0 overflow-visible">
         <line
           x1="0"
@@ -195,7 +195,7 @@ export default function ChargeDischargePeakChart({
           ))}
           {(threshold?.currentMaxCharge != null ||
             threshold?.currentMaxDischarge != null) && (
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+            <span className="flex items-center gap-1.5 text-2xs text-muted-foreground/70">
               <svg width="14" height="2" className="shrink-0 overflow-visible">
                 <line
                   x1="0"

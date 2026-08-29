@@ -28,6 +28,7 @@ import type { IotFirmwareReleaseDto } from "@/shared/types/iot/iot.types";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { formatDate } from "@/shared/utils/datetime";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -160,7 +161,7 @@ export default function IoTFirmwareTable({ items, sort }: Props) {
                 {formatBytes(item.artifactSizeBytes)}
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                {formatDate(item.createdAt)}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

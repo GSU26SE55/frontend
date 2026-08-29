@@ -8,6 +8,7 @@ import {
   GROUP_DESCRIPTION_MAX,
   BROADCAST_TITLE_MAX,
   BROADCAST_BODY_MAX,
+  BROADCAST_TARGETS_MAX,
 } from "@/features/admin/types/notification/notification-group.types";
 
 // Length limits match the DB columns and the BE's ValidateAsync — checked on the FE so errors show
@@ -75,6 +76,16 @@ export const broadcastFormSchema = z
   .refine((v) => v.groupIds.length > 0 || v.userIds.length > 0, {
     message: "Select at least one group or recipient",
     path: ["groupIds"],
-  });
+  })
+  // The BE rejects more than MaxTargets in one send. Without this the admin only learns
+  // after picking every recipient and writing the message, and the 400 costs them all of
+  // that work — so the ceiling is enforced while they are still choosing.
+  .refine(
+    (v) => v.groupIds.length + v.userIds.length <= BROADCAST_TARGETS_MAX,
+    {
+      message: `A send may target at most ${BROADCAST_TARGETS_MAX} groups and recipients combined`,
+      path: ["groupIds"],
+    },
+  );
 
 export type BroadcastFormValues = z.infer<typeof broadcastFormSchema>;

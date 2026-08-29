@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
   Dialog,
   DialogContent,
@@ -42,9 +43,16 @@ export default function DeclareIncidentDialog({
   });
 
   const onSubmit = async (values: DeclareIncidentFormValues) => {
-    await mutateAsync(values.incidentDescription.trim());
-    form.reset();
-    onClose();
+    try {
+      await mutateAsync(values.incidentDescription.trim());
+      form.reset();
+      onClose();
+    } catch (error) {
+      // EntityError (400 + listErrors) → the message lands on the offending input;
+      // anything else → toast. Without this the promise rejected unhandled and the
+      // dialog just sat there: no error shown, and reset/onClose never ran either.
+      handleErrorApi({ error, setError: form.setError });
+    }
   };
 
   return (

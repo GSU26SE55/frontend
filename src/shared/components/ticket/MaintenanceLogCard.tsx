@@ -19,7 +19,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value?.trim()) return null;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+      <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground/80">
         {label}
       </p>
       <p className="text-sm whitespace-pre-wrap wrap-break-word">{value}</p>
@@ -63,14 +63,15 @@ export default function MaintenanceLogCard({
 
   // Same-day logs repeat the date twice otherwise ("08/25 14:55 → 08/25 23:19").
   const sameDay =
-    completed && format(started, "yyyy-MM-dd") === format(completed, "yyyy-MM-dd");
+    completed &&
+    format(started, "yyyy-MM-dd") === format(completed, "yyyy-MM-dd");
   const when = completed
-    ? `${format(started, "MM/dd/yyyy HH:mm", { locale: enUS })} → ${format(
+    ? `${format(started, "dd/MM/yyyy HH:mm", { locale: enUS })} → ${format(
         completed,
-        sameDay ? "HH:mm" : "MM/dd/yyyy HH:mm",
+        sameDay ? "HH:mm" : "dd/MM/yyyy HH:mm",
         { locale: enUS },
       )}`
-    : format(started, "MM/dd/yyyy HH:mm", { locale: enUS });
+    : format(started, "dd/MM/yyyy HH:mm", { locale: enUS });
 
   const hasBody =
     !!log.diagnosisDetails?.trim() ||

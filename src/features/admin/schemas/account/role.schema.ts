@@ -5,16 +5,16 @@ export const createRoleSchema = z.object({
   name: z
     .string()
     .min(2, "Role name must be at least 2 characters")
-    .max(50, "Must be at most 50 characters"),
-  description: z.string().max(200, "Must be at most 200 characters").optional(),
+    .max(100, "Must be at most 100 characters"),
+  description: z.string().max(500, "Must be at most 500 characters").optional(),
 });
 
 export const editRoleSchema = z.object({
   name: z
     .string()
     .min(2, "Role name must be at least 2 characters")
-    .max(50, "Must be at most 50 characters"),
-  description: z.string().max(200, "Must be at most 200 characters").optional(),
+    .max(100, "Must be at most 100 characters"),
+  description: z.string().max(500, "Must be at most 500 characters").optional(),
 });
 
 export const changeRoleStatusSchema = z.object({

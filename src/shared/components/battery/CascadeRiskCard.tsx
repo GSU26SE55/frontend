@@ -97,7 +97,7 @@ export default function CascadeRiskCard({
               {data.cascadeRiskUpdatedAt
                 ? format(
                     new Date(data.cascadeRiskUpdatedAt),
-                    "MM/dd/yyyy HH:mm",
+                    "dd/MM/yyyy HH:mm",
                     {
                       locale: enUS,
                     },

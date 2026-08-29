@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import type { ChatReaderDto } from "@/shared/types/chat/chat.types";
+import type { TicketCommentDTO } from "@/shared/types/ticket/ticket.types";
 import {
   createTicketCommentConnection,
   isConnected,
@@ -16,6 +18,41 @@ import {
 // Manager renders comments from QUERY_KEY.tickets.chats (default), but staff/admin render
 // comments EMBEDDED in the ticket detail (a different key) → pass the corresponding detail key
 // so new comments show up realtime without a reload.
+/** ChatRead payload — BE sends it only to the AUTHOR of the messages that were read. */
+interface ChatReadPayload {
+  ticketId: string;
+  readers?: ChatReaderDto[];
+}
+
+/**
+ * Apply `fn` to every chat inside a cached QUERY_KEY.tickets.chats entry.
+ *
+ * The same key is cached in DIFFERENT shapes depending on which feature fetched it — staff
+ * stores a bare TicketCommentDTO[], admin/manager store the raw axios/CommonResponse envelope
+ * and unwrap via `select`. Rather than guessing, walk the known containers and return the
+ * value untouched whenever the shape isn't recognised, so an unknown shape is left alone
+ * instead of being clobbered.
+ */
+function patchChats(
+  cached: unknown,
+  fn: (c: TicketCommentDTO) => TicketCommentDTO,
+): unknown {
+  if (!cached) return cached;
+
+  if (Array.isArray(cached)) return cached.map(fn);
+
+  if (typeof cached !== "object") return cached;
+
+  const obj = cached as Record<string, unknown>;
+  for (const key of ["items", "data"]) {
+    const inner = obj[key];
+    if (inner === undefined) continue;
+    const patched = patchChats(inner, fn);
+    if (patched !== inner) return { ...obj, [key]: patched };
+  }
+  return cached;
+}
+
 export function useTicketCommentsRealtime(
   ticketId: string,
   extraInvalidateKeys: readonly (readonly unknown[])[] = [],
@@ -108,6 +145,42 @@ export function useTicketCommentsRealtime(
             }
           },
         );
+
+        // "Seen" receipts (Messenger-style). BE sends this ONLY to the author of the messages
+        // that were just read, and the payload carries just the NEW receipts from that flush —
+        // not the full list. So merge into the cached chats by (chatId, userId) instead of
+        // refetching: a refetch here would be one extra request per reader per flush.
+        c.on("ChatRead", (payload: ChatReadPayload) => {
+          const readers = payload?.readers;
+          if (!readers?.length) return;
+
+          const byChat = new Map<string, ChatReaderDto[]>();
+          for (const r of readers) {
+            if (!r?.chatId) continue;
+            const list = byChat.get(r.chatId);
+            if (list) list.push(r);
+            else byChat.set(r.chatId, [r]);
+          }
+          if (byChat.size === 0) return;
+
+          const mergeInto = (c: TicketCommentDTO): TicketCommentDTO => {
+            const incoming = byChat.get(c.id);
+            if (!incoming) return c;
+            const merged = [...(c.readReceipts ?? [])];
+            for (const r of incoming) {
+              const at = merged.findIndex((m) => m.userId === r.userId);
+              if (at >= 0) merged[at] = r;
+              else merged.push(r);
+            }
+            return { ...c, readReceipts: merged, readCount: merged.length };
+          };
+
+          // The chat list is paginated, so patch every cached page of this ticket.
+          qc.setQueriesData(
+            { queryKey: QUERY_KEY.tickets.chats(ticketId) },
+            (old: unknown) => patchChats(old, mergeInto),
+          );
+        });
 
         c.on(
           "UserTyping",

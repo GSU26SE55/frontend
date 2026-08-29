@@ -91,10 +91,10 @@ const Login2faPage = () => {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Two-factor authentication
         </h1>
-        <p className="text-sm text-slate-500">{hint}</p>
+        <p className="text-sm text-muted-foreground">{hint}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -141,7 +141,7 @@ const Login2faPage = () => {
               />
               <Label
                 htmlFor="trust-device"
-                className="text-sm font-normal text-slate-600"
+                className="text-sm font-normal text-muted-foreground"
               >
                 Trust this device (skip 2FA for 30 days)
               </Label>
@@ -166,7 +166,7 @@ const Login2faPage = () => {
           Verify
         </Button>
 
-        <div className="flex flex-col gap-1.5 text-center text-sm text-slate-500">
+        <div className="flex flex-col gap-1.5 text-center text-sm text-muted-foreground">
           {!isBackup && (
             <button
               type="button"

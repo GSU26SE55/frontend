@@ -71,7 +71,7 @@ export default function MyMaintenanceLogsPage() {
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="outline">{log.logType}</Badge>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(log.startedAt), "MM/dd/yyyy HH:mm", {
+                        {format(new Date(log.startedAt), "dd/MM/yyyy HH:mm", {
                           locale: enUS,
                         })}
                       </p>

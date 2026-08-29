@@ -13,14 +13,29 @@ export const PASSWORD_MESSAGE =
 export const PHONE_REGEX = /^(0[35789])[0-9]{8}$/;
 export const PHONE_MESSAGE = "Invalid phone number";
 
-/** Email — used by login/register/forgot… */
-export const emailField = z.string().email("Invalid email address");
+/**
+ * Email — used by login/register/forgot…
+ *
+ * `.min(1)` runs before `.email()` so an empty box reports "Email is required" instead of
+ * "Invalid email address" — the password field beside it already said "Password is required",
+ * so the two halves of the same form disagreed on what an empty field means.
+ */
+export const emailField = z
+  .string()
+  .min(1, "Email is required")
+  .email("Invalid email address")
+  .max(256, "Email must be at most 256 characters");
 
 /** Email with a length cap (change-email, reactivate). */
 export const emailFieldMax = (
   max = 256,
   msg = "Email must be at most 256 characters",
-) => z.string().email("Invalid email address").max(max, msg);
+) =>
+  z
+    .string()
+    .min(1, "Email is required")
+    .email("Invalid email address")
+    .max(max, msg);
 
 /** Strong password (register / forgot-password / accept-invite). */
 export const passwordField = z.string().regex(PASSWORD_REGEX, PASSWORD_MESSAGE);
@@ -31,10 +46,11 @@ export const passwordFieldBounded = z
   .regex(PASSWORD_REGEX, PASSWORD_MESSAGE)
   .max(100, "Password must be at most 100 characters");
 
-/** Full name, at least 2 characters. */
+/** Full name, 2–150 characters (the BE rejects anything longer with a 400). */
 export const fullNameField = z
   .string()
-  .min(2, "Full name must be at least 2 characters");
+  .min(2, "Full name must be at least 2 characters")
+  .max(150, "Full name must be at most 150 characters");
 
 /** Vietnamese phone number (required). */
 export const phoneField = z.string().regex(PHONE_REGEX, PHONE_MESSAGE);

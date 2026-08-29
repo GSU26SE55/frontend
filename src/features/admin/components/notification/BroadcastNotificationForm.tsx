@@ -326,7 +326,7 @@ export default function BroadcastNotificationForm() {
                       <span className="text-muted-foreground">— {a.email}</span>
                     </span>
                     {userIds.includes(a.id) && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-3xs">
                         selected
                       </Badge>
                     )}
@@ -395,7 +395,7 @@ export default function BroadcastNotificationForm() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>
-            Type <span className="text-red-500">*</span>
+            Type <span className="text-destructive">*</span>
           </Label>
           <Controller
             name="type"
@@ -429,7 +429,7 @@ export default function BroadcastNotificationForm() {
 
         <div className="space-y-1.5">
           <Label>
-            Channels <span className="text-red-500">*</span>
+            Channels <span className="text-destructive">*</span>
           </Label>
           <div className="flex flex-wrap gap-3 pt-1.5">
             {CHANNEL_OPTIONS.map((c) => (
@@ -461,7 +461,7 @@ export default function BroadcastNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="bc-title">
-          Title <span className="text-red-500">*</span>{" "}
+          Title <span className="text-destructive">*</span>{" "}
           <span className="text-xs font-normal text-muted-foreground">
             ({titleValue.length}/{BROADCAST_TITLE_MAX})
           </span>
@@ -478,7 +478,7 @@ export default function BroadcastNotificationForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="bc-body">
-          Body <span className="text-red-500">*</span>{" "}
+          Body <span className="text-destructive">*</span>{" "}
           <span className="text-xs font-normal text-muted-foreground">
             ({bodyValue.length}/{BROADCAST_BODY_MAX})
           </span>

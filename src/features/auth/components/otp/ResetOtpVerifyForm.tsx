@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,13 +25,14 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
   const {
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<ForgotPasswordStep2Values>({
     resolver: zodResolver(forgotPasswordStep2Schema),
     defaultValues: { otp: "" },
   });
 
-  const { mutate: verifyOtp, isPending: isVerifying } =
+  const { mutateAsync: verifyOtp, isPending: isVerifying } =
     useVerifyResetOtp(onSuccess);
   const { mutate: resendOtp, isPending: isResending } = useResendResetOtp();
 
@@ -40,8 +42,15 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
     return () => clearInterval(id);
   }, [countdown]);
 
-  const onSubmit = (data: ForgotPasswordStep2Values) =>
-    verifyOtp({ email, otp: data.otp });
+  const onSubmit = async (data: ForgotPasswordStep2Values) => {
+    try {
+      await verifyOtp({ email, otp: data.otp });
+    } catch (error) {
+      // EntityError (400 + listErrors) → the message appears under the input the BE
+      // rejected — a wrong or expired code belongs beside the OTP box, not in a toast.
+      handleErrorApi({ error, setError });
+    }
+  };
 
   const handleResend = () => {
     resendOtp({ email });
@@ -96,7 +105,7 @@ const ResetOtpVerifyForm = ({ email, onSuccess }: ResetOtpVerifyFormProps) => {
           type="button"
           disabled={countdown > 0 || isResending}
           onClick={handleResend}
-          className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           {countdown > 0 ? `Resend in ${countdown}s` : "Resend OTP"}
         </button>

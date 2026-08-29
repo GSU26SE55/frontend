@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import { Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,13 +25,14 @@ const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
   const {
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<OtpVerifyFormValues>({
     resolver: zodResolver(otpVerifySchema),
     defaultValues: { otp: "" },
   });
 
-  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp(
+  const { mutateAsync: verifyOtp, isPending: isVerifying } = useVerifyOtp(
     onSuccess || (() => {}),
   );
   const { mutate: resendOtp, isPending: isResending } = useResendOtp();
@@ -41,8 +43,15 @@ const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
     return () => clearInterval(id);
   }, [countdown]);
 
-  const onSubmit = (data: OtpVerifyFormValues) =>
-    verifyOtp({ email, otp: data.otp });
+  const onSubmit = async (data: OtpVerifyFormValues) => {
+    try {
+      await verifyOtp({ email, otp: data.otp });
+    } catch (error) {
+      // EntityError (400 + listErrors) → the message appears under the input the BE
+      // rejected — a wrong or expired code belongs beside the OTP box, not in a toast.
+      handleErrorApi({ error, setError });
+    }
+  };
 
   const handleResend = () => {
     resendOtp({ email });
@@ -53,16 +62,18 @@ const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
           Verify email
         </h1>
-        <p className="text-sm text-slate-500">A 6-digit code was sent to</p>
+        <p className="text-sm text-muted-foreground">
+          A 6-digit code was sent to
+        </p>
       </div>
 
       {/* Email badge */}
-      <div className="flex items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+      <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted px-3.5 py-2.5">
         <Mail className="size-4 shrink-0 text-emerald-500" />
-        <span className="text-sm font-medium text-slate-700 truncate">
+        <span className="text-sm font-medium text-foreground truncate">
           {email}
         </span>
       </div>
@@ -105,12 +116,14 @@ const OtpVerifyForm = ({ email, onSuccess }: OtpVerifyFormProps) => {
         </Button>
 
         <div className="text-center">
-          <p className="text-xs text-slate-500 mb-1">Didn't get a code?</p>
+          <p className="text-xs text-muted-foreground mb-1">
+            Didn't get a code?
+          </p>
           <button
             type="button"
             disabled={countdown > 0 || isResending}
             onClick={handleResend}
-            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
           </button>

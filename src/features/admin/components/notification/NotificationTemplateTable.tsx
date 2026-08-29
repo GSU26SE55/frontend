@@ -117,7 +117,7 @@ export default function NotificationTemplateTable({
               </span>
             </TableCell>
             <TableCell className="text-muted-foreground text-xs">
-              {format(new Date(t.updatedAt ?? t.createdAt), "MM/dd/yyyy HH:mm")}
+              {format(new Date(t.updatedAt ?? t.createdAt), "dd/MM/yyyy HH:mm")}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>

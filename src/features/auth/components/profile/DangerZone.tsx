@@ -70,7 +70,7 @@ const DangerZone = () => {
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}
-            Download data
+            Download
           </Button>
         </div>
 
