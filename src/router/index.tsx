@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { lazyPage } from "./lazyPage";
+import RouteErrorBoundary from "./RouteErrorBoundary";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import PageLoader from "@/shared/components/layout/PageLoader";
 import ProtectedRoute from "./ProtectedRoute";
@@ -36,15 +37,21 @@ const UseMobileAppPage = lazyPage(
   () => import("@/features/auth/pages/UseMobileAppPage"),
 );
 const LoginPage = lazyPage(() => import("@/features/auth/pages/LoginPage"));
-const Login2faPage = lazyPage(() => import("@/features/auth/pages/Login2faPage"));
+const Login2faPage = lazyPage(
+  () => import("@/features/auth/pages/Login2faPage"),
+);
 const ReactivatePage = lazyPage(
   () => import("@/features/auth/pages/ReactivatePage"),
 );
 const CrossDeviceConfirmPage = lazyPage(
   () => import("@/features/auth/pages/CrossDeviceConfirmPage"),
 );
-const RegisterPage = lazyPage(() => import("@/features/auth/pages/RegisterPage"));
-const OtpVerifyPage = lazyPage(() => import("@/features/auth/pages/OtpVerifyPage"));
+const RegisterPage = lazyPage(
+  () => import("@/features/auth/pages/RegisterPage"),
+);
+const OtpVerifyPage = lazyPage(
+  () => import("@/features/auth/pages/OtpVerifyPage"),
+);
 const ForgotPasswordPage = lazyPage(
   () => import("@/features/auth/pages/ForgotPasswordPage"),
 );
@@ -133,7 +140,9 @@ const StaffIoTDevicesPage = lazyPage(
 const StaffIoTDeviceDetailPage = lazyPage(
   () => import("@/features/staff/pages/IoTDeviceDetailPage"),
 );
-const AccountsPage = lazyPage(() => import("@/features/admin/pages/AccountsPage"));
+const AccountsPage = lazyPage(
+  () => import("@/features/admin/pages/AccountsPage"),
+);
 const RolesPage = lazyPage(() => import("@/features/admin/pages/RolesPage"));
 const AdminTicketListPage = lazyPage(
   () => import("@/features/admin/pages/AdminTicketListPage"),
@@ -144,7 +153,9 @@ const AdminSagaDebugPage = lazyPage(
 const AdminTicketDetailPage = lazyPage(
   () => import("@/features/admin/pages/AdminTicketDetailPage"),
 );
-const AdminAlertsPage = lazyPage(() => import("@/features/admin/pages/AlertsPage"));
+const AdminAlertsPage = lazyPage(
+  () => import("@/features/admin/pages/AlertsPage"),
+);
 const AdminEnvironmentalIncidentsPage = lazyPage(
   () => import("@/features/admin/pages/EnvironmentalIncidentsPage"),
 );
@@ -202,7 +213,9 @@ const StaffMyMaintenanceLogsPage = lazyPage(
 const StaffSlaMonitorPage = lazyPage(
   () => import("@/features/staff/pages/SlaMonitorPage"),
 );
-const AdminKbListPage = lazyPage(() => import("@/features/admin/pages/KbListPage"));
+const AdminKbListPage = lazyPage(
+  () => import("@/features/admin/pages/KbListPage"),
+);
 const AdminKbDetailPage = lazyPage(
   () => import("@/features/admin/pages/KbDetailPage"),
 );
@@ -218,7 +231,9 @@ const ManagerKbDetailPage = lazyPage(
 const ManagerKbEditorPage = lazyPage(
   () => import("@/features/manager/pages/KbEditorPage"),
 );
-const StaffKbListPage = lazyPage(() => import("@/features/staff/pages/KbListPage"));
+const StaffKbListPage = lazyPage(
+  () => import("@/features/staff/pages/KbListPage"),
+);
 const StaffKbDetailPage = lazyPage(
   () => import("@/features/staff/pages/KbDetailPage"),
 );
@@ -256,263 +271,279 @@ const StaffBatteryAssetDetailPage = lazyPage(
   () => import("@/features/staff/pages/BatteryAssetDetailPage"),
 );
 
+// Route rỗng bọc ngoài: chỉ tồn tại để mọi lỗi bên dưới nổi lên một errorElement DUY NHẤT,
+// thay vì phải gắn errorElement cho từng route một.
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <SmartHome />,
-  },
-  {
-    element: <AuthLayout />,
-    children: [
-      { path: "/login", element: <LoginPage /> },
-      { path: "/login/2fa", element: <Login2faPage /> },
-      { path: "/reactivate", element: <ReactivatePage /> },
-      { path: "/register", element: <RegisterPage /> },
-      { path: "/register/verify-otp", element: <OtpVerifyPage /> },
-      { path: "/forgot-password", element: <ForgotPasswordPage /> },
-      { path: "/invite/accept", element: <AcceptInvitePage /> },
-    ],
-  },
-  // The next three routes render without any layout, so they carry their own Suspense
-  // boundary — there is no parent <Outlet/> to host one.
-  {
-    path: "/auth/google/callback",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <GoogleCallbackPage />
-      </Suspense>
-    ),
-  },
-  {
-    // CUSTOMER login on web → redirected here (web not supported, use the Mobile App)
-    path: "/use-mobile-app",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <UseMobileAppPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/notification-unsubscribe",
-    element: (
-      <Suspense fallback={<PageLoader />}>
-        <NotificationUnsubscribePage />
-      </Suspense>
-    ),
-  },
-  {
-    path: "/unauthorized",
-    element: (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-semibold text-destructive">403</h1>
-          <p className="mt-2 text-muted-foreground">
-            You do not have permission to access this page.
-          </p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    element: <ProtectedRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
-        path: "/settings",
-        element: <RoleAwareAppLayout />,
-        children: [{ index: true, element: <AccountSettingsPage /> }],
+        path: "/",
+        element: <SmartHome />,
       },
       {
-        // Inbox shared across every role (like /settings) — the content is already
-        // filtered by the UserId in the JWT on the BE, so no need to duplicate the route per role.
-        path: "/notifications",
-        element: <RoleAwareAppLayout />,
-        children: [{ index: true, element: <NotificationInboxPage /> }],
+        element: <AuthLayout />,
+        children: [
+          { path: "/login", element: <LoginPage /> },
+          { path: "/login/2fa", element: <Login2faPage /> },
+          { path: "/reactivate", element: <ReactivatePage /> },
+          { path: "/register", element: <RegisterPage /> },
+          { path: "/register/verify-otp", element: <OtpVerifyPage /> },
+          { path: "/forgot-password", element: <ForgotPasswordPage /> },
+          { path: "/invite/accept", element: <AcceptInvitePage /> },
+        ],
       },
+      // The next three routes render without any layout, so they carry their own Suspense
+      // boundary — there is no parent <Outlet/> to host one.
       {
-        // #AUTH-51: Device B confirm — only requires login (any role), bypasses AppLayout
-        // (and therefore its Suspense boundary, so it needs its own).
-        path: "/2fa/cross-device-confirm",
+        path: "/auth/google/callback",
         element: (
           <Suspense fallback={<PageLoader />}>
-            <CrossDeviceConfirmPage />
+            <GoogleCallbackPage />
           </Suspense>
         ),
       },
       {
-        element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
+        // CUSTOMER login on web → redirected here (web not supported, use the Mobile App)
+        path: "/use-mobile-app",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <UseMobileAppPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/notification-unsubscribe",
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <NotificationUnsubscribePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/unauthorized",
+        element: (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-4xl font-semibold text-destructive">403</h1>
+              <p className="mt-2 text-muted-foreground">
+                You do not have permission to access this page.
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        element: <ProtectedRoute />,
         children: [
           {
-            path: "/admin",
-            element: <AdminAppLayout />,
+            path: "/settings",
+            element: <RoleAwareAppLayout />,
+            children: [{ index: true, element: <AccountSettingsPage /> }],
+          },
+          {
+            // Inbox shared across every role (like /settings) — the content is already
+            // filtered by the UserId in the JWT on the BE, so no need to duplicate the route per role.
+            path: "/notifications",
+            element: <RoleAwareAppLayout />,
+            children: [{ index: true, element: <NotificationInboxPage /> }],
+          },
+          {
+            // #AUTH-51: Device B confirm — only requires login (any role), bypasses AppLayout
+            // (and therefore its Suspense boundary, so it needs its own).
+            path: "/2fa/cross-device-confirm",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CrossDeviceConfirmPage />
+              </Suspense>
+            ),
+          },
+          {
+            element: <RoleRoute allowedRoles={[UserRole.ADMIN]} />,
             children: [
-              { index: true, element: <AdminDashboardPage /> },
-              { path: "dashboard", element: <AdminDashboardPage /> },
-              { path: "analytics", element: <AdminAnalyticsPage /> },
-              { path: "sites", element: <AdminSiteListPage /> },
-              { path: "sites/:id", element: <AdminSiteDetailPage /> },
-              { path: "battery-assets", element: <BatteryAssetsPage /> },
-              { path: "battery-types", element: <BatteryTypesPage /> },
               {
-                path: "battery-assets/:id",
-                element: <BatteryAssetDetailPage />,
+                path: "/admin",
+                element: <AdminAppLayout />,
+                children: [
+                  { index: true, element: <AdminDashboardPage /> },
+                  { path: "dashboard", element: <AdminDashboardPage /> },
+                  { path: "analytics", element: <AdminAnalyticsPage /> },
+                  { path: "sites", element: <AdminSiteListPage /> },
+                  { path: "sites/:id", element: <AdminSiteDetailPage /> },
+                  { path: "battery-assets", element: <BatteryAssetsPage /> },
+                  { path: "battery-types", element: <BatteryTypesPage /> },
+                  {
+                    path: "battery-assets/:id",
+                    element: <BatteryAssetDetailPage />,
+                  },
+                  { path: "data-import", element: <DataImportPage /> },
+                  { path: "iot-devices", element: <IoTDevicesPage /> },
+                  { path: "iot-devices/new", element: <IoTDeviceFormPage /> },
+                  { path: "iot-devices/:id", element: <IoTDeviceDetailPage /> },
+                  {
+                    path: "iot-devices/:id/edit",
+                    element: <IoTDeviceFormPage />,
+                  },
+                  {
+                    path: "iot-firmware",
+                    element: <IoTFirmwareReleasesPage />,
+                  },
+                  {
+                    path: "iot-firmware/new",
+                    element: <IoTFirmwareFormPage />,
+                  },
+                  { path: "accounts", element: <AccountsPage /> },
+                  { path: "roles", element: <RolesPage /> },
+                  { path: "tickets", element: <AdminTicketListPage /> },
+                  { path: "tickets/:id", element: <AdminTicketDetailPage /> },
+                  { path: "kb", element: <AdminKbListPage /> },
+                  { path: "kb/new", element: <AdminKbEditorPage /> },
+                  { path: "kb/:id", element: <AdminKbDetailPage /> },
+                  { path: "kb/:id/edit", element: <AdminKbEditorPage /> },
+                  { path: "blog", element: <AdminBlogListPage /> },
+                  { path: "blog/new", element: <AdminBlogEditorPage /> },
+                  { path: "blog/:id", element: <AdminBlogDetailPage /> },
+                  { path: "blog/:id/edit", element: <AdminBlogEditorPage /> },
+                  { path: "alerts", element: <AdminAlertsPage /> },
+                  {
+                    path: "environmental-incidents",
+                    element: <AdminEnvironmentalIncidentsPage />,
+                  },
+                  { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
+                  { path: "sagas", element: <AdminSagaDebugPage /> },
+                  { path: "profile", element: <ProfilePage /> },
+                  { path: "audit-logs", element: <AuditLogsPage /> },
+                  {
+                    path: "battery-audit-logs",
+                    element: <BatteryAuditLogsPage />,
+                  },
+                  { path: "files-audit-logs", element: <FilesAuditLogsPage /> },
+                  { path: "notifications", element: <NotificationAdminPage /> },
+                  {
+                    path: "notification-templates",
+                    element: <NotificationTemplatesPage />,
+                  },
+                  {
+                    path: "notification-groups",
+                    element: <NotificationGroupsPage />,
+                  },
+                  {
+                    path: "notification-batches",
+                    element: <NotificationBatchesPage />,
+                  },
+                  { path: "settings", element: <AccountSettingsPage /> },
+                ],
               },
-              { path: "data-import", element: <DataImportPage /> },
-              { path: "iot-devices", element: <IoTDevicesPage /> },
-              { path: "iot-devices/new", element: <IoTDeviceFormPage /> },
-              { path: "iot-devices/:id", element: <IoTDeviceDetailPage /> },
+            ],
+          },
+          {
+            element: <RoleRoute allowedRoles={[UserRole.MANAGER]} />,
+            children: [
               {
-                path: "iot-devices/:id/edit",
-                element: <IoTDeviceFormPage />,
+                path: "/manager",
+                element: <ManagerAppLayout />,
+                children: [
+                  { index: true, element: <ManagerDashboardPage /> },
+                  { path: "dashboard", element: <ManagerDashboardPage /> },
+                  { path: "analytics", element: <ManagerAnalyticsPage /> },
+                  { path: "sites", element: <ManagerSiteListPage /> },
+                  { path: "sites/:id", element: <ManagerSiteDetailPage /> },
+                  {
+                    path: "battery-assets",
+                    element: <ManagerBatteryAssetsPage />,
+                  },
+                  {
+                    path: "battery-assets/:id",
+                    element: <ManagerBatteryAssetDetailPage />,
+                  },
+                  { path: "tickets", element: <ManagerTicketListPage /> },
+                  {
+                    path: "tickets/queue",
+                    element: <ManagerTicketQueuePage />,
+                  },
+                  {
+                    path: "tickets/queue/:id",
+                    element: <ManagerTicketDetailPage />,
+                  },
+                  { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
+                  {
+                    path: "tickets/:id/merge",
+                    element: <ManagerMergeComparePage />,
+                  },
+                  { path: "kb", element: <ManagerKbListPage /> },
+                  { path: "kb/new", element: <ManagerKbEditorPage /> },
+                  { path: "kb/:id", element: <ManagerKbDetailPage /> },
+                  { path: "kb/:id/edit", element: <ManagerKbEditorPage /> },
+                  { path: "blog", element: <ManagerBlogListPage /> },
+                  { path: "blog/new", element: <ManagerBlogEditorPage /> },
+                  { path: "blog/:id", element: <ManagerBlogDetailPage /> },
+                  { path: "blog/:id/edit", element: <ManagerBlogEditorPage /> },
+                  { path: "alerts", element: <ManagerAlertsPage /> },
+                  {
+                    path: "environmental-incidents",
+                    element: <ManagerEnvironmentalIncidentsPage />,
+                  },
+                  {
+                    path: "iot-calibrations",
+                    element: <ManagerCalibrationsExpiringPage />,
+                  },
+                  { path: "profile", element: <ProfilePage /> },
+                  { path: "settings", element: <AccountSettingsPage /> },
+                ],
               },
-              { path: "iot-firmware", element: <IoTFirmwareReleasesPage /> },
-              { path: "iot-firmware/new", element: <IoTFirmwareFormPage /> },
-              { path: "accounts", element: <AccountsPage /> },
-              { path: "roles", element: <RolesPage /> },
-              { path: "tickets", element: <AdminTicketListPage /> },
-              { path: "tickets/:id", element: <AdminTicketDetailPage /> },
-              { path: "kb", element: <AdminKbListPage /> },
-              { path: "kb/new", element: <AdminKbEditorPage /> },
-              { path: "kb/:id", element: <AdminKbDetailPage /> },
-              { path: "kb/:id/edit", element: <AdminKbEditorPage /> },
-              { path: "blog", element: <AdminBlogListPage /> },
-              { path: "blog/new", element: <AdminBlogEditorPage /> },
-              { path: "blog/:id", element: <AdminBlogDetailPage /> },
-              { path: "blog/:id/edit", element: <AdminBlogEditorPage /> },
-              { path: "alerts", element: <AdminAlertsPage /> },
+            ],
+          },
+          {
+            element: <RoleRoute allowedRoles={[UserRole.STAFF]} />,
+            children: [
               {
-                path: "environmental-incidents",
-                element: <AdminEnvironmentalIncidentsPage />,
+                path: "/staff",
+                element: <StaffAppLayout />,
+                children: [
+                  { index: true, element: <Navigate to="dashboard" replace /> },
+                  { path: "dashboard", element: <StaffDashboardPage /> },
+                  { path: "tickets", element: <StaffTicketListPage /> },
+                  { path: "tickets/:id", element: <StaffTicketDetailPage /> },
+                  {
+                    path: "maintenance-logs",
+                    element: <StaffMyMaintenanceLogsPage />,
+                  },
+                  { path: "kb", element: <StaffKbListPage /> },
+                  { path: "kb/new", element: <StaffKbEditorPage /> },
+                  { path: "kb/:id", element: <StaffKbDetailPage /> },
+                  { path: "kb/:id/edit", element: <StaffKbEditorPage /> },
+                  { path: "blog", element: <StaffBlogListPage /> },
+                  { path: "blog/new", element: <StaffBlogEditorPage /> },
+                  { path: "blog/:id", element: <StaffBlogDetailPage /> },
+                  { path: "blog/:id/edit", element: <StaffBlogEditorPage /> },
+                  { path: "sla", element: <StaffSlaMonitorPage /> },
+                  {
+                    path: "iot-calibrations",
+                    element: <StaffIoTCalibrationsPage />,
+                  },
+                  // IOT3-66/67
+                  { path: "iot-devices", element: <StaffIoTDevicesPage /> },
+                  {
+                    path: "iot-devices/:id",
+                    element: <StaffIoTDeviceDetailPage />,
+                  },
+                  {
+                    path: "battery-assets/:id",
+                    element: <StaffBatteryAssetDetailPage />,
+                  },
+                  { path: "profile", element: <ProfilePage /> },
+                  { path: "settings", element: <AccountSettingsPage /> },
+                ],
               },
-              { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
-              { path: "sagas", element: <AdminSagaDebugPage /> },
-              { path: "profile", element: <ProfilePage /> },
-              { path: "audit-logs", element: <AuditLogsPage /> },
-              {
-                path: "battery-audit-logs",
-                element: <BatteryAuditLogsPage />,
-              },
-              { path: "files-audit-logs", element: <FilesAuditLogsPage /> },
-              { path: "notifications", element: <NotificationAdminPage /> },
-              {
-                path: "notification-templates",
-                element: <NotificationTemplatesPage />,
-              },
-              {
-                path: "notification-groups",
-                element: <NotificationGroupsPage />,
-              },
-              {
-                path: "notification-batches",
-                element: <NotificationBatchesPage />,
-              },
-              { path: "settings", element: <AccountSettingsPage /> },
             ],
           },
         ],
       },
       {
-        element: <RoleRoute allowedRoles={[UserRole.MANAGER]} />,
-        children: [
-          {
-            path: "/manager",
-            element: <ManagerAppLayout />,
-            children: [
-              { index: true, element: <ManagerDashboardPage /> },
-              { path: "dashboard", element: <ManagerDashboardPage /> },
-              { path: "analytics", element: <ManagerAnalyticsPage /> },
-              { path: "sites", element: <ManagerSiteListPage /> },
-              { path: "sites/:id", element: <ManagerSiteDetailPage /> },
-              {
-                path: "battery-assets",
-                element: <ManagerBatteryAssetsPage />,
-              },
-              {
-                path: "battery-assets/:id",
-                element: <ManagerBatteryAssetDetailPage />,
-              },
-              { path: "tickets", element: <ManagerTicketListPage /> },
-              { path: "tickets/queue", element: <ManagerTicketQueuePage /> },
-              {
-                path: "tickets/queue/:id",
-                element: <ManagerTicketDetailPage />,
-              },
-              { path: "tickets/:id", element: <ManagerTicketDetailPage /> },
-              {
-                path: "tickets/:id/merge",
-                element: <ManagerMergeComparePage />,
-              },
-              { path: "kb", element: <ManagerKbListPage /> },
-              { path: "kb/new", element: <ManagerKbEditorPage /> },
-              { path: "kb/:id", element: <ManagerKbDetailPage /> },
-              { path: "kb/:id/edit", element: <ManagerKbEditorPage /> },
-              { path: "blog", element: <ManagerBlogListPage /> },
-              { path: "blog/new", element: <ManagerBlogEditorPage /> },
-              { path: "blog/:id", element: <ManagerBlogDetailPage /> },
-              { path: "blog/:id/edit", element: <ManagerBlogEditorPage /> },
-              { path: "alerts", element: <ManagerAlertsPage /> },
-              {
-                path: "environmental-incidents",
-                element: <ManagerEnvironmentalIncidentsPage />,
-              },
-              {
-                path: "iot-calibrations",
-                element: <ManagerCalibrationsExpiringPage />,
-              },
-              { path: "profile", element: <ProfilePage /> },
-              { path: "settings", element: <AccountSettingsPage /> },
-            ],
-          },
-        ],
-      },
-      {
-        element: <RoleRoute allowedRoles={[UserRole.STAFF]} />,
-        children: [
-          {
-            path: "/staff",
-            element: <StaffAppLayout />,
-            children: [
-              { index: true, element: <Navigate to="dashboard" replace /> },
-              { path: "dashboard", element: <StaffDashboardPage /> },
-              { path: "tickets", element: <StaffTicketListPage /> },
-              { path: "tickets/:id", element: <StaffTicketDetailPage /> },
-              {
-                path: "maintenance-logs",
-                element: <StaffMyMaintenanceLogsPage />,
-              },
-              { path: "kb", element: <StaffKbListPage /> },
-              { path: "kb/new", element: <StaffKbEditorPage /> },
-              { path: "kb/:id", element: <StaffKbDetailPage /> },
-              { path: "kb/:id/edit", element: <StaffKbEditorPage /> },
-              { path: "blog", element: <StaffBlogListPage /> },
-              { path: "blog/new", element: <StaffBlogEditorPage /> },
-              { path: "blog/:id", element: <StaffBlogDetailPage /> },
-              { path: "blog/:id/edit", element: <StaffBlogEditorPage /> },
-              { path: "sla", element: <StaffSlaMonitorPage /> },
-              {
-                path: "iot-calibrations",
-                element: <StaffIoTCalibrationsPage />,
-              },
-              // IOT3-66/67
-              { path: "iot-devices", element: <StaffIoTDevicesPage /> },
-              {
-                path: "iot-devices/:id",
-                element: <StaffIoTDeviceDetailPage />,
-              },
-              {
-                path: "battery-assets/:id",
-                element: <StaffBatteryAssetDetailPage />,
-              },
-              { path: "profile", element: <ProfilePage /> },
-              { path: "settings", element: <AccountSettingsPage /> },
-            ],
-          },
-        ],
+        path: "*",
+        element: <Navigate to="/unauthorized" replace />,
       },
     ],
-  },
-  {
-    path: "*",
-    element: <Navigate to="/unauthorized" replace />,
   },
 ]);
 
