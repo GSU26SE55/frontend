@@ -66,7 +66,7 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
@@ -476,22 +476,30 @@ export default function AdminTicketDetailPage() {
                     {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Remaining
-                  </span>
-                  <span className="text-xs font-medium">
-                    {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                    style={{
-                      width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                    }}
-                  />
-                </div>
+                {/* Live-clock only — see the Manager panel. The Status row above already
+                    names the terminal state (Stopped/Met/Breached), and the BE returns
+                    remainingPercent = 0 for all of them, so the ratio rows would only
+                    contradict it. */}
+                {isSlaClockLive(ticket.slaTimer.status) && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Remaining
+                      </span>
+                      <span className="text-xs font-medium">
+                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                        style={{
+                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               // No SLA timer, but a periodic-maintenance ticket still has a live booking

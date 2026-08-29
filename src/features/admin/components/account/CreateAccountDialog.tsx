@@ -58,6 +58,18 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
     formState: { errors },
   } = useForm<CreateAccountFormValues>({
     resolver: zodResolver(createAccountSchema),
+    // roleId starts as "" rather than undefined so an untouched select reports
+    // "Select a role" instead of Zod's raw "expected string, received undefined".
+    defaultValues: {
+      email: "",
+      fullName: "",
+      password: "",
+      confirmPassword: "",
+      phoneNumber: "",
+      dateOfBirth: "",
+      address: "",
+      roleId: "",
+    },
   });
 
   const handleClose = () => {
@@ -196,6 +208,11 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                   />
                 )}
               />
+              {errors.dateOfBirth && (
+                <p className="text-xs text-red-500">
+                  {errors.dateOfBirth.message}
+                </p>
+              )}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Address</Label>
@@ -203,6 +220,9 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                 placeholder="Street number, street, ward..."
                 {...register("address")}
               />
+              {errors.address && (
+                <p className="text-xs text-red-500">{errors.address.message}</p>
+              )}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>

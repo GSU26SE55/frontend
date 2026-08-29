@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SiteCascadeRiskSummaryDto } from "@/shared/types/battery/cascade.types";
 import { plural } from "@/shared/utils/plural";
+import { displayNameOrShortId } from "@/shared/utils/displayId";
 
 interface CascadeRiskSummaryProps {
   summary: SiteCascadeRiskSummaryDto | undefined;
@@ -181,7 +182,7 @@ export default function CascadeRiskSummary({
                 variant="outline"
                 className="text-3xs font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold"
               >
-                {a.serialNumber ?? a.batteryAssetId} (
+                {displayNameOrShortId(a.serialNumber, a.batteryAssetId)} (
                 {a.cascadeRiskScore.toFixed(2)})
               </Badge>
             ))}

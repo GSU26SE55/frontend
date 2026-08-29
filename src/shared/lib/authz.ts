@@ -72,6 +72,9 @@ export const P = {
   CHAT_EDIT_ANY: "chat.edit.any" as PermissionType,
   CHAT_DELETE_ANY: "chat.delete.any" as PermissionType,
   CHAT_VIEW_INTERNAL: "chat.view.internal" as PermissionType,
+  // Pin/unpin a comment. The BE gates both on this single code (ChatAuthorizationService
+  // .CanPinChat) — there is no separate unpin permission.
+  CHAT_PIN: "chat.pin" as PermissionType,
 } as const;
 
 export const checkPermission = (

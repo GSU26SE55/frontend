@@ -3,17 +3,19 @@ import {
   fullNameField,
   optionalPhoneField,
   birthDateField,
+  addressField,
 } from "@/shared/schemas/common.schema";
 
 export const profileSchema = z.object({
   fullName: fullNameField,
   phoneNumber: optionalPhoneField,
-  address: z
-    .string()
-    .max(500, "Address must be at most 500 characters")
-    .optional(),
+  address: addressField,
   birthDate: birthDateField,
-  timeZone: z.string().optional(),
+  // UpdateMyProfileCommand caps TimeZone at 100 characters.
+  timeZone: z
+    .string()
+    .max(100, "Time zone must be at most 100 characters")
+    .optional(),
 });
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;

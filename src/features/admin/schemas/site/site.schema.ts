@@ -1,10 +1,13 @@
 import { z } from "zod";
 import { SiteStatusEnum } from "@/shared/types/site/site.types";
-import { coordField } from "@/shared/schemas/common.schema";
+import { coordField, requiredSelect } from "@/shared/schemas/common.schema";
 
 export const siteFormSchema = z.object({
   name: z.string().min(1, "Required").max(200),
-  customerId: z.string().uuid("Select a customer"),
+  customerId: requiredSelect(
+    z.string().uuid("Select a customer"),
+    "Select a customer",
+  ),
   address: z.string().max(500).optional(),
   latitude: coordField("Latitude", -90, 90),
   longitude: coordField("Longitude", -180, 180),

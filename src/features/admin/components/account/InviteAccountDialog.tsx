@@ -53,6 +53,14 @@ export default function InviteAccountDialog({ open, onClose }: Props) {
     formState: { errors },
   } = useForm<InviteAccountFormValues>({
     resolver: zodResolver(inviteAccountSchema),
+    // Same reason as CreateAccountDialog: an untouched select is `undefined`, and the
+    // empty string is what carries the authored message through.
+    defaultValues: {
+      email: "",
+      fullName: "",
+      phoneNumber: "",
+      roleId: "",
+    },
   });
 
   const handleClose = () => {

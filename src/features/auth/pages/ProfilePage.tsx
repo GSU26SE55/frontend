@@ -121,11 +121,17 @@ const ProfilePage = () => {
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
+      // The BE reads an omitted key as "keep the stored value", so that a client which does
+      // not render a field cannot wipe it. Address is editable here, so clearing it has to
+      // be said explicitly with "". birthDate is a DateTime? — cleared via its own flag.
+      // timeZone is a fixed deployment constant with no editor on any client: send it only
+      // when we actually have one, never "" (which would blank the stored Asia/Ho_Chi_Minh).
       await updateProfile({
         fullName: data.fullName,
         phoneNumber: data.phoneNumber || undefined,
-        address: data.address || undefined,
+        address: data.address ?? "",
         birthDate: data.birthDate || undefined,
+        clearBirthDate: !data.birthDate,
         timeZone: data.timeZone || undefined,
       });
       toast.success(AUTH_MESSAGES.profile.updated);

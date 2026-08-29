@@ -1,12 +1,16 @@
 import { z } from "zod";
+import { requiredSelect } from "@/shared/schemas/common.schema";
 import {
   NotificationTypeEnum,
   NotificationChannelEnum,
 } from "@/shared/enums/notification/notification.enum";
 
 export const createNotificationSchema = z.object({
-  userId: z.string().uuid("UserId must be a valid UUID"),
-  type: z.nativeEnum(NotificationTypeEnum),
+  userId: requiredSelect(
+    z.string().uuid("UserId must be a valid UUID"),
+    "Select a user",
+  ),
+  type: requiredSelect(z.nativeEnum(NotificationTypeEnum), "Select a type"),
   channel: z.nativeEnum(NotificationChannelEnum),
   title: z
     .string()

@@ -15,6 +15,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -70,13 +76,20 @@ function commandFailureMessage(status: number) {
 //
 // `variant` picks the shell only — the controls, confirmation dialog and toasts are identical.
 // "popover" is the header button used by both callers; "card" is the older sidebar block,
-// kept so the control can be moved back into the sidebar without rewriting it.
+// kept so the control can be moved back into the sidebar without rewriting it. "dialog" has no
+// trigger of its own — its open state is controlled by the caller (e.g. a DropdownMenuItem
+// "BMS" in a table row's Actions menu, where the control can't own a nested Popover trigger).
 export default function BmsSwitchControlCard({
   assetId,
   variant = "popover",
+  open,
+  onOpenChange,
 }: {
   assetId: string;
-  variant?: "card" | "popover";
+  variant?: "card" | "popover" | "dialog";
+  /** "dialog" variant only — open state is controlled by the caller. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const stateQuery = useBmsSwitch(assetId);
   const mutation = useSetBmsSwitch(assetId);
@@ -136,6 +149,21 @@ export default function BmsSwitchControlCard({
   // In the header the placeholder is a disabled button, not a card: a skeleton card
   // sitting in a row of buttons reads as a broken layout rather than as loading.
   if (stateQuery.isLoading) {
+    if (variant === "dialog") {
+      return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="w-72">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-1.5 text-2sm">
+                <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
+                BMS Control
+              </DialogTitle>
+            </DialogHeader>
+            <Skeleton className="h-24 w-full" />
+          </DialogContent>
+        </Dialog>
+      );
+    }
     return variant === "popover" ? (
       <Button variant="outline" size="sm" disabled aria-label="BMS Control">
         <Power className="size-3.5" />
@@ -151,6 +179,20 @@ export default function BmsSwitchControlCard({
 
   if (stateQuery.isError) {
     const message = failureMessage(stateQuery.error);
+    if (variant === "dialog") {
+      return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="w-72">
+            <DialogHeader>
+              <DialogTitle className="text-2sm">
+                Unable to load BMS controls
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-xs text-muted-foreground">{message}</p>
+          </DialogContent>
+        </Dialog>
+      );
+    }
     return variant === "popover" ? (
       <Popover>
         <PopoverTrigger
@@ -271,6 +313,18 @@ export default function BmsSwitchControlCard({
             {controls}
           </PopoverContent>
         </Popover>
+      ) : variant === "dialog" ? (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+          <DialogContent className="w-72 gap-2">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-1.5 text-2sm leading-tight">
+                <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
+                BMS Control
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-1.5">{controls}</div>
+          </DialogContent>
+        </Dialog>
       ) : (
         <Card className="m-3 mt-0 gap-1.5 border-amber-300/70 bg-amber-50/30 py-2 dark:border-amber-900/60 dark:bg-amber-950/10">
           <CardHeader className="px-2.5 pb-0">

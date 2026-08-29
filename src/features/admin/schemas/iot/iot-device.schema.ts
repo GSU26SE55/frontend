@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredSelect } from "@/shared/schemas/common.schema";
 import {
   IOT_COMMAND_TYPES,
   IotDeviceStatusEnum,
@@ -23,7 +24,7 @@ export const createIotDeviceSchema = z.object({
     .string()
     .min(1, "Required")
     .max(200, "Must be at most 200 characters"),
-  siteId: z.string().uuid("Select a site"),
+  siteId: requiredSelect(z.string().uuid("Select a site"), "Select a site"),
   hardwareRevision: z
     .string()
     .max(64, "Must be at most 64 characters")
@@ -43,7 +44,7 @@ export const updateIotDeviceSchema = z.object({
     .string()
     .min(1, "Required")
     .max(200, "Must be at most 200 characters"),
-  siteId: z.string().uuid("Select a site"),
+  siteId: requiredSelect(z.string().uuid("Select a site"), "Select a site"),
   hardwareRevision: z
     .string()
     .max(64, "Must be at most 64 characters")

@@ -49,6 +49,7 @@ import { toneClass } from "@/shared/theme/statusColors";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { noData, notFound } from "@/shared/constants/emptyStates";
+import { parseUserAgent } from "@/shared/utils/userAgent";
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -197,19 +198,6 @@ function parseMetadata(raw?: string): Record<string, string> | null {
   } catch {
     return null;
   }
-}
-
-function parseUserAgent(ua?: string) {
-  if (!ua) return null;
-  const browser = ua.match(/(Chrome|Firefox|Safari|Edge|Edg)[/\s]([\d.]+)/);
-  const os = ua.match(/\(([^)]+)\)/);
-  return {
-    browser: browser
-      ? `${browser[1].replace("Edg", "Edge")} ${browser[2].split(".")[0]}`
-      : "Unknown",
-    os: os ? os[1].split(";")[0].trim() : "Unknown",
-    full: ua,
-  };
 }
 
 // ── Detail Sheet ──────────────────────────────────────────────────────────────

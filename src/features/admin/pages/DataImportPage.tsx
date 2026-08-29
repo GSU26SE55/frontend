@@ -76,6 +76,7 @@ export default function DataImportPage() {
   const [files, setFiles] = useState<CreateImportBatchPayload>({});
   const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
   const [revertTarget, setRevertTarget] = useState<string | null>(null);
+  const [confirmCommit, setConfirmCommit] = useState(false);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { data: batches, isLoading: batchesLoading } = useImportBatches({
@@ -159,8 +160,14 @@ export default function DataImportPage() {
   function handleCommit() {
     if (!activeBatchId) return;
     commitBatch.mutate(activeBatchId, {
-      onSuccess: () => toast.success("Accepted. Track the progress below."),
-      onError: (error) => handleErrorApi({ error }),
+      onSuccess: () => {
+        toast.success("Accepted. Track the progress below.");
+        setConfirmCommit(false);
+      },
+      onError: (error) => {
+        handleErrorApi({ error });
+        setConfirmCommit(false);
+      },
     });
   }
 
@@ -325,7 +332,7 @@ export default function DataImportPage() {
             <Button
               data-testid="commit-button"
               disabled={!canCommit || commitBatch.isPending}
-              onClick={handleCommit}
+              onClick={() => setConfirmCommit(true)}
             >
               <Upload className="mr-2 size-4" />
               Commit
@@ -448,6 +455,32 @@ export default function DataImportPage() {
           </Table>
         )}
       </Card>
+
+      {/* Commit writes the staged rows into live data and is the harder of the two actions to
+          undo — Revert cannot bring back customer accounts. It gets the same confirmation the
+          Revert button has always had, and names the row count so the number is checked before
+          anything is written. */}
+      <AlertDialog open={confirmCommit} onOpenChange={setConfirmCommit}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Commit this batch?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {activeBatch
+                ? `${activeBatch.validRows} of ${activeBatch.totalRows} rows will be written into live data. Reverting afterwards removes the sites, battery assets and devices created — but keeps the customer accounts.`
+                : "The valid rows will be written into live data."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="confirm-commit"
+              onClick={handleCommit}
+            >
+              Commit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={!!revertTarget}

@@ -6,6 +6,8 @@ import {
   Globe,
   Loader2,
   Lock,
+  Pin,
+  PinOff,
   RotateCw,
   Sparkles,
 } from "lucide-react";
@@ -57,6 +59,12 @@ import {
 import { useRetryVoiceChat } from "@/shared/hooks/ticket/useTicketChatActions";
 import type { OutboxMessage } from "@/shared/types/chat/chat.types";
 import { ACTIONS } from "@/shared/constants/actions";
+import {
+  usePinChat,
+  useUnpinChat,
+} from "@/features/admin/hooks/ticket/useTicketChats";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { checkPermission, P } from "@/shared/lib/authz";
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
   Admin: "Admin",
@@ -319,6 +327,15 @@ export function TicketCommentThread({
 }: TicketCommentThreadProps) {
   const [internalTab, setInternalTab] = useState<ChatTab>("public");
   const tab = activeTab ?? internalTab;
+
+  // Pin/unpin. Gated on chat.pin, which is exactly what the BE checks
+  // (ChatAuthorizationService.CanPinChat) — matching it here rather than guessing from the
+  // role avoids the 403-on-click problem described above canEditThis.
+  const currentUser = useSessionStore((st) => st.user);
+  const canPin = checkPermission(currentUser, P.CHAT_PIN);
+  const { mutate: pinChat, isPending: pinPending } = usePinChat();
+  const { mutate: unpinChat, isPending: unpinPending } = useUnpinChat();
+  const pinBusy = pinPending || unpinPending;
   const setTab = (t: ChatTab) => {
     setInternalTab(t);
     onTabChange?.(t);
@@ -751,9 +768,15 @@ export function TicketCommentThread({
             // but every action on it is meaningless — there is no body left to edit, translate
             // or delete again, and the BE rejects all three. Gate the whole menu here rather
             // than each flag, so any action added later is covered too.
+            // Pinning needs a ticketId to call with, and a closed ticket is read-only.
+            const canPinThis = canPin && !!ticketId && !ticketClosed;
             const canShowActions =
               !c.isDeleted &&
-              (canEditThis || canDeleteThis || !!onTranslate || canOverride);
+              (canEditThis ||
+                canDeleteThis ||
+                !!onTranslate ||
+                canOverride ||
+                canPinThis);
 
             return (
               <Fragment key={c.id}>
@@ -822,6 +845,18 @@ export function TicketCommentThread({
                           Internal
                         </Badge>
                       )}
+                      {/* Without a marker on the bubble itself, a pinned message is
+                          indistinguishable from any other and the menu is the only way to
+                          tell — which defeats the point of pinning it. */}
+                      {c.isPinned && (
+                        <Badge
+                          variant="outline"
+                          className="text-3xs h-4 px-1.5 gap-0.5 border-primary/40 text-primary"
+                        >
+                          <Pin className="size-2.5" />
+                          Pinned
+                        </Badge>
+                      )}
                     </div>
 
                     {isEditing ? (
@@ -868,6 +903,15 @@ export function TicketCommentThread({
                                 canDelete={canDeleteThis}
                                 canTranslate={!!onTranslate}
                                 canOverride={canOverride}
+                                canPin={canPinThis}
+                                isPinned={!!c.isPinned}
+                                pinBusy={pinBusy}
+                                onTogglePin={() => {
+                                  if (!ticketId) return;
+                                  const args = { ticketId, chatId: c.id };
+                                  if (c.isPinned) unpinChat(args);
+                                  else pinChat(args);
+                                }}
                                 translating={translatingId === c.id}
                                 onEdit={() => startEdit(c)}
                                 onDelete={() => setDeleteTarget(c)}
@@ -996,7 +1040,8 @@ export function TicketCommentThread({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete comment?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone.
+              The comment is hidden from the conversation. An Admin can restore
+              it afterwards.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1020,10 +1065,14 @@ function CommentActionsMenu({
   canDelete,
   canTranslate,
   canOverride,
+  canPin,
+  isPinned,
+  pinBusy,
   translating,
   onEdit,
   onDelete,
   onTranslate,
+  onTogglePin,
   onOverrideEdit,
   onOverrideDelete,
 }: {
@@ -1031,10 +1080,14 @@ function CommentActionsMenu({
   canDelete: boolean;
   canTranslate: boolean;
   canOverride: boolean;
+  canPin: boolean;
+  isPinned: boolean;
+  pinBusy: boolean;
   translating: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onTranslate: (lang: string) => void;
+  onTogglePin: () => void;
   onOverrideEdit: () => void;
   onOverrideDelete: () => void;
 }) {
@@ -1047,6 +1100,9 @@ function CommentActionsMenu({
             variant="ghost"
             size="icon"
             className="size-6 shrink-0 text-muted-foreground"
+            /* Icon-only, and rendered once per message — without a name a screen reader
+               announces only "button". Matches the neighbouring React button. */
+            aria-label="Message actions"
           />
         }
       >
@@ -1055,6 +1111,19 @@ function CommentActionsMenu({
       <DropdownMenuContent>
         {canEdit && (
           <DropdownMenuItem onClick={onEdit}>{ACTIONS.EDIT}</DropdownMenuItem>
+        )}
+        {canPin && (
+          <DropdownMenuItem disabled={pinBusy} onClick={onTogglePin}>
+            {isPinned ? (
+              <>
+                <PinOff className="size-3.5" /> Unpin
+              </>
+            ) : (
+              <>
+                <Pin className="size-3.5" /> Pin
+              </>
+            )}
+          </DropdownMenuItem>
         )}
         {canTranslate && (
           <DropdownMenuSub>

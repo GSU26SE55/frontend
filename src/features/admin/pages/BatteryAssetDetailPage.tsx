@@ -103,8 +103,9 @@ export default function BatteryAssetDetailPage() {
                 <AlertDialogTitle>Delete battery asset?</AlertDialogTitle>
                 <AlertDialogDescription>
                   Are you sure you want to delete{" "}
-                  <strong>{asset.serialNumber}</strong>? This action cannot be
-                  undone.
+                  <strong>{asset.serialNumber}</strong>? It is hidden from the
+                  asset list and its readings stop being collected. An Admin can
+                  restore it later from the deleted-assets filter.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
