@@ -21,6 +21,21 @@ import {
 } from "@/shared/schemas/iot/iot-calibration.schema";
 import { useCreateCalibration } from "@/shared/hooks/iot/useIotCalibrationMutations";
 import { MESSAGES } from "@/shared/constants/messages";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useBatteryAssets } from "@/shared/hooks/battery/useBatteryAssets";
+import { useSessionStore } from "@/shared/stores/sessionStore";
+import { checkRole } from "@/shared/lib/authz";
+import { UserRole } from "@/shared/enums/account/session.enum";
+
+// Select needs a non-empty value, but "no asset" must reach the BE as an absent field.
+const DEVICE_LEVEL = "__device_level__";
+const DEVICE_LEVEL_LABEL = "No asset — device-level calibration";
 
 interface Props {
   open: boolean;
@@ -46,6 +61,25 @@ export default function CalibrationFormDialog({
   });
 
   const calibratedAt = useWatch({ control, name: "calibratedAt" });
+
+  // GET /api/battery-assets is Admin,Manager only — Staff gets a 403 even though Staff is one
+  // of the two roles allowed to CREATE a calibration (POST is Admin,Staff). So the picker is
+  // offered to whoever can actually load the list, and Staff keeps the id field it has always
+  // had rather than being shown an empty or erroring dropdown.
+  const currentUser = useSessionStore((st) => st.user);
+  const canListAssets = checkRole(
+    currentUser,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+  );
+  const { data: assetList } = useBatteryAssets(
+    { pageSize: 100 },
+    { enabled: open && canListAssets },
+  );
+  const assetOptions = (assetList?.items ?? []).map((a) => ({
+    value: a.id,
+    label: a.siteName ? `${a.serialNumber} — ${a.siteName}` : a.serialNumber,
+  }));
 
   const { mutateAsync: createCalibration } = useCreateCalibration(deviceId);
 
@@ -189,12 +223,48 @@ export default function CalibrationFormDialog({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryAssetId">Battery Asset ID</Label>
-            <Input
-              id="batteryAssetId"
-              {...register("batteryAssetId")}
-              placeholder="Leave blank = device-level calibration"
-            />
+            <Label htmlFor="batteryAssetId">Battery asset</Label>
+            {canListAssets ? (
+              <Controller
+                control={control}
+                name="batteryAssetId"
+                render={({ field }) => (
+                  <Select
+                    value={field.value || DEVICE_LEVEL}
+                    items={[
+                      { value: DEVICE_LEVEL, label: DEVICE_LEVEL_LABEL },
+                      ...assetOptions,
+                    ]}
+                    // The sentinel stands in for "no asset": an empty string cannot be a
+                    // Select value, but the schema and the BE both want the field absent.
+                    onValueChange={(v) =>
+                      field.onChange(v === DEVICE_LEVEL ? "" : v)
+                    }
+                  >
+                    <SelectTrigger id="batteryAssetId">
+                      <SelectValue placeholder={DEVICE_LEVEL_LABEL} />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectItem value={DEVICE_LEVEL}>
+                        {DEVICE_LEVEL_LABEL}
+                      </SelectItem>
+                      {assetOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            ) : (
+              // Staff cannot read the asset list (403), so it keeps the raw id field.
+              <Input
+                id="batteryAssetId"
+                {...register("batteryAssetId")}
+                placeholder="Leave blank = device-level calibration"
+              />
+            )}
             {errors.batteryAssetId && (
               <p className="text-sm text-destructive">
                 {errors.batteryAssetId.message}
