@@ -37,7 +37,6 @@ export type TicketCategoryEnum =
 export const TicketOriginEnum = {
   ManualByCustomer: "ManualByCustomer",
   AutoFromAlert: "AutoFromAlert",
-  CreatedByStaff: "CreatedByStaff",
   // Created by the system, not from one specific alert (High cascade risk, Critical
   // environmental incident). Tickets of this kind have batteryAssetId = "" at site level.
   System: "System",
@@ -140,6 +139,18 @@ export const SlaTimerStatusEnum = {
   Breached: "Breached",
   Stopped: "Stopped",
 } as const;
+// Bộ lọc "nguồn tạo ticket" — mirror TicketSourceFilterEnum bên BE (Domain/Enums).
+// KHÔNG map 1-1 với TicketOriginEnum: Environmental và PeriodicMaintenance đều là
+// Origin = System. Xem utils/ticket/ticketSource.ts.
+export const TicketSourceFilterEnum = {
+  Customer: "Customer",
+  AiPredicted: "AiPredicted",
+  Environmental: "Environmental",
+  PeriodicMaintenance: "PeriodicMaintenance",
+} as const;
+export type TicketSourceFilterEnum =
+  (typeof TicketSourceFilterEnum)[keyof typeof TicketSourceFilterEnum];
+
 export type SlaTimerStatusEnum =
   (typeof SlaTimerStatusEnum)[keyof typeof SlaTimerStatusEnum];
 

@@ -18,6 +18,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BatteryAssetInfoPanel from "@/features/admin/components/battery/BatteryAssetInfoPanel";
+import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
+import MaintenanceScheduleCountdown from "@/shared/components/ticket/MaintenanceScheduleCountdown";
+import { getTicketSubject } from "@/shared/lib/ticketSubject";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -36,6 +40,7 @@ import {
 } from "@/features/admin/hooks/ticket/useAdminTickets";
 import AddCommentForm from "@/features/admin/components/ticket/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import MaintenanceLogCard from "@/shared/components/ticket/MaintenanceLogCard";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import MergeTicketDialog from "@/features/admin/components/ticket/MergeTicketDialog";
@@ -63,6 +68,26 @@ import {
 } from "@/shared/hooks/ticket/useTicketChatActions";
 import { slaBarColorClass } from "@/shared/lib/sla";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
+import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+import { adminKbService } from "@/features/admin/services/kb/kb.service";
+import type { KbArticleSearchParams } from "@/shared/components/kb/KbArticleSelector";
+import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
+
+// Article lookups stay with the role's own KB service — shared must not import from a
+// feature. The panel only needs these two reads.
+const searchKbArticles = ({ q, category }: KbArticleSearchParams) =>
+  adminKbService
+    .getList({
+      q,
+      category: category ? KbCategoryCode[category] : undefined,
+      status: KbArticleStatusEnum.Published,
+      pageSize: 20,
+    })
+    .then((r) => r.data.data?.items ?? []);
+
+const getKbArticleDetail = (id: string) =>
+  adminKbService.getDetail(id).then((r) => r.data.data!);
 
 function SideInfoRow({
   label,
@@ -254,19 +279,66 @@ export default function AdminTicketDetailPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Left: Timeline / Comments */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <Tabs defaultValue="timeline" className="h-full gap-0">
+          <Tabs defaultValue="info" className="h-full gap-0">
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
+                <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="comments" className="group">
                   Chat
+                  <ChatUnreadBadge ticketId={ticketId} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   Logs
                   {maintenanceLogs.length > 0 && ` (${maintenanceLogs.length})`}
                 </TabsTrigger>
+                <TabsTrigger value="kb">Guide</TabsTrigger>
               </TabsList>
             </div>
+
+            {/* Read-only context: which battery (or site) this ticket is about, and the
+                readings that triggered it. Carries no action buttons — triage and assignment
+                remain the Manager's, per the note at the top of this file — but Admin still
+                has to be able to SEE the evidence when investigating a ticket. */}
+            <TabsContent
+              value="info"
+              className="min-h-0 overflow-y-auto m-0 p-6 space-y-6"
+            >
+              {ticket &&
+                (() => {
+                  // Same classifier as the Manager page, so both pages agree on whether a
+                  // ticket is about a battery or a site.
+                  const subject = getTicketSubject(ticket);
+                  if (subject.kind === "site")
+                    return (
+                      <EnvironmentalIncidentInfoPanel
+                        incidentId={subject.incidentId}
+                        description={ticket.description}
+                        siteBasePath="/admin"
+                      />
+                    );
+                  const ids =
+                    subject.kind === "battery" ? subject.batteryAssetIds : [];
+                  if (ids.length === 0)
+                    return <BatteryAssetInfoPanel batteryAssetId={null} />;
+                  return (
+                    <div className="space-y-4">
+                      {ids.length > 1 && (
+                        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {ids.length} related battery devices
+                        </p>
+                      )}
+                      {ids.map((bid) => (
+                        <BatteryAssetInfoPanel
+                          key={bid}
+                          batteryAssetId={bid}
+                          detectedAt={ticket.detectedAt}
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
+            </TabsContent>
 
             <TabsContent
               value="timeline"
@@ -365,6 +437,19 @@ export default function AdminTicketDetailPage() {
                 )}
               </div>
             </TabsContent>
+            <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
+              <TicketKbReferencesPanel
+                ticketId={id ?? ""}
+                // The BE rejects attaching once a ticket is terminal
+                // (AddTicketKbReferenceCommandHandler returns 409).
+                canAdd={!chatLocked}
+                afterResolveOnly={ticket.status === TicketStatusEnum.Completed}
+                defaultCategory={ticket.category}
+                basePath="/admin"
+                searchArticles={searchKbArticles}
+                getArticleDetail={getKbArticleDetail}
+              />
+            </TabsContent>
           </Tabs>
         </div>
 
@@ -409,7 +494,16 @@ export default function AdminTicketDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">No SLA timer yet.</p>
+              // No SLA timer, but a periodic-maintenance ticket still has a live booking
+              // deadline (and may already be past its cycle due date) — "No SLA timer yet"
+              // alone reported that as nothing being due.
+              <MaintenanceScheduleCountdown
+                dueAtUtc={ticket.periodicMaintenanceDueAtUtc}
+                scheduleDeadlineAtUtc={
+                  ticket.periodicMaintenanceScheduleDeadlineAtUtc
+                }
+                isOverdue={ticket.isPeriodicMaintenanceOverdue}
+              />
             )}
           </div>
 

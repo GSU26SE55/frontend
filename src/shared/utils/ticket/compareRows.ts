@@ -7,7 +7,6 @@ import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 const ORIGIN_LABELS: Record<string, string> = {
   [TicketOriginEnum.ManualByCustomer]: "Created by customer",
   [TicketOriginEnum.AutoFromAlert]: "Automatic from alert",
-  [TicketOriginEnum.CreatedByStaff]: "Created by staff",
   [TicketOriginEnum.System]: "Created by system",
 };
 

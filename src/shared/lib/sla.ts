@@ -29,6 +29,22 @@ export function slaComplianceColor(
   return "var(--p1)";
 }
 
+/**
+ * Same 3-band scale as `slaComplianceColor`, expressed as a StatusTone — for the
+ * `<Stat>` KPI tile, which takes a tone rather than a raw CSS colour. Kept next to the
+ * colour fn so the two can never drift: high ≥90 · medium ≥70 · low below that.
+ * `undefined` = no finished timer yet, so the tile stays neutral instead of scoring 0.
+ */
+export function slaComplianceTone(
+  compliancePercent: number | null | undefined,
+): "ok" | "p3" | "p1" | undefined {
+  if (compliancePercent === null || compliancePercent === undefined)
+    return undefined;
+  if (compliancePercent >= 90) return "ok";
+  if (compliancePercent >= 70) return "p3";
+  return "p1";
+}
+
 /** Same 3-band scale as `slaBarColorClass`, as a text color — SVG strokes pick it up via `currentColor`. */
 export function slaTextColorClass(remainingPercent?: number | null): string {
   const pct = remainingPercent ?? 0;
@@ -72,7 +88,6 @@ export function formatSlaDueAt(dueAt: string): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
 
 /**
  * Coarsest useful unit only — "11d", "17h", "45m", "30s". For list rows, where the

@@ -3,12 +3,12 @@ import { SlaTimerStatusEnum } from "@/shared/types/ticket/ticket.types";
 import type { SlaTimerDTO } from "@/shared/types/ticket/ticket.types";
 import {
   isNearBreachPercent,
+  SLA_CAUTION_PERCENT,
+  SLA_WARNING_PERCENT,
   formatSlaRemaining,
-  formatSlaRemainingCompact,
   formatSlaDueAt,
-  slaTextColorClass,
 } from "@/shared/lib/sla";
-import { toneClass } from "@/shared/theme/statusColors";
+import { toneClass, type StatusTone } from "@/shared/theme/statusColors";
 import {
   Tooltip,
   TooltipContent,
@@ -16,85 +16,38 @@ import {
 } from "@/components/ui/tooltip";
 
 /**
- * Ring = % of the SLA window still left, number in the middle = how much time.
- *
- * Two facts in one 36px cell, and the ring is readable without reading the number —
- * a row of these shows which tickets are running out before you parse any digits.
- * Sized so the coarse label ("11d", "45m") always fits; that is why the list format
- * is capped at one unit.
+ * Same 3-band scale as `slaTextColorClass`, expressed as a badge tone so the running
+ * countdown sits in the SAME chip family as "On time" / "SLA breached" / "Paused".
+ * The ring that used to live here read as a different kind of object in the column.
  */
-function SlaRing({
-  percent,
-  label,
-  toneClassName,
-}: {
-  percent: number;
-  label: string;
-  toneClassName: string;
-}) {
-  const size = 36;
-  const stroke = 3;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const filled = Math.max(0, Math.min(100, percent));
-  // 0% draws no arc at all, which rendered an out-of-time ticket as an empty grey
-  // circle — the calmest thing in the column. Out of time closes the ring instead.
-  const dashOffset = filled <= 0 ? 0 : circumference * (1 - filled / 100);
-
-  return (
-    <span
-      className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          strokeWidth={stroke}
-          className="stroke-muted-foreground/20"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          stroke="currentColor"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          // Width shrinks continuously so it is linear; the color band change is a
-          // state flip, so it eases — same split as the SLA bar elsewhere.
-          className={`${toneClassName} [transition:stroke-dashoffset_var(--motion-enter)_linear,stroke_var(--motion-enter)_var(--motion-ease-out)]`}
-        />
-      </svg>
-      <span
-        className={`absolute text-2xs font-semibold tabular-nums ${toneClassName}`}
-      >
-        {label}
-      </span>
-    </span>
-  );
+function slaTone(remainingPercent?: number | null): StatusTone {
+  const pct = remainingPercent ?? 0;
+  if (pct > SLA_CAUTION_PERCENT) return "ok";
+  if (pct > SLA_WARNING_PERCENT) return "p3";
+  return "p1";
 }
+
+const BADGE_BASE =
+  "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium";
 
 interface Props {
   slaTimer: SlaTimerDTO | null;
   /**
-   * List rendering: one coarse unit ("11d") instead of the full countdown.
+   * List rendering: same badge, tightened typography for a table cell.
    *
-   * A table cell is scanned, not read — "11d 17:41:56" spends three fields on
-   * precision nobody acts on. The exact value stays one hover (title) or one
-   * click (detail page) away. Off by default, so the detail page keeps ticking.
+   * The countdown itself is NOT truncated any more — a row that says "01:12:04" is
+   * the point of the column. `tabular-nums` keeps the digits from shifting as it ticks.
    */
   compact?: boolean;
 }
 
 export default function SlaCountdown({ slaTimer, compact = false }: Props) {
-  const [remaining, setRemaining] = useState(() =>
-    slaTimer ? new Date(slaTimer.dueAt).getTime() - Date.now() : 0,
-  );
+  const dueAt = slaTimer?.dueAt ?? "";
+  // `now` is the only clock read, and it only ever moves inside the effect. Remaining
+  // is then derived (deadline - now), so a dueAt change is reflected on the SAME render
+  // instead of showing the previous ticket's remainder until the next tick lands.
+  const [now, setNow] = useState(() => Date.now());
+  const remaining = dueAt ? new Date(dueAt).getTime() - now : 0;
 
   useEffect(() => {
     if (
@@ -104,41 +57,46 @@ export default function SlaCountdown({ slaTimer, compact = false }: Props) {
     )
       return;
 
-    const interval = setInterval(() => {
-      setRemaining(new Date(slaTimer!.dueAt).getTime() - Date.now());
-    }, 1000);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, [slaTimer]);
 
-  if (!slaTimer) return null;
+  // No timer at all. The clock is only created when a ticket is actually picked up
+  // (ApplySlaAsync, on the transition to InProgress), and Urgent tickets never get one —
+  // so an unassigned ticket legitimately has nothing to count down. An empty cell read
+  // as missing data; this says the SLA has not started, which is the real state.
+  //
+  // Detail pages render their own SLA block, so a placeholder there would be noise —
+  // only the list needs the column to stay aligned.
+  if (!slaTimer) {
+    if (!compact) return null;
+    return (
+      <span className={`${BADGE_BASE} ${toneClass("muted")}`}>Not started</span>
+    );
+  }
 
   if (slaTimer.status === SlaTimerStatusEnum.Met) {
-    return (
-      <span
-        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("ok")}`}
-      >
-        On time
-      </span>
-    );
+    return <span className={`${BADGE_BASE} ${toneClass("ok")}`}>On time</span>;
   }
 
   if (slaTimer.status === SlaTimerStatusEnum.Breached) {
     return (
-      <span
-        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
-      >
-        SLA breached
-      </span>
+      <span className={`${BADGE_BASE} ${toneClass("p1")}`}>SLA breached</span>
     );
   }
 
   if (slaTimer.status === SlaTimerStatusEnum.Paused) {
+    return <span className={`${BADGE_BASE} ${toneClass("p3")}`}>Paused</span>;
+  }
+
+  // Stopped is a real BE state (SlaTimerStatusEnum.Stopped = 5): the clock was cancelled,
+  // e.g. StopSlaAsync, or the ticket became Urgent after a timer already existed. It used
+  // to fall through to the countdown branch below, which rendered a LIVE badge counting
+  // against a dueAt nobody is held to any more — and once that date passed it showed a red
+  // 00:00:00, i.e. an about-to-breach ticket that is not being timed at all.
+  if (slaTimer.status === SlaTimerStatusEnum.Stopped) {
     return (
-      <span
-        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p3")}`}
-      >
-        Paused
-      </span>
+      <span className={`${BADGE_BASE} ${toneClass("muted")}`}>No SLA</span>
     );
   }
 
@@ -147,8 +105,7 @@ export default function SlaCountdown({ slaTimer, compact = false }: Props) {
   // absolute <1h mark — avoids the same ticket showing a different urgency level per role.
   const isWarning = isNearBreachPercent(slaTimer.remainingPercent);
 
-  // What the ring cannot say: the exact deadline, the exact time left, and the
-  // percentage the arc is drawing. Hover is where the precision lives now.
+  // What the badge cannot say: the exact deadline and the percentage left.
   const details = (
     <div className="space-y-0.5 text-left">
       <div className="font-medium tabular-nums">
@@ -161,28 +118,30 @@ export default function SlaCountdown({ slaTimer, compact = false }: Props) {
     </div>
   );
 
-  if (compact) {
-    return (
-      <Tooltip>
-        <TooltipTrigger render={<span className="inline-flex" />}>
-          <SlaRing
-            percent={slaTimer.remainingPercent}
-            label={formatSlaRemainingCompact(remaining)}
-            toneClassName={slaTextColorClass(slaTimer.remainingPercent)}
-          />
-        </TooltipTrigger>
-        <TooltipContent>{details}</TooltipContent>
-      </Tooltip>
-    );
+  // Running, but the deadline is already behind us — the BE breach sweep has not flipped
+  // the status yet. `formatSlaRemaining` floors at "00:00:00", so this rendered as a live
+  // clock frozen on zero, which reads as "breaching right now" rather than "already over".
+  // Say it plainly instead of counting time that has run out.
+  if (remaining <= 0) {
+    return <span className={`${BADGE_BASE} ${toneClass("p1")}`}>Overdue</span>;
   }
+
+  // In a list the badge is graded green→amber→red by % left, so a column of them still
+  // sorts by urgency at a glance — the one thing the ring was actually good at. On the
+  // detail page there is nothing to compare against, so it stays the plain near-breach flip.
+  const tone = compact ? slaTone(slaTimer.remainingPercent) : undefined;
 
   return (
     <Tooltip>
       <TooltipTrigger
         render={
           <span
-            className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${
-              isWarning ? toneClass("p1") : toneClass("muted")
+            className={`${BADGE_BASE} font-mono tabular-nums ${
+              tone
+                ? toneClass(tone)
+                : isWarning
+                  ? toneClass("p1")
+                  : toneClass("muted")
             }`}
           />
         }

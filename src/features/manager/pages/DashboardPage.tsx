@@ -22,6 +22,7 @@ import {
   SegmentedRing,
 } from "@/shared/components/dashboard/DashboardBlocks";
 import { SlaGaugePanel } from "@/shared/components/dashboard/SlaGaugePanel";
+import { slaComplianceTone } from "@/shared/lib/sla";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
@@ -222,7 +223,7 @@ export default function ManagerDashboardPage() {
           {/* A percentage off one closed ticket is noise, so the rail shows the raw
               fraction until there is enough of a record to divide. */}
           <Stat
-            label="SLA met"
+            label="SLA on time"
             value={
               ticketsLoading
                 ? "--"
@@ -232,7 +233,9 @@ export default function ManagerDashboardPage() {
                     ? `${sla?.met}/${slaTotal}`
                     : `${sla?.compliancePercent}%`
             }
-            tone={breached > 0 ? "p1" : slaTotal > 0 ? "ok" : undefined}
+            tone={slaComplianceTone(
+              slaTotal > 0 ? sla?.compliancePercent : undefined,
+            )}
           />
         </StatRail>
       </div>
@@ -456,7 +459,7 @@ export default function ManagerDashboardPage() {
 
         <SlaGaugePanel
           title="SLA compliance"
-          desc="met / (met + breach)"
+          desc="finished timers"
           sla={sla}
           isLoading={ticketsLoading}
           className="min-h-72 rounded-lg lg:col-span-3 lg:min-h-0"

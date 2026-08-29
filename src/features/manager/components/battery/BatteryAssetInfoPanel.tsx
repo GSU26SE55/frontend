@@ -8,7 +8,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useManagerBatteryAsset } from "@/features/manager/hooks/battery/useBatteryAsset";
 import { BatteryStatusEnum } from "@/features/manager/types/battery/battery-asset.types";
-import BatteryUsageHistoryPanel from "@/features/manager/components/battery/BatteryUsageHistoryPanel";
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
@@ -133,10 +132,6 @@ export default function BatteryAssetInfoPanel({
           detectedAt={detectedAt}
           batteryTypeId={asset.batteryTypeId}
         />
-      </div>
-
-      <div className="mt-5">
-        <BatteryUsageHistoryPanel batteryAssetId={batteryAssetId} />
       </div>
     </div>
   );

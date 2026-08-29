@@ -20,7 +20,7 @@ import type { SensorReadingDto } from "@/shared/types/battery/sensor-reading-his
  *   looks fabricated. One reading proves a threshold was crossed; it cannot show a battery
  *   heating up.
  *
- *   `ManualByCustomer` / `CreatedByStaff` — a person typed in when they noticed the problem.
+ *   `ManualByCustomer` — a person typed in when they noticed the problem.
  *   Nobody recalls an incident to the second; they enter "3pm" for something seen around 3pm.
  *
  * At 10s per reading the window holds ~24 rows — comfortably above the 5-breach noise

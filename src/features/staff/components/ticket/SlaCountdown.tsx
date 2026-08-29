@@ -59,7 +59,22 @@ export function SlaCountdown({
     return () => clearInterval(id);
   }, [dueAt, status]);
 
-  if (!slaTimer) return null;
+  // Matches `shared/components/ticket/SlaCountdown`: the timer only exists once a ticket
+  // is actually picked up (ApplySlaAsync), and Urgent never gets one — so "no timer" is a
+  // real state, not missing data. Rendering nothing left a hole in the card/table row.
+  if (!slaTimer) {
+    return compact ? (
+      <span
+        className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("muted")}`}
+      >
+        Not started
+      </span>
+    ) : (
+      <span className="text-sm font-medium text-muted-foreground">
+        SLA not started
+      </span>
+    );
+  }
 
   // Single-line chip — matches exactly how Manager displays it, including labels and colors.
   if (compact) {
@@ -87,6 +102,30 @@ export function SlaCountdown({
           className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p3")}`}
         >
           Paused
+        </span>
+      );
+    }
+    // Clock cancelled (StopSlaAsync / became Urgent) — must not fall through to a live
+    // countdown against a dueAt nobody is held to any more.
+    if (status === SlaTimerStatusEnum.Stopped) {
+      return (
+        <span
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("muted")}`}
+        >
+          No SLA
+        </span>
+      );
+    }
+    // Still Running but past dueAt (BE breach sweep has not landed yet). `remaining` is
+    // clamped at 0, so this rendered a clock frozen on 00:00:00 — reads as "breaching now"
+    // rather than "already over".
+    if (remaining <= 0) {
+      return (
+        <span
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
+          title={`Due ${formatSlaDueAt(dueAt)}`}
+        >
+          Overdue
         </span>
       );
     }
@@ -128,6 +167,17 @@ export function SlaCountdown({
             <div className="h-1.5 rounded-full bg-ok w-full" />
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (status === SlaTimerStatusEnum.Stopped) {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-sm font-medium text-muted-foreground">
+          No SLA
+        </span>
+        {!hideBar && <div className="h-1.5 w-full rounded-full bg-muted" />}
       </div>
     );
   }

@@ -40,6 +40,7 @@ import {
 import { staffTicketService } from "@/features/staff/services/ticket/ticket.service";
 import { useChatSender } from "@/shared/hooks/ticket/useChatSender";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
@@ -58,7 +59,7 @@ import {
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
-import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKbReferencesPanel";
+import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
@@ -79,6 +80,26 @@ import type { ResumeFormValues } from "@/features/staff/schemas/ticket/staff-tic
 import type { EscalateRequestFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { AddCommentFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { MaintenanceLogFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import { staffKbService } from "@/features/staff/services/kb/kb.service";
+import type { KbArticleSearchParams } from "@/shared/components/kb/KbArticleSelector";
+
+// Article lookups stay with the role's own KB service: Manager's carries the
+// approve/publish workflow that Staff's does not, and shared must not import from a
+// feature. The panel only needs these two reads.
+const searchKbArticles = ({ q, category }: KbArticleSearchParams) =>
+  staffKbService
+    .getList({
+      q,
+      category: category ? KbCategoryCode[category] : undefined,
+      status: KbArticleStatusEnum.Published,
+      pageSize: 20,
+    })
+    .then((r) => r.data.data?.items ?? []);
+
+const getKbArticleDetail = (id: string) =>
+  staffKbService.getDetail(id).then((r) => r.data.data!);
+
+import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
 
 // GH-1176: removed legacy WaitingCustomer/WaitingParts/WaitingOnsiteSchedule statuses.
 
@@ -351,6 +372,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="comments" className="group">
                   Chat
+                  <ChatUnreadBadge ticketId={ticketId} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   Logs{logs.length > 0 && ` (${logs.length})`}
@@ -549,6 +571,9 @@ export default function TicketDetailPage() {
                 canAdd={canAddKb}
                 afterResolveOnly={kbAfterResolveOnly}
                 defaultCategory={ticket.category}
+                basePath="/staff"
+                searchArticles={searchKbArticles}
+                getArticleDetail={getKbArticleDetail}
               />
             </TabsContent>
           </Tabs>

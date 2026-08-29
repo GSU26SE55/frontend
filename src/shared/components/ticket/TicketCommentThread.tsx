@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import ChatSeenAvatars from "@/shared/components/ticket/ChatSeenAvatars";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -688,8 +689,13 @@ export function TicketCommentThread({
             // C4 — Admin override only when the ticket is Closed and the page passes the handler.
             const canOverride =
               ticketClosed && !!onOverrideEdit && !!onOverrideDelete;
+            // A deleted message keeps its row as a "This message has been deleted." tombstone,
+            // but every action on it is meaningless — there is no body left to edit, translate
+            // or delete again, and the BE rejects all three. Gate the whole menu here rather
+            // than each flag, so any action added later is covered too.
             const canShowActions =
-              canEditThis || canDeleteThis || !!onTranslate || canOverride;
+              !c.isDeleted &&
+              (canEditThis || canDeleteThis || !!onTranslate || canOverride);
 
             return (
               <Fragment key={c.id}>
@@ -778,37 +784,55 @@ export function TicketCommentThread({
                         </div>
                       </div>
                     ) : (
-                      <CommentBubbleContent
-                        comment={c}
-                        displayBody={displayBody}
-                        isOwn={isOwn}
-                        canShowActions={canShowActions}
-                        ticketId={ticketId}
-                        actionsMenu={
-                          <CommentActionsMenu
-                            canEdit={canEditThis}
-                            canDelete={canDeleteThis}
-                            canTranslate={!!onTranslate}
-                            canOverride={canOverride}
-                            translating={translatingId === c.id}
-                            onEdit={() => startEdit(c)}
-                            onDelete={() => setDeleteTarget(c)}
-                            onTranslate={(lang) => handleTranslate(c, lang)}
-                            onOverrideEdit={() => onOverrideEdit?.(c)}
-                            onOverrideDelete={() => onOverrideDelete?.(c)}
+                      // Wrapped so hovering the bubble still reveals when it was sent — the
+                      // date line under each message is gone, and the thread has no date
+                      // separators, so this is the only place the time is available now.
+                      <Tooltip>
+                        <TooltipTrigger render={<div />}>
+                          <CommentBubbleContent
+                            comment={c}
+                            displayBody={displayBody}
+                            isOwn={isOwn}
+                            canShowActions={canShowActions}
+                            ticketId={ticketId}
+                            actionsMenu={
+                              <CommentActionsMenu
+                                canEdit={canEditThis}
+                                canDelete={canDeleteThis}
+                                canTranslate={!!onTranslate}
+                                canOverride={canOverride}
+                                translating={translatingId === c.id}
+                                onEdit={() => startEdit(c)}
+                                onDelete={() => setDeleteTarget(c)}
+                                onTranslate={(lang) => handleTranslate(c, lang)}
+                                onOverrideEdit={() => onOverrideEdit?.(c)}
+                                onOverrideDelete={() => onOverrideDelete?.(c)}
+                              />
+                            }
                           />
-                        }
-                      />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {format(
+                            new Date(c.createdAt),
+                            "EEEE, dd/MM/yyyy HH:mm:ss",
+                            { locale: enUS },
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
                     )}
 
-                    {!isEditing && ticketId && !ticketClosed && (
-                      <ChatReactionBar
-                        ticketId={ticketId}
-                        chatId={c.id}
-                        currentUserId={currentUserId}
-                        align={isOwn ? "end" : "start"}
-                      />
-                    )}
+                    {/* No reacting to a tombstone either — same reasoning as canShowActions. */}
+                    {!isEditing &&
+                      !c.isDeleted &&
+                      ticketId &&
+                      !ticketClosed && (
+                        <ChatReactionBar
+                          ticketId={ticketId}
+                          chatId={c.id}
+                          currentUserId={currentUserId}
+                          align={isOwn ? "end" : "start"}
+                        />
+                      )}
 
                     {translation && (
                       <button
@@ -821,25 +845,33 @@ export function TicketCommentThread({
                           : "View original"}
                       </button>
                     )}
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <span className="text-3xs text-muted-foreground px-1 mt-0.5 cursor-default" />
-                        }
-                      >
-                        {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
-                          locale: enUS,
-                        })}
-                        {!!c.editCount && c.editCount > 0 && " · edited"}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {format(
-                          new Date(c.createdAt),
-                          "EEEE, dd/MM/yyyy HH:mm:ss",
-                          { locale: enUS },
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
+                    {/* The date line under every bubble was dropped — it repeated on each
+                        message and crowded the thread. The full timestamp still shows on
+                        hover, and "edited" stays visible since nothing else marks an edit. */}
+                    {!!c.editCount && c.editCount > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="text-3xs text-muted-foreground px-1 mt-0.5 cursor-default" />
+                          }
+                        >
+                          edited
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {format(
+                            new Date(c.createdAt),
+                            "EEEE, dd/MM/yyyy HH:mm:ss",
+                            { locale: enUS },
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {/* "Seen by" avatars, Messenger-style. BE only fills readReceipts for
+                        messages YOU sent, so this never renders on someone else's bubble. */}
+                    {isOwn && !!c.readReceipts?.length && (
+                      <ChatSeenAvatars readers={c.readReceipts} />
+                    )}
                   </div>
                 </div>
               </Fragment>
