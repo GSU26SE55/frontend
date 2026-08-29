@@ -67,6 +67,8 @@ import IncidentTypeBadge from "./IncidentTypeBadge";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { noData, notFound } from "@/shared/constants/emptyStates";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const DEFAULTS = {
   status: "",
@@ -99,9 +101,6 @@ const TYPE_OPTIONS = [
   EnvironmentalIncidentTypeEnum.OverheatHazard,
   EnvironmentalIncidentTypeEnum.Other,
 ];
-
-const formatDateTime = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString("vi-VN") : "—";
 
 export default function EnvironmentalIncidentsView({
   subtitle,
@@ -143,8 +142,11 @@ export default function EnvironmentalIncidentsView({
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
             {subtitle}
           </p>
+          {/* Titled "alerts" to read as one family with Battery alerts and Device alerts
+              in the sidebar. The rows themselves are still incidents — the sentence below,
+              the route, the types and the BE endpoint all keep that word. */}
           <h1 className="text-2xl font-semibold tracking-tight">
-            Environmental incidents
+            Environmental alerts
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "..." : totalItems} incidents &mdash; smoke / fire /
@@ -268,7 +270,9 @@ export default function EnvironmentalIncidentsView({
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ShieldAlert className="size-8 opacity-30" />
-            <span className="text-sm">No incidents yet.</span>
+            <span className="text-sm">
+              {hasActiveFilter ? notFound("incidents") : noData("incidents")}
+            </span>
           </div>
         ) : (
           <Table>
@@ -500,7 +504,9 @@ function ResolveForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
       <div className="space-y-1">
-        <Label htmlFor="resolutionNote">Resolution note *</Label>
+        <Label htmlFor="resolutionNote">
+          Resolution note <span className="text-destructive">*</span>
+        </Label>
         <Textarea
           id="resolutionNote"
           rows={3}
@@ -555,7 +561,9 @@ function FalseAlarmForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
       <div className="space-y-1">
-        <Label htmlFor="falseAlarmReason">False alarm reason *</Label>
+        <Label htmlFor="falseAlarmReason">
+          False alarm reason <span className="text-destructive">*</span>
+        </Label>
         <Textarea
           id="falseAlarmReason"
           rows={3}

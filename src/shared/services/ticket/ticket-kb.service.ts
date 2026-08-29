@@ -8,6 +8,13 @@ import type {
 
 export type AddTicketKbRefInput = Omit<AddTicketKbReferencePayload, "ticketId">;
 
+/**
+ * Links between a ticket and the KB articles consulted while handling it.
+ *
+ * Shared rather than duplicated per feature: the endpoints take no role in the path and
+ * the BE decides permission from the JWT, so the admin/manager/staff copies of this file
+ * were byte-identical apart from where they lived.
+ */
 export const ticketKbService = {
   list: (ticketId: string) =>
     axiosInstance.get<CommonResponse<TicketKbReferenceDTO[]>>(

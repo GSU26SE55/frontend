@@ -12,6 +12,7 @@ import {
   Lock,
   KeyRound,
   MonitorSmartphone,
+  LogOut,
   Bell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,6 +27,7 @@ import PhoneVerifySection from "@/features/auth/components/profile/PhoneVerifySe
 import TwoFactorSetup from "@/features/auth/components/2fa/TwoFactorSetup";
 import GoogleLinkSection from "@/features/auth/components/profile/GoogleLinkSection";
 import TrustedDevicesSection from "@/features/auth/components/trusted-device/TrustedDevicesSection";
+import MySessionsSection from "@/features/auth/components/session/MySessionsSection";
 import LoginHistoryTable from "@/features/auth/components/account/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/profile/DangerZone";
 import NotificationPreferencesSection from "@/features/auth/components/profile/NotificationPreferencesSection";
@@ -84,12 +86,12 @@ function StatusBadge({
   labelNo: string;
 }) {
   return ok ? (
-    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
+    <span className="inline-flex items-center gap-1 text-3xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
       <span className="size-1.5 rounded-full bg-emerald-500" />
       {labelOk}
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
+    <span className="inline-flex items-center gap-1 text-3xs font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
       <span className="size-1.5 rounded-full bg-muted-foreground/40" />
       {labelNo}
     </span>
@@ -233,7 +235,7 @@ const AccountSettingsPage = () => {
                   />
                 )}
                 <Icon size={14} className="relative shrink-0" />
-                <span className="relative flex-1 text-[13px] truncate">
+                <span className="relative flex-1 text-2sm truncate">
                   {item.label}
                 </span>
                 {isActive && (
@@ -335,14 +337,14 @@ const AccountSettingsPage = () => {
                           </button>
                           {credSub === "password" ? (
                             <>
-                              <p className="text-[13px] font-semibold mb-4">
+                              <p className="text-2sm font-semibold mb-4">
                                 Change password
                               </p>
                               <ChangePasswordForm bare />
                             </>
                           ) : (
                             <>
-                              <p className="text-[13px] font-semibold mb-4">
+                              <p className="text-2sm font-semibold mb-4">
                                 Change email address
                               </p>
                               <ChangeEmailForm bare />
@@ -407,6 +409,14 @@ const AccountSettingsPage = () => {
                         description="Devices exempt from 2FA verification for 30 days"
                       >
                         <TrustedDevicesSection />
+                      </SecurityRow>
+
+                      <SecurityRow
+                        icon={LogOut}
+                        title="Where you're signed in"
+                        description="Devices with an active session — sign out any you don't recognise"
+                      >
+                        <MySessionsSection />
                       </SecurityRow>
                     </div>
                   )}

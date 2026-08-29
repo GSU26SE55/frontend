@@ -1,20 +1,31 @@
 import { z } from "zod";
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import { htmlToPlainText } from "@/shared/lib/sanitizeHtml";
+import { requiredSelect } from "@/shared/schemas/common.schema";
 
 // Content is authored in rich text (Tiptap) → always at least "<p></p>" when
 // empty, so .min(1) is useless: check the plain text after stripping tags.
+// An image-only article carries no plain text but is accepted by the BE, so embedded
+// media counts as content as well.
+const HAS_EMBEDDED_MEDIA = /<(img|video|iframe|figure|embed)\b/i;
+
 const richTextField = (max: number, emptyMsg: string) =>
   z
     .string()
-    .refine((v) => htmlToPlainText(v).length > 0, emptyMsg)
+    .refine(
+      (v) => htmlToPlainText(v).length > 0 || HAS_EMBEDDED_MEDIA.test(v),
+      emptyMsg,
+    )
     .refine((v) => v.length <= max, `Must be at most ${max} characters`);
 
 // KB Article — shared by admin/manager/staff (the BE ValidateAsync is the same).
 // Content merged into a single `content` field
 // (BE #692 — MergeKbContentFieldsToSingleContent).
 export const kbArticleSchema = z.object({
-  category: z.nativeEnum(TicketCategoryEnum),
+  category: requiredSelect(
+    z.nativeEnum(TicketCategoryEnum),
+    "Select a category",
+  ),
   title: z
     .string()
     .min(1, "Title is required")

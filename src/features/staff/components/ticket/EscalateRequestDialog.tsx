@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,9 @@ const ESCALATION_REASON_LABELS: Record<string, string> = {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: EscalateRequestFormValues) => void;
+  /** Returns the mutation's promise so this dialog can map a rejection onto its
+   *  own fields — a void callback leaves the error nowhere to go. */
+  onSubmit: (data: EscalateRequestFormValues) => Promise<unknown>;
   isPending: boolean;
 }
 
@@ -56,8 +59,15 @@ export function EscalateRequestDialog({
     resolver: zodResolver(escalateRequestSchema),
   });
 
-  const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
+  const handleSubmit = form.handleSubmit(async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // EntityError (400 + listErrors) → message lands on the field the BE rejected;
+      // anything else → toast. The mutation no longer reports errors itself, precisely so
+      // they can be mapped here.
+      handleErrorApi({ error, setError: form.setError });
+    }
   });
 
   return (

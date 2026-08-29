@@ -131,7 +131,9 @@ export default function IoTDeviceForm({
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="displayName">Display name *</Label>
+          <Label htmlFor="displayName">
+            Display name <span className="text-destructive">*</span>
+          </Label>
           <Input id="displayName" {...register("displayName")} />
           {errors.displayName && (
             <p className="text-sm text-destructive">
@@ -142,7 +144,9 @@ export default function IoTDeviceForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label>Site *</Label>
+            <Label>
+              Site <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="siteId"
@@ -177,7 +181,9 @@ export default function IoTDeviceForm({
             )}
           </div>
           <div className="space-y-1">
-            <Label>Status *</Label>
+            <Label>
+              Status <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="status"
@@ -331,7 +337,9 @@ export default function IoTDeviceForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <Label htmlFor="deviceCode">Device Code *</Label>
+          <Label htmlFor="deviceCode">
+            Device Code <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="deviceCode"
             {...register("deviceCode")}
@@ -345,7 +353,9 @@ export default function IoTDeviceForm({
           )}
         </div>
         <div className="space-y-1">
-          <Label htmlFor="displayName">Display name *</Label>
+          <Label htmlFor="displayName">
+            Display name <span className="text-destructive">*</span>
+          </Label>
           <Input id="displayName" {...register("displayName")} />
           {errors.displayName && (
             <p className="text-sm text-destructive">
@@ -357,7 +367,9 @@ export default function IoTDeviceForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <Label>Site *</Label>
+          <Label>
+            Site <span className="text-destructive">*</span>
+          </Label>
           <Controller
             control={control}
             name="siteId"

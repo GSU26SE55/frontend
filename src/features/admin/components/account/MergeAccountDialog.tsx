@@ -88,7 +88,7 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
           <div className="space-y-1.5">
             <Label>
               Account being merged (secondary){" "}
-              <span className="text-red-500">*</span>
+              <span className="text-destructive">*</span>
             </Label>
             <Controller
               name="secondaryAccountId"
@@ -124,7 +124,7 @@ export default function MergeAccountDialog({ open, onClose, account }: Props) {
 
           <div className="space-y-1.5">
             <Label htmlFor="reason">
-              Reason <span className="text-red-500">*</span>
+              Reason <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="reason"

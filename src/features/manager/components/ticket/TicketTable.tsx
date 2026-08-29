@@ -6,6 +6,8 @@ import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge"
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
 import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
+import { getTicketSource } from "@/shared/utils/ticket/ticketSource";
+import { toneClass } from "@/shared/theme/statusColors";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import {
@@ -15,6 +17,7 @@ import {
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { formatDate } from "@/shared/utils/datetime";
 
 interface Props {
   tickets: TicketDTO[];
@@ -128,6 +131,22 @@ export default function TicketTable({
       ),
     },
     {
+      id: "source",
+      header: "Source",
+      // Không sortKey: BE whitelist sort là code|title|category|status|priority|createdAt —
+      // "source" không phải cột thật nên bấm sort sẽ không có tác dụng.
+      cell: (t) => {
+        const source = getTicketSource(t);
+        return (
+          <span
+            className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${toneClass(source.tone)}`}
+          >
+            {source.label}
+          </span>
+        );
+      },
+    },
+    {
       id: "status",
       header: "Status",
       sortKey: "status",
@@ -178,7 +197,7 @@ export default function TicketTable({
       sortKey: "createdAt",
       sortValue: (t) => new Date(t.createdAt).getTime(),
       cellClassName: "text-xs text-muted-foreground",
-      cell: (t) => new Date(t.createdAt).toLocaleDateString("vi-VN"),
+      cell: (t) => formatDate(t.createdAt),
     },
   ];
 

@@ -7,6 +7,7 @@ import {
   getActivityMeta,
   activityToneStyle,
 } from "@/shared/components/ticket/ticketActivityMeta";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const IS_GUID =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -115,7 +116,7 @@ export default function TicketActivityTimeline({
               )}
             </div>
             <time className="text-xs text-muted-foreground">
-              {new Date(act.createdAt).toLocaleString("vi-VN")}
+              {formatDateTime(act.createdAt)}
             </time>
           </li>
         );

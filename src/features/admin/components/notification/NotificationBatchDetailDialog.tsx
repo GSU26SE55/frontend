@@ -39,7 +39,7 @@ function Stat({
           : "";
   return (
     <div className="rounded-md border border-border bg-background px-3 py-2">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="text-2xs text-muted-foreground">{label}</p>
       <p className={`text-lg font-semibold tabular-nums ${color}`}>{value}</p>
     </div>
   );
@@ -70,22 +70,22 @@ export default function NotificationBatchDetailDialog({
           <div className="space-y-4">
             <div className="rounded-lg border border-border p-3">
               <p className="font-medium">{data.title}</p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+              <p className="mt-1 whitespace-pre-wrap text-base text-muted-foreground">
                 {data.body}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-3xs">
                   {notificationTypeLabel(data.type)}
                 </Badge>
                 {data.channels.map((c) => (
-                  <Badge key={c} variant="outline" className="text-[10px]">
+                  <Badge key={c} variant="outline" className="text-3xs">
                     {notificationChannelLabel(c)}
                   </Badge>
                 ))}
-                <Badge variant="outline" className="text-[10px]">
+                <Badge variant="outline" className="text-3xs">
                   {notificationBatchSourceLabel(data.source)}
                 </Badge>
-                <Badge variant="outline" className="text-[10px]">
+                <Badge variant="outline" className="text-3xs">
                   {notificationBatchStatusLabel(data.status)}
                 </Badge>
               </div>
@@ -95,7 +95,7 @@ export default function NotificationBatchDetailDialog({
               <p className="mb-1.5 text-xs font-medium">Sent to</p>
               <div className="flex flex-wrap gap-1">
                 {data.targets.map((t, i) => (
-                  <Badge key={i} variant="secondary" className="text-[10px]">
+                  <Badge key={i} variant="secondary" className="text-3xs">
                     {t.targetKind === NotificationBatchTargetKindEnum.Group
                       ? // Deleted groups still show WITH THEIR NAME — the backend deliberately
                         // does not filter out soft-deleted rows. The fallback branch is only

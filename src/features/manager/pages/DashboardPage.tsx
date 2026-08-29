@@ -22,6 +22,7 @@ import {
   SegmentedRing,
 } from "@/shared/components/dashboard/DashboardBlocks";
 import { SlaGaugePanel } from "@/shared/components/dashboard/SlaGaugePanel";
+import { slaComplianceTone } from "@/shared/lib/sla";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { useAdminTicketQueue } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useStaffAssignmentList } from "@/features/manager/hooks/ticket/useStaffAssignmentList";
@@ -222,17 +223,19 @@ export default function ManagerDashboardPage() {
           {/* A percentage off one closed ticket is noise, so the rail shows the raw
               fraction until there is enough of a record to divide. */}
           <Stat
-            label="SLA met"
+            label="SLA on time"
             value={
               ticketsLoading
                 ? "--"
                 : slaTotal === 0
-                  ? "no data"
+                  ? "0"
                   : slaTotal < 5
                     ? `${sla?.met}/${slaTotal}`
                     : `${sla?.compliancePercent}%`
             }
-            tone={breached > 0 ? "p1" : slaTotal > 0 ? "ok" : undefined}
+            tone={slaComplianceTone(
+              slaTotal > 0 ? sla?.compliancePercent : undefined,
+            )}
           />
         </StatRail>
       </div>
@@ -423,11 +426,15 @@ export default function ManagerDashboardPage() {
               </div>
               {/* Priority sits under the ring instead of taking its own row of cards:
                   three numbers do not need three panels. */}
+              {/* Working DAYS, not hours: SlaCalculator derives the budget from the working-day
+                  count (1/3/7) times the 07:00–17:00 window, so the real deadlines are 10h/30h/70h
+                  — the old "4h/24h/72h" labels here were the GitHub-issue priority thresholds from
+                  the team's internal process, a different scale that had leaked into ticket UI. */}
               <ChartFooterStats
                 items={[
-                  { label: "P1 · 4h SLA", value: p1, color: "var(--p1)" },
-                  { label: "P2 · 24h SLA", value: p2, color: "var(--p2)" },
-                  { label: "P3 · 72h SLA", value: p3, color: "var(--p3)" },
+                  { label: "P1 · 1d SLA", value: p1, color: "var(--p1)" },
+                  { label: "P2 · 3d SLA", value: p2, color: "var(--p2)" },
+                  { label: "P3 · 7d SLA", value: p3, color: "var(--p3)" },
                 ]}
               />
             </>
@@ -452,7 +459,7 @@ export default function ManagerDashboardPage() {
 
         <SlaGaugePanel
           title="SLA compliance"
-          desc="met / (met + breach)"
+          desc="finished timers"
           sla={sla}
           isLoading={ticketsLoading}
           className="min-h-72 rounded-lg lg:col-span-3 lg:min-h-0"

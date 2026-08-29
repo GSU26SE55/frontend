@@ -7,6 +7,7 @@ import {
   countBreaches,
 } from "@/shared/hooks/battery/useReadingEvidence";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 /** Number of rows shown by default before clicking "Show more". */
 const PREVIEW_ROWS = 10;
@@ -43,20 +44,7 @@ export default function BatteryWarningEvidencePanel({
     undefined,
     !!batteryTypeId,
   );
-  const warnings = toWarningRows(
-    data?.items ?? [],
-    threshold
-      ? {
-          temperatureMax: threshold.temperatureMax,
-          temperatureMin: threshold.temperatureMin,
-          voltageMax: threshold.voltageMax,
-          voltageMin: threshold.voltageMin,
-          socWarningThreshold: threshold.socWarningThreshold,
-          currentMaxCharge: threshold.currentMaxCharge,
-          currentMaxDischarge: threshold.currentMaxDischarge,
-        }
-      : undefined,
-  );
+  const warnings = toWarningRows(data?.items ?? []);
 
   // Chỉ những dòng thật sự vượt ngưỡng mới được tính là "bằng chứng"; phần còn lại là bối
   // cảnh xung quanh, vẫn phải hiện để người đọc thấy pin lúc đó ra sao.
@@ -75,11 +63,11 @@ export default function BatteryWarningEvidencePanel({
     <div>
       <div className="flex items-center gap-2 mb-2">
         <ShieldAlert className="size-4 text-amber-600" />
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
           Alert evidence (at detection time)
         </p>
         {breachCount > 0 && (
-          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-3xs font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
             {breachCount}
           </span>
         )}
@@ -153,7 +141,7 @@ export default function BatteryWarningEvidencePanel({
                       }
                     >
                       <td className="px-2 py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">
-                        {new Date(r.time).toLocaleString("vi-VN")}
+                        {formatDateTime(r.time)}
                       </td>
                       <td
                         className={`px-2 py-1.5 text-right tabular-nums ${
@@ -192,7 +180,7 @@ export default function BatteryWarningEvidencePanel({
                           {reasons.map((reason) => (
                             <span
                               key={reason}
-                              className="inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-300"
+                              className="inline-flex items-center rounded bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 text-3xs font-medium text-amber-800 dark:text-amber-300"
                             >
                               {reason}
                             </span>

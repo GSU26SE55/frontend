@@ -29,7 +29,9 @@ function useTicketMutation<TData>(
       });
       queryClient.invalidateQueries({ queryKey: [KEY.staffTickets, "list"] });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // No onError: these all back forms, and the dialogs catch the rejection so
+    // EntityError's per-field messages reach the inputs instead of collapsing into one
+    // toast that never says which field the BE rejected.
   });
 }
 
@@ -94,7 +96,7 @@ export function useAddMaintenanceLog(ticketId: string) {
         queryKey: QUERY_KEY.staffTickets.detail(ticketId),
       });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // Form mutation — the dialog maps the error onto its fields.
   });
 }
 
@@ -117,6 +119,6 @@ export function useUpdateMaintenanceLog(ticketId: string) {
         queryKey: QUERY_KEY.staffTickets.myMaintenanceLogs(),
       });
     },
-    onError: (error) => handleErrorApi({ error }),
+    // Form mutation — the dialog maps the error onto its fields.
   });
 }

@@ -1,3 +1,5 @@
+import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+
 // SLA thresholds UNIFIED across the app (fixes the inconsistency between staff ≤25% vs
 // manager <1h vs bar >50/>20). Uses remainingPercent (relative) so it's correct for every priority.
 //
@@ -27,6 +29,22 @@ export function slaComplianceColor(
   if (compliancePercent >= 90) return "var(--ok)";
   if (compliancePercent >= 70) return "var(--p3)";
   return "var(--p1)";
+}
+
+/**
+ * Same 3-band scale as `slaComplianceColor`, expressed as a StatusTone — for the
+ * `<Stat>` KPI tile, which takes a tone rather than a raw CSS colour. Kept next to the
+ * colour fn so the two can never drift: high ≥90 · medium ≥70 · low below that.
+ * `undefined` = no finished timer yet, so the tile stays neutral instead of scoring 0.
+ */
+export function slaComplianceTone(
+  compliancePercent: number | null | undefined,
+): "ok" | "p3" | "p1" | undefined {
+  if (compliancePercent === null || compliancePercent === undefined)
+    return undefined;
+  if (compliancePercent >= 90) return "ok";
+  if (compliancePercent >= 70) return "p3";
+  return "p1";
 }
 
 /** Same 3-band scale as `slaBarColorClass`, as a text color — SVG strokes pick it up via `currentColor`. */
@@ -73,7 +91,6 @@ export function formatSlaDueAt(dueAt: string): string {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-
 /**
  * Coarsest useful unit only — "11d", "17h", "45m", "30s". For list rows, where the
  * cell answers "how urgent" at a glance; the exact countdown and deadline live on
@@ -89,4 +106,24 @@ export function formatSlaRemainingCompact(ms: number): string {
   const mins = Math.floor(totalSecs / 60);
   if (mins > 0) return `${mins}m`;
   return `${totalSecs}s`;
+}
+
+/**
+ * Is the SLA clock still counting?
+ *
+ * Only `Running` and `Paused` are live states — every other status is terminal:
+ * `Met`/`Breached` are outcomes already decided, and `Stopped` means the clock was
+ * cancelled (StopSlaAsync on reject/merge/declare-incident, or the ticket turning
+ * Urgent). The BE agrees: `SlaCalculator.GetRemainingPercent` returns 0 for anything
+ * that is not Running/Paused, so a terminal timer has no meaningful % left.
+ *
+ * The detail sidebars use this to decide whether to draw the "Remaining %" row and the
+ * progress bar at all. Without it a rejected ticket rendered a full green bar counting
+ * down to a deadline nobody is held to any more.
+ */
+export function isSlaClockLive(status?: SlaTimerStatusEnum | null): boolean {
+  return (
+    status === SlaTimerStatusEnum.Running ||
+    status === SlaTimerStatusEnum.Paused
+  );
 }

@@ -21,7 +21,7 @@ interface ReportTimeSeriesChartProps {
   data: unknown[] | undefined;
   series: ChartSeries[];
   xKey?: string; // defaults to "date"
-  xFormat?: string; // date-fns pattern, defaults to "MM/dd"
+  xFormat?: string; // date-fns pattern, defaults to "dd/MM"
   isLoading?: boolean;
   emptyText?: string;
 }
@@ -40,7 +40,7 @@ export function ReportTimeSeriesChart({
   data,
   series,
   xKey = "date",
-  xFormat = "MM/dd",
+  xFormat = "dd/MM",
   isLoading,
   emptyText = "No data.",
 }: ReportTimeSeriesChartProps) {

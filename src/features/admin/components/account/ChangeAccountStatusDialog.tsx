@@ -94,7 +94,7 @@ export default function ChangeAccountStatusDialog({
           </p>
           <div className="space-y-1.5">
             <Label>
-              New status <span className="text-red-500">*</span>
+              New status <span className="text-destructive">*</span>
             </Label>
             <Controller
               name="status"
@@ -122,12 +122,23 @@ export default function ChangeAccountStatusDialog({
               )}
             />
             {errors.status && (
-              <p className="text-xs text-red-500">{errors.status.message}</p>
+              <p className="text-xs text-destructive">
+                {errors.status.message}
+              </p>
             )}
           </div>
           <div className="space-y-1.5">
             <Label>Reason</Label>
-            <Input {...register("reason")} placeholder="Enter a reason" />
+            <Input
+              {...register("reason")}
+              placeholder="Enter a reason"
+              aria-invalid={!!errors.reason || undefined}
+            />
+            {errors.reason && (
+              <p className="text-xs text-destructive">
+                {errors.reason.message}
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>

@@ -6,8 +6,8 @@ import { useAmbientThresholdBySite } from "@/shared/hooks/ambient/useAmbient";
 import {
   evaluateAmbientRow,
   ambientLevelTextClass,
-  ambientLevelRowClass,
 } from "@/shared/lib/ambientThresholds";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 /** Rows shown before "Show more" — matches the battery evidence panel. */
 const PREVIEW_ROWS = 10;
@@ -15,8 +15,6 @@ const LOAD_MORE_STEP = 25;
 
 const fmt = (v: number | null | undefined, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
-
-const formatDateTime = (iso: string) => new Date(iso).toLocaleString("vi-VN");
 
 interface Props {
   siteId?: string | null;
@@ -60,7 +58,7 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
     <div className="mt-5">
       <div className="flex items-center gap-2 mb-2">
         <Thermometer className="size-4 text-amber-600" />
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
           Site readings
         </p>
       </div>
@@ -89,10 +87,7 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
                 {visible.map((r) => {
                   const ev = evaluateAmbientRow(r, threshold);
                   return (
-                    <tr
-                      key={r.time}
-                      className={`border-t border-border/50 ${ambientLevelRowClass(ev.worst)}`}
-                    >
+                    <tr key={r.time} className="border-t border-border/50">
                       <td className="px-2 py-1.5 tabular-nums text-muted-foreground whitespace-nowrap">
                         {formatDateTime(r.time)}
                       </td>
@@ -129,7 +124,7 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
       )}
 
       {threshold && !threshold.enabled ? (
-        <p className="text-[11px] text-muted-foreground mt-1.5">
+        <p className="text-2xs text-muted-foreground mt-1.5">
           Threshold monitoring is off for this site — values are shown unmarked.
         </p>
       ) : null}

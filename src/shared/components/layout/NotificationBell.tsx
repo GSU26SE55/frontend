@@ -13,6 +13,7 @@ import {
 } from "@/shared/hooks/notifications/useNotifications";
 import { useNotificationsRealtime } from "@/shared/hooks/notifications/useNotificationsRealtime";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { redirectByRole } from "@/shared/types/account/session.types";
 import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
 import { notificationDeepLink } from "@/shared/utils/notificationDeepLink";
 import type { NotificationDto } from "@/shared/types/notification/notification.types";
@@ -29,6 +30,11 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useSessionStore();
+  // Inbox lives inside each role's layout (/admin/inbox, ...) so that opening it
+  // swaps only the <Outlet />, instead of remounting the whole shell.
+  const inboxPath = user?.role
+    ? `${redirectByRole(user.role)}/inbox`
+    : "/unauthorized";
 
   // Connects to the notification hub. The bell mounts once in the layout ⇒ exactly
   // one WebSocket for the whole app. Gated by user: without login there's no token,
@@ -62,7 +68,7 @@ export default function NotificationBell() {
     setOpen(false);
     // No deep link (system notification, battery alert...) → open in the inbox — it
     // used to just mark as read with nowhere to go, which looked like a broken button.
-    navigate(deepLink ?? `/notifications?id=${n.id}`);
+    navigate(deepLink ?? `${inboxPath}?id=${n.id}`);
   };
 
   return (
@@ -84,8 +90,8 @@ export default function NotificationBell() {
             {unreadCount > 0 && (
               <motion.span
                 key={badge}
-                className="absolute -top-0.5 -right-0.5 min-w-3.75 h-3.75 px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold leading-none"
-                style={{ backgroundColor: "var(--p1)" }}
+                className="absolute -top-0.5 -right-0.5 min-w-3.75 h-3.75 px-1 flex items-center justify-center rounded-full text-white text-3xs font-bold leading-none"
+                style={{ backgroundColor: "var(--p1-solid)" }}
                 initial={reduced ? false : { scale: 0.4, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1, transition: SPRING }}
                 exit={{
@@ -102,7 +108,7 @@ export default function NotificationBell() {
 
         <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
-            <span className="text-[13px] font-semibold">Notifications</span>
+            <span className="text-2sm font-semibold">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={(e) => {
@@ -110,7 +116,7 @@ export default function NotificationBell() {
                   markAllRead.mutate();
                 }}
                 disabled={markAllRead.isPending}
-                className="flex items-center gap-1 text-[11px] text-primary hover:underline disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1 text-2xs text-primary hover:underline disabled:opacity-50 cursor-pointer"
               >
                 <CheckCheck size={12} />
                 Mark all as read
@@ -153,13 +159,13 @@ export default function NotificationBell() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12.5px] font-medium text-foreground truncate">
+                        <div className="text-xs font-medium text-foreground truncate">
                           {n.title}
                         </div>
-                        <div className="text-[11.5px] text-muted-foreground line-clamp-2 whitespace-normal">
+                        <div className="text-2xs text-muted-foreground line-clamp-2 whitespace-normal">
                           {n.body}
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                        <div className="text-3xs text-muted-foreground mt-0.5">
                           {formatDistanceToNow(new Date(n.createdAt), {
                             addSuffix: true,
                             locale: enUS,
@@ -176,9 +182,9 @@ export default function NotificationBell() {
           <DropdownMenuItem
             onClick={() => {
               setOpen(false);
-              navigate("/notifications");
+              navigate(inboxPath);
             }}
-            className="w-full justify-center px-3.5 py-2.5 border-t border-border text-[12px] text-primary rounded-none hover:bg-muted focus:bg-muted cursor-pointer"
+            className="w-full justify-center px-3.5 py-2.5 border-t border-border text-xs text-primary rounded-none hover:bg-muted focus:bg-muted cursor-pointer"
           >
             View all in inbox
           </DropdownMenuItem>

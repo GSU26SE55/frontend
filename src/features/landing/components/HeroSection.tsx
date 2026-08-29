@@ -177,7 +177,7 @@ const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
 
       {/* Battery service nodes */}
       <div className="relative z-10 flex flex-col gap-3 p-4 pt-14">
-        <p className="mb-1 font-mono text-[10px] font-medium uppercase tracking-widest text-white/25">
+        <p className="mb-1 font-mono text-3xs font-medium uppercase tracking-widest text-white/25">
           Battery Services
         </p>
         {BATTERY_ROWS.map((row, i) => {
@@ -237,8 +237,8 @@ const CanvasPanel = ({ activeTab }: { activeTab: HeroDemoId }) => {
               </div>
 
               <div className="mt-1.5 flex items-center justify-between">
-                <span className="text-[10px] text-white/35">{row.site}</span>
-                <span className="font-mono text-[10px] text-white/50">
+                <span className="text-3xs text-white/35">{row.site}</span>
+                <span className="font-mono text-3xs text-white/50">
                   SOH {row.soh}%
                 </span>
               </div>
@@ -329,13 +329,13 @@ const AlertsContent = ({ placeholder }: { placeholder: string }) => (
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span
             className={cn(
-              "rounded px-1.5 py-0.5 font-mono text-[10px] font-medium",
+              "rounded px-1.5 py-0.5 font-mono text-3xs font-medium",
               severityStyle[row.severity],
             )}
           >
             {row.severity}
           </span>
-          <span className="text-[11px] text-white/25">{row.time}</span>
+          <span className="text-2xs text-white/25">{row.time}</span>
         </div>
       </Row>
     ))}
@@ -357,13 +357,13 @@ const TicketsContent = ({ placeholder }: { placeholder: string }) => (
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span
             className={cn(
-              "rounded px-1.5 py-0.5 font-mono text-[10px] font-medium",
+              "rounded px-1.5 py-0.5 font-mono text-3xs font-medium",
               severityStyle[row.priority],
             )}
           >
             {row.priority}
           </span>
-          <span className="flex items-center gap-1 text-[11px] text-white/25">
+          <span className="flex items-center gap-1 text-2xs text-white/25">
             <Clock className="size-3" />
             {row.sla}
           </span>
@@ -401,13 +401,13 @@ const SlaContent = () => (
             <p className="font-mono text-lg font-semibold text-white">
               {row.active}
             </p>
-            <p className="text-[10px] text-white/35">Open</p>
+            <p className="text-3xs text-white/35">Open</p>
           </div>
           <div>
             <p className="font-mono text-lg font-semibold text-emerald-400">
               {row.breach}
             </p>
-            <p className="text-[10px] text-white/35">Breach</p>
+            <p className="text-3xs text-white/35">Breach</p>
           </div>
         </div>
       </div>

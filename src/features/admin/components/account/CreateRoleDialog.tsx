@@ -65,7 +65,7 @@ export default function CreateRoleDialog({ open, onClose }: Props) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 py-2">
           <div className="space-y-1.5">
             <Label>
-              Role name <span className="text-red-500">*</span>
+              Role name <span className="text-destructive">*</span>
             </Label>
             <Input {...register("name")} placeholder="e.g. SeniorTechnician" />
             {errors.name && (

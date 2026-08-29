@@ -227,9 +227,6 @@ export default function BatteryAssetForm({
     }
   };
 
-  const selectClass =
-    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -241,7 +238,9 @@ export default function BatteryAssetForm({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="serialNumber">Serial Number *</Label>
+            <Label htmlFor="serialNumber">
+              Serial Number <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="serialNumber"
               {...register("serialNumber")}
@@ -255,7 +254,9 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="batteryTypeId">Battery type *</Label>
+            <Label htmlFor="batteryTypeId">
+              Battery type <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="batteryTypeId"
@@ -279,7 +280,9 @@ export default function BatteryAssetForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="customerId">Customer *</Label>
+            <Label htmlFor="customerId">
+              Customer <span className="text-destructive">*</span>
+            </Label>
             <Controller
               control={control}
               name="customerId"
@@ -369,7 +372,9 @@ export default function BatteryAssetForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="installDate">Install date *</Label>
+              <Label htmlFor="installDate">
+                Install date <span className="text-destructive">*</span>
+              </Label>
               <Controller
                 control={control}
                 name="installDate"
@@ -436,75 +441,69 @@ export default function BatteryAssetForm({
             )}
           </div>
 
-          {/* Opened from the site page → coordinates come from the site, so hide the
-              inputs. The values still live in form state (set from the locked site). */}
-          {!lockedSiteId && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="latitude">Latitude</Label>
-                {/* Filled from the location picker — read-only so it can't drift from the address. */}
-                <Input
-                  id="latitude"
-                  type="number"
-                  step="any"
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                  {...register("latitude")}
-                />
-                {errors.latitude && (
-                  <p className="text-sm text-destructive">
-                    {errors.latitude.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input
-                  id="longitude"
-                  type="number"
-                  step="any"
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                  {...register("longitude")}
-                />
-                {errors.longitude && (
-                  <p className="text-sm text-destructive">
-                    {errors.longitude.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Latitude/longitude still live in form state (auto-filled from the location
+              picker or the locked site) and are sent on submit — just not shown, the operator
+              never needs to look at raw coordinates here. */}
+          <input type="hidden" {...register("latitude")} />
+          <input type="hidden" {...register("longitude")} />
 
           {isEdit && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  {...register("status", { valueAsNumber: true })}
-                  className={selectClass}
-                >
-                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(v) => v && field.onChange(Number(v))}
+                      items={Object.entries(STATUS_LABELS).map(
+                        ([value, label]) => ({ value, label }),
+                      )}
+                    >
+                      <SelectTrigger id="status" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false}>
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="warrantyStatus">Warranty</Label>
-                <select
-                  id="warrantyStatus"
-                  {...register("warrantyStatus", { valueAsNumber: true })}
-                  className={selectClass}
-                >
-                  {Object.entries(WARRANTY_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name="warrantyStatus"
+                  render={({ field }) => (
+                    <Select
+                      value={String(field.value)}
+                      onValueChange={(v) => v && field.onChange(Number(v))}
+                      items={Object.entries(WARRANTY_LABELS).map(
+                        ([value, label]) => ({ value, label }),
+                      )}
+                    >
+                      <SelectTrigger id="warrantyStatus" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false}>
+                        {Object.entries(WARRANTY_LABELS).map(
+                          ([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
           )}

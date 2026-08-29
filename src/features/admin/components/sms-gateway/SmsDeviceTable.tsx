@@ -14,7 +14,7 @@ const isOnline = (lastSeenAt: string | null) =>
   Date.now() - new Date(lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
 
 const fmt = (dt: string | null) =>
-  dt ? format(new Date(dt), "MM/dd/yyyy HH:mm") : "—";
+  dt ? format(new Date(dt), "dd/MM/yyyy HH:mm") : "—";
 
 interface SmsDeviceTableProps {
   data: GatewayDeviceDto[];

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SiteCascadeRiskSummaryDto } from "@/shared/types/battery/cascade.types";
+import { plural } from "@/shared/utils/plural";
+import { displayNameOrShortId } from "@/shared/utils/displayId";
 
 interface CascadeRiskSummaryProps {
   summary: SiteCascadeRiskSummaryDto | undefined;
@@ -75,13 +77,13 @@ export default function CascadeRiskSummary({
             <div className="space-y-1.5 text-xs font-medium">
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
-                <span className="text-muted-foreground min-w-16">
+                <span className="text-muted-foreground min-w-20">
                   High risk:
                 </span>
                 <strong
                   className={`font-bold ${summary.highRiskCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}
                 >
-                  {summary.highRiskCount} batteries{" "}
+                  {plural(summary.highRiskCount, "battery", "batteries")}{" "}
                   {summary.totalAssets > 0
                     ? `(${((summary.highRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
                     : ""}
@@ -90,11 +92,11 @@ export default function CascadeRiskSummary({
 
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-muted-foreground min-w-16">Medium:</span>
+                <span className="text-muted-foreground min-w-20">Medium:</span>
                 <strong
                   className={`font-bold ${summary.mediumRiskCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
                 >
-                  {summary.mediumRiskCount} batteries{" "}
+                  {plural(summary.mediumRiskCount, "battery", "batteries")}{" "}
                   {summary.totalAssets > 0
                     ? `(${((summary.mediumRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
                     : ""}
@@ -103,11 +105,11 @@ export default function CascadeRiskSummary({
 
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
-                <span className="text-muted-foreground min-w-16">Low:</span>
+                <span className="text-muted-foreground min-w-20">Low:</span>
                 <strong
                   className={`font-bold ${summary.lowRiskCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
                 >
-                  {summary.lowRiskCount} batteries{" "}
+                  {plural(summary.lowRiskCount, "battery", "batteries")}{" "}
                   {summary.totalAssets > 0
                     ? `(${((summary.lowRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
                     : ""}
@@ -116,15 +118,15 @@ export default function CascadeRiskSummary({
             </div>
           </div>
 
-          <div className="relative w-32 h-32 shrink-0 flex items-center justify-center">
+          <div className="relative w-40 h-40 shrink-0 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={24}
-                  outerRadius={44}
+                  innerRadius={44}
+                  outerRadius={68}
                   paddingAngle={chartData.length > 1 ? 3 : 0}
                   cornerRadius={3}
                   dataKey="value"
@@ -140,7 +142,7 @@ export default function CascadeRiskSummary({
                 </Pie>
                 <Tooltip
                   formatter={(value: unknown) => [
-                    `${String(value)} batteries`,
+                    plural(Number(value), "battery", "batteries"),
                     "Count",
                   ]}
                   contentStyle={{
@@ -154,7 +156,7 @@ export default function CascadeRiskSummary({
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
               <span
-                className={`text-xs font-bold font-mono ${
+                className={`text-2xl font-bold font-mono ${
                   hasHighRisk
                     ? "text-rose-600 dark:text-rose-400"
                     : "text-emerald-600"
@@ -162,8 +164,8 @@ export default function CascadeRiskSummary({
               >
                 {summary.maxScore.toFixed(2)}
               </span>
-              <span className="text-[9px] text-muted-foreground font-medium">
-                Risk Max
+              <span className="text-2xs text-muted-foreground font-medium">
+                Risk
               </span>
             </div>
           </div>
@@ -171,16 +173,16 @@ export default function CascadeRiskSummary({
 
         {summary.highRiskAssets.length > 0 && (
           <div className="pt-2 border-t border-border flex items-center gap-1.5 flex-wrap text-xs">
-            <span className="text-[11px] text-muted-foreground font-medium">
+            <span className="text-2xs text-muted-foreground font-medium">
               Batteries to watch:
             </span>
             {summary.highRiskAssets.slice(0, 4).map((a) => (
               <Badge
                 key={a.batteryAssetId}
                 variant="outline"
-                className="text-[10px] font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold"
+                className="text-3xs font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold"
               >
-                {a.serialNumber ?? a.batteryAssetId} (
+                {displayNameOrShortId(a.serialNumber, a.batteryAssetId)} (
                 {a.cascadeRiskScore.toFixed(2)})
               </Badge>
             ))}

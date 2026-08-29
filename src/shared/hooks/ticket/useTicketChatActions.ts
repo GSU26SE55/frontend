@@ -98,6 +98,10 @@ export function useMarkTicketChatsRead() {
           queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
         });
         qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+        // The cross-ticket total has to drop too, otherwise the layout badge keeps counting
+        // messages the user has just read here — it only refetched on its own 60s interval,
+        // so the two badges disagreed for up to a minute.
+        qc.invalidateQueries({ queryKey: QUERY_KEY.myChats.unreadCount() });
       }, 1_500);
     },
     // Mark-read is background housekeeping the user never asked for, so a failure must stay

@@ -7,6 +7,7 @@ import type {
   UrgencyLevelEnum,
   EscalationReasonEnum,
   SlaTimerStatusEnum,
+  TicketSourceFilterEnum,
   SlaFilterEnum,
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
@@ -18,6 +19,9 @@ import type {
   PauseReasonEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 import type { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
+// Type-only import, so the chat.types <-> ticket.types cycle is erased at compile time
+// (chat.types already imports AddCommentPayload from here).
+import type { ChatReaderDto } from "@/shared/types/chat/chat.types";
 export { VoiceTranscriptionStatusEnum } from "@/shared/enums/ticket/chat.enum";
 export {
   TicketStatusEnum,
@@ -30,6 +34,7 @@ export {
   PauseReasonEnum,
   EscalationReasonEnum,
   SlaTimerStatusEnum,
+  TicketSourceFilterEnum,
   SlaFilterEnum,
   MaintenanceLogTypeEnum,
   ActivityActionEnum,
@@ -69,7 +74,20 @@ export interface SlaTimerDTO {
   warningSentAt?: string | null;
   breachAt?: string | null;
   status: SlaTimerStatusEnum;
+  /**
+   * % SLA còn lại. CHỈ có nghĩa khi status là Running/Paused — BE
+   * (SlaCalculator.GetRemainingPercent) trả 0 cho Met/Breached/Stopped, nên đừng
+   * vẽ thanh progress từ nó mà không kiểm tra `isSlaClockLive(status)` trước.
+   */
   remainingPercent: number;
+  /** Số lần đã pause — BE trả về nhưng client chưa dùng. */
+  pauseEpisodesCount?: number;
+  /** Budget SLA theo ngày làm việc của priority (P1=1 · P2=3 · P3=7). */
+  slaWorkingDays?: number;
+  /** Budget SLA quy ra giờ làm việc (P1=10h · P2=30h · P3=70h). */
+  slaWorkingHours?: number;
+  /** Số phút làm việc còn lại tới dueAt. Cùng quy ước với remainingPercent: 0 khi timer đã kết thúc. */
+  remainingWorkingMinutes?: number;
 }
 
 export interface TicketDTO {
@@ -203,7 +221,32 @@ export interface TicketCommentDTO {
    * undefined as unread (it would draw the "Unread messages" divider in the wrong
    * place).
    */
+  /**
+   * Soft-deleted message. BE keeps the row and replaces the body with
+   * "This message has been deleted." — the tombstone stays in the thread, but every action
+   * on it (edit/translate/delete/react) is gone, so gate the UI on this.
+   */
+  isDeleted?: boolean;
   isRead?: boolean;
+  /**
+   * Who ELSE has read this message — the Messenger-style "seen" avatars.
+   *
+   * NOT the same thing as `isRead`: that one means "*I* have read this" and drives the
+   * "Unread messages" divider. This one means "who has read it" and is only populated by the
+   * BE for messages YOU sent — other people's messages always come back with an empty array.
+   * Realtime updates arrive via the ChatRead event, which carries only the NEW receipts, so
+   * merge by (chatId, userId) rather than overwriting.
+   */
+  readReceipts?: ChatReaderDto[];
+  /** = readReceipts.length, precomputed by the BE for a quick "Seen by N" label. */
+  readCount?: number;
+  /**
+   * Pinned to the top of the thread. Staff/Manager/Admin only, and the BE caps a ticket at
+   * 3 pinned messages — a 4th pin comes back as a 400 rather than silently replacing one.
+   */
+  isPinned?: boolean;
+  pinnedAt?: string | null;
+  pinnedByUserId?: string | null;
   // Voice chat (created via POST /chats/voice): Pending/Processing = transcribing (body is
   // temporarily empty), Completed = body holds the transcript, Failed = error → allow retry.
   // null for ordinary text chat.
@@ -293,6 +336,11 @@ export interface AdminTicketListParams {
   batteryAssetId?: string;
   /** BE query param `Sla` — Paused | Warning | Breached. Independent of `status`. */
   sla?: SlaFilterEnum;
+  /**
+   * BE query param `Source` — nguồn tạo ticket. Không map 1-1 với `origin`:
+   * Environmental / PeriodicMaintenance / CascadeRisk đều là Origin = System.
+   */
+  source?: TicketSourceFilterEnum;
   isDescending?: boolean;
   pageNumber?: number;
   pageSize?: number;

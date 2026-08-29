@@ -18,7 +18,7 @@ import {
   TicketStatusEnum,
   MaintenanceLogTypeEnum,
 } from "@/shared/types/ticket/ticket.types";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
 import {
   isTicketChatLocked,
   TICKET_CHAT_LOCKED_NOTICE,
@@ -40,6 +40,7 @@ import {
 import { staffTicketService } from "@/features/staff/services/ticket/ticket.service";
 import { useChatSender } from "@/shared/hooks/ticket/useChatSender";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
@@ -58,7 +59,7 @@ import {
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
-import TicketKbReferencesPanel from "@/features/staff/components/ticket/TicketKbReferencesPanel";
+import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
@@ -79,6 +80,26 @@ import type { ResumeFormValues } from "@/features/staff/schemas/ticket/staff-tic
 import type { EscalateRequestFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { AddCommentFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
 import type { MaintenanceLogFormValues } from "@/features/staff/schemas/ticket/staff-ticket.schema";
+import { staffKbService } from "@/features/staff/services/kb/kb.service";
+import type { KbArticleSearchParams } from "@/shared/components/kb/KbArticleSelector";
+
+// Article lookups stay with the role's own KB service: Manager's carries the
+// approve/publish workflow that Staff's does not, and shared must not import from a
+// feature. The panel only needs these two reads.
+const searchKbArticles = ({ q, category }: KbArticleSearchParams) =>
+  staffKbService
+    .getList({
+      q,
+      category: category ? KbCategoryCode[category] : undefined,
+      status: KbArticleStatusEnum.Published,
+      pageSize: 20,
+    })
+    .then((r) => r.data.data?.items ?? []);
+
+const getKbArticleDetail = (id: string) =>
+  staffKbService.getDetail(id).then((r) => r.data.data!);
+
+import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
 
 // GH-1176: removed legacy WaitingCustomer/WaitingParts/WaitingOnsiteSchedule statuses.
 
@@ -241,38 +262,29 @@ export default function TicketDetailPage() {
   const handleResumeSubmit = (data: ResumeFormValues) =>
     resumeMutationForHeld.mutateAsync(data).then(() => setResumeOpen(false));
 
-  const handleEscalateSubmit = (data: EscalateRequestFormValues) => {
-    escalateMutation.mutate(data, { onSuccess: () => setEscalateOpen(false) });
-  };
+  const handleEscalateSubmit = (data: EscalateRequestFormValues) =>
+    escalateMutation.mutateAsync(data).then(() => setEscalateOpen(false));
 
   const handleCommentSubmit = (data: AddCommentFormValues) => {
     enqueueChat(data);
   };
 
-  const handleLogSubmit = (data: MaintenanceLogFormValues) => {
+  const handleLogSubmit = (data: MaintenanceLogFormValues) =>
     // BE requires StartedAt (TicketService.MaintenanceLogAddCommand.ValidateAsync) — the form
     // has no dedicated input for it, so stamp "now" at submit time.
-    logMutation.mutate(
-      { ...data, startedAt: new Date().toISOString() },
-      { onSuccess: () => setLogOpen(false) },
-    );
-  };
+    logMutation
+      .mutateAsync({ ...data, startedAt: new Date().toISOString() })
+      .then(() => setLogOpen(false));
 
   // Complete requires a maintenance log first: save the log, then use its own summary as
   // the ticket's resolutionSummary — no separate "describe the resolution" step.
-  const handleCompleteLogSubmit = (data: MaintenanceLogFormValues) => {
-    logMutation.mutate(
-      { ...data, startedAt: new Date().toISOString() },
-      {
-        onSuccess: () => {
-          completeMutation.mutate(
-            { resolutionSummary: data.summary },
-            { onSuccess: () => setCompleteLogOpen(false) },
-          );
-        },
-      },
-    );
-  };
+  const handleCompleteLogSubmit = (data: MaintenanceLogFormValues) =>
+    logMutation
+      .mutateAsync({ ...data, startedAt: new Date().toISOString() })
+      .then(() =>
+        completeMutation.mutateAsync({ resolutionSummary: data.summary }),
+      )
+      .then(() => setCompleteLogOpen(false));
 
   const logs = ticket.maintenanceLogs ?? [];
 
@@ -360,6 +372,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="comments" className="group">
                   Chat
+                  <ChatUnreadBadge ticketId={ticketId} />
                 </TabsTrigger>
                 <TabsTrigger value="logs">
                   Logs{logs.length > 0 && ` (${logs.length})`}
@@ -394,7 +407,7 @@ export default function TicketDetailPage() {
                 return (
                   <div className="space-y-4">
                     {ids.length > 1 && (
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {ids.length} related batteries
                       </p>
                     )}
@@ -409,7 +422,7 @@ export default function TicketDetailPage() {
                 );
               })()}
               <div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Attachments
                 </p>
                 {ticket.attachmentFileIds &&
@@ -558,6 +571,9 @@ export default function TicketDetailPage() {
                 canAdd={canAddKb}
                 afterResolveOnly={kbAfterResolveOnly}
                 defaultCategory={ticket.category}
+                basePath="/staff"
+                searchArticles={searchKbArticles}
+                getArticleDetail={getKbArticleDetail}
               />
             </TabsContent>
           </Tabs>
@@ -587,7 +603,7 @@ export default function TicketDetailPage() {
             <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
               {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Info
                 </p>
                 <button
@@ -608,7 +624,7 @@ export default function TicketDetailPage() {
                 (ticket.aiVerifyStatus ||
                   (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
                   <div className="px-4 py-3 space-y-2">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                       AI check
                     </p>
                     {ticket.aiVerifyStatus && (
@@ -646,7 +662,7 @@ export default function TicketDetailPage() {
 
               {/* SLA */}
               <div className="p-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   SLA
                 </p>
                 {ticket.slaTimer ? (
@@ -672,25 +688,33 @@ export default function TicketDetailPage() {
                         Deadline
                       </span>
                       <span className="text-xs font-medium tabular-nums">
-                        {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
+                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Remaining
-                      </span>
-                      <span className="text-xs font-medium">
-                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                        style={{
-                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                        }}
-                      />
-                    </div>
+                    {/* Live-clock only — see the Manager panel. A Stopped/Met/Breached timer
+                        has remainingPercent = 0 from the BE, so the bar would either read as
+                        an empty red near-breach or, on stale data, a full green clock on a
+                        ticket nobody is working any more. */}
+                    {isSlaClockLive(ticket.slaTimer.status) && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Remaining
+                          </span>
+                          <span className="text-xs font-medium">
+                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                            style={{
+                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -705,7 +729,7 @@ export default function TicketDetailPage() {
                   info twice. The "Status" label in the SLA block above is the SLA countdown —
                   a completely different meaning, so merging the two blocks would only confuse. */}
               <div className="p-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   Processing time
                 </p>
                 <div className="flex items-center justify-between">
@@ -723,10 +747,10 @@ export default function TicketDetailPage() {
               {/* Description */}
               {ticket.description && (
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Description
                   </p>
-                  <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                  <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
                     {ticket.description}
                   </p>
                 </div>
@@ -736,7 +760,7 @@ export default function TicketDetailPage() {
               {ticket.attachmentFileIds &&
                 ticket.attachmentFileIds.length > 0 && (
                   <div className="p-4">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                       Attached photos
                     </p>
                     <TicketAttachments
@@ -750,7 +774,7 @@ export default function TicketDetailPage() {
               {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
               {ticket.rejectionReason && (
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-destructive uppercase tracking-wider mb-2">
                     Reason
                   </p>
                   <p className="text-xs leading-relaxed">
@@ -762,16 +786,16 @@ export default function TicketDetailPage() {
               {/* Resolution */}
               {ticket.resolutionSummary && (
                 <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
-                  <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                     Resolution
                   </p>
-                  <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
+                  <p className="text-base leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
                   {ticket.resolvedAt && (
-                    <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
+                    <p className="text-3xs text-emerald-700/70 dark:text-emerald-400/70">
                       Resolved at{" "}
-                      {format(new Date(ticket.resolvedAt), "MM/dd/yyyy HH:mm", {
+                      {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
                         locale: enUS,
                       })}
                     </p>
@@ -782,7 +806,7 @@ export default function TicketDetailPage() {
               {/* Escalation */}
               {ticket.escalatedAt && (
                 <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
-                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
                     Escalation
                   </p>
                   {ticket.escalationReason && (
@@ -791,8 +815,8 @@ export default function TicketDetailPage() {
                         ticket.escalationReason}
                     </p>
                   )}
-                  <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
-                    {format(new Date(ticket.escalatedAt), "MM/dd/yyyy HH:mm", {
+                  <p className="text-3xs text-orange-700/70 dark:text-orange-400/70 mt-1">
+                    {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
                       locale: enUS,
                     })}
                   </p>
@@ -802,7 +826,7 @@ export default function TicketDetailPage() {
               {/* Customer rating */}
               {ticket.rating != null && (
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Customer rating
                   </p>
                   <p className="text-xs font-medium">
@@ -827,31 +851,24 @@ export default function TicketDetailPage() {
                 {ticket.isPeriodicMaintenance && (
                   <>
                     <SideInfoRow
-                      label="Maintenance cycle"
-                      value={
-                        <span
-                          className={
-                            ticket.isPeriodicMaintenanceOverdue
-                              ? "font-medium text-destructive"
-                              : undefined
-                          }
-                        >
-                          {ticket.isPeriodicMaintenanceOverdue
-                            ? "Periodic · overdue"
-                            : "Periodic"}
-                        </span>
-                      }
-                    />
-                    <SideInfoRow
                       label="Maintenance due"
                       value={
-                        ticket.periodicMaintenanceDueAtUtc
-                          ? format(
+                        ticket.periodicMaintenanceDueAtUtc ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {format(
                               new Date(ticket.periodicMaintenanceDueAtUtc),
-                              "MM/dd/yyyy HH:mm",
+                              "dd/MM/yyyy HH:mm",
                               { locale: enUS },
-                            )
-                          : null
+                            )}
+                            {/* Quá hạn là tin cần biết ngay, nhưng nó nói về CÁI HẠN NÀY — nên đứng
+                                cạnh ngày, không tách thành một hàng "Periodic · overdue" riêng. */}
+                            {ticket.isPeriodicMaintenanceOverdue && (
+                              <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-3xs font-semibold uppercase tracking-wide text-destructive">
+                                Overdue
+                              </span>
+                            )}
+                          </span>
+                        ) : null
                       }
                     />
                     <SideInfoRow
@@ -860,10 +877,10 @@ export default function TicketDetailPage() {
                         ticket.scheduledStartAtUtc
                           ? format(
                               new Date(ticket.scheduledStartAtUtc),
-                              "MM/dd/yyyy HH:mm",
+                              "dd/MM/yyyy HH:mm",
                               { locale: enUS },
                             )
-                          : "Awaiting Customer selection"
+                          : null
                       }
                     />
                   </>
@@ -892,7 +909,7 @@ export default function TicketDetailPage() {
                     label="Detected at"
                     value={format(
                       new Date(ticket.detectedAt),
-                      "MM/dd/yyyy HH:mm",
+                      "dd/MM/yyyy HH:mm",
                       { locale: enUS },
                     )}
                   />
@@ -906,7 +923,7 @@ export default function TicketDetailPage() {
                   label="Created"
                   value={format(
                     new Date(ticket.createdAt),
-                    "MM/dd/yyyy HH:mm",
+                    "dd/MM/yyyy HH:mm",
                     {
                       locale: enUS,
                     },

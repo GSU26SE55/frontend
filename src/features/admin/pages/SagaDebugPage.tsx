@@ -46,7 +46,7 @@ import { toneClass, SAGA_STATE_TONE } from "@/shared/theme/statusColors";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 function fmt(d?: string | null) {
-  return d ? format(new Date(d), "MM/dd/yyyy HH:mm", { locale: enUS }) : "—";
+  return d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: enUS }) : "—";
 }
 
 function DetailRow({

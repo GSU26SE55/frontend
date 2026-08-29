@@ -2,6 +2,7 @@
 // The BE already filters out soft-deleted records, so the FE does not filter again.
 
 import { TicketAssignmentRoleEnum } from "@/shared/enums/ticket/ticket.enum";
+import { displayNameOrShortId } from "@/shared/utils/displayId";
 import type { TicketAssignmentDTO } from "@/shared/types/ticket/ticket.types";
 
 /** The staff member in charge — null when the ticket has not been assigned yet. */
@@ -40,10 +41,11 @@ export function getPreviousPrimaryHandlers(
  * Display name for one assignment row.
  * The BE already returns `staffName` (from the synced StaffAccount), so every role can use
  * it — no need to call `/api/staff`, which is open to Admin/Manager only. When the sync has
- * not caught up, it falls back to staffId so the row is at least identifiable.
+ * not caught up, it falls back to a SHORTENED staffId so the row stays identifiable without
+ * printing a full 36-character GUID where a person's name belongs.
  */
 export function assignmentDisplayName(a: TicketAssignmentDTO): string {
-  return a.staffName?.trim() || a.staffId;
+  return displayNameOrShortId(a.staffName, a.staffId);
 }
 
 /** Primary handler's name — null when the ticket has not been assigned yet. */

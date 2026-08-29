@@ -231,13 +231,25 @@ export const useMarkChatsRead = () => {
     }: {
       ticketId: string;
       payload: ChatMarkReadPayload;
+      onFailed?: () => void;
     }) => ticketChatService.markRead(ticketId, payload),
     onSuccess: (_, { ticketId }) => {
-      qc.invalidateQueries({
-        queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
-      });
-      qc.invalidateQueries({ queryKey: [KEY.myChats] });
+      // Same 1.5s delay as the shared useMarkTicketChatsRead, and for the same reason: a 200
+      // only means the receipts were QUEUED. TicketService persists them from
+      // ChatReadReceiptBulkWriter on a 1s flush interval, so refetching immediately reads the
+      // database before the flush, gets the old count back and marks the query fresh — the
+      // badge then holds a stale number instead of clearing.
+      setTimeout(() => {
+        qc.invalidateQueries({
+          queryKey: QUERY_KEY.tickets.chatUnreadCount(ticketId),
+        });
+        qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
+        qc.invalidateQueries({ queryKey: [KEY.myChats] });
+      }, 1_500);
     },
-    onError: (error) => handleErrorApi({ error }),
+    // Mark-read is background housekeeping the user never asked for → stay silent, no toast.
+    // onFailed hands the ids back to the thread so the next render retries them; BE answers
+    // 503 when its read-receipt queue is full, exactly the case worth retrying.
+    onError: (_error, { onFailed }) => onFailed?.(),
   });
 };

@@ -145,7 +145,7 @@ export default function NotificationGroupMembersDialog({
                       <span className="text-muted-foreground">— {a.email}</span>
                     </span>
                     {selected.includes(a.id) && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-3xs">
                         selected
                       </Badge>
                     )}
@@ -209,7 +209,7 @@ export default function NotificationGroupMembersDialog({
                           — {m.email}
                         </span>
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         {m.role}
                         {!m.isActive && " · account deactivated"}
                       </p>

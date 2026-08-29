@@ -33,6 +33,7 @@ import {
   type NotificationBatchDto,
 } from "@/features/admin/types/notification/notification-group.types";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const ALL = "__all__";
 
@@ -147,15 +148,11 @@ export default function NotificationBatchesPage() {
                   <TableCell>
                     <p className="line-clamp-1 font-medium">{b.title}</p>
                     <div className="mt-0.5 flex flex-wrap gap-1">
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-3xs">
                         {notificationTypeLabel(b.type)}
                       </Badge>
                       {b.channels.map((c) => (
-                        <Badge
-                          key={c}
-                          variant="outline"
-                          className="text-[10px]"
-                        >
+                        <Badge key={c} variant="outline" className="text-3xs">
                           {notificationChannelLabel(c)}
                         </Badge>
                       ))}
@@ -171,7 +168,7 @@ export default function NotificationBatchesPage() {
                     {b.notificationCount}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {new Date(b.createdAt).toLocaleString("vi-VN")}
+                    {formatDateTime(b.createdAt)}
                   </TableCell>
                 </TableRow>
               ))}

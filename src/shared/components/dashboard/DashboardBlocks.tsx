@@ -66,7 +66,7 @@ export function OverviewTile({
     <>
       <div className="flex items-baseline gap-1.5">
         <span
-          className="text-[28px] font-semibold leading-none tabular-nums"
+          className="text-2xl font-semibold leading-none tabular-nums"
           style={tone ? { color: toneVars(tone).fg } : undefined}
         >
           {value}
@@ -114,7 +114,7 @@ export function MiniStat({
     <div className="relative flex min-w-0 flex-col justify-between rounded-2xl border border-border bg-card p-4">
       <div>
         <span
-          className="text-[26px] font-semibold leading-none tabular-nums"
+          className="text-2xl font-semibold leading-none tabular-nums"
           style={tone ? { color: toneVars(tone).fg } : undefined}
         >
           {value}

@@ -134,7 +134,7 @@ export default function TemplateVariablePalette({
                 {doc?.label ?? name}
               </span>
               {doc && (
-                <span className="block truncate text-[10px] text-muted-foreground">
+                <span className="block truncate text-3xs text-muted-foreground">
                   e.g. {doc.sample}
                 </span>
               )}
@@ -211,7 +211,7 @@ export default function TemplateVariablePalette({
             <ChevronDown className="size-3.5 shrink-0 -rotate-90 transition-transform group-open/internal:rotate-0" />
             Internal / debug only ({allInternal.length})
           </summary>
-          <p className="mt-1.5 mb-1.5 text-[11px] text-muted-foreground">
+          <p className="mt-1.5 mb-1.5 text-2xs text-muted-foreground">
             Raw IDs and codes — meaningless to the recipient. Rarely needed
             (e.g. a deep-link path); prefer the readable fields above.
           </p>

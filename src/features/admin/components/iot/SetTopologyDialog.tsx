@@ -108,7 +108,9 @@ export default function SetTopologyDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="electricalTopology">Wiring layout *</Label>
+            <Label htmlFor="electricalTopology">
+              Wiring layout <span className="text-destructive">*</span>
+            </Label>
             <Controller
               name="electricalTopology"
               control={control}

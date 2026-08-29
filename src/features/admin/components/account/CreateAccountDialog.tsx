@@ -58,6 +58,18 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
     formState: { errors },
   } = useForm<CreateAccountFormValues>({
     resolver: zodResolver(createAccountSchema),
+    // roleId starts as "" rather than undefined so an untouched select reports
+    // "Select a role" instead of Zod's raw "expected string, received undefined".
+    defaultValues: {
+      email: "",
+      fullName: "",
+      password: "",
+      confirmPassword: "",
+      phoneNumber: "",
+      dateOfBirth: "",
+      address: "",
+      roleId: "",
+    },
   });
 
   const handleClose = () => {
@@ -95,7 +107,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Email <span className="text-red-500">*</span>
+                Email <span className="text-destructive">*</span>
               </Label>
               <Input
                 type="email"
@@ -108,7 +120,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Full name <span className="text-red-500">*</span>
+                Full name <span className="text-destructive">*</span>
               </Label>
               <Input placeholder="John Doe" {...register("fullName")} />
               {errors.fullName && (
@@ -119,7 +131,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>
-                Password <span className="text-red-500">*</span>
+                Password <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -148,7 +160,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>
-                Confirm password <span className="text-red-500">*</span>
+                Confirm password <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -196,6 +208,11 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                   />
                 )}
               />
+              {errors.dateOfBirth && (
+                <p className="text-xs text-red-500">
+                  {errors.dateOfBirth.message}
+                </p>
+              )}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Address</Label>
@@ -203,10 +220,13 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
                 placeholder="Street number, street, ward..."
                 {...register("address")}
               />
+              {errors.address && (
+                <p className="text-xs text-red-500">{errors.address.message}</p>
+              )}
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>
-                Role <span className="text-red-500">*</span>
+                Role <span className="text-destructive">*</span>
               </Label>
               <Controller
                 name="roleId"

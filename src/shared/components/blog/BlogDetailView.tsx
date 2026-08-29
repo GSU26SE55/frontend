@@ -215,7 +215,7 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
             </p>
           )}
 
-          <div className="text-[15px]">
+          <div className="text-sm">
             <RichContentView html={post.contentHtml} />
           </div>
         </article>

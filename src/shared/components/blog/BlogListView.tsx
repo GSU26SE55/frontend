@@ -287,7 +287,7 @@ export function BlogListView({
                     v{b.currentVersion}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right font-mono text-xs text-muted-foreground">
-                    {format(new Date(b.createdAt), "MM/dd/yyyy")}
+                    {format(new Date(b.createdAt), "dd/MM/yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
                     <div onClick={(e) => e.stopPropagation()}>

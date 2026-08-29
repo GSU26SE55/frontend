@@ -31,7 +31,15 @@ export const STAFF_NAV: NavSection[] = [
       },
       // Always visible, never a click away — the ticket IS the staff workload
       // (core-business-flow.md §8: a conveyor of tickets worked in parallel).
-      { label: "My Tickets", path: "/staff/tickets", icon: Ticket },
+      {
+        label: "My Tickets",
+        path: "/staff/tickets",
+        icon: Ticket,
+        // Staff reach these two through the ticket they are working — a battery from the
+        // ticket's asset, and their own maintenance logs from the work they logged on it.
+        // Neither has a nav entry, so without this the sidebar shows nothing active there.
+        activePaths: ["/staff/battery-assets", "/staff/maintenance-logs"],
+      },
       // Beside My Tickets, not below the content links: staff MUST escalate at 2/3 of
       // the SLA, so this is watched continuously rather than looked up.
       { label: "SLA Monitor", path: "/staff/sla", icon: Clock },

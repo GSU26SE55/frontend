@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { WarrantyStatusEnum } from "@/features/admin/enums/battery-asset.enum";
 import { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
-import { coordField } from "@/shared/schemas/common.schema";
+import { coordField, requiredSelect } from "@/shared/schemas/common.schema";
 
 export const batteryAssetFormSchema = z
   .object({
@@ -10,8 +10,14 @@ export const batteryAssetFormSchema = z
       .min(5, "Must be at least 5 characters")
       .max(64)
       .regex(/^[A-Z0-9-]+$/, "Only A-Z, 0-9, and - are allowed"),
-    batteryTypeId: z.string().uuid("Invalid UUID"),
-    customerId: z.string().uuid("Invalid UUID"),
+    batteryTypeId: requiredSelect(
+      z.string().uuid("Invalid UUID"),
+      "Select a battery type",
+    ),
+    customerId: requiredSelect(
+      z.string().uuid("Invalid UUID"),
+      "Select a customer",
+    ),
     siteId: z.string().uuid().optional().or(z.literal("")),
     installDate: z
       .string()
@@ -48,7 +54,10 @@ export const batteryAssetFormSchema = z
 export type BatteryAssetFormValues = z.infer<typeof batteryAssetFormSchema>;
 
 export const transferOwnerSchema = z.object({
-  newCustomerId: z.string().uuid("Select a customer"),
+  newCustomerId: requiredSelect(
+    z.string().uuid("Select a customer"),
+    "Select a customer",
+  ),
   reason: z.string().max(500).optional(),
 });
 

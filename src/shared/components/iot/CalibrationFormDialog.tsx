@@ -82,7 +82,9 @@ export default function CalibrationFormDialog({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="channel">Channel *</Label>
+              <Label htmlFor="channel">
+                Channel <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="channel"
                 {...register("channel")}
@@ -95,7 +97,9 @@ export default function CalibrationFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="unit">Unit *</Label>
+              <Label htmlFor="unit">
+                Unit <span className="text-destructive">*</span>
+              </Label>
               <Input id="unit" {...register("unit")} placeholder="V" />
               {errors.unit && (
                 <p className="text-sm text-destructive">
@@ -107,7 +111,9 @@ export default function CalibrationFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="scale">Scale *</Label>
+              <Label htmlFor="scale">
+                Scale <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="scale"
                 type="number"
@@ -121,7 +127,9 @@ export default function CalibrationFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="offset">Offset *</Label>
+              <Label htmlFor="offset">
+                Offset <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="offset"
                 type="number"
@@ -138,7 +146,9 @@ export default function CalibrationFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="calibratedAt">Calibration date *</Label>
+              <Label htmlFor="calibratedAt">
+                Calibration date <span className="text-destructive">*</span>
+              </Label>
               <Controller
                 control={control}
                 name="calibratedAt"

@@ -69,8 +69,9 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
-import { loadFailed, noData } from "@/shared/constants/emptyStates";
+import { loadFailed, noData, notFound } from "@/shared/constants/emptyStates";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { formatDate } from "@/shared/utils/datetime";
 
 const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   [AccountStatusEnum.PendingVerification]: {
@@ -99,11 +100,15 @@ const STATUS_MAP: Record<number, { label: string; cls: string }> = {
   },
 };
 
+// Fixed 100/700 pairs render dark text on a light chip, which does not invert in dark mode —
+// the chip stayed a bright block against the dark card. Each keeps its hue (the four roles are
+// told apart by color) but gains a dark-mode variant: translucent tint + light text.
 const ROLE_CLS: Record<string, string> = {
-  Admin: "bg-purple-100 text-purple-700",
-  Manager: "bg-blue-100   text-blue-700",
-  Staff: "bg-slate-100  text-slate-600",
-  Customer: "bg-teal-100   text-teal-700",
+  Admin:
+    "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
+  Manager: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
+  Staff: "bg-slate-100 text-slate-600 dark:bg-slate-400/15 dark:text-slate-300",
+  Customer: "bg-teal-100 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300",
 };
 
 type DialogState =
@@ -248,7 +253,10 @@ export default function AccountsPage() {
             onRetry={() => refetch()}
           />
         ) : accounts.length === 0 ? (
-          <EmptyState icon={Users} title={noData("accounts")} />
+          <EmptyState
+            icon={Users}
+            title={hasActiveFilter ? notFound("accounts") : noData("accounts")}
+          />
         ) : (
           <Table>
             <TableHeader>
@@ -297,7 +305,7 @@ export default function AccountsPage() {
               {accounts.map((acc, index) => {
                 const s = STATUS_MAP[acc.status] ?? {
                   label: String(acc.status),
-                  cls: "bg-gray-100 text-gray-500",
+                  cls: "bg-muted text-muted-foreground",
                 };
                 const initials = acc.fullName
                   .split(" ")
@@ -315,7 +323,7 @@ export default function AccountsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold shrink-0">
+                        <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xs font-bold shrink-0">
                           {initials}
                         </span>
                         <div>
@@ -329,7 +337,7 @@ export default function AccountsPage() {
                     <TableCell>
                       {acc.role ? (
                         <span
-                          className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${ROLE_CLS[acc.role] ?? "bg-gray-100 text-gray-600"}`}
+                          className={`text-3xs font-semibold px-2 py-0.5 rounded-full ${ROLE_CLS[acc.role] ?? "bg-muted text-muted-foreground"}`}
                         >
                           {acc.role}
                         </span>
@@ -341,13 +349,13 @@ export default function AccountsPage() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${s.cls}`}
+                        className={`text-3xs font-semibold px-2 py-0.5 rounded-full ${s.cls}`}
                       >
                         {s.label}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(acc.createdAt).toLocaleDateString("vi-VN")}
+                      {formatDate(acc.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

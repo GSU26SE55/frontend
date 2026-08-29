@@ -133,7 +133,9 @@ export default function BatteryTypeFormDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Model name *</Label>
+            <Label htmlFor="name">
+              Model name <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="name"
               {...register("name")}
@@ -155,7 +157,7 @@ export default function BatteryTypeFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label>Chemistry *</Label>
+              <Label>Chemistry</Label>
               <Controller
                 name="chemistry"
                 control={control}
@@ -183,7 +185,9 @@ export default function BatteryTypeFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="nominalCapacityAh">Capacity (Ah) *</Label>
+              <Label htmlFor="nominalCapacityAh">
+                Capacity (Ah) <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="nominalCapacityAh"
                 type="number"
@@ -197,7 +201,9 @@ export default function BatteryTypeFormDialog({
               )}
             </div>
             <div className="space-y-1">
-              <Label htmlFor="nominalVoltage">Voltage (V) *</Label>
+              <Label htmlFor="nominalVoltage">
+                Voltage (V) <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="nominalVoltage"
                 type="number"

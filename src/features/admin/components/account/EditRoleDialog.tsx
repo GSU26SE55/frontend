@@ -77,7 +77,7 @@ export default function EditRoleDialog({ open, onClose, role }: Props) {
           )}
           <div className="space-y-1.5">
             <Label>
-              Role name <span className="text-red-500">*</span>
+              Role name <span className="text-destructive">*</span>
             </Label>
             <Input
               {...register("name")}

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { handleErrorApi } from "@/shared/lib/errors";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,7 +85,9 @@ interface GuideEditorFormProps {
   articleId?: string;
   existing?: KbArticleDTO;
   isSaving?: boolean;
-  /** Persists the article. The page owns create vs update and where to go next. */
+  /** Persists the article. The page owns create vs update and where to go next; it must
+   *  let the rejection through so the error can be mapped onto the fields here, where
+   *  setError lives. */
   onSubmit: (values: KbArticleFormValues) => void | Promise<void>;
   /** Writing from a ticket → the image picker gains that ticket's chat images tab. */
   ticketId?: string;
@@ -114,11 +117,22 @@ export function GuideEditorForm({
   const isEdit = !!articleId;
   const cancelUrl = isEdit ? basePath + "/" + articleId : basePath;
 
+  // The page owns the mutation but not setError, so the mapping has to happen here:
+  // otherwise a BE rejection of title/content/category only ever reached a toast.
+  const submit = async (values: KbArticleFormValues) => {
+    try {
+      await onSubmit(values);
+    } catch (error) {
+      handleErrorApi({ error, setError });
+    }
+  };
+
   const {
     register,
     handleSubmit,
     reset,
     control,
+    setError,
     formState: { errors },
   } = useForm<KbArticleFormInput, unknown, KbArticleFormValues>({
     resolver: zodResolver(kbArticleSchema),
@@ -143,7 +157,7 @@ export function GuideEditorForm({
   }, [existing, reset]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="pb-24">
+    <form onSubmit={handleSubmit(submit)} className="pb-24">
       <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           <Button

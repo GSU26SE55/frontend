@@ -46,7 +46,7 @@ export function SectionContent({ text }: { text: string }) {
             key={i}
             className="flex gap-3 text-sm leading-relaxed text-foreground/80"
           >
-            <span className="mt-[1px] flex size-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[11px] font-semibold tabular-nums text-muted-foreground">
+            <span className="mt-[1px] flex size-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-2xs font-semibold tabular-nums text-muted-foreground">
               {i + 1}
             </span>
             <span>{step}</span>
@@ -56,7 +56,7 @@ export function SectionContent({ text }: { text: string }) {
     );
   }
   return (
-    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/80">
       {text}
     </p>
   );
@@ -166,7 +166,7 @@ export function KbArticleDetail({
               onViewVersions={onViewVersions}
             />
           </div>
-          <div className="text-[15px]">
+          <div className="text-sm">
             <SectionContent text={article.content} />
           </div>
         </article>
@@ -217,7 +217,7 @@ export function KbArticleDetail({
                 {article.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                    className="rounded-md bg-muted px-2 py-0.5 text-2xs text-muted-foreground"
                   >
                     {tag}
                   </span>

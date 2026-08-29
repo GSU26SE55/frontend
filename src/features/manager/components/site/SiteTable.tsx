@@ -76,7 +76,7 @@ export default function SiteTable({
       header: "Install date",
       sortKey: "installDate",
       sortValue: (s) => new Date(s.installDate).getTime(),
-      cell: (s) => format(new Date(s.installDate), "MM/dd/yyyy"),
+      cell: (s) => format(new Date(s.installDate), "dd/MM/yyyy"),
     },
     {
       id: "chevron",

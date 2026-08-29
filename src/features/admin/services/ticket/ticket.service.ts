@@ -18,6 +18,7 @@ import type {
   SlaFilterEnum,
   MergeTicketPayload,
 } from "@/shared/types/ticket/ticket.types";
+import type { TicketSourceFilterEnum } from "@/shared/enums/ticket/ticket.enum";
 
 export interface GetAdminTicketsParams {
   keyword?: string;
@@ -26,6 +27,11 @@ export interface GetAdminTicketsParams {
   category?: TicketCategoryEnum;
   /** BE query param `Sla` — Paused | Warning | Breached. Independent of `status`. */
   sla?: SlaFilterEnum;
+  /**
+   * BE query param `Source` — nguồn tạo ticket. Không map 1-1 với `origin`:
+   * Environmental và PeriodicMaintenance đều là Origin = System.
+   */
+  source?: TicketSourceFilterEnum;
   isDescending?: boolean;
   sortBy?: string;
   sortDir?: string;
@@ -41,6 +47,7 @@ function toQueryParams(params?: GetAdminTicketsParams) {
     Priority: params.priority,
     Category: params.category,
     Sla: params.sla,
+    Source: params.source,
     IsDescending: params.isDescending,
     SortBy: params.sortBy,
     SortDir: params.sortDir,

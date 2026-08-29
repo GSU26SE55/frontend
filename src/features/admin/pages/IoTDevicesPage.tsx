@@ -24,6 +24,7 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
+import { noData, notFound } from "@/shared/constants/emptyStates";
 
 const STATUS_LABELS: Record<IotDeviceStatusEnum, string> = {
   [IotDeviceStatusEnum.Pending]: "Pending provision",
@@ -164,7 +165,9 @@ export default function IoTDevicesPage() {
         ) : items.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <Cpu className="size-8 opacity-30" />
-            <span className="text-sm">No devices yet.</span>
+            <span className="text-sm">
+              {hasActiveFilter ? notFound("devices") : noData("devices")}
+            </span>
           </div>
         ) : (
           <IoTDeviceTable

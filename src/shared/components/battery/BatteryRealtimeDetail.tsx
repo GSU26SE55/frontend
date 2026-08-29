@@ -27,6 +27,7 @@ import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { KEY } from "@/shared/utils/queryKeys";
 import {
   healthScoreTone,
+  toneClass,
   toneVars,
   CASCADE_RISK_TONE,
 } from "@/shared/theme/statusColors";
@@ -66,29 +67,27 @@ function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   }
   const tone = healthScoreTone(sohPercent);
   const { fg, bg } = toneVars(tone);
+  // The tone fills the whole slot rather than sitting in an inset card: this is the first
+  // band of the sidebar and reads as a status banner, so an outline + surrounding gutter
+  // only boxed the colour in and competed with the panel's own border.
   return (
-    <div className="px-4 pt-3 pb-2.5">
-      <div
-        className="rounded-xl px-3.5 py-3.5 flex items-center gap-3 border transition-[color,background-color,border-color,box-shadow] duration-(--motion-enter) ease-strong"
-        style={{
-          backgroundColor: bg,
-          borderColor: `${fg}55`,
-        }}
+    <div
+      className="px-4 py-3.5 flex items-center gap-3 transition-[color,background-color] duration-(--motion-enter) ease-strong"
+      style={{ backgroundColor: bg }}
+    >
+      <span
+        className="text-sm font-semibold flex-1 min-w-0 truncate"
+        style={{ color: fg }}
       >
-        <span
-          className="text-sm font-semibold flex-1 min-w-0 truncate"
-          style={{ color: fg }}
-        >
-          Max capacity
-        </span>
-        <span
-          className="text-3xl font-black tracking-tight tabular-nums leading-none"
-          style={{ color: fg }}
-        >
-          {sohPercent.toFixed(0)}
-          <span className="text-base font-bold ml-0.5">%</span>
-        </span>
-      </div>
+        Max capacity
+      </span>
+      <span
+        className="text-3xl font-black tracking-tight tabular-nums leading-none"
+        style={{ color: fg }}
+      >
+        {sohPercent.toFixed(0)}
+        <span className="text-base font-bold ml-0.5">%</span>
+      </span>
     </div>
   );
 }
@@ -102,7 +101,7 @@ function CascadeRiskBadge({ assetId }: { assetId: string }) {
   const { fg, bg } = toneVars(tone);
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border"
+      className="inline-flex items-center gap-1.5 text-2xs font-semibold px-2 py-0.5 rounded-full border"
       style={{ color: fg, backgroundColor: bg, borderColor: fg }}
       title={`Cascade risk score ${data.cascadeRiskScore.toFixed(2)}`}
     >
@@ -207,30 +206,17 @@ export default function BatteryRealtimeDetail({
   const gatewayConnecting = gatewayItems.some(
     (device) => device.status === IotDeviceStatusEnum.Pending,
   );
+  // toneClass, not fixed emerald-50/zinc-100 pairs: those render dark text on a light chip and
+  // do not invert, so every gateway badge stayed a bright block on the dark shell.
   const gatewayBadge = !gateways
-    ? {
-        label: "Checking gateway",
-        className: "bg-zinc-100 text-zinc-600 border-zinc-200",
-      }
+    ? { label: "Checking gateway", className: toneClass("muted") }
     : gatewayOnline
-      ? {
-          label: "Gateway online",
-          className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        }
+      ? { label: "Gateway online", className: toneClass("ok") }
       : gatewayConnecting
-        ? {
-            label: "Gateway connecting",
-            className: "bg-amber-50 text-amber-700 border-amber-200",
-          }
+        ? { label: "Gateway connecting", className: toneClass("p3") }
         : gatewayItems.length > 0
-          ? {
-              label: "Gateway offline",
-              className: "bg-red-50 text-red-700 border-red-200",
-            }
-          : {
-              label: "No gateway",
-              className: "bg-zinc-100 text-zinc-600 border-zinc-200",
-            };
+          ? { label: "Gateway offline", className: toneClass("p1") }
+          : { label: "No gateway", className: toneClass("muted") };
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -252,7 +238,7 @@ export default function BatteryRealtimeDetail({
               </h1>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+                  "inline-flex items-center gap-1.5 text-2xs font-semibold px-2 py-0.5 rounded-full border",
                   gatewayBadge.className,
                 )}
                 title="Live connection status of the IoT gateway at this site"
@@ -270,7 +256,7 @@ export default function BatteryRealtimeDetail({
                 {gatewayBadge.label}
               </span>
               {rt && rt.activeAlerts > 0 && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
+                <span className="inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
                   {rt.activeAlerts} alerts
                 </span>
               )}
@@ -300,7 +286,7 @@ export default function BatteryRealtimeDetail({
 
             {/* Info */}
             <div className="px-4 pt-4 pb-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Information
               </p>
               <div className="divide-y divide-border/50">

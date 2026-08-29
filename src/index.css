@@ -47,6 +47,10 @@
   --ok-soft: #dcfce7; /* green-100 */
   --p1: #dc2626; /* red-600 */
   --p1-soft: #fee2e2; /* red-100 */
+  /* Solid red used as a BACKGROUND under white text (notification count badge). Distinct
+     from --p1, which lightens in dark mode so it stays readable as text/border ON a dark
+     background — exactly the wrong direction for a fill sitting under white text. */
+  --p1-solid: #dc2626; /* red-600 — white on this = 4.83:1 */
   --p2: #ea580c; /* orange-600 */
   --p2-soft: #ffedd5; /* orange-100 */
   --p3: #ca8a04; /* yellow-600 */
@@ -155,6 +159,8 @@
   --ok-soft: rgb(34 197 94 / 0.16);
   --p1: #f87171;
   --p1-soft: rgb(239 68 68 / 0.16);
+  /* Stays dark in dark mode — white text on #f87171 is only 2.77:1 (AA needs 4.5:1). */
+  --p1-solid: #b91c1c; /* red-700 — white on this = 6.4:1 */
   --p2: #fb923c;
   --p2-soft: rgb(249 115 22 / 0.16);
   --p3: #facc15;
@@ -192,7 +198,30 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", sans-serif;
+  /* Full fallback chain, not just `sans-serif`: Geist is a webfont, so until it loads (or
+     if it fails) the browser would otherwise drop to Times-like default sans on some
+     platforms. system-ui matches the host UI and keeps metrics close to Geist. */
+  --font-sans:
+    "Geist Variable", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* ── Type scale ────────────────────────────────────────────────────────────
+     Reading text (prose, descriptions, article/ticket bodies) uses text-base = 16px.
+     Chrome — table cells, badges, eyebrow labels — stays denser, the way every console
+     UI of this kind does; a 16px floor across the board would widen 8-column tables past
+     the viewport and burst the badge pills.
+
+     Three steps BELOW text-xs (12px) because Tailwind's scale bottoms out there, while
+     ~300 spots had drifted into one-off arbitrary values spanning 13 distinct pixel sizes
+     between 9 and 15px. These name the three actually needed, so the drift has somewhere
+     legitimate to land. Nothing below 10px — smaller stops being readable at arm's length,
+     which is why the old text-[9px] / text-[9.5px] round UP to 10, never down. */
+  --text-3xs: 0.625rem; /* 10px — badge counts, dense table meta */
+  --text-3xs--line-height: 1.4;
+  --text-2xs: 0.6875rem; /* 11px — uppercase eyebrow labels, chart axis */
+  --text-2xs--line-height: 1.45;
+  --text-2sm: 0.8125rem; /* 13px — sits between xs (12) and sm (14) */
+  --text-2sm--line-height: 1.5;
 
   /* Easing → Tailwind utilities: `ease-strong`, `ease-strong-in-out`, `ease-drawer`.
      Durations have no such namespace in Tailwind 4, so they are used as arbitrary
@@ -206,6 +235,7 @@
   --color-ok-soft: var(--ok-soft);
   --color-p1: var(--p1);
   --color-p1-soft: var(--p1-soft);
+  --color-p1-solid: var(--p1-solid);
   --color-p2: var(--p2);
   --color-p2-soft: var(--p2-soft);
   --color-p3: var(--p3);
@@ -522,7 +552,6 @@
 .rich-content hr {
   border-top: 1px solid var(--border);
 }
-
 
 /* Ticket tile in alarm: a site incident, or an SLA clock that already ran out.
    The whole surface carries the colour, not just an edge — at a glance across a

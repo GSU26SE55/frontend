@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "@/features/admin/schemas/battery/battery-asset.schema";
 import { useCustomers } from "@/features/admin/hooks/account/useCustomers";
 import { useTransferOwner } from "@/features/admin/hooks/battery/useTransferOwner";
+import CustomerCombobox from "@/features/admin/components/account/CustomerCombobox";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 interface TransferOwnerDialogProps {
@@ -40,6 +41,7 @@ export default function TransferOwnerDialog({
     register,
     handleSubmit,
     setError,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TransferOwnerFormValues>({
     resolver: zodResolver(transferOwnerSchema),
@@ -59,9 +61,6 @@ export default function TransferOwnerDialog({
     }
   };
 
-  const selectClass =
-    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -71,21 +70,25 @@ export default function TransferOwnerDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="newCustomerId">New customer *</Label>
-            <select
-              id="newCustomerId"
-              {...register("newCustomerId")}
-              className={selectClass}
-            >
-              <option value="">-- Select a customer --</option>
-              {customersData?.items
-                .filter((c) => c.id !== currentCustomerId)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.fullName} ({c.email})
-                  </option>
-                ))}
-            </select>
+            <Label htmlFor="newCustomerId">
+              New customer <span className="text-destructive">*</span>
+            </Label>
+            <Controller
+              control={control}
+              name="newCustomerId"
+              render={({ field }) => (
+                <CustomerCombobox
+                  id="newCustomerId"
+                  customers={
+                    customersData?.items.filter(
+                      (c) => c.id !== currentCustomerId,
+                    ) ?? []
+                  }
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
             {errors.newCustomerId && (
               <p className="text-sm text-destructive">
                 {errors.newCustomerId.message}

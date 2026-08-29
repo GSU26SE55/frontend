@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
@@ -74,12 +75,32 @@ import {
   getSupporterNames,
   getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
-import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
+import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { managerKbService } from "@/features/manager/services/kb/kb.service";
+import type { KbArticleSearchParams } from "@/shared/components/kb/KbArticleSelector";
+
+// Article lookups stay with the role's own KB service: Manager's carries the
+// approve/publish workflow that Staff's does not, and shared must not import from a
+// feature. The panel only needs these two reads.
+const searchKbArticles = ({ q, category }: KbArticleSearchParams) =>
+  managerKbService
+    .getList({
+      q,
+      category: category ? KbCategoryCode[category] : undefined,
+      status: KbArticleStatusEnum.Published,
+      pageSize: 20,
+    })
+    .then((r) => r.data.data?.items ?? []);
+
+const getKbArticleDetail = (id: string) =>
+  managerKbService.getDetail(id).then((r) => r.data.data!);
+
+import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
 
 // GH-1176: "triage" (approval) removed; "escalate" (force) removed;
 // "escalate-approve" and "escalate-reject" added for Request-status handling.
@@ -430,6 +451,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="comments" className="group">
                   Chat
+                  <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="logs">
@@ -465,7 +487,7 @@ export default function TicketDetailPage() {
                 return (
                   <div className="space-y-4">
                     {ids.length > 1 && (
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {ids.length} related battery devices
                       </p>
                     )}
@@ -480,7 +502,7 @@ export default function TicketDetailPage() {
                 );
               })()}
               <div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Attachments
                 </p>
                 {ticket.attachmentFileIds &&
@@ -598,8 +620,15 @@ export default function TicketDetailPage() {
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel
                 ticketId={id}
+                // GH: the BE rejects attaching once a ticket is terminal
+                // (AddTicketKbReferenceCommandHandler returns 409). This page used to leave
+                // the button enabled and let the request fail.
+                canAdd={!isTicketChatLocked(status)}
                 afterResolveOnly={status === TicketStatusEnum.Completed}
                 defaultCategory={ticket.category}
+                basePath="/manager"
+                searchArticles={searchKbArticles}
+                getArticleDetail={getKbArticleDetail}
               />
             </TabsContent>
           </Tabs>
@@ -629,7 +658,7 @@ export default function TicketDetailPage() {
             <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
               {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Info
                 </p>
                 <button
@@ -648,7 +677,7 @@ export default function TicketDetailPage() {
                 (ticket.aiVerifyStatus ||
                   (ticket.suspectedDuplicateOfTicketId && !chatLocked)) && (
                   <div className="px-4 py-3 space-y-2">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                       AI check
                     </p>
                     {ticket.aiVerifyStatus && (
@@ -721,7 +750,7 @@ export default function TicketDetailPage() {
 
               {/* SLA */}
               <div className="p-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   SLA
                 </p>
                 {ticket.slaTimer ? (
@@ -740,25 +769,35 @@ export default function TicketDetailPage() {
                         Deadline
                       </span>
                       <span className="text-xs font-medium tabular-nums">
-                        {format(new Date(ticket.slaTimer.dueAt), "MM/dd HH:mm")}
+                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Remaining
-                      </span>
-                      <span className="text-xs font-medium">
-                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                        style={{
-                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                        }}
-                      />
-                    </div>
+                    {/* "Remaining %" and the bar are only meaningful while the clock is
+                        actually counting. On a terminal timer (Stopped after a reject/merge,
+                        or an already decided Met/Breached) the BE returns remainingPercent = 0,
+                        and drawing the bar anyway rendered a rejected ticket as if it still had
+                        an SLA running against it. The countdown above already states the
+                        outcome, so the ratio rows just drop out. */}
+                    {isSlaClockLive(ticket.slaTimer.status) && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Remaining
+                          </span>
+                          <span className="text-xs font-medium">
+                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                            style={{
+                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -769,7 +808,7 @@ export default function TicketDetailPage() {
 
               {/* Status + processing time */}
               <div className="p-4">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                   Status
                 </p>
                 <div className="space-y-2.5">
@@ -794,10 +833,10 @@ export default function TicketDetailPage() {
               {/* Description */}
               {ticket.description && (
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Description
                   </p>
-                  <p className="text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                  <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
                     {ticket.description}
                   </p>
                 </div>
@@ -806,7 +845,7 @@ export default function TicketDetailPage() {
               {/* GH-1176: BE reuses ticket.Reason for Hold/Reject/Escalate notes — label kept generic. */}
               {ticket.rejectionReason && (
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold text-destructive uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-destructive uppercase tracking-wider mb-2">
                     Reason
                   </p>
                   <p className="text-xs leading-relaxed">
@@ -818,16 +857,16 @@ export default function TicketDetailPage() {
               {/* Resolution */}
               {ticket.resolutionSummary && (
                 <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/10">
-                  <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                     Resolution
                   </p>
-                  <p className="text-xs leading-relaxed whitespace-pre-wrap mb-2">
+                  <p className="text-base leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
                   {ticket.resolvedAt && (
-                    <p className="text-[10.5px] text-emerald-700/70 dark:text-emerald-400/70">
+                    <p className="text-3xs text-emerald-700/70 dark:text-emerald-400/70">
                       Resolved at{" "}
-                      {format(new Date(ticket.resolvedAt), "MM/dd/yyyy HH:mm", {
+                      {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
                         locale: enUS,
                       })}
                     </p>
@@ -838,7 +877,7 @@ export default function TicketDetailPage() {
               {/* Escalation */}
               {ticket.escalatedAt && (
                 <div className="p-4 bg-orange-50/50 dark:bg-orange-950/10">
-                  <p className="text-[10px] font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider mb-2">
                     Escalation
                   </p>
                   {ticket.escalationReason && (
@@ -847,8 +886,8 @@ export default function TicketDetailPage() {
                         ticket.escalationReason}
                     </p>
                   )}
-                  <p className="text-[10.5px] text-orange-700/70 dark:text-orange-400/70 mt-1">
-                    {format(new Date(ticket.escalatedAt), "MM/dd/yyyy HH:mm", {
+                  <p className="text-3xs text-orange-700/70 dark:text-orange-400/70 mt-1">
+                    {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
                       locale: enUS,
                     })}
                   </p>
@@ -858,7 +897,7 @@ export default function TicketDetailPage() {
               {/* Customer rating */}
               {ticket.rating != null && (
                 <div className="p-4">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Customer rating
                   </p>
                   <p className="text-xs font-medium">
@@ -869,7 +908,7 @@ export default function TicketDetailPage() {
                     </span>
                   </p>
                   {ticket.ratingComment && (
-                    <p className="text-xs leading-relaxed text-foreground/90 mt-1.5 whitespace-pre-wrap">
+                    <p className="text-base leading-relaxed text-foreground/90 mt-1.5 whitespace-pre-wrap">
                       {ticket.ratingComment}
                     </p>
                   )}
@@ -886,31 +925,24 @@ export default function TicketDetailPage() {
                 {ticket.isPeriodicMaintenance && (
                   <>
                     <SideInfoRow
-                      label="Maintenance cycle"
-                      value={
-                        <span
-                          className={
-                            ticket.isPeriodicMaintenanceOverdue
-                              ? "font-medium text-destructive"
-                              : undefined
-                          }
-                        >
-                          {ticket.isPeriodicMaintenanceOverdue
-                            ? "Periodic · overdue"
-                            : "Periodic"}
-                        </span>
-                      }
-                    />
-                    <SideInfoRow
                       label="Maintenance due"
                       value={
-                        ticket.periodicMaintenanceDueAtUtc
-                          ? format(
+                        ticket.periodicMaintenanceDueAtUtc ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            {format(
                               new Date(ticket.periodicMaintenanceDueAtUtc),
-                              "MM/dd/yyyy HH:mm",
+                              "dd/MM/yyyy HH:mm",
                               { locale: enUS },
-                            )
-                          : null
+                            )}
+                            {/* Quá hạn là tin cần biết ngay, nhưng nó nói về CÁI HẠN NÀY — nên đứng
+                                cạnh ngày, không tách thành một hàng "Periodic · overdue" riêng. */}
+                            {ticket.isPeriodicMaintenanceOverdue && (
+                              <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-3xs font-semibold uppercase tracking-wide text-destructive">
+                                Overdue
+                              </span>
+                            )}
+                          </span>
+                        ) : null
                       }
                     />
                     <SideInfoRow
@@ -919,10 +951,10 @@ export default function TicketDetailPage() {
                         ticket.scheduledStartAtUtc
                           ? format(
                               new Date(ticket.scheduledStartAtUtc),
-                              "MM/dd/yyyy HH:mm",
+                              "dd/MM/yyyy HH:mm",
                               { locale: enUS },
                             )
-                          : "Awaiting Customer selection"
+                          : null
                       }
                     />
                     <SideInfoRow
@@ -933,7 +965,7 @@ export default function TicketDetailPage() {
                               new Date(
                                 ticket.periodicMaintenanceScheduleDeadlineAtUtc,
                               ),
-                              "MM/dd/yyyy HH:mm",
+                              "dd/MM/yyyy HH:mm",
                               { locale: enUS },
                             )
                           : null
@@ -972,7 +1004,7 @@ export default function TicketDetailPage() {
                     label="Detected at"
                     value={format(
                       new Date(ticket.detectedAt),
-                      "MM/dd/yyyy HH:mm",
+                      "dd/MM/yyyy HH:mm",
                       { locale: enUS },
                     )}
                   />
@@ -998,7 +1030,7 @@ export default function TicketDetailPage() {
                   label="Created"
                   value={format(
                     new Date(ticket.createdAt),
-                    "MM/dd/yyyy HH:mm",
+                    "dd/MM/yyyy HH:mm",
                     {
                       locale: enUS,
                     },
@@ -1009,7 +1041,7 @@ export default function TicketDetailPage() {
                     label="Updated"
                     value={format(
                       new Date(ticket.updatedAt),
-                      "MM/dd/yyyy HH:mm",
+                      "dd/MM/yyyy HH:mm",
                       {
                         locale: enUS,
                       },
@@ -1021,7 +1053,7 @@ export default function TicketDetailPage() {
                     label="Approved at"
                     value={format(
                       new Date(ticket.approvedAt),
-                      "MM/dd/yyyy HH:mm",
+                      "dd/MM/yyyy HH:mm",
                       {
                         locale: enUS,
                       },
@@ -1033,7 +1065,7 @@ export default function TicketDetailPage() {
                     label="Closed at"
                     value={format(
                       new Date(ticket.closedAt),
-                      "MM/dd/yyyy HH:mm",
+                      "dd/MM/yyyy HH:mm",
                       {
                         locale: enUS,
                       },

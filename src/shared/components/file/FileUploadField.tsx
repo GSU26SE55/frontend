@@ -312,9 +312,7 @@ export default function FileUploadField({
             ) : (
               <>
                 <ImagePlus size={large ? 24 : 18} />
-                <span className={cn(large ? "text-xs" : "text-[10px]")}>
-                  Add
-                </span>
+                <span className={cn(large ? "text-xs" : "text-3xs")}>Add</span>
               </>
             )}
           </button>

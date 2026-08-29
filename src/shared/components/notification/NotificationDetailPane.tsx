@@ -16,7 +16,7 @@ import type { NotificationDto } from "@/shared/types/notification/notification.t
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex gap-3 py-1.5 text-[12px]">
+    <div className="flex gap-3 py-1.5 text-xs">
       <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
       <span className="flex-1 min-w-0 text-foreground">{value}</span>
     </div>
@@ -84,20 +84,18 @@ export default function NotificationDetailPane({
       <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
+            <span className="px-1.5 py-0.5 rounded text-3xs font-medium bg-muted text-muted-foreground">
               {notificationTypeLabel(n.type)}
             </span>
             {isUnreadStatus(n.status) && (
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary text-primary-foreground">
+              <span className="px-1.5 py-0.5 rounded text-3xs font-medium bg-primary text-primary-foreground">
                 Unread
               </span>
             )}
           </div>
-          <h2 className="text-[15px] font-semibold text-foreground">
-            {n.title}
-          </h2>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {format(new Date(n.createdAt), "HH:mm — EEEE, MM/dd/yyyy", {
+          <h2 className="text-sm font-semibold text-foreground">{n.title}</h2>
+          <p className="text-2xs text-muted-foreground mt-0.5">
+            {format(new Date(n.createdAt), "HH:mm — EEEE, dd/MM/yyyy", {
               locale: enUS,
             })}
           </p>
@@ -109,7 +107,7 @@ export default function NotificationDetailPane({
           <button
             onClick={handleOpen}
             disabled={markOpened.isPending}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <ExternalLink size={13} />
             Open content
@@ -118,13 +116,13 @@ export default function NotificationDetailPane({
       </div>
 
       <div className="px-5 py-4">
-        <p className="text-[13px] leading-relaxed text-foreground whitespace-pre-wrap">
+        <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
           {displayBody}
         </p>
       </div>
 
       <div className="px-5 py-3 border-t border-border">
-        <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+        <h3 className="text-2xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
           Info
         </h3>
         <Row label="Channel" value={notificationChannelLabel(n.channel)} />
@@ -132,13 +130,13 @@ export default function NotificationDetailPane({
         {n.sentAt && (
           <Row
             label="Sent at"
-            value={format(new Date(n.sentAt), "HH:mm MM/dd/yyyy")}
+            value={format(new Date(n.sentAt), "HH:mm dd/MM/yyyy")}
           />
         )}
         {n.readAt && (
           <Row
             label="Read at"
-            value={format(new Date(n.readAt), "HH:mm MM/dd/yyyy")}
+            value={format(new Date(n.readAt), "HH:mm dd/MM/yyyy")}
           />
         )}
         {/* Only shown once the entity name resolves — a raw GUID (entityType has no
