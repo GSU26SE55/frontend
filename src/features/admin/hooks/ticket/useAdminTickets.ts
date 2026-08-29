@@ -65,7 +65,8 @@ export function useAdminAddComment(ticketId: string) {
     mutationFn: (payload: AddCommentPayload) =>
       adminTicketService.addComment(ticketId, payload),
     onSuccess: () => {
-      toast.success(ADMIN_MESSAGES.ticket.commentAdded);
+      // No success toast — the message goes through the chat outbox and its status shows
+      // under the bubble, same as manager/staff. A toast on every message is pure noise.
       qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.chats(ticketId) });
     },
     onError: (error) => handleErrorApi({ error }),

@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import ChatSeenAvatars from "@/shared/components/ticket/ChatSeenAvatars";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -76,6 +77,30 @@ const LANGUAGE_OPTIONS = [
 const LANGUAGE_LABEL: Record<string, string> = Object.fromEntries(
   LANGUAGE_OPTIONS.map((l) => [l.code, l.label]),
 );
+
+function startOfDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function dayKey(iso: string) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/**
+ * Label for the date separator. Mirrors the mobile thread (Today / Yesterday / dd/MM/yyyy) so
+ * the two clients read the same — the separator is the only place the date is shown now that
+ * the per-message date line is gone.
+ */
+function formatDateLabel(iso: string) {
+  const d = new Date(iso);
+  const diffDays = Math.round(
+    (startOfDay(new Date()) - startOfDay(d)) / 86_400_000,
+  );
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return format(d, "dd/MM/yyyy", { locale: enUS });
+}
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -335,6 +360,7 @@ export function TicketCommentThread({
   // the sender was watching their own messages.
   const [unreadAnchor, setUnreadAnchor] = useState<{
     tab: ChatTab;
+    ticketId?: string;
     id: string | null;
     count: number;
   } | null>(null);
@@ -342,20 +368,24 @@ export function TicketCommentThread({
   // Only lock in once the BE has returned isRead for at least 1 message — the realtime
   // ChatAdded event doesn't include this field, locking in too early would give "no marker"
   // even when there really are unread messages.
-  if (
-    unreadAnchor?.tab !== tab &&
-    visible.some((c) => c.isRead !== undefined)
-  ) {
+  // Keyed on ticketId as well as tab: navigating straight from one ticket to another reuses
+  // this component instead of remounting it, so a tab-only key left the previous ticket's
+  // anchor pinned on a thread it doesn't belong to.
+  const anchorMatches =
+    unreadAnchor?.tab === tab && unreadAnchor?.ticketId === ticketId;
+
+  if (!anchorMatches && visible.some((c) => c.isRead !== undefined)) {
     const unread = visible.filter((c) => c.isRead === false);
     setUnreadAnchor({
       tab,
+      ticketId,
       id: unread[0]?.id ?? null,
       count: unread.length,
     });
   }
 
-  const unreadAnchorId = unreadAnchor?.tab === tab ? unreadAnchor.id : null;
-  const unreadCount = unreadAnchor?.tab === tab ? unreadAnchor.count : 0;
+  const unreadAnchorId = anchorMatches ? unreadAnchor.id : null;
+  const unreadCount = anchorMatches ? unreadAnchor.count : 0;
 
   // "New messages" marker — a SECOND, separate line for messages that land while the user is
   // already in the chat. The unread anchor above is frozen on open, so without this a message
@@ -446,6 +476,34 @@ export function TicketCommentThread({
     observer.observe(el);
     return () => observer.disconnect();
   }, [newAfterId, visible]);
+
+  // Clear the "Unread messages" line once the user has actually reached the bottom AND the BE
+  // confirms nothing is unread any more. The line is pinned on open on purpose — auto
+  // mark-read fires immediately, so recomputing it from fresh data would make it vanish before
+  // it could be seen. But pinning it for the WHOLE session left it stranded on screen after the
+  // backlog had been read, which is what users report as "the unread line won't go away".
+  //
+  // Both conditions matter: reaching the bottom alone isn't enough in a short thread that opens
+  // already scrolled down (the user never read the backlog), and `isRead` alone flips within a
+  // second of opening.
+  useEffect(() => {
+    const el = bottomRef.current;
+    if (!el || !unreadAnchorId) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        const stillUnread = visible.some((c) => c.isRead === false);
+        if (stillUnread) return;
+        setUnreadAnchor((prev) =>
+          prev ? { ...prev, id: null, count: 0 } : prev,
+        );
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [unreadAnchorId, visible]);
 
   useEffect(() => {
     const el = bottomRef.current;
@@ -652,13 +710,6 @@ export function TicketCommentThread({
         )}
       </div>
 
-      {/* Contextual note for the current tab */}
-      <p className="text-2xs text-muted-foreground px-1 pt-2 pb-1 shrink-0">
-        {tab === "public"
-          ? "Public comments — visible to the customer."
-          : "Internal comments — visible only to staff working the ticket."}
-      </p>
-
       {visible.length === 0 &&
       aiSuggestions.length === 0 &&
       pendingForTab.length === 0 ? (
@@ -669,7 +720,15 @@ export function TicketCommentThread({
         </p>
       ) : (
         <div className="space-y-3 pt-2 pr-2">
-          {visible.map((c) => {
+          {visible.map((c, index) => {
+            // Date separator ONLY at a real day boundary — i.e. between two messages sent on
+            // different days. Deliberately not shown above the first message: in a thread where
+            // everything happened on one day it would be a lone "Today" header separating
+            // nothing, which is noise rather than information.
+            const showDateSeparator =
+              index > 0 &&
+              dayKey(c.createdAt) !== dayKey(visible[index - 1].createdAt);
+
             const isOwn = isOwnComment(c);
             const name =
               c.authorDisplayName ?? ROLE_LABEL[c.authorRole] ?? c.authorRole;
@@ -688,11 +747,25 @@ export function TicketCommentThread({
             // C4 — Admin override only when the ticket is Closed and the page passes the handler.
             const canOverride =
               ticketClosed && !!onOverrideEdit && !!onOverrideDelete;
+            // A deleted message keeps its row as a "This message has been deleted." tombstone,
+            // but every action on it is meaningless — there is no body left to edit, translate
+            // or delete again, and the BE rejects all three. Gate the whole menu here rather
+            // than each flag, so any action added later is covered too.
             const canShowActions =
-              canEditThis || canDeleteThis || !!onTranslate || canOverride;
+              !c.isDeleted &&
+              (canEditThis || canDeleteThis || !!onTranslate || canOverride);
 
             return (
               <Fragment key={c.id}>
+                {showDateSeparator && (
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-3xs font-medium text-muted-foreground">
+                      {formatDateLabel(c.createdAt)}
+                    </span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                )}
                 {c.id === unreadAnchorId && (
                   <div
                     ref={unreadDividerRef}
@@ -778,37 +851,55 @@ export function TicketCommentThread({
                         </div>
                       </div>
                     ) : (
-                      <CommentBubbleContent
-                        comment={c}
-                        displayBody={displayBody}
-                        isOwn={isOwn}
-                        canShowActions={canShowActions}
-                        ticketId={ticketId}
-                        actionsMenu={
-                          <CommentActionsMenu
-                            canEdit={canEditThis}
-                            canDelete={canDeleteThis}
-                            canTranslate={!!onTranslate}
-                            canOverride={canOverride}
-                            translating={translatingId === c.id}
-                            onEdit={() => startEdit(c)}
-                            onDelete={() => setDeleteTarget(c)}
-                            onTranslate={(lang) => handleTranslate(c, lang)}
-                            onOverrideEdit={() => onOverrideEdit?.(c)}
-                            onOverrideDelete={() => onOverrideDelete?.(c)}
+                      // Wrapped so hovering the bubble still reveals when it was sent — the
+                      // date line under each message is gone, and the thread has no date
+                      // separators, so this is the only place the time is available now.
+                      <Tooltip>
+                        <TooltipTrigger render={<div />}>
+                          <CommentBubbleContent
+                            comment={c}
+                            displayBody={displayBody}
+                            isOwn={isOwn}
+                            canShowActions={canShowActions}
+                            ticketId={ticketId}
+                            actionsMenu={
+                              <CommentActionsMenu
+                                canEdit={canEditThis}
+                                canDelete={canDeleteThis}
+                                canTranslate={!!onTranslate}
+                                canOverride={canOverride}
+                                translating={translatingId === c.id}
+                                onEdit={() => startEdit(c)}
+                                onDelete={() => setDeleteTarget(c)}
+                                onTranslate={(lang) => handleTranslate(c, lang)}
+                                onOverrideEdit={() => onOverrideEdit?.(c)}
+                                onOverrideDelete={() => onOverrideDelete?.(c)}
+                              />
+                            }
                           />
-                        }
-                      />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {format(
+                            new Date(c.createdAt),
+                            "EEEE, dd/MM/yyyy HH:mm:ss",
+                            { locale: enUS },
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
                     )}
 
-                    {!isEditing && ticketId && !ticketClosed && (
-                      <ChatReactionBar
-                        ticketId={ticketId}
-                        chatId={c.id}
-                        currentUserId={currentUserId}
-                        align={isOwn ? "end" : "start"}
-                      />
-                    )}
+                    {/* No reacting to a tombstone either — same reasoning as canShowActions. */}
+                    {!isEditing &&
+                      !c.isDeleted &&
+                      ticketId &&
+                      !ticketClosed && (
+                        <ChatReactionBar
+                          ticketId={ticketId}
+                          chatId={c.id}
+                          currentUserId={currentUserId}
+                          align={isOwn ? "end" : "start"}
+                        />
+                      )}
 
                     {translation && (
                       <button
@@ -821,25 +912,33 @@ export function TicketCommentThread({
                           : "View original"}
                       </button>
                     )}
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <span className="text-3xs text-muted-foreground px-1 mt-0.5 cursor-default" />
-                        }
-                      >
-                        {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm", {
-                          locale: enUS,
-                        })}
-                        {!!c.editCount && c.editCount > 0 && " · edited"}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {format(
-                          new Date(c.createdAt),
-                          "EEEE, dd/MM/yyyy HH:mm:ss",
-                          { locale: enUS },
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
+                    {/* The date line under every bubble was dropped — it repeated on each
+                        message and crowded the thread. The full timestamp still shows on
+                        hover, and "edited" stays visible since nothing else marks an edit. */}
+                    {!!c.editCount && c.editCount > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <span className="text-3xs text-muted-foreground px-1 mt-0.5 cursor-default" />
+                          }
+                        >
+                          edited
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {format(
+                            new Date(c.createdAt),
+                            "EEEE, dd/MM/yyyy HH:mm:ss",
+                            { locale: enUS },
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+
+                    {/* "Seen by" avatars, Messenger-style. BE only fills readReceipts for
+                        messages YOU sent, so this never renders on someone else's bubble. */}
+                    {isOwn && !!c.readReceipts?.length && (
+                      <ChatSeenAvatars readers={c.readReceipts} />
+                    )}
                   </div>
                 </div>
               </Fragment>

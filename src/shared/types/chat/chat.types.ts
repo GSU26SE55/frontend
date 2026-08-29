@@ -78,8 +78,11 @@ export interface ChatReactionsAggregateDto {
 }
 
 export interface ChatReaderDto {
+  chatId?: string;
   userId: string;
   displayName: string;
+  /** Null → render the initial of displayName instead. */
+  avatarUrl?: string | null;
   readAt: string;
 }
 

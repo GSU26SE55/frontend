@@ -15,6 +15,8 @@ import {
   TicketCategoryEnum,
   SlaFilterEnum,
 } from "@/shared/types/ticket/ticket.types";
+import { TicketSourceFilterEnum } from "@/shared/enums/ticket/ticket.enum";
+import { TICKET_SOURCE_LABEL } from "@/shared/utils/ticket/ticketSource";
 import type {
   TicketStatusEnum as TicketStatus,
   TicketPriorityEnum as TicketPriority,
@@ -43,6 +45,7 @@ const STATUS_OPTIONS = Object.values(TicketStatusEnum) as TicketStatus[];
 const PRIORITY_OPTIONS = Object.values(TicketPriorityEnum) as TicketPriority[];
 const CATEGORY_OPTIONS = Object.values(TicketCategoryEnum) as TicketCategory[];
 const SLA_OPTIONS = Object.values(SlaFilterEnum);
+const SOURCE_OPTIONS = Object.values(TicketSourceFilterEnum);
 
 // Three SLA situations worth chasing. Deliberately not the raw SlaTimerStatusEnum: Running and
 // Met need no action, and "Warning" is not a stored status at all — it is a running timer that
@@ -59,6 +62,7 @@ const DEFAULTS = {
   priority: "",
   category: "",
   sla: "",
+  source: "",
   sortBy: "",
   sortDir: "",
   pageNumber: 1,
@@ -79,6 +83,7 @@ export default function AdminTicketListPage() {
     priority: (filters.priority as TicketPriority) || undefined,
     category: (filters.category as TicketCategory) || undefined,
     sla: (filters.sla as SlaFilterEnum) || undefined,
+    source: (filters.source as TicketSourceFilterEnum) || undefined,
     sortBy: filters.sortBy || undefined,
     sortDir: filters.sortDir || undefined,
     pageNumber: filters.pageNumber,
@@ -197,6 +202,29 @@ export default function AdminTicketListPage() {
             {SLA_OPTIONS.map((v) => (
               <SelectItem key={v} value={v}>
                 {SLA_LABELS[v]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.source || null}
+          items={SOURCE_OPTIONS.map((v) => ({
+            value: v,
+            label: TICKET_SOURCE_LABEL[v],
+          }))}
+          onValueChange={(v: string | null) =>
+            setFilter("source", v || undefined)
+          }
+        >
+          <SelectTrigger size="sm" className="w-44">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All sources</SelectItem>
+            {SOURCE_OPTIONS.map((v) => (
+              <SelectItem key={v} value={v}>
+                {TICKET_SOURCE_LABEL[v]}
               </SelectItem>
             ))}
           </SelectContent>

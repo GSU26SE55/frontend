@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import {
   ticketKbService,
   type AddTicketKbRefInput,
-} from "@/features/staff/services/ticket/ticket-kb.service";
+} from "@/shared/services/ticket/ticket-kb.service";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { MESSAGES } from "@/shared/constants/messages";
@@ -28,6 +28,8 @@ export function useAddTicketKbRef(ticketId: string) {
         queryKey: QUERY_KEY.ticketKbRefs.list(ticketId),
       });
     },
+    // Attaching happens from a button, not a form with fields to map an error onto, so a
+    // toast is the whole story here.
     onError: (error) => handleErrorApi({ error }),
   });
 }

@@ -7,6 +7,8 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
+  Bar,
+  BarChart,
   Cell,
   Label,
   Pie,
@@ -14,6 +16,8 @@ import {
   PolarAngleAxis,
   RadialBar,
   RadialBarChart,
+  XAxis,
+  YAxis,
 } from "recharts";
 import { toneVars, type StatusTone } from "@/shared/theme/statusColors";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
@@ -335,5 +339,111 @@ export function GaugeFooter({
         </div>
       ))}
     </div>
+  );
+}
+
+// ── Stacked share bar (parts of one whole) ────────────────────────────────────
+export interface StackedSegment {
+  key: string;
+  label: string;
+  value: number;
+  fill: string;
+  /** Drawn hatched — the segment is shown but excluded from the headline figure. */
+  muted?: boolean;
+}
+
+const stackedConfig = { value: { label: "Count" } } satisfies ChartConfig;
+
+/**
+ * One horizontal bar split into segments, sized by share of the total.
+ *
+ * Use when the parts genuinely make up a whole and the reader needs the proportion at a
+ * glance — a donut wastes the panel's width on a hole, and a row of numbers alone never
+ * shows that one slice dwarfs another.
+ */
+export function DashboardStackedBar({
+  segments,
+  height = 14,
+}: {
+  segments: StackedSegment[];
+  height?: number;
+}) {
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  const datum: Record<string, number> = { name: 0 };
+  segments.forEach((seg) => {
+    datum[seg.key] = seg.value;
+  });
+
+  if (total <= 0) {
+    return (
+      <div
+        className="w-full rounded-full bg-muted"
+        style={{ height }}
+        role="img"
+        aria-label="No data"
+      />
+    );
+  }
+
+  return (
+    <ChartContainer
+      config={stackedConfig}
+      className="w-full"
+      style={{ height, aspectRatio: "auto" }}
+    >
+      <BarChart
+        data={[datum]}
+        layout="vertical"
+        margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        barCategoryGap={0}
+      >
+        <XAxis type="number" domain={[0, total]} hide />
+        <YAxis type="category" dataKey="name" hide />
+        <ChartTooltip
+          cursor={false}
+          content={
+            <ChartTooltipContent
+              hideLabel
+              formatter={(value, name) => {
+                const seg = segments.find((sg) => sg.key === name);
+                if (!seg) return null;
+                return (
+                  <div className="flex w-full items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="size-2.5 shrink-0 rounded-[2px]"
+                      style={{ background: seg.fill }}
+                    />
+                    <span className="text-muted-foreground">{seg.label}</span>
+                    <span className="ml-auto font-medium tabular-nums">
+                      {value as number}
+                    </span>
+                  </div>
+                );
+              }}
+            />
+          }
+        />
+        {segments.map((seg, i) => (
+          <Bar
+            key={seg.key}
+            dataKey={seg.key}
+            stackId="a"
+            fill={seg.fill}
+            fillOpacity={seg.muted ? 0.25 : 1}
+            // Only the outer ends are rounded, so the segments read as one bar.
+            radius={
+              segments.length === 1
+                ? [999, 999, 999, 999]
+                : i === 0
+                  ? [999, 0, 0, 999]
+                  : i === segments.length - 1
+                    ? [0, 999, 999, 0]
+                    : [0, 0, 0, 0]
+            }
+          />
+        ))}
+      </BarChart>
+    </ChartContainer>
   );
 }

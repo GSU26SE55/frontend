@@ -122,9 +122,12 @@ export default function BmsSwitchControlCard({
     }
 
     mutation.mutate(payload, {
+      // No "command sent" toast: acceptance is not the outcome the operator is waiting
+      // for, and pairing it with the confirmation toast that follows meant every switch
+      // produced two notifications. The wait is already visible in the control itself,
+      // which stays disabled and pending until the BMS answers.
       onSuccess: (accepted) => {
         issuedCmdId.current = accepted.cmdId;
-        toast.message("Command sent; waiting for BMS confirmation.");
       },
       onError: (error) => toast.error(failureMessage(error)),
     });

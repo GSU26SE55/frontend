@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
+import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
@@ -74,12 +75,32 @@ import {
   getSupporterNames,
   getPreviousPrimaryHandlerNames,
 } from "@/shared/utils/ticket/assignments";
-import TicketKbReferencesPanel from "@/features/manager/components/ticket/TicketKbReferencesPanel";
+import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { slaBarColorClass } from "@/shared/lib/sla";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { managerKbService } from "@/features/manager/services/kb/kb.service";
+import type { KbArticleSearchParams } from "@/shared/components/kb/KbArticleSelector";
+
+// Article lookups stay with the role's own KB service: Manager's carries the
+// approve/publish workflow that Staff's does not, and shared must not import from a
+// feature. The panel only needs these two reads.
+const searchKbArticles = ({ q, category }: KbArticleSearchParams) =>
+  managerKbService
+    .getList({
+      q,
+      category: category ? KbCategoryCode[category] : undefined,
+      status: KbArticleStatusEnum.Published,
+      pageSize: 20,
+    })
+    .then((r) => r.data.data?.items ?? []);
+
+const getKbArticleDetail = (id: string) =>
+  managerKbService.getDetail(id).then((r) => r.data.data!);
+
+import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
 
 // GH-1176: "triage" (approval) removed; "escalate" (force) removed;
 // "escalate-approve" and "escalate-reject" added for Request-status handling.
@@ -430,6 +451,7 @@ export default function TicketDetailPage() {
                 <TabsTrigger value="info">Info</TabsTrigger>
                 <TabsTrigger value="comments" className="group">
                   Chat
+                  <ChatUnreadBadge ticketId={id} />
                 </TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="logs">
@@ -598,8 +620,15 @@ export default function TicketDetailPage() {
             <TabsContent value="kb" className="min-h-0 overflow-y-auto m-0 p-6">
               <TicketKbReferencesPanel
                 ticketId={id}
+                // GH: the BE rejects attaching once a ticket is terminal
+                // (AddTicketKbReferenceCommandHandler returns 409). This page used to leave
+                // the button enabled and let the request fail.
+                canAdd={!isTicketChatLocked(status)}
                 afterResolveOnly={status === TicketStatusEnum.Completed}
                 defaultCategory={ticket.category}
+                basePath="/manager"
+                searchArticles={searchKbArticles}
+                getArticleDetail={getKbArticleDetail}
               />
             </TabsContent>
           </Tabs>

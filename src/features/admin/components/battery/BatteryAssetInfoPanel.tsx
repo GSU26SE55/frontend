@@ -6,23 +6,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useStaffBatteryAsset } from "@/features/staff/hooks/battery/useBatteryAsset";
-import {
-  BatteryStatusEnum,
-  WarrantyStatusEnum,
-} from "@/features/staff/types/battery/battery-asset.types";
+import { useBatteryAsset } from "@/features/admin/hooks/battery/useBatteryAsset";
+import { BatteryStatusEnum } from "@/features/admin/types/battery/battery-asset.types";
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Active",
   [BatteryStatusEnum.Inactive]: "Inactive",
   [BatteryStatusEnum.Decommissioned]: "Decommissioned",
-};
-
-const WARRANTY_LABEL: Record<WarrantyStatusEnum, string> = {
-  [WarrantyStatusEnum.ACTIVE]: "Under warranty",
-  [WarrantyStatusEnum.EXPIRED]: "Warranty expired",
-  [WarrantyStatusEnum.VOID]: "Void",
 };
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -45,15 +36,20 @@ interface Props {
   detectedAt?: string | null;
 }
 
+/**
+ * Read-only battery context for the Admin ticket page — the counterpart of the Manager and
+ * Staff panels, deliberately carrying no action buttons.
+ *
+ * Admin previously saw only a "Battery serial" text row, with no way to reach the readings
+ * that caused the ticket. Showing the evidence does not widen Admin's permissions: the
+ * triage/assign/approve actions stay with the Manager (see the comment at the top of
+ * AdminTicketDetailPage), and nothing here mutates anything.
+ */
 export default function BatteryAssetInfoPanel({
   batteryAssetId,
   detectedAt,
 }: Props) {
-  const {
-    data: asset,
-    isLoading,
-    isError,
-  } = useStaffBatteryAsset(batteryAssetId);
+  const { data: asset, isLoading, isError } = useBatteryAsset(batteryAssetId);
 
   if (!batteryAssetId) {
     return (
@@ -100,9 +96,9 @@ export default function BatteryAssetInfoPanel({
 
       {/* Open the real-time detail page for this battery. When the ticket carries a detection
           time, the link lands on Sensor history already filtered to the ±2' window around it —
-          the same span as the evidence table above, so the two agree. */}
+          the same span as the evidence table below, so the two agree. */}
       <Link
-        to={`/staff/battery-assets/${batteryAssetId}${realtimeQuery}`}
+        to={`/admin/battery-assets/${batteryAssetId}${realtimeQuery}`}
         className={cn(
           buttonVariants({ variant: "outline", size: "sm" }),
           "w-full mb-3",
@@ -111,6 +107,7 @@ export default function BatteryAssetInfoPanel({
         <Activity className="size-3.5" />
         View real-time detail
       </Link>
+
       <div className="divide-y divide-border/50">
         <InfoRow label="Serial number" value={asset.serialNumber} />
         <InfoRow label="Battery type" value={asset.batteryTypeName} />
@@ -125,11 +122,11 @@ export default function BatteryAssetInfoPanel({
         <InfoRow
           label="Warranty"
           value={
-            <>
-              {WARRANTY_LABEL[asset.warrantyStatus] ?? asset.warrantyStatus}
-              {asset.warrantyEndDate &&
-                ` (until ${format(new Date(asset.warrantyEndDate), "dd/MM/yyyy")})`}
-            </>
+            asset.warrantyEndDate
+              ? format(new Date(asset.warrantyEndDate), "dd/MM/yyyy", {
+                  locale: enUS,
+                })
+              : "—"
           }
         />
       </div>

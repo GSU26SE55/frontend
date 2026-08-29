@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -18,14 +18,11 @@ import {
   useTicketKbRefs,
   useAddTicketKbRef,
   useRemoveTicketKbRef,
-} from "@/features/staff/hooks/ticket/useTicketKbRefs";
-import { staffKbService } from "@/features/staff/services/kb/kb.service";
+} from "@/shared/hooks/ticket/useTicketKbRefs";
 import { useKbSuggestions } from "@/shared/hooks/useSuggestions";
 import {
   KbReferenceTypeEnum,
   KbReferenceTypeLabel,
-  KbArticleStatusEnum,
-  KbCategoryCode,
 } from "@/shared/enums/kb/kb.enum";
 import { TicketCategoryEnum } from "@/shared/enums/ticket/ticket.enum";
 import {
@@ -33,6 +30,10 @@ import {
   type KbArticleSearchParams,
 } from "@/shared/components/kb/KbArticleSelector";
 import type { KbReferenceTypeEnum as RefType } from "@/shared/enums/kb/kb.enum";
+import type {
+  KbArticleDTO,
+  KbArticleSummaryDTO,
+} from "@/shared/types/kb/kb.types";
 import { cn } from "@/lib/utils";
 import { toneFill } from "@/shared/theme/statusColors";
 
@@ -67,6 +68,17 @@ interface TicketKbReferencesPanelProps {
   canAdd?: boolean;
   /** Ticket is Resolved — only the 2 after-resolve types are recorded (matches BE guard H). */
   afterResolveOnly?: boolean;
+  /**
+   * Route prefix owning a `kb/:id` page — "/admin", "/manager" or "/staff". Shared cannot
+   * know which console it is rendering in, and a hardcoded prefix would 404 in the others.
+   */
+  basePath: string;
+  /** Published-article search, backed by the caller's own KB service. */
+  searchArticles: (
+    params: KbArticleSearchParams,
+  ) => Promise<KbArticleSummaryDTO[]>;
+  /** Full article for the preview pane, backed by the caller's own KB service. */
+  getArticleDetail: (id: string) => Promise<KbArticleDTO>;
 }
 
 export default function TicketKbReferencesPanel({
@@ -74,6 +86,9 @@ export default function TicketKbReferencesPanel({
   defaultCategory,
   canAdd = true,
   afterResolveOnly = false,
+  basePath,
+  searchArticles,
+  getArticleDetail,
 }: TicketKbReferencesPanelProps) {
   const navigate = useNavigate();
   const { data: refs, isLoading } = useTicketKbRefs(ticketId);
@@ -95,24 +110,6 @@ export default function TicketKbReferencesPanel({
       (s) => !attachedIds.has(s.kbArticleId),
     );
   }, [aiSuggest, refs]);
-
-  const searchArticles = useCallback(
-    ({ q, category }: KbArticleSearchParams) =>
-      staffKbService
-        .getList({
-          q,
-          category: category ? KbCategoryCode[category] : undefined,
-          status: KbArticleStatusEnum.Published,
-          pageSize: 20,
-        })
-        .then((r) => r.data.data?.items ?? []),
-    [],
-  );
-
-  const getArticleDetail = useCallback(
-    (id: string) => staffKbService.getDetail(id).then((r) => r.data.data!),
-    [],
-  );
 
   const [showAdd, setShowAdd] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -197,7 +194,7 @@ export default function TicketKbReferencesPanel({
                 : undefined
             }
             onClick={() =>
-              navigate("/staff/kb/new", {
+              navigate(`${basePath}/kb/new`, {
                 state: { ticketId, category: defaultCategory },
               })
             }
@@ -469,7 +466,7 @@ export default function TicketKbReferencesPanel({
                             size="icon"
                             className="size-7"
                             onClick={() =>
-                              navigate(`/staff/kb/${ref.kbArticleId}`)
+                              navigate(`${basePath}/kb/${ref.kbArticleId}`)
                             }
                             title="View article"
                           >
