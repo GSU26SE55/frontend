@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Router,
   BarChart3,
+  Calendar,
   // SlidersHorizontal, // unused while "Calibrations expiring" nav entry is hidden
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
@@ -119,6 +120,13 @@ export const MANAGER_NAV: NavSection[] = [
     collapsible: true,
     defaultOpen: false,
     items: [
+      // Days declared here are excluded from every ticket's SLA clock — Manager owns the
+      // holiday calendar, the same list Admin sees.
+      {
+        label: "SLA calendar",
+        path: "/manager/sla-calendar",
+        icon: Calendar,
+      },
       {
         label: SIDEBAR_LABELS.settings,
         path: "/manager/settings",
