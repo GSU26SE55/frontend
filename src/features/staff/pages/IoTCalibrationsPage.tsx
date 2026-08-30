@@ -86,12 +86,12 @@ export default function IoTCalibrationsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <RefreshButton
-                queryKeys={[KEY.iotCalibrations, KEY.iotDevices]}
-              />
               <Button size="sm" onClick={() => setCalibrationOpen(true)}>
                 <Plus className="size-3.5" /> Add calibration
               </Button>
+              <RefreshButton
+                queryKeys={[KEY.iotCalibrations, KEY.iotDevices]}
+              />
             </div>
           </Card>
 

@@ -13,6 +13,7 @@ import type {
   EscalationDecisionPayload,
   AddCommentPayload,
   ReprioritizePayload,
+  LinkParentPayload,
 } from "@/shared/types/ticket/ticket.types";
 import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -42,6 +43,23 @@ export const useManagerTicketDetail = (id: string) =>
     enabled: !!id,
     staleTime: 0,
     refetchInterval: 30_000,
+  });
+
+/**
+ * Open tickets sharing this one's site, plus anything already linked parent/child.
+ *
+ * Exists for the case where one cabinet fault produces several tickets at once — a system
+ * environmental ticket plus the battery tickets the customer raises for the packs inside it.
+ * They are the same root cause but separate units of work, so they are listed side by side
+ * rather than merged.
+ */
+export const useTicketRelated = (id: string) =>
+  useQuery({
+    queryKey: QUERY_KEY.tickets.related(id),
+    queryFn: () =>
+      managerTicketService.getRelated(id).then((r) => r.data.data ?? []),
+    enabled: !!id,
+    staleTime: 30_000,
   });
 
 export const useTicketActivities = (id: string) =>
@@ -283,6 +301,45 @@ export const useDeclareIncident = (id: string) => {
     onError: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY.manager.tickets.detail(id) });
     },
+  });
+};
+
+/**
+ * Link a ticket to a parent sharing the same root cause (or unlink with null).
+ *
+ * Deliberately NOT merge: the ticket stays open and its SLA keeps running, so the work it
+ * represents is still tracked after the parent incident is resolved.
+ *
+ * Takes `ticketId` PER CALL rather than binding it at the hook level. The relation is stored on
+ * the child, so linking two tickets from a panel showing a THIRD ticket (the parent's own page,
+ * offering "add this candidate as my child") must edit the candidate, not the page's own ticket
+ * — a fixed `id` made every call edit the currently-open ticket regardless of which button was
+ * pressed, which is what let a parent try to adopt its own child as ITS parent.
+ */
+export const useLinkParentTicket = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      ticketId,
+      payload,
+    }: {
+      ticketId: string;
+      payload: LinkParentPayload;
+    }) => managerTicketService.linkParent(ticketId, payload),
+    onSuccess: (_, { ticketId, payload }) => {
+      toast.success(payload.parentTicketId ? "Ticket linked" : "Link removed");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.detail(ticketId),
+      });
+      qc.invalidateQueries({ queryKey: QUERY_KEY.tickets.detail(ticketId) });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEY.manager.tickets.activities(ticketId),
+      });
+      // Both sides of the relation change, and the panel is keyed per ticket — invalidate
+      // every "related" list rather than guessing which ones are affected.
+      qc.invalidateQueries({ queryKey: [KEY.tickets, "related"] });
+    },
+    onError: (error) => handleErrorApi({ error }),
   });
 };
 

@@ -11,6 +11,7 @@ import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 import { getTicketSource } from "@/shared/utils/ticket/ticketSource";
+import { priorityRank } from "@/shared/utils/ticket/priorityMatrix";
 import { toneClass } from "@/shared/theme/statusColors";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
@@ -93,7 +94,9 @@ export default function AdminTicketTable({
       id: "priority",
       header: "Priority",
       sortKey: "priority",
-      sortValue: (t) => t.priority ?? "",
+      // Rank, not the enum string: a plain string compare sorts "Urgent" last,
+      // burying the most severe ticket. See priorityRank.
+      sortValue: (t) => priorityRank(t.priority),
       headClassName: "w-32",
       cell: (t) => <TicketPriorityBadge priority={t.priority} />,
     },

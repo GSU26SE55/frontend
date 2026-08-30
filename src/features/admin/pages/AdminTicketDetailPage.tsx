@@ -13,7 +13,7 @@ import {
 } from "@/shared/utils/ticket/assignments";
 import {
   isTicketChatLocked,
-  TICKET_CHAT_LOCKED_NOTICE,
+  ticketChatLockedNotice,
 } from "@/shared/utils/ticket.utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,8 @@ import BatteryAssetInfoPanel from "@/features/admin/components/battery/BatteryAs
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import MaintenanceScheduleCountdown from "@/shared/components/ticket/MaintenanceScheduleCountdown";
 import { getTicketSubject } from "@/shared/lib/ticketSubject";
+import RelatedTicketsPanel from "@/shared/components/ticket/RelatedTicketsPanel";
+import TicketBmsAction from "@/shared/components/ticket/TicketBmsAction";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -37,6 +39,7 @@ import {
   useAdminTicketActivities,
   useAdminTicketComments,
   useDeclareIncident,
+  useAdminTicketRelated,
 } from "@/features/admin/hooks/ticket/useAdminTickets";
 import AddCommentForm from "@/features/admin/components/ticket/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
@@ -150,6 +153,8 @@ export default function AdminTicketDetailPage() {
   );
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
+  const { data: relatedTickets, isLoading: relatedLoading } =
+    useAdminTicketRelated(id!);
   const { data: comments = [] } = useAdminTicketComments(
     ticketId,
     mainTab === "comments",
@@ -267,10 +272,10 @@ export default function AdminTicketDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <RefreshButton
-            queryKeys={[KEY.admin.tickets, KEY.tickets]}
-            size="icon"
-          />
+          {/* Cutting charge/discharge is the first move on a thermal or overcharge ticket, so it
+              sits with the other header actions rather than a screen away. Picks battery vs
+              whole-site itself, and hides once the ticket is finished. */}
+          <TicketBmsAction ticket={ticket} />
           <Button
             variant="destructive"
             size="sm"
@@ -280,6 +285,7 @@ export default function AdminTicketDetailPage() {
             <AlertTriangle size={13} />
             {ticket.isIncident ? "Already an Incident" : "Declare Incident"}
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.tickets, KEY.tickets]} />
         </div>
       </div>
 
@@ -350,6 +356,17 @@ export default function AdminTicketDetailPage() {
                     </div>
                   );
                 })()}
+
+              {/* Read-only here: the BE authorises /link-parent for Manager only, so Admin sees
+                  the relation without being offered a control that would 403. */}
+              {ticket && (
+                <RelatedTicketsPanel
+                  ticket={ticket}
+                  related={relatedTickets}
+                  isLoading={relatedLoading}
+                  basePath="/admin/tickets"
+                />
+              )}
             </TabsContent>
 
             <TabsContent
@@ -432,7 +449,7 @@ export default function AdminTicketDetailPage() {
                 {chatLocked ? (
                   <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
                     <Lock className="size-3.5" />
-                    {TICKET_CHAT_LOCKED_NOTICE}
+                    {ticketChatLockedNotice(ticket.status)}
                   </p>
                 ) : (
                   <>

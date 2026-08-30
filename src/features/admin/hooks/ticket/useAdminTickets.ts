@@ -28,6 +28,21 @@ export function useAdminTicketDetail(id: string) {
   });
 }
 
+/**
+ * Open tickets related to this one — same site, or already linked parent/child.
+ *
+ * Admin is read-only on the relation: the BE authorises /link-parent for Manager only.
+ */
+export function useAdminTicketRelated(id: string) {
+  return useQuery({
+    queryKey: QUERY_KEY.tickets.related(id),
+    queryFn: () =>
+      adminTicketService.getRelated(id).then((r) => r.data.data ?? []),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
 export function useAdminTicketActivities(id: string) {
   return useQuery({
     queryKey: QUERY_KEY.tickets.activities(id),

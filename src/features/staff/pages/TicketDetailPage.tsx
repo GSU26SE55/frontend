@@ -21,7 +21,7 @@ import {
 import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
 import {
   isTicketChatLocked,
-  TICKET_CHAT_LOCKED_NOTICE,
+  ticketChatLockedNotice,
 } from "@/shared/utils/ticket.utils";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import type { MaintenanceLogDTO } from "@/shared/types/ticket/ticket.types";
@@ -64,6 +64,7 @@ import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import { getTicketSubject } from "@/shared/lib/ticketSubject";
+import TicketBmsAction from "@/shared/components/ticket/TicketBmsAction";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -330,10 +331,10 @@ export default function TicketDetailPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <RefreshButton
-            queryKeys={[KEY.staffTickets, KEY.tickets]}
-            size="icon"
-          />
+          {/* Cutting charge/discharge is the first move on a thermal or overcharge ticket, so it
+              sits with the other header actions rather than a screen away. Picks battery vs
+              whole-site itself, and hides once the ticket is finished. */}
+          <TicketBmsAction ticket={ticket} />
           {/* GH-1176: unrestricted start removed; early resume is shown for Held tickets only */}
           {isPending && ticket.pendingContext === "Held" && (
             <Button
@@ -366,6 +367,7 @@ export default function TicketDetailPage() {
             </>
           )}
           {/* GH-1176: resume is handled by the resumeMutationForHeld button above for Held tickets. */}
+          <RefreshButton queryKeys={[KEY.staffTickets, KEY.tickets]} />
         </div>
       </div>
 
@@ -510,7 +512,7 @@ export default function TicketDetailPage() {
                 <div className="shrink-0 border-t border-border p-3">
                   <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
                     <Lock className="size-3.5" />
-                    {TICKET_CHAT_LOCKED_NOTICE}
+                    {ticketChatLockedNotice(status)}
                   </p>
                 </div>
               )}

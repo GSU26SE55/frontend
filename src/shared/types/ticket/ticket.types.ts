@@ -180,6 +180,19 @@ export interface TicketDTO {
   mergedIntoTicketId?: string | null;
   /** Special close reason — set alongside `mergedIntoTicketId` on a Manager merge. */
   closeReason?: TicketCloseReasonEnum | null;
+  /** Site the ticket belongs to. Null on older tickets and on auto-from-alert ones. */
+  siteId?: string | null;
+  /**
+   * Parent ticket sharing the same root cause — an environmental incident and the battery
+   * tickets it caused. Unlike `mergedIntoTicketId` this does NOT close the ticket or stop its
+   * SLA: the batteries still have to be checked once the incident is dealt with.
+   */
+  parentTicketId?: string | null;
+}
+
+/** Link payload (Manager) — attaches this ticket to a parent; null unlinks it. */
+export interface LinkParentPayload {
+  parentTicketId: string | null;
 }
 
 /** Merge payload (Manager) — merges the current ticket into the target ticket. */

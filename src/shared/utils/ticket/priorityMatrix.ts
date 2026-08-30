@@ -34,3 +34,27 @@ export function computePriority(
   if (!impact || !urgency) return undefined;
   return PRIORITY_MATRIX[impact]?.[urgency];
 }
+
+/**
+ * Sort rank for a priority — lowest number is the most severe.
+ *
+ * Sorting on the enum value itself is a string compare, which orders alphabetically:
+ * "P1Critical" < "P2High" < "P3Normal" happens to be right, but "Urgent" sorts AFTER all
+ * of them, pushing the single most severe ticket to the bottom of the table. Rank the
+ * levels explicitly instead.
+ *
+ * Mirrors the BE queue ordering in ManagerQueueQueryHandler (Urgent → P1 → P2 → P3 → unset),
+ * so a client-sorted page and a server-sorted one agree. Tickets with no priority yet sort
+ * last, matching Postgres NULLS LAST.
+ */
+const PRIORITY_RANK: Record<string, number> = {
+  Urgent: 0,
+  P1Critical: 1,
+  P2High: 2,
+  P3Normal: 3,
+};
+
+export function priorityRank(priority?: TicketPriorityEnum | null): number {
+  if (!priority) return 99;
+  return PRIORITY_RANK[priority] ?? 99;
+}

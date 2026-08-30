@@ -57,7 +57,7 @@ export default function BatteryAssetDetailPage() {
         assetId={id}
         headerActions={
           <>
-            <BmsSwitchControlCard assetId={id} variant="popover" />
+            <BmsSwitchControlCard assetId={id} />
             <Button
               variant="outline"
               size="sm"

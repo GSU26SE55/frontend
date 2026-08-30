@@ -1,3 +1,4 @@
+import { CHAT_PAGE_SIZE } from "@/shared/constants/pagination";
 import axiosInstance from "@/shared/lib/axios";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type {
@@ -20,6 +21,7 @@ import type {
   EscalationDecisionPayload,
   AddCommentPayload,
   MergeTicketPayload,
+  LinkParentPayload,
   ReprioritizePayload,
 } from "@/shared/types/ticket/ticket.types";
 
@@ -70,6 +72,11 @@ export const managerTicketService = {
       ENDPOINTS.TICKETS.DETAIL(id),
     ),
 
+  getRelated: (id: string) =>
+    axiosInstance.get<CommonResponse<TicketDTO[]>>(
+      ENDPOINTS.TICKETS.RELATED(id),
+    ),
+
   getActivities: (id: string) =>
     axiosInstance.get<CommonResponse<TicketActivityDTO[]>>(
       ENDPOINTS.TICKETS.ACTIVITIES(id),
@@ -83,7 +90,7 @@ export const managerTicketService = {
   getComments: (ticketId: string) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketCommentDTO>>>(
       ENDPOINTS.TICKETS.CHATS(ticketId),
-      { params: { page: 1, pageSize: 50 } },
+      { params: { page: 1, pageSize: CHAT_PAGE_SIZE } },
     ),
 
   // GH-1176: triage (approval) removed; triageReject remains (Open→ClosedRejected).
@@ -141,6 +148,14 @@ export const managerTicketService = {
   addComment: (ticketId: string, payload: AddCommentPayload) =>
     axiosInstance.post<TicketActionResponse>(
       ENDPOINTS.TICKETS.CHATS(ticketId),
+      payload,
+    ),
+
+  // Link this ticket to a parent sharing the same root cause; pass null to unlink.
+  // Unlike merge, this leaves the ticket open and its SLA running.
+  linkParent: (id: string, payload: LinkParentPayload) =>
+    axiosInstance.post<TicketActionResponse>(
+      ENDPOINTS.ADMIN.TICKETS.LINK_PARENT(id),
       payload,
     ),
 

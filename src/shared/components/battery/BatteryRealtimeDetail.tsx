@@ -147,8 +147,15 @@ export default function BatteryRealtimeDetail({
     !!asset?.siteId,
   );
   const stream = useSensorStream(id ? `asset:${id}` : null);
-  // Prefer live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
-  const live = stream.reading ?? rt ?? null;
+  // Whichever of SSE (stream.reading, ~5s) or polling (rt, 30s) has the NEWER `time` wins —
+  // comparing timestamps instead of always preferring SSE. A pure SSE-first pick got stuck on
+  // a stale reading whenever the gateway went offline (SSE stops pushing but keeps its last
+  // value in state): the header Refresh button re-triggers `rt`'s query, yet the screen never
+  // reflected it because the stale SSE value kept winning the `??` fallback regardless of age.
+  const live =
+    !stream.reading || (rt?.time && rt.time > stream.reading.time)
+      ? (rt ?? stream.reading ?? null)
+      : stream.reading;
   // Telemetry alert threshold by BatteryType — readable by Admin/Manager/Staff alike.
   const { data: threshold } = useThresholdByType(asset?.batteryTypeId ?? "");
 
@@ -242,8 +249,8 @@ export default function BatteryRealtimeDetail({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <RefreshButton queryKeys={[KEY.batteryAssets]} />
           {headerActions}
+          <RefreshButton queryKeys={[KEY.batteryAssets]} />
         </div>
       </div>
 

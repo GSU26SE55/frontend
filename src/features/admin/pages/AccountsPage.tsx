@@ -207,7 +207,6 @@ export default function AccountsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.admin.accounts]} />
           <Button
             size="sm"
             variant="outline"
@@ -218,6 +217,7 @@ export default function AccountsPage() {
           <Button size="sm" onClick={() => setDialog({ type: "create" })}>
             <Plus className="size-3.5" /> Create account
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.accounts]} />
         </div>
       </div>
 

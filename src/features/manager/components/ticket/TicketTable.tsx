@@ -7,6 +7,7 @@ import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
 import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 import { getTicketSource } from "@/shared/utils/ticket/ticketSource";
+import { priorityRank } from "@/shared/utils/ticket/priorityMatrix";
 import { toneClass } from "@/shared/theme/statusColors";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
@@ -31,6 +32,15 @@ interface Props {
    */
   sort?: ServerSortState;
   /**
+   * Drops every column's `sortKey`, making the table render exactly in the order the BE
+   * returned. The Queue uses this: its rows arrive ordered Urgent → P1 → P2 → P3, then oldest
+   * first, and that IS the order Staff should be assigned in. Leaving the headers clickable
+   * there was misleading — the queue endpoint takes no sort params, so a click re-sorted only
+   * the 25 rows of the current page while page 2 sorted independently, silently breaking the
+   * global order the queue exists to express.
+   */
+  disableSort?: boolean;
+  /**
    * Base path for the row-click detail link. Defaults to the "Tickets" list route;
    * the Queue page passes "/manager/tickets/queue" so Back returns to the Queue instead.
    */
@@ -52,6 +62,7 @@ export default function TicketTable({
   pageNumber = 1,
   pageSize = 0,
   sort,
+  disableSort = false,
   detailBasePath = "/manager/tickets",
 }: Props) {
   const navigate = useNavigate();
@@ -157,7 +168,9 @@ export default function TicketTable({
       id: "priority",
       header: "Priority",
       sortKey: "priority",
-      sortValue: (t) => t.priority ?? "",
+      // Rank, not the enum string: a plain string compare sorts "Urgent" last,
+      // burying the most severe ticket. See priorityRank.
+      sortValue: (t) => priorityRank(t.priority),
       // Auto tickets not yet assigned to Staff: priority is inferred by AI from the anomaly
       // category and hasn't gone through a reviewer. Flag it so Manager doesn't mistake it
       // for a priority someone has already signed off on.
@@ -205,7 +218,11 @@ export default function TicketTable({
     <Card className="gap-0 py-0 overflow-hidden">
       <DataTable
         data={tickets}
-        columns={columns}
+        columns={
+          disableSort
+            ? columns.map((c) => ({ ...c, sortKey: undefined }))
+            : columns
+        }
         rowKey={(t) => t.id}
         showIndex
         pageNumber={pageNumber}
