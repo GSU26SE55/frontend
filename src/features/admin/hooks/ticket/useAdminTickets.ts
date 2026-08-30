@@ -49,12 +49,18 @@ export function useAdminTicketMaintenanceLogs(id: string) {
 }
 
 // GET /api/tickets/{ticketId}/chats — shares the endpoint with staff/manager.
-export function useAdminTicketComments(id: string) {
+/**
+ * GET /chats also AUTO-MARKS every message it returns as read on the BE, so this must only run
+ * once the user has actually opened the Chat tab — `enabled` is not just an optimisation here.
+ * Fetching it alongside the rest of the ticket detail marked a thread as read that nobody had
+ * looked at, and the sender saw a false "seen".
+ */
+export function useAdminTicketComments(id: string, enabled = true) {
   return useQuery({
     queryKey: QUERY_KEY.tickets.chats(id),
     queryFn: () => adminTicketService.getComments(id),
     select: (res) => res.data?.items ?? [],
-    enabled: !!id,
+    enabled: !!id && enabled,
     staleTime: 60_000,
   });
 }

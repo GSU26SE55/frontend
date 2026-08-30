@@ -127,6 +127,10 @@ export default function AdminTicketDetailPage() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  // Which outer tab is open. The chat query must NOT run until the user actually opens
+  // the Chat tab: GET /chats auto-marks every message it returns as read on the BE, so
+  // fetching it eagerly told the sender "seen" for a thread nobody had looked at.
+  const [mainTab, setMainTab] = useState("info");
   const [composerPrefill, setComposerPrefill] = useState({
     text: "",
     version: 0,
@@ -146,7 +150,10 @@ export default function AdminTicketDetailPage() {
   );
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
-  const { data: comments = [] } = useAdminTicketComments(ticketId);
+  const { data: comments = [] } = useAdminTicketComments(
+    ticketId,
+    mainTab === "comments",
+  );
 
   // Read-only for these roles — the Logs tab and its count both read from here.
   const maintenanceLogs = ticket?.maintenanceLogs ?? [];
@@ -174,7 +181,8 @@ export default function AdminTicketDetailPage() {
   // Who can be @-tagged: the ticket's active participants (GET .../participants).
   // Do NOT use chat authors — someone newly added to the ticket who hasn't posted yet must still be taggable.
   const mentionCandidates = useMentionCandidates(ticketId);
-  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
+  const { typingNames, sendTyping, pinNotices } =
+    useTicketCommentsRealtime(ticketId);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
   const { mutate: deleteChat, isPending: deleteChatPending } =
@@ -279,7 +287,11 @@ export default function AdminTicketDetailPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Left: Timeline / Comments */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <Tabs defaultValue="info" className="h-full gap-0">
+          <Tabs
+            value={mainTab}
+            onValueChange={setMainTab}
+            className="h-full gap-0"
+          >
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
@@ -382,6 +394,7 @@ export default function AdminTicketDetailPage() {
             >
               <div className="flex-1 overflow-y-auto p-6">
                 <TicketCommentThread
+                  pinNotices={pinNotices}
                   comments={comments}
                   currentUserId={currentUserId}
                   activeTab={chatTab}

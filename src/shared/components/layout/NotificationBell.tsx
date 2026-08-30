@@ -108,7 +108,14 @@ export default function NotificationBell() {
 
         <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
-            <span className="text-2sm font-semibold">Notifications</span>
+            <span className="text-2sm font-semibold">
+              Notifications
+              {unreadCount > 0 && (
+                <span className="ml-1.5 font-normal text-muted-foreground tabular-nums">
+                  {unreadCount} unread
+                </span>
+              )}
+            </span>
             {unreadCount > 0 && (
               <button
                 onClick={(e) => {
@@ -124,7 +131,10 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-90 overflow-y-auto">
+          {/* Each row is ~90px, so the old max-h-90 (360px) showed barely four and cut the
+              fifth mid-row, which read as "the rest of my notifications are missing".
+              Taller list + the count in the header make it clear the list scrolls. */}
+          <div className="max-h-[32rem] overflow-y-auto">
             {isLoading ? (
               <div
                 role="status"

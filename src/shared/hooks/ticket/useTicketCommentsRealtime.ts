@@ -19,6 +19,13 @@ import {
 // comments EMBEDDED in the ticket detail (a different key) → pass the corresponding detail key
 // so new comments show up realtime without a reload.
 /** ChatRead payload — BE sends it only to the AUTHOR of the messages that were read. */
+export interface PinNotice {
+  id: string;
+  chatId: string;
+  isPinned: boolean;
+  byUserDisplayName: string;
+}
+
 interface ChatReadPayload {
   ticketId: string;
   readers?: ChatReaderDto[];
@@ -63,6 +70,10 @@ export function useTicketCommentsRealtime(
     {},
   );
   const [typingNames, setTypingNames] = useState<string[]>([]);
+  // Pin/unpin announcements for the current session only — "X pinned a message", the line a
+  // chat app drops into the conversation. Deliberately not persisted: the BE has no feed of
+  // these, and replaying them on every reload would bury the thread in old notices.
+  const [pinNotices, setPinNotices] = useState<PinNotice[]>([]);
 
   // extraInvalidateKeys is kept in a ref — the caller passes a NEW inline array every render.
   // If it were in the deps, the connection would rebuild constantly → teardown races → duplicate
@@ -182,6 +193,38 @@ export function useTicketCommentsRealtime(
           );
         });
 
+        // Pin state belongs to the whole ticket (it drives the pinned bar above the thread), so
+        // everyone viewing it must see a pin/unpin without reloading. The payload carries the
+        // new state, so patch the cached pages directly instead of refetching the list.
+        c.on(
+          "ChatPinChanged",
+          (payload: {
+            chatId: string;
+            isPinned: boolean;
+            byUserDisplayName?: string;
+          }) => {
+            if (!payload?.chatId) return;
+            setPinNotices((prev) => [
+              ...prev,
+              {
+                id: `${payload.chatId}-${Date.now()}`,
+                chatId: payload.chatId,
+                isPinned: payload.isPinned,
+                byUserDisplayName: payload.byUserDisplayName ?? "Someone",
+              },
+            ]);
+            qc.setQueriesData(
+              { queryKey: QUERY_KEY.tickets.chats(ticketId) },
+              (old: unknown) =>
+                patchChats(old, (c) =>
+                  c.id === payload.chatId
+                    ? { ...c, isPinned: payload.isPinned }
+                    : c,
+                ),
+            );
+          },
+        );
+
         c.on(
           "UserTyping",
           (_ticketId: string, userId: string, displayName: string) => {
@@ -213,6 +256,7 @@ export function useTicketCommentsRealtime(
         // Remove handlers BEFORE stopping — guards against a stray event firing into a connection
         // mid-teardown (StrictMode double mount / rebuild) causing a duplicate invalidate.
         c.off("ChatAdded");
+        c.off("ChatPinChanged");
         c.off("ChatEdited");
         c.off("ChatDeleted");
         c.off("ReactionChanged");
@@ -241,5 +285,5 @@ export function useTicketCommentsRealtime(
     }
   }, [ticketId]);
 
-  return { typingNames, sendTyping };
+  return { typingNames, sendTyping, pinNotices };
 }

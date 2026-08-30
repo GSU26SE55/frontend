@@ -134,6 +134,10 @@ export default function TicketDetailPage() {
   const [editingLog, setEditingLog] = useState<MaintenanceLogDTO | null>(null);
   // Chat tab: new comments are sent under whichever tab is active (public/internal).
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  // Which outer tab is open. The chat query must NOT run until the user actually opens
+  // the Chat tab: GET /chats auto-marks every message it returns as read on the BE, so
+  // fetching it eagerly told the sender "seen" for a thread nobody had looked at.
+  const [mainTab, setMainTab] = useState("info");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [composerPrefill, setComposerPrefill] = useState({
     text: "",
@@ -146,7 +150,8 @@ export default function TicketDetailPage() {
 
   // Realtime: invalidates tickets.chats on ChatAdded (same key as useStaffTicketComments)
   // + typing indicator (typingNames renders "is typing", sendTyping reports when we type).
-  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
+  const { typingNames, sendTyping, pinNotices } =
+    useTicketCommentsRealtime(ticketId);
 
   const { data: ticket, isLoading, isError } = useStaffTicketDetail(ticketId);
   // Handler's name — taken directly from assignments (BE already includes staffName).
@@ -157,7 +162,10 @@ export default function TicketDetailPage() {
   );
   const { data: activities = [], isLoading: activitiesLoading } =
     useStaffTicketActivities(ticketId);
-  const { data: comments = [] } = useStaffTicketComments(ticketId);
+  const { data: comments = [] } = useStaffTicketComments(
+    ticketId,
+    mainTab === "comments",
+  );
 
   const existingFileIds = useMemo(() => {
     const ids = new Set<string>();
@@ -365,7 +373,11 @@ export default function TicketDetailPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Left: Tabs */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <Tabs defaultValue="info" className="h-full gap-0">
+          <Tabs
+            value={mainTab}
+            onValueChange={setMainTab}
+            className="h-full gap-0"
+          >
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
@@ -462,6 +474,7 @@ export default function TicketDetailPage() {
             >
               <div className="flex-1 overflow-y-auto p-6">
                 <TicketCommentThread
+                  pinNotices={pinNotices}
                   comments={comments}
                   currentUserId={currentUserId}
                   activeTab={chatTab}

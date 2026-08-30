@@ -50,9 +50,17 @@ export const clearTokens = () => {
   Cookies.remove("refreshToken");
 };
 
+// The dev server is reachable through an ngrok tunnel. On a free ngrok domain the edge
+// injects an HTML interstitial ("You are about to visit...") ahead of the real response
+// unless this header is present, so an API call would resolve with an HTML page instead of
+// JSON and every parse downstream would fail. Harmless on any other host — ngrok is the only
+// thing that reads it. Exported because the calls that bypass this instance (the refresh
+// POST below, auth.service.refreshToken) must send it too.
+export const NGROK_HEADER = { "ngrok-skip-browser-warning": "true" } as const;
+
 const axiosInstance = axios.create({
   baseURL: env.VITE_API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json", ...NGROK_HEADER },
 });
 
 let isRefreshing = false;
@@ -76,7 +84,7 @@ const tryRefresh = async (): Promise<string | null> => {
     const res = await axios.post(
       `${env.VITE_API_BASE_URL}${ENDPOINTS.AUTH.REFRESH_TOKEN}`,
       { refreshToken },
-      { timeout: 10_000 },
+      { timeout: 10_000, headers: { ...NGROK_HEADER } },
     );
     // GH-295: refresh returns a LoginResultDto — the token lives in data.tokens (challenge is always null)
     if (!res.data?.isSuccess || !res.data.data?.tokens)
