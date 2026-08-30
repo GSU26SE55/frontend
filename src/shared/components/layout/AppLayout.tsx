@@ -125,15 +125,50 @@ function Topbar() {
   );
 }
 
+// Reads the saved rail state. localStorage throws in private mode / when full, and a
+// missing entry means "never toggled" — both fall back to expanded.
+function readRailCollapsed(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+}
+
 // ── AppLayout ─────────────────────────────────────────────────────────────────
 // Pure component: the nav config is passed in from the router (config-down, no
 // importing features from the shared layer). `sections` is required — the router
 // picks the NAV by role.
 export default function AppLayout({ sections }: { sections: NavSection[] }) {
-  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   // Namespaces the sidebar's saved section state per role — see Sidebar's `scopeKey`.
   const role = useSessionStore((s) => s.user?.role);
+
+  // The rail's collapsed state persists per role, same reasoning as the per-section
+  // state: localStorage is keyed by origin, so without the role in the key an Admin
+  // collapsing the rail would collapse it for the next Staff login on the same browser.
+  // `role` is undefined on the first render (the session store hydrates after mount),
+  // so this reads "anon" first and the effect below re-reads once the role lands.
+  const railKey = `sidebar-collapsed-${role ?? "anon"}`;
+  const [collapsed, setCollapsed] = useState(() => readRailCollapsed(railKey));
+  // Re-read during render rather than in an effect: adjusting state while the key
+  // changes keeps it to one render pass, with no flash of the wrong rail width.
+  const [readKey, setReadKey] = useState(railKey);
+  if (readKey !== railKey) {
+    setReadKey(railKey);
+    setCollapsed(readRailCollapsed(railKey));
+  }
+
+  const toggleCollapsed = () =>
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(railKey, String(next));
+      } catch {
+        // Private mode / storage full — the toggle must still work, just not persist.
+      }
+      return next;
+    });
 
   // Badges injected here (not in each nav config) because all 3 roles go through
   // AppLayout — doing it here is one place instead of three. Items with no entry below
@@ -221,7 +256,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
         appName={APP_NAME}
         sections={sectionsWithBadge}
         collapsed={collapsed}
-        onToggle={() => setCollapsed((v) => !v)}
+        onToggle={toggleCollapsed}
         scopeKey={role ?? "anon"}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
