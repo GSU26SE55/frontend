@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Thermometer, Droplets, Sun, Settings2 } from "lucide-react";
+import { Thermometer, Sun, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -143,12 +143,6 @@ function LatestStrip({ siteId }: { siteId: string }) {
         icon={<Thermometer className="size-4 text-orange-500" />}
         label="Temperature"
         value={fmt(latest.ambientTemperature, " °C")}
-      />
-      <Separator orientation="vertical" className="h-7" />
-      <MetricItem
-        icon={<Droplets className="size-4 text-blue-500" />}
-        label="Humidity"
-        value={fmt(latest.humidity, " %")}
       />
       <Separator orientation="vertical" className="h-7" />
       <MetricItem
@@ -525,7 +519,6 @@ function HistoryTable({
                 </TableHead>
                 <TableHead>Timestamp</TableHead>
                 <TableHead>Temperature</TableHead>
-                <TableHead>Humidity</TableHead>
                 <TableHead>Irradiance</TableHead>
                 <TableHead>{TABLE_COLUMNS.source}</TableHead>
               </TableRow>
@@ -545,9 +538,6 @@ function HistoryTable({
                       className={ambientLevelTextClass(ev.temperature)}
                     >
                       {fmt(r.ambientTemperature, " °C")}
-                    </TableCell>
-                    <TableCell className={ambientLevelTextClass(ev.humidity)}>
-                      {fmt(r.humidity, " %")}
                     </TableCell>
                     <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
