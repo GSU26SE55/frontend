@@ -18,14 +18,18 @@ export const useAmbientHistory = (params: AmbientHistoryParams) =>
     staleTime: 5 * 60_000,
   });
 
-// Ambient latest — dashboard widget: staleTime 1 minute.
+// Ambient latest — the current temperature/humidity reading for the site, so it polls on the
+// same 30s beat as useEnvironmentalIncidents, which is rendered beside it. The two disagreeing
+// (an incident listed while the reading above still showed the pre-incident value) was the
+// whole reason this widget looked wrong.
 // retry:false — a site with no reading yet returns 404 (expected), no need to retry.
 export const useAmbientLatest = (siteId: string) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.latest(siteId),
     queryFn: () => ambientService.getLatest(siteId).then((r) => r.data.data),
     enabled: !!siteId,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
     retry: false,
   });
 

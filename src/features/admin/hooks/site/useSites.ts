@@ -29,7 +29,10 @@ export const useSiteDashboard = (id: string) =>
     queryKey: QUERY_KEY.sites.dashboard(id),
     queryFn: () => adminSiteService.getDashboard(id).then((r) => r.data.data),
     enabled: !!id,
-    staleTime: 60_000, // dashboard stats — 1 min per fe.md; healthScore/alerts affect safety
+    // healthScore + open-alert count drive the safety read of the site, so they refresh on
+    // the same 30s beat as the alert and incident queues rather than sitting a minute behind.
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 
 export const useSiteAssets = (
