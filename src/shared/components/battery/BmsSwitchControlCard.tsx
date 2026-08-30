@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, Power, PowerOff } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Power,
+  PowerOff,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -19,15 +25,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { toneClass, type StatusTone } from "@/shared/theme/statusColors";
+import { toneText, type StatusTone } from "@/shared/theme/statusColors";
 import { HttpError } from "@/shared/lib/errors";
 import { useBmsSwitch } from "@/shared/hooks/battery/useBmsSwitch";
 import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
@@ -46,6 +48,41 @@ const FAILED_STATUSES = new Set<number>([
   BmsSwitchCommandStatus.Unknown,
   BmsSwitchCommandStatus.TimedOut,
 ]);
+
+/**
+ * The dialog's own trigger. Omitted when the caller controls `open` — then something else
+ * (a menu item, another button) is already the affordance.
+ */
+function BmsTrigger({
+  disabled,
+  tone,
+}: {
+  disabled?: boolean;
+  tone?: "danger";
+}) {
+  return (
+    <DialogTrigger
+      render={
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          aria-label="BMS Control"
+        />
+      }
+    >
+      <Power
+        className={cn(
+          "size-3.5",
+          tone === "danger"
+            ? "text-destructive"
+            : "text-amber-700 dark:text-amber-400",
+        )}
+      />
+      BMS
+    </DialogTrigger>
+  );
+}
 
 function mosfetState(enabled: boolean | null | undefined) {
   if (enabled == null)
@@ -75,19 +112,31 @@ function commandFailureMessage(status: number) {
 // treated as a security boundary.
 //
 // `variant` picks the shell only — the controls, confirmation dialog and toasts are identical.
-// "popover" is the header button used by both callers; "card" is the older sidebar block,
-// kept so the control can be moved back into the sidebar without rewriting it. "dialog" has no
-// trigger of its own — its open state is controlled by the caller (e.g. a DropdownMenuItem
-// "BMS" in a table row's Actions menu, where the control can't own a nested Popover trigger).
+//
+// "dialog" (default) is what every caller on the web uses. It was a popover until switching a
+// MOSFET from a popover proved wrong for the job: a popover dismisses on any outside click or
+// scroll, which is the wrong behaviour for a control that stays open while it waits several
+// hundred ms for the BMS to answer — losing the panel mid-command hides whether the switch
+// actually took. A modal dialog holds until the operator closes it. It also nests correctly
+// inside a menu item, which a Popover trigger cannot.
+//
+// "card" is the older sidebar block, kept so the control can be moved back into the sidebar
+// without rewriting it.
+//
+// The dialog supplies its own trigger button unless the caller passes `open`, in which case the
+// caller owns the open state (e.g. a "BMS" item in a table row's Actions menu).
 export default function BmsSwitchControlCard({
   assetId,
-  variant = "popover",
+  variant = "dialog",
   open,
   onOpenChange,
 }: {
   assetId: string;
-  variant?: "card" | "popover" | "dialog";
-  /** "dialog" variant only — open state is controlled by the caller. */
+  variant?: "card" | "dialog";
+  /**
+   * Controlled open state. Omit and the dialog renders its own "BMS" trigger button; pass it
+   * to drive the dialog from elsewhere (a menu item, another button).
+   */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -95,6 +144,12 @@ export default function BmsSwitchControlCard({
   const mutation = useSetBmsSwitch(assetId);
   const { data: cascade } = useCascadeRisk(assetId);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  // What the confirm button will do. Defaults to the urgent case — cut everything — matching
+  // the site-wide dialog.
+  const [pickTarget, setPickTarget] = useState<BmsSwitchTarget>(
+    BmsSwitchTarget.All,
+  );
+  const [pickEnable, setPickEnable] = useState(false);
   const [localSwitches, setLocalSwitches] = useState<{
     charge?: boolean;
     discharge?: boolean;
@@ -146,73 +201,55 @@ export default function BmsSwitchControlCard({
     });
   };
 
-  // In the header the placeholder is a disabled button, not a card: a skeleton card
-  // sitting in a row of buttons reads as a broken layout rather than as loading.
+  // In a row of header buttons the placeholder is a disabled trigger, not a card: a skeleton
+  // card sitting among buttons reads as a broken layout rather than as loading.
+  const controlled = open !== undefined;
+
   if (stateQuery.isLoading) {
-    if (variant === "dialog") {
+    if (variant === "card")
       return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-72">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-1.5 text-2sm">
-                <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
-                BMS Control
-              </DialogTitle>
-            </DialogHeader>
-            <Skeleton className="h-24 w-full" />
-          </DialogContent>
-        </Dialog>
+        <Card className="m-4 mt-0 p-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-24 w-full" />
+        </Card>
       );
-    }
-    return variant === "popover" ? (
-      <Button variant="outline" size="sm" disabled aria-label="BMS Control">
-        <Power className="size-3.5" />
-        BMS
-      </Button>
-    ) : (
-      <Card className="m-4 mt-0 p-4">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-24 w-full" />
-      </Card>
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        {!controlled && <BmsTrigger disabled />}
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-1.5 text-2sm">
+              <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
+              BMS Control
+            </DialogTitle>
+          </DialogHeader>
+          <Skeleton className="h-24 w-full" />
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (stateQuery.isError) {
     const message = failureMessage(stateQuery.error);
-    if (variant === "dialog") {
+    if (variant === "card")
       return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-72">
-            <DialogHeader>
-              <DialogTitle className="text-2sm">
-                Unable to load BMS controls
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-xs text-muted-foreground">{message}</p>
-          </DialogContent>
-        </Dialog>
-      );
-    }
-    return variant === "popover" ? (
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button variant="outline" size="sm" aria-label="BMS Control" />
-          }
-        >
-          <Power className="size-3.5 text-destructive" />
-          BMS
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-64">
+        <Card className="m-4 mt-0 border-destructive/40 p-4">
           <p className="text-sm font-medium">Unable to load BMS controls</p>
+          <p className="mt-1 text-xs text-muted-foreground">{message}</p>
+        </Card>
+      );
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        {!controlled && <BmsTrigger tone="danger" />}
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2sm">
+              Unable to load BMS controls
+            </DialogTitle>
+          </DialogHeader>
           <p className="text-xs text-muted-foreground">{message}</p>
-        </PopoverContent>
-      </Popover>
-    ) : (
-      <Card className="m-4 mt-0 border-destructive/40 p-4">
-        <p className="text-sm font-medium">Unable to load BMS controls</p>
-        <p className="mt-1 text-xs text-muted-foreground">{message}</p>
-      </Card>
+        </DialogContent>
+      </Dialog>
     );
   }
 
@@ -224,6 +261,21 @@ export default function BmsSwitchControlCard({
         ? "discharging"
         : "charging and discharging";
 
+  // Same shape as the site-wide dialog: pick the MOSFET, pick the direction, confirm with a
+  // button that names the exact action. Two controls that switch the same hardware should not
+  // demand two different mental models — and the old per-row toggle hid the direction inside
+  // the current state, so the operator only learned what a click would do by reading the
+  // sub-label first.
+  //
+  // What this one keeps that the site dialog cannot: the CURRENT state of each MOSFET, which
+  // only exists per battery. It is shown as a read-only status line rather than as the control.
+  const targetLabel =
+    pickTarget === BmsSwitchTarget.Charge
+      ? "charge"
+      : pickTarget === BmsSwitchTarget.Discharge
+        ? "discharge"
+        : "both";
+
   const controls = (
     <>
       {highRisk && (
@@ -233,89 +285,131 @@ export default function BmsSwitchControlCard({
           re-enabling a MOSFET.
         </p>
       )}
-      {/* The MOSFETs are controlled independently and stacked vertically because
-          the narrow container would compress labels in a two-column layout. */}
-      {(
-        [
-          {
-            key: "charge",
-            label: "Charge",
-            state: charge,
-            target: BmsSwitchTarget.Charge,
-          },
-          {
-            key: "discharge",
-            label: "Discharge",
-            state: discharge,
-            target: BmsSwitchTarget.Discharge,
-          },
-        ] as const
-      ).map((row) => (
-        <div
-          key={row.key}
-          className="flex items-center gap-2 rounded-md border border-border/70 px-2 py-1.5"
-        >
-          {/* Shape and color both change so the state remains distinguishable
-              for users with color-vision deficiencies. */}
-          <button
-            type="button"
-            disabled={pending}
-            aria-pressed={row.state.on}
-            aria-label={`${row.state.on ? "Disable" : "Enable"} battery ${row.label.toLowerCase()}`}
-            onClick={() =>
-              setConfirmation({ target: row.target, enable: !row.state.on })
-            }
-            className={cn(
-              "grid size-8 shrink-0 place-items-center rounded-full transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-state) ease-strong",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              toneClass(row.state.tone),
-              pending
-                ? "cursor-default opacity-50"
-                : "cursor-pointer hover:brightness-105 active:scale-95",
-            )}
+
+      {/* Current state first — it is what the operator checks before deciding. */}
+      <div className="grid grid-cols-2 gap-1.5">
+        {(
+          [
+            {
+              key: "charge",
+              label: "Charge",
+              state: charge,
+              // Direction of current rather than a second power symbol: both tiles used the
+              // same Power glyph, so at a glance they were one control duplicated. An arrow
+              // INTO the pack vs OUT of it says which path each tile is about.
+              Icon: ArrowDownToLine,
+            },
+            {
+              key: "discharge",
+              label: "Discharge",
+              state: discharge,
+              Icon: ArrowUpFromLine,
+            },
+          ] as const
+        ).map((row) => (
+          <div
+            key={row.key}
+            className="rounded-md border border-border/70 px-3 py-2"
           >
-            {row.state.on ? (
-              <Power className="size-4" />
-            ) : (
-              <PowerOff className="size-4" />
-            )}
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="text-2sm font-medium leading-tight">{row.label}</p>
-            {/* Keep the state to one word. Detailed errors use a toast instead of
-                taking another line inside this compact panel. */}
             <p className="text-2xs leading-tight text-muted-foreground">
-              {pending ? "Waiting for BMS" : row.state.label}
+              {row.label}
+            </p>
+            <p
+              className={cn(
+                "mt-0.5 flex items-center gap-1.5 text-sm font-medium leading-tight",
+                toneText(row.state.tone),
+              )}
+            >
+              <row.Icon className="size-3.5" />
+              {/* On/Off spelled out, not just coloured — the state has to survive
+                  colour-vision deficiency, and the icon now carries direction instead. */}
+              {pending ? "Waiting…" : row.state.label}
             </p>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      {/* MOSFET and direction, then the confirm button — same order as the site dialog. */}
+      <div className="grid grid-cols-3 gap-1 rounded-md bg-muted p-1">
+        {(
+          [
+            { value: BmsSwitchTarget.All, label: "Both" },
+            { value: BmsSwitchTarget.Charge, label: "Charge" },
+            { value: BmsSwitchTarget.Discharge, label: "Discharge" },
+          ] as const
+        ).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            disabled={pending}
+            aria-pressed={pickTarget === option.value}
+            onClick={() => setPickTarget(option.value)}
+            className={cn(
+              "rounded px-2 py-1.5 text-xs font-medium transition-colors",
+              pickTarget === option.value
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+              pending && "cursor-default opacity-50",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-1 rounded-md bg-muted p-1">
+        {(
+          [
+            { value: false, label: "Turn off", icon: PowerOff },
+            { value: true, label: "Turn on", icon: Power },
+          ] as const
+        ).map((option) => (
+          <button
+            key={String(option.value)}
+            type="button"
+            disabled={pending}
+            aria-pressed={pickEnable === option.value}
+            onClick={() => setPickEnable(option.value)}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-xs font-medium transition-colors",
+              pickEnable === option.value
+                ? option.value
+                  ? "bg-background text-emerald-700 shadow-sm dark:text-emerald-400"
+                  : "bg-background text-destructive shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+              pending && "cursor-default opacity-50",
+            )}
+          >
+            <option.icon className="size-3.5" />
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <Button
+        variant={pickEnable ? "default" : "destructive"}
+        disabled={pending}
+        onClick={() =>
+          setConfirmation({ target: pickTarget, enable: pickEnable })
+        }
+        className="w-full"
+      >
+        {pickEnable ? (
+          <Power className="size-3.5" />
+        ) : (
+          <PowerOff className="size-3.5" />
+        )}
+        {pickEnable ? "Turn on" : "Turn off"} {targetLabel}
+      </Button>
     </>
   );
 
   return (
     <>
-      {variant === "popover" ? (
-        <Popover>
-          <PopoverTrigger
-            render={
-              <Button variant="outline" size="sm" aria-label="BMS Control" />
-            }
-          >
-            <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
-            BMS
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 gap-1.5">
-            <p className="flex items-center gap-1.5 text-2sm font-medium leading-tight">
-              <Power className="size-3.5 text-amber-700 dark:text-amber-400" />
-              BMS Control
-            </p>
-            {controls}
-          </PopoverContent>
-        </Popover>
-      ) : variant === "dialog" ? (
+      {variant === "dialog" ? (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent className="w-72 gap-2">
+          {!controlled && <BmsTrigger />}
+          <DialogContent className="max-w-md gap-3">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-1.5 text-2sm leading-tight">
                 <Power className="size-3.5 text-amber-700 dark:text-amber-400" />

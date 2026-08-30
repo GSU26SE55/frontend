@@ -155,7 +155,6 @@ export default function IoTDeviceDetailPage() {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <RefreshButton queryKeys={[KEY.iotDevices, KEY.iotCalibrations]} />
           <Button
             variant="outline"
             size="sm"
@@ -208,6 +207,7 @@ export default function IoTDeviceDetailPage() {
               Revoke key
             </Button>
           )}
+          <RefreshButton queryKeys={[KEY.iotDevices, KEY.iotCalibrations]} />
         </div>
       </div>
 

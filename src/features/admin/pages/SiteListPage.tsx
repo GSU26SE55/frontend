@@ -111,10 +111,10 @@ export default function SiteListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.sites]} />
           <Button size="sm" onClick={handleCreate}>
             <Plus className="size-3.5" /> Create site
           </Button>
+          <RefreshButton queryKeys={[KEY.sites]} />
         </div>
       </div>
 

@@ -40,7 +40,9 @@ import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDu
 import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import MaintenanceLogCard from "@/shared/components/ticket/MaintenanceLogCard";
-import { getTicketSubject } from "@/shared/lib/ticketSubject";
+import { getTicketSubject, ticketBatteryIds } from "@/shared/lib/ticketSubject";
+import RelatedTicketsPanel from "@/shared/components/ticket/RelatedTicketsPanel";
+import TicketBmsAction from "@/shared/components/ticket/TicketBmsAction";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -48,11 +50,13 @@ import {
   useTicketComments,
   useReVerifyTicket,
   useAdminTicketList,
+  useTicketRelated,
+  useLinkParentTicket,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useMergeCandidates } from "@/shared/hooks/ticket/useMergeCandidates";
 import {
   isTicketChatLocked,
-  TICKET_CHAT_LOCKED_NOTICE,
+  ticketChatLockedNotice,
 } from "@/shared/utils/ticket.utils";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
@@ -185,6 +189,9 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
+  const { data: relatedTickets, isLoading: relatedLoading } =
+    useTicketRelated(id);
+  const linkParent = useLinkParentTicket();
   const { data: comments = [] } = useTicketComments(id, mainTab === "comments");
 
   // The BE already returns `staffName` in assignments (synced from StaffAccount), so there's
@@ -260,10 +267,16 @@ export default function TicketDetailPage() {
     ],
     [mergeSourceList?.items, mergeSourceOpenList?.items],
   );
+  // useMemo keeps the array identity stable — useMergeCandidates depends on it.
+  const sourceBatteryIds = useMemo(
+    () => (ticket ? ticketBatteryIds(ticket) : []),
+    [ticket],
+  );
   const mergeCandidates = useMergeCandidates(
     mergeSourceItems,
     id,
     ticket?.suspectedDuplicateOfTicketId,
+    sourceBatteryIds,
   );
 
   if (isError) {
@@ -305,7 +318,10 @@ export default function TicketDetailPage() {
   const canEscalateReject = status === TicketStatusEnum.Request;
   // GH-1176: force escalation endpoint removed; only Staff-requested escalation remains.
   // canReprioritize: Open only — priority fixed once assigned per User Guide §3.8.
-  const canReprioritize = status === TicketStatusEnum.Open;
+  // An incident is pinned at Urgent: declaring one stops the SLA timer and isolates the
+  // battery, so letting it drop back to P1/P2/P3 would strand those side effects.
+  const canReprioritize =
+    status === TicketStatusEnum.Open && !ticket.isIncident;
   // A closed-out ticket can no longer be turned into an incident — the work is already
   // finished or rejected, so declaring one would create an incident nobody will act on.
   const canDeclareIncident =
@@ -355,10 +371,10 @@ export default function TicketDetailPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <RefreshButton
-            queryKeys={[KEY.manager.tickets, KEY.tickets]}
-            size="icon"
-          />
+          {/* Cutting charge/discharge is the first move on a thermal or overcharge ticket, so it
+              sits with the other header actions rather than a screen away. Picks battery vs
+              whole-site itself, and hides once the ticket is finished. */}
+          <TicketBmsAction ticket={ticket} />
           {canAssign && (
             <Button size="sm" onClick={() => setDialog("assign")}>
               Assign Staff
@@ -442,6 +458,7 @@ export default function TicketDetailPage() {
               Merge ticket
             </Button>
           )}
+          <RefreshButton queryKeys={[KEY.manager.tickets, KEY.tickets]} />
         </div>
       </div>
 
@@ -509,6 +526,24 @@ export default function TicketDetailPage() {
                   </div>
                 );
               })()}
+
+              {/* One cabinet fault raises several tickets at once — the system's environmental
+                  ticket plus the customer's per-battery ones. Same cause, separate work, so they
+                  are listed side by side and can be linked without closing any of them. */}
+              <RelatedTicketsPanel
+                ticket={ticket}
+                related={relatedTickets}
+                isLoading={relatedLoading}
+                // Same detail page lives under two routes (/tickets/:id and /tickets/queue/:id).
+                // Reuse whichever the user is on, so following a related ticket keeps them in
+                // the Queue if that is where they came from — and Back keeps working, since the
+                // queue route is what restores the Queue list.
+                basePath={backToListPath}
+                onLinkParent={(ticketId, parentTicketId) =>
+                  linkParent.mutate({ ticketId, payload: { parentTicketId } })
+                }
+                isLinking={linkParent.isPending}
+              />
               <div>
                 <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Attachments
@@ -568,7 +603,7 @@ export default function TicketDetailPage() {
                 {chatLocked ? (
                   <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
                     <Lock className="size-3.5" />
-                    {TICKET_CHAT_LOCKED_NOTICE}
+                    {ticketChatLockedNotice(status)}
                   </p>
                 ) : (
                   <>

@@ -142,10 +142,10 @@ export function BlogListView({
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.blog]} />
           <Button size="sm" onClick={() => navigate(`${basePath}/blog/new`)}>
             <Plus className="size-3.5" /> Create post
           </Button>
+          <RefreshButton queryKeys={[KEY.blog]} />
         </div>
       </div>
 

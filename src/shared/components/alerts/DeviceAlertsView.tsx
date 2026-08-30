@@ -322,7 +322,9 @@ function DeviceAlertDetailDialog({
   onClose: () => void;
 }) {
   const { data: alert, isLoading } = useAlertDetail(alertId ?? "");
-  const ticketCode = useTicketCode(alert?.ticketId);
+  const { code: ticketCode, isLoading: ticketCodeLoading } = useTicketCode(
+    alert?.ticketId,
+  );
 
   const { mutate: acknowledge, isPending: ackPending } = useAcknowledgeAlert();
   const { mutate: resolve, isPending: resolvePending } = useResolveAlert();
@@ -399,10 +401,13 @@ function DeviceAlertDetailDialog({
                   to={`${basePath}/tickets/${alert.ticketId}`}
                   className="font-mono-num text-xs text-primary hover:underline"
                 >
-                  {/* Falls back to a SHORTENED id while the code loads, or when the ticket
-                      cannot be read — never leaves the link blank, and never prints a full
-                      GUID where a TKT-code belongs. The link itself still uses the full id. */}
-                  {ticketCode ?? shortId(alert.ticketId)}
+                  {/* Three states, deliberately distinct: the code once it lands, a neutral
+                      placeholder while it is still being fetched, and a SHORTENED id only when
+                      the lookup has settled without one (403 / deleted ticket). Rendering the
+                      id during loading made the link flash a GUID and then swap to the TKT-
+                      code. Never a full GUID; the link itself still uses the full id. */}
+                  {ticketCode ??
+                    (ticketCodeLoading ? "…" : shortId(alert.ticketId))}
                 </Link>
               ) : (
                 "—"

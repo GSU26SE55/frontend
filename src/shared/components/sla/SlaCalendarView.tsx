@@ -91,10 +91,10 @@ export default function SlaCalendarView({ roleLabel }: Props) {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.slaCalendar]} />
           <Button size="sm" onClick={openCreate}>
             <Plus className="size-3.5" /> Add period
           </Button>
+          <RefreshButton queryKeys={[KEY.slaCalendar]} />
         </div>
       </div>
 

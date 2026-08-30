@@ -31,14 +31,26 @@ describe("isOpenTicket", () => {
 });
 
 describe("isTicketChatLocked", () => {
-  // Khoá theo đúng bộ trạng thái của isOpenTicket. Hai hàm lệch nhau sẽ ra cảnh ticket
-  // hiện là "đã đóng" nhưng ô nhập tin nhắn vẫn mở.
-  it("khoá đúng bằng phần bù của isOpenTicket", () => {
-    for (const status of Object.values(
-      TicketStatusEnum,
-    ) as TicketStatusEnum[]) {
-      expect(isTicketChatLocked(status)).toBe(!isOpenTicket(ticket(status)));
-    }
+  // KHÔNG còn trùng với phần bù của isOpenTicket — hai hàm trả lời hai câu hỏi khác nhau:
+  // isOpenTicket = "ticket còn đang chạy?", isTicketChatLocked = "gửi tin được không?".
+  // Completed vẫn nhắn được (chờ đánh giá), còn Open thì chưa (chưa ai được giao nên
+  // notification không tới đúng người).
+  const CHAT_BLOCKED: TicketStatusEnum[] = [
+    TicketStatusEnum.Open,
+    TicketStatusEnum.Closed,
+    TicketStatusEnum.ClosedRejected,
+  ];
+
+  it.each(CHAT_BLOCKED)("%s thì khoá chat", (status) => {
+    expect(isTicketChatLocked(status)).toBe(true);
+  });
+
+  it.each(
+    (Object.values(TicketStatusEnum) as TicketStatusEnum[]).filter(
+      (s) => !CHAT_BLOCKED.includes(s),
+    ),
+  )("%s thì chat được", (status) => {
+    expect(isTicketChatLocked(status)).toBe(false);
   });
 
   // Trang chi tiết gọi hàm này trước khi tải xong ticket. Khoá lúc chưa biết trạng thái sẽ

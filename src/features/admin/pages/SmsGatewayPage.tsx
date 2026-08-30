@@ -63,10 +63,10 @@ export default function SmsGatewayPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.admin.smsGateway]} />
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="size-3.5" /> Add device
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.smsGateway]} />
         </div>
       </div>
 

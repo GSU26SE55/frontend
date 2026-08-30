@@ -63,10 +63,10 @@ export default function IoTFirmwareReleasesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.iotFirmware]} />
           <Button size="sm" onClick={() => navigate("/admin/iot-firmware/new")}>
             <Plus className="size-3.5" /> Create release
           </Button>
+          <RefreshButton queryKeys={[KEY.iotFirmware]} />
         </div>
       </div>
 

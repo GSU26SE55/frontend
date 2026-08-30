@@ -127,10 +127,10 @@ export default function KbListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.kb]} />
           <Button size="sm" onClick={() => navigate("/admin/kb/new")}>
             <Plus className="size-3.5" /> New article
           </Button>
+          <RefreshButton queryKeys={[KEY.kb]} />
         </div>
       </div>
 
