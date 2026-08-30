@@ -6,8 +6,8 @@ import { APP_NAME, SIDEBAR_LABELS } from "@/shared/constants/sidebarLabels";
 import {
   useUnresolvedAlertCount,
   useUnresolvedDeviceAlertCount,
+  useSiteLevelAlertCount,
 } from "@/shared/hooks/alerts/useAlerts";
-import { useUnresolvedIncidentCount } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { useKbReviewCounts } from "@/shared/hooks/kb/useKbPendingReview";
 import { useBlogDraftCount } from "@/shared/hooks/blog/useBlog";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -140,7 +140,9 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
   // keep whatever badge their nav config already set (e.g. Manager's queue).
   const alerts = useUnresolvedAlertCount();
   const deviceAlerts = useUnresolvedDeviceAlertCount();
-  const incidents = useUnresolvedIncidentCount();
+  // Drives the Environmental badge. One count covers that whole screen: incidents write a
+  // site-level alert of their own, so this already includes them.
+  const siteLevelAlerts = useSiteLevelAlertCount();
   // All of these return 0 for roles that cannot act on them (Staff) — the gate lives in
   // the hooks themselves, so nothing here has to know about roles.
   const kb = useKbReviewCounts();
@@ -156,7 +158,10 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     const single: Record<string, number> = {
       // What still needs action: Open + Acknowledged.
       [SIDEBAR_LABELS.batteryAlerts]: alerts.count,
-      [SIDEBAR_LABELS.envIncidents]: incidents.count,
+      // Site-level alerts alone: every incident also writes one of these, so the screen — and this
+      // badge — cover both from that single count. Adding the incident count on top would tally
+      // each incident twice.
+      [SIDEBAR_LABELS.envIncidents]: siteLevelAlerts.count,
       // Counted by the same Open+Acknowledged rule; its query is the exact opposite of the
       // battery one, so the two badges partition the alert table rather than overlap.
       [SIDEBAR_LABELS.deviceAlerts]: deviceAlerts.count,
@@ -197,7 +202,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     sections,
     alerts.count,
     deviceAlerts.count,
-    incidents.count,
+    siteLevelAlerts.count,
     kb.pendingReview,
     kb.draft,
     blogDrafts,

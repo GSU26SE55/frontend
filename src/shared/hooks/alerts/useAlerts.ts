@@ -128,3 +128,26 @@ export const useUnresolvedDeviceAlertCount = () => {
     isLoading: open.isLoading || acknowledged.isLoading,
   };
 };
+
+// Site-level alerts (ambient threshold breaches) for the Environmental alerts screen. Third and
+// last slice of the alert table: together with the battery and device filters it covers every
+// alert exactly once, so the three sidebar badges never double-count.
+export const useSiteLevelAlertCount = () => {
+  const open = useAlertList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: AlertStatusEnum.Open,
+    siteLevelOnly: true,
+  });
+  const acknowledged = useAlertList({
+    pageNumber: 1,
+    pageSize: 1,
+    status: AlertStatusEnum.Acknowledged,
+    siteLevelOnly: true,
+  });
+
+  return {
+    count: (open.data?.totalItems ?? 0) + (acknowledged.data?.totalItems ?? 0),
+    isLoading: open.isLoading || acknowledged.isLoading,
+  };
+};

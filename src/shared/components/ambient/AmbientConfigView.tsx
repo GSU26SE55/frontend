@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Thermometer, Droplets, Sun, Settings2 } from "lucide-react";
+import { Thermometer, Droplets, Wind, Droplet, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -59,6 +59,9 @@ const toNumOrNull = (val?: string): number | null => {
 
 const fmt = (v?: number | null, unit = "") =>
   v === null || v === undefined ? "—" : `${v}${unit}`;
+
+const fmtWater = (v?: boolean | null) =>
+  v === null || v === undefined ? "—" : v ? "Wet" : "Dry";
 
 // datetime-local (local time, no timezone) → ISO UTC for the API. "" → undefined.
 const toUtcIso = (local: string): string | undefined =>
@@ -152,9 +155,15 @@ function LatestStrip({ siteId }: { siteId: string }) {
       />
       <Separator orientation="vertical" className="h-7" />
       <MetricItem
-        icon={<Sun className="size-4 text-amber-500" />}
-        label="Irradiance"
-        value={fmt(latest.solarIrradiance, " W/m²")}
+        icon={<Wind className="size-4 text-emerald-500" />}
+        label="Gas"
+        value={fmt(latest.gasConcentration, " %")}
+      />
+      <Separator orientation="vertical" className="h-7" />
+      <MetricItem
+        icon={<Droplet className="size-4 text-cyan-500" />}
+        label="Water"
+        value={fmtWater(latest.waterLeakDetected)}
       />
     </div>
   );
@@ -246,6 +255,8 @@ function ThresholdFormBody({
           threshold.highAmbientTempCritical?.toString() ?? "",
         highHumidityWarning: threshold.highHumidityWarning?.toString() ?? "",
         highHumidityCritical: threshold.highHumidityCritical?.toString() ?? "",
+        highGasWarning: threshold.highGasWarning?.toString() ?? "",
+        highGasCritical: threshold.highGasCritical?.toString() ?? "",
         comboTempThreshold: threshold.comboTempThreshold?.toString() ?? "",
         comboHumidityThreshold:
           threshold.comboHumidityThreshold?.toString() ?? "",
@@ -261,6 +272,8 @@ function ThresholdFormBody({
         highAmbientTempCritical: "",
         highHumidityWarning: "",
         highHumidityCritical: "",
+        highGasWarning: "",
+        highGasCritical: "",
         comboTempThreshold: "",
         comboHumidityThreshold: "",
         enabled: true,
@@ -275,6 +288,8 @@ function ThresholdFormBody({
       highAmbientTempCritical: toNumOrNull(data.highAmbientTempCritical),
       highHumidityWarning: toNumOrNull(data.highHumidityWarning),
       highHumidityCritical: toNumOrNull(data.highHumidityCritical),
+      highGasWarning: toNumOrNull(data.highGasWarning),
+      highGasCritical: toNumOrNull(data.highGasCritical),
       comboTempThreshold: toNumOrNull(data.comboTempThreshold),
       comboHumidityThreshold: toNumOrNull(data.comboHumidityThreshold),
       enabled: data.enabled,
@@ -323,6 +338,24 @@ function ThresholdFormBody({
             label="Critical (%)"
             error={errors.highHumidityCritical?.message}
             {...register("highHumidityCritical")}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Gas Concentration (Khí Gas)
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <NumField
+            label="Warning (%)"
+            error={errors.highGasWarning?.message}
+            {...register("highGasWarning")}
+          />
+          <NumField
+            label="Critical (%)"
+            error={errors.highGasCritical?.message}
+            {...register("highGasCritical")}
           />
         </div>
       </div>
@@ -512,11 +545,12 @@ function HistoryTable({
           <Table className="table-fixed">
             <colgroup>
               <col className="w-12" />
-              <col className="w-[28%]" />
-              <col className="w-[18%]" />
-              <col className="w-[18%]" />
-              <col className="w-[18%]" />
-              <col className="w-[18%]" />
+              <col className="w-[24%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
+              <col className="w-[15%]" />
+              <col className="w-[16%]" />
             </colgroup>
             <TableHeader>
               <TableRow>
@@ -526,7 +560,8 @@ function HistoryTable({
                 <TableHead>Timestamp</TableHead>
                 <TableHead>Temperature</TableHead>
                 <TableHead>Humidity</TableHead>
-                <TableHead>Irradiance</TableHead>
+                <TableHead>Gas</TableHead>
+                <TableHead>Water</TableHead>
                 <TableHead>{TABLE_COLUMNS.source}</TableHead>
               </TableRow>
             </TableHeader>
@@ -549,7 +584,12 @@ function HistoryTable({
                     <TableCell className={ambientLevelTextClass(ev.humidity)}>
                       {fmt(r.humidity, " %")}
                     </TableCell>
-                    <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
+                    <TableCell className={ambientLevelTextClass(ev.gas)}>
+                      {fmt(r.gasConcentration, " %")}
+                    </TableCell>
+                    <TableCell className={ambientLevelTextClass(ev.water)}>
+                      {fmtWater(r.waterLeakDetected)}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {SOURCE_LABELS[r.source] ?? "—"}
                     </TableCell>
