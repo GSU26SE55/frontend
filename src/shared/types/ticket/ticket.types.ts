@@ -341,6 +341,13 @@ export interface AdminTicketListParams {
    * Environmental / PeriodicMaintenance / CascadeRisk đều là Origin = System.
    */
   source?: TicketSourceFilterEnum;
+  /**
+   * BE query param `IncludeOpen` — bỏ bộ lọc ẩn ticket Open mặc định của Manager, trả về mọi
+   * trạng thái trong MỘT lần gọi. Dùng cho màn so sánh trước khi gộp ticket, nơi ứng viên do AI
+   * gợi ý thường vẫn đang Open chờ triage. Không nới quyền: Manager vốn đã đọc được Open qua
+   * `status`, và lọc `status` tường minh vẫn thắng cờ này.
+   */
+  includeOpen?: boolean;
   isDescending?: boolean;
   pageNumber?: number;
   pageSize?: number;

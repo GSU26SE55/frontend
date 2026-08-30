@@ -218,6 +218,14 @@ const StaffMyMaintenanceLogsPage = lazyPage(
 const StaffSlaMonitorPage = lazyPage(
   () => import("@/features/staff/pages/SlaMonitorPage"),
 );
+// SLA business calendar — Manager and Admin manage the same list (the BE authorises both),
+// so each portal points at its own thin page over one shared view.
+const AdminSlaCalendarPage = lazyPage(
+  () => import("@/features/admin/pages/SlaCalendarPage"),
+);
+const ManagerSlaCalendarPage = lazyPage(
+  () => import("@/features/manager/pages/SlaCalendarPage"),
+);
 const AdminKbListPage = lazyPage(
   () => import("@/features/admin/pages/KbListPage"),
 );
@@ -391,6 +399,7 @@ const router = createBrowserRouter([
               { path: "device-alerts", element: <AdminDeviceAlertsPage /> },
               { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "sagas", element: <AdminSagaDebugPage /> },
+              { path: "sla-calendar", element: <AdminSlaCalendarPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               {
@@ -448,6 +457,7 @@ const router = createBrowserRouter([
                 path: "tickets/:id/merge",
                 element: <ManagerMergeComparePage />,
               },
+              { path: "sla-calendar", element: <ManagerSlaCalendarPage /> },
               { path: "kb", element: <ManagerKbListPage /> },
               { path: "kb/new", element: <ManagerKbEditorPage /> },
               { path: "kb/:id", element: <ManagerKbDetailPage /> },
