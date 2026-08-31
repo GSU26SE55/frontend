@@ -12,6 +12,7 @@ import BatteryMaintenanceHistory from "@/shared/components/battery/BatteryMainte
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { useBatteryAssetRealtime } from "@/shared/hooks/battery/useBatteryAssetRealtime";
+import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
@@ -28,12 +29,13 @@ import {
   healthScoreTone,
   toneClass,
   toneVars,
+  CASCADE_RISK_TONE,
 } from "@/shared/theme/statusColors";
 
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "MMM d, yyyy", { locale: enUS });
+    return format(new Date(iso), "dd/MM/yyyy", { locale: enUS });
   } catch {
     return iso;
   }
@@ -137,6 +139,7 @@ export default function BatteryRealtimeDetail({
   };
 
   const { data: asset, isLoading } = useBatteryAsset(id);
+  const { data: cascade } = useCascadeRisk(id);
   const { data: rt } = useBatteryAssetRealtime(id);
   const { data: gateways } = useIotDevicesForStaff(
     {
@@ -241,6 +244,17 @@ export default function BatteryRealtimeDetail({
                 />
                 {gatewayBadge.label}
               </span>
+              {cascade && (
+                <span
+                  className={cn(
+                    "inline-flex items-center text-2xs font-semibold px-2 py-0.5 rounded-full border",
+                    toneClass(CASCADE_RISK_TONE[cascade.level] ?? "muted"),
+                  )}
+                  title="Cascade risk — likelihood this battery's issue spreads to neighbouring batteries"
+                >
+                  Cascade risk: {cascade.cascadeRiskScore.toFixed(2)}
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {asset.batteryTypeName}

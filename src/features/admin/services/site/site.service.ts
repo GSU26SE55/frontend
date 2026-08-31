@@ -12,7 +12,19 @@ import type {
   SiteCreatePayload,
   SiteUpdatePayload,
 } from "@/shared/types/site/site.types";
-import type { BatteryAssetDto } from "@/shared/types/battery/battery.types";
+import type {
+  BatteryAssetDto,
+  RawBatteryAssetDto,
+} from "@/shared/types/battery/battery.types";
+import { CascadeRiskLevel } from "@/shared/enums/battery/cascade.enum";
+import { nameFrom } from "@/shared/services/battery/cascade.service";
+
+// Same numeric-enum quirk as the cascade endpoints (see cascade.service.ts) — cascadeRiskLevel
+// arrives as a number, not the string name the DTO advertises.
+const normalizeAsset = (dto: RawBatteryAssetDto): BatteryAssetDto => ({
+  ...dto,
+  cascadeRiskLevel: nameFrom(CascadeRiskLevel, dto.cascadeRiskLevel),
+});
 
 export const adminSiteService = {
   getList: (params?: SiteFilterParams) =>
@@ -29,11 +41,21 @@ export const adminSiteService = {
       ENDPOINTS.SITES.DASHBOARD(id),
     ),
 
-  getAssets: (siteId: string, params?: SiteAssetsFilterParams) =>
-    axiosInstance.get<CommonResponse<PaginationResponse<BatteryAssetDto>>>(
-      ENDPOINTS.SITES.ASSETS(siteId),
-      { params },
-    ),
+  getAssets: async (siteId: string, params?: SiteAssetsFilterParams) => {
+    const res = await axiosInstance.get<
+      CommonResponse<PaginationResponse<RawBatteryAssetDto>>
+    >(ENDPOINTS.SITES.ASSETS(siteId), { params });
+    return {
+      ...res,
+      data: {
+        ...res.data,
+        data: res.data.data && {
+          ...res.data.data,
+          items: res.data.data.items.map(normalizeAsset),
+        },
+      },
+    };
+  },
 
   create: (payload: SiteCreatePayload) =>
     axiosInstance.post<CommonResponse<SiteDto>>(

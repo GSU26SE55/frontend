@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { ChevronDown, LogOut } from "lucide-react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, LogOut, User } from "lucide-react";
 import Sidebar, { type NavSection, type NavBadge } from "./Sidebar";
 import { APP_NAME, SIDEBAR_LABELS } from "@/shared/constants/sidebarLabels";
 import {
@@ -12,7 +12,7 @@ import { useKbReviewCounts } from "@/shared/hooks/kb/useKbPendingReview";
 import { useBlogDraftCount } from "@/shared/hooks/blog/useBlog";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
-import { UserRole } from "@/shared/types/account/session.types";
+import { UserRole, redirectByRole } from "@/shared/types/account/session.types";
 import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import LayoutSkeleton, { PageSkeleton } from "./LayoutSkeleton";
@@ -30,6 +30,7 @@ import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
 // ── Topbar ───────────────────────────────────────────────────────────────────
 function Topbar() {
   const reduced = useReducedMotion();
+  const navigate = useNavigate();
   const { user } = useSessionStore();
   const { mutate: logout } = useLogout();
 
@@ -101,6 +102,18 @@ function Topbar() {
               {user?.email}
             </div>
           </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() =>
+              navigate(
+                `${redirectByRole(user?.role ?? UserRole.ADMIN)}/profile`,
+              )
+            }
+            className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-1.75"
+          >
+            <User size={14} />
+            Profile
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"

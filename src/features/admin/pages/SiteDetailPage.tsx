@@ -49,7 +49,9 @@ import { useSiteSwitchableAssets } from "@/shared/hooks/battery/useSiteSwitchabl
 import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
 import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
+import SetTopologyDialog from "@/features/admin/components/iot/SetTopologyDialog";
 import { useSiteCascadeSummary } from "@/features/admin/hooks/battery/useSiteCascadeSummary";
+import { useCascadeRisk } from "@/features/admin/hooks/battery/useCascadeRisk";
 import { useBatteryAsset } from "@/features/admin/hooks/battery/useBatteryAsset";
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/battery/useDeleteBatteryAsset";
 import {
@@ -99,7 +101,9 @@ export default function SiteDetailPage() {
   const [deleteAssetTarget, setDeleteAssetTarget] =
     useState<BatteryAssetDto | null>(null);
   const [bmsAssetId, setBmsAssetId] = useState<string | null>(null);
+  const [topologyAssetId, setTopologyAssetId] = useState<string | null>(null);
   const { data: editAssetDetail } = useBatteryAsset(editAssetId);
+  const { data: topologyAssetCascade } = useCascadeRisk(topologyAssetId ?? "");
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
@@ -313,12 +317,17 @@ export default function SiteDetailPage() {
                     <EllipsisVertical className="size-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-36">
+                    <DropdownMenuItem onClick={() => setEditAssetId(asset.id)}>
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setBmsAssetId(asset.id)}>
                       BMS
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setEditAssetId(asset.id)}>
-                      Edit
+                    <DropdownMenuItem
+                      onClick={() => setTopologyAssetId(asset.id)}
+                    >
+                      Set topology
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTransferTarget(asset)}>
                       Transfer
@@ -372,6 +381,15 @@ export default function SiteDetailPage() {
           onOpenChange={(open) => !open && setTransferTarget(null)}
           assetId={transferTarget.id}
           currentCustomerId={transferTarget.customerId}
+        />
+      )}
+
+      {topologyAssetId && (
+        <SetTopologyDialog
+          assetId={topologyAssetId}
+          currentTopology={topologyAssetCascade?.electricalTopology}
+          open
+          onOpenChange={(open) => !open && setTopologyAssetId(null)}
         />
       )}
 
