@@ -63,6 +63,9 @@ export interface AlertListParams {
   batteryAssetId?: string;
   severity?: AlertSeverityEnum;
   status?: AlertStatusEnum;
+  // Excludes alerts with status = Merged. BE defaults this to true, so the FE only needs to
+  // pass it to explicitly opt into seeing merged alerts.
+  excludeMerged?: boolean;
   anomalyType?: AnomalyTypeEnum;
   // Drops EVERY site-level alert (no battery attached): the mirror alert written alongside each
   // EnvironmentalIncident, plus ambient threshold breaches (temperature / humidity / gas). Those

@@ -26,6 +26,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import {
   useCommitImportBatch,
   useCreateImportBatch,
@@ -230,12 +232,15 @@ export default function DataImportPage() {
 
   return (
     <PageContainer data-testid="data-import-page">
-      <div>
-        <h1 className="text-2xl font-semibold">Third-party data import</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Download a template, fill it in, dry-run it to preview the result,
-          then commit. The dry-run writes no business records at all.
-        </p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold">Third-party data import</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Download a template, fill it in, dry-run it to preview the result,
+            then commit. The dry-run writes no business records at all.
+          </p>
+        </div>
+        <RefreshButton queryKeys={[KEY.importBatches]} />
       </div>
 
       {/* Step 1 — templates */}

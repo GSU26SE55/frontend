@@ -219,7 +219,9 @@ export default function SiteDetailPage() {
                 </Button>
               </>
             )}
-            <RefreshButton queryKeys={[KEY.sites]} />
+            {/* Covers both tabs: KEY.sites carries the detail, dashboard, asset list and
+               cascade summary; KEY.ambient the Environment strip and history table. */}
+            <RefreshButton queryKeys={[KEY.sites, KEY.ambient]} />
           </div>
         </div>
       </div>

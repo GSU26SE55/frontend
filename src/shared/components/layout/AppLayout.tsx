@@ -106,7 +106,7 @@ function Topbar() {
           <DropdownMenuItem
             onClick={() =>
               navigate(
-                `${redirectByRole(user?.role ?? UserRole.ADMIN)}/profile`,
+                `${redirectByRole(user?.role ?? UserRole.ADMIN)}/settings`,
               )
             }
             className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-1.75"

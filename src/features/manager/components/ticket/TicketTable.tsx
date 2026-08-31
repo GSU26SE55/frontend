@@ -11,10 +11,6 @@ import { priorityRank } from "@/shared/utils/ticket/priorityMatrix";
 import { toneClass } from "@/shared/theme/statusColors";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
-import {
-  TicketStatusEnum,
-  TicketSourceFilterEnum,
-} from "@/shared/enums/ticket/ticket.enum";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -171,31 +167,7 @@ export default function TicketTable({
       // Rank, not the enum string: a plain string compare sorts "Urgent" last,
       // burying the most severe ticket. See priorityRank.
       sortValue: (t) => priorityRank(t.priority),
-      // Auto tickets not yet assigned to Staff: priority is inferred by AI from the anomaly
-      // category and hasn't gone through a reviewer. Flag it so Manager doesn't mistake it
-      // for a priority someone has already signed off on.
-      //
-      // Điều kiện phải là `getTicketSource(...) === AiPredicted`, KHÔNG phải `origin ===
-      // AutoFromAlert`. Ticket môi trường sinh từ ngưỡng ambient (nhiệt độ / độ ẩm / gas của cả
-      // site) cũng mang `AutoFromAlert`, nên điều kiện cũ dán "AI suggested" lên chúng — trong
-      // khi đường đó KHÔNG hề chạy AI: mức ưu tiên do threshold engine + priority matrix tính,
-      // và không có bản ghi `ticket_ai_suggestions` nào. Cột Source ngay bên cạnh đã ghi
-      // "Environmental" nhờ dùng helper này, hai cột nói hai chuyện khác nhau về cùng một dòng.
-      cell: (t) => (
-        <div className="flex flex-wrap items-center gap-1">
-          <TicketPriorityBadge priority={t.priority} />
-          {getTicketSource(t).key === TicketSourceFilterEnum.AiPredicted &&
-            t.status === TicketStatusEnum.Open && (
-              <Badge
-                variant="outline"
-                className="border-violet-200 bg-violet-50 text-violet-700"
-                title="Priority suggested by AI from the alert — not yet approved by Manager"
-              >
-                AI suggested
-              </Badge>
-            )}
-        </div>
-      ),
+      cell: (t) => <TicketPriorityBadge priority={t.priority} />,
     },
     {
       id: "category",
