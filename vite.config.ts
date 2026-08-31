@@ -138,10 +138,21 @@ export default defineConfig({
   // sent when the callback XHR is same-origin. Target comes from VITE_DEV_API_TARGET
   // (default 4001).
   server: {
+    // The dev server is also reached through a reserved ngrok domain, and Vite rejects
+    // any Host header it was not told about.
+    allowedHosts: [".ngrok-free.dev"],
     proxy: {
       "/api": {
         target: process.env.VITE_DEV_API_TARGET ?? "http://localhost:4001",
         changeOrigin: true,
+      },
+      // SignalR hub. Same-origin for the same reason as /api: opened through the
+      // ngrok tunnel, an absolute http://localhost:4001 hub URL is blocked by the
+      // browser's loopback-address restriction. ws:true upgrades the WebSocket.
+      "/hubs": {
+        target: process.env.VITE_DEV_API_TARGET ?? "http://localhost:4001",
+        changeOrigin: true,
+        ws: true,
       },
     },
   },

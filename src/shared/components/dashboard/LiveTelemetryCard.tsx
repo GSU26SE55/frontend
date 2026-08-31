@@ -10,6 +10,13 @@ import {
   toneVars,
   type StatusTone,
 } from "@/shared/theme/statusColors";
+import {
+  socLevel,
+  temperatureLevel,
+  voltageLevel,
+  currentLevel,
+  type ThresholdLevel,
+} from "@/shared/lib/thresholdTone";
 
 // Display contract — identifies the metrics to display, NOT tied to a specific DTO.
 // `LiveReadingDto` (SSE) and `BatteryAssetRealtimeDto` (REST snapshot) are both structurally
@@ -37,7 +44,10 @@ const CHARGING_STATE_META: Record<number, { label: string; tone: StatusTone }> =
     [ChargingStateEnum.BYPASS]: { label: "Bypass", tone: "p3" },
   };
 
-const fmtNum = (v: number | null | undefined, dec = 1) =>
+// 2 chữ số thập phân — đúng bằng độ chính xác thật của dữ liệu (`numeric(x,2)`) và đúng bằng
+// độ chính xác mà `thresholdTone` dùng để chấm màu. Hiển thị và logic khớp nhau thì con số trên
+// màn hình luôn giải thích được màu của chính nó: 26.94 hiện "26.94" và đỏ khi trần là 26.90.
+const fmtNum = (v: number | null | undefined, dec = 2) =>
   v != null ? v.toFixed(dec) : "—";
 
 // SSE connection status dot.
@@ -110,23 +120,31 @@ function StatTile({
  * Alert thresholds used to color telemetry. The page passes these down from the
  * BatteryType's ThresholdConfig (BE: GET /api/thresholds/by-type/{id}); the component does
  * NOT import types from features/admin (keeps the shared→feature dependency direction
- * correct). Any missing field → falls back to the default thresholds below.
+ * correct). Missing field → the metric stays neutral, never a guessed default.
  */
 export interface TelemetryThresholds {
   socWarning?: number | null;
   socCritical?: number | null;
-  temperatureMax?: number | null; // ≥ max: danger; within [max-10, max): warning
+  temperatureMin?: number | null;
+  temperatureMax?: number | null;
+  voltageMin?: number | null;
+  voltageMax?: number | null;
+  currentMaxCharge?: number | null;
+  currentMaxDischarge?: number | null;
 }
 
-// Default thresholds (when the BatteryType hasn't configured a ThresholdConfig) — keeps the old values.
-const DEFAULT_SOC_WARN = 50;
-const DEFAULT_SOC_CRIT = 20;
-const DEFAULT_TEMP_MAX = 50;
+// Mức vi phạm → tone của card. "ok" giữ màu info (xanh) như cũ; chưa cấu hình ngưỡng → trung tính,
+// KHÔNG bịa ngưỡng mặc định — cùng quy ước với bảng lịch sử và với BE (`AttachAnomaliesAsync`).
+const NEUTRAL_CLS = "bg-muted/60 text-foreground";
+const levelCls = (level: ThresholdLevel) =>
+  level == null
+    ? NEUTRAL_CLS
+    : toneFill(level === "critical" ? "p1" : level === "warning" ? "p3" : "info");
 
 interface LiveTelemetryCardProps {
   data: TelemetryDisplay | null;
   status?: SensorStreamState["status"];
-  /** Thresholds from the BE's ThresholdConfig (per BatteryType). Omit → uses default thresholds. */
+  /** Thresholds from the BE's ThresholdConfig (per BatteryType). Omit → telemetry stays uncolored. */
   thresholds?: TelemetryThresholds;
   /**
    * Rolling min/max charge/discharge for a window (SSE event `stats`). No event yet →
@@ -146,29 +164,52 @@ export function LiveTelemetryCard({
   thresholds,
   stats,
 }: LiveTelemetryCardProps) {
-  const socWarn = thresholds?.socWarning ?? DEFAULT_SOC_WARN;
-  const socCrit = thresholds?.socCritical ?? DEFAULT_SOC_CRIT;
-  const tempMax = thresholds?.temperatureMax ?? DEFAULT_TEMP_MAX;
-  // Temperature "warning" zone: 10°C before the danger threshold (keeps the old 40/50 two-tier logic).
-  const tempWarn = tempMax - 10;
+  // Voltage và Current cũng có luật cảnh báo ở BE (Overvoltage/Undervoltage, AbnormalCharging/
+  // RapidDischarge) — trước đây hai ô này luôn trung tính, nên dòng sạc vượt trần vẫn hiện như
+  // bình thường trong khi engine đã xếp Critical.
+  const voltageCls =
+    data?.voltage == null
+      ? NEUTRAL_CLS
+      : levelCls(
+          voltageLevel(
+            data.voltage,
+            thresholds?.voltageMin,
+            thresholds?.voltageMax,
+          ),
+        );
+
+  const currentCls =
+    data?.current == null
+      ? NEUTRAL_CLS
+      : levelCls(
+          currentLevel(
+            data.current,
+            thresholds?.currentMaxCharge,
+            thresholds?.currentMaxDischarge,
+          ),
+        );
 
   const socCls =
     data?.socPercent == null
-      ? "bg-muted/60 text-foreground"
-      : data.socPercent >= socWarn
-        ? toneFill("info")
-        : data.socPercent >= socCrit
-          ? toneFill("p3")
-          : toneFill("p1");
+      ? NEUTRAL_CLS
+      : levelCls(
+          socLevel(
+            data.socPercent,
+            thresholds?.socWarning,
+            thresholds?.socCritical,
+          ),
+        );
 
   const tempCls =
     data?.temperature == null
-      ? "bg-muted/60 text-foreground"
-      : data.temperature < tempWarn
-        ? toneFill("info")
-        : data.temperature < tempMax
-          ? toneFill("p3")
-          : toneFill("p1");
+      ? NEUTRAL_CLS
+      : levelCls(
+          temperatureLevel(
+            data.temperature,
+            thresholds?.temperatureMin,
+            thresholds?.temperatureMax,
+          ),
+        );
 
   // status undefined → defaults to emerald when there's data (used where status isn't tracked).
   const dotCls = status ? DOT_CLS[status] : data ? DOT_CLS.live : null;
@@ -198,16 +239,13 @@ export function LiveTelemetryCard({
               label="Voltage"
               value={fmtNum(data.voltage)}
               unit="V"
-              className="bg-muted/50 text-foreground"
+              className={voltageCls}
             />
             <StatTile
               label="Current"
               value={fmtNum(data.current)}
               unit="A"
-              className={cn(
-                "bg-muted/50 text-foreground",
-                chargingMeta && "border-2",
-              )}
+              className={cn(currentCls, chargingMeta && "border-2")}
               style={
                 chargingMeta
                   ? { borderColor: toneVars(chargingMeta.tone).border }
@@ -223,7 +261,7 @@ export function LiveTelemetryCard({
             />
             <StatTile
               label="SOC"
-              value={fmtNum(data.socPercent, 0)}
+              value={fmtNum(data.socPercent)}
               unit="%"
               className={socCls}
             />
@@ -256,7 +294,7 @@ export function LiveTelemetryCard({
               <span className="text-3xs text-muted-foreground">Charge</span>
               <span className="text-3xs font-medium font-mono-num">
                 {stats
-                  ? `${fmtNum(stats.minChargeCurrent, 2)} – ${fmtNum(stats.maxChargeCurrent, 2)} A`
+                  ? `${fmtNum(stats.minChargeCurrent)} – ${fmtNum(stats.maxChargeCurrent)} A`
                   : "—"}
               </span>
             </div>
@@ -264,7 +302,7 @@ export function LiveTelemetryCard({
               <span className="text-3xs text-muted-foreground">Discharge</span>
               <span className="text-3xs font-medium font-mono-num">
                 {stats
-                  ? `${fmtNum(stats.minDischargeCurrent, 2)} – ${fmtNum(stats.maxDischargeCurrent, 2)} A`
+                  ? `${fmtNum(stats.minDischargeCurrent)} – ${fmtNum(stats.maxDischargeCurrent)} A`
                   : "—"}
               </span>
             </div>

@@ -44,11 +44,12 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
   const { data: threshold } = useAmbientThresholdBySite(siteId ?? "");
   const [limit, setLimit] = useState(PREVIEW_ROWS);
 
-  // Readings arrive newest-first; the incident reads better oldest-first, as a build-up toward
-  // the detection stamp rather than a countdown away from it.
-  const rows = [...(data?.items ?? [])].sort(
-    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
-  );
+  // Newest first — BE tra ve san `OrderByDescending(r => r.Time)`, khong sort lai.
+  // Truoc day panel nay dao nguoc thanh cu->moi, gay hai van de: no la panel DUY NHAT lam vay
+  // (`BatteryWarningEvidencePanel` ngay ben canh giu nguyen thu tu cua BE), va vi ban xem truoc
+  // chi lay 10 dong DAU, nguoi doc nhan duoc 10 dong CU nhat — dung nhung dong bien dong dan
+  // toi su co lai bi giau sau nut "Show more".
+  const rows = data?.items ?? [];
   const visible = rows.slice(0, limit);
   const hidden = rows.length - visible.length;
 

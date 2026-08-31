@@ -536,6 +536,14 @@ export const ENDPOINTS = {
     DELETE: (id: string) => `/api/files/${id}`,
   },
 
+  // SLA business calendar — Manager/Admin declare the days that do NOT count towards a
+  // ticket's SLA (public holidays, maintenance windows). SlaBusinessCalendarProvider reads
+  // this table on every deadline calculation.
+  SLA_CALENDAR: {
+    NON_WORKING_PERIODS: "/api/sla/non-working-periods",
+    NON_WORKING_PERIOD: (id: string) => `/api/sla/non-working-periods/${id}`,
+  },
+
   SESSIONS: {
     ME: "/api/sessions/me",
     REVOKE: (id: string) => `/api/sessions/${id}`,

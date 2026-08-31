@@ -23,6 +23,7 @@ import {
   MessageSquare,
   BarChart3,
   Cpu,
+  Calendar,
 } from "lucide-react";
 import type { NavSection } from "@/shared/components/layout/Sidebar";
 import {
@@ -166,6 +167,13 @@ export const ADMIN_NAV: NavSection[] = [
         label: "Third-party import",
         path: "/admin/data-import",
         icon: FileUp,
+      },
+      // Feeds the SLA clock: days declared here are skipped when deadlines are calculated,
+      // so it sits with the other configure-once screens.
+      {
+        label: "SLA calendar",
+        path: "/admin/sla-calendar",
+        icon: Calendar,
       },
       { label: "Accounts", path: "/admin/accounts", icon: Users },
       { label: "Roles & Permissions", path: "/admin/roles", icon: Shield },

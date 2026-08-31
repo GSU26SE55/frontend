@@ -22,9 +22,11 @@ function grade(
   critical: number | null | undefined,
 ): AmbientLevel {
   if (value === null || value === undefined) return null;
-  if (critical !== null && critical !== undefined && value >= critical)
+  // So sanh NGAT (>), giong `AnomalyRules.DetectAmbient`. Dung `>=` thi gia tri dung bang
+  // nguong se duoc to mau trong khi BE khong he sinh Alert.
+  if (critical !== null && critical !== undefined && value > critical)
     return "critical";
-  if (warning !== null && warning !== undefined && value >= warning)
+  if (warning !== null && warning !== undefined && value > warning)
     return "warning";
   // Monitored (at least one bound set) and under it → explicitly OK.
   const monitored =
@@ -115,12 +117,13 @@ export function evaluateAmbientRow(
     reading.humidity >= threshold.comboHumidityThreshold;
 
   const levels = [temperature, humidity, gas, water];
-  const worst: AmbientLevel = levels.includes("critical")
+  // Combo la Critical, khong phai warning: BE sinh `HighTempHumidityCombo` voi
+  // `AlertSeverityEnum.Critical`. Day la dieu kien can thoat nhiet cua pin lithium — no co the
+  // do mot dong ma ca hai chi so deu chua vuot nguong rieng cua chung.
+  const worst: AmbientLevel = levels.includes("critical") || combo
     ? "critical"
-    : levels.includes("warning") || combo
-      ? // A combo breach is a real alert condition, so it must not read as "ok" just because
-        // neither metric crossed its own line.
-        "warning"
+    : levels.includes("warning")
+      ? "warning"
       : levels.includes("ok")
         ? "ok"
         : null;

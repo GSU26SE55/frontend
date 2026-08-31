@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Thermometer, Droplets, Wind, Droplet, Settings2 } from "lucide-react";
+import { Thermometer, Wind, Droplet, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -24,6 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
@@ -102,10 +104,20 @@ export function AmbientSitePanel({
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <LatestStrip siteId={siteId} />
-        <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
-          <Settings2 size={14} />
-          Configure threshold
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Sensors report every 15s, so the panel goes stale while it sits open. One key for
+              the whole `ambient` namespace refreshes the strip and the history table together —
+              two separate keys would leave the two showing different moments in time. */}
+          <RefreshButton queryKeys={[KEY.ambient]} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setConfigOpen(true)}
+          >
+            <Settings2 size={14} />
+            Configure threshold
+          </Button>
+        </div>
       </div>
 
       <HistoryTable
@@ -146,12 +158,6 @@ function LatestStrip({ siteId }: { siteId: string }) {
         icon={<Thermometer className="size-4 text-orange-500" />}
         label="Temperature"
         value={fmt(latest.ambientTemperature, " °C")}
-      />
-      <Separator orientation="vertical" className="h-7" />
-      <MetricItem
-        icon={<Droplets className="size-4 text-blue-500" />}
-        label="Humidity"
-        value={fmt(latest.humidity, " %")}
       />
       <Separator orientation="vertical" className="h-7" />
       <MetricItem
@@ -545,12 +551,11 @@ function HistoryTable({
           <Table className="table-fixed">
             <colgroup>
               <col className="w-12" />
-              <col className="w-[24%]" />
-              <col className="w-[15%]" />
-              <col className="w-[15%]" />
-              <col className="w-[15%]" />
-              <col className="w-[15%]" />
-              <col className="w-[16%]" />
+              <col className="w-[28%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
             </colgroup>
             <TableHeader>
               <TableRow>
@@ -559,7 +564,6 @@ function HistoryTable({
                 </TableHead>
                 <TableHead>Timestamp</TableHead>
                 <TableHead>Temperature</TableHead>
-                <TableHead>Humidity</TableHead>
                 <TableHead>Gas</TableHead>
                 <TableHead>Water</TableHead>
                 <TableHead>{TABLE_COLUMNS.source}</TableHead>
@@ -580,9 +584,6 @@ function HistoryTable({
                       className={ambientLevelTextClass(ev.temperature)}
                     >
                       {fmt(r.ambientTemperature, " °C")}
-                    </TableCell>
-                    <TableCell className={ambientLevelTextClass(ev.humidity)}>
-                      {fmt(r.humidity, " %")}
                     </TableCell>
                     <TableCell className={ambientLevelTextClass(ev.gas)}>
                       {fmt(r.gasConcentration, " %")}

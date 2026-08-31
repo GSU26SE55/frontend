@@ -9,6 +9,13 @@ import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import { useServerSort } from "@/shared/hooks/useServerSort";
 import { toneText, type StatusTone } from "@/shared/theme/statusColors";
+import {
+  socLevel,
+  temperatureLevel,
+  voltageLevel,
+  currentLevel,
+  type ThresholdLevel,
+} from "@/shared/lib/thresholdTone";
 import type {
   SensorReadingDto,
   SensorReadingSortKey,
@@ -33,48 +40,40 @@ const toLocalInput = (iso?: string): string => {
 const num = (v: number | null, digits = 2) =>
   v !== null && v !== undefined ? v.toFixed(digits) : "—";
 
-// ── Cell color by threshold (synced with SensorChart's safe zone / danger zone) ──
-// Within [min,max] = ok; near the edge (10% margin) = warning (p2); outside the range = danger (p1).
-function rangeTone(value: number, min: number, max: number): StatusTone {
-  if (value < min || value > max) return "p1";
-  const margin = (max - min) * 0.1;
-  if (value <= min + margin || value >= max - margin) return "p2";
-  return "ok";
-}
-
-// SOC is only dangerous when LOW: ≤ critical → p1, ≤ warning → p2, otherwise ok.
-function socTone(soc: number, warn: number, crit: number): StatusTone {
-  if (soc <= crit) return "p1";
-  if (soc <= warn) return "p2";
-  return "ok";
-}
+// ── Cell color by threshold ──
+// Dùng chung `thresholdTone` với card Realtime — tức đúng luật BE `AnomalyRules`. Bản cũ tô vàng
+// trong biên 10% của [min,max], nghĩa là cảnh báo khi số đo VẪN NẰM TRONG ngưỡng đã cấu hình
+// và BE không hề sinh Alert. Chưa cấu hình ngưỡng → null → để nguyên, không đoán mặc định.
+const TONE_OF: Record<Exclude<ThresholdLevel, null>, StatusTone> = {
+  critical: "p1",
+  warning: "p2",
+  ok: "ok",
+};
+const toTone = (level: ThresholdLevel): StatusTone | null =>
+  level == null ? null : TONE_OF[level];
 
 function voltageTone(
   v: number,
   t?: ThresholdConfigDto | null,
 ): StatusTone | null {
-  return t ? rangeTone(v, t.voltageMin, t.voltageMax) : null;
+  return toTone(voltageLevel(v, t?.voltageMin, t?.voltageMax));
 }
 function temperatureTone(
   v: number,
   t?: ThresholdConfigDto | null,
 ): StatusTone | null {
-  return t ? rangeTone(v, t.temperatureMin, t.temperatureMax) : null;
+  return toTone(temperatureLevel(v, t?.temperatureMin, t?.temperatureMax));
 }
-// currentMaxCharge/currentMaxDischarge are optional in ThresholdConfigDto.
-// Not configured → do NOT color the Current column (return null), rather than guessing
-// a default threshold: a color derived from a made-up threshold would diverge from the
-// BE's real-threshold alerts, misleading the viewer into thinking it was cross-checked.
 function currentTone(
   v: number,
   t?: ThresholdConfigDto | null,
 ): StatusTone | null {
-  if (!t) return null; // no threshold configured → the whole table stays uncolored (stay consistent)
-  if (t.currentMaxCharge == null || t.currentMaxDischarge == null) return null;
-  return rangeTone(v, -t.currentMaxDischarge, t.currentMaxCharge);
+  return toTone(currentLevel(v, t?.currentMaxCharge, t?.currentMaxDischarge));
 }
 function socOf(v: number, t?: ThresholdConfigDto | null): StatusTone | null {
-  return t ? socTone(v, t.socWarningThreshold, t.socCriticalThreshold) : null;
+  return toTone(
+    socLevel(v, t?.socWarningThreshold, t?.socCriticalThreshold),
+  );
 }
 
 // Numbers colored by tone (no threshold yet → shown neutral).
@@ -139,7 +138,6 @@ function buildColumns(
         <ToneNum
           value={r.temperature}
           tone={temperatureTone(r.temperature, threshold)}
-          digits={1}
         />
       ),
     },
@@ -154,7 +152,6 @@ function buildColumns(
         <ToneNum
           value={r.socPercent}
           tone={socOf(r.socPercent, threshold)}
-          digits={1}
         />
       ),
     },

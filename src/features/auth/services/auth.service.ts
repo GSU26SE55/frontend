@@ -1,5 +1,5 @@
 import axios from "axios";
-import axiosInstance from "@/shared/lib/axios";
+import axiosInstance, { NGROK_HEADER } from "@/shared/lib/axios";
 import { env } from "@/config/env";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type {
@@ -63,7 +63,9 @@ export const authService = {
     axios.post<CommonResponse<LoginResultData>>(
       `${env.VITE_API_BASE_URL}${ENDPOINTS.AUTH.REFRESH_TOKEN}`,
       { refreshToken },
-      { timeout: 10_000 },
+      // Raw axios, not axiosInstance — it does not inherit the instance headers, so the
+      // ngrok interstitial guard has to be repeated here.
+      { timeout: 10_000, headers: { ...NGROK_HEADER } },
     ),
 
   register: (payload: RegisterPayload) =>

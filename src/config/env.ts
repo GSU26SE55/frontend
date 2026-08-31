@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  VITE_API_BASE_URL: z.string().min(1),
+  // Empty string is VALID and is the dev default: axios/SSE then build relative
+  // URLs (/api/...) so requests go to whatever origin the page was opened on —
+  // localhost:5173 or the ngrok tunnel — and Vite's proxy forwards them to the
+  // gateway. Hardcoding http://localhost:5173 here breaks the tunnel: the browser
+  // blocks an HTTPS page from calling a loopback address (Private Network Access).
+  VITE_API_BASE_URL: z.string(),
   VITE_GOOGLE_CLIENT_ID: z.string().min(1),
   // SignalR hub origin (e.g. http://localhost:5xxx). signalr.ts appends the path
   // /hubs/ticket-chats. SEPARATE var; optional → when unset, signalr.ts falls

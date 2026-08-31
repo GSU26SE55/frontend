@@ -65,6 +65,9 @@ import {
 } from "@/features/admin/hooks/ticket/useTicketChats";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { checkPermission, P } from "@/shared/lib/authz";
+import type { PinNotice } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
+import PinnedMessageBar from "@/shared/components/chat/PinnedMessageBar";
+import PinnedMessagesDialog from "@/shared/components/chat/PinnedMessagesDialog";
 
 const ROLE_LABEL: Record<ActorRoleEnum, string> = {
   Admin: "Admin",
@@ -301,6 +304,11 @@ interface TicketCommentThreadProps {
   onRetryPending?: (tempId: string) => void;
   /** Discards a failed message from the queue entirely. */
   onDiscardPending?: (tempId: string) => void;
+  /**
+   * Live "X pinned a message" notices from the realtime hook, appended at the end of the
+   * thread. Session-only: the BE keeps no feed of them, so they are not replayed on reload.
+   */
+  pinNotices?: PinNotice[];
 }
 
 /** Bubble-style chat frame — SPLIT into 2 tabs: Public (customer-visible) & Internal (staff-only). */
@@ -322,6 +330,7 @@ export function TicketCommentThread({
   onOverrideEdit,
   onOverrideDelete,
   pendingMessages = [],
+  pinNotices = [],
   onRetryPending,
   onDiscardPending,
 }: TicketCommentThreadProps) {
@@ -336,6 +345,30 @@ export function TicketCommentThread({
   const { mutate: pinChat, isPending: pinPending } = usePinChat();
   const { mutate: unpinChat, isPending: unpinPending } = useUnpinChat();
   const pinBusy = pinPending || unpinPending;
+  const [pinnedListOpen, setPinnedListOpen] = useState(false);
+
+  const togglePin = (comment: TicketCommentDTO) => {
+    if (!ticketId) return;
+    const args = { ticketId, chatId: comment.id };
+    if (comment.isPinned) unpinChat(args);
+    else pinChat(args);
+  };
+
+  // Scrolls the thread to a pinned message and flashes it, so the reader can see WHICH row
+  // the bar was pointing at — landing silently on a wall of text says nothing.
+  const jumpToMessage = (chatId: string) => {
+    setPinnedListOpen(false);
+    const el = document.querySelector<HTMLElement>(
+      `[data-chat-id="${chatId}"]`,
+    );
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("ring-2", "ring-primary", "rounded-lg");
+    setTimeout(
+      () => el.classList.remove("ring-2", "ring-primary", "rounded-lg"),
+      1600,
+    );
+  };
   const setTab = (t: ChatTab) => {
     setInternalTab(t);
     onTabChange?.(t);
@@ -365,6 +398,22 @@ export function TicketCommentThread({
     [sorted, tab],
   );
 
+  // Scoped to the current tab: an internal pin must not surface on the public one, which is
+  // customer-visible. Newest first so the bar shows the most recent pin.
+  const pinnedMessages = useMemo(
+    () =>
+      visible
+        .filter((c) => c.isPinned && !c.isDeleted)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+    [visible],
+  );
+
+  const authorNameOf = (c: TicketCommentDTO) =>
+    c.authorDisplayName ?? ROLE_LABEL[c.authorRole] ?? c.authorRole;
+
   // "Unread messages" marker — locks in the OLDEST unread message's id the first time data
   // arrives, then keeps it for the whole session. onMarkRead below marks messages as read the
   // moment the tab opens ⇒ if recomputed against fresh data, the divider that just appeared
@@ -380,6 +429,13 @@ export function TicketCommentThread({
     ticketId?: string;
     id: string | null;
     count: number;
+    /**
+     * Set once the backlog this anchor described has been read. The anchor is then kept —
+     * rather than reset to null — precisely so it does NOT lock in again: a message arriving
+     * while the user watches must be announced by the "New messages" line at the bottom, not
+     * by a red "unread" divider re-anchoring itself part-way up the thread.
+     */
+    cleared?: boolean;
   } | null>(null);
 
   // Only lock in once the BE has returned isRead for at least 1 message — the realtime
@@ -401,51 +457,10 @@ export function TicketCommentThread({
     });
   }
 
-  const unreadAnchorId = anchorMatches ? unreadAnchor.id : null;
-  const unreadCount = anchorMatches ? unreadAnchor.count : 0;
-
-  // "New messages" marker — a SECOND, separate line for messages that land while the user is
-  // already in the chat. The unread anchor above is frozen on open, so without this a message
-  // arriving mid-conversation is indistinguishable from backlog: both just sit below the same
-  // red line. Only messages from other people count — marking your own would push the line
-  // down on every send.
-  // `seenOnOpen` holds the ids present when the tab was opened; anything outside it arrived
-  // while the user was watching. Kept in state rather than a ref because it is read during
-  // render — refs must not be.
-  const [newAfter, setNewAfter] = useState<{
-    tab: ChatTab;
-    seenOnOpen: ReadonlySet<string>;
-    id: string | null;
-  } | null>(null);
-
-  // Derived from props via "adjust during render" — the same pattern the unread anchor above
-  // uses, and the reason neither runs in an effect: setting state from an effect costs an
-  // extra render pass and trips react-hooks/set-state-in-effect.
-  if (visible.length > 0) {
-    if (newAfter?.tab !== tab) {
-      // Tab switched (or first data) — everything on screen counts as already seen, so only
-      // what arrives from here on can be "new".
-      setNewAfter({
-        tab,
-        seenOnOpen: new Set(visible.map((c) => c.id)),
-        id: null,
-      });
-    } else if (!newAfter.id) {
-      // visible is ASC (oldest first) → the first unseen match is the oldest one, which is
-      // where the line belongs.
-      const firstFromOthers = visible.find(
-        (c) =>
-          !newAfter.seenOnOpen.has(c.id) &&
-          !!c.authorUserId &&
-          c.authorUserId !== currentUserId,
-      );
-      if (firstFromOthers) {
-        setNewAfter({ ...newAfter, id: firstFromOthers.id });
-      }
-    }
-  }
-
-  const newAfterId = newAfter?.tab === tab ? newAfter.id : null;
+  const rawUnreadAnchorId =
+    anchorMatches && !unreadAnchor.cleared ? unreadAnchor.id : null;
+  const rawUnreadCount =
+    anchorMatches && !unreadAnchor.cleared ? unreadAnchor.count : 0;
 
   // Messages waiting to send (outbox) belonging to the current tab — optimistic bubble at the end of the stream.
   const pendingForTab = useMemo(
@@ -460,76 +475,98 @@ export function TicketCommentThread({
   const unreadDividerRef = useRef<HTMLDivElement>(null);
   const jumpedToUnreadRef = useRef(false);
   const isFirstScrollRef = useRef(true);
+  // Counts messages the CURRENT USER has put into the thread (sent or still queued in the
+  // outbox). The scroll effect compares it against the previous value to tell "the user just
+  // sent something" apart from "someone else's message arrived" — only the former should
+  // override the one-time jump to the unread divider.
+  const lastSentCountRef = useRef(0);
+  // Key of the bottom-most row (pending bubble or real message) — see the scroll effect deps.
+  const lastRowKey =
+    pendingForTab.length > 0
+      ? `pending:${pendingForTab[pendingForTab.length - 1].tempId}`
+      : (visible[visible.length - 1]?.id ?? null);
+  const sentCount =
+    pendingForTab.length +
+    (currentUserId
+      ? visible.filter((c) => c.authorUserId === currentUserId).length
+      : 0);
 
   useEffect(() => {
     jumpedToUnreadRef.current = false;
   }, [tab]);
 
-  // Reaching the bottom means those messages have been seen, so the "New messages" line has
-  // done its job and is cleared. The unread line above is NOT touched — it stays pinned for
-  // the session so the user keeps their place in the backlog. Observed rather than measured
-  // via scroll offsets because the scroll container lives in the parent page, not here.
+  // Has the user reached the bottom of the thread at least once this session? Tracked as state
+  // rather than checked inline because IntersectionObserver only fires on a CHANGE of
+  // intersection: in a thread short enough not to scroll, the bottom is already visible on
+  // mount, so it fires exactly once — at a moment when `isRead` is still false — and never
+  // again. Recording the fact separately lets the clearing effect below re-evaluate later.
+  // Keyed on tab+ticket so switching either resets it without an effect — same
+  // "adjust during render" pattern the unread anchor above uses.
+  const [bottomSeen, setBottomSeen] = useState<{
+    tab: ChatTab;
+    ticketId?: string;
+  } | null>(null);
+  const reachedBottom =
+    bottomSeen?.tab === tab && bottomSeen?.ticketId === ticketId;
+
   useEffect(() => {
     const el = bottomRef.current;
-    if (!el || !newAfterId) return;
+    if (!el || reachedBottom) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Those ids move into seenOnOpen as the line clears, so the same messages can't
-        // immediately re-trigger it on the next render.
-        if (entry.isIntersecting) {
-          setNewAfter((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  seenOnOpen: new Set(visible.map((c) => c.id)),
-                  id: null,
-                }
-              : prev,
-          );
-        }
+        if (entry.isIntersecting) setBottomSeen({ tab, ticketId });
       },
       { threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [newAfterId, visible]);
+  }, [reachedBottom, visible.length, tab, ticketId]);
 
-  // Clear the "Unread messages" line once the user has actually reached the bottom AND the BE
-  // confirms nothing is unread any more. The line is pinned on open on purpose — auto
-  // mark-read fires immediately, so recomputing it from fresh data would make it vanish before
-  // it could be seen. But pinning it for the WHOLE session left it stranded on screen after the
-  // backlog had been read, which is what users report as "the unread line won't go away".
+  // Clear the "Unread messages" line once the user has reached the bottom AND the BE confirms
+  // nothing is unread any more. The line is pinned on open on purpose — auto mark-read fires
+  // immediately, so recomputing it from fresh data would make it vanish before it could be
+  // seen. But pinning it for the WHOLE session left it stranded on screen after the backlog had
+  // been read, which is what "the unread line won't go away" means.
   //
   // Both conditions matter: reaching the bottom alone isn't enough in a short thread that opens
   // already scrolled down (the user never read the backlog), and `isRead` alone flips within a
   // second of opening.
-  useEffect(() => {
-    const el = bottomRef.current;
-    if (!el || !unreadAnchorId) return;
+  // Computed during render instead of in an effect: setState inside an effect triggers a
+  // cascading render, and this is pure derivation — the anchor stays in state only so it can
+  // be FROZEN on open, and once it has served its purpose it is simply not shown any more.
+  // Latch it on the anchor itself instead of deriving "hidden" every render. Deriving it was
+  // the bug behind "the unread line reappears in the wrong place": the moment the backlog was
+  // read the divider disappeared, `anchorMatches` was still true but the anchor was no longer
+  // being shown — so the very next message from the other person made this block re-run and
+  // re-anchor the red line onto it, part-way up the thread. Once cleared, the anchor stays
+  // cleared for this tab+ticket, and anything arriving afterwards belongs to the "New
+  // messages" line at the bottom.
+  if (
+    anchorMatches &&
+    !unreadAnchor.cleared &&
+    !!rawUnreadAnchorId &&
+    reachedBottom &&
+    !visible.some((c) => c.isRead === false)
+  ) {
+    setUnreadAnchor({ ...unreadAnchor, cleared: true });
+  }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        const stillUnread = visible.some((c) => c.isRead === false);
-        if (stillUnread) return;
-        setUnreadAnchor((prev) =>
-          prev ? { ...prev, id: null, count: 0 } : prev,
-        );
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [unreadAnchorId, visible]);
+  const unreadAnchorId = rawUnreadAnchorId;
+  const unreadCount = rawUnreadCount;
 
   useEffect(() => {
     const el = bottomRef.current;
     if (!el) return;
 
+    // Sending always wins: after the user posts a message the view must land on it, even if
+    // the unread divider is still on screen and the one-time jump below hasn't run yet.
+    const justSent = sentCount !== lastSentCountRef.current;
+    lastSentCountRef.current = sentCount;
+
     // Unread messages remain → scroll to the divider instead of the bottom, so reading starts
     // from the oldest unread message. Done only ONCE per session; later scrolls (new message,
     // image finished loading) still go to the bottom.
-    if (unreadDividerRef.current && !jumpedToUnreadRef.current) {
+    if (!justSent && unreadDividerRef.current && !jumpedToUnreadRef.current) {
       jumpedToUnreadRef.current = true;
       isFirstScrollRef.current = false;
       unreadDividerRef.current.scrollIntoView({
@@ -574,7 +611,17 @@ export function TicketCommentThread({
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [visible.length, tab, aiSuggestions.length, pendingForTab.length]);
+  }, [
+    visible.length,
+    tab,
+    aiSuggestions.length,
+    pendingForTab.length,
+    sentCount,
+    // Identity of the last row, not just the counts. When the outbox swaps an optimistic
+    // bubble for the real message both lengths stay the same, so without this the effect
+    // never re-ran and the view was left sitting above the message just sent.
+    lastRowKey,
+  ]);
 
   // Mark-read only covers messages from OTHER people. A message the user sent themself is
   // never unread, so sending it here just burns a slot in the BE read-receipt queue
@@ -727,6 +774,23 @@ export function TicketCommentThread({
         )}
       </div>
 
+      {/* Pinned strip — sticks directly beneath the tab bar, so the pinned note stays in view
+          while the conversation scrolls under it. Same negative-gutter trick as the tab strip
+          above: bleed to the page edges so the background covers the messages passing behind,
+          and a lower z-index so the tab bar stays on top where the two meet.
+
+          top-10 (40px) is where the tab strip ends: it pins at -top-6 (-24) and stands
+          pt-6 + h-8 + pb-2 + 1px border = 65 tall, so its bottom edge lands at 41px. */}
+      {pinnedMessages.length > 0 && (
+        <div className="sticky top-10 z-10 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] bg-background pl-(--page-pl) pr-(--page-pr) shrink-0">
+          <PinnedMessageBar
+            pinned={pinnedMessages}
+            authorName={authorNameOf}
+            onOpenList={() => setPinnedListOpen(true)}
+          />
+        </div>
+      )}
+
       {visible.length === 0 &&
       aiSuggestions.length === 0 &&
       pendingForTab.length === 0 ? (
@@ -803,21 +867,12 @@ export function TicketCommentThread({
                     <div className="h-px flex-1 bg-destructive" />
                   </div>
                 )}
-                {/* Deliberately quieter than the red unread line: a plain tinted rule, no
-                    pill. It says "the conversation moved on while you were here", not "you
-                    have a backlog to clear" — the two must not compete for attention. Skipped
-                    when it would land in the same slot as the unread line. */}
-                {c.id === newAfterId && c.id !== unreadAnchorId && (
-                  <div className="flex items-center gap-2 py-0.5">
-                    <div className="h-px flex-1 bg-primary/35" />
-                    <span className="text-3xs font-semibold text-primary/90">
-                      New messages
-                    </span>
-                    <div className="h-px flex-1 bg-primary/35" />
-                  </div>
-                )}
                 <div
-                  className={cn("flex items-end gap-2", isOwn && "justify-end")}
+                  data-chat-id={c.id}
+                  className={cn(
+                    "flex items-end gap-2 transition-shadow",
+                    isOwn && "justify-end",
+                  )}
                 >
                   {!isOwn && (
                     <Avatar size="sm" className="mb-4">
@@ -906,12 +961,7 @@ export function TicketCommentThread({
                                 canPin={canPinThis}
                                 isPinned={!!c.isPinned}
                                 pinBusy={pinBusy}
-                                onTogglePin={() => {
-                                  if (!ticketId) return;
-                                  const args = { ticketId, chatId: c.id };
-                                  if (c.isPinned) unpinChat(args);
-                                  else pinChat(args);
-                                }}
+                                onTogglePin={() => togglePin(c)}
                                 translating={translatingId === c.id}
                                 onEdit={() => startEdit(c)}
                                 onDelete={() => setDeleteTarget(c)}
@@ -989,6 +1039,27 @@ export function TicketCommentThread({
             );
           })}
 
+          {/* "X pinned a message" — a system line in the flow, the way a chat app announces it.
+              Clicking "View all" opens the same list the bar above links to. */}
+          {pinNotices.map((n) => (
+            <div
+              key={n.id}
+              className="flex flex-col items-center gap-0.5 py-1 text-2xs text-muted-foreground"
+            >
+              <span>
+                {n.byUserDisplayName}{" "}
+                {n.isPinned ? "pinned a message." : "unpinned a message."}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPinnedListOpen(true)}
+                className="font-medium text-primary hover:underline underline-offset-2"
+              >
+                View all
+              </button>
+            </div>
+          ))}
+
           {pendingForTab.map((m) => (
             <PendingBubble
               key={m.tempId}
@@ -1029,6 +1100,22 @@ export function TicketCommentThread({
           <div ref={bottomRef} />
         </div>
       )}
+
+      <PinnedMessagesDialog
+        open={pinnedListOpen}
+        onOpenChange={setPinnedListOpen}
+        pinned={pinnedMessages}
+        authorName={authorNameOf}
+        onJumpTo={jumpToMessage}
+        /* Unpin is only offered to a viewer the BE would accept — same permission as pin. */
+        onUnpin={
+          canPin && ticketId && !ticketClosed
+            ? (c) => {
+                if (!pinBusy) togglePin(c);
+              }
+            : undefined
+        }
+      />
 
       <AlertDialog
         open={!!deleteTarget}
@@ -1099,7 +1186,7 @@ function CommentActionsMenu({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-6 shrink-0 text-muted-foreground"
+            className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
             /* Icon-only, and rendered once per message — without a name a screen reader
                announces only "button". Matches the neighbouring React button. */
             aria-label="Message actions"

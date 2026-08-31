@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Battery, HeartPulse, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Battery, HeartPulse } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ import BatteryMaintenanceHistory from "@/shared/components/battery/BatteryMainte
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { useBatteryAssetRealtime } from "@/shared/hooks/battery/useBatteryAssetRealtime";
-import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
@@ -29,7 +28,6 @@ import {
   healthScoreTone,
   toneClass,
   toneVars,
-  CASCADE_RISK_TONE,
 } from "@/shared/theme/statusColors";
 
 function fmtDate(iso?: string | null) {
@@ -89,25 +87,6 @@ function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
         <span className="text-base font-bold ml-0.5">%</span>
       </span>
     </div>
-  );
-}
-
-// Cascade risk is a critical safety signal — kept as a header badge (next to
-// Active/alerts) so it can't be missed by scrolling past a sidebar card.
-function CascadeRiskBadge({ assetId }: { assetId: string }) {
-  const { data } = useCascadeRisk(assetId);
-  if (!data) return null;
-  const tone = CASCADE_RISK_TONE[data.level] ?? "muted";
-  const { fg, bg } = toneVars(tone);
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 text-2xs font-semibold px-2 py-0.5 rounded-full border"
-      style={{ color: fg, backgroundColor: bg, borderColor: fg }}
-      title={`Cascade risk score ${data.cascadeRiskScore.toFixed(2)}`}
-    >
-      <ShieldAlert size={12} />
-      Cascade risk: {data.level}
-    </span>
   );
 }
 
@@ -255,12 +234,6 @@ export default function BatteryRealtimeDetail({
                 />
                 {gatewayBadge.label}
               </span>
-              {rt && rt.activeAlerts > 0 && (
-                <span className="inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
-                  {rt.activeAlerts} alerts
-                </span>
-              )}
-              <CascadeRiskBadge assetId={id} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {asset.batteryTypeName}
@@ -329,7 +302,12 @@ export default function BatteryRealtimeDetail({
                   ? {
                       socWarning: threshold.socWarningThreshold,
                       socCritical: threshold.socCriticalThreshold,
+                      temperatureMin: threshold.temperatureMin,
                       temperatureMax: threshold.temperatureMax,
+                      voltageMin: threshold.voltageMin,
+                      voltageMax: threshold.voltageMax,
+                      currentMaxCharge: threshold.currentMaxCharge,
+                      currentMaxDischarge: threshold.currentMaxDischarge,
                     }
                   : undefined
               }

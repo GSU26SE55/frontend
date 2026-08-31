@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,14 @@ interface ThresholdConfigDialogProps {
   batteryType: BatteryTypeDto | null;
 }
 
+/**
+ * AnomalyRules.OverheatCriticalDeltaC / UndertempCriticalDeltaC — BE nâng Overheat/Undertemp lên
+ * Critical khi số đo vượt QUÁ 5°C ra ngoài dải min/max. Đây là `private const` trong BE, không
+ * có cột DB và không có field nào ở đây, nên admin set max 32.6 mà không hề biết Critical thật
+ * sự nằm ở 37.6 — đủ xa để pin thật không bao giờ chạm tới. Hiện ra để khỏi phải đoán.
+ */
+const CRITICAL_DELTA_C = 5;
+
 const reqNum = { valueAsNumber: true } as const;
 const optNum = {
   setValueAs: (v: unknown) => (v === "" || v == null ? undefined : Number(v)),
@@ -74,6 +82,7 @@ export default function ThresholdConfigDialog({
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     reset,
@@ -169,6 +178,22 @@ export default function ThresholdConfigDialog({
       handleErrorApi({ error });
     }
   };
+
+  // `useWatch` chứ không phải `watch()`: nó subscribe qua `control` nên re-render đúng phạm vi
+  // và không vướng rule `react-hooks/incompatible-library`.
+  // Ô trống → valueAsNumber cho ra NaN, `Number.isFinite` loại luôn nên chưa nhập thì không hiện.
+  const tempMin = useWatch({ control, name: "temperatureMin" });
+  const tempMax = useWatch({ control, name: "temperatureMax" });
+  const criticalBounds = [
+    Number.isFinite(tempMin)
+      ? `< ${(tempMin - CRITICAL_DELTA_C).toFixed(2)} °C`
+      : null,
+    Number.isFinite(tempMax)
+      ? `> ${(tempMax + CRITICAL_DELTA_C).toFixed(2)} °C`
+      : null,
+  ].filter(Boolean);
+  const criticalHint =
+    criticalBounds.length > 0 ? criticalBounds.join(" or ") : null;
 
   const onSubmit = async (data: UpsertThresholdFormValues) => {
     const payload: UpsertThresholdPayload = {
@@ -267,6 +292,11 @@ export default function ThresholdConfigDialog({
               {field("voltageMax", "Maximum voltage (V)")}
               {field("temperatureMin", "Minimum temperature (°C)")}
               {field("temperatureMax", "Maximum temperature (°C)")}
+              {criticalHint && (
+                <p className="col-span-2 -mt-2 text-xs text-muted-foreground">
+                  Critical at {criticalHint}
+                </p>
+              )}
               {field("socWarningThreshold", "SOC Warning (%)")}
               {field("socCriticalThreshold", "SOC Critical (%)")}
               {field("currentMaxCharge", "Maximum charge current (A)", true)}
