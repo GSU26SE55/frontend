@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Pencil, ArrowRightLeft, Trash2 } from "lucide-react";
+import { Pencil, ArrowRightLeft, Trash2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +24,7 @@ import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCa
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
 // Admin — full battery detail page: uses the shared BatteryRealtimeDetail (read-only core)
-// + injects admin CRUD and the BMS control through headerActions.
-//
-// The "Set topology" trigger is hidden for now; SetTopologyDialog below is kept wired so
-// restoring it only means putting the button back into headerActions.
+// + injects admin CRUD, the BMS control, and Set topology through headerActions.
 export default function BatteryAssetDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,6 +61,13 @@ export default function BatteryAssetDetailPage() {
               onClick={() => setEditOpen(true)}
             >
               <Pencil size={13} /> Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTopologyOpen(true)}
+            >
+              <ShieldAlert size={13} /> Set topology
             </Button>
             <Button
               variant="outline"

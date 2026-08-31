@@ -18,15 +18,24 @@ import { cn } from "@/lib/utils";
  * `size="narrow"` is the exception, for genuinely form-shaped pages (settings, a single
  * profile). A form stretched across 2000px leaves its fields stranded, so those stay in
  * a centred column.
+ *
+ * `fillViewport` is for the role dashboards (manager, staff): one fixed frame that fills
+ * the viewport at any data volume, no page-level scroll on desktop. `space-y-6` becomes a
+ * column flex so a `flex-1` child can claim the remaining height, and scrolling stays on
+ * (via `overflow-y-auto`) below the `lg` breakpoint, where panels stack instead of filling
+ * a frame.
  */
 export function PageContainer({
   children,
   className,
   size = "default",
+  fillViewport = false,
   ...rest
 }: React.ComponentProps<"div"> & {
   /** "narrow" for form/settings pages. Anything list- or dashboard-shaped stays default. */
   size?: "default" | "narrow";
+  /** One fixed frame filling the viewport, no desktop scroll. For fixed-frame dashboards only. */
+  fillViewport?: boolean;
 }) {
   return (
     <div
@@ -36,7 +45,10 @@ export function PageContainer({
         // a child that needs to bleed to the page edge can cancel them with
         // `calc(var(--page-pl) * -1)` however deeply it is nested. `-mx-6` guessed, and
         // guessed wrong the moment the two gutters stopped matching.
-        "w-full space-y-6 py-6 pl-(--page-pl) pr-(--page-pr)",
+        "w-full py-6 pl-(--page-pl) pr-(--page-pr)",
+        fillViewport
+          ? "flex h-full flex-col overflow-y-auto lg:overflow-hidden"
+          : "space-y-6",
         // A centred column needs matching gutters, or it reads as misaligned.
         size === "narrow" && "mx-auto max-w-275 [--page-pl:var(--page-pr)]",
         className,

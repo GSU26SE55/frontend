@@ -8,7 +8,7 @@ import {
   BatteryStatusEnum,
   type BatteryAssetDto,
 } from "@/shared/types/battery/battery.types";
-import { toneClass } from "@/shared/theme/statusColors";
+import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
 import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -172,6 +172,32 @@ export default function SiteAssetsTable({
         asset.lastSensorReadingAt
           ? format(new Date(asset.lastSensorReadingAt), "dd/MM/yyyy HH:mm")
           : "—",
+    },
+    {
+      id: "alert",
+      header: "Alert",
+      cell: (asset) =>
+        asset.activeAlertCount > 0 ? (
+          <Badge variant="outline" className={toneClass("p1")}>
+            {asset.activeAlertCount}
+          </Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground">0</span>
+        ),
+    },
+    {
+      id: "cascadeRisk",
+      header: "Cascade risk",
+      cell: (asset) => (
+        <Badge
+          variant="outline"
+          className={toneClass(
+            CASCADE_RISK_TONE[asset.cascadeRiskLevel] ?? "muted",
+          )}
+        >
+          {asset.cascadeRiskScore.toFixed(2)}
+        </Badge>
+      ),
     },
   ];
 
