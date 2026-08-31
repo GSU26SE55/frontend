@@ -142,7 +142,9 @@ export default function ManagerSiteDetailPage() {
               <Power className="size-3.5 text-destructive" />
               BMS
             </Button>
-            <RefreshButton queryKeys={[KEY.sites]} />
+            {/* Covers both tabs: KEY.sites carries the site data, KEY.ambient the
+               Environment strip and history table. */}
+            <RefreshButton queryKeys={[KEY.sites, KEY.ambient]} />
           </div>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">{site.name}</h1>

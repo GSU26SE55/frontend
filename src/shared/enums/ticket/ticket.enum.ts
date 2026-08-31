@@ -168,7 +168,7 @@ export const MaintenanceLogTypeEnum = {
 export type MaintenanceLogTypeEnum =
   (typeof MaintenanceLogTypeEnum)[keyof typeof MaintenanceLogTypeEnum];
 
-// GH-1176: synced with BE ActivityActionEnum. Removed: AutoClosed (AutoClose removed),
+// Synced 1-1 with BE ActivityActionEnum (35 values). Removed: AutoClosed (AutoClose removed),
 // TriageApproved (triage approval removed). Renamed: Commented → Chatted (BE name).
 // Resolved retained (BE still uses it for the activity record of staff completion).
 export const ActivityActionEnum = {
@@ -194,11 +194,19 @@ export const ActivityActionEnum = {
   Reopened: "Reopened",
   ResolvedByEscalatedStaff: "ResolvedByEscalatedStaff",
   Closed: "Closed",
+  ChatEdited: "ChatEdited",
+  ChatDeleted: "ChatDeleted",
+  ChatRestored: "ChatRestored",
+  ChatReplied: "ChatReplied",
+  ChatPinned: "ChatPinned",
+  ChatUnpinned: "ChatUnpinned",
+  ChatFlagged: "ChatFlagged",
   RatingRequested: "RatingRequested",
   ParticipantAdded: "ParticipantAdded",
   ParticipantRemoved: "ParticipantRemoved",
   ParticipantRoleChanged: "ParticipantRoleChanged",
   IncidentDeclassified: "IncidentDeclassified",
+  PeriodicMaintenanceScheduleChanged: "PeriodicMaintenanceScheduleChanged",
 } as const;
 export type ActivityActionEnum =
   (typeof ActivityActionEnum)[keyof typeof ActivityActionEnum];

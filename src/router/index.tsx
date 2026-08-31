@@ -66,7 +66,6 @@ const NotificationInboxPage = lazyPage(
 const NotificationUnsubscribePage = lazyPage(
   () => import("@/shared/pages/NotificationUnsubscribePage"),
 );
-const ProfilePage = lazyPage(() => import("@/features/auth/pages/ProfilePage"));
 const AuditLogsPage = lazyPage(
   () => import("@/features/admin/pages/AuditLogsPage"),
 );
@@ -400,7 +399,6 @@ const router = createBrowserRouter([
               { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "sagas", element: <AdminSagaDebugPage /> },
               { path: "sla-calendar", element: <AdminSlaCalendarPage /> },
-              { path: "profile", element: <ProfilePage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               {
                 path: "battery-audit-logs",
@@ -476,7 +474,6 @@ const router = createBrowserRouter([
                 path: "iot-calibrations",
                 element: <ManagerCalibrationsExpiringPage />,
               },
-              { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
               { path: "inbox", element: <NotificationInboxPage /> },
             ],
@@ -521,7 +518,6 @@ const router = createBrowserRouter([
                 path: "battery-assets/:id",
                 element: <StaffBatteryAssetDetailPage />,
               },
-              { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
               { path: "inbox", element: <NotificationInboxPage /> },
             ],

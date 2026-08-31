@@ -90,6 +90,15 @@ const INVALIDATION_MAP: Partial<
   // The saga failing leaves the alert without the ticket it should have produced.
   [T.AlertTicketSagaFailed]: [ALERTS, ...ANY_TICKETS],
 
+  // ── Device alerts (IoT gateway) ─────────────────────────────────────────────
+  // The Device alerts badge counts Open + Acknowledged rows with iotOnly: true — the same
+  // ALERTS branch as Battery alerts, just filtered the opposite way (see
+  // useUnresolvedDeviceAlertCount). Went-offline raises the count; recovered/decommissioned
+  // resolve or remove the row, so both directions must invalidate.
+  [T.IotDeviceWentOffline]: [ALERTS],
+  [T.IotDeviceRecovered]: [ALERTS],
+  [T.IotDeviceAutoDecommissioned]: [ALERTS],
+
   // ── Environmental incidents ────────────────────────────────────────────────
   // Detected raises the count; Resolved lowers it. Both must invalidate — dropping the
   // resolved case is how a badge gets stuck showing work that is already done.

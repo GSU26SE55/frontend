@@ -24,8 +24,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import DataPagination from "@/shared/components/ui/DataPagination";
-import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { KEY } from "@/shared/utils/queryKeys";
 import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
@@ -50,7 +48,7 @@ import { formatDateTime } from "@/shared/utils/datetime";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
   [AmbientReadingSourceEnum.IotSensor]: "Sensor",
-  [AmbientReadingSourceEnum.WeatherApi]: "Weather API",
+  [AmbientReadingSourceEnum.WeatherApi]: "Sensor",
 };
 
 const toNumOrNull = (val?: string): number | null => {
@@ -104,20 +102,13 @@ export function AmbientSitePanel({
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <LatestStrip siteId={siteId} />
-        <div className="flex items-center gap-2">
-          {/* Sensors report every 15s, so the panel goes stale while it sits open. One key for
-              the whole `ambient` namespace refreshes the strip and the history table together —
-              two separate keys would leave the two showing different moments in time. */}
-          <RefreshButton queryKeys={[KEY.ambient]} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setConfigOpen(true)}
-          >
-            <Settings2 size={14} />
-            Configure threshold
-          </Button>
-        </div>
+        {/* No refresh button here: this panel is a tab inside the site detail page, whose
+            header button already invalidates KEY.ambient alongside KEY.sites. A second one
+            beside it looked like two different refreshes for the same screen. */}
+        <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
+          <Settings2 size={14} />
+          Configure threshold
+        </Button>
       </div>
 
       <HistoryTable

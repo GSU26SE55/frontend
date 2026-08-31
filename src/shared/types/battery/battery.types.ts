@@ -14,9 +14,9 @@ export interface BatteryAssetDto {
   status: BatteryStatusEnum;
   location?: string;
   lastSensorReadingAt?: string;
-  // OPTIONAL — không phải endpoint nào cũng trả. `GET /sites/{id}/assets` chiếu sang
-  // `BatteryAssetDto` mà không set ba trường này, nên khai `number` bắt buộc chỉ làm tsc im
-  // lặng rồi để runtime nổ ở `.toFixed()`. Chỗ hiển thị phải tự lo trường hợp thiếu.
+  // `GET /sites/{id}/assets` sets these (see GetSiteAssetsQueryHandler), but other endpoints
+  // that reuse this DTO may not — keep them optional and let call sites guard for the missing
+  // case rather than trust `number`/`.toFixed()` blindly.
   activeAlertCount?: number;
   cascadeRiskScore?: number;
   cascadeRiskLevel?: CascadeRiskLevelName;
