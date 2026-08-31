@@ -179,10 +179,10 @@ export default function SiteAssetsTable({
       cell: (asset) =>
         asset.activeAlertCount > 0 ? (
           <Badge variant="outline" className={toneClass("p1")}>
-            {asset.activeAlertCount}
+            Open
           </Badge>
         ) : (
-          <span className="text-xs text-muted-foreground">0</span>
+          <span className="text-xs text-muted-foreground">—</span>
         ),
     },
     {
