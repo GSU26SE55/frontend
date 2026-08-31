@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Thermometer, Sun, Settings2 } from "lucide-react";
+import { Thermometer, Wind, Droplet, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -24,6 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import DataPagination from "@/shared/components/ui/DataPagination";
+import { RefreshButton } from "@/shared/components/ui/RefreshButton";
+import { KEY } from "@/shared/utils/queryKeys";
 import { DateTimePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
@@ -47,7 +49,7 @@ import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { formatDateTime } from "@/shared/utils/datetime";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
-  [AmbientReadingSourceEnum.IotSensor]: "IoT sensor",
+  [AmbientReadingSourceEnum.IotSensor]: "Sensor",
   [AmbientReadingSourceEnum.WeatherApi]: "Weather API",
 };
 
@@ -59,6 +61,9 @@ const toNumOrNull = (val?: string): number | null => {
 
 const fmt = (v?: number | null, unit = "") =>
   v === null || v === undefined ? "—" : `${v}${unit}`;
+
+const fmtWater = (v?: boolean | null) =>
+  v === null || v === undefined ? "—" : v ? "Wet" : "Dry";
 
 // datetime-local (local time, no timezone) → ISO UTC for the API. "" → undefined.
 const toUtcIso = (local: string): string | undefined =>
@@ -99,10 +104,20 @@ export function AmbientSitePanel({
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <LatestStrip siteId={siteId} />
-        <Button variant="outline" size="sm" onClick={() => setConfigOpen(true)}>
-          <Settings2 size={14} />
-          Configure threshold
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Sensors report every 15s, so the panel goes stale while it sits open. One key for
+              the whole `ambient` namespace refreshes the strip and the history table together —
+              two separate keys would leave the two showing different moments in time. */}
+          <RefreshButton queryKeys={[KEY.ambient]} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setConfigOpen(true)}
+          >
+            <Settings2 size={14} />
+            Configure threshold
+          </Button>
+        </div>
       </div>
 
       <HistoryTable
@@ -146,9 +161,15 @@ function LatestStrip({ siteId }: { siteId: string }) {
       />
       <Separator orientation="vertical" className="h-7" />
       <MetricItem
-        icon={<Sun className="size-4 text-amber-500" />}
-        label="Irradiance"
-        value={fmt(latest.solarIrradiance, " W/m²")}
+        icon={<Wind className="size-4 text-emerald-500" />}
+        label="Gas"
+        value={fmt(latest.gasConcentration, " %")}
+      />
+      <Separator orientation="vertical" className="h-7" />
+      <MetricItem
+        icon={<Droplet className="size-4 text-cyan-500" />}
+        label="Water"
+        value={fmtWater(latest.waterLeakDetected)}
       />
     </div>
   );
@@ -240,6 +261,8 @@ function ThresholdFormBody({
           threshold.highAmbientTempCritical?.toString() ?? "",
         highHumidityWarning: threshold.highHumidityWarning?.toString() ?? "",
         highHumidityCritical: threshold.highHumidityCritical?.toString() ?? "",
+        highGasWarning: threshold.highGasWarning?.toString() ?? "",
+        highGasCritical: threshold.highGasCritical?.toString() ?? "",
         comboTempThreshold: threshold.comboTempThreshold?.toString() ?? "",
         comboHumidityThreshold:
           threshold.comboHumidityThreshold?.toString() ?? "",
@@ -255,6 +278,8 @@ function ThresholdFormBody({
         highAmbientTempCritical: "",
         highHumidityWarning: "",
         highHumidityCritical: "",
+        highGasWarning: "",
+        highGasCritical: "",
         comboTempThreshold: "",
         comboHumidityThreshold: "",
         enabled: true,
@@ -269,6 +294,8 @@ function ThresholdFormBody({
       highAmbientTempCritical: toNumOrNull(data.highAmbientTempCritical),
       highHumidityWarning: toNumOrNull(data.highHumidityWarning),
       highHumidityCritical: toNumOrNull(data.highHumidityCritical),
+      highGasWarning: toNumOrNull(data.highGasWarning),
+      highGasCritical: toNumOrNull(data.highGasCritical),
       comboTempThreshold: toNumOrNull(data.comboTempThreshold),
       comboHumidityThreshold: toNumOrNull(data.comboHumidityThreshold),
       enabled: data.enabled,
@@ -317,6 +344,24 @@ function ThresholdFormBody({
             label="Critical (%)"
             error={errors.highHumidityCritical?.message}
             {...register("highHumidityCritical")}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Gas Concentration (Khí Gas)
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <NumField
+            label="Warning (%)"
+            error={errors.highGasWarning?.message}
+            {...register("highGasWarning")}
+          />
+          <NumField
+            label="Critical (%)"
+            error={errors.highGasCritical?.message}
+            {...register("highGasCritical")}
           />
         </div>
       </div>
@@ -519,7 +564,8 @@ function HistoryTable({
                 </TableHead>
                 <TableHead>Timestamp</TableHead>
                 <TableHead>Temperature</TableHead>
-                <TableHead>Irradiance</TableHead>
+                <TableHead>Gas</TableHead>
+                <TableHead>Water</TableHead>
                 <TableHead>{TABLE_COLUMNS.source}</TableHead>
               </TableRow>
             </TableHeader>
@@ -539,7 +585,12 @@ function HistoryTable({
                     >
                       {fmt(r.ambientTemperature, " °C")}
                     </TableCell>
-                    <TableCell>{fmt(r.solarIrradiance, " W/m²")}</TableCell>
+                    <TableCell className={ambientLevelTextClass(ev.gas)}>
+                      {fmt(r.gasConcentration, " %")}
+                    </TableCell>
+                    <TableCell className={ambientLevelTextClass(ev.water)}>
+                      {fmtWater(r.waterLeakDetected)}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {SOURCE_LABELS[r.source] ?? "—"}
                     </TableCell>

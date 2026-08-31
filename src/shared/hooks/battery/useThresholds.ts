@@ -30,5 +30,14 @@ export function useThresholdByType(
         .getByType(batteryTypeId, params)
         .then((r) => r.data.data ?? null),
     enabled: enabled && !!batteryTypeId,
+    // Ngưỡng quyết định MÀU của mọi ô realtime và các vùng tô trên chart, nên nó không được
+    // đứng yên trong cache khi Admin vừa sửa ở màn khác. Coi là stale ngay và refetch khi tab
+    // được focus lại: đổi ngưỡng ở tab Admin rồi quay sang tab này là màu cập nhật.
+    //
+    // Đây là polling theo tương tác, KHÔNG phải push: hai phiên đăng nhập khác nhau (vd Admin ở
+    // cửa sổ thường, Manager ở cửa sổ ẩn danh) vẫn cần focus lại tab hoặc bấm Refresh. Muốn đổi
+    // là đổi ngay không cần thao tác thì phải có kênh push riêng cho threshold.
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }

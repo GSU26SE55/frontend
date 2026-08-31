@@ -9,13 +9,18 @@ import type {
 } from "@/shared/types/ambient/ambient.types";
 import { MESSAGES } from "@/shared/constants/messages";
 
-// Ambient history — chart/timeline, hourly frequency: staleTime 5 minutes.
+// Nhịp tự tải lại của màn hình môi trường. KHÔNG phải nhịp gửi của thiết bị (firmware đang gửi
+// mỗi 15s) — mỗi nhịp có thể trễ tối đa một chu kỳ gửi, đổi lại còn nửa số request.
+// Trước đây bảng để staleTime 5 phút và KHÔNG có refetchInterval vì dữ liệu môi trường lấy theo
+// giờ từ weather API; từ khi cảm biến tự báo, giả định đó sai và bảng đứng im hàng phút.
+const AMBIENT_REFRESH_MS = 20_000;
 export const useAmbientHistory = (params: AmbientHistoryParams) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.history(params.siteId, params),
     queryFn: () => ambientService.getHistory(params).then((r) => r.data.data),
     enabled: !!params.siteId,
-    staleTime: 5 * 60_000,
+    staleTime: AMBIENT_REFRESH_MS,
+    refetchInterval: AMBIENT_REFRESH_MS,
   });
 
 // Ambient latest — the current temperature/humidity reading for the site, so it polls on the
@@ -28,8 +33,10 @@ export const useAmbientLatest = (siteId: string) =>
     queryKey: QUERY_KEY.ambient.latest(siteId),
     queryFn: () => ambientService.getLatest(siteId).then((r) => r.data.data),
     enabled: !!siteId,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
+    // Cùng nhịp với bảng lịch sử ngay bên dưới: lệch nhịp thì ô "mới nhất" và dòng đầu của bảng
+    // hiển thị hai thời điểm khác nhau — đúng cái sai mà widget này từng mắc.
+    staleTime: AMBIENT_REFRESH_MS,
+    refetchInterval: AMBIENT_REFRESH_MS,
     retry: false,
   });
 

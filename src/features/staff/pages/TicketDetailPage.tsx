@@ -427,6 +427,8 @@ export default function TicketDetailPage() {
                   return (
                     <EnvironmentalIncidentInfoPanel
                       incidentId={subject.incidentId}
+                      siteId={subject.siteId}
+                      detectedAt={ticket.detectedAt}
                       description={ticket.description}
                     />
                   );

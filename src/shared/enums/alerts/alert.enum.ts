@@ -37,6 +37,9 @@ export const AnomalyTypeEnum = {
   // Rare, but it DOES reach the alert table, so leaving it out here made the UI render a
   // bare "#17" for a state that ends a device's life.
   IotDataIntegrityViolation: 17,
+  // MQ-2 gas concentration (%) over AmbientThresholdConfig.HighGasWarning/Critical.
+  // Site-level like HighAmbientTemp — reported by the gas sensor, not tied to a battery.
+  HighGasConcentration: 18,
 } as const;
 export type AnomalyTypeEnum =
   (typeof AnomalyTypeEnum)[keyof typeof AnomalyTypeEnum];

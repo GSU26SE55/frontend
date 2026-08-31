@@ -37,9 +37,12 @@ export type TicketCategoryEnum =
 export const TicketOriginEnum = {
   ManualByCustomer: "ManualByCustomer",
   AutoFromAlert: "AutoFromAlert",
-  // Created by the system, not from one specific alert (High cascade risk, Critical
-  // environmental incident). Tickets of this kind have batteryAssetId = "" at site level.
+  // Created by the system, not from one specific alert (High cascade risk). Tickets of this
+  // kind have batteryAssetId = "" at site level.
   System: "System",
+  // Sự cố môi trường của site — thiết bị tự báo (khói, rò khí, ngập) hoặc backend chấm số đo
+  // ambient vượt ngưỡng. Có origin RIÊNG để không phải suy ra từ `AutoFromAlert + ImpactScope`.
+  AutoFromEnvironment: "AutoFromEnvironment",
 } as const;
 export type TicketOriginEnum =
   (typeof TicketOriginEnum)[keyof typeof TicketOriginEnum];

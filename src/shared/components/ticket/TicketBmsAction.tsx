@@ -44,11 +44,16 @@ export default function TicketBmsAction({ ticket }: { ticket: TicketDTO }) {
 
   // Both hooks run unconditionally — `enabled` keeps the one this ticket doesn't need idle.
   const { data: incident } = useIncidentDetail(
-    isSite ? subject.incidentId : "",
+    (isSite ? subject.incidentId : "") ?? "",
   );
   const [siteBmsOpen, setSiteBmsOpen] = useState(false);
+  // Site lấy từ incident khi có, ngược lại từ chính ticket: ticket môi trường sinh từ ngưỡng
+  // ambient không có incident record nhưng vẫn là ticket cấp site và vẫn cần điều khiển BMS
+  // cho cả site.
+  const siteIdForBms =
+    incident?.siteId ?? (isSite ? subject.siteId : undefined) ?? "";
   const { data: siteAssets, isLoading: loadingSiteAssets } =
-    useSiteSwitchableAssets(incident?.siteId ?? "", siteBmsOpen);
+    useSiteSwitchableAssets(siteIdForBms, siteBmsOpen);
 
   const [menuAssetId, setMenuAssetId] = useState<string | null>(null);
 

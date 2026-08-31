@@ -68,10 +68,10 @@ export default function CompareEvidencePanel({
                     {format(new Date(w.reading.time), "HH:mm:ss dd/MM")}
                   </td>
                   <td className="px-2 py-1.5 text-right">
-                    {w.reading.temperature.toFixed(1)}
+                    {w.reading.temperature.toFixed(2)}
                   </td>
                   <td className="px-2 py-1.5 text-right">
-                    {w.reading.socPercent.toFixed(0)}
+                    {w.reading.socPercent.toFixed(2)}
                   </td>
                   <td className="px-2 py-1.5">
                     <span className="flex flex-wrap gap-1">

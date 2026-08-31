@@ -129,9 +129,34 @@ export default function SiteBmsSwitchDialog({
       return next;
     });
 
-  const run = async (batch: BatteryAssetDto[]) => {
-    const payload: SetBmsSwitchPayload = { target, enable };
+  // "Both" = hai lệnh TUẦN TỰ trên từng viên pin (charge rồi discharge), không phải một lệnh
+  // `target: "all"` — firmware chỉ map charge=1/discharge=2 nên `"all"` ack `failed` ở thiết bị.
+  // Backend không chặn vì hai MOSFET khác nhau không tính là xung đột.
+  //
+  // Khi TẮT thì lệnh thứ hai vẫn gửi dù lệnh đầu lỗi (cô lập được vế nào hay vế đó); khi BẬT thì
+  // lỗi ở vế đầu là dừng, không để pin ở trạng thái bật nửa vời.
+  const applyToAsset = async (assetId: string) => {
+    const targets =
+      target === BmsSwitchTarget.All
+        ? [BmsSwitchTarget.Charge, BmsSwitchTarget.Discharge]
+        : [target];
 
+    let firstError: unknown = null;
+    for (const t of targets) {
+      try {
+        await bmsSwitchService.setSwitch(assetId, {
+          target: t,
+          enable,
+        } satisfies SetBmsSwitchPayload);
+      } catch (error) {
+        firstError ??= error;
+        if (enable) break;
+      }
+    }
+    if (firstError) throw firstError;
+  };
+
+  const run = async (batch: BatteryAssetDto[]) => {
     setPending(true);
     const collected: AssetResult[] = [];
 
@@ -140,7 +165,7 @@ export default function SiteBmsSwitchDialog({
     for (let i = 0; i < batch.length; i += BATCH_SIZE) {
       const chunk = batch.slice(i, i + BATCH_SIZE);
       const settled = await Promise.allSettled(
-        chunk.map((asset) => bmsSwitchService.setSwitch(asset.id, payload)),
+        chunk.map((asset) => applyToAsset(asset.id)),
       );
       settled.forEach((outcome, index) =>
         collected.push(
