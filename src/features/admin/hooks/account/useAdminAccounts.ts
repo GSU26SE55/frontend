@@ -68,7 +68,10 @@ export const useAdminUpdateAccount = () => {
   });
 };
 
-export const useAdminChangeAccountStatus = () => {
+// Powers the dropdown quick-change submenu. The toast lives here, not in mutate()'s callback —
+// the submenu closes as soon as it's clicked, so the component unmounts before the response
+// returns.
+export const useAdminChangeAccountStatusQuick = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -80,7 +83,9 @@ export const useAdminChangeAccountStatus = () => {
     }) => adminAccountsService.changeStatus(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY.admin.accounts });
+      toast.success(ADMIN_MESSAGES.common.statusUpdated);
     },
+    onError: (error) => handleErrorApi({ error }),
   });
 };
 

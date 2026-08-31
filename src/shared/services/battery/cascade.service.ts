@@ -23,7 +23,7 @@ import type {
 // renders "Cascade risk: 1", High risk paints the neutral fallback colour, and the BMS
 // high-risk guard never trips. Normalising once here keeps that fix in a single place rather
 // than in each component.
-const nameFrom = <T extends Record<string, number>>(
+export const nameFrom = <T extends Record<string, number>>(
   lookup: T,
   value: RawEnum<Extract<keyof T, string>>,
 ): Extract<keyof T, string> => {

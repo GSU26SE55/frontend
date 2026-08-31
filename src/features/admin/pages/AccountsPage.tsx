@@ -58,8 +58,8 @@ import { UserRole } from "@/shared/types/account/session.types";
 import InviteAccountDialog from "@/features/admin/components/account/InviteAccountDialog";
 import CreateAccountDialog from "@/features/admin/components/account/CreateAccountDialog";
 import EditAccountDialog from "@/features/admin/components/account/EditAccountDialog";
-import ChangeAccountStatusDialog from "@/features/admin/components/account/ChangeAccountStatusDialog";
 import ChangeRoleSubmenu from "@/features/admin/components/account/ChangeRoleSubmenu";
+import ChangeAccountStatusSubmenu from "@/features/admin/components/account/ChangeAccountStatusSubmenu";
 import AccountDetailDrawer from "@/features/admin/components/account/AccountDetailDrawer";
 import EditStaffProfileDialog from "@/features/admin/components/account/EditStaffProfileDialog";
 import MergeAccountDialog from "@/features/admin/components/account/MergeAccountDialog";
@@ -116,7 +116,6 @@ type DialogState =
   | { type: "invite" }
   | { type: "create" }
   | { type: "edit"; account: AccountDto }
-  | { type: "status"; account: AccountDto }
   | { type: "unlock"; account: AccountDto }
   | { type: "reset2fa"; account: AccountDto }
   | { type: "delete"; account: AccountDto }
@@ -378,13 +377,7 @@ export default function AccountsPage() {
                           >
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setDialog({ type: "status", account: acc })
-                            }
-                          >
-                            Change status
-                          </DropdownMenuItem>
+                          <ChangeAccountStatusSubmenu account={acc} />
                           <ChangeRoleSubmenu account={acc} roles={roles} />
                           <DropdownMenuItem
                             onClick={() =>
@@ -471,13 +464,6 @@ export default function AccountsPage() {
 
       {dialog.type === "edit" && (
         <EditAccountDialog open onClose={close} account={dialog.account} />
-      )}
-      {dialog.type === "status" && (
-        <ChangeAccountStatusDialog
-          open
-          onClose={close}
-          account={dialog.account}
-        />
       )}
       {dialog.type === "detail" && (
         <AccountDetailDrawer open onClose={close} account={dialog.account} />

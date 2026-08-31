@@ -1,11 +1,7 @@
 import { cn } from "@/lib/utils";
-import type {
-  SensorStreamState,
-  LiveStatsDto,
-} from "@/shared/types/battery/sensor-stream.types";
+import type { LiveStatsDto } from "@/shared/types/battery/sensor-stream.types";
 import { ChargingStateEnum } from "@/shared/enums/battery/battery.enum";
 import {
-  toneDot,
   toneFill,
   toneVars,
   type StatusTone,
@@ -49,15 +45,6 @@ const CHARGING_STATE_META: Record<number, { label: string; tone: StatusTone }> =
 // màn hình luôn giải thích được màu của chính nó: 26.94 hiện "26.94" và đỏ khi trần là 26.90.
 const fmtNum = (v: number | null | undefined, dec = 2) =>
   v != null ? v.toFixed(dec) : "—";
-
-// SSE connection status dot.
-const DOT_CLS: Record<SensorStreamState["status"], string> = {
-  live: `${toneDot("ok")} animate-pulse`,
-  connecting: `${toneDot("p3")} animate-pulse`,
-  "open-idle": "bg-muted-foreground/40",
-  error: toneDot("p1"),
-  closed: "bg-muted-foreground/40",
-};
 
 function StatTile({
   label,
@@ -143,7 +130,6 @@ const levelCls = (level: ThresholdLevel) =>
 
 interface LiveTelemetryCardProps {
   data: TelemetryDisplay | null;
-  status?: SensorStreamState["status"];
   /** Thresholds from the BE's ThresholdConfig (per BatteryType). Omit → telemetry stays uncolored. */
   thresholds?: TelemetryThresholds;
   /**
@@ -155,12 +141,11 @@ interface LiveTelemetryCardProps {
 }
 
 /**
- * Card showing a single live telemetry reading (SSE) + connection status dot.
+ * Card showing a single live telemetry reading (SSE).
  * Used for the admin asset detail page (GH-114) and reused for the summary item (GH-116).
  */
 export function LiveTelemetryCard({
   data,
-  status,
   thresholds,
   stats,
 }: LiveTelemetryCardProps) {
@@ -211,9 +196,6 @@ export function LiveTelemetryCard({
           ),
         );
 
-  // status undefined → defaults to emerald when there's data (used where status isn't tracked).
-  const dotCls = status ? DOT_CLS[status] : data ? DOT_CLS.live : null;
-
   const chargingMeta =
     data?.chargingState != null
       ? CHARGING_STATE_META[data.chargingState]
@@ -221,15 +203,6 @@ export function LiveTelemetryCard({
 
   return (
     <div className="px-4 py-4 flex-1">
-      <div className="flex items-center gap-2 mb-4">
-        <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Realtime
-        </p>
-        {dotCls && (
-          <span className={cn("size-1.5 rounded-full shrink-0", dotCls)} />
-        )}
-      </div>
-
       {!data ? (
         <p className="text-xs text-muted-foreground">No sensor data yet</p>
       ) : (
@@ -281,26 +254,26 @@ export function LiveTelemetryCard({
               pack is idle (neither charging nor discharging). */}
           <div className="rounded-lg bg-muted/50 px-3 py-2 mt-1 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Peak {stats?.window === "today" ? "today" : "1 hour"}
               </span>
-              <span className="text-3xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {stats
                   ? `${stats.chargeSampleCount + stats.dischargeSampleCount} samples`
                   : "no data yet"}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-3xs text-muted-foreground">Charge</span>
-              <span className="text-3xs font-medium font-mono-num">
+              <span className="text-xs text-muted-foreground">Charge</span>
+              <span className="text-xs font-medium font-mono-num">
                 {stats
                   ? `${fmtNum(stats.minChargeCurrent)} – ${fmtNum(stats.maxChargeCurrent)} A`
                   : "—"}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-3xs text-muted-foreground">Discharge</span>
-              <span className="text-3xs font-medium font-mono-num">
+              <span className="text-xs text-muted-foreground">Discharge</span>
+              <span className="text-xs font-medium font-mono-num">
                 {stats
                   ? `${fmtNum(stats.minDischargeCurrent)} – ${fmtNum(stats.maxDischargeCurrent)} A`
                   : "—"}

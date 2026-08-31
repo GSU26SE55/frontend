@@ -31,7 +31,6 @@ import {
   useAdminKbList,
   usePublishKbArticle,
   useArchiveKbArticle,
-  useMarkKbHelpful,
   useDuplicateKbArticle,
   useDeleteKbArticle,
 } from "@/features/admin/hooks/kb/useAdminKb";
@@ -98,7 +97,6 @@ export default function KbListPage() {
   const { data, isLoading, isError, refetch } = useAdminKbList(params);
   const { mutate: publish } = usePublishKbArticle();
   const { mutate: archive } = useArchiveKbArticle();
-  const { mutate: markHelpful } = useMarkKbHelpful();
   const { mutateAsync: duplicate } = useDuplicateKbArticle();
   const { mutate: deleteKb } = useDeleteKbArticle();
   const { mutate: generateBlog, isPending: generatingBlog } =
@@ -264,7 +262,6 @@ export default function KbListPage() {
           onResetFilter={resetFilters}
           onPublish={(a) => publish(a.id)}
           onArchive={(a) => archive(a.id)}
-          onMarkHelpful={(a) => markHelpful(a.id)}
           onEdit={(a) => navigate(`/admin/kb/${a.id}/edit`)}
           onCopy={(a) => handleCopy(a.id)}
           onGenerateBlog={(a) => setToGenerate(a)}

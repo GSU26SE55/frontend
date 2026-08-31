@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   ChartContainer,
   ChartTooltip,
@@ -186,7 +187,7 @@ export default function ManagerDashboardPage() {
       );
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto py-6 pl-(--page-pl) pr-(--page-pr) lg:overflow-hidden">
+    <PageContainer fillViewport>
       <div className="shrink-0">
         <DashboardHeading
           title="Operations"
@@ -286,73 +287,22 @@ export default function ManagerDashboardPage() {
           ))}
         </RecentTable>
 
+        {/* Sits beside "Waiting to be triaged" (same row) rather than after the pipeline
+            panels below: this is a breakdown of that exact queue, not a separate topic —
+            reading the two side by side is the point. */}
         <DashboardPanel
-          title="New tickets, last 7 days"
-          desc={`${createdThisWeek} this week`}
+          title="Untriaged by age"
+          desc={queueCount > 0 ? `${queueCount} in the queue` : undefined}
           className="min-h-72 rounded-lg lg:col-span-4 lg:min-h-0"
-          bodyClassName="flex flex-col gap-2"
         >
-          {ticketsLoading ? (
+          {queueLoading ? (
             <Skeleton className="h-full w-full" />
+          ) : queueItems.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nothing is waiting on triage.
+            </p>
           ) : (
-            <>
-              <ChartContainer
-                config={trendConfig}
-                className="aspect-auto min-h-0 w-full flex-1"
-              >
-                <BarChart
-                  accessibilityLayer
-                  data={ticketTrend}
-                  margin={{ left: 0, right: 6, top: 4 }}
-                >
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(v: string) =>
-                      `${v.slice(5, 7)}/${v.slice(8, 10)}`
-                    }
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <YAxis
-                    width={24}
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={4}
-                    allowDecimals={false}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar
-                    dataKey="count"
-                    fill="var(--color-count)"
-                    radius={8}
-                    maxBarSize={22}
-                  />
-                </BarChart>
-              </ChartContainer>
-              <ChartFooterStats
-                items={[
-                  {
-                    label: "this week",
-                    value: createdThisWeek,
-                    color: "var(--cat-1)",
-                  },
-                  {
-                    label: "busiest day",
-                    value: busiestDay.count,
-                    color: "var(--cat-3)",
-                  },
-                  {
-                    label: "open now",
-                    value: openCount,
-                    color: "var(--cat-2)",
-                  },
-                ]}
-              />
-            </>
+            <BarList data={ageBuckets} total={queueItems.length} />
           )}
         </DashboardPanel>
 
@@ -442,18 +392,72 @@ export default function ManagerDashboardPage() {
         </DashboardPanel>
 
         <DashboardPanel
-          title="Untriaged by age"
-          desc={queueCount > 0 ? `${queueCount} in the queue` : undefined}
+          title="New tickets, last 7 days"
+          desc={`${createdThisWeek} this week`}
           className="min-h-72 rounded-lg lg:col-span-4 lg:min-h-0"
+          bodyClassName="flex flex-col gap-2"
         >
-          {queueLoading ? (
+          {ticketsLoading ? (
             <Skeleton className="h-full w-full" />
-          ) : queueItems.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              Nothing is waiting on triage.
-            </p>
           ) : (
-            <BarList data={ageBuckets} total={queueItems.length} />
+            <>
+              <ChartContainer
+                config={trendConfig}
+                className="aspect-auto min-h-0 w-full flex-1"
+              >
+                <BarChart
+                  accessibilityLayer
+                  data={ticketTrend}
+                  margin={{ left: 0, right: 6, top: 4 }}
+                >
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(v: string) =>
+                      `${v.slice(5, 7)}/${v.slice(8, 10)}`
+                    }
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis
+                    width={24}
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={4}
+                    allowDecimals={false}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar
+                    dataKey="count"
+                    fill="var(--color-count)"
+                    radius={8}
+                    maxBarSize={22}
+                  />
+                </BarChart>
+              </ChartContainer>
+              <ChartFooterStats
+                items={[
+                  {
+                    label: "this week",
+                    value: createdThisWeek,
+                    color: "var(--cat-1)",
+                  },
+                  {
+                    label: "busiest day",
+                    value: busiestDay.count,
+                    color: "var(--cat-3)",
+                  },
+                  {
+                    label: "open now",
+                    value: openCount,
+                    color: "var(--cat-2)",
+                  },
+                ]}
+              />
+            </>
           )}
         </DashboardPanel>
 
@@ -465,6 +469,6 @@ export default function ManagerDashboardPage() {
           className="min-h-72 rounded-lg lg:col-span-3 lg:min-h-0"
         />
       </div>
-    </div>
+    </PageContainer>
   );
 }

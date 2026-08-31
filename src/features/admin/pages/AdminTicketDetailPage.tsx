@@ -69,7 +69,12 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
-import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
+import {
+  slaBarColorClass,
+  isSlaClockLive,
+  formatCalendarExtension,
+  formatCalendarExtensionDays,
+} from "@/shared/lib/sla";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
@@ -232,6 +237,12 @@ export default function AdminTicketDetailPage() {
   }
 
   const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
+  const calendarExtensionLabel = formatCalendarExtension(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
+  const calendarExtensionDays = formatCalendarExtensionDays(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
   // Ticket finished (Completed/Closed/ClosedRejected). Two consequences:
   //  - chat is archived: composer hidden, edit/delete locked in the thread (Admin's override
   //    edit/delete still applies — that path exists precisely for closed tickets);
@@ -506,6 +517,22 @@ export default function AdminTicketDetailPage() {
                     {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                   </span>
                 </div>
+                {/* Tells Admin WHY the deadline is further out than the raw priority budget
+                    would suggest — see the Manager panel for the full rationale. */}
+                {calendarExtensionLabel && (
+                  <div className="text-xs text-muted-foreground">
+                    <p className="italic">{calendarExtensionLabel}:</p>
+                    {calendarExtensionDays.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {calendarExtensionDays.map((day) => (
+                          <li key={day} className="font-bold not-italic">
+                            - {day}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 {/* Live-clock only — see the Manager panel. The Status row above already
                     names the terminal state (Stopped/Met/Breached), and the BE returns
                     remainingPercent = 0 for all of them, so the ratio rows would only
@@ -573,7 +600,7 @@ export default function AdminTicketDetailPage() {
               <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Description
               </p>
-              <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <p className="text-sm font-medium leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {ticket.description}
               </p>
             </div>
@@ -607,7 +634,7 @@ export default function AdminTicketDetailPage() {
               <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                 Resolution
               </p>
-              <p className="text-base leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
                 {ticket.resolutionSummary}
               </p>
             </div>

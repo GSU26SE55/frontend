@@ -24,6 +24,8 @@ import {
   useDeleteSlaNonWorkingPeriod,
   useSlaNonWorkingPeriods,
 } from "@/shared/hooks/sla/useSlaCalendar";
+import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
+import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { KEY } from "@/shared/utils/queryKeys";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { loadFailed, noData } from "@/shared/constants/emptyStates";
@@ -34,6 +36,13 @@ interface Props {
   roleLabel: string;
 }
 
+const DEFAULTS = {
+  sortBy: "",
+  sortDir: "",
+  pageNumber: 1,
+  pageSize: DEFAULT_PAGE_SIZE,
+};
+
 /**
  * SLA business calendar — the days that do NOT count towards a ticket's SLA.
  *
@@ -42,15 +51,18 @@ interface Props {
  * behavioural difference between them here, so both routes render this one view.
  */
 export default function SlaCalendarView({ roleLabel }: Props) {
-  const [page, setPage] = useState(1);
+  const { filters, setFilter, setFilters } = useUrlFilters(DEFAULTS);
+  const sort = useUrlSort(filters.sortBy, filters.sortDir, setFilters);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<SlaNonWorkingPeriodDto | null>(null);
   const [deleteTarget, setDeleteTarget] =
     useState<SlaNonWorkingPeriodDto | null>(null);
 
   const { data, isLoading, isError, refetch } = useSlaNonWorkingPeriods({
-    pageNumber: page,
-    pageSize: DEFAULT_PAGE_SIZE,
+    pageNumber: filters.pageNumber,
+    pageSize: filters.pageSize,
+    sortBy: filters.sortBy || undefined,
+    sortDir: filters.sortDir || undefined,
   });
   const { mutate: removePeriod, isPending: isRemoving } =
     useDeleteSlaNonWorkingPeriod();
@@ -124,6 +136,7 @@ export default function SlaCalendarView({ roleLabel }: Props) {
             pageSize={data?.pageSize}
             onEdit={openEdit}
             onDelete={setDeleteTarget}
+            sort={sort}
           />
         )}
       </Card>
@@ -136,7 +149,7 @@ export default function SlaCalendarView({ roleLabel }: Props) {
           totalPages={data.totalPages}
           hasNextPage={data.hasNextPage}
           hasPreviousPage={data.hasPreviousPage}
-          onPageChange={setPage}
+          onPageChange={(p) => setFilter("pageNumber", p)}
         />
       )}
 

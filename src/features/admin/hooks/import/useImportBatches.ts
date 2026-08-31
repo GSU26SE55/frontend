@@ -58,11 +58,13 @@ export function useImportRows(
   });
 }
 
-export function useCreateImportBatch() {
+export function useCreateImportBatch(
+  onUploadProgress?: (percent: number) => void,
+) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateImportBatchPayload) =>
-      importService.createBatch(payload).then((r) => r.data),
+      importService.createBatch(payload, onUploadProgress).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.importBatches] });
     },
