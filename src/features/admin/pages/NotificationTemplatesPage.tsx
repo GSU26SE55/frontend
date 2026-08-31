@@ -123,10 +123,10 @@ export default function NotificationTemplatesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.admin.notificationTemplates]} />
           <Button size="sm" onClick={() => setFormState({ target: null })}>
             <Plus className="size-3.5" /> Create template
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.notificationTemplates]} />
         </div>
       </div>
 

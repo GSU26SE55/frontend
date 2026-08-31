@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, MapPin, Battery, Thermometer } from "lucide-react";
+import { ArrowLeft, MapPin, Battery, Thermometer, Power } from "lucide-react";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { KEY } from "@/shared/utils/queryKeys";
@@ -20,6 +20,8 @@ import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
+import SiteBmsSwitchDialog from "@/shared/components/battery/SiteBmsSwitchDialog";
+import { useSiteSwitchableAssets } from "@/shared/hooks/battery/useSiteSwitchableAssets";
 import { useSiteCascadeSummary } from "@/features/manager/hooks/battery/useSiteCascadeSummary";
 import {
   useSiteDetail,
@@ -70,6 +72,11 @@ export default function ManagerSiteDetailPage() {
     pageNumber: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
+
+  const [siteBmsOpen, setSiteBmsOpen] = useState(false);
+  // Only fetched once the dialog opens — see useSiteSwitchableAssets.
+  const { data: siteAssets, isLoading: loadingSiteAssets } =
+    useSiteSwitchableAssets(id, siteBmsOpen);
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
   const { data: dashboard } = useSiteDashboard(id);
@@ -123,7 +130,20 @@ export default function ManagerSiteDetailPage() {
           >
             <ArrowLeft className="size-3.5" /> Back
           </Button>
-          <RefreshButton queryKeys={[KEY.sites]} />
+          <div className="flex items-center gap-2">
+            {/* Cut charge/discharge across the site's batteries — the dialog lists them and the
+                operator picks which ones. Reaching this through each battery's own screen is too
+                many steps when a cabinet-level fault is the call being made. */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSiteBmsOpen(true)}
+            >
+              <Power className="size-3.5 text-destructive" />
+              BMS
+            </Button>
+            <RefreshButton queryKeys={[KEY.sites]} />
+          </div>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">{site.name}</h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
@@ -216,7 +236,7 @@ export default function ManagerSiteDetailPage() {
               // the only quick action available is the BMS charge/discharge switch, same scope
               // as the header control on the detail page.
               renderActions={(asset) => (
-                <BmsSwitchControlCard assetId={asset.id} variant="popover" />
+                <BmsSwitchControlCard assetId={asset.id} />
               )}
             />
           </Card>
@@ -233,6 +253,14 @@ export default function ManagerSiteDetailPage() {
           />
         </TabsContent>
       </Tabs>
+
+      <SiteBmsSwitchDialog
+        assets={siteAssets?.assets ?? []}
+        truncated={siteAssets?.truncated}
+        isLoading={loadingSiteAssets}
+        open={siteBmsOpen}
+        onOpenChange={setSiteBmsOpen}
+      />
     </PageContainer>
   );
 }

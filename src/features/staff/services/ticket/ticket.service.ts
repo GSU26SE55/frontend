@@ -1,3 +1,4 @@
+import { CHAT_PAGE_SIZE } from "@/shared/constants/pagination";
 import axiosInstance from "@/shared/lib/axios";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
 import type {
@@ -48,7 +49,8 @@ export const staffTicketService = {
       ENDPOINTS.TICKETS.ACTIVITIES(id),
     ),
 
-  getComments: (ticketId: string, page = 1, pageSize = 10) =>
+  // pageSize default was 10, so a busy ticket silently lost every message past the tenth.
+  getComments: (ticketId: string, page = 1, pageSize = CHAT_PAGE_SIZE) =>
     axiosInstance.get<CommonResponse<PaginationResponse<TicketCommentDTO>>>(
       ENDPOINTS.TICKETS.CHATS(ticketId),
       { params: { page, pageSize } },

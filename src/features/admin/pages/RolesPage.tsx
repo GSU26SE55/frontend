@@ -152,10 +152,10 @@ export default function RolesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.admin.roles]} />
           <Button size="sm" onClick={() => setDialog({ type: "create" })}>
             <Plus className="size-3.5" /> Create role
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.roles]} />
         </div>
       </div>
 

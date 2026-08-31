@@ -178,8 +178,6 @@ export default function IoTDeviceDetailPage() {
           )}
         </div>
         <div className="flex gap-2 flex-wrap">
-          {/* Root key covers both the staff list and the heartbeat history. */}
-          <RefreshButton queryKeys={[KEY.iotDevices]} />
           <Button
             variant="outline"
             size="sm"
@@ -205,6 +203,8 @@ export default function IoTDeviceDetailPage() {
               Rotate key
             </Button>
           )}
+          {/* Root key covers both the staff list and the heartbeat history. */}
+          <RefreshButton queryKeys={[KEY.iotDevices]} />
         </div>
       </div>
 

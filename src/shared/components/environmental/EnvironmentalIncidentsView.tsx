@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldAlert } from "lucide-react";
@@ -43,6 +44,7 @@ import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { useIncidentTicket } from "@/shared/hooks/ticket/useTicketCode";
 import { checkRole } from "@/shared/lib/authz";
 import { UserRole } from "@/shared/types/account/session.types";
 import {
@@ -103,7 +105,17 @@ export default function EnvironmentalIncidentsView({
 }) {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Chi tiết sống trong URL, không chỉ trong state: notification về một sự cố deep-link tới
+  // `environmental-incidents?incident=<id>` (trang này là danh sách, không có route /:id), nên
+  // dialog phải mở được từ chính URL đó.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get("incident");
+  const setSelectedId = (id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set("incident", id);
+    else next.delete("incident");
+    setSearchParams(next, { replace: true });
+  };
   const [reportOpen, setReportOpen] = useState(false);
 
   const siteNameById = new Map((sites ?? []).map((s) => [s.id, s.name]));
@@ -150,12 +162,14 @@ export default function EnvironmentalIncidentsView({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <RefreshButton queryKeys={[KEY.environmentalIncidents]} />
           {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
               Staff can only list sites once BE opens GET /api/sites to the Staff role. */}
           {sites && sites.length > 0 && (
-            <Button onClick={() => setReportOpen(true)}>Manual report</Button>
+            <Button size="sm" onClick={() => setReportOpen(true)}>
+              Manual report
+            </Button>
           )}
+          <RefreshButton queryKeys={[KEY.environmentalIncidents]} />
         </div>
       </div>
 
@@ -359,6 +373,12 @@ function IncidentDetailDialog({
   const canFalseAlarm = checkRole(user, UserRole.ADMIN, UserRole.MANAGER);
 
   const { data: incident, isLoading } = useIncidentDetail(incidentId ?? "");
+  // Ticket sinh ra từ sự cố này. Alert của pin mang sẵn ticketId trong payload nên dialog bên đó
+  // link thẳng được; sự cố môi trường thì không — quan hệ chỉ nằm phía ticket, nên phải tra ngược.
+  const { ticket: incidentTicket, isLoading: ticketLoading } =
+    useIncidentTicket(incidentId);
+  // Staff không có trang này (route chỉ mở cho Admin/Manager), nên chỉ cần 2 prefix.
+  const ticketBasePath = user?.role === UserRole.ADMIN ? "/admin" : "/manager";
   const { mutate: acknowledge, isPending: ackPending } =
     useAcknowledgeIncident();
 
@@ -425,6 +445,23 @@ function IncidentDetailDialog({
             </DetailRow>
             <DetailRow label="Resolved at">
               {formatDateTime(incident.resolvedAt)}
+            </DetailRow>
+            <DetailRow label="Ticket">
+              {/* Ba trạng thái tách bạch, cùng quy ước với dialog alert của pin: mã ticket khi
+                  có, dấu chờ khi đang tra, và "—" khi sự cố chưa sinh ra ticket nào (consumer
+                  có thể chưa chạy xong) — không phải lỗi. */}
+              {incidentTicket ? (
+                <Link
+                  to={`${ticketBasePath}/tickets/${incidentTicket.id}`}
+                  className="font-mono-num text-xs text-primary hover:underline"
+                >
+                  {incidentTicket.code}
+                </Link>
+              ) : ticketLoading ? (
+                "…"
+              ) : (
+                "—"
+              )}
             </DetailRow>
             {incident.resolutionNote && (
               <DetailRow label="Resolution note">

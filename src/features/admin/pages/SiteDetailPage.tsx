@@ -7,6 +7,7 @@ import {
   Thermometer,
   Plus,
   EllipsisVertical,
+  Power,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
@@ -43,6 +44,8 @@ import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
 import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
+import SiteBmsSwitchDialog from "@/shared/components/battery/SiteBmsSwitchDialog";
+import { useSiteSwitchableAssets } from "@/shared/hooks/battery/useSiteSwitchableAssets";
 import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
 import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
@@ -101,6 +104,10 @@ export default function SiteDetailPage() {
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
   const { data: dashboard } = useSiteDashboard(id);
+  const [siteBmsOpen, setSiteBmsOpen] = useState(false);
+  // Only fetched once the dialog opens — see useSiteSwitchableAssets.
+  const { data: siteAssets, isLoading: loadingSiteAssets } =
+    useSiteSwitchableAssets(id, siteBmsOpen);
   const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(
     id,
     assetsParams,
@@ -166,18 +173,30 @@ export default function SiteDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <RefreshButton queryKeys={[KEY.sites]} />
+            {/* State, not an action — so it leads the row rather than sitting between the
+                buttons where it read as a third one. */}
+            {isDecommissioned && (
+              <Badge variant="destructive">Decommissioned</Badge>
+            )}
+            {/* Cut charge/discharge across the site's batteries — the dialog lists them and the
+                operator picks which ones. Reaching this through each battery's own screen is too
+                many steps when a cabinet-level fault is the call being made. */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSiteBmsOpen(true)}
+            >
+              <Power className="size-3.5 text-destructive" />
+              BMS
+            </Button>
             {isDecommissioned ? (
-              <>
-                <Badge variant="destructive">Decommissioned</Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setConfirm({ type: "restore" })}
-                >
-                  Restore
-                </Button>
-              </>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirm({ type: "restore" })}
+              >
+                Restore
+              </Button>
             ) : (
               <>
                 <Button
@@ -196,6 +215,7 @@ export default function SiteDetailPage() {
                 </Button>
               </>
             )}
+            <RefreshButton queryKeys={[KEY.sites]} />
           </div>
         </div>
       </div>
@@ -355,10 +375,17 @@ export default function SiteDetailPage() {
         />
       )}
 
+      <SiteBmsSwitchDialog
+        assets={siteAssets?.assets ?? []}
+        truncated={siteAssets?.truncated}
+        isLoading={loadingSiteAssets}
+        open={siteBmsOpen}
+        onOpenChange={setSiteBmsOpen}
+      />
+
       {bmsAssetId && (
         <BmsSwitchControlCard
           assetId={bmsAssetId}
-          variant="dialog"
           open
           onOpenChange={(open) => !open && setBmsAssetId(null)}
         />

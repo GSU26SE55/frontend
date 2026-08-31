@@ -82,10 +82,10 @@ export default function IoTDevicesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.iotDevices]} />
           <Button size="sm" onClick={() => navigate("/admin/iot-devices/new")}>
             <Plus className="size-3.5" /> Create new
           </Button>
+          <RefreshButton queryKeys={[KEY.iotDevices]} />
         </div>
       </div>
 

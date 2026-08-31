@@ -138,7 +138,6 @@ export function KbArticleDetail({
           </span>
           <KbStatusBadge status={article.status} />
           <div className="ml-auto flex items-center gap-2">
-            <RefreshButton queryKeys={[KEY.kb]} />
             {actions}
             {onEdit && (
               <>
@@ -149,6 +148,7 @@ export function KbArticleDetail({
                 </Button>
               </>
             )}
+            <RefreshButton queryKeys={[KEY.kb]} />
           </div>
         </div>
       </div>

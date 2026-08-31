@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useIncidentDetail } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { useSiteDetail } from "@/shared/hooks/site/useSites";
 import AmbientEvidencePanel from "@/shared/components/ticket/AmbientEvidencePanel";
+import SiteBatteryEvidencePanel from "@/shared/components/ticket/SiteBatteryEvidencePanel";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { alertSeverityLabel } from "@/shared/constants/alertLabels";
 import {
@@ -182,6 +183,14 @@ export default function EnvironmentalIncidentInfoPanel({
       <AmbientEvidencePanel
         siteId={incident.siteId}
         anchorAt={incident.detectedAt}
+      />
+
+      {/* Ambient answers "did something happen in the cabinet"; this answers "has it reached the
+          packs, and which ones" — the question the BMS control on this ticket asks the operator
+          to settle. */}
+      <SiteBatteryEvidencePanel
+        siteId={incident.siteId}
+        detectedAt={incident.detectedAt}
       />
     </div>
   );

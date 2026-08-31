@@ -57,6 +57,11 @@ export const ENDPOINTS = {
     DASHBOARD_STATS: "/api/tickets/dashboard/stats",
     DETAIL: (id: string) => `/api/tickets/${id}`,
     ACTIVITIES: (id: string) => `/api/tickets/${id}/activities`,
+    /** Ticket còn mở liên quan — cùng site hoặc đã link cha–con. */
+    RELATED: (id: string) => `/api/tickets/${id}/related`,
+    /** Tra ngược ticket auto-tạo từ một environmental incident. */
+    BY_INCIDENT: (incidentId: string) =>
+      `/api/tickets/by-incident/${incidentId}`,
     CHATS: (id: string) => `/api/tickets/${id}/chats`,
     CHAT_DETAIL: (tid: string, cid: string) =>
       `/api/tickets/${tid}/chats/${cid}`,
@@ -286,6 +291,8 @@ export const ENDPOINTS = {
         `/api/admin/tickets/${id}/declare-incident`,
       // Manager gộp ticket nghi trùng vào ticket đích (body: { targetTicketId }).
       MERGE: (id: string) => `/api/admin/tickets/${id}/merge`,
+      // Link cha–con: KHÁC merge — không đóng ticket, không dừng SLA.
+      LINK_PARENT: (id: string) => `/api/admin/tickets/${id}/link-parent`,
       // Kích hoạt AI kiểm tra lại (ticket Skipped/Pending).
       RE_VERIFY: (id: string) => `/api/admin/tickets/${id}/re-verify`,
       // Manager đổi priority + reason. BE có thể tự escalate + đổi primary handler

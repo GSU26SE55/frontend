@@ -109,10 +109,10 @@ export default function BatteryAssetsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.batteryAssets]} />
           <Button size="sm" onClick={handleCreate}>
             <Plus className="size-3.5" /> Create
           </Button>
+          <RefreshButton queryKeys={[KEY.batteryAssets]} />
         </div>
       </div>
 

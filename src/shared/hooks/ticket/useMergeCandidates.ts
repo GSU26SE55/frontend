@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ticketBatteryIds } from "@/shared/lib/ticketSubject";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import {
   TicketStatusEnum,
@@ -37,10 +38,22 @@ export function useMergeCandidates(
   tickets: TicketDTO[] | undefined,
   sourceTicketId: string,
   suggestedTargetId?: string | null,
+  /**
+   * Batteries on the source ticket. The BE refuses a merge unless the two tickets share one
+   * (`hasCommonBattery` in TicketMergeCommandHandler), so without this the dropdown offers
+   * targets that always answer 409 — most visibly environmental tickets, which carry no battery
+   * at all and therefore can never be a valid merge target. Omit to keep the old behaviour.
+   */
+  sourceBatteryIds?: string[],
 ): TicketDTO[] {
   return useMemo(() => {
     const all = (tickets ?? []).filter((t) => {
       if (t.id === sourceTicketId) return false;
+      if (sourceBatteryIds && sourceBatteryIds.length > 0) {
+        const targetBatteryIds = ticketBatteryIds(t);
+        if (!targetBatteryIds.some((b) => sourceBatteryIds.includes(b)))
+          return false;
+      }
       if (t.mergedIntoTicketId) return false;
       if (CLOSED_STATUSES.includes(t.status)) return false;
       // GH-1176: New is removed; only Open tickets can be merged (source must be Open too).
@@ -57,5 +70,5 @@ export function useMergeCandidates(
       const bAuto = AUTO_ORIGINS.includes(b.origin) ? 0 : 1;
       return aAuto - bAuto;
     });
-  }, [tickets, sourceTicketId, suggestedTargetId]);
+  }, [tickets, sourceTicketId, suggestedTargetId, sourceBatteryIds]);
 }
