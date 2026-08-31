@@ -64,15 +64,6 @@ function Topbar() {
     >
       <div className="flex-1" />
 
-      {/* System status dot inside a polished pill container */}
-      <div className="hidden sm:flex items-center gap-1.5 text-2xs font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
-        <span
-          className="w-1.5 h-1.5 rounded-full pulse-dot shrink-0"
-          style={{ backgroundColor: "var(--ok)" }}
-        />
-        System stable
-      </div>
-
       <ThemeToggle />
 
       {/* Notification bell */}

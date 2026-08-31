@@ -302,7 +302,6 @@ export default function BatteryRealtimeDetail({
             {/* Realtime — live SSE (~5s), seed/fallback from rt (polling 30s) */}
             <LiveTelemetryCard
               data={live}
-              status={stream.status}
               stats={stream.stats?.["1h"]}
               thresholds={
                 threshold

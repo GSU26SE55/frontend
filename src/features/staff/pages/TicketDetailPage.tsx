@@ -9,6 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   getPrimaryHandler,
   getPrimaryHandlerName,
   getSupporterNames,
@@ -18,7 +23,12 @@ import {
   TicketStatusEnum,
   MaintenanceLogTypeEnum,
 } from "@/shared/types/ticket/ticket.types";
-import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
+import {
+  slaBarColorClass,
+  isSlaClockLive,
+  formatCalendarExtension,
+  formatCalendarExtensionDays,
+} from "@/shared/lib/sla";
 import {
   isTicketChatLocked,
   ticketChatLockedNotice,
@@ -298,6 +308,12 @@ export default function TicketDetailPage() {
   const logs = ticket.maintenanceLogs ?? [];
 
   const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
+  const calendarExtensionLabel = formatCalendarExtension(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
+  const calendarExtensionDays = formatCalendarExtensionDays(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -597,38 +613,58 @@ export default function TicketDetailPage() {
         {/* Right: Sidebar — always mounted, animates width (matches the left sidebar) */}
         <aside
           className={cn(
-            "shrink-0 border-l border-border overflow-hidden",
+            "shrink-0 border-l border-border overflow-hidden transition-[width] duration-300 ease-in-out",
             sidebarOpen ? "w-75" : "w-8",
           )}
         >
           {/* Collapsed rail — button to reopen the info panel */}
           {!sidebarOpen && (
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              title="Open info panel"
-              className="w-8 h-full flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
-            >
-              <PanelRightOpen className="size-4" />
-            </button>
+            <div className="w-8 h-full flex items-start justify-center pt-4 animate-in fade-in duration-200">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => setSidebarOpen(true)}
+                      aria-label="Open info panel"
+                      className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    />
+                  }
+                >
+                  <PanelRightOpen size={15} />
+                </TooltipTrigger>
+                <TooltipContent side="left" sideOffset={8}>
+                  Open info panel
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
 
           {/* Panel content — only shown when open; fixed width w-75 so it doesn't reflow while sliding */}
           {sidebarOpen && (
-            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
+            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60 animate-in fade-in slide-in-from-right-4 duration-300 ease-out">
               {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
                 <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Info
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setSidebarOpen(false)}
-                  title="Collapse info panel"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <PanelRightClose className="size-4" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        onClick={() => setSidebarOpen(false)}
+                        aria-label="Collapse info panel"
+                        className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                      />
+                    }
+                  >
+                    <PanelRightClose size={15} />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={8}>
+                    Collapse info panel
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
               {/* ── AI check + suspected duplicate (only for tickets manually created by a Customer) ──
@@ -706,6 +742,22 @@ export default function TicketDetailPage() {
                         {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                       </span>
                     </div>
+                    {/* Tells Staff WHY the deadline is further out than the raw priority budget
+                        would suggest — see the Manager panel for the full rationale. */}
+                    {calendarExtensionLabel && (
+                      <div className="text-xs text-muted-foreground">
+                        <p className="italic">{calendarExtensionLabel}:</p>
+                        {calendarExtensionDays.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {calendarExtensionDays.map((day) => (
+                              <li key={day} className="font-bold not-italic">
+                                - {day}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                     {/* Live-clock only — see the Manager panel. A Stopped/Met/Breached timer
                         has remainingPercent = 0 from the BE, so the bar would either read as
                         an empty red near-breach or, on stale data, a full green clock on a
@@ -765,7 +817,7 @@ export default function TicketDetailPage() {
                   <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Description
                   </p>
-                  <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                  <p className="text-sm font-medium leading-relaxed text-foreground/90 whitespace-pre-wrap">
                     {ticket.description}
                   </p>
                 </div>
@@ -804,7 +856,7 @@ export default function TicketDetailPage() {
                   <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                     Resolution
                   </p>
-                  <p className="text-base leading-relaxed whitespace-pre-wrap mb-2">
+                  <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
                   {ticket.resolvedAt && (
@@ -852,7 +904,7 @@ export default function TicketDetailPage() {
                     </span>
                   </p>
                   {ticket.ratingComment && (
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    <p className="text-sm font-medium text-foreground/90 mt-1 leading-relaxed">
                       {ticket.ratingComment}
                     </p>
                   )}

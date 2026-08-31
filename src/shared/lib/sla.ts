@@ -127,3 +127,46 @@ export function isSlaClockLive(status?: SlaTimerStatusEnum | null): boolean {
     status === SlaTimerStatusEnum.Paused
   );
 }
+
+/**
+ * "Extended by 1 non-working day" — how much the SLA calendar (holidays / maintenance windows)
+ * pushed a timer's deadline out. Day count comes straight from `calendarExtensionDays` (the BE's
+ * own list of the exact dates excluded), not a division of `calendarExtensionMinutes` — so it's
+ * exact even if the business-hours window ever changes.
+ */
+export function formatCalendarExtension(
+  calendarExtensionDays?: string[] | null,
+): string | null {
+  const count = calendarExtensionDays?.length ?? 0;
+  if (count === 0) return null;
+  return count === 1
+    ? "Extended by 1 non-working day"
+    : `Extended by ${count} non-working days`;
+}
+
+/**
+ * ["02/09", "03/09"] — the specific dates behind a calendar extension, one per entry so the
+ * caller can render each on its own row instead of a single comma-joined line. Parses the
+ * "yyyy-MM-dd" (DateOnly) string by hand instead of `new Date(iso)`: that constructor reads a
+ * date-only string as UTC midnight, which shifts a day earlier once rendered in a timezone
+ * behind UTC (Asia/Ho_Chi_Minh is ahead, so it happens to be safe today, but this stays correct
+ * regardless of the viewer's local timezone).
+ *
+ * A period spanning New Year's (30/12 → 02/01) has two dates that would otherwise print
+ * identically across years — "01/01" alone doesn't say which one — and the day-only format
+ * reads as going backwards (30/12, 31/12, 01/01 looks like a jump into the past without a
+ * year to anchor it). The year is appended only when the range actually crosses one, so the
+ * common single-year case stays as compact as before.
+ */
+export function formatCalendarExtensionDays(
+  calendarExtensionDays?: string[] | null,
+): string[] {
+  if (!calendarExtensionDays?.length) return [];
+  const years = new Set(calendarExtensionDays.map((iso) => iso.slice(0, 4)));
+  const spansMultipleYears = years.size > 1;
+  return calendarExtensionDays.map((iso) => {
+    const [year, month, day] = iso.split("-");
+    if (!year || !month || !day) return iso;
+    return spansMultipleYears ? `${day}/${month}/${year}` : `${day}/${month}`;
+  });
+}

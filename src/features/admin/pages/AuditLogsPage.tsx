@@ -12,7 +12,9 @@ import {
   Hash,
   User,
   ShieldAlert,
+  Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -230,6 +232,42 @@ function DetailRow({
   );
 }
 
+function CopyIdRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex gap-3 min-w-0 items-center">
+      <div className="shrink-0">
+        <Icon size={14} className="text-muted-foreground" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
+          {label}
+        </p>
+        <p className="text-sm text-muted-foreground">Hidden</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        aria-label={`Copy ${label}`}
+        onClick={() => {
+          navigator.clipboard.writeText(value);
+          toast.success(`${label} copied`);
+        }}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 function AuditLogDetail({
   log,
   open,
@@ -289,13 +327,12 @@ function AuditLogDetail({
                 label="Time"
                 value={fmtFull(log.createdAt)}
               />
-              <DetailRow icon={Hash} label="Log ID" value={log.id} mono />
+              <CopyIdRow icon={Hash} label="Log ID" value={log.id} />
               {log.correlationId && (
-                <DetailRow
+                <CopyIdRow
                   icon={Hash}
                   label="Correlation ID"
                   value={log.correlationId}
-                  mono
                 />
               )}
             </div>
@@ -316,19 +353,17 @@ function AuditLogDetail({
                 />
               )}
               {log.targetAccountId && (
-                <DetailRow
+                <CopyIdRow
                   icon={Hash}
                   label="Target Account ID"
                   value={log.targetAccountId}
-                  mono
                 />
               )}
               {log.actorAccountId && (
-                <DetailRow
+                <CopyIdRow
                   icon={User}
                   label="Performed by (Actor ID)"
                   value={log.actorAccountId}
-                  mono
                 />
               )}
             </div>
@@ -350,11 +385,10 @@ function AuditLogDetail({
                 />
               )}
               {log.deviceId && (
-                <DetailRow
+                <CopyIdRow
                   icon={Fingerprint}
                   label="Device ID"
                   value={log.deviceId}
-                  mono
                 />
               )}
               {ua && (
