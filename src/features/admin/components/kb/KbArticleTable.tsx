@@ -38,7 +38,6 @@ interface KbArticleTableProps {
   onPublish?: (article: KbArticleSummaryDTO) => void;
   onArchive?: (article: KbArticleSummaryDTO) => void;
   onDelete?: (article: KbArticleSummaryDTO) => void;
-  onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
   onEdit?: (article: KbArticleSummaryDTO) => void;
   /** Copy this row → create a similar new article (opens the create page pre-filled). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
@@ -59,7 +58,6 @@ export default function KbArticleTable({
   onPublish,
   onArchive,
   onDelete,
-  onMarkHelpful,
   onEdit,
   onCopy,
   onGenerateBlog,
@@ -198,22 +196,9 @@ export default function KbArticleTable({
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  {onMarkHelpful ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMarkHelpful(article);
-                      }}
-                      className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <ThumbsUp className="size-3.5" /> {article.helpfulCount}
-                    </button>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <ThumbsUp className="size-3.5" /> {article.helpfulCount}
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <ThumbsUp className="size-3.5" /> {article.helpfulCount}
+                  </span>
                 </TableCell>
                 <TableCell className="text-right">
                   <div onClick={(e) => e.stopPropagation()}>
