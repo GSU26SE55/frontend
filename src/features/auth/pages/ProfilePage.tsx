@@ -34,6 +34,7 @@ import { useUpdateAvatar } from "@/features/auth/hooks/profile/useUpdateAvatar";
 import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
 import { FilePurposeEnum } from "@/shared/types/file/file-storage.types";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { toLocalPhone } from "@/shared/lib/phone";
 import { AccountStatusEnum } from "@/shared/enums/account/account.enum";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
@@ -102,7 +103,7 @@ const ProfilePage = () => {
     values: account
       ? {
           fullName: account.fullName ?? "",
-          phoneNumber: account.phoneNumber ?? "",
+          phoneNumber: toLocalPhone(account.phoneNumber),
           address: account.address ?? "",
           birthDate: account.dateOfBirth
             ? account.dateOfBirth.slice(0, 10)
@@ -121,11 +122,17 @@ const ProfilePage = () => {
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
+      // The BE reads an omitted key as "keep the stored value", so that a client which does
+      // not render a field cannot wipe it. Address is editable here, so clearing it has to
+      // be said explicitly with "". birthDate is a DateTime? — cleared via its own flag.
+      // timeZone is a fixed deployment constant with no editor on any client: send it only
+      // when we actually have one, never "" (which would blank the stored Asia/Ho_Chi_Minh).
       await updateProfile({
         fullName: data.fullName,
         phoneNumber: data.phoneNumber || undefined,
-        address: data.address || undefined,
+        address: data.address ?? "",
         birthDate: data.birthDate || undefined,
+        clearBirthDate: !data.birthDate,
         timeZone: data.timeZone || undefined,
       });
       toast.success(AUTH_MESSAGES.profile.updated);

@@ -76,7 +76,8 @@ export default function MaintenanceLogCard({
   const hasBody =
     !!log.diagnosisDetails?.trim() ||
     !!log.actionsTaken?.trim() ||
-    !!log.resolutionNote?.trim();
+    !!log.resolutionNote?.trim() ||
+    !!log.partsUsed?.trim();
 
   return (
     <div className="rounded-lg border border-border overflow-hidden h-full">
@@ -127,6 +128,7 @@ export default function MaintenanceLogCard({
             <Field label="Diagnosis" value={log.diagnosisDetails} />
             <Field label="Actions taken" value={log.actionsTaken} />
             <Field label="Result" value={log.resolutionNote} />
+            <Field label="Parts used" value={log.partsUsed} />
           </div>
         )}
 

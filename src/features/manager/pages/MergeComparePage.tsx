@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   useManagerTicketDetail,
   useAdminTicketList,
   useMergeTicket,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
-import { TicketStatusEnum } from "@/shared/types/ticket/ticket.types";
 import MergeCompareView from "@/shared/components/ticket/MergeCompareView";
 
 /**
@@ -25,18 +24,16 @@ export default function MergeComparePage() {
     useManagerTicketDetail(id);
   const { data: target, isLoading: isLoadingTarget } =
     useManagerTicketDetail(targetId);
-  // TicketGetListQueryHandler hides Open tickets by default (that's the Queue's job), so a
-  // second call with status=Open is required — otherwise Open targets (e.g. the AI-suggested
-  // auto-origin ticket) never make it into `tickets`/`candidates` below.
+  // TicketGetListQueryHandler hides Open tickets from Manager by default (that's the Queue's
+  // job), but an Open ticket is a valid merge target — the AI-suggested duplicate is usually
+  // still awaiting triage. `includeOpen` lifts that default filter in ONE call; this used to be
+  // two calls (default + status=Open) concatenated, which paginated and sorted each half
+  // separately and so could drop candidates past either 100-row page.
   const { data: list, isLoading: isLoadingTickets } = useAdminTicketList({
     pageSize: 100,
+    includeOpen: true,
   });
-  const { data: openList, isLoading: isLoadingOpenTickets } =
-    useAdminTicketList({ pageSize: 100, status: TicketStatusEnum.Open });
-  const tickets = useMemo(
-    () => [...(list?.items ?? []), ...(openList?.items ?? [])],
-    [list?.items, openList?.items],
-  );
+  const tickets = list?.items;
   const merge = useMergeTicket(id);
 
   const handleMerge = async () => {
@@ -57,7 +54,7 @@ export default function MergeComparePage() {
       target={targetId ? target : undefined}
       isLoadingTarget={isLoadingTarget}
       tickets={tickets}
-      isLoadingTickets={isLoadingTickets || isLoadingOpenTickets}
+      isLoadingTickets={isLoadingTickets}
       targetId={targetId}
       onTargetIdChange={setTargetId}
       onBack={() => navigate(`/manager/tickets/${id}`)}

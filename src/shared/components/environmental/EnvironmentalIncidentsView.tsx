@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldAlert } from "lucide-react";
@@ -36,22 +37,23 @@ import DataPagination from "@/shared/components/ui/DataPagination";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import AlertSeverityBadge from "@/shared/components/alerts/AlertSeverityBadge";
+import AlertStatusBadge from "@/shared/components/alerts/AlertStatusBadge";
+import { useAlertList } from "@/shared/hooks/alerts/useAlerts";
+import { anomalyTypeLabel } from "@/shared/constants/alertLabels";
+import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
+import { useIncidentTicket } from "@/shared/hooks/ticket/useTicketCode";
 import { checkRole } from "@/shared/lib/authz";
 import { UserRole } from "@/shared/types/account/session.types";
 import {
-  useIncidentList,
   useIncidentDetail,
   useAcknowledgeIncident,
   useResolveIncident,
   useFalseAlarmIncident,
 } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
-import {
-  EnvironmentalIncidentStatusEnum,
-  EnvironmentalIncidentTypeEnum,
-} from "@/shared/enums/alerts/environmental.enum";
+import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
 import {
   resolveIncidentSchema,
   type ResolveIncidentFormValues,
@@ -72,7 +74,6 @@ import { formatDateTime } from "@/shared/utils/datetime";
 
 const DEFAULTS = {
   status: "",
-  incidentType: "",
   siteId: "",
   from: "",
   to: "",
@@ -80,27 +81,20 @@ const DEFAULTS = {
   pageSize: DEFAULT_PAGE_SIZE,
 };
 
+// Statuses of the ALERT table, which is what this screen now reads. Merged is left out on
+// purpose: the BE drops those by default (`excludeMerged`), they are echoes of an alert already
+// listed here.
 const STATUS_OPTIONS = [
-  EnvironmentalIncidentStatusEnum.Open,
-  EnvironmentalIncidentStatusEnum.Acknowledged,
-  EnvironmentalIncidentStatusEnum.Resolved,
-  EnvironmentalIncidentStatusEnum.FalseAlarm,
+  AlertStatusEnum.Open,
+  AlertStatusEnum.Acknowledged,
+  AlertStatusEnum.Resolved,
 ];
-const STATUS_LABELS: Record<EnvironmentalIncidentStatusEnum, string> = {
-  [EnvironmentalIncidentStatusEnum.Open]: "Open",
-  [EnvironmentalIncidentStatusEnum.Acknowledged]: "Acknowledged",
-  [EnvironmentalIncidentStatusEnum.Resolved]: "Resolved",
-  [EnvironmentalIncidentStatusEnum.FalseAlarm]: "False alarm",
+const STATUS_LABELS: Record<number, string> = {
+  [AlertStatusEnum.Open]: "Open",
+  [AlertStatusEnum.Acknowledged]: "Acknowledged",
+  [AlertStatusEnum.Resolved]: "Resolved",
 };
 
-const TYPE_OPTIONS = [
-  EnvironmentalIncidentTypeEnum.Smoke,
-  EnvironmentalIncidentTypeEnum.FireDetected,
-  EnvironmentalIncidentTypeEnum.GasLeak,
-  EnvironmentalIncidentTypeEnum.Flood,
-  EnvironmentalIncidentTypeEnum.OverheatHazard,
-  EnvironmentalIncidentTypeEnum.Other,
-];
 
 export default function EnvironmentalIncidentsView({
   subtitle,
@@ -111,25 +105,38 @@ export default function EnvironmentalIncidentsView({
 }) {
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Chi tiết sống trong URL, không chỉ trong state: notification về một sự cố deep-link tới
+  // `environmental-incidents?incident=<id>` (trang này là danh sách, không có route /:id), nên
+  // dialog phải mở được từ chính URL đó.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get("incident");
+  const setSelectedId = (id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set("incident", id);
+    else next.delete("incident");
+    setSearchParams(next, { replace: true });
+  };
   const [reportOpen, setReportOpen] = useState(false);
 
   const siteNameById = new Map((sites ?? []).map((s) => [s.id, s.name]));
   const siteName = (id: string) => siteNameById.get(id) ?? id.slice(0, 8);
 
-  const { data, isLoading } = useIncidentList({
+  // ONE source for the whole screen. Every EnvironmentalIncident also writes a row into the alert
+  // table, so `siteLevelOnly` already returns both halves of "environmental": incidents reported by
+  // the firmware and thresholds breached against the site's config. Reading the two endpoints
+  // instead would mean paginating two independent result sets into one table, which cannot be done
+  // correctly without pulling everything client-side.
+  const { data, isLoading } = useAlertList({
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
+    siteLevelOnly: true,
     siteId: filters.siteId || undefined,
     status: filters.status
-      ? (Number(filters.status) as EnvironmentalIncidentStatusEnum)
-      : undefined,
-    incidentType: filters.incidentType
-      ? (Number(filters.incidentType) as EnvironmentalIncidentTypeEnum)
+      ? (Number(filters.status) as AlertStatusEnum)
       : undefined,
     from: filters.from || undefined,
     // `to` is date-only from the input → send end-of-day so the selected day is fully covered
-    // (avoids excluding incidents that fall on the `to` day itself).
+    // (avoids excluding rows that fall on the `to` day itself).
     to: filters.to ? `${filters.to}T23:59:59` : undefined,
   });
   const items = data?.items ?? [];
@@ -149,17 +156,20 @@ export default function EnvironmentalIncidentsView({
             Environmental alerts
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} incidents &mdash; smoke / fire /
-            gas leak / flood / overheat at site level
+            {isLoading ? "..." : totalItems} alerts &mdash; incidents reported
+            on site (smoke / fire / gas leak / flood) and ambient thresholds
+            breached (temperature / humidity / gas)
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <RefreshButton queryKeys={[KEY.environmentalIncidents]} />
           {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
               Staff can only list sites once BE opens GET /api/sites to the Staff role. */}
           {sites && sites.length > 0 && (
-            <Button onClick={() => setReportOpen(true)}>Manual report</Button>
+            <Button size="sm" onClick={() => setReportOpen(true)}>
+              Manual report
+            </Button>
           )}
+          <RefreshButton queryKeys={[KEY.environmentalIncidents]} />
         </div>
       </div>
 
@@ -195,28 +205,10 @@ export default function EnvironmentalIncidentsView({
           </SelectContent>
         </Select>
 
-        <Select
-          value={filters.incidentType || null}
-          items={TYPE_OPTIONS.map((t) => ({
-            value: String(t),
-            label: incidentTypeLabel(t),
-          }))}
-          onValueChange={(v: string | null) =>
-            setFilter("incidentType", v || undefined)
-          }
-        >
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="All types" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>All types</SelectItem>
-            {TYPE_OPTIONS.map((t) => (
-              <SelectItem key={t} value={String(t)}>
-                {incidentTypeLabel(t)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* No "type" filter: the list now mixes incidents (Gas leak, Flood…) with threshold
+            breaches (High gas concentration…), which are two different enums on the BE. A dropdown
+            of incident types would silently hide every threshold row, so status / site / date —
+            the three that apply to both — are the filters kept. */}
 
         {sites && sites.length > 0 && (
           <Select
@@ -271,7 +263,9 @@ export default function EnvironmentalIncidentsView({
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ShieldAlert className="size-8 opacity-30" />
             <span className="text-sm">
-              {hasActiveFilter ? notFound("incidents") : noData("incidents")}
+              {hasActiveFilter
+                ? notFound("environmental alerts")
+                : noData("environmental alerts")}
             </span>
           </div>
         ) : (
@@ -283,41 +277,63 @@ export default function EnvironmentalIncidentsView({
                 </TableHead>
                 <TableHead>Site</TableHead>
                 <TableHead>{TABLE_COLUMNS.customer}</TableHead>
-                <TableHead>Incident type</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>{TABLE_COLUMNS.severity}</TableHead>
+                <TableHead>Value</TableHead>
                 <TableHead>{TABLE_COLUMNS.detectedAt}</TableHead>
                 <TableHead>{TABLE_COLUMNS.status}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((incident, index) => (
-                <TableRow
-                  key={incident.id}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedId(incident.id)}
-                >
-                  <TableCell className="text-center text-muted-foreground tabular-nums">
-                    {(filters.pageNumber - 1) * filters.pageSize + index + 1}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {siteName(incident.siteId)}
-                  </TableCell>
-                  {/* Empty when the BE cannot resolve the account — show a dash. */}
-                  <TableCell>{incident.customerName || "—"}</TableCell>
-                  <TableCell>
-                    <IncidentTypeBadge incidentType={incident.incidentType} />
-                  </TableCell>
-                  <TableCell>
-                    <AlertSeverityBadge severity={incident.severity} />
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDateTime(incident.detectedAt)}
-                  </TableCell>
-                  <TableCell>
-                    <IncidentStatusBadge status={incident.status} />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {items.map((alert, index) => {
+                // Only the rows that mirror an incident have a detail dialog to open — a threshold
+                // breach has no incident behind it, so its row is not clickable.
+                const incidentId = alert.environmentalIncidentId;
+                return (
+                  <TableRow
+                    key={alert.id}
+                    className={incidentId ? "cursor-pointer" : undefined}
+                    onClick={
+                      incidentId ? () => setSelectedId(incidentId) : undefined
+                    }
+                  >
+                    <TableCell className="text-center text-muted-foreground tabular-nums">
+                      {(filters.pageNumber - 1) * filters.pageSize + index + 1}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {alert.siteId ? siteName(alert.siteId) : "—"}
+                    </TableCell>
+                    {/* Empty when the BE cannot resolve the account — show a dash. */}
+                    <TableCell>{alert.customerName || "—"}</TableCell>
+                    <TableCell>
+                      {/* An incident's mirror row carries AnomalyType=EnvironmentalIncident for
+                          every kind of incident, so the incident's own type is what makes the row
+                          readable ("Gas leak", not "Environmental incident"). */}
+                      {alert.incidentType != null ? (
+                        <IncidentTypeBadge incidentType={alert.incidentType} />
+                      ) : (
+                        anomalyTypeLabel(alert.anomalyType)
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <AlertSeverityBadge severity={alert.severity} />
+                    </TableCell>
+                    {/* Mirror rows carry no measurement (they would read "0 incident / 0 incident"),
+                        so only threshold breaches show numbers. */}
+                    <TableCell className="font-mono text-sm">
+                      {alert.actualValue == null || alert.incidentType != null
+                        ? "—"
+                        : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""} / ${alert.thresholdValue ?? "—"}${alert.unit ? ` ${alert.unit}` : ""}`}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatDateTime(alert.detectedAt)}
+                    </TableCell>
+                    <TableCell>
+                      <AlertStatusBadge status={alert.status} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -357,6 +373,12 @@ function IncidentDetailDialog({
   const canFalseAlarm = checkRole(user, UserRole.ADMIN, UserRole.MANAGER);
 
   const { data: incident, isLoading } = useIncidentDetail(incidentId ?? "");
+  // Ticket sinh ra từ sự cố này. Alert của pin mang sẵn ticketId trong payload nên dialog bên đó
+  // link thẳng được; sự cố môi trường thì không — quan hệ chỉ nằm phía ticket, nên phải tra ngược.
+  const { ticket: incidentTicket, isLoading: ticketLoading } =
+    useIncidentTicket(incidentId);
+  // Staff không có trang này (route chỉ mở cho Admin/Manager), nên chỉ cần 2 prefix.
+  const ticketBasePath = user?.role === UserRole.ADMIN ? "/admin" : "/manager";
   const { mutate: acknowledge, isPending: ackPending } =
     useAcknowledgeIncident();
 
@@ -423,6 +445,23 @@ function IncidentDetailDialog({
             </DetailRow>
             <DetailRow label="Resolved at">
               {formatDateTime(incident.resolvedAt)}
+            </DetailRow>
+            <DetailRow label="Ticket">
+              {/* Ba trạng thái tách bạch, cùng quy ước với dialog alert của pin: mã ticket khi
+                  có, dấu chờ khi đang tra, và "—" khi sự cố chưa sinh ra ticket nào (consumer
+                  có thể chưa chạy xong) — không phải lỗi. */}
+              {incidentTicket ? (
+                <Link
+                  to={`${ticketBasePath}/tickets/${incidentTicket.id}`}
+                  className="font-mono-num text-xs text-primary hover:underline"
+                >
+                  {incidentTicket.code}
+                </Link>
+              ) : ticketLoading ? (
+                "…"
+              ) : (
+                "—"
+              )}
             </DetailRow>
             {incident.resolutionNote && (
               <DetailRow label="Resolution note">

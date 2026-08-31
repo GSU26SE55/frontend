@@ -50,7 +50,7 @@ describe("upsertThresholdSchema — cross-field bounds", () => {
       expect(r.success).toBe(false);
       if (!r.success) {
         expect(r.error.issues[0]?.message).toBe(
-          "Maximum voltage must be greater than minimum voltage",
+          "Critical voltage must be greater than warning voltage",
         );
       }
     });

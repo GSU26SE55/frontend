@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredSelect } from "@/shared/schemas/common.schema";
 import {
   PauseReasonEnum,
   EscalationReasonEnum,
@@ -12,7 +13,7 @@ const maintenanceAttachmentSchema = attachmentSchema;
 // GH-1176: rescheduledStartAt required — hold requires a future customer appointment.
 // Field name must match BE TicketHoldCommand.RescheduledStartAt exactly (no Utc suffix).
 export const holdSchema = z.object({
-  reason: z.nativeEnum(PauseReasonEnum),
+  reason: requiredSelect(z.nativeEnum(PauseReasonEnum), "Select a reason"),
   rescheduledStartAt: z
     .string()
     .min(1, "A future appointment is required")
@@ -38,7 +39,7 @@ export const resolveSchema = z.object({
 export type ResolveFormValues = z.infer<typeof resolveSchema>;
 
 export const escalateRequestSchema = z.object({
-  reason: z.nativeEnum(EscalationReasonEnum),
+  reason: requiredSelect(z.nativeEnum(EscalationReasonEnum), "Select a reason"),
   note: z.string().optional(),
 });
 export type EscalateRequestFormValues = z.infer<typeof escalateRequestSchema>;

@@ -19,6 +19,7 @@ import {
 } from "@/features/admin/schemas/account/admin-account.schema";
 import { useAdminUpdateAccount } from "@/features/admin/hooks/account/useAdminAccounts";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { toLocalPhone } from "@/shared/lib/phone";
 import type { AccountDto } from "@/shared/types/account/account.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
@@ -42,8 +43,8 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
     resolver: zodResolver(editAccountSchema),
     values: {
       fullName: account.fullName,
-      phoneNumber: account.phoneNumber ?? "",
-      dateOfBirth: account.dateOfBirth ?? "",
+      phoneNumber: toLocalPhone(account.phoneNumber),
+      dateOfBirth: account.dateOfBirth?.slice(0, 10) ?? "",
       address: account.address ?? "",
     },
   });

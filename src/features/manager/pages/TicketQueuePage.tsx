@@ -63,6 +63,7 @@ export default function TicketQueuePage() {
         <Select
           value={filters.priority || null}
           items={[
+            { value: TicketPriorityEnum.Urgent, label: "Urgent" },
             { value: TicketPriorityEnum.P1Critical, label: "P1 Critical" },
             { value: TicketPriorityEnum.P2High, label: "P2 High" },
             { value: TicketPriorityEnum.P3Normal, label: "P3 Normal" },
@@ -76,6 +77,9 @@ export default function TicketQueuePage() {
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
             <SelectItem value={null}>All priorities</SelectItem>
+            {/* Urgent outranks P1 — it was missing here, so the most severe tickets
+                could not be filtered for at all. */}
+            <SelectItem value={TicketPriorityEnum.Urgent}>Urgent</SelectItem>
             <SelectItem value={TicketPriorityEnum.P1Critical}>
               P1 Critical
             </SelectItem>
@@ -122,6 +126,9 @@ export default function TicketQueuePage() {
           isLoading={isLoading}
           pageNumber={filters.pageNumber}
           pageSize={filters.pageSize}
+          // The BE returns the queue in the order it must be worked (Urgent → P1 → P2 → P3,
+          // then oldest first). The queue endpoint takes no sort params, so leave the order alone.
+          disableSort
           detailBasePath="/manager/tickets/queue"
         />
       </Card>

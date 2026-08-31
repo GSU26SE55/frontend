@@ -52,14 +52,25 @@ export const importService = {
    * 409 means this exact content was uploaded before; 422 means the file is malformed or is
    * missing columns.
    */
-  createBatch: (payload: CreateImportBatchPayload) =>
+  createBatch: (
+    payload: CreateImportBatchPayload,
+    onUploadProgress?: (percent: number) => void,
+  ) =>
     axiosInstance.post<CommonResponse<ImportBatchDto>>(
       ENDPOINTS.IMPORTS.CREATE_BATCH,
       toFormData(payload),
-      // Drop the default Content-Type so the browser sets "multipart/form-data" with its boundary.
-      // The shared axios instance presets "application/json"; leaving it makes the server answer 415
-      // and read no file at all. Same approach fileStorageService already uses.
-      { headers: { "Content-Type": undefined } },
+      {
+        // Drop the default Content-Type so the browser sets "multipart/form-data" with its
+        // boundary. The shared axios instance presets "application/json"; leaving it makes the
+        // server answer 415 and read no file at all. Same approach fileStorageService already uses.
+        headers: { "Content-Type": undefined },
+        onUploadProgress: onUploadProgress
+          ? (event) => {
+              if (!event.total) return;
+              onUploadProgress(Math.round((event.loaded / event.total) * 100));
+            }
+          : undefined,
+      },
     ),
 
   /** Returns 202 and exits at once — the background worker does the writing. The screen has to

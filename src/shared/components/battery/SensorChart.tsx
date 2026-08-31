@@ -44,7 +44,8 @@ const METRICS = [
 
 const CHARGE_COLOR = "var(--chart-1)"; // positive current — charging
 const DISCHARGE_COLOR = "var(--destructive)"; // negative current — discharging
-const DANGER_ZONE_COLOR = "var(--destructive)"; // zone outside the safe threshold
+const CRITICAL_ZONE_COLOR = "var(--destructive)"; // đã chạm mốc Critical
+const WARNING_ZONE_COLOR = "var(--p3)"; // đã chạm mốc Warning, chưa tới Critical
 
 const chartConfig = METRICS.reduce<ChartConfig>((acc, m) => {
   acc[m.key] = { label: `${m.label} (${m.unit})`, color: m.color };
@@ -181,20 +182,43 @@ function MetricMiniChart({
   const values = numericValues(chartData, metric.key);
   const isCurrent = metric.key === "avgCurrent";
 
-  const safeRange =
+  // Hai mốc Admin đặt, vẽ thành BA vùng: dưới Warning để trống (an toàn), Warning→Critical tô
+  // vàng, từ Critical trở lên tô đỏ. Trước đây chart chỉ biết "dải an toàn" rồi tô đỏ cả hai phía
+  // ngoài — nhưng min/max nay là Warning/Critical cùng một chiều, nên tô như cũ là bôi đỏ đúng
+  // vùng mà engine cảnh báo chỉ coi là Warning.
+  //
+  // `warn`/`crit` là hai mốc theo chiều vi phạm; `descending` cho SOC (thấp mới là vi phạm).
+  const bounds: { warn: number; crit: number; descending: boolean } | null =
     metric.key === "avgVoltage" && threshold
-      ? { min: threshold.voltageMin, max: threshold.voltageMax }
+      ? { warn: threshold.voltageMin, crit: threshold.voltageMax, descending: false }
       : metric.key === "avgTemperature" && threshold
-        ? { min: threshold.temperatureMin, max: threshold.temperatureMax }
-        : metric.key === "avgCurrent" &&
-            threshold &&
-            threshold.currentMaxDischarge != null &&
-            threshold.currentMaxCharge != null
+        ? { warn: threshold.temperatureMin, crit: threshold.temperatureMax, descending: false }
+        : metric.key === "avgSocPercent" && threshold
           ? {
-              min: -threshold.currentMaxDischarge,
-              max: threshold.currentMaxCharge,
+              warn: threshold.socWarningThreshold,
+              crit: threshold.socCriticalThreshold,
+              descending: true,
             }
           : null;
+
+  // Dòng điện là ngoại lệ: chỉ có MỘT trần mỗi chiều nên không có nấc Warning — giữ nguyên kiểu
+  // dải, ra ngoài là đỏ.
+  const currentBand =
+    metric.key === "avgCurrent" &&
+    threshold &&
+    threshold.currentMaxDischarge != null &&
+    threshold.currentMaxCharge != null
+      ? { min: -threshold.currentMaxDischarge, max: threshold.currentMaxCharge }
+      : null;
+
+  const safeRange =
+    currentBand ??
+    (bounds
+      ? {
+          min: Math.min(bounds.warn, bounds.crit),
+          max: Math.max(bounds.warn, bounds.crit),
+        }
+      : null);
 
   const isSoc = metric.key === "avgSocPercent";
   const [low, high]: [number, number] = isSoc
@@ -203,9 +227,12 @@ function MetricMiniChart({
       ? computeSafeZoneDomain(values, safeRange)
       : computeAutoDomain(values);
   const axisDomain: [number, number] = [low, high];
-  const dangerZone = safeRange
-    ? { low, high, min: safeRange.min, max: safeRange.max }
-    : null;
+  // Nhãn góc phải: nói rõ hai mốc thay vì "Safe: a–b", vì a–b nay KHÔNG phải vùng an toàn.
+  const zoneLabel = currentBand
+    ? `Safe: ${currentBand.min}–${currentBand.max}`
+    : bounds
+      ? `Warn ${bounds.warn} · Crit ${bounds.crit}`
+      : null;
 
   const gradientId = `sensor-gradient-${metric.key}`;
   const splitStrokeId = `sensor-split-stroke-${metric.key}`;
@@ -241,9 +268,9 @@ function MetricMiniChart({
             {metric.label} ({metric.unit})
           </span>
         )}
-        {dangerZone && (
+        {zoneLabel && (
           <span className="text-3xs text-muted-foreground/70 shrink-0">
-            Safe: {dangerZone.min}–{dangerZone.max}
+            {zoneLabel}
             {metric.unit}
           </span>
         )}
@@ -311,20 +338,38 @@ function MetricMiniChart({
             tickCount={5}
             tickFormatter={formatAxisNumber}
           />
-          {dangerZone && (
+          {currentBand && (
             <>
               <ReferenceArea
-                y1={dangerZone.low}
-                y2={dangerZone.min}
-                fill={DANGER_ZONE_COLOR}
+                y1={low}
+                y2={currentBand.min}
+                fill={CRITICAL_ZONE_COLOR}
                 fillOpacity={0.1}
                 strokeOpacity={0}
               />
               <ReferenceArea
-                y1={dangerZone.max}
-                y2={dangerZone.high}
-                fill={DANGER_ZONE_COLOR}
+                y1={currentBand.max}
+                y2={high}
+                fill={CRITICAL_ZONE_COLOR}
                 fillOpacity={0.1}
+                strokeOpacity={0}
+              />
+            </>
+          )}
+          {bounds && (
+            <>
+              <ReferenceArea
+                y1={bounds.warn}
+                y2={bounds.crit}
+                fill={WARNING_ZONE_COLOR}
+                fillOpacity={0.14}
+                strokeOpacity={0}
+              />
+              <ReferenceArea
+                y1={bounds.crit}
+                y2={bounds.descending ? low : high}
+                fill={CRITICAL_ZONE_COLOR}
+                fillOpacity={0.12}
                 strokeOpacity={0}
               />
             </>

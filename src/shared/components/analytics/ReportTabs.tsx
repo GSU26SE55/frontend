@@ -2,6 +2,7 @@ import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ENDPOINTS } from "@/shared/utils/endpoints";
+import { displayName } from "@/shared/utils/displayId";
 import { ReportTable, type ReportColumn } from "./ReportTable";
 import { ReportTimeSeriesChart } from "./ReportTimeSeriesChart";
 import { ReportExportMenu } from "./ReportExportMenu";
@@ -197,9 +198,10 @@ export function ReportTabs({ filter }: { filter: AnalyticsFilter }) {
       key: "customer",
       header: "Customer",
       align: "left",
-      // Falls back to the id when the name is missing (deleted account / read model lag) —
-      // a warranty about to expire still has to be visible.
-      render: (r) => r.customerName ?? r.customerId,
+      // A deleted account or a lagging read model leaves the name empty. The row still has
+      // to be visible (the expiring warranty is the point), but the customerId is not a name
+      // — printing it made a data gap look like a customer called "3623e112-79fa-…".
+      render: (r) => displayName(r.customerName),
     },
   ];
 

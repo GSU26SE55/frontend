@@ -84,10 +84,10 @@ export default function NotificationGroupsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.admin.notificationGroups]} />
           <Button size="sm" onClick={() => setFormState({ target: null })}>
             <Plus className="size-3.5" /> Create group
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.notificationGroups]} />
         </div>
       </div>
 

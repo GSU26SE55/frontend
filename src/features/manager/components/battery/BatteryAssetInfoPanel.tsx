@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useManagerBatteryAsset } from "@/features/manager/hooks/battery/useBatteryAsset";
 import { BatteryStatusEnum } from "@/features/manager/types/battery/battery-asset.types";
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
+import CustomerHoverCard from "@/features/manager/components/account/CustomerHoverCard";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Active",
@@ -107,7 +108,15 @@ export default function BatteryAssetInfoPanel({
         <InfoRow label="Serial number" value={asset.serialNumber} />
         <InfoRow label="Battery type" value={asset.batteryTypeName} />
         <InfoRow label="Site" value={asset.siteName} />
-        <InfoRow label="Customer" value={asset.customerName} />
+        <InfoRow
+          label="Customer"
+          value={
+            <CustomerHoverCard
+              customerId={asset.customerId}
+              customerName={asset.customerName}
+            />
+          }
+        />
         <InfoRow
           label="Install date"
           value={format(new Date(asset.installDate), "dd/MM/yyyy", {

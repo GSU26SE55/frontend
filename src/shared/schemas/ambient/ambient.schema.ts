@@ -10,6 +10,8 @@ export const ambientThresholdSchema = z
     highAmbientTempCritical: z.string().optional(),
     highHumidityWarning: z.string().optional(),
     highHumidityCritical: z.string().optional(),
+    highGasWarning: z.string().optional(),
+    highGasCritical: z.string().optional(),
     comboTempThreshold: z.string().optional(),
     comboHumidityThreshold: z.string().optional(),
     enabled: z.boolean(),
@@ -22,6 +24,8 @@ export const ambientThresholdSchema = z
       "highAmbientTempCritical",
       "highHumidityWarning",
       "highHumidityCritical",
+      "highGasWarning",
+      "highGasCritical",
       "comboTempThreshold",
       "comboHumidityThreshold",
     ] as const;
@@ -40,6 +44,8 @@ export const ambientThresholdSchema = z
       highAmbientTempCritical: { min: -50, max: 150, unit: "°C" },
       highHumidityWarning: { min: 0, max: 100, unit: "%" },
       highHumidityCritical: { min: 0, max: 100, unit: "%" },
+      highGasWarning: { min: 0, max: 100, unit: "%" },
+      highGasCritical: { min: 0, max: 100, unit: "%" },
       comboTempThreshold: { min: -50, max: 150, unit: "°C" },
       comboHumidityThreshold: { min: 0, max: 100, unit: "%" },
     };
@@ -88,6 +94,16 @@ export const ambientThresholdSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["highHumidityCritical"],
+        message: "Must be ≥ the warning threshold",
+      });
+    }
+
+    const gasWarn = num(data.highGasWarning);
+    const gasCrit = num(data.highGasCritical);
+    if (gasWarn !== undefined && gasCrit !== undefined && gasCrit < gasWarn) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["highGasCritical"],
         message: "Must be ≥ the warning threshold",
       });
     }

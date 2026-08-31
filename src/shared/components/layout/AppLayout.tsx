@@ -1,18 +1,18 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { ChevronDown, LogOut } from "lucide-react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, LogOut, User } from "lucide-react";
 import Sidebar, { type NavSection, type NavBadge } from "./Sidebar";
 import { APP_NAME, SIDEBAR_LABELS } from "@/shared/constants/sidebarLabels";
 import {
   useUnresolvedAlertCount,
   useUnresolvedDeviceAlertCount,
+  useSiteLevelAlertCount,
 } from "@/shared/hooks/alerts/useAlerts";
-import { useUnresolvedIncidentCount } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { useKbReviewCounts } from "@/shared/hooks/kb/useKbPendingReview";
 import { useBlogDraftCount } from "@/shared/hooks/blog/useBlog";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
-import { UserRole } from "@/shared/types/account/session.types";
+import { UserRole, redirectByRole } from "@/shared/types/account/session.types";
 import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import LayoutSkeleton, { PageSkeleton } from "./LayoutSkeleton";
@@ -30,6 +30,7 @@ import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
 // ── Topbar ───────────────────────────────────────────────────────────────────
 function Topbar() {
   const reduced = useReducedMotion();
+  const navigate = useNavigate();
   const { user } = useSessionStore();
   const { mutate: logout } = useLogout();
 
@@ -63,15 +64,6 @@ function Topbar() {
       className="h-14 border-b border-border/60 bg-background/85 backdrop-blur-md flex items-center px-5 gap-3 sticky top-0 z-20 shrink-0"
     >
       <div className="flex-1" />
-
-      {/* System status dot inside a polished pill container */}
-      <div className="hidden sm:flex items-center gap-1.5 text-2xs font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
-        <span
-          className="w-1.5 h-1.5 rounded-full pulse-dot shrink-0"
-          style={{ backgroundColor: "var(--ok)" }}
-        />
-        System stable
-      </div>
 
       <ThemeToggle />
 
@@ -112,6 +104,18 @@ function Topbar() {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            onClick={() =>
+              navigate(
+                `${redirectByRole(user?.role ?? UserRole.ADMIN)}/settings`,
+              )
+            }
+            className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-1.75"
+          >
+            <User size={14} />
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
             variant="destructive"
             onClick={handleLogout}
             className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-1.75"
@@ -125,22 +129,59 @@ function Topbar() {
   );
 }
 
+// Reads the saved rail state. localStorage throws in private mode / when full, and a
+// missing entry means "never toggled" — both fall back to expanded.
+function readRailCollapsed(key: string): boolean {
+  try {
+    return localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+}
+
 // ── AppLayout ─────────────────────────────────────────────────────────────────
 // Pure component: the nav config is passed in from the router (config-down, no
 // importing features from the shared layer). `sections` is required — the router
 // picks the NAV by role.
 export default function AppLayout({ sections }: { sections: NavSection[] }) {
-  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   // Namespaces the sidebar's saved section state per role — see Sidebar's `scopeKey`.
   const role = useSessionStore((s) => s.user?.role);
+
+  // The rail's collapsed state persists per role, same reasoning as the per-section
+  // state: localStorage is keyed by origin, so without the role in the key an Admin
+  // collapsing the rail would collapse it for the next Staff login on the same browser.
+  // `role` is undefined on the first render (the session store hydrates after mount),
+  // so this reads "anon" first and the effect below re-reads once the role lands.
+  const railKey = `sidebar-collapsed-${role ?? "anon"}`;
+  const [collapsed, setCollapsed] = useState(() => readRailCollapsed(railKey));
+  // Re-read during render rather than in an effect: adjusting state while the key
+  // changes keeps it to one render pass, with no flash of the wrong rail width.
+  const [readKey, setReadKey] = useState(railKey);
+  if (readKey !== railKey) {
+    setReadKey(railKey);
+    setCollapsed(readRailCollapsed(railKey));
+  }
+
+  const toggleCollapsed = () =>
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(railKey, String(next));
+      } catch {
+        // Private mode / storage full — the toggle must still work, just not persist.
+      }
+      return next;
+    });
 
   // Badges injected here (not in each nav config) because all 3 roles go through
   // AppLayout — doing it here is one place instead of three. Items with no entry below
   // keep whatever badge their nav config already set (e.g. Manager's queue).
   const alerts = useUnresolvedAlertCount();
   const deviceAlerts = useUnresolvedDeviceAlertCount();
-  const incidents = useUnresolvedIncidentCount();
+  // Drives the Environmental badge. One count covers that whole screen: incidents write a
+  // site-level alert of their own, so this already includes them.
+  const siteLevelAlerts = useSiteLevelAlertCount();
   // All of these return 0 for roles that cannot act on them (Staff) — the gate lives in
   // the hooks themselves, so nothing here has to know about roles.
   const kb = useKbReviewCounts();
@@ -156,7 +197,10 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     const single: Record<string, number> = {
       // What still needs action: Open + Acknowledged.
       [SIDEBAR_LABELS.batteryAlerts]: alerts.count,
-      [SIDEBAR_LABELS.envIncidents]: incidents.count,
+      // Site-level alerts alone: every incident also writes one of these, so the screen — and this
+      // badge — cover both from that single count. Adding the incident count on top would tally
+      // each incident twice.
+      [SIDEBAR_LABELS.envIncidents]: siteLevelAlerts.count,
       // Counted by the same Open+Acknowledged rule; its query is the exact opposite of the
       // battery one, so the two badges partition the alert table rather than overlap.
       [SIDEBAR_LABELS.deviceAlerts]: deviceAlerts.count,
@@ -197,7 +241,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     sections,
     alerts.count,
     deviceAlerts.count,
-    incidents.count,
+    siteLevelAlerts.count,
     kb.pendingReview,
     kb.draft,
     blogDrafts,
@@ -221,7 +265,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
         appName={APP_NAME}
         sections={sectionsWithBadge}
         collapsed={collapsed}
-        onToggle={() => setCollapsed((v) => !v)}
+        onToggle={toggleCollapsed}
         scopeKey={role ?? "anon"}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">

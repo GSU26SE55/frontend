@@ -25,6 +25,10 @@ import { NotificationTypeEnum } from "@/shared/enums/notification/notification.e
 // params object (pageSize 1, one status each), and every one of them must be refreshed.
 const ALERTS = [KEY.alerts] as const;
 const INCIDENTS = [KEY.environmentalIncidents] as const;
+// Màn Environment (số đo mới nhất + bảng lịch sử) tự tải lại mỗi 20s, còn thiết bị đẩy mỗi 15s
+// — cộng lại là số đo đã gây ra alert có thể mất tới ~35s mới xuất hiện trên bảng, trong khi
+// chuông báo đã kêu từ trước đó. Nối vào hub để đúng lúc alert tới thì bảng nạp lại ngay.
+const AMBIENT = [KEY.ambient] as const;
 const KB = [KEY.kb] as const;
 const BLOG = [KEY.blog] as const;
 // Manager's Queue badge reads QUERY_KEY.manager.tickets.queue — that branch also carries the
@@ -71,9 +75,14 @@ const INVALIDATION_MAP: Partial<
   // ── Battery alerts ─────────────────────────────────────────────────────────
   // The badge counts Open + Acknowledged. A new anomaly at ANY severity writes an alert row,
   // so all three severities count — the badge does not filter by severity.
-  [T.BatteryAnomalyDetected]: [ALERTS],
-  [T.BatteryAnomalyWarning]: [ALERTS],
-  [T.BatteryAnomalyInfo]: [ALERTS],
+  // AMBIENT đi kèm: alert MÔI TRƯỜNG (nhiệt độ / độ ẩm / gas của tủ) cũng phát dưới ba loại
+  // thông báo này — đường ambient publish `BatteryAnomalyDetectedEvent` /
+  // `BatteryAnomalyWarningDetectedEvent`, không có loại thông báo riêng. Bỏ AMBIENT ở đây là
+  // đúng ca người dùng gặp: chuông kêu vì nhiệt độ tủ vượt ngưỡng mà bảng Environment vẫn
+  // đứng im tới hết chu kỳ poll.
+  [T.BatteryAnomalyDetected]: [ALERTS, AMBIENT],
+  [T.BatteryAnomalyWarning]: [ALERTS, AMBIENT],
+  [T.BatteryAnomalyInfo]: [ALERTS, AMBIENT],
   // Escalation means an alert sat unacknowledged — the row is still Open, but the saga may
   // have spawned a ticket off it, so both branches move.
   [T.BatteryAlertEscalationPending]: [ALERTS, ...ANY_TICKETS],
@@ -81,12 +90,21 @@ const INVALIDATION_MAP: Partial<
   // The saga failing leaves the alert without the ticket it should have produced.
   [T.AlertTicketSagaFailed]: [ALERTS, ...ANY_TICKETS],
 
+  // ── Device alerts (IoT gateway) ─────────────────────────────────────────────
+  // The Device alerts badge counts Open + Acknowledged rows with iotOnly: true — the same
+  // ALERTS branch as Battery alerts, just filtered the opposite way (see
+  // useUnresolvedDeviceAlertCount). Went-offline raises the count; recovered/decommissioned
+  // resolve or remove the row, so both directions must invalidate.
+  [T.IotDeviceWentOffline]: [ALERTS],
+  [T.IotDeviceRecovered]: [ALERTS],
+  [T.IotDeviceAutoDecommissioned]: [ALERTS],
+
   // ── Environmental incidents ────────────────────────────────────────────────
   // Detected raises the count; Resolved lowers it. Both must invalidate — dropping the
   // resolved case is how a badge gets stuck showing work that is already done.
-  [T.EnvironmentalIncidentDetected]: [INCIDENTS],
-  [T.EnvironmentalIncidentResolved]: [INCIDENTS],
-  [T.IncidentDeclared]: [INCIDENTS, ALERTS],
+  [T.EnvironmentalIncidentDetected]: [INCIDENTS, AMBIENT],
+  [T.EnvironmentalIncidentResolved]: [INCIDENTS, AMBIENT],
+  [T.IncidentDeclared]: [INCIDENTS, ALERTS, AMBIENT],
 
   // ── Guide (KB) ─────────────────────────────────────────────────────────────
   // All three move the Guide badges, because "awaiting approval" and "drafts" are counts over

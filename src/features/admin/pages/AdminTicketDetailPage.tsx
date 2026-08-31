@@ -13,7 +13,7 @@ import {
 } from "@/shared/utils/ticket/assignments";
 import {
   isTicketChatLocked,
-  TICKET_CHAT_LOCKED_NOTICE,
+  ticketChatLockedNotice,
 } from "@/shared/utils/ticket.utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,8 @@ import BatteryAssetInfoPanel from "@/features/admin/components/battery/BatteryAs
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import MaintenanceScheduleCountdown from "@/shared/components/ticket/MaintenanceScheduleCountdown";
 import { getTicketSubject } from "@/shared/lib/ticketSubject";
+import RelatedTicketsPanel from "@/shared/components/ticket/RelatedTicketsPanel";
+import TicketBmsAction from "@/shared/components/ticket/TicketBmsAction";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -37,6 +39,7 @@ import {
   useAdminTicketActivities,
   useAdminTicketComments,
   useDeclareIncident,
+  useAdminTicketRelated,
 } from "@/features/admin/hooks/ticket/useAdminTickets";
 import AddCommentForm from "@/features/admin/components/ticket/AddCommentForm";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
@@ -66,7 +69,12 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import {
+  slaBarColorClass,
+  isSlaClockLive,
+  formatCalendarExtension,
+  formatCalendarExtensionDays,
+} from "@/shared/lib/sla";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
@@ -127,6 +135,10 @@ export default function AdminTicketDetailPage() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [incidentDescription, setIncidentDescription] = useState("");
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  // Which outer tab is open. The chat query must NOT run until the user actually opens
+  // the Chat tab: GET /chats auto-marks every message it returns as read on the BE, so
+  // fetching it eagerly told the sender "seen" for a thread nobody had looked at.
+  const [mainTab, setMainTab] = useState("info");
   const [composerPrefill, setComposerPrefill] = useState({
     text: "",
     version: 0,
@@ -146,7 +158,12 @@ export default function AdminTicketDetailPage() {
   );
   const { data: activities = [], isLoading: loadingActivities } =
     useAdminTicketActivities(id!);
-  const { data: comments = [] } = useAdminTicketComments(ticketId);
+  const { data: relatedTickets, isLoading: relatedLoading } =
+    useAdminTicketRelated(id!);
+  const { data: comments = [] } = useAdminTicketComments(
+    ticketId,
+    mainTab === "comments",
+  );
 
   // Read-only for these roles — the Logs tab and its count both read from here.
   const maintenanceLogs = ticket?.maintenanceLogs ?? [];
@@ -174,7 +191,8 @@ export default function AdminTicketDetailPage() {
   // Who can be @-tagged: the ticket's active participants (GET .../participants).
   // Do NOT use chat authors — someone newly added to the ticket who hasn't posted yet must still be taggable.
   const mentionCandidates = useMentionCandidates(ticketId);
-  const { typingNames, sendTyping } = useTicketCommentsRealtime(ticketId);
+  const { typingNames, sendTyping, pinNotices } =
+    useTicketCommentsRealtime(ticketId);
   const { mutate: updateChat, isPending: editChatPending } =
     useUpdateTicketChat();
   const { mutate: deleteChat, isPending: deleteChatPending } =
@@ -219,6 +237,12 @@ export default function AdminTicketDetailPage() {
   }
 
   const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
+  const calendarExtensionLabel = formatCalendarExtension(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
+  const calendarExtensionDays = formatCalendarExtensionDays(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
   // Ticket finished (Completed/Closed/ClosedRejected). Two consequences:
   //  - chat is archived: composer hidden, edit/delete locked in the thread (Admin's override
   //    edit/delete still applies — that path exists precisely for closed tickets);
@@ -259,10 +283,10 @@ export default function AdminTicketDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <RefreshButton
-            queryKeys={[KEY.admin.tickets, KEY.tickets]}
-            size="icon"
-          />
+          {/* Cutting charge/discharge is the first move on a thermal or overcharge ticket, so it
+              sits with the other header actions rather than a screen away. Picks battery vs
+              whole-site itself, and hides once the ticket is finished. */}
+          <TicketBmsAction ticket={ticket} />
           <Button
             variant="destructive"
             size="sm"
@@ -272,6 +296,7 @@ export default function AdminTicketDetailPage() {
             <AlertTriangle size={13} />
             {ticket.isIncident ? "Already an Incident" : "Declare Incident"}
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.tickets, KEY.tickets]} />
         </div>
       </div>
 
@@ -279,7 +304,11 @@ export default function AdminTicketDetailPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Left: Timeline / Comments */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <Tabs defaultValue="info" className="h-full gap-0">
+          <Tabs
+            value={mainTab}
+            onValueChange={setMainTab}
+            className="h-full gap-0"
+          >
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
@@ -313,6 +342,8 @@ export default function AdminTicketDetailPage() {
                     return (
                       <EnvironmentalIncidentInfoPanel
                         incidentId={subject.incidentId}
+                        siteId={subject.siteId}
+                        detectedAt={ticket.detectedAt}
                         description={ticket.description}
                         siteBasePath="/admin"
                       />
@@ -338,6 +369,17 @@ export default function AdminTicketDetailPage() {
                     </div>
                   );
                 })()}
+
+              {/* Read-only here: the BE authorises /link-parent for Manager only, so Admin sees
+                  the relation without being offered a control that would 403. */}
+              {ticket && (
+                <RelatedTicketsPanel
+                  ticket={ticket}
+                  related={relatedTickets}
+                  isLoading={relatedLoading}
+                  basePath="/admin/tickets"
+                />
+              )}
             </TabsContent>
 
             <TabsContent
@@ -382,6 +424,7 @@ export default function AdminTicketDetailPage() {
             >
               <div className="flex-1 overflow-y-auto p-6">
                 <TicketCommentThread
+                  pinNotices={pinNotices}
                   comments={comments}
                   currentUserId={currentUserId}
                   activeTab={chatTab}
@@ -419,7 +462,7 @@ export default function AdminTicketDetailPage() {
                 {chatLocked ? (
                   <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
                     <Lock className="size-3.5" />
-                    {TICKET_CHAT_LOCKED_NOTICE}
+                    {ticketChatLockedNotice(ticket.status)}
                   </p>
                 ) : (
                   <>
@@ -476,22 +519,46 @@ export default function AdminTicketDetailPage() {
                     {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Remaining
-                  </span>
-                  <span className="text-xs font-medium">
-                    {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                    style={{
-                      width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                    }}
-                  />
-                </div>
+                {/* Tells Admin WHY the deadline is further out than the raw priority budget
+                    would suggest — see the Manager panel for the full rationale. */}
+                {calendarExtensionLabel && (
+                  <div className="text-xs text-muted-foreground">
+                    <p className="italic">{calendarExtensionLabel}:</p>
+                    {calendarExtensionDays.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {calendarExtensionDays.map((day) => (
+                          <li key={day} className="font-bold not-italic">
+                            - {day}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {/* Live-clock only — see the Manager panel. The Status row above already
+                    names the terminal state (Stopped/Met/Breached), and the BE returns
+                    remainingPercent = 0 for all of them, so the ratio rows would only
+                    contradict it. */}
+                {isSlaClockLive(ticket.slaTimer.status) && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Remaining
+                      </span>
+                      <span className="text-xs font-medium">
+                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                        style={{
+                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               // No SLA timer, but a periodic-maintenance ticket still has a live booking
@@ -535,7 +602,7 @@ export default function AdminTicketDetailPage() {
               <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Description
               </p>
-              <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <p className="text-sm font-medium leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {ticket.description}
               </p>
             </div>
@@ -569,7 +636,7 @@ export default function AdminTicketDetailPage() {
               <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                 Resolution
               </p>
-              <p className="text-base leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
                 {ticket.resolutionSummary}
               </p>
             </div>

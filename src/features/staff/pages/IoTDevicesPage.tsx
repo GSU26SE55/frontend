@@ -65,9 +65,9 @@ export default function IoTDevicesPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Staff &middot; IoT
+            Staff &middot; Devices
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">IoT Devices</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Devices</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Status, firmware and last-seen time of the gateways in the field.
           </p>

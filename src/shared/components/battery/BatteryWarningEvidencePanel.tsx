@@ -44,20 +44,7 @@ export default function BatteryWarningEvidencePanel({
     undefined,
     !!batteryTypeId,
   );
-  const warnings = toWarningRows(
-    data?.items ?? [],
-    threshold
-      ? {
-          temperatureMax: threshold.temperatureMax,
-          temperatureMin: threshold.temperatureMin,
-          voltageMax: threshold.voltageMax,
-          voltageMin: threshold.voltageMin,
-          socWarningThreshold: threshold.socWarningThreshold,
-          currentMaxCharge: threshold.currentMaxCharge,
-          currentMaxDischarge: threshold.currentMaxDischarge,
-        }
-      : undefined,
-  );
+  const warnings = toWarningRows(data?.items ?? []);
 
   // Chỉ những dòng thật sự vượt ngưỡng mới được tính là "bằng chứng"; phần còn lại là bối
   // cảnh xung quanh, vẫn phải hiện để người đọc thấy pin lúc đó ra sao.
@@ -183,10 +170,10 @@ export default function BatteryWarningEvidencePanel({
                             : ""
                         }`}
                       >
-                        {num(r.temperature, 1)}
+                        {num(r.temperature)}
                       </td>
                       <td className="px-2 py-1.5 text-right tabular-nums">
-                        {num(r.socPercent, 1)}
+                        {num(r.socPercent)}
                       </td>
                       <td className="px-2 py-1.5">
                         <div className="flex flex-wrap gap-1">

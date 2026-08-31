@@ -12,6 +12,7 @@ import {
   Lock,
   KeyRound,
   MonitorSmartphone,
+  LogOut,
   Bell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,6 +27,7 @@ import PhoneVerifySection from "@/features/auth/components/profile/PhoneVerifySe
 import TwoFactorSetup from "@/features/auth/components/2fa/TwoFactorSetup";
 import GoogleLinkSection from "@/features/auth/components/profile/GoogleLinkSection";
 import TrustedDevicesSection from "@/features/auth/components/trusted-device/TrustedDevicesSection";
+import MySessionsSection from "@/features/auth/components/session/MySessionsSection";
 import LoginHistoryTable from "@/features/auth/components/account/LoginHistoryTable";
 import DangerZone from "@/features/auth/components/profile/DangerZone";
 import NotificationPreferencesSection from "@/features/auth/components/profile/NotificationPreferencesSection";
@@ -407,6 +409,14 @@ const AccountSettingsPage = () => {
                         description="Devices exempt from 2FA verification for 30 days"
                       >
                         <TrustedDevicesSection />
+                      </SecurityRow>
+
+                      <SecurityRow
+                        icon={LogOut}
+                        title="Where you're signed in"
+                        description="Devices with an active session — sign out any you don't recognise"
+                      >
+                        <MySessionsSection />
                       </SecurityRow>
                     </div>
                   )}

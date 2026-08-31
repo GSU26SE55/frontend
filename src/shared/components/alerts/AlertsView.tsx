@@ -57,6 +57,7 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { noData, notFound } from "@/shared/constants/emptyStates";
 import { formatDateTime } from "@/shared/utils/datetime";
+import { shortId } from "@/shared/utils/displayId";
 
 const DEFAULTS = {
   severity: "",
@@ -325,7 +326,9 @@ function AlertDetailDialog({
   onClose: () => void;
 }) {
   const { data: alert, isLoading } = useAlertDetail(alertId ?? "");
-  const ticketCode = useTicketCode(alert?.ticketId);
+  const { code: ticketCode, isLoading: ticketCodeLoading } = useTicketCode(
+    alert?.ticketId,
+  );
 
   // Falls back to a shortened id when the site list has not loaded or the site is
   // outside this user's scope — matches EnvironmentalIncidentsView.
@@ -407,9 +410,13 @@ function AlertDetailDialog({
                   to={`${basePath}/tickets/${alert.ticketId}`}
                   className="font-mono-num text-xs text-primary hover:underline"
                 >
-                  {/* Falls back to the raw id while the code loads, or when the ticket
-                      cannot be read — never leaves the row blank. */}
-                  {ticketCode ?? alert.ticketId}
+                  {/* Three states, deliberately distinct: the code once it lands, a neutral
+                      placeholder while it is still being fetched, and a SHORTENED id only when
+                      the lookup has settled without one (403 / deleted ticket). Rendering the
+                      id during loading made the link flash a GUID and then swap to the TKT-
+                      code. Never a full GUID; the link itself still uses the full id. */}
+                  {ticketCode ??
+                    (ticketCodeLoading ? "…" : shortId(alert.ticketId))}
                 </Link>
               ) : (
                 "—"

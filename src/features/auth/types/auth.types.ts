@@ -108,6 +108,12 @@ export interface UpdateProfilePayload {
   address?: string;
   birthDate?: string;
   timeZone?: string;
+  /**
+   * Clears the stored date of birth. The BE reads an omitted `birthDate` as "keep what is
+   * stored" — so that a client which does not render the field cannot wipe it — which
+   * means clearing has to be stated explicitly.
+   */
+  clearBirthDate?: boolean;
 }
 
 export interface UpdateAvatarPayload {

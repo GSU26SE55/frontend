@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEY } from "@/shared/utils/queryKeys";
 import { sensorReadingService } from "@/shared/services/battery/sensor-reading.service";
+import { ANOMALY_TYPE_LABELS } from "@/shared/constants/alertLabels";
 import type { SensorReadingDto } from "@/shared/types/battery/sensor-reading-history.types";
 
 /**
@@ -71,99 +72,41 @@ export function useReadingEvidence(
   });
 }
 
-/**
- * Thresholds come from the battery type's own `ThresholdConfig` — the very row `AnomalyRules`
- * on the backend reads to raise the alert. They must NOT be hardcoded here: the fleet mixes
- * 12V/24V/48V packs with different chemistries, so one set of numbers cannot describe them all,
- * and any constant we pick will silently drift away from what the backend actually enforced.
- *
- * Passing `undefined` disables every rule and yields no evidence rows — deliberate. Showing
- * rows judged against guessed limits is worse than showing none, because the Manager would be
- * cross-checking a ticket against a threshold the system never applied.
- */
-export interface EvidenceThresholds {
-  temperatureMax: number;
-  temperatureMin: number;
-  voltageMax: number;
-  voltageMin: number;
-  socWarningThreshold: number;
-  currentMaxCharge?: number;
-  currentMaxDischarge?: number;
-}
-
 export interface ReadingWarning {
   reading: SensorReadingDto;
   reasons: string[]; // warning labels ("Overheating 72°C > 60°C"...); empty = within limits
 }
 
 /**
- * Keep only the readings that breach the battery type's configured limits, labelling each with
- * the measured value AND the limit it crossed, so the row itself shows why it is evidence.
+ * Gắn nhãn cảnh báo cho từng dòng số đo, dựa trên anomaly BE ĐÃ CHẤM (`reading.anomalies`).
  *
- * Every anomaly the backend can raise from a reading needs a rule here. Undertemp used to be
- * missing, and the gap was not a cosmetic one: a −18°C reading matched nothing and vanished
- * from the list, while a 72°C row left over from an earlier Overheat run on the same battery
- * did match and took its place — the Undertemp ticket displayed "Overheating 72°C" as its own
- * evidence. A missing rule does not merely hide a row; it hands the slot to a neighbouring case.
+ * Trước đây hàm này tự so số đo với ngưỡng rồi tự ghép chuỗi — tức dựng lại luật của BE ở phía
+ * client. Hai vấn đề thực tế: FE chỉ có 7 rule trong khi BE có 17 loại anomaly (Undertemp từng
+ * bị thiếu, khiến ticket nhiệt độ thấp hiện nhầm bằng chứng "Overheating 72°C" của lần chạy
+ * trước), và severity không hề được tính. Nay BE chấm bằng `AnomalyRules.Detect` với đúng
+ * ThresholdConfig của loại pin, FE chỉ dịch sang nhãn.
+ *
+ * Không còn nhận `thresholds`: ngưỡng nay chỉ BE dùng, truyền vào đây chỉ mời gọi tính lại.
  */
-export function toWarningRows(
-  readings: SensorReadingDto[],
-  thresholds?: EvidenceThresholds,
-): ReadingWarning[] {
-  if (!thresholds) return [];
-
-  const rows: ReadingWarning[] = [];
-  for (const r of readings) {
-    const reasons: string[] = [];
-
-    if (r.temperature > thresholds.temperatureMax)
-      reasons.push(
-        `Overheating ${r.temperature.toFixed(0)}°C > ${thresholds.temperatureMax.toFixed(0)}°C`,
-      );
-    if (r.temperature < thresholds.temperatureMin)
-      reasons.push(
-        `Low temperature ${r.temperature.toFixed(0)}°C < ${thresholds.temperatureMin.toFixed(0)}°C`,
-      );
-    if (r.voltage > thresholds.voltageMax)
-      reasons.push(
-        `Overvoltage ${r.voltage.toFixed(2)}V > ${thresholds.voltageMax.toFixed(2)}V`,
-      );
-    if (r.voltage < thresholds.voltageMin)
-      reasons.push(
-        `Undervoltage ${r.voltage.toFixed(2)}V < ${thresholds.voltageMin.toFixed(2)}V`,
-      );
-    if (r.socPercent < thresholds.socWarningThreshold)
-      reasons.push(
-        `Low SOC ${r.socPercent.toFixed(0)}% < ${thresholds.socWarningThreshold.toFixed(0)}%`,
-      );
-
-    // Current carries direction in its sign: positive = charging, negative = discharging.
-    // Both limits are optional in the config — a null column means the backend never raises
-    // that anomaly for this battery type, so we must not invent a limit of our own.
-    if (
-      thresholds.currentMaxCharge !== undefined &&
-      thresholds.currentMaxCharge !== null &&
-      r.current > thresholds.currentMaxCharge
-    )
-      reasons.push(
-        `Charging current ${r.current.toFixed(0)}A > ${thresholds.currentMaxCharge.toFixed(0)}A`,
-      );
-    if (
-      thresholds.currentMaxDischarge !== undefined &&
-      thresholds.currentMaxDischarge !== null &&
-      r.current < -thresholds.currentMaxDischarge
-    )
-      reasons.push(
-        `Discharge current ${Math.abs(r.current).toFixed(0)}A > ${thresholds.currentMaxDischarge.toFixed(0)}A`,
-      );
-
-    // Giữ CẢ dòng không vi phạm. Trước đây lọc bỏ chúng, nên một ticket có đầy đủ số đo
-    // nhưng đều trong ngưỡng lại hiện bảng trống — Manager đọc thành "không có dữ liệu" và
-    // mất luôn căn cứ để bác một ticket khai khống. Số đo bình thường quanh thời điểm khai
-    // báo CŨNG là bằng chứng, chỉ là bằng chứng theo chiều ngược lại.
-    rows.push({ reading: r, reasons });
-  }
-  return rows;
+export function toWarningRows(readings: SensorReadingDto[]): ReadingWarning[] {
+  return readings.map((r) => ({
+    reading: r,
+    // Số đo hiện nguyên văn giá trị BE trả về, kèm ngưỡng bị vượt — cùng định dạng cũ
+    // ("Undervoltage 0.00V < 10.50V") để không phải sửa chỗ hiển thị.
+    reasons: (r.anomalies ?? []).map((a) => {
+      const label = ANOMALY_TYPE_LABELS[a.type] ?? a.type;
+      // 2 chu so cho MOI don vi — cung do chinh xac voi du lieu (`numeric(x,2)`) va voi
+      // `thresholdTone`. Truoc day chi Volt duoc 2 chu so, con lai lam tron ve so nguyen,
+      // nen mot vi pham that lai in ra thanh hai so BANG NHAU: nguong 32.6°C, do duoc
+      // 32.8°C, nhan hien "Overheat 33°C > 33°C" — khong giai thich duoc gi.
+      const digits = 2;
+      const actual = a.actualValue.toFixed(digits);
+      const limit = a.thresholdValue.toFixed(digits);
+      // Hướng so sánh suy từ chính số liệu, nên không cần bảng tra riêng cho từng loại.
+      const op = a.actualValue > a.thresholdValue ? ">" : "<";
+      return `${label} ${actual}${a.unit} ${op} ${limit}${a.unit}`;
+    }),
+  }));
 }
 
 /** Số dòng thực sự vượt ngưỡng — dùng cho badge đếm và câu tóm tắt phía trên bảng. */

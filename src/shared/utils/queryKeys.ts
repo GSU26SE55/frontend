@@ -21,6 +21,7 @@ export const KEY = {
   ambient: "ambient",
   environmentalIncidents: "environmentalIncidents",
   tickets: "tickets",
+  slaCalendar: "slaCalendar",
   staffTickets: "staffTickets",
   ticketHealth: "ticketHealth",
   batteryDashboard: "batteryDashboard",
@@ -89,6 +90,9 @@ export const QUERY_KEY = {
   },
   sessions: {
     me: (activeOnly?: boolean) => [KEY.sessions, "me", activeOnly] as const,
+  },
+  slaCalendar: {
+    list: (params?: object) => [KEY.slaCalendar, "list", params] as const,
   },
   trustedDevices: {
     list: () => [KEY.trustedDevices, "list"] as const,
@@ -319,6 +323,9 @@ export const QUERY_KEY = {
     kbSuggestions: (id: string, topN: number) =>
       [KEY.tickets, "kbSuggestions", id, topN] as const,
     activities: (id: string) => [KEY.tickets, "activities", id] as const,
+    related: (id: string) => [KEY.tickets, "related", id] as const,
+    byIncident: (incidentId: string) =>
+      [KEY.tickets, "byIncident", incidentId] as const,
     maintenanceLogs: (id: string) =>
       [KEY.tickets, "maintenanceLogs", id] as const,
     chats: (id: string) => [KEY.tickets, "chats", id] as const,

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { AlertTriangle, Thermometer } from "lucide-react";
+import { Activity, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useIncidentDetail } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { useSiteDetail } from "@/shared/hooks/site/useSites";
 import AmbientEvidencePanel from "@/shared/components/ticket/AmbientEvidencePanel";
+import SiteBatteryEvidencePanel from "@/shared/components/ticket/SiteBatteryEvidencePanel";
 import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
 import { alertSeverityLabel } from "@/shared/constants/alertLabels";
 import {
@@ -51,7 +52,16 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 interface Props {
-  incidentId: string;
+  /**
+   * Bản ghi incident — CHỈ có ở đường thiết bị tự báo (khói, rò khí, ngập). Đường ngưỡng ambient
+   * không đi qua EnvironmentalIncident nên không có id; khi đó panel bỏ khối chi tiết incident và
+   * dựng chứng cứ từ `siteId` + `detectedAt` của chính ticket.
+   */
+  incidentId?: string;
+  /** Site của ticket — dùng khi không có incident record. */
+  siteId?: string;
+  /** Thời điểm phát hiện lấy từ ticket — mốc để đọc log ambient khi không có incident. */
+  detectedAt?: string | null;
   /** Ticket description — carries the raw sensor reading the firmware sent. */
   description?: string | null;
   /**
@@ -74,13 +84,78 @@ interface Props {
  */
 export default function EnvironmentalIncidentInfoPanel({
   incidentId,
+  siteId,
+  detectedAt,
   description,
   siteBasePath,
 }: Props) {
-  const { data: incident, isLoading, isError } = useIncidentDetail(incidentId);
+  const {
+    data: incident,
+    isLoading,
+    isError,
+  } = useIncidentDetail(incidentId ?? "");
+  // Site lấy từ incident khi có, ngược lại từ chính ticket.
+  const effectiveSiteId = incident?.siteId ?? siteId;
   // Called before the early returns — hooks cannot run conditionally. `enabled` inside keeps it
-  // idle until the incident lands and hands over a siteId.
-  const { data: site } = useSiteDetail(incident?.siteId);
+  // idle until a siteId is available.
+  const { data: site } = useSiteDetail(effectiveSiteId);
+
+  // Mốc thời gian để đọc log ambient: thời điểm incident được phát hiện, hoặc `detectedAt` của
+  // ticket khi ticket sinh thẳng từ ngưỡng ambient.
+  const anchorAt = incident?.detectedAt ?? detectedAt ?? null;
+
+  // Link sang trang site, tab Environment, đã lọc sẵn ±2' quanh đúng mốc alert nổ — đối ứng cấp
+  // site của nút "View real-time detail" trên panel pin. Một cú bấm là tới đúng phút đang xét,
+  // thay vì đổ bộ vào log cả ngày rồi tự dò.
+  //
+  // Chỉ dựng khi route có trang `sites/:id`: Staff không có, link sang đó là 404.
+  const anchorMsShared = anchorAt ? new Date(anchorAt).getTime() : NaN;
+  const realtimeHref =
+    siteBasePath && effectiveSiteId && !Number.isNaN(anchorMsShared)
+      ? `${siteBasePath}/sites/${effectiveSiteId}?${new URLSearchParams({
+          tab: "ambient",
+          from: new Date(anchorMsShared - EVIDENCE_WINDOW_MS).toISOString(),
+          to: new Date(anchorMsShared + EVIDENCE_WINDOW_MS).toISOString(),
+        }).toString()}`
+      : null;
+
+  const realtimeLink = realtimeHref ? (
+    <Link
+      to={realtimeHref}
+      className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full mb-3")}
+    >
+      <Activity className="size-3.5" />
+      View real-time detail
+    </Link>
+  ) : null;
+
+  // Không có incident record — đường ngưỡng ambient. Vẫn dựng đủ chứng cứ: đó là toàn bộ lý do
+  // ticket này tồn tại, và trước đây màn hình bỏ trắng phần này.
+  if (!incidentId) {
+    return (
+      <div>
+        <Header />
+        {realtimeLink}
+        <div className="divide-y divide-border/50">
+          <InfoRow label="Site" value={site?.name ?? null} />
+          <InfoRow
+            label="Detected at"
+            value={
+              anchorAt
+                ? format(new Date(anchorAt), "HH:mm dd/MM/yyyy", { locale: enUS })
+                : null
+            }
+          />
+        </div>
+        <SensorEvidence fallback={description} />
+        <AmbientEvidencePanel siteId={effectiveSiteId} anchorAt={anchorAt} />
+        <SiteBatteryEvidencePanel
+          siteId={effectiveSiteId}
+          detectedAt={anchorAt}
+        />
+      </div>
+    );
+  }
 
   if (isLoading) return <Skeleton className="h-48 w-full" />;
 
@@ -107,16 +182,6 @@ export default function EnvironmentalIncidentInfoPanel({
   // minutes in the future (EnvironmentalIncidentCommands.ValidateAsync), so it is always set
   // and always sane. Ambient readings are ingested continuously, independent of when the
   // incident record lands, so the log covers detectedAt either way.
-  const anchorMs = new Date(incident.detectedAt).getTime();
-  const siteHref =
-    siteBasePath && incident.siteId && !Number.isNaN(anchorMs)
-      ? `${siteBasePath}/sites/${incident.siteId}?${new URLSearchParams({
-          tab: "ambient",
-          from: new Date(anchorMs - EVIDENCE_WINDOW_MS).toISOString(),
-          to: new Date(anchorMs + EVIDENCE_WINDOW_MS).toISOString(),
-        }).toString()}`
-      : null;
-
   return (
     <div>
       <Header incident={incident} />
@@ -131,18 +196,7 @@ export default function EnvironmentalIncidentInfoPanel({
           incident minute by hand. Rendered only where a site route exists: Staff has no
           `sites/:id` page, so linking there would 404.
         */}
-        {siteHref ? (
-          <Link
-            to={siteHref}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "w-full",
-            )}
-          >
-            <Thermometer className="size-3.5" />
-            Log readings around detection time
-          </Link>
-        ) : null}
+        {realtimeLink}
       </div>
 
       <div className="divide-y divide-border/50">
@@ -182,6 +236,14 @@ export default function EnvironmentalIncidentInfoPanel({
       <AmbientEvidencePanel
         siteId={incident.siteId}
         anchorAt={incident.detectedAt}
+      />
+
+      {/* Ambient answers "did something happen in the cabinet"; this answers "has it reached the
+          packs, and which ones" — the question the BMS control on this ticket asks the operator
+          to settle. */}
+      <SiteBatteryEvidencePanel
+        siteId={incident.siteId}
+        detectedAt={incident.detectedAt}
       />
     </div>
   );

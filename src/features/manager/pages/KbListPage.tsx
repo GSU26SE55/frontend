@@ -30,7 +30,6 @@ import {
   useManagerKbList,
   useManagerPublishKbArticle,
   useManagerArchiveKbArticle,
-  useMarkManagerKbHelpful,
   useManagerDuplicateKbArticle,
 } from "@/features/manager/hooks/kb/useManagerKb";
 // Shared hook, not a manager-specific one: POST /api/admin/blog/generate-from-kb is open to
@@ -98,7 +97,6 @@ export default function KbListPage() {
   const { data, isLoading, isError, refetch } = useManagerKbList(params);
   const { mutate: publish } = useManagerPublishKbArticle();
   const { mutate: archive } = useManagerArchiveKbArticle();
-  const { mutate: markHelpful } = useMarkManagerKbHelpful();
   const { mutateAsync: duplicate } = useManagerDuplicateKbArticle();
   const { mutate: generateBlog, isPending: generatingBlog } =
     useGenerateBlogFromKb();
@@ -125,10 +123,10 @@ export default function KbListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.kb]} />
           <Button size="sm" onClick={() => navigate("/manager/kb/new")}>
             <Plus className="size-3.5" /> New article
           </Button>
+          <RefreshButton queryKeys={[KEY.kb]} />
         </div>
       </div>
 
@@ -262,7 +260,6 @@ export default function KbListPage() {
           onResetFilter={resetFilters}
           onPublish={(a) => publish(a.id)}
           onArchive={(a) => archive(a.id)}
-          onMarkHelpful={(a) => markHelpful(a.id)}
           onEdit={(a) => navigate(`/manager/kb/${a.id}/edit`)}
           onCopy={(a) => handleCopy(a.id)}
           onGenerateBlog={(a) => setToGenerate(a)}

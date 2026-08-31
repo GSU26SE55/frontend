@@ -14,6 +14,11 @@ import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
@@ -40,7 +45,9 @@ import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDu
 import BatteryAssetInfoPanel from "@/features/manager/components/battery/BatteryAssetInfoPanel";
 import EnvironmentalIncidentInfoPanel from "@/shared/components/ticket/EnvironmentalIncidentInfoPanel";
 import MaintenanceLogCard from "@/shared/components/ticket/MaintenanceLogCard";
-import { getTicketSubject } from "@/shared/lib/ticketSubject";
+import { getTicketSubject, ticketBatteryIds } from "@/shared/lib/ticketSubject";
+import RelatedTicketsPanel from "@/shared/components/ticket/RelatedTicketsPanel";
+import TicketBmsAction from "@/shared/components/ticket/TicketBmsAction";
 import {
   useManagerTicketDetail,
   useTicketActivities,
@@ -48,11 +55,13 @@ import {
   useTicketComments,
   useReVerifyTicket,
   useAdminTicketList,
+  useTicketRelated,
+  useLinkParentTicket,
 } from "@/features/manager/hooks/ticket/useManagerTickets";
 import { useMergeCandidates } from "@/shared/hooks/ticket/useMergeCandidates";
 import {
   isTicketChatLocked,
-  TICKET_CHAT_LOCKED_NOTICE,
+  ticketChatLockedNotice,
 } from "@/shared/utils/ticket.utils";
 import { useTicketCommentsRealtime } from "@/shared/hooks/ticket/useTicketCommentsRealtime";
 import { useMentionCandidates } from "@/shared/hooks/ticket/useTicketParticipants";
@@ -77,7 +86,12 @@ import {
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { slaBarColorClass } from "@/shared/lib/sla";
+import {
+  slaBarColorClass,
+  isSlaClockLive,
+  formatCalendarExtension,
+  formatCalendarExtensionDays,
+} from "@/shared/lib/sla";
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -172,6 +186,10 @@ export default function TicketDetailPage() {
     : "/manager/tickets";
   const [dialog, setDialog] = useState<DialogType>(null);
   const [chatTab, setChatTab] = useState<ChatTab>("public");
+  // Which outer tab is open. The chat query must NOT run until the user actually opens
+  // the Chat tab: GET /chats auto-marks every message it returns as read on the BE, so
+  // fetching it eagerly told the sender "seen" for a thread nobody had looked at.
+  const [mainTab, setMainTab] = useState("info");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [composerPrefill, setComposerPrefill] = useState({
     text: "",
@@ -181,7 +199,10 @@ export default function TicketDetailPage() {
   const { data: ticket, isLoading, isError } = useManagerTicketDetail(id);
   const { data: activities = [], isLoading: activitiesLoading } =
     useTicketActivities(id);
-  const { data: comments = [] } = useTicketComments(id);
+  const { data: relatedTickets, isLoading: relatedLoading } =
+    useTicketRelated(id);
+  const linkParent = useLinkParentTicket();
+  const { data: comments = [] } = useTicketComments(id, mainTab === "comments");
 
   // The BE already returns `staffName` in assignments (synced from StaffAccount), so there's
   // no need to look it up via staffList — the helper falls back to staffId when the name is missing.
@@ -211,7 +232,7 @@ export default function TicketDetailPage() {
     });
     return Array.from(ids);
   }, [ticket, comments]);
-  const { typingNames, sendTyping } = useTicketCommentsRealtime(id);
+  const { typingNames, sendTyping, pinNotices } = useTicketCommentsRealtime(id);
   const { mutate: approve, isPending: approving } = useApproveTicket(id);
   const reVerify = useReVerifyTicket(id);
   const user = useSessionStore((s) => s.user);
@@ -256,10 +277,16 @@ export default function TicketDetailPage() {
     ],
     [mergeSourceList?.items, mergeSourceOpenList?.items],
   );
+  // useMemo keeps the array identity stable — useMergeCandidates depends on it.
+  const sourceBatteryIds = useMemo(
+    () => (ticket ? ticketBatteryIds(ticket) : []),
+    [ticket],
+  );
   const mergeCandidates = useMergeCandidates(
     mergeSourceItems,
     id,
     ticket?.suspectedDuplicateOfTicketId,
+    sourceBatteryIds,
   );
 
   if (isError) {
@@ -301,7 +328,10 @@ export default function TicketDetailPage() {
   const canEscalateReject = status === TicketStatusEnum.Request;
   // GH-1176: force escalation endpoint removed; only Staff-requested escalation remains.
   // canReprioritize: Open only — priority fixed once assigned per User Guide §3.8.
-  const canReprioritize = status === TicketStatusEnum.Open;
+  // An incident is pinned at Urgent: declaring one stops the SLA timer and isolates the
+  // battery, so letting it drop back to P1/P2/P3 would strand those side effects.
+  const canReprioritize =
+    status === TicketStatusEnum.Open && !ticket.isIncident;
   // A closed-out ticket can no longer be turned into an incident — the work is already
   // finished or rejected, so declaring one would create an incident nobody will act on.
   const canDeclareIncident =
@@ -316,6 +346,12 @@ export default function TicketDetailPage() {
   // comments come from a separate query (useTicketComments) + realtime push (SignalR).
 
   const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
+  const calendarExtensionLabel = formatCalendarExtension(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
+  const calendarExtensionDays = formatCalendarExtensionDays(
+    ticket.slaTimer?.calendarExtensionDays,
+  );
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -351,10 +387,10 @@ export default function TicketDetailPage() {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-          <RefreshButton
-            queryKeys={[KEY.manager.tickets, KEY.tickets]}
-            size="icon"
-          />
+          {/* Cutting charge/discharge is the first move on a thermal or overcharge ticket, so it
+              sits with the other header actions rather than a screen away. Picks battery vs
+              whole-site itself, and hides once the ticket is finished. */}
+          <TicketBmsAction ticket={ticket} />
           {canAssign && (
             <Button size="sm" onClick={() => setDialog("assign")}>
               Assign Staff
@@ -438,6 +474,7 @@ export default function TicketDetailPage() {
               Merge ticket
             </Button>
           )}
+          <RefreshButton queryKeys={[KEY.manager.tickets, KEY.tickets]} />
         </div>
       </div>
 
@@ -445,7 +482,11 @@ export default function TicketDetailPage() {
       <div className="flex-1 min-h-0 flex">
         {/* Left: Tabs */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-border">
-          <Tabs defaultValue="info" className="h-full gap-0">
+          <Tabs
+            value={mainTab}
+            onValueChange={setMainTab}
+            className="h-full gap-0"
+          >
             <div className="px-6 py-2.5 border-b border-border shrink-0">
               <TabsList>
                 <TabsTrigger value="info">Info</TabsTrigger>
@@ -476,6 +517,8 @@ export default function TicketDetailPage() {
                   return (
                     <EnvironmentalIncidentInfoPanel
                       incidentId={subject.incidentId}
+                      siteId={subject.siteId}
+                      detectedAt={ticket.detectedAt}
                       description={ticket.description}
                       siteBasePath="/manager"
                     />
@@ -501,6 +544,24 @@ export default function TicketDetailPage() {
                   </div>
                 );
               })()}
+
+              {/* One cabinet fault raises several tickets at once — the system's environmental
+                  ticket plus the customer's per-battery ones. Same cause, separate work, so they
+                  are listed side by side and can be linked without closing any of them. */}
+              <RelatedTicketsPanel
+                ticket={ticket}
+                related={relatedTickets}
+                isLoading={relatedLoading}
+                // Same detail page lives under two routes (/tickets/:id and /tickets/queue/:id).
+                // Reuse whichever the user is on, so following a related ticket keeps them in
+                // the Queue if that is where they came from — and Back keeps working, since the
+                // queue route is what restores the Queue list.
+                basePath={backToListPath}
+                onLinkParent={(ticketId, parentTicketId) =>
+                  linkParent.mutate({ ticketId, payload: { parentTicketId } })
+                }
+                isLinking={linkParent.isPending}
+              />
               <div>
                 <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   Attachments
@@ -523,6 +584,7 @@ export default function TicketDetailPage() {
             >
               <div className="flex-1 overflow-y-auto p-6">
                 <TicketCommentThread
+                  pinNotices={pinNotices}
                   comments={comments}
                   currentUserId={currentUserId}
                   activeTab={chatTab}
@@ -559,7 +621,7 @@ export default function TicketDetailPage() {
                 {chatLocked ? (
                   <p className="flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground">
                     <Lock className="size-3.5" />
-                    {TICKET_CHAT_LOCKED_NOTICE}
+                    {ticketChatLockedNotice(status)}
                   </p>
                 ) : (
                   <>
@@ -637,38 +699,58 @@ export default function TicketDetailPage() {
         {/* Right: Sidebar — always mounted, animates width (synced with left sidebar) */}
         <aside
           className={cn(
-            "shrink-0 border-l border-border overflow-hidden",
+            "shrink-0 border-l border-border overflow-hidden transition-[width] duration-300 ease-in-out",
             sidebarOpen ? "w-75" : "w-8",
           )}
         >
           {/* Collapsed rail — button to reopen the info panel */}
           {!sidebarOpen && (
-            <button
-              type="button"
-              onClick={() => setSidebarOpen(true)}
-              title="Open info panel"
-              className="w-8 h-full flex items-start justify-center pt-4 text-muted-foreground hover:bg-muted/50 transition-colors"
-            >
-              <PanelRightOpen className="size-4" />
-            </button>
+            <div className="w-8 h-full flex items-start justify-center pt-4 animate-in fade-in duration-200">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => setSidebarOpen(true)}
+                      aria-label="Open info panel"
+                      className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                    />
+                  }
+                >
+                  <PanelRightOpen size={15} />
+                </TooltipTrigger>
+                <TooltipContent side="left" sideOffset={8}>
+                  Open info panel
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
 
           {/* Panel content — only shown when open, fixed width w-75 to avoid reflow while sliding */}
           {sidebarOpen && (
-            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60">
+            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60 animate-in fade-in slide-in-from-right-4 duration-300 ease-out">
               {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
                 <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Info
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setSidebarOpen(false)}
-                  title="Collapse info panel"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <PanelRightClose className="size-4" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        onClick={() => setSidebarOpen(false)}
+                        aria-label="Collapse info panel"
+                        className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                      />
+                    }
+                  >
+                    <PanelRightClose size={15} />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={8}>
+                    Collapse info panel
+                  </TooltipContent>
+                </Tooltip>
               </div>
               {/* ── AI verify + suspected duplicate (Customer-created manual tickets only) ──
                   Placed AT THE TOP: Manager needs to read the AI assessment + duplicate warning
@@ -772,22 +854,51 @@ export default function TicketDetailPage() {
                         {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Remaining
-                      </span>
-                      <span className="text-xs font-medium">
-                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                        style={{
-                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                        }}
-                      />
-                    </div>
+                    {/* Tells Manager WHY the deadline is further out than the raw priority
+                        budget would suggest — without this, a calendar-pushed deadline reads
+                        identically to a normal one and the SLA calendar page's effect is invisible
+                        on the ticket it actually changed. The exact dates are the point: "extended"
+                        alone still leaves the Manager guessing which holiday did it. */}
+                    {calendarExtensionLabel && (
+                      <div className="text-xs text-muted-foreground">
+                        <p className="italic">{calendarExtensionLabel}:</p>
+                        {calendarExtensionDays.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {calendarExtensionDays.map((day) => (
+                              <li key={day} className="font-bold not-italic">
+                                - {day}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                    {/* "Remaining %" and the bar are only meaningful while the clock is
+                        actually counting. On a terminal timer (Stopped after a reject/merge,
+                        or an already decided Met/Breached) the BE returns remainingPercent = 0,
+                        and drawing the bar anyway rendered a rejected ticket as if it still had
+                        an SLA running against it. The countdown above already states the
+                        outcome, so the ratio rows just drop out. */}
+                    {isSlaClockLive(ticket.slaTimer.status) && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            Remaining
+                          </span>
+                          <span className="text-xs font-medium">
+                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
+                            style={{
+                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -826,7 +937,7 @@ export default function TicketDetailPage() {
                   <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Description
                   </p>
-                  <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                  <p className="text-sm font-medium leading-relaxed text-foreground/90 whitespace-pre-wrap">
                     {ticket.description}
                   </p>
                 </div>
@@ -850,7 +961,7 @@ export default function TicketDetailPage() {
                   <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                     Resolution
                   </p>
-                  <p className="text-base leading-relaxed whitespace-pre-wrap mb-2">
+                  <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap mb-2">
                     {ticket.resolutionSummary}
                   </p>
                   {ticket.resolvedAt && (
@@ -898,7 +1009,7 @@ export default function TicketDetailPage() {
                     </span>
                   </p>
                   {ticket.ratingComment && (
-                    <p className="text-base leading-relaxed text-foreground/90 mt-1.5 whitespace-pre-wrap">
+                    <p className="text-sm font-medium leading-relaxed text-foreground/90 mt-1.5 whitespace-pre-wrap">
                       {ticket.ratingComment}
                     </p>
                   )}

@@ -74,7 +74,28 @@ export interface SlaTimerDTO {
   warningSentAt?: string | null;
   breachAt?: string | null;
   status: SlaTimerStatusEnum;
+  /**
+   * % SLA còn lại. CHỈ có nghĩa khi status là Running/Paused — BE
+   * (SlaCalculator.GetRemainingPercent) trả 0 cho Met/Breached/Stopped, nên đừng
+   * vẽ thanh progress từ nó mà không kiểm tra `isSlaClockLive(status)` trước.
+   */
   remainingPercent: number;
+  /** Số lần đã pause — BE trả về nhưng client chưa dùng. */
+  pauseEpisodesCount?: number;
+  /** Budget SLA theo ngày làm việc của priority (P1=1 · P2=3 · P3=7). */
+  slaWorkingDays?: number;
+  /** Budget SLA quy ra giờ làm việc (P1=10h · P2=30h · P3=70h). */
+  slaWorkingHours?: number;
+  /** Số phút làm việc còn lại tới dueAt. Cùng quy ước với remainingPercent: 0 khi timer đã kết thúc. */
+  remainingWorkingMinutes?: number;
+  /**
+   * Số phút SLA calendar (ngày lễ/nghỉ) đã cộng thêm vào dueAt, so với deadline nếu không có
+   * ngày nghỉ nào rơi vào khoảng chạy của timer. 0 khi không bị ảnh hưởng — luôn 0 ở Stage 1
+   * (ticket còn Open), vì response SLA chạy 24/7 và không xét lịch nghỉ.
+   */
+  calendarExtensionMinutes?: number;
+  /** Các ngày (yyyy-MM-dd) trong SLA calendar rơi vào khoảng chạy của timer — nguồn cho calendarExtensionMinutes. */
+  calendarExtensionDays?: string[];
 }
 
 export interface TicketDTO {
@@ -167,6 +188,19 @@ export interface TicketDTO {
   mergedIntoTicketId?: string | null;
   /** Special close reason — set alongside `mergedIntoTicketId` on a Manager merge. */
   closeReason?: TicketCloseReasonEnum | null;
+  /** Site the ticket belongs to. Null on older tickets and on auto-from-alert ones. */
+  siteId?: string | null;
+  /**
+   * Parent ticket sharing the same root cause — an environmental incident and the battery
+   * tickets it caused. Unlike `mergedIntoTicketId` this does NOT close the ticket or stop its
+   * SLA: the batteries still have to be checked once the incident is dealt with.
+   */
+  parentTicketId?: string | null;
+}
+
+/** Link payload (Manager) — attaches this ticket to a parent; null unlinks it. */
+export interface LinkParentPayload {
+  parentTicketId: string | null;
 }
 
 /** Merge payload (Manager) — merges the current ticket into the target ticket. */
@@ -227,6 +261,13 @@ export interface TicketCommentDTO {
   readReceipts?: ChatReaderDto[];
   /** = readReceipts.length, precomputed by the BE for a quick "Seen by N" label. */
   readCount?: number;
+  /**
+   * Pinned to the top of the thread. Staff/Manager/Admin only, and the BE caps a ticket at
+   * 3 pinned messages — a 4th pin comes back as a 400 rather than silently replacing one.
+   */
+  isPinned?: boolean;
+  pinnedAt?: string | null;
+  pinnedByUserId?: string | null;
   // Voice chat (created via POST /chats/voice): Pending/Processing = transcribing (body is
   // temporarily empty), Completed = body holds the transcript, Failed = error → allow retry.
   // null for ordinary text chat.
@@ -245,6 +286,7 @@ export interface MaintenanceLogDTO {
   actionsTaken?: string | null;
   durationMinutes: number;
   resolutionNote?: string | null;
+  partsUsed?: string | null;
   startedAt: string;
   completedAt?: string | null;
   attachmentFileIds?: string[] | null;
@@ -321,6 +363,13 @@ export interface AdminTicketListParams {
    * Environmental / PeriodicMaintenance / CascadeRisk đều là Origin = System.
    */
   source?: TicketSourceFilterEnum;
+  /**
+   * BE query param `IncludeOpen` — bỏ bộ lọc ẩn ticket Open mặc định của Manager, trả về mọi
+   * trạng thái trong MỘT lần gọi. Dùng cho màn so sánh trước khi gộp ticket, nơi ứng viên do AI
+   * gợi ý thường vẫn đang Open chờ triage. Không nới quyền: Manager vốn đã đọc được Open qua
+   * `status`, và lọc `status` tường minh vẫn thắng cờ này.
+   */
+  includeOpen?: boolean;
   isDescending?: boolean;
   pageNumber?: number;
   pageSize?: number;

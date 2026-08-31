@@ -13,6 +13,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DatePicker } from "@/shared/components/ui/DatePicker";
 import AddressAutocomplete from "@/shared/components/site/AddressAutocomplete";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -39,6 +46,12 @@ interface SiteFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editData?: SiteDto | null;
 }
+
+const SITE_STATUS_LABELS: Record<SiteStatusEnum, string> = {
+  [SiteStatusEnum.Active]: "Active",
+  [SiteStatusEnum.UnderMaintenance]: "Under maintenance",
+  [SiteStatusEnum.Decommissioned]: "Decommissioned",
+};
 
 const toNumOrNull = (val?: string): number | null | undefined => {
   if (!val || val === "") return null;
@@ -201,6 +214,38 @@ export default function SiteFormDialog({
               </p>
             )}
           </div>
+
+          {isEdit && (
+            <div className="space-y-1">
+              <Label htmlFor="status">Status</Label>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(v) => v && field.onChange(Number(v))}
+                    items={Object.entries(SITE_STATUS_LABELS).map(
+                      ([value, label]) => ({ value, label }),
+                    )}
+                  >
+                    <SelectTrigger id="status" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      {Object.entries(SITE_STATUS_LABELS).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="address">Address</Label>

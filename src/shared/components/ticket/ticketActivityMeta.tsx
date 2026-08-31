@@ -58,7 +58,8 @@ const TONE_STYLE: Record<
   },
 };
 
-// Key is a string because the BE has actions outside the FE enum (Chatted, ChatFlagged, ChatEdited…).
+// Key is a string (not ActivityActionEnum) so legacy/removed BE actions (Commented, TriageApproved,
+// AutoClosed) still resolve to a label instead of falling through to the raw string.
 const ACTIVITY_META: Record<string, ActivityMeta> = {
   Created: { label: "Ticket created", tone: "info", icon: Plus },
   StatusChanged: { label: "Status changed", tone: "info", icon: RefreshCw },
@@ -73,6 +74,18 @@ const ACTIVITY_META: Record<string, ActivityMeta> = {
   Chatted: { label: "Comment", tone: "info", icon: MessageSquare },
   ChatEdited: { label: "Comment edited", tone: "info", icon: MessageSquare },
   ChatDeleted: { label: "Comment deleted", tone: "muted", icon: MessageSquare },
+  ChatRestored: {
+    label: "Comment restored",
+    tone: "info",
+    icon: MessageSquare,
+  },
+  ChatReplied: { label: "Comment reply", tone: "info", icon: MessageSquare },
+  ChatPinned: { label: "Comment pinned", tone: "info", icon: MessageSquare },
+  ChatUnpinned: {
+    label: "Comment unpinned",
+    tone: "muted",
+    icon: MessageSquare,
+  },
   ChatFlagged: {
     label: "Comment flagged",
     tone: "p1",
@@ -108,6 +121,32 @@ const ACTIVITY_META: Record<string, ActivityMeta> = {
     icon: CheckCircle2,
   },
   Closed: { label: "Ticket closed", tone: "muted", icon: Lock },
+  RatingRequested: { label: "Rating requested", tone: "info", icon: Star },
+  ParticipantAdded: {
+    label: "Participant added",
+    tone: "info",
+    icon: UserPlus,
+  },
+  ParticipantRemoved: {
+    label: "Participant removed",
+    tone: "muted",
+    icon: Users,
+  },
+  ParticipantRoleChanged: {
+    label: "Participant role changed",
+    tone: "info",
+    icon: Users,
+  },
+  IncidentDeclassified: {
+    label: "Incident declassified",
+    tone: "p2",
+    icon: Siren,
+  },
+  PeriodicMaintenanceScheduleChanged: {
+    label: "Maintenance schedule changed",
+    tone: "info",
+    icon: Wrench,
+  },
 };
 
 const FALLBACK: ActivityMeta = {

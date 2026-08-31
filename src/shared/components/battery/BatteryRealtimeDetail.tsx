@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Battery, HeartPulse, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Battery, HeartPulse } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ import {
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
   try {
-    return format(new Date(iso), "MMM d, yyyy", { locale: enUS });
+    return format(new Date(iso), "dd/MM/yyyy", { locale: enUS });
   } catch {
     return iso;
   }
@@ -92,25 +92,6 @@ function MaxCapacityHighlight({ sohPercent }: { sohPercent?: number | null }) {
   );
 }
 
-// Cascade risk is a critical safety signal — kept as a header badge (next to
-// Active/alerts) so it can't be missed by scrolling past a sidebar card.
-function CascadeRiskBadge({ assetId }: { assetId: string }) {
-  const { data } = useCascadeRisk(assetId);
-  if (!data) return null;
-  const tone = CASCADE_RISK_TONE[data.level] ?? "muted";
-  const { fg, bg } = toneVars(tone);
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 text-2xs font-semibold px-2 py-0.5 rounded-full border"
-      style={{ color: fg, backgroundColor: bg, borderColor: fg }}
-      title={`Cascade risk score ${data.cascadeRiskScore.toFixed(2)}`}
-    >
-      <ShieldAlert size={12} />
-      Cascade risk: {data.level}
-    </span>
-  );
-}
-
 interface BatteryRealtimeDetailProps {
   assetId: string;
   // Admin injects CRUD buttons (Edit/Transfer/Delete) + dialogs through this slot;
@@ -158,6 +139,7 @@ export default function BatteryRealtimeDetail({
   };
 
   const { data: asset, isLoading } = useBatteryAsset(id);
+  const { data: cascade } = useCascadeRisk(id);
   const { data: rt } = useBatteryAssetRealtime(id);
   const { data: gateways } = useIotDevicesForStaff(
     {
@@ -168,8 +150,15 @@ export default function BatteryRealtimeDetail({
     !!asset?.siteId,
   );
   const stream = useSensorStream(id ? `asset:${id}` : null);
-  // Prefer live SSE; fallback seed/polling = rt (useBatteryAssetRealtime).
-  const live = stream.reading ?? rt ?? null;
+  // Whichever of SSE (stream.reading, ~5s) or polling (rt, 30s) has the NEWER `time` wins —
+  // comparing timestamps instead of always preferring SSE. A pure SSE-first pick got stuck on
+  // a stale reading whenever the gateway went offline (SSE stops pushing but keeps its last
+  // value in state): the header Refresh button re-triggers `rt`'s query, yet the screen never
+  // reflected it because the stale SSE value kept winning the `??` fallback regardless of age.
+  const live =
+    !stream.reading || (rt?.time && rt.time > stream.reading.time)
+      ? (rt ?? stream.reading ?? null)
+      : stream.reading;
   // Telemetry alert threshold by BatteryType — readable by Admin/Manager/Staff alike.
   const { data: threshold } = useThresholdByType(asset?.batteryTypeId ?? "");
 
@@ -238,29 +227,24 @@ export default function BatteryRealtimeDetail({
               </h1>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 text-2xs font-semibold px-2 py-0.5 rounded-full border",
+                  "inline-flex items-center text-2xs font-semibold px-2 py-0.5 rounded-full border",
                   gatewayBadge.className,
                 )}
                 title="Live connection status of the IoT gateway at this site"
               >
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    gatewayOnline
-                      ? "bg-emerald-500"
-                      : gatewayConnecting
-                        ? "bg-amber-500"
-                        : "bg-red-500",
-                  )}
-                />
                 {gatewayBadge.label}
               </span>
-              {rt && rt.activeAlerts > 0 && (
-                <span className="inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">
-                  {rt.activeAlerts} alerts
+              {cascade && (
+                <span
+                  className={cn(
+                    "inline-flex items-center text-2xs font-semibold px-2 py-0.5 rounded-full border",
+                    toneClass(CASCADE_RISK_TONE[cascade.level] ?? "muted"),
+                  )}
+                  title="Cascade risk — likelihood this battery's issue spreads to neighbouring batteries"
+                >
+                  Cascade risk: {cascade.cascadeRiskScore.toFixed(2)}
                 </span>
               )}
-              <CascadeRiskBadge assetId={id} />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {asset.batteryTypeName}
@@ -269,8 +253,21 @@ export default function BatteryRealtimeDetail({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <RefreshButton queryKeys={[KEY.batteryAssets]} />
           {headerActions}
+          {/* Nút này phải làm mới CẢ TRANG, không chỉ thông tin pin. Trước đây nó chỉ invalidate
+              `batteryAssets`, nên bấm xong thì chart, ngưỡng, thiết bị gateway và trạng thái BMS
+              vẫn là dữ liệu cũ — người dùng thấy nút quay mà nửa màn hình không đổi.
+              `sensorReadings` phủ chart + bảng lịch sử; `thresholds` phủ màu cảnh báo và các vùng
+              tô trên chart; `iotDevices` phủ badge gateway online/offline. */}
+          <RefreshButton
+            queryKeys={[
+              KEY.batteryAssets,
+              KEY.sensorReadings,
+              KEY.thresholds,
+              KEY.iotDevices,
+              KEY.alerts,
+            ]}
+          />
         </div>
       </div>
 
@@ -322,14 +319,18 @@ export default function BatteryRealtimeDetail({
             {/* Realtime — live SSE (~5s), seed/fallback from rt (polling 30s) */}
             <LiveTelemetryCard
               data={live}
-              status={stream.status}
               stats={stream.stats?.["1h"]}
               thresholds={
                 threshold
                   ? {
                       socWarning: threshold.socWarningThreshold,
                       socCritical: threshold.socCriticalThreshold,
+                      temperatureMin: threshold.temperatureMin,
                       temperatureMax: threshold.temperatureMax,
+                      voltageMin: threshold.voltageMin,
+                      voltageMax: threshold.voltageMax,
+                      currentMaxCharge: threshold.currentMaxCharge,
+                      currentMaxDischarge: threshold.currentMaxDischarge,
                     }
                   : undefined
               }

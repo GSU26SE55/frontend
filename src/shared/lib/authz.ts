@@ -3,9 +3,9 @@ import type {
   UserRole,
 } from "@/shared/types/account/session.types";
 
-type PermissionType = string & { readonly __brand: "Permission" };
+export type PermissionType = string & { readonly __brand: "Permission" };
 
-// Source of truth: BE PermissionCodes.cs + PermissionSeed.cs (40 system codes, verified in GH-106).
+// Source of truth: BE PermissionCodes.cs + PermissionSeed.cs (53 system codes, re-verified against DB 2026-08-31).
 // Codes are lowercase "module.action". Do NOT add codes that don't exist in the BE seed.
 export const P = {
   // user.*
@@ -48,6 +48,11 @@ export const P = {
   NOTIFICATION_SEND: "notification.send" as PermissionType,
   NOTIFICATION_MANAGE_TEMPLATE:
     "notification.manage_template" as PermissionType,
+  // Sprint 6.4 NOTI4-10 — nhóm người nhận và gửi hàng loạt
+  NOTIFICATION_GROUP_VIEW: "notification.group_view" as PermissionType,
+  NOTIFICATION_GROUP_MANAGE: "notification.group_manage" as PermissionType,
+  NOTIFICATION_BROADCAST: "notification.broadcast" as PermissionType,
+  NOTIFICATION_BATCH_VIEW: "notification.batch_view" as PermissionType,
 
   // knowledge_base.*
   KNOWLEDGE_BASE_VIEW: "knowledge_base.view" as PermissionType,
@@ -68,10 +73,17 @@ export const P = {
   TICKET_SAGA_REPROCESS: "ticket.saga.reprocess" as PermissionType,
 
   // chat.* (#CHAT-16)
+  CHAT_CREATE_PUBLIC: "chat.create.public" as PermissionType,
   CHAT_CREATE_INTERNAL: "chat.create.internal" as PermissionType,
+  CHAT_EDIT_OWN: "chat.edit.own" as PermissionType,
   CHAT_EDIT_ANY: "chat.edit.any" as PermissionType,
+  CHAT_DELETE_OWN: "chat.delete.own" as PermissionType,
   CHAT_DELETE_ANY: "chat.delete.any" as PermissionType,
   CHAT_VIEW_INTERNAL: "chat.view.internal" as PermissionType,
+  // Pin/unpin a comment. The BE gates both on this single code (ChatAuthorizationService
+  // .CanPinChat) — there is no separate unpin permission.
+  CHAT_PIN: "chat.pin" as PermissionType,
+  CHAT_TEMPLATE_CREATE_GLOBAL: "chat.template.create.global" as PermissionType,
 } as const;
 
 export const checkPermission = (

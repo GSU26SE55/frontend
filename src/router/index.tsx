@@ -66,7 +66,6 @@ const NotificationInboxPage = lazyPage(
 const NotificationUnsubscribePage = lazyPage(
   () => import("@/shared/pages/NotificationUnsubscribePage"),
 );
-const ProfilePage = lazyPage(() => import("@/features/auth/pages/ProfilePage"));
 const AuditLogsPage = lazyPage(
   () => import("@/features/admin/pages/AuditLogsPage"),
 );
@@ -217,6 +216,14 @@ const StaffMyMaintenanceLogsPage = lazyPage(
 );
 const StaffSlaMonitorPage = lazyPage(
   () => import("@/features/staff/pages/SlaMonitorPage"),
+);
+// SLA business calendar — Manager and Admin manage the same list (the BE authorises both),
+// so each portal points at its own thin page over one shared view.
+const AdminSlaCalendarPage = lazyPage(
+  () => import("@/features/admin/pages/SlaCalendarPage"),
+);
+const ManagerSlaCalendarPage = lazyPage(
+  () => import("@/features/manager/pages/SlaCalendarPage"),
 );
 const AdminKbListPage = lazyPage(
   () => import("@/features/admin/pages/KbListPage"),
@@ -391,7 +398,7 @@ const router = createBrowserRouter([
               { path: "device-alerts", element: <AdminDeviceAlertsPage /> },
               { path: "sms-gateway", element: <AdminSmsGatewayPage /> },
               { path: "sagas", element: <AdminSagaDebugPage /> },
-              { path: "profile", element: <ProfilePage /> },
+              { path: "sla-calendar", element: <AdminSlaCalendarPage /> },
               { path: "audit-logs", element: <AuditLogsPage /> },
               {
                 path: "battery-audit-logs",
@@ -448,6 +455,7 @@ const router = createBrowserRouter([
                 path: "tickets/:id/merge",
                 element: <ManagerMergeComparePage />,
               },
+              { path: "sla-calendar", element: <ManagerSlaCalendarPage /> },
               { path: "kb", element: <ManagerKbListPage /> },
               { path: "kb/new", element: <ManagerKbEditorPage /> },
               { path: "kb/:id", element: <ManagerKbDetailPage /> },
@@ -466,7 +474,6 @@ const router = createBrowserRouter([
                 path: "iot-calibrations",
                 element: <ManagerCalibrationsExpiringPage />,
               },
-              { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
               { path: "inbox", element: <NotificationInboxPage /> },
             ],
@@ -511,7 +518,6 @@ const router = createBrowserRouter([
                 path: "battery-assets/:id",
                 element: <StaffBatteryAssetDetailPage />,
               },
-              { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <AccountSettingsPage /> },
               { path: "inbox", element: <NotificationInboxPage /> },
             ],

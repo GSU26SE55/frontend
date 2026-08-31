@@ -19,6 +19,7 @@ import type {
   MergeTicketPayload,
 } from "@/shared/types/ticket/ticket.types";
 import type { TicketSourceFilterEnum } from "@/shared/enums/ticket/ticket.enum";
+import { CHAT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 export interface GetAdminTicketsParams {
   keyword?: string;
@@ -69,6 +70,11 @@ export const adminTicketService = {
       .get<CommonResponse<TicketDetailDTO>>(ENDPOINTS.TICKETS.DETAIL(id))
       .then((r) => r.data),
 
+  getRelated: (id: string) =>
+    axiosInstance.get<CommonResponse<TicketDTO[]>>(
+      ENDPOINTS.TICKETS.RELATED(id),
+    ),
+
   getActivities: (id: string) =>
     axiosInstance
       .get<
@@ -93,11 +99,13 @@ export const adminTicketService = {
       )
       .then((r) => r.data),
 
-  getComments: (id: string) =>
+  // pageSize is explicit: the BE defaults to 10, so a busy ticket silently lost every message
+  // past the tenth — the thread just ended early with no indication anything was missing.
+  getComments: (id: string, page = 1, pageSize = CHAT_PAGE_SIZE) =>
     axiosInstance
       .get<
         CommonResponse<PaginationResponse<TicketCommentDTO>>
-      >(ENDPOINTS.TICKETS.CHATS(id))
+      >(ENDPOINTS.TICKETS.CHATS(id), { params: { page, pageSize } })
       .then((r) => r.data),
 
   addComment: (id: string, payload: AddCommentPayload) =>

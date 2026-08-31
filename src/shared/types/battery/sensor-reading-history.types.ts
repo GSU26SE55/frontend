@@ -1,3 +1,8 @@
+import type {
+  AnomalyTypeEnum,
+  AlertSeverityEnum,
+} from "@/shared/enums/alerts/alert.enum";
+
 // Sensor Readings — time-series data (TimescaleDB). Does NOT extend AuditableEntity.
 // Docs: docs/api-battery.md §Group 4.
 // Single source shared by admin/manager/staff (previously duplicated in each feature).
@@ -11,6 +16,22 @@ export interface SensorReadingDto {
   socPercent: number; // 0–100
   cycleCount: number | null; // null if the BMS does not report it
   sourceDeviceId: string | null;
+  /**
+   * Anomalies BE đã chấm cho chính dòng này (AnomalyRules.Detect + ThresholdConfig của loại pin).
+   *
+   * Rỗng = trong ngưỡng, HOẶC loại pin chưa cấu hình ngưỡng. Optional để tương thích ngược với
+   * BE cũ chưa trả field này — khi đó FE không vẽ badge nào thay vì crash.
+   */
+  anomalies?: SensorReadingAnomalyDto[];
+}
+
+/** Một anomaly trên một dòng số đo — đủ để dựng nhãn mà FE không cần biết luật. */
+export interface SensorReadingAnomalyDto {
+  type: AnomalyTypeEnum;
+  severity: AlertSeverityEnum;
+  thresholdValue: number;
+  actualValue: number;
+  unit: string; // "V" | "A" | "°C" | "%"
 }
 
 export type SensorReadingSortKey =

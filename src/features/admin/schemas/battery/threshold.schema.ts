@@ -1,13 +1,17 @@
 import { z } from "zod";
+import { requiredNumber } from "@/shared/schemas/common.schema";
 
 export const upsertThresholdSchema = z
   .object({
-    voltageMin: z.number().positive("Must be > 0"),
-    voltageMax: z.number().positive("Must be > 0"),
-    temperatureMin: z.number(),
-    temperatureMax: z.number(),
-    socWarningThreshold: z.number().min(0).max(100),
-    socCriticalThreshold: z.number().min(0).max(100),
+    // requiredNumber, not a bare z.number(): creating a config for a battery type with no
+    // existing threshold leaves every input empty, and a bare z.number() then reports Zod's
+    // "expected number, received undefined" under all six at once.
+    voltageMin: requiredNumber(z.number().positive("Must be > 0")),
+    voltageMax: requiredNumber(z.number().positive("Must be > 0")),
+    temperatureMin: requiredNumber(z.number()),
+    temperatureMax: requiredNumber(z.number()),
+    socWarningThreshold: requiredNumber(z.number().min(0).max(100)),
+    socCriticalThreshold: requiredNumber(z.number().min(0).max(100)),
     currentMaxCharge: z.number().positive().optional(),
     currentMaxDischarge: z.number().positive().optional(),
     sohWarningThreshold: z.number().min(0).max(100).optional(),
@@ -22,7 +26,7 @@ export const upsertThresholdSchema = z
   // payload spells them ("voltageMax") — that matches nothing on screen.
   .superRefine((d, ctx) => {
     if (d.voltageMax <= d.voltageMin) {
-      const message = "Maximum voltage must be greater than minimum voltage";
+      const message = "Critical voltage must be greater than warning voltage";
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message,
@@ -32,7 +36,7 @@ export const upsertThresholdSchema = z
 
     if (d.temperatureMax <= d.temperatureMin) {
       const message =
-        "Maximum temperature must be greater than minimum temperature";
+        "Critical temperature must be greater than warning temperature";
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message,

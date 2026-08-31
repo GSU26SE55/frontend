@@ -31,6 +31,7 @@ import CompareFieldTable from "@/shared/components/ticket/CompareFieldTable";
 import { buildCompareRows } from "@/shared/utils/ticket/compareRows";
 import CompareEvidencePanel from "@/shared/components/ticket/CompareEvidencePanel";
 import { useMergeCandidates } from "@/shared/hooks/ticket/useMergeCandidates";
+import { ticketBatteryIds } from "@/shared/lib/ticketSubject";
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import type {
   TicketDTO,
@@ -77,10 +78,16 @@ export default function MergeCompareView({
 }: MergeCompareViewProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  // Stable identity for the hook's dependency list.
+  const sourceBatteryIds = useMemo(
+    () => (source ? ticketBatteryIds(source) : []),
+    [source],
+  );
   const candidates = useMergeCandidates(
     tickets,
     source?.id ?? "",
     source?.suspectedDuplicateOfTicketId,
+    sourceBatteryIds,
   );
 
   // The currently selected ticket MUST be present in the list, otherwise Select can't
@@ -325,13 +332,11 @@ export default function MergeCompareView({
               <CompareEvidencePanel
                 assetId={source.batteryAssetId}
                 detectedAt={source.detectedAt}
-                batteryTypeId={sourceAsset?.batteryTypeId}
                 title={source.code}
               />
               <CompareEvidencePanel
                 assetId={target.batteryAssetId}
                 detectedAt={target.detectedAt}
-                batteryTypeId={targetAsset?.batteryTypeId}
                 title={target.code}
               />
             </CardContent>

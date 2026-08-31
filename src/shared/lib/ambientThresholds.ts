@@ -22,9 +22,11 @@ function grade(
   critical: number | null | undefined,
 ): AmbientLevel {
   if (value === null || value === undefined) return null;
-  if (critical !== null && critical !== undefined && value >= critical)
+  // So sanh NGAT (>), giong `AnomalyRules.DetectAmbient`. Dung `>=` thi gia tri dung bang
+  // nguong se duoc to mau trong khi BE khong he sinh Alert.
+  if (critical !== null && critical !== undefined && value > critical)
     return "critical";
-  if (warning !== null && warning !== undefined && value >= warning)
+  if (warning !== null && warning !== undefined && value > warning)
     return "warning";
   // Monitored (at least one bound set) and under it → explicitly OK.
   const monitored =
@@ -36,6 +38,9 @@ function grade(
 export interface AmbientRowEvaluation {
   temperature: AmbientLevel;
   humidity: AmbientLevel;
+  gas: AmbientLevel;
+  /** Wet → "critical" (always alerts, no configurable threshold). Dry → "ok". Not reported → null. */
+  water: AmbientLevel;
   /**
    * The combo rule: heat plus moisture is worse than either alone, so the site config carries a
    * separate lower pair that only fires when BOTH are exceeded together. It can flag a row whose
@@ -55,14 +60,28 @@ export interface AmbientRowEvaluation {
  * the numbers that decided whether an alert fired.
  */
 export function evaluateAmbientRow(
-  reading: Pick<AmbientReadingDto, "ambientTemperature" | "humidity">,
+  reading: Pick<
+    AmbientReadingDto,
+    "ambientTemperature" | "humidity" | "gasConcentration" | "waterLeakDetected"
+  >,
   threshold: AmbientThresholdConfigDto | null | undefined,
 ): AmbientRowEvaluation {
+  // Water has no configurable threshold (3 sensors are independent) — wet always alerts,
+  // regardless of whether temp/humidity/gas monitoring is enabled for the site.
+  const water: AmbientLevel =
+    reading.waterLeakDetected === null || reading.waterLeakDetected === undefined
+      ? null
+      : reading.waterLeakDetected
+        ? "critical"
+        : "ok";
+
   const none: AmbientRowEvaluation = {
     temperature: null,
     humidity: null,
+    gas: null,
+    water,
     combo: false,
-    worst: null,
+    worst: water === "critical" ? "critical" : null,
   };
   // `enabled: false` means the site opted out of monitoring — grading anyway would show
   // breaches for limits that are not in force.
@@ -78,6 +97,11 @@ export function evaluateAmbientRow(
     threshold.highHumidityWarning,
     threshold.highHumidityCritical,
   );
+  const gas = grade(
+    reading.gasConcentration,
+    threshold.highGasWarning,
+    threshold.highGasCritical,
+  );
 
   // Only active when BOTH combo thresholds have a value — matches the config drawer's own note.
   const combo =
@@ -92,18 +116,19 @@ export function evaluateAmbientRow(
     reading.ambientTemperature >= threshold.comboTempThreshold &&
     reading.humidity >= threshold.comboHumidityThreshold;
 
-  const levels = [temperature, humidity];
-  const worst: AmbientLevel = levels.includes("critical")
+  const levels = [temperature, humidity, gas, water];
+  // Combo la Critical, khong phai warning: BE sinh `HighTempHumidityCombo` voi
+  // `AlertSeverityEnum.Critical`. Day la dieu kien can thoat nhiet cua pin lithium — no co the
+  // do mot dong ma ca hai chi so deu chua vuot nguong rieng cua chung.
+  const worst: AmbientLevel = levels.includes("critical") || combo
     ? "critical"
-    : levels.includes("warning") || combo
-      ? // A combo breach is a real alert condition, so it must not read as "ok" just because
-        // neither metric crossed its own line.
-        "warning"
+    : levels.includes("warning")
+      ? "warning"
       : levels.includes("ok")
         ? "ok"
         : null;
 
-  return { temperature, humidity, combo, worst };
+  return { temperature, humidity, gas, water, combo, worst };
 }
 
 /** Tailwind text colour for a graded value. `ok`/null stay unstyled — only breaches shout. */

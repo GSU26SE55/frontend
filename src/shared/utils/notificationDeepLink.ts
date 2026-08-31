@@ -46,6 +46,13 @@ const ENTITY_ROUTES: Record<string, EntityRoute> = {
     path: (id) => `sites/${id}`,
     roles: [UserRole.ADMIN, UserRole.MANAGER],
   },
+  environmentalincident: {
+    // Không có route `environmental-incidents/:id` — trang là một danh sách, chi tiết mở bằng
+    // dialog. Deep link vì thế trỏ vào danh sách kèm ?incident=<id> và view tự mở dialog đó.
+    // Staff không có trang này.
+    path: (id) => `environmental-incidents?incident=${id}`,
+    roles: [UserRole.ADMIN, UserRole.MANAGER],
+  },
   iotdevice: {
     // Only Admin has /admin/iot-devices/:id.
     path: (id) => `iot-devices/${id}`,

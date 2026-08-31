@@ -1,14 +1,30 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SiteCascadeRiskSummaryDto } from "@/shared/types/battery/cascade.types";
-import { plural } from "@/shared/utils/plural";
+import { toneText, toneVars } from "@/shared/theme/statusColors";
+import type { StatusTone } from "@/shared/theme/statusColors";
+import { displayNameOrShortId } from "@/shared/utils/displayId";
+import StatBreakdown from "@/shared/components/dashboard/StatBreakdown";
+import type { BreakdownSegment } from "@/shared/components/dashboard/StatBreakdown";
 
 interface CascadeRiskSummaryProps {
   summary: SiteCascadeRiskSummaryDto | undefined;
   isLoading?: boolean;
+}
+
+/** Score bands mirror the high/medium/low counts the BE sends, so the meter agrees with them. */
+function scoreTone(score: number): StatusTone {
+  if (score >= 0.7) return "p1";
+  if (score >= 0.4) return "p3";
+  return "ok";
+}
+
+function scoreLabel(score: number): string {
+  if (score >= 0.7) return "High";
+  if (score >= 0.4) return "Medium";
+  return "Low";
 }
 
 export default function CascadeRiskSummary({
@@ -18,11 +34,12 @@ export default function CascadeRiskSummary({
   if (isLoading) {
     return (
       <Card className="h-full">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-3">
           <Skeleton className="h-5 w-40" />
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-28 w-full" />
+        <CardContent className="space-y-3">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-10 w-full" />
         </CardContent>
       </Card>
     );
@@ -31,162 +48,84 @@ export default function CascadeRiskSummary({
   if (!summary) return null;
 
   const hasHighRisk = summary.highRiskCount > 0;
+  const maxTone = scoreTone(summary.maxScore);
 
-  const pieData = [
-    { name: "High risk", value: summary.highRiskCount, color: "#f43f5e" },
-    { name: "Medium", value: summary.mediumRiskCount, color: "#f59e0b" },
-    { name: "Low", value: summary.lowRiskCount, color: "#10b981" },
-  ].filter((d) => d.value > 0);
+  const segments: BreakdownSegment[] = [
+    { label: "High risk", value: summary.highRiskCount, tone: "p1" },
+    { label: "Medium", value: summary.mediumRiskCount, tone: "p3" },
+    { label: "Low", value: summary.lowRiskCount, tone: "ok" },
+  ];
 
-  const chartData =
-    pieData.length > 0
-      ? pieData
-      : [{ name: "Low", value: 1, color: "#10b981" }];
+  const Icon = hasHighRisk ? ShieldAlert : ShieldCheck;
 
   return (
-    <Card className="h-full flex flex-col justify-between">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-2">
-          <ShieldAlert
-            className={`size-4 ${
-              hasHighRisk
-                ? "text-rose-600 dark:text-rose-400"
-                : "text-emerald-500"
-            }`}
+          <Icon
+            className={`size-4 ${hasHighRisk ? toneText("p1") : toneText("ok")}`}
           />
           <CardTitle className="text-base">Cascade risk</CardTitle>
         </div>
         <Badge
-          variant={hasHighRisk ? "destructive" : "outline"}
-          className={`font-mono text-xs font-semibold px-2 py-0.5 ${
-            hasHighRisk ? "bg-rose-600 text-white" : ""
-          }`}
+          variant="outline"
+          className="font-mono text-xs font-semibold px-2 py-0.5"
         >
-          Max: {summary.maxScore.toFixed(2)}
+          {summary.totalAssets} rated
         </Badge>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col justify-between space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">
-              Risk level distribution
-            </p>
+      <CardContent className="flex-1 flex flex-col justify-between gap-4">
+        <StatBreakdown segments={segments} total={summary.totalAssets} />
 
-            <div className="space-y-1.5 text-xs font-medium">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
-                <span className="text-muted-foreground min-w-20">
-                  High risk:
-                </span>
-                <strong
-                  className={`font-bold ${summary.highRiskCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}
-                >
-                  {plural(summary.highRiskCount, "battery", "batteries")}{" "}
-                  {summary.totalAssets > 0
-                    ? `(${((summary.highRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
-                    : ""}
-                </strong>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
-                <span className="text-muted-foreground min-w-20">Medium:</span>
-                <strong
-                  className={`font-bold ${summary.mediumRiskCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
-                >
-                  {plural(summary.mediumRiskCount, "battery", "batteries")}{" "}
-                  {summary.totalAssets > 0
-                    ? `(${((summary.mediumRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
-                    : ""}
-                </strong>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
-                <span className="text-muted-foreground min-w-20">Low:</span>
-                <strong
-                  className={`font-bold ${summary.lowRiskCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
-                >
-                  {plural(summary.lowRiskCount, "battery", "batteries")}{" "}
-                  {summary.totalAssets > 0
-                    ? `(${((summary.lowRiskCount / summary.totalAssets) * 100).toFixed(0)}%)`
-                    : ""}
-                </strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative w-40 h-40 shrink-0 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={44}
-                  outerRadius={68}
-                  paddingAngle={chartData.length > 1 ? 3 : 0}
-                  cornerRadius={3}
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`risk-pie-${index}`}
-                      fill={entry.color}
-                      stroke="#ffffff"
-                      strokeWidth={1.5}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: unknown) => [
-                    plural(Number(value), "battery", "batteries"),
-                    "Count",
-                  ]}
-                  contentStyle={{
-                    fontSize: "12px",
-                    borderRadius: "8px",
-                    padding: "4px 8px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-              <span
-                className={`text-2xl font-bold font-mono ${
-                  hasHighRisk
-                    ? "text-rose-600 dark:text-rose-400"
-                    : "text-emerald-600"
-                }`}
+        {/* The worst single battery, not a total — a linear meter rather than another
+            count, so this card is distinguishable from Site overview at a glance instead
+            of repeating the same three-column shape twice across the row. */}
+        <div className="border-t border-border pt-3 space-y-2">
+          <div className="flex items-end justify-between gap-3">
+            <span className="text-xs text-muted-foreground font-medium pb-1">
+              Highest risk score
+            </span>
+            <span className="flex items-baseline gap-2">
+              <strong
+                className={`font-mono text-3xl font-bold tabular-nums leading-none ${toneText(maxTone)}`}
               >
                 {summary.maxScore.toFixed(2)}
+              </strong>
+              <span className={`text-xs font-semibold ${toneText(maxTone)}`}>
+                {scoreLabel(summary.maxScore)}
               </span>
-              <span className="text-2xs text-muted-foreground font-medium">
-                Risk
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {summary.highRiskAssets.length > 0 && (
-          <div className="pt-2 border-t border-border flex items-center gap-1.5 flex-wrap text-xs">
-            <span className="text-2xs text-muted-foreground font-medium">
-              Batteries to watch:
             </span>
-            {summary.highRiskAssets.slice(0, 4).map((a) => (
-              <Badge
-                key={a.batteryAssetId}
-                variant="outline"
-                className="text-3xs font-mono px-2 py-0.5 border-rose-500/30 text-rose-600 dark:text-rose-400 bg-rose-500/10 font-semibold"
-              >
-                {a.serialNumber ?? a.batteryAssetId} (
-                {a.cascadeRiskScore.toFixed(2)})
-              </Badge>
-            ))}
           </div>
-        )}
+
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min(100, Math.max(0, summary.maxScore * 100))}%`,
+                backgroundColor: toneVars(maxTone).fg,
+              }}
+            />
+          </div>
+
+          {summary.highRiskAssets.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+              <span className="text-2xs text-muted-foreground font-medium">
+                Watch:
+              </span>
+              {summary.highRiskAssets.slice(0, 4).map((a) => (
+                <Badge
+                  key={a.batteryAssetId}
+                  variant="outline"
+                  className="text-3xs font-mono px-2 py-0.5 border-p1/30 text-p1 bg-p1/10 font-semibold"
+                >
+                  {displayNameOrShortId(a.serialNumber, a.batteryAssetId)} (
+                  {a.cascadeRiskScore.toFixed(2)})
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

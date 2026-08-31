@@ -17,7 +17,6 @@ import { useUrlSort } from "@/shared/hooks/useUrlSort";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
 import {
   useStaffKbList,
-  useMarkStaffKbHelpful,
   useStaffDuplicateKbArticle,
 } from "@/features/staff/hooks/kb/useStaffKb";
 import KbArticleTable from "@/features/staff/components/kb/KbArticleTable";
@@ -67,7 +66,6 @@ export default function KbListPage() {
   };
 
   const { data, isLoading, isError, refetch } = useStaffKbList(params);
-  const { mutate: markHelpful } = useMarkStaffKbHelpful();
   const { mutateAsync: duplicate } = useStaffDuplicateKbArticle();
 
   const handleCopy = async (id: string) => {
@@ -89,10 +87,10 @@ export default function KbListPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.kb]} />
           <Button size="sm" onClick={() => navigate("/staff/kb/new")}>
             <Plus className="size-3.5" /> Create article
           </Button>
+          <RefreshButton queryKeys={[KEY.kb]} />
         </div>
       </div>
 
@@ -198,7 +196,6 @@ export default function KbListPage() {
           isLoading={isLoading}
           hasFilter={hasActiveFilter}
           onResetFilter={resetFilters}
-          onMarkHelpful={(a) => markHelpful(a.id)}
           onCopy={(a) => handleCopy(a.id)}
           sort={sort}
         />

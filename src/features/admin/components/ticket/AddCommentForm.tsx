@@ -92,6 +92,24 @@ export default function AddCommentForm({
     });
   }, [form, prefillText, prefillVersion]);
 
+  // Return focus to the composer after sending so the next message can be typed straight
+  // away — form.reset() clears the value but leaves the textarea blurred, forcing a click
+  // back into it after every send. rAF waits for the reset to be painted first.
+  // Return focus to the composer after a send so the next message can be typed straight away.
+  // form.reset() clears the value but leaves the textarea blurred, which forced a click back
+  // into it after every message. Keyed on resetCount (bumped on each successful send) rather
+  // than called inline from the submit handler, so the ref is only touched from an effect.
+  useEffect(() => {
+    if (resetCount === 0) return;
+    const raf = requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      autoResize(el);
+      el.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [resetCount]);
+
   const onSubmit = async (values: AddCommentFormValues) => {
     try {
       await mutateAsync({ ...values, isInternal });

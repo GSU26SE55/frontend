@@ -25,7 +25,6 @@ interface KbArticleTableProps {
   isLoading?: boolean;
   hasFilter?: boolean;
   onResetFilter?: () => void;
-  onMarkHelpful?: (article: KbArticleSummaryDTO) => void;
   /** Copy this row → create a similar article (opens the create page pre-filled). */
   onCopy?: (article: KbArticleSummaryDTO) => void;
   pageNumber: number;
@@ -39,7 +38,6 @@ export default function KbArticleTable({
   isLoading,
   hasFilter,
   onResetFilter,
-  onMarkHelpful,
   onCopy,
   pageNumber,
   pageSize,
@@ -175,22 +173,9 @@ export default function KbArticleTable({
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  {onMarkHelpful ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onMarkHelpful(article);
-                      }}
-                      className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <ThumbsUp className="size-3.5" /> {article.helpfulCount}
-                    </button>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <ThumbsUp className="size-3.5" /> {article.helpfulCount}
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <ThumbsUp className="size-3.5" /> {article.helpfulCount}
+                  </span>
                 </TableCell>
                 <TableCell className="text-right">
                   {onCopy && (

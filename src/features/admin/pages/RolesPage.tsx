@@ -58,7 +58,7 @@ import {
 } from "@/features/admin/types/account/admin.types";
 import CreateRoleDialog from "@/features/admin/components/account/CreateRoleDialog";
 import EditRoleDialog from "@/features/admin/components/account/EditRoleDialog";
-import ChangeRoleStatusDialog from "@/features/admin/components/account/ChangeRoleStatusDialog";
+import ChangeRoleStatusSubmenu from "@/features/admin/components/account/ChangeRoleStatusSubmenu";
 import PermissionsDialog from "@/features/admin/components/account/PermissionsDialog";
 import { handleErrorApi } from "@/shared/lib/errors";
 import type { RoleDto } from "@/features/admin/types/account/admin.types";
@@ -81,7 +81,6 @@ type DialogState =
   | { type: "none" }
   | { type: "create" }
   | { type: "edit"; role: RoleDto }
-  | { type: "status"; role: RoleDto }
   | { type: "perms"; role: RoleDto }
   | { type: "delete"; role: RoleDto };
 
@@ -152,10 +151,10 @@ export default function RolesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <RefreshButton queryKeys={[KEY.admin.roles]} />
           <Button size="sm" onClick={() => setDialog({ type: "create" })}>
             <Plus className="size-3.5" /> Create role
           </Button>
+          <RefreshButton queryKeys={[KEY.admin.roles]} />
         </div>
       </div>
 
@@ -293,11 +292,7 @@ export default function RolesPage() {
                           >
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDialog({ type: "status", role })}
-                          >
-                            Change status
-                          </DropdownMenuItem>
+                          <ChangeRoleStatusSubmenu role={role} />
                           <DropdownMenuItem
                             onClick={() => setDialog({ type: "perms", role })}
                           >
@@ -331,9 +326,6 @@ export default function RolesPage() {
 
       {dialog.type === "edit" && (
         <EditRoleDialog open onClose={close} role={dialog.role} />
-      )}
-      {dialog.type === "status" && (
-        <ChangeRoleStatusDialog open onClose={close} role={dialog.role} />
       )}
       {dialog.type === "perms" && (
         <PermissionsDialog open onClose={close} role={dialog.role} />
