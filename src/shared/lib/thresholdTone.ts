@@ -18,45 +18,52 @@ type Num = number | null | undefined;
 // Cắt hiển thị xuống 1 chữ số thì hai dòng cùng hiện "26.9" lại ra hai màu khác nhau; còn chấm
 // màu trên số đã cắt thì bỏ sót vi phạm mà engine cảnh báo BE vẫn bắt. Giữ cả hai ở 2 chữ số.
 //
-// Chốt 2 chữ số cũng khử luôn sai số nhị phân ở biên tính toán (`max + 5`, `min - 5`), thứ có
-// thể lật kết quả của một phép so sánh ngặt ngay tại đúng mốc ngưỡng.
+// Chốt 2 chữ số cũng khử luôn sai số nhị phân ở biên, thứ có thể lật kết quả của một phép so
+// sánh ngặt ngay tại đúng mốc ngưỡng.
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
-// AnomalyRules.OverheatCriticalDeltaC / UndertempCriticalDeltaC — vượt ngưỡng quá 5°C là Critical.
-const CRITICAL_DELTA_C = 5;
-
-export function temperatureLevel(value: number, min: Num, max: Num): ThresholdLevel {
-  if (min == null && max == null) return null;
+// NHIỆT ĐỘ / ĐIỆN ÁP — thang MỘT CHIỀU hai nấc: `min` là mốc Warning, `max` là mốc Critical.
+// Cả hai là số Admin đặt; không còn hằng số ±5 nào suy ra ở giữa (hằng cũ khớp
+// `AnomalyRules.OverheatCriticalDeltaC`, BE đã bỏ — giữ ở FE thì màu trên màn hình mô tả một
+// luật engine cảnh báo không còn chạy).
+//
+// ⚠️ Không phải dải an toàn: phía THẤP không còn rule nào bên BE (`Undertemp`/`Undervoltage` đã
+// gỡ), nên ở đây cũng không được tô màu cho số đo thấp — tô là hứa một cảnh báo không tồn tại.
+// So sánh BAO GỒM mốc: đạt tới ngưỡng là đã vi phạm. Admin đặt 30 nghĩa là "từ 30 trở lên báo
+// cho tôi". Khớp `AnomalyRules.Detect` — nếu FE dùng `>` còn BE dùng `>=` thì số đo đúng bằng
+// ngưỡng sẽ đẻ alert mà ô trên màn hình vẫn xanh.
+function ascendingLevel(value: number, warning: Num, critical: Num): ThresholdLevel {
+  if (warning == null && critical == null) return null;
   const v = round2(value);
-  if (max != null && v > round2(max))
-    return v > round2(max + CRITICAL_DELTA_C) ? "critical" : "warning";
-  if (min != null && v < round2(min))
-    return v < round2(min - CRITICAL_DELTA_C) ? "critical" : "warning";
+  if (critical != null && v >= round2(critical)) return "critical";
+  if (warning != null && v >= round2(warning)) return "warning";
   return "ok";
 }
 
-// LowSoc: dưới critical → Critical, dưới warning → Warning. Cả hai đều là so sánh NGẶT (<),
-// giống BE: SOC đúng bằng ngưỡng critical vẫn chỉ là Warning.
+export function temperatureLevel(value: number, min: Num, max: Num): ThresholdLevel {
+  return ascendingLevel(value, min, max);
+}
+
+// LowSoc — cùng luật nhưng chiều ngược: SOC THẤP mới là vi phạm. Cũng bao gồm mốc, giống BE.
 export function socLevel(value: number, warning: Num, critical: Num): ThresholdLevel {
   if (warning == null || critical == null) return null;
   const v = round2(value);
-  if (v < round2(critical)) return "critical";
-  if (v < round2(warning)) return "warning";
+  if (v <= round2(critical)) return "critical";
+  if (v <= round2(warning)) return "warning";
   return "ok";
 }
 
-// Overvoltage / Undervoltage: BE luôn xếp Critical, không có dải warning.
+// Overvoltage — cùng quy ước: `voltageMin` là Warning, `voltageMax` là Critical.
 export function voltageLevel(value: number, min: Num, max: Num): ThresholdLevel {
-  if (min == null || max == null) return null;
-  const v = round2(value);
-  return v > round2(max) || v < round2(min) ? "critical" : "ok";
+  return ascendingLevel(value, min, max);
 }
 
-// AbnormalCharging (dòng sạc vượt trần) / RapidDischarge (dòng xả vượt trần) — cũng luôn Critical.
+// AbnormalCharging (dòng sạc chạm trần) / RapidDischarge (dòng xả chạm trần) — luôn Critical:
+// dòng chỉ có MỘT mốc mỗi chiều nên không có nấc Warning để đứng giữa.
 export function currentLevel(value: number, maxCharge: Num, maxDischarge: Num): ThresholdLevel {
   if (maxCharge == null || maxDischarge == null) return null;
   const v = round2(value);
-  if (v > round2(maxCharge)) return "critical";
-  if (v < 0 && round2(Math.abs(v)) > round2(maxDischarge)) return "critical";
+  if (v >= round2(maxCharge)) return "critical";
+  if (v < 0 && round2(Math.abs(v)) >= round2(maxDischarge)) return "critical";
   return "ok";
 }

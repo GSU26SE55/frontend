@@ -342,6 +342,8 @@ export default function AdminTicketDetailPage() {
                     return (
                       <EnvironmentalIncidentInfoPanel
                         incidentId={subject.incidentId}
+                        siteId={subject.siteId}
+                        detectedAt={ticket.detectedAt}
                         description={ticket.description}
                         siteBasePath="/admin"
                       />

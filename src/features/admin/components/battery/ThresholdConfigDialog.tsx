@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,14 +40,6 @@ interface ThresholdConfigDialogProps {
   batteryType: BatteryTypeDto | null;
 }
 
-/**
- * AnomalyRules.OverheatCriticalDeltaC / UndertempCriticalDeltaC — BE nâng Overheat/Undertemp lên
- * Critical khi số đo vượt QUÁ 5°C ra ngoài dải min/max. Đây là `private const` trong BE, không
- * có cột DB và không có field nào ở đây, nên admin set max 32.6 mà không hề biết Critical thật
- * sự nằm ở 37.6 — đủ xa để pin thật không bao giờ chạm tới. Hiện ra để khỏi phải đoán.
- */
-const CRITICAL_DELTA_C = 5;
-
 const reqNum = { valueAsNumber: true } as const;
 const optNum = {
   setValueAs: (v: unknown) => (v === "" || v == null ? undefined : Number(v)),
@@ -82,7 +74,6 @@ export default function ThresholdConfigDialog({
 
   const {
     register,
-    control,
     handleSubmit,
     setError,
     reset,
@@ -130,6 +121,9 @@ export default function ThresholdConfigDialog({
   // Copy-from-another-type — maps that type's saved thresholds into the form fields
   // below so the admin doesn't start every new type from a blank form; still just a
   // fill, not a submit, so the values can be reviewed/edited before Save.
+  // Lựa chọn đầu danh sách LÀ CHÍNH loại pin đang mở, hiện đúng tên nó thay vì chuỗi "-- None --":
+  // dropdown liệt kê toàn tên loại pin, để một dòng chữ chung ở đầu thì không đọc ra đang cấu hình
+  // cho loại nào. Chọn lại dòng này = nạp lại chính ngưỡng đã lưu của loại pin này.
   const NO_COPY = "__none__";
   const [copyFromId, setCopyFromId] = useState<string>(NO_COPY);
   // Reset the copy-from pick when the dialog transitions closed → open — adjusting
@@ -154,19 +148,24 @@ export default function ThresholdConfigDialog({
   );
   const copyFromOptions = useMemo(
     () => [
-      { value: NO_COPY, label: "-- None (keep current values) --" },
+      {
+        value: NO_COPY,
+        label: batteryType?.name ?? "-- None (keep current values) --",
+      },
       ...(otherTypes?.items ?? [])
         .filter((t) => t.id !== batteryTypeId && configuredTypeIds.has(t.id))
         .map((t) => ({ value: t.id, label: t.name })),
     ],
-    [otherTypes, batteryTypeId, configuredTypeIds],
+    [otherTypes, batteryTypeId, configuredTypeIds, batteryType?.name],
   );
 
   const handleCopyFrom = async (sourceTypeId: string) => {
     setCopyFromId(sourceTypeId);
     if (sourceTypeId === NO_COPY) {
-      // "None" just clears the fields — no need to re-derive this type's own values.
-      applyConfig(undefined);
+      // Chọn lại chính loại pin đang mở → nạp lại ngưỡng đã lưu của nó. Trước đây nhánh này
+      // `applyConfig(undefined)` tức là XOÁ TRẮNG form, ngược hẳn với nhãn "keep current values"
+      // mà nó mang: bấm nhầm rồi chọn lại là mất hết số vừa xem.
+      applyConfig(config);
       return;
     }
     try {
@@ -178,22 +177,6 @@ export default function ThresholdConfigDialog({
       handleErrorApi({ error });
     }
   };
-
-  // `useWatch` chứ không phải `watch()`: nó subscribe qua `control` nên re-render đúng phạm vi
-  // và không vướng rule `react-hooks/incompatible-library`.
-  // Ô trống → valueAsNumber cho ra NaN, `Number.isFinite` loại luôn nên chưa nhập thì không hiện.
-  const tempMin = useWatch({ control, name: "temperatureMin" });
-  const tempMax = useWatch({ control, name: "temperatureMax" });
-  const criticalBounds = [
-    Number.isFinite(tempMin)
-      ? `< ${(tempMin - CRITICAL_DELTA_C).toFixed(2)} °C`
-      : null,
-    Number.isFinite(tempMax)
-      ? `> ${(tempMax + CRITICAL_DELTA_C).toFixed(2)} °C`
-      : null,
-  ].filter(Boolean);
-  const criticalHint =
-    criticalBounds.length > 0 ? criticalBounds.join(" or ") : null;
 
   const onSubmit = async (data: UpsertThresholdFormValues) => {
     const payload: UpsertThresholdPayload = {
@@ -288,15 +271,10 @@ export default function ThresholdConfigDialog({
             )}
 
             <div className="grid grid-cols-2 gap-4">
-              {field("voltageMin", "Minimum voltage (V)")}
-              {field("voltageMax", "Maximum voltage (V)")}
-              {field("temperatureMin", "Minimum temperature (°C)")}
-              {field("temperatureMax", "Maximum temperature (°C)")}
-              {criticalHint && (
-                <p className="col-span-2 -mt-2 text-xs text-muted-foreground">
-                  Critical at {criticalHint}
-                </p>
-              )}
+              {field("voltageMin", "Voltage Warning (V)")}
+              {field("voltageMax", "Voltage Critical (V)")}
+              {field("temperatureMin", "Temperature Warning (°C)")}
+              {field("temperatureMax", "Temperature Critical (°C)")}
               {field("socWarningThreshold", "SOC Warning (%)")}
               {field("socCriticalThreshold", "SOC Critical (%)")}
               {field("currentMaxCharge", "Maximum charge current (A)", true)}

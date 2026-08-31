@@ -62,6 +62,8 @@ export function getTicketSource(t: SourceInput): TicketSourceInfo {
   // System — nen cap dieu kien nay la duy nhat. Phai KHOP voi FilterBySource ben BE.
   let key: TicketSourceFilterEnum;
   if (
+    t.origin === TicketOriginEnum.AutoFromEnvironment ||
+    // Dòng CŨ tạo trước khi có origin riêng: lưới an toàn nếu migration backfill chưa chạy.
     t.environmentalIncidentId ||
     (t.origin === TicketOriginEnum.AutoFromAlert &&
       t.impactScope === ImpactScopeEnum.Site)

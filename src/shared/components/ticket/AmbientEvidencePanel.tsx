@@ -49,9 +49,22 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
   // (`BatteryWarningEvidencePanel` ngay ben canh giu nguyen thu tu cua BE), va vi ban xem truoc
   // chi lay 10 dong DAU, nguoi doc nhan duoc 10 dong CU nhat — dung nhung dong bien dong dan
   // toi su co lai bi giau sau nut "Show more".
-  const rows = data?.items ?? [];
+  const allRows = data?.items ?? [];
+
+  // Chỉ giữ dòng THỰC SỰ vi phạm ngưỡng — đó là dòng làm alert nổ và ticket ra đời.
+  //
+  // Cửa sổ ±2' quanh mốc phát hiện với thiết bị đẩy ambient mỗi 15s cho ra ~16 dòng, phần lớn
+  // hoàn toàn bình thường. Bảng vì thế đọc như một đoạn log chép nguyên si, người trực phải tự
+  // dò xem dòng nào là lý do mình đang nhìn cái ticket này. Cùng khuôn với bảng bằng chứng của
+  // pin ngay dưới: dẫn bằng vi phạm, phần còn lại nằm sau nút "Show more".
+  const graded = allRows.map((r) => ({ row: r, ev: evaluateAmbientRow(r, threshold) }));
+  const breaching = graded.filter((g) => g.ev.worst === "warning" || g.ev.worst === "critical");
+  // Không có dòng nào vi phạm (ngưỡng site tắt, hoặc alert đến từ kênh khác) → hiện toàn bộ
+  // thay vì một bảng rỗng: bằng chứng vẫn đáng đọc, chỉ là không tô được dòng nào.
+  const rows = breaching.length > 0 ? breaching.map((g) => g.row) : allRows;
   const visible = rows.slice(0, limit);
   const hidden = rows.length - visible.length;
+  const trimmed = breaching.length > 0 ? allRows.length - rows.length : 0;
 
   if (!siteId || !anchorAt) return null;
 
@@ -63,6 +76,14 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
           Site readings
         </p>
       </div>
+
+      {trimmed > 0 ? (
+        <p className="text-2xs text-muted-foreground mb-1.5">
+          Showing the {rows.length} reading{rows.length > 1 ? "s" : ""} that breached a
+          configured limit · {trimmed} normal reading{trimmed > 1 ? "s" : ""} in this window
+          hidden.
+        </p>
+      ) : null}
 
       {isLoading ? (
         <Skeleton className="h-32 w-full" />
@@ -80,8 +101,8 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
                 <tr className="text-muted-foreground">
                   <th className="text-left font-medium px-2 py-1.5">Time</th>
                   <th className="text-right font-medium px-2 py-1.5">°C</th>
-                  <th className="text-right font-medium px-2 py-1.5">RH%</th>
-                  <th className="text-right font-medium px-2 py-1.5">W/m²</th>
+                  <th className="text-right font-medium px-2 py-1.5">Gas%</th>
+                  <th className="text-right font-medium px-2 py-1.5">Water</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,12 +119,21 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
                         {fmt(r.ambientTemperature)}
                       </td>
                       <td
-                        className={`px-2 py-1.5 text-right tabular-nums ${ambientLevelTextClass(ev.humidity)}`}
+                        className={`px-2 py-1.5 text-right tabular-nums ${ambientLevelTextClass(ev.gas)}`}
                       >
-                        {fmt(r.humidity)}
+                        {fmt(r.gasConcentration)}
                       </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">
-                        {fmt(r.solarIrradiance)}
+                      {/* Boolean nên viết chữ, không phải số: "Wet" đọc ra ngay là sự cố, còn
+                          "1"/"0" thì người trực phải đoán chiều nào là ướt. */}
+                      <td
+                        className={`px-2 py-1.5 text-right ${ambientLevelTextClass(ev.water)}`}
+                      >
+                        {r.waterLeakDetected === null ||
+                        r.waterLeakDetected === undefined
+                          ? "—"
+                          : r.waterLeakDetected
+                            ? "Wet"
+                            : "Dry"}
                       </td>
                     </tr>
                   );

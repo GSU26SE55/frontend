@@ -177,7 +177,7 @@ export default function SiteAssetsTable({
       id: "alert",
       header: "Alert",
       cell: (asset) =>
-        asset.activeAlertCount > 0 ? (
+        (asset.activeAlertCount ?? 0) > 0 ? (
           <Badge variant="outline" className={toneClass("p1")}>
             Open
           </Badge>
@@ -188,16 +188,22 @@ export default function SiteAssetsTable({
     {
       id: "cascadeRisk",
       header: "Cascade risk",
-      cell: (asset) => (
-        <Badge
-          variant="outline"
-          className={toneClass(
-            CASCADE_RISK_TONE[asset.cascadeRiskLevel] ?? "muted",
-          )}
-        >
-          {asset.cascadeRiskScore.toFixed(2)}
-        </Badge>
-      ),
+      // Thiếu số thì hiện "—", KHÔNG hiện 0.00: 0.00 là một mức rủi ro có thật (Low), nên in nó
+      // khi thực ra không có dữ liệu là bịa ra một kết luận an toàn.
+      cell: (asset) =>
+        asset.cascadeRiskScore == null ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <Badge
+            variant="outline"
+            className={toneClass(
+              (asset.cascadeRiskLevel && CASCADE_RISK_TONE[asset.cascadeRiskLevel]) ||
+                "muted",
+            )}
+          >
+            {asset.cascadeRiskScore.toFixed(2)}
+          </Badge>
+        ),
     },
   ];
 

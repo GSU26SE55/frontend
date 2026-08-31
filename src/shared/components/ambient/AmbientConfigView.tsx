@@ -49,7 +49,7 @@ import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { formatDateTime } from "@/shared/utils/datetime";
 
 const SOURCE_LABELS: Record<AmbientReadingSourceEnum, string> = {
-  [AmbientReadingSourceEnum.IotSensor]: "IoT sensor",
+  [AmbientReadingSourceEnum.IotSensor]: "Sensor",
   [AmbientReadingSourceEnum.WeatherApi]: "Weather API",
 };
 

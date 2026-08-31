@@ -13,7 +13,7 @@ import { MESSAGES } from "@/shared/constants/messages";
 // mỗi 15s) — mỗi nhịp có thể trễ tối đa một chu kỳ gửi, đổi lại còn nửa số request.
 // Trước đây bảng để staleTime 5 phút và KHÔNG có refetchInterval vì dữ liệu môi trường lấy theo
 // giờ từ weather API; từ khi cảm biến tự báo, giả định đó sai và bảng đứng im hàng phút.
-const AMBIENT_REFRESH_MS = 30_000;
+const AMBIENT_REFRESH_MS = 20_000;
 export const useAmbientHistory = (params: AmbientHistoryParams) =>
   useQuery({
     queryKey: QUERY_KEY.ambient.history(params.siteId, params),
