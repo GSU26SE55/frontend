@@ -15,12 +15,13 @@ const NOTIFICATION_HUB_URL = `${HUB_BASE}/hubs/notifications`;
 // render of every authenticated page. The `import type` above is erased at compile time and
 // costs nothing at runtime.
 async function buildConnection(url: string): Promise<HubConnection> {
-  const { HubConnectionBuilder } = await import("@microsoft/signalr");
+  const { HubConnectionBuilder, LogLevel } = await import("@microsoft/signalr");
   return new HubConnectionBuilder()
     .withUrl(url, {
       accessTokenFactory: () => Cookies.get("accessToken") ?? "",
     })
     .withAutomaticReconnect()
+    .configureLogging(LogLevel.Warning)
     .build();
 }
 

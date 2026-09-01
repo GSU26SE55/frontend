@@ -5,7 +5,7 @@ import {
 } from "@/shared/enums/alerts/alert.enum";
 
 export const ANOMALY_TYPE_LABELS: Record<AnomalyTypeEnum, string> = {
-  [AnomalyTypeEnum.Overheat]: "Overheating",
+  [AnomalyTypeEnum.Overheat]: "Overheating hazard",
   [AnomalyTypeEnum.Overvoltage]: "Overvoltage",
   [AnomalyTypeEnum.Undervoltage]: "Undervoltage",
   [AnomalyTypeEnum.LowSoc]: "Low SOC",
@@ -23,6 +23,7 @@ export const ANOMALY_TYPE_LABELS: Record<AnomalyTypeEnum, string> = {
   [AnomalyTypeEnum.Undertemp]: "Low temperature",
   [AnomalyTypeEnum.IotDataIntegrityViolation]: "IoT data integrity violation",
   [AnomalyTypeEnum.HighGasConcentration]: "High gas concentration",
+  [AnomalyTypeEnum.WaterLeak]: "Water leak detected",
 };
 
 export const ALERT_SEVERITY_LABELS: Record<AlertSeverityEnum, string> = {

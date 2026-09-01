@@ -197,7 +197,8 @@ export default function SiteAssetsTable({
           <Badge
             variant="outline"
             className={toneClass(
-              (asset.cascadeRiskLevel && CASCADE_RISK_TONE[asset.cascadeRiskLevel]) ||
+              (asset.cascadeRiskLevel &&
+                CASCADE_RISK_TONE[asset.cascadeRiskLevel]) ||
                 "muted",
             )}
           >

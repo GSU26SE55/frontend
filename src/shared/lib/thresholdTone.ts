@@ -32,7 +32,11 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
 // So sánh BAO GỒM mốc: đạt tới ngưỡng là đã vi phạm. Admin đặt 30 nghĩa là "từ 30 trở lên báo
 // cho tôi". Khớp `AnomalyRules.Detect` — nếu FE dùng `>` còn BE dùng `>=` thì số đo đúng bằng
 // ngưỡng sẽ đẻ alert mà ô trên màn hình vẫn xanh.
-function ascendingLevel(value: number, warning: Num, critical: Num): ThresholdLevel {
+function ascendingLevel(
+  value: number,
+  warning: Num,
+  critical: Num,
+): ThresholdLevel {
   if (warning == null && critical == null) return null;
   const v = round2(value);
   if (critical != null && v >= round2(critical)) return "critical";
@@ -40,12 +44,20 @@ function ascendingLevel(value: number, warning: Num, critical: Num): ThresholdLe
   return "ok";
 }
 
-export function temperatureLevel(value: number, min: Num, max: Num): ThresholdLevel {
+export function temperatureLevel(
+  value: number,
+  min: Num,
+  max: Num,
+): ThresholdLevel {
   return ascendingLevel(value, min, max);
 }
 
 // LowSoc — cùng luật nhưng chiều ngược: SOC THẤP mới là vi phạm. Cũng bao gồm mốc, giống BE.
-export function socLevel(value: number, warning: Num, critical: Num): ThresholdLevel {
+export function socLevel(
+  value: number,
+  warning: Num,
+  critical: Num,
+): ThresholdLevel {
   if (warning == null || critical == null) return null;
   const v = round2(value);
   if (v <= round2(critical)) return "critical";
@@ -54,13 +66,21 @@ export function socLevel(value: number, warning: Num, critical: Num): ThresholdL
 }
 
 // Overvoltage — cùng quy ước: `voltageMin` là Warning, `voltageMax` là Critical.
-export function voltageLevel(value: number, min: Num, max: Num): ThresholdLevel {
+export function voltageLevel(
+  value: number,
+  min: Num,
+  max: Num,
+): ThresholdLevel {
   return ascendingLevel(value, min, max);
 }
 
 // AbnormalCharging (dòng sạc chạm trần) / RapidDischarge (dòng xả chạm trần) — luôn Critical:
 // dòng chỉ có MỘT mốc mỗi chiều nên không có nấc Warning để đứng giữa.
-export function currentLevel(value: number, maxCharge: Num, maxDischarge: Num): ThresholdLevel {
+export function currentLevel(
+  value: number,
+  maxCharge: Num,
+  maxDischarge: Num,
+): ThresholdLevel {
   if (maxCharge == null || maxDischarge == null) return null;
   const v = round2(value);
   if (v >= round2(maxCharge)) return "critical";

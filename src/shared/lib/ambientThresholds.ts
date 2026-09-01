@@ -69,7 +69,8 @@ export function evaluateAmbientRow(
   // Water has no configurable threshold (3 sensors are independent) — wet always alerts,
   // regardless of whether temp/humidity/gas monitoring is enabled for the site.
   const water: AmbientLevel =
-    reading.waterLeakDetected === null || reading.waterLeakDetected === undefined
+    reading.waterLeakDetected === null ||
+    reading.waterLeakDetected === undefined
       ? null
       : reading.waterLeakDetected
         ? "critical"
@@ -120,13 +121,14 @@ export function evaluateAmbientRow(
   // Combo la Critical, khong phai warning: BE sinh `HighTempHumidityCombo` voi
   // `AlertSeverityEnum.Critical`. Day la dieu kien can thoat nhiet cua pin lithium — no co the
   // do mot dong ma ca hai chi so deu chua vuot nguong rieng cua chung.
-  const worst: AmbientLevel = levels.includes("critical") || combo
-    ? "critical"
-    : levels.includes("warning")
-      ? "warning"
-      : levels.includes("ok")
-        ? "ok"
-        : null;
+  const worst: AmbientLevel =
+    levels.includes("critical") || combo
+      ? "critical"
+      : levels.includes("warning")
+        ? "warning"
+        : levels.includes("ok")
+          ? "ok"
+          : null;
 
   return { temperature, humidity, gas, water, combo, worst };
 }

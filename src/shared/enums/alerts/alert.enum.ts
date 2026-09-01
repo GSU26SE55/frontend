@@ -40,6 +40,9 @@ export const AnomalyTypeEnum = {
   // MQ-2 gas concentration (%) over AmbientThresholdConfig.HighGasWarning/Critical.
   // Site-level like HighAmbientTemp — reported by the gas sensor, not tied to a battery.
   HighGasConcentration: 18,
+  // Water-leak sensor (rain/water-leak) reported wet — bool, no threshold, always Critical.
+  // Site-level, same environmental group as HighGasConcentration/EnvironmentalIncident.
+  WaterLeak: 19,
 } as const;
 export type AnomalyTypeEnum =
   (typeof AnomalyTypeEnum)[keyof typeof AnomalyTypeEnum];
