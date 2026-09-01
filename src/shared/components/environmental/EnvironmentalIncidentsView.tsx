@@ -40,13 +40,21 @@ import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import AlertSeverityBadge from "@/shared/components/alerts/AlertSeverityBadge";
 import AlertStatusBadge from "@/shared/components/alerts/AlertStatusBadge";
-import { useAlertList } from "@/shared/hooks/alerts/useAlerts";
+import {
+  useAlertList,
+  useAlertDetail,
+  useResolveAlert,
+} from "@/shared/hooks/alerts/useAlerts";
+import { alertService } from "@/shared/services/alerts/alert.service";
 import { anomalyTypeLabel } from "@/shared/constants/alertLabels";
 import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
-import { useIncidentTicket } from "@/shared/hooks/ticket/useTicketCode";
+import {
+  useIncidentTicket,
+  useTicketCode,
+} from "@/shared/hooks/ticket/useTicketCode";
 import { checkRole } from "@/shared/lib/authz";
 import { UserRole } from "@/shared/types/account/session.types";
 import {
@@ -120,7 +128,11 @@ export default function EnvironmentalIncidentsView({
     else next.delete("incident");
     setSearchParams(next, { replace: true });
   };
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+
+  const user = useSessionStore((s) => s.user);
+  const ticketBasePath = user?.role === UserRole.ADMIN ? "/admin" : "/manager";
 
   const siteNameById = new Map((sites ?? []).map((s) => [s.id, s.name]));
   const siteName = (id: string) => siteNameById.get(id) ?? id.slice(0, 8);
@@ -151,19 +163,12 @@ export default function EnvironmentalIncidentsView({
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            {subtitle}
+            Admin &middot; Environmental incidents
           </p>
-          {/* Titled "alerts" to read as one family with Battery alerts and Device alerts
-              in the sidebar. The rows themselves are still incidents — the sentence below,
-              the route, the types and the BE endpoint all keep that word. */}
           <h1 className="text-2xl font-semibold tracking-tight">
             Environmental alerts
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "..." : totalItems} alerts &mdash; incidents reported
-            on site (smoke / fire / gas leak / flood) and ambient thresholds
-            breached (temperature / humidity / gas)
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
@@ -173,7 +178,7 @@ export default function EnvironmentalIncidentsView({
               Manual report
             </Button>
           )}
-          <RefreshButton queryKeys={[KEY.environmentalIncidents]} />
+          <RefreshButton queryKeys={[KEY.alerts]} />
         </div>
       </div>
 
@@ -196,7 +201,7 @@ export default function EnvironmentalIncidentsView({
             setFilter("status", v || undefined)
           }
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-40">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -304,10 +309,14 @@ export default function EnvironmentalIncidentsView({
                 return (
                   <TableRow
                     key={alert.id}
-                    className={incidentId ? "cursor-pointer" : undefined}
-                    onClick={
-                      incidentId ? () => setSelectedId(incidentId) : undefined
-                    }
+                    className="cursor-pointer"
+                    onClick={() => {
+                      if (isIncident && incidentId) {
+                        setSelectedId(incidentId);
+                      } else {
+                        setSelectedAlertId(alert.id);
+                      }
+                    }}
                   >
                     <TableCell className="text-center text-muted-foreground tabular-nums">
                       {(filters.pageNumber - 1) * filters.pageSize + index + 1}
@@ -365,6 +374,13 @@ export default function EnvironmentalIncidentsView({
         incidentId={selectedId}
         siteName={siteName}
         onClose={() => setSelectedId(null)}
+      />
+
+      <AmbientAlertDetailDialog
+        alertId={selectedAlertId}
+        basePath={ticketBasePath}
+        siteName={(id) => (id ? siteName(id) : null)}
+        onClose={() => setSelectedAlertId(null)}
       />
     </PageContainer>
   );
@@ -646,6 +662,133 @@ function FalseAlarmForm({
         </Button>
       </DialogFooter>
     </form>
+  );
+}
+
+// ── Ambient Alert Detail Dialog (for sensor threshold breach alerts) ───────────
+
+function AmbientAlertDetailDialog({
+  alertId,
+  basePath,
+  siteName,
+  onClose,
+}: {
+  alertId: string | null;
+  basePath: string;
+  siteName: (id?: string | null) => string | null;
+  onClose: () => void;
+}) {
+  const { data: alert, isLoading } = useAlertDetail(alertId ?? "");
+  const { code: ticketCode, isLoading: ticketCodeLoading } = useTicketCode(
+    alert?.ticketId,
+  );
+  const { mutate: resolve, isPending: resolvePending } = useResolveAlert();
+
+  const canResolve =
+    alert?.status === AlertStatusEnum.Open ||
+    alert?.status === AlertStatusEnum.Acknowledged;
+
+  const qc = useQueryClient();
+  const autoAckedId = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      alert &&
+      alert.status === AlertStatusEnum.Open &&
+      autoAckedId.current !== alert.id
+    ) {
+      autoAckedId.current = alert.id;
+      alertService
+        .acknowledge(alert.id)
+        .then(() => qc.invalidateQueries({ queryKey: [KEY.alerts] }));
+    }
+  }, [alert, qc]);
+
+  return (
+    <Dialog
+      open={!!alertId}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Environmental alert details</DialogTitle>
+          <DialogDescription>
+            {alert
+              ? `${siteName(alert.siteId) ?? "Site level"} · ${anomalyTypeLabel(alert.anomalyType)}`
+              : "Loading..."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading || !alert ? (
+          <div className="space-y-3 py-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-5 w-full" />
+            ))}
+          </div>
+        ) : (
+          <dl className="grid grid-cols-3 gap-x-4 gap-y-3 text-sm py-2">
+            <DetailRow label="Severity">
+              <AlertSeverityBadge severity={alert.severity} />
+            </DetailRow>
+            <DetailRow label="Status">
+              <AlertStatusBadge status={alert.status} />
+            </DetailRow>
+            <DetailRow label="Actual value">
+              <span className="font-mono-num">
+                {alert.actualValue == null
+                  ? "—"
+                  : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""}`}
+              </span>
+            </DetailRow>
+            <DetailRow label="Threshold">
+              <span className="font-mono-num">
+                {alert.thresholdValue == null
+                  ? "—"
+                  : `${alert.thresholdValue}${alert.unit ? ` ${alert.unit}` : ""}`}
+              </span>
+            </DetailRow>
+            <DetailRow label="Customer">{alert.customerName || "—"}</DetailRow>
+            <DetailRow label="Site">
+              <span className="font-medium text-xs">
+                {siteName(alert.siteId) ?? "—"}
+              </span>
+            </DetailRow>
+            <DetailRow label="Detected at">
+              {formatDateTime(alert.detectedAt)}
+            </DetailRow>
+            <DetailRow label="Acknowledged at">
+              {formatDateTime(alert.acknowledgedAt)}
+            </DetailRow>
+            <DetailRow label="Resolved at">
+              {formatDateTime(alert.resolvedAt)}
+            </DetailRow>
+            <DetailRow label="Ticket">
+              {alert.ticketId ? (
+                <Link
+                  to={`${basePath}/tickets/${alert.ticketId}`}
+                  className="font-mono-num text-xs text-primary hover:underline"
+                >
+                  {ticketCode ??
+                    (ticketCodeLoading ? "…" : alert.ticketId.slice(0, 8))}
+                </Link>
+              ) : (
+                "—"
+              )}
+            </DetailRow>
+          </dl>
+        )}
+
+        <DialogFooter>
+          <Button
+            disabled={!canResolve || resolvePending}
+            onClick={() => alert && resolve(alert.id)}
+          >
+            Mark resolved
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
