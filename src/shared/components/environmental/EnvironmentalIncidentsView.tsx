@@ -68,7 +68,10 @@ import type { SiteOption } from "@/shared/types/site/site.types";
 import ManualIncidentDialog from "./ManualIncidentDialog";
 import IncidentStatusBadge from "./IncidentStatusBadge";
 import IncidentTypeBadge from "./IncidentTypeBadge";
-import { incidentTypeLabel } from "@/shared/constants/incidentLabels";
+import {
+  incidentTypeLabel,
+  INCIDENT_TYPE_LABELS,
+} from "@/shared/constants/incidentLabels";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { noData, notFound } from "@/shared/constants/emptyStates";
@@ -287,9 +290,17 @@ export default function EnvironmentalIncidentsView({
             </TableHeader>
             <TableBody>
               {items.map((alert, index) => {
-                // Only the rows that mirror an incident have a detail dialog to open — a threshold
-                // breach has no incident behind it, so its row is not clickable.
-                const incidentId = alert.environmentalIncidentId;
+                // Only rows matching EnvironmentalIncidentTypeEnum (Smoke, Fire, Gas leak, Flood, OverheatHazard, Other)
+                // have an environmental incident behind them with a detail dialog to open.
+                // Threshold breaches (sensor ambient alerts) do not have incident details, so they are not clickable.
+                const isIncident =
+                  alert.environmentalIncidentId != null &&
+                  alert.incidentType != null &&
+                  alert.incidentType in INCIDENT_TYPE_LABELS;
+                const incidentId = isIncident
+                  ? alert.environmentalIncidentId
+                  : null;
+
                 return (
                   <TableRow
                     key={alert.id}
@@ -307,11 +318,8 @@ export default function EnvironmentalIncidentsView({
                     {/* Empty when the BE cannot resolve the account — show a dash. */}
                     <TableCell>{alert.customerName || "—"}</TableCell>
                     <TableCell>
-                      {/* An incident's mirror row carries AnomalyType=EnvironmentalIncident for
-                          every kind of incident, so the incident's own type is what makes the row
-                          readable ("Gas leak", not "Environmental incident"). */}
-                      {alert.incidentType != null ? (
-                        <IncidentTypeBadge incidentType={alert.incidentType} />
+                      {isIncident ? (
+                        <IncidentTypeBadge incidentType={alert.incidentType!} />
                       ) : (
                         <Badge variant="outline">
                           {anomalyTypeLabel(alert.anomalyType)}
@@ -324,7 +332,7 @@ export default function EnvironmentalIncidentsView({
                     {/* Mirror rows carry no measurement (they would read "0 incident / 0 incident"),
                         so only threshold breaches show numbers. */}
                     <TableCell className="font-mono text-sm">
-                      {alert.actualValue == null || alert.incidentType != null
+                      {alert.actualValue == null || isIncident
                         ? "—"
                         : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""} / ${alert.thresholdValue ?? "—"}${alert.unit ? ` ${alert.unit}` : ""}`}
                     </TableCell>
