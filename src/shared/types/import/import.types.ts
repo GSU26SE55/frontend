@@ -48,6 +48,8 @@ export interface ImportRowDto {
   errors: ErrorEntity[];
   createdEntityId: string | null;
   processedAt: string | null;
+  /** Original column values (xlsx column names as keys) — lets the UI pre-fill an edit form. */
+  fields: Record<string, string>;
 }
 
 export interface ImportBatchListParams {
@@ -63,9 +65,17 @@ export interface ImportRowListParams {
   entityType?: ImportEntityTypeEnum;
 }
 
-/** The three CSV files of one upload. All optional, but at least one must be present. */
+/** The one .xlsx workbook of an upload — three sheets: Customers, Sites, Battery assets. */
 export interface CreateImportBatchPayload {
-  customersFile?: File | null;
-  sitesFile?: File | null;
-  assetsFile?: File | null;
+  file?: File | null;
+}
+
+/** One row's corrected field values, keyed by the same column names as the .xlsx sheet. */
+export interface ImportRowEditItem {
+  rowId: string;
+  fields: Record<string, string>;
+}
+
+export interface UpdateImportRowsPayload {
+  rows: ImportRowEditItem[];
 }

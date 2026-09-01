@@ -10,21 +10,13 @@ import type {
   ImportBatchListParams,
   ImportRowDto,
   ImportRowListParams,
+  UpdateImportRowsPayload,
 } from "@/shared/types/import/import.types";
-import type { ImportEntityTypeEnum } from "@/shared/enums/import/import.enum";
 
-/**
- * Packs the three files into one multipart body.
- *
- * Only attaches the parts actually picked: sending an empty field makes the server receive a
- * zero-byte file and report "empty file" instead of reading it as "this type was not supplied".
- */
+/** Packs the one workbook into a multipart body under field name "file". */
 function toFormData(payload: CreateImportBatchPayload): FormData {
   const form = new FormData();
-  if (payload.customersFile)
-    form.append("customersFile", payload.customersFile);
-  if (payload.sitesFile) form.append("sitesFile", payload.sitesFile);
-  if (payload.assetsFile) form.append("assetsFile", payload.assetsFile);
+  if (payload.file) form.append("file", payload.file);
   return form;
 }
 
@@ -73,6 +65,17 @@ export const importService = {
       },
     ),
 
+  /**
+   * Corrects one or more invalid rows in place and re-validates the WHOLE batch — fixing a
+   * customer row can clear a "customer not found" error on a site row nobody touched, so the
+   * server always re-checks everything, not just the edited rows.
+   */
+  updateRows: (id: string, payload: UpdateImportRowsPayload) =>
+    axiosInstance.put<CommonResponse<ImportBatchDto>>(
+      ENDPOINTS.IMPORTS.UPDATE_ROWS(id),
+      payload,
+    ),
+
   /** Returns 202 and exits at once — the background worker does the writing. The screen has to
    *  poll for progress. */
   commitBatch: (id: string) =>
@@ -86,14 +89,14 @@ export const importService = {
     ),
 
   /**
-   * Downloads the template and the error report.
+   * Downloads the template (.xlsx) and the error report (.csv).
    *
-   * Uses `responseType: "blob"` because these two endpoints return CSV rather than the JSON
+   * Uses `responseType: "blob"` because these two endpoints return a file rather than the JSON
    * envelope the rest of the system uses. On the default, axios tries to parse it as JSON and the
    * file content is corrupted.
    */
-  downloadTemplate: (entityType: ImportEntityTypeEnum) =>
-    axiosInstance.get<Blob>(ENDPOINTS.IMPORTS.TEMPLATE(entityType), {
+  downloadTemplate: () =>
+    axiosInstance.get<Blob>(ENDPOINTS.IMPORTS.TEMPLATE, {
       responseType: "blob",
     }),
 
