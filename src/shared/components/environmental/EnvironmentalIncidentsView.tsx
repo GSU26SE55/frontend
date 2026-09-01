@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,10 +50,10 @@ import { checkRole } from "@/shared/lib/authz";
 import { UserRole } from "@/shared/types/account/session.types";
 import {
   useIncidentDetail,
-  useAcknowledgeIncident,
   useResolveIncident,
   useFalseAlarmIncident,
 } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
+import { environmentalService } from "@/shared/services/alerts/environmental.service";
 import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
 import {
   resolveIncidentSchema,
@@ -94,7 +95,6 @@ const STATUS_LABELS: Record<number, string> = {
   [AlertStatusEnum.Acknowledged]: "Acknowledged",
   [AlertStatusEnum.Resolved]: "Resolved",
 };
-
 
 export default function EnvironmentalIncidentsView({
   subtitle,
@@ -379,13 +379,10 @@ function IncidentDetailDialog({
     useIncidentTicket(incidentId);
   // Staff không có trang này (route chỉ mở cho Admin/Manager), nên chỉ cần 2 prefix.
   const ticketBasePath = user?.role === UserRole.ADMIN ? "/admin" : "/manager";
-  const { mutate: acknowledge, isPending: ackPending } =
-    useAcknowledgeIncident();
 
   const [panel, setPanel] = useState<"none" | "resolve" | "falseAlarm">("none");
 
   const status = incident?.status;
-  const canAck = status === EnvironmentalIncidentStatusEnum.Open;
   const canResolve =
     status === EnvironmentalIncidentStatusEnum.Open ||
     status === EnvironmentalIncidentStatusEnum.Acknowledged;
@@ -393,6 +390,26 @@ function IncidentDetailDialog({
     canFalseAlarm &&
     (status === EnvironmentalIncidentStatusEnum.Open ||
       status === EnvironmentalIncidentStatusEnum.Acknowledged);
+
+  // Opening the dialog on an Open incident acknowledges it right away, so the reviewer
+  // doesn't have to click a separate button before they can act on it. Calls the service
+  // directly (skipping useAcknowledgeIncident) so this silent step doesn't surface a toast.
+  const qc = useQueryClient();
+  const autoAckedId = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      incident &&
+      incident.status === EnvironmentalIncidentStatusEnum.Open &&
+      autoAckedId.current !== incident.id
+    ) {
+      autoAckedId.current = incident.id;
+      environmentalService
+        .acknowledge(incident.id)
+        .then(() =>
+          qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] }),
+        );
+    }
+  }, [incident, qc]);
 
   return (
     <Dialog
@@ -491,13 +508,6 @@ function IncidentDetailDialog({
 
         {incident && panel === "none" && (
           <DialogFooter className="flex-wrap">
-            <Button
-              variant="outline"
-              disabled={!canAck || ackPending}
-              onClick={() => acknowledge(incident.id)}
-            >
-              Acknowledge
-            </Button>
             {canMarkFalseAlarm && (
               <Button variant="outline" onClick={() => setPanel("falseAlarm")}>
                 False alarm

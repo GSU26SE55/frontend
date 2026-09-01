@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Router } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,9 @@ import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import {
   useAlertList,
   useAlertDetail,
-  useAcknowledgeAlert,
   useResolveAlert,
 } from "@/shared/hooks/alerts/useAlerts";
+import { alertService } from "@/shared/services/alerts/alert.service";
 import { useTicketCode } from "@/shared/hooks/ticket/useTicketCode";
 import {
   AlertSeverityEnum,
@@ -326,13 +327,30 @@ function DeviceAlertDetailDialog({
     alert?.ticketId,
   );
 
-  const { mutate: acknowledge, isPending: ackPending } = useAcknowledgeAlert();
   const { mutate: resolve, isPending: resolvePending } = useResolveAlert();
 
-  const canAck = alert?.status === AlertStatusEnum.Open;
   const canResolve =
     alert?.status === AlertStatusEnum.Open ||
     alert?.status === AlertStatusEnum.Acknowledged;
+
+  // Opening the dialog on an Open alert acknowledges it right away, so the reviewer
+  // doesn't have to click a separate button before they can act on it. Calls the
+  // service directly (skipping useAcknowledgeAlert) so this silent step doesn't
+  // surface a toast — one alert per id.
+  const qc = useQueryClient();
+  const autoAckedId = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      alert &&
+      alert.status === AlertStatusEnum.Open &&
+      autoAckedId.current !== alert.id
+    ) {
+      autoAckedId.current = alert.id;
+      alertService
+        .acknowledge(alert.id)
+        .then(() => qc.invalidateQueries({ queryKey: [KEY.alerts] }));
+    }
+  }, [alert, qc]);
 
   return (
     <Dialog
@@ -417,13 +435,6 @@ function DeviceAlertDetailDialog({
         )}
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            disabled={!canAck || ackPending}
-            onClick={() => alert && acknowledge(alert.id)}
-          >
-            Acknowledge
-          </Button>
           <Button
             disabled={!canResolve || resolvePending}
             onClick={() => alert && resolve(alert.id)}
