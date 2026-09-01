@@ -56,9 +56,11 @@ const FAILED_STATUSES = new Set<number>([
 function BmsTrigger({
   disabled,
   tone,
+  onClick,
 }: {
   disabled?: boolean;
   tone?: "danger";
+  onClick?: () => void;
 }) {
   return (
     <DialogTrigger
@@ -68,6 +70,7 @@ function BmsTrigger({
           size="sm"
           disabled={disabled}
           aria-label="BMS Control"
+          onClick={onClick}
         />
       }
     >
@@ -224,6 +227,10 @@ export default function BmsSwitchControlCard({
         // BẬT thì dừng: bật nửa vời trong khi nửa kia lỗi là trạng thái không ai muốn.
         if (payload.enable) return;
       }
+
+      // Đợi 1.2s để bus RS485 Modbus và BMS hoàn tất lệnh trước khi gửi lệnh thứ hai
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
       try {
         await submitOne({
           target: BmsSwitchTarget.Discharge,
@@ -233,6 +240,20 @@ export default function BmsSwitchControlCard({
         toast.error(failureMessage(error));
       }
     })();
+  };
+
+  // Tự động fetch lại trạng thái BMS mới nhất mỗi khi mở dialog
+  useEffect(() => {
+    if (open) {
+      stateQuery.refetch();
+    }
+  }, [open]);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      stateQuery.refetch();
+    }
+    onOpenChange?.(isOpen);
   };
 
   // In a row of header buttons the placeholder is a disabled trigger, not a card: a skeleton
@@ -248,8 +269,8 @@ export default function BmsSwitchControlCard({
         </Card>
       );
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        {!controlled && <BmsTrigger disabled />}
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        {!controlled && <BmsTrigger disabled onClick={() => stateQuery.refetch()} />}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-1.5 text-2sm">
@@ -273,8 +294,8 @@ export default function BmsSwitchControlCard({
         </Card>
       );
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        {!controlled && <BmsTrigger tone="danger" />}
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        {!controlled && <BmsTrigger tone="danger" onClick={() => stateQuery.refetch()} />}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2sm">
@@ -441,8 +462,8 @@ export default function BmsSwitchControlCard({
   return (
     <>
       {variant === "dialog" ? (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-          {!controlled && <BmsTrigger />}
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+          {!controlled && <BmsTrigger onClick={() => stateQuery.refetch()} />}
           <DialogContent className="max-w-md gap-3">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-1.5 text-2sm leading-tight">
