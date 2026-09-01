@@ -9,17 +9,14 @@ import {
   Globe,
   Fingerprint,
   Clock,
-  Hash,
   User,
   ShieldAlert,
-  Copy,
   Download,
   RotateCcw,
   UserX,
   Activity,
   Layers,
   ShieldCheck,
-  ArrowRight,
   Loader2,
   FileSpreadsheet,
   FileCode,
@@ -329,58 +326,6 @@ function DetailRow({
         <div className={`text-sm break-all ${mono ? "font-mono text-xs" : ""}`}>
           {value}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function CopyIdRow({
-  icon: Icon,
-  label,
-  value,
-  onAction,
-  actionLabel,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  onAction?: () => void;
-  actionLabel?: string;
-}) {
-  return (
-    <div className="flex gap-3 min-w-0 items-center">
-      <div className="shrink-0">
-        <Icon size={14} className="text-muted-foreground" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
-          {label}
-        </p>
-        <p className="text-xs font-mono text-foreground truncate">{value}</p>
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        {onAction && actionLabel && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs px-2"
-            onClick={onAction}
-          >
-            {actionLabel}
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          aria-label={`Copy ${label}`}
-          onClick={() => {
-            navigator.clipboard.writeText(value);
-            toast.success(`${label} copied`);
-          }}
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </Button>
       </div>
     </div>
   );
@@ -809,8 +754,8 @@ function AuditLogDetailDrawer({
               <DrawerTitle className="text-base font-semibold leading-tight mt-1">
                 {actionText}
               </DrawerTitle>
-              <p className="text-2xs text-muted-foreground font-mono mt-0.5">
-                Category: {category} ({log.actionCode})
+              <p className="text-2xs text-muted-foreground mt-0.5">
+                Category: {category}
               </p>
             </div>
             <Badge
@@ -831,10 +776,10 @@ function AuditLogDetailDrawer({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* Timing & Identifiers */}
+          {/* General Information & Timing */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Timing & Identifiers
+              General Information
             </h3>
             <div className="space-y-3">
               <DetailRow
@@ -842,28 +787,39 @@ function AuditLogDetailDrawer({
                 label="Occurred At (UTC)"
                 value={fmtFull(log.occurredAt)}
               />
-              <DetailRow
-                icon={Clock}
-                label="Recorded At (Source)"
-                value={fmtFull(log.recordedAt)}
-              />
-              <CopyIdRow icon={Hash} label="Event ID" value={log.eventId} />
-              <CopyIdRow icon={Hash} label="Read-Store ID" value={log.id} />
-              {log.correlationId && (
-                <CopyIdRow
-                  icon={Activity}
-                  label="Correlation ID"
-                  value={log.correlationId}
-                  actionLabel="Trace Flow"
-                  onAction={() => onTraceCorrelation(log.correlationId!)}
+              {log.recordedAt && log.recordedAt !== log.occurredAt && (
+                <DetailRow
+                  icon={Clock}
+                  label="Recorded At (Source)"
+                  value={fmtFull(log.recordedAt)}
                 />
               )}
-              {log.causationId && (
-                <CopyIdRow
-                  icon={ArrowRight}
-                  label="Causation ID"
-                  value={log.causationId}
-                />
+              {log.correlationId && (
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-3">
+                    <Activity
+                      size={14}
+                      className="text-muted-foreground shrink-0"
+                    />
+                    <div>
+                      <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Correlation Flow
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Event is part of a cross-service flow
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1.5"
+                    onClick={() => onTraceCorrelation(log.correlationId!)}
+                  >
+                    <Activity size={12} />
+                    Trace Flow
+                  </Button>
+                </div>
               )}
             </div>
           </section>
@@ -876,7 +832,7 @@ function AuditLogDetailDrawer({
               Actor (Performed By)
             </h3>
             <div className="space-y-3">
-              <DetailRow icon={User} label="Actor Display" value={actorText} />
+              <DetailRow icon={User} label="Performed By" value={actorText} />
               {log.actorRole && (
                 <DetailRow
                   icon={ShieldCheck}
@@ -884,45 +840,40 @@ function AuditLogDetailDrawer({
                   value={<Badge variant="outline">{log.actorRole}</Badge>}
                 />
               )}
-              {log.actorAccountId && (
-                <CopyIdRow
-                  icon={Hash}
-                  label="Actor Account ID"
-                  value={log.actorAccountId}
-                />
-              )}
             </div>
           </section>
-
-          <Separator />
 
           {/* Target */}
-          <section className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Target (Affected Entity)
-            </h3>
-            <div className="space-y-3">
-              <DetailRow
-                icon={Layers}
-                label="Target Type"
-                value={log.targetType ?? "—"}
-              />
-              {log.targetDisplay && (
-                <DetailRow
-                  icon={User}
-                  label="Target Display"
-                  value={log.targetDisplay}
-                />
-              )}
-              {log.targetId && (
-                <CopyIdRow icon={Hash} label="Target ID" value={log.targetId} />
-              )}
-            </div>
-          </section>
+          {(log.targetDisplay || log.targetType) && (
+            <>
+              <Separator />
+              <section className="space-y-3">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Target (Affected Entity)
+                </h3>
+                <div className="space-y-3">
+                  {log.targetType && (
+                    <DetailRow
+                      icon={Layers}
+                      label="Target Type"
+                      value={log.targetType}
+                    />
+                  )}
+                  {log.targetDisplay && log.targetDisplay !== actorText && (
+                    <DetailRow
+                      icon={User}
+                      label="Target Account"
+                      value={log.targetDisplay}
+                    />
+                  )}
+                </div>
+              </section>
+            </>
+          )}
 
           <Separator />
 
-          {/* Device & Network (from ActorUserAgent and Geo) */}
+          {/* Device & Network */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Device, Browser & Network
