@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -312,7 +313,9 @@ export default function EnvironmentalIncidentsView({
                       {alert.incidentType != null ? (
                         <IncidentTypeBadge incidentType={alert.incidentType} />
                       ) : (
-                        anomalyTypeLabel(alert.anomalyType)
+                        <Badge variant="outline">
+                          {anomalyTypeLabel(alert.anomalyType)}
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>

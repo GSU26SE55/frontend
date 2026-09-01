@@ -214,7 +214,10 @@ export default function BmsSwitchControlCard({
 
     void (async () => {
       try {
-        await submitOne({ target: BmsSwitchTarget.Charge, enable: payload.enable });
+        await submitOne({
+          target: BmsSwitchTarget.Charge,
+          enable: payload.enable,
+        });
       } catch (error) {
         toast.error(failureMessage(error));
         // TẮT thì vẫn đi tiếp: mục đích là cô lập pin, tắt được vế nào hay vế đó.
@@ -222,7 +225,10 @@ export default function BmsSwitchControlCard({
         if (payload.enable) return;
       }
       try {
-        await submitOne({ target: BmsSwitchTarget.Discharge, enable: payload.enable });
+        await submitOne({
+          target: BmsSwitchTarget.Discharge,
+          enable: payload.enable,
+        });
       } catch (error) {
         toast.error(failureMessage(error));
       }
