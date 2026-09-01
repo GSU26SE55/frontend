@@ -9,17 +9,10 @@ import {
   Globe,
   Fingerprint,
   Clock,
+  Hash,
   User,
   ShieldAlert,
-  Download,
-  RotateCcw,
-  UserX,
-  Activity,
-  Layers,
-  ShieldCheck,
-  Loader2,
-  FileSpreadsheet,
-  FileCode,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -39,29 +32,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { DatePicker } from "@/shared/components/ui/DatePicker";
-import { RevealInline } from "@/shared/motion/RevealInline";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Drawer,
   DrawerContent,
@@ -70,21 +40,11 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "@/components/ui/drawer";
-import {
-  useAuditSearch,
-  useAuditCorrelation,
-  useAuditReplay,
-  useAuditReplayJob,
-  useAuditRedact,
-} from "@/features/admin/hooks/account/useAuditAggregator";
-import { auditAggregatorService } from "@/features/admin/services/account/audit-aggregator.service";
+import { useAuditSearch } from "@/features/admin/hooks/account/useAuditAggregator";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import type {
-  AuditAggregateDto,
-  AuditSearchParams,
-} from "@/features/admin/types/account/audit-aggregator.types";
+import type { AuditAggregateDto } from "@/features/admin/types/account/audit-aggregator.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { toneClass } from "@/shared/theme/statusColors";
@@ -92,27 +52,10 @@ import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { noData, notFound } from "@/shared/constants/emptyStates";
 import { parseUserAgent } from "@/shared/utils/userAgent";
-import {
-  AuditSeverity,
-  AuditActionCategory,
-} from "@/shared/enums/account/audit.enum";
 
-// ── Metadata & Configuration ──────────────────────────────────────────────────
-
-const SERVICES = [
-  "AuthService",
-  "BatteryService",
-  "TicketService",
-  "NotificationService",
-  "FileStorageService",
-  "SmsService",
-] as const;
-
-const CATEGORIES = Object.values(AuditActionCategory);
-const SEVERITIES = Object.values(AuditSeverity);
+// ── Metadata ──────────────────────────────────────────────────────────────────
 
 const ACTION_LABELS: Record<string, string> = {
-  // Auth & Account
   LoginSuccess: "Login",
   LoginFailedWrongPassword: "Wrong password",
   LoginFailedAccountLocked: "Account locked",
@@ -163,12 +106,11 @@ const ACTION_LABELS: Record<string, string> = {
   PermissionGranted: "Permission granted",
   PermissionRevoked: "Permission revoked",
 
-  // Battery & IoT
+  // Battery & System
   BatteryCreated: "Battery created",
   BatteryUpdated: "Battery updated",
   BatteryDeleted: "Battery deleted",
   BatteryStatusChanged: "Battery status changed",
-  ThresholdUpdated: "Threshold updated",
   AlertCreated: "Alert generated",
   AlertAcknowledged: "Alert acknowledged",
   AlertResolved: "Alert resolved",
@@ -176,97 +118,133 @@ const ACTION_LABELS: Record<string, string> = {
   DeviceCreated: "Device provisioned",
   DeviceUpdated: "Device updated",
   DeviceDecommissioned: "Device decommissioned",
-  FirmwareUploaded: "Firmware uploaded",
-  FirmwareReleased: "Firmware released",
-  BmsSwitchTriggered: "BMS switch triggered",
-  CalibrationApplied: "Calibration applied",
-  IncidentReported: "Incident reported",
-  IncidentResolved: "Incident resolved",
-
-  // Ticket
   TicketCreated: "Ticket created",
   TicketUpdated: "Ticket updated",
-  TicketAssigned: "Ticket assigned",
   TicketResolved: "Ticket resolved",
   TicketClosed: "Ticket closed",
-  TicketReopened: "Ticket reopened",
-  CommentAdded: "Comment added",
-
-  // Notification & File
-  NotificationSent: "Notification sent",
-  TemplateCreated: "Template created",
-  TemplateUpdated: "Template updated",
-  FileUploaded: "File uploaded",
-  FileDeleted: "File deleted",
 };
 
-const CATEGORY_SHORT_LABEL: Record<string, string> = {
-  Authentication: "Auth",
-  Authorization: "Authz",
-  AccountManagement: "Account",
-  DataModification: "Data",
-  DataAccess: "Access",
-  Configuration: "Config",
-  Security: "Security",
-  Communication: "Comm",
-  System: "System",
+type ActionCategory =
+  | "auth"
+  | "account"
+  | "session"
+  | "role"
+  | "security"
+  | "system"
+  | "other";
+
+const ACTION_CATEGORY: Record<string, ActionCategory> = {
+  LoginSuccess: "auth",
+  LoginFailedWrongPassword: "auth",
+  LoginFailedAccountLocked: "auth",
+  LoginFailedAccountSuspended: "auth",
+  LoginFailedAccountBanned: "auth",
+  LoginFailedAccountInactive: "auth",
+  LoginFailedNotVerified: "auth",
+  Logout: "auth",
+  GoogleLoginSuccess: "auth",
+  GoogleLoginFailed: "auth",
+  LoginWith2fa: "auth",
+  LoginPending2fa: "auth",
+  TokenRefreshed: "security",
+  TokenReuseDetected: "security",
+  AccountAutoLocked: "security",
+  TwoFactorEnabled: "security",
+  TwoFactorDisabled: "security",
+  TwoFactorReset: "security",
+  BackupCodeRedeemed: "security",
+  BackupCodesRegenerated: "security",
+  Admin2faReset: "security",
+  PasswordChanged: "security",
+  PasswordReset: "security",
+  OtpVerifySuccess: "security",
+  OtpVerifyFailed: "security",
+  GoogleLinked: "security",
+  GoogleUnlinked: "security",
+  AccountRegistered: "account",
+  AccountCreatedByAdmin: "account",
+  AccountUpdated: "account",
+  AccountStatusChanged: "account",
+  AccountUnlocked: "account",
+  AccountDeactivated: "account",
+  AccountDeleted: "account",
+  AccountInviteSent: "account",
+  AccountInviteAccepted: "account",
+  SessionRevoked: "session",
+  AllSessionsRevoked: "session",
+  AdminForceLogout: "session",
+  SessionLimitExceededOldestRevoked: "session",
+  RoleAssigned: "role",
+  RoleRevoked: "role",
+  RoleTemporaryAssigned: "role",
+  RoleCreated: "role",
+  RoleUpdated: "role",
+  RoleStatusChanged: "role",
+  RoleDeleted: "role",
+  PermissionGranted: "role",
+  PermissionRevoked: "role",
 };
 
-const CATEGORY_STYLE: Record<string, string> = {
-  Authentication:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-  Authorization:
-    "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800",
-  AccountManagement:
+const CATEGORY_STYLE: Record<ActionCategory, string> = {
+  auth: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+  account:
     "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
-  DataModification:
-    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
-  DataAccess:
-    "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800",
-  Configuration:
+  session:
     "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-  Security:
+  role: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800",
+  security:
     "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800",
-  Communication:
-    "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800",
-  System:
+  system:
     "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800",
+  other: "bg-muted text-muted-foreground border-border",
 };
 
-const SEVERITY_STYLE: Record<string, string> = {
-  Info: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-  Warning:
-    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-  Critical:
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800",
-  Security:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800",
+const CATEGORY_LABEL: Record<ActionCategory, string> = {
+  auth: "Auth",
+  account: "Account",
+  session: "Session",
+  role: "Permissions",
+  security: "Security",
+  system: "System",
+  other: "Other",
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function isUuid(val?: string | null): boolean {
-  if (!val) return false;
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    val,
-  );
+function resolveCategory(log: AuditAggregateDto): ActionCategory {
+  if (ACTION_CATEGORY[log.actionCode]) {
+    return ACTION_CATEGORY[log.actionCode];
+  }
+  const catLower = (log.actionCategory ?? "").toLowerCase();
+  if (catLower.includes("auth")) return "auth";
+  if (catLower.includes("account")) return "account";
+  if (catLower.includes("session")) return "session";
+  if (catLower.includes("role") || catLower.includes("permission"))
+    return "role";
+  if (catLower.includes("sec")) return "security";
+  if (catLower.includes("sys")) return "system";
+  return "other";
 }
 
-function resolveActorName(log: AuditAggregateDto): string {
-  if (log.actorDisplay && !isUuid(log.actorDisplay)) {
-    return log.actorDisplay;
-  }
-  if (log.targetDisplay && !isUuid(log.targetDisplay)) {
+function resolveAccountDisplay(log: AuditAggregateDto): string {
+  if (
+    log.targetDisplay &&
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      log.targetDisplay,
+    )
+  ) {
     return log.targetDisplay;
   }
-  if (log.actorRole) {
-    return log.actorRole;
+  if (
+    log.actorDisplay &&
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      log.actorDisplay,
+    )
+  ) {
+    return log.actorDisplay;
   }
-  if (log.actorAccountId || log.targetId) {
-    return log.targetDisplay || log.actorDisplay || "User";
-  }
-  return "System";
+  return "—";
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const fmt = (dt?: string) => {
   if (!dt) return "—";
@@ -301,7 +279,7 @@ function parseMetadata(raw?: string | null): Record<string, unknown> | null {
   }
 }
 
-// ── Detail Rows ───────────────────────────────────────────────────────────────
+// ── Detail Sheet Components ───────────────────────────────────────────────────
 
 function DetailRow({
   icon: Icon,
@@ -331,646 +309,203 @@ function DetailRow({
   );
 }
 
-// ── Correlation Trace Modal ───────────────────────────────────────────────────
-
-function CorrelationTraceDialog({
-  correlationId,
-  open,
-  onClose,
-  onSelectEvent,
+function CopyIdRow({
+  icon: Icon,
+  label,
+  value,
 }: {
-  correlationId: string | null;
-  open: boolean;
-  onClose: () => void;
-  onSelectEvent: (event: AuditAggregateDto) => void;
+  icon: React.ElementType;
+  label: string;
+  value: string;
 }) {
-  const { data: events, isLoading } = useAuditCorrelation(
-    correlationId ?? undefined,
-  );
-
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-3 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Activity className="size-5 text-primary" />
-            <DialogTitle className="text-lg">
-              Correlation Flow Trace
-            </DialogTitle>
-          </div>
-          <DialogDescription className="text-xs font-mono break-all mt-1">
-            Correlation ID: {correlationId}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {isLoading ? (
-            <div className="space-y-3 py-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : !events || events.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">
-              No correlated events found in read-store for this ID.
-            </div>
-          ) : (
-            <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
-              {events.map((ev, idx) => {
-                const isFailed = !ev.isSuccess;
-                return (
-                  <div
-                    key={ev.id}
-                    className="relative bg-card rounded-lg border border-border p-3.5 hover:border-primary/50 transition-colors cursor-pointer"
-                    onClick={() => {
-                      onSelectEvent(ev);
-                      onClose();
-                    }}
-                  >
-                    <div
-                      className={`absolute -left-6 top-4 size-3 rounded-full border-2 bg-background ${
-                        isFailed ? "border-red-500" : "border-emerald-500"
-                      }`}
-                    />
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-muted-foreground">
-                          #{idx + 1}
-                        </span>
-                        <Badge variant="outline" className="text-2xs font-mono">
-                          {ev.serviceName}
-                        </Badge>
-                        <span className="font-medium text-sm">
-                          {ACTION_LABELS[ev.actionCode] ?? ev.actionCode}
-                        </span>
-                      </div>
-                      <span className="text-2xs text-muted-foreground font-mono">
-                        {fmt(ev.occurredAt)}
-                      </span>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Actor: {resolveActorName(ev)}</span>
-                      <span
-                        className={`font-semibold inline-flex items-center gap-1 ${
-                          ev.isSuccess ? "text-emerald-600" : "text-red-600"
-                        }`}
-                      >
-                        {ev.isSuccess ? (
-                          <CheckCircle2 size={12} />
-                        ) : (
-                          <XCircle size={12} />
-                        )}
-                        {ev.isSuccess ? "Success" : "Failed"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter className="px-6 py-3 border-t border-border">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <div className="flex gap-3 min-w-0 items-center">
+      <div className="shrink-0">
+        <Icon size={14} className="text-muted-foreground" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">
+          {label}
+        </p>
+        <p className="text-sm text-muted-foreground">Hidden</p>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        aria-label={`Copy ${label}`}
+        onClick={() => {
+          navigator.clipboard.writeText(value);
+          toast.success(`${label} copied`);
+        }}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }
 
-// ── Replay Dialog ─────────────────────────────────────────────────────────────
-
-function AuditReplayDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const [service, setService] = useState<string | null>(null);
-  const [from, setFrom] = useState<string>("");
-  const [to, setTo] = useState<string>("");
-  const [activeJobId, setActiveJobId] = useState<string | null>(null);
-
-  const replayMutation = useAuditReplay();
-  const { data: jobStatus, isLoading: isJobLoading } = useAuditReplayJob(
-    activeJobId ?? undefined,
-  );
-
-  const handleStartReplay = async () => {
-    try {
-      const res = await replayMutation.mutateAsync({
-        service: service || undefined,
-        from: from ? new Date(from).toISOString() : undefined,
-        to: to ? new Date(to).toISOString() : undefined,
-      });
-      const dataObj = res.data?.data as { jobId?: string } | undefined;
-      if (dataObj?.jobId) {
-        setActiveJobId(dataObj.jobId);
-      }
-    } catch {
-      // Error handled by hook
-    }
-  };
-
-  const handleClose = () => {
-    setActiveJobId(null);
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <RotateCcw className="size-5 text-primary" />
-            <DialogTitle>Audit Replay Tool</DialogTitle>
-          </div>
-          <DialogDescription className="text-xs leading-relaxed">
-            Replay audit events from microservice source outbox tables into the
-            unified read-store (
-            <code className="font-mono">audit_aggregate</code>). Consumer is
-            idempotent and will not create duplicates.
-          </DialogDescription>
-        </DialogHeader>
-
-        {activeJobId && jobStatus ? (
-          <div className="space-y-4 py-3">
-            <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase text-muted-foreground">
-                  Job Status
-                </span>
-                <Badge
-                  variant={
-                    jobStatus.status === "Completed"
-                      ? "default"
-                      : jobStatus.status === "CompletedWithErrors"
-                        ? "destructive"
-                        : "secondary"
-                  }
-                >
-                  {jobStatus.status}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <p className="text-muted-foreground">Progress:</p>
-                  <p className="font-semibold">
-                    {jobStatus.completedServices} / {jobStatus.totalServices}{" "}
-                    services
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Events Replayed:</p>
-                  <p className="font-semibold">
-                    {jobStatus.totalEventsReplayed.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {jobStatus.pendingServices &&
-                jobStatus.pendingServices.length > 0 && (
-                  <div>
-                    <p className="text-2xs text-muted-foreground uppercase mb-1">
-                      Pending Services:
-                    </p>
-                    <p className="text-xs font-mono">
-                      {jobStatus.pendingServices.join(", ")}
-                    </p>
-                  </div>
-                )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">
-                Service Source
-              </label>
-              <Select
-                value={service}
-                items={[
-                  { value: null, label: "All Services" },
-                  ...SERVICES.map((s) => ({ value: s, label: s })),
-                ]}
-                onValueChange={(v) => setService(v)}
-              >
-                <SelectTrigger size="sm">
-                  <SelectValue placeholder="All Services" />
-                </SelectTrigger>
-                <SelectContent alignItemWithTrigger={false}>
-                  <SelectItem value={null}>All Services</SelectItem>
-                  {SERVICES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
-                  From (Optional)
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  className="text-xs"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
-                  To (Optional)
-                </label>
-                <Input
-                  type="datetime-local"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  className="text-xs"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleClose}>
-            {activeJobId ? "Dismiss" : "Cancel"}
-          </Button>
-          {!activeJobId && (
-            <Button
-              onClick={handleStartReplay}
-              disabled={replayMutation.isPending || isJobLoading}
-            >
-              {replayMutation.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Trigger Replay
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── GDPR Redact Dialog ────────────────────────────────────────────────────────
-
-function AuditRedactDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const [accountId, setAccountId] = useState("");
-  const redactMutation = useAuditRedact();
-
-  const handleRedact = async () => {
-    if (!accountId.trim()) {
-      toast.error("Please enter a valid Account ID.");
-      return;
-    }
-    try {
-      await redactMutation.mutateAsync(accountId.trim());
-      setAccountId("");
-      onClose();
-    } catch {
-      // Handled by hook
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-2 text-destructive">
-            <UserX className="size-5" />
-            <DialogTitle>GDPR PII Redact</DialogTitle>
-          </div>
-          <DialogDescription className="text-xs leading-relaxed mt-1.5">
-            Executes GDPR &quot;Right to be Forgotten&quot; on the audit
-            read-store. Personal information (display name, IP address) for this
-            account will be permanently replaced with{" "}
-            <code className="font-mono">[REDACTED]</code>. Event IDs, action
-            codes, and timestamps are preserved for compliance integrity.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 py-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              Account ID (UUID)
-            </label>
-            <Input
-              placeholder="e.g. 01923e45-789a-7b8c-9def-0123456789ab"
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="font-mono text-xs"
-            />
-          </div>
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleRedact}
-            disabled={redactMutation.isPending || !accountId.trim()}
-          >
-            {redactMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            Confirm Redact
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Audit Log Detail Drawer ───────────────────────────────────────────────────
-
-function AuditLogDetailDrawer({
+function AuditLogDetail({
   log,
   open,
   onClose,
-  onTraceCorrelation,
 }: {
-  log: AuditAggregateDto | null;
+  log: AuditAggregateDto;
   open: boolean;
   onClose: () => void;
-  onTraceCorrelation: (correlationId: string) => void;
 }) {
-  if (!log) return null;
-
+  const category = resolveCategory(log);
   const metadata = parseMetadata(log.metadataJson);
   const ua = parseUserAgent(log.actorUserAgent);
-  const category = log.actionCategory ?? "Other";
-  const severity = log.severity ?? "Info";
-  const actionText = ACTION_LABELS[log.actionCode] ?? log.actionCode;
-  const actorText = resolveActorName(log);
+  const accountText = resolveAccountDisplay(log);
 
   return (
     <Drawer open={open} onOpenChange={(v) => !v && onClose()} direction="right">
-      <DrawerContent className="sm:max-w-140">
+      <DrawerContent className="sm:max-w-130">
         {/* Header */}
         <DrawerHeader className="border-b border-border p-0">
           <div className="flex items-start gap-3 px-6 py-5">
             <div
-              className={`mt-0.5 size-9 rounded-lg flex items-center justify-center border shrink-0 ${
-                CATEGORY_STYLE[category] ?? "bg-muted text-muted-foreground"
-              }`}
+              className={`mt-0.5 size-8 rounded-lg flex items-center justify-center border ${CATEGORY_STYLE[category]}`}
             >
-              <ShieldAlert size={18} />
+              <ShieldAlert size={16} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge
-                  variant="outline"
-                  className="text-3xs font-mono font-bold"
-                >
-                  {log.serviceName}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className={`text-3xs font-semibold px-2 py-0 border ${
-                    SEVERITY_STYLE[severity] ?? ""
-                  }`}
-                >
-                  {severity}
-                </Badge>
-              </div>
-              <DrawerTitle className="text-base font-semibold leading-tight mt-1">
-                {actionText}
+              <DrawerTitle className="text-base font-semibold leading-tight">
+                {ACTION_LABELS[log.actionCode] ?? log.actionCode}
               </DrawerTitle>
-              <p className="text-2xs text-muted-foreground mt-0.5">
-                Category: {category}
+              <p className="text-2xs text-muted-foreground font-mono mt-0.5">
+                {log.actionCode} &middot; #{log.serviceName}
               </p>
             </div>
-            <Badge
-              variant="outline"
-              className={`shrink-0 text-2xs font-semibold ${toneClass(
-                log.isSuccess ? "ok" : "p1",
-              )}`}
+            <span
+              className={`shrink-0 inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full ${
+                log.isSuccess ? toneClass("ok") : toneClass("p1")
+              }`}
             >
               {log.isSuccess ? (
-                <CheckCircle2 size={12} className="mr-1" />
+                <CheckCircle2 size={11} />
               ) : (
-                <XCircle size={12} className="mr-1" />
+                <XCircle size={11} />
               )}
               {log.isSuccess ? "Success" : "Failed"}
-            </Badge>
+            </span>
           </div>
         </DrawerHeader>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* General Information & Timing */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              General Information
+              General information
             </h3>
             <div className="space-y-3">
               <DetailRow
                 icon={Clock}
-                label="Occurred At (UTC)"
+                label="Time"
                 value={fmtFull(log.occurredAt)}
               />
-              {log.recordedAt && log.recordedAt !== log.occurredAt && (
-                <DetailRow
-                  icon={Clock}
-                  label="Recorded At (Source)"
-                  value={fmtFull(log.recordedAt)}
-                />
-              )}
+              <CopyIdRow icon={Hash} label="Log ID" value={log.id} />
               {log.correlationId && (
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-3">
-                    <Activity
-                      size={14}
-                      className="text-muted-foreground shrink-0"
-                    />
-                    <div>
-                      <p className="text-2xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Correlation Flow
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Event is part of a cross-service flow
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs gap-1.5"
-                    onClick={() => onTraceCorrelation(log.correlationId!)}
-                  >
-                    <Activity size={12} />
-                    Trace Flow
-                  </Button>
-                </div>
+                <CopyIdRow
+                  icon={Hash}
+                  label="Correlation ID"
+                  value={log.correlationId}
+                />
               )}
             </div>
           </section>
 
           <Separator />
 
-          {/* Actor */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Actor (Performed By)
+              Account
             </h3>
             <div className="space-y-3">
-              <DetailRow icon={User} label="Performed By" value={actorText} />
-              {log.actorRole && (
+              {accountText !== "—" && (
                 <DetailRow
-                  icon={ShieldCheck}
-                  label="Actor Role"
-                  value={<Badge variant="outline">{log.actorRole}</Badge>}
+                  icon={User}
+                  label="Affected account"
+                  value={accountText}
+                />
+              )}
+              {(log.targetId || log.targetDisplay) && (
+                <CopyIdRow
+                  icon={Hash}
+                  label="Target Account ID"
+                  value={log.targetId || log.targetDisplay || ""}
+                />
+              )}
+              {log.actorAccountId && (
+                <CopyIdRow
+                  icon={User}
+                  label="Performed by (Actor ID)"
+                  value={log.actorAccountId}
                 />
               )}
             </div>
           </section>
 
-          {/* Target */}
-          {(log.targetDisplay || log.targetType) && (
-            <>
-              <Separator />
-              <section className="space-y-3">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Target (Affected Entity)
-                </h3>
-                <div className="space-y-3">
-                  {log.targetType && (
-                    <DetailRow
-                      icon={Layers}
-                      label="Target Type"
-                      value={log.targetType}
-                    />
-                  )}
-                  {log.targetDisplay && log.targetDisplay !== actorText && (
-                    <DetailRow
-                      icon={User}
-                      label="Target Account"
-                      value={log.targetDisplay}
-                    />
-                  )}
-                </div>
-              </section>
-            </>
-          )}
-
           <Separator />
 
-          {/* Device & Network */}
           <section className="space-y-3">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Device, Browser & Network
+              Device & Network
             </h3>
             <div className="space-y-3">
               {log.actorIp && (
                 <DetailRow
                   icon={Globe}
-                  label="IP Address"
+                  label="IP address"
                   value={log.actorIp}
                   mono
                 />
               )}
-              {(log.geoCity || log.geoCountry) && (
-                <DetailRow
-                  icon={Globe}
-                  label="Geo Location"
-                  value={
-                    <span>
-                      {log.geoCity ? `${log.geoCity}, ` : ""}
-                      {log.geoCountry ?? "Unknown Country"}
-                    </span>
-                  }
+              {log.targetId && (
+                <CopyIdRow
+                  icon={Fingerprint}
+                  label="Device ID"
+                  value={log.targetId}
                 />
               )}
-              {ua ? (
+              {ua && (
                 <DetailRow
                   icon={Monitor}
-                  label="Browser & Device"
+                  label="Browser"
                   value={
-                    <div className="space-y-1.5">
-                      <p className="text-sm font-medium">
-                        {ua.browser} · {ua.os}
+                    <div className="space-y-1">
+                      <p className="text-sm">
+                        {ua.browser} &middot; {ua.os}
                       </p>
-                      <p className="text-2xs text-muted-foreground font-mono break-all leading-relaxed bg-muted/50 p-2 rounded border border-border">
+                      <p className="text-2xs text-muted-foreground font-mono break-all leading-relaxed">
                         {ua.full}
                       </p>
                     </div>
-                  }
-                />
-              ) : log.actorUserAgent ? (
-                <DetailRow
-                  icon={Monitor}
-                  label="User Agent"
-                  value={
-                    <p className="text-2xs text-muted-foreground font-mono break-all leading-relaxed bg-muted/50 p-2 rounded border border-border">
-                      {log.actorUserAgent}
-                    </p>
-                  }
-                />
-              ) : (
-                <DetailRow
-                  icon={Fingerprint}
-                  label="User Agent"
-                  value={
-                    <span className="text-muted-foreground text-xs italic">
-                      No User-Agent header recorded (System/Internal action)
-                    </span>
                   }
                 />
               )}
             </div>
           </section>
 
-          {/* Error / Failure Details */}
-          {(!log.isSuccess || log.errorCode || log.reason) && (
+          {log.reason && (
             <>
               <Separator />
               <section className="space-y-3">
-                <h3 className="text-xs font-semibold text-destructive uppercase tracking-wider">
-                  Error & Reason
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Reason
                 </h3>
-                <div className="space-y-2 text-sm bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
-                  {log.errorCode && (
-                    <p>
-                      <span className="font-semibold">Error Code:</span>{" "}
-                      <code className="font-mono text-xs">{log.errorCode}</code>
-                    </p>
-                  )}
-                  {log.reason && (
-                    <p>
-                      <span className="font-semibold">Reason:</span>{" "}
-                      {log.reason}
-                    </p>
-                  )}
-                </div>
+                <p className="text-sm">{log.reason}</p>
               </section>
             </>
           )}
 
-          {/* Metadata */}
           {metadata && (
             <>
               <Separator />
               <section className="space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Metadata JSON
+                  Metadata
                 </h3>
                 <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border">
                   {Object.entries(metadata).map(([k, v]) => (
@@ -978,7 +513,7 @@ function AuditLogDetailDrawer({
                       <span className="text-2xs font-mono text-muted-foreground shrink-0 pt-0.5 w-32 truncate">
                         {k}
                       </span>
-                      <span className="text-xs font-mono break-all text-foreground">
+                      <span className="text-xs font-mono break-all">
                         {typeof v === "object" ? JSON.stringify(v) : String(v)}
                       </span>
                     </div>
@@ -989,7 +524,7 @@ function AuditLogDetailDrawer({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Fixed footer */}
         <DrawerFooter className="border-t border-border">
           <DrawerClose asChild>
             <Button variant="outline" className="w-full">
@@ -1002,281 +537,75 @@ function AuditLogDetailDrawer({
   );
 }
 
-// ── Main Page Component ───────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
-const DEFAULTS: {
-  keyword: string;
-  service?: string;
-  category?: string;
-  severity?: string;
-  status?: string;
-  from: string;
-  to: string;
-  pageNumber: number;
-  pageSize: number;
-} = {
+const DEFAULTS = {
   keyword: "",
-  service: undefined,
-  category: undefined,
-  severity: undefined,
-  status: undefined,
-  from: "",
-  to: "",
   pageNumber: 1,
   pageSize: DEFAULT_PAGE_SIZE,
 };
 
 export default function AuditLogsPage() {
   const [selected, setSelected] = useState<AuditAggregateDto | null>(null);
-  const [traceCorrelationId, setTraceCorrelationId] = useState<string | null>(
-    null,
-  );
-  const [replayOpen, setReplayOpen] = useState(false);
-  const [redactOpen, setRedactOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
-
   const search = useDebouncedSearch(filters.keyword ?? "", (kw) =>
     setFilter("keyword", kw),
   );
 
-  // Convert status to boolean
-  const isSuccessParam =
-    filters.status === "success"
-      ? true
-      : filters.status === "failed"
-        ? false
-        : undefined;
-
-  const queryParams: AuditSearchParams = {
-    service: filters.service || undefined,
-    category: filters.category || undefined,
-    severity: filters.severity || undefined,
-    isSuccess: isSuccessParam,
+  const { data, isLoading } = useAuditSearch({
     action: filters.keyword ? filters.keyword.trim() : undefined,
-    from: filters.from ? new Date(filters.from).toISOString() : undefined,
-    to: filters.to ? new Date(filters.to).toISOString() : undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
-  };
+  });
 
-  const { data, isLoading } = useAuditSearch(queryParams);
   const logs = data?.items ?? [];
-  const total = data?.totalItems ?? 0;
-
-  const handleExport = async (formatType: "csv" | "json") => {
-    setIsExporting(true);
-    try {
-      await auditAggregatorService.export(
-        {
-          service: queryParams.service,
-          category: queryParams.category,
-          severity: queryParams.severity,
-          isSuccess: queryParams.isSuccess,
-          action: queryParams.action,
-          from: queryParams.from,
-          to: queryParams.to,
-        },
-        formatType,
-      );
-      toast.success(`Audit logs exported as ${formatType.toUpperCase()}`);
-    } catch {
-      toast.error("Failed to export audit logs. Please try again.");
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   return (
     <PageContainer>
-      {/* Header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin &middot; Compliance
+            Admin &middot; System
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Audit logs</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isLoading ? "…" : total.toLocaleString()} audit events &mdash;
-            cross-service unified audit trail.
+            {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()} events
+            &mdash; activity history across the system.
           </p>
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Replay Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setReplayOpen(true)}
-          >
-            <RotateCcw className="size-3.5" />
-            Replay
-          </Button>
-
-          {/* Redact Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setRedactOpen(true)}
-          >
-            <UserX className="size-3.5" />
-            GDPR Redact
-          </Button>
-
-          {/* Export Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" size="sm" disabled={isExporting}>
-                  {isExporting ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Download className="size-3.5" />
-                  )}
-                  Export
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExport("csv")}>
-                <FileSpreadsheet className="size-4 mr-2" />
-                Export CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("json")}>
-                <FileCode className="size-4 mr-2" />
-                Export JSON
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <RefreshButton queryKeys={[KEY.auditAggregate]} />
-        </div>
+        <RefreshButton queryKeys={[KEY.auditAggregate]} />
       </div>
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search action, actor, target..."
-            value={search.value}
-            onChange={search.onChange}
-            className="pl-8"
-          />
-        </div>
-
-        {/* Service Select */}
-        <Select
-          value={filters.service || null}
-          items={[
-            { value: null, label: "All services" },
-            ...SERVICES.map((s) => ({ value: s, label: s })),
-          ]}
-          onValueChange={(v) => setFilter("service", v || undefined)}
-        >
-          <SelectTrigger size="sm" className="w-40">
-            <SelectValue placeholder="All services" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>All services</SelectItem>
-            {SERVICES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Category Select */}
-        <Select
-          value={filters.category || null}
-          items={[
-            { value: null, label: "All categories" },
-            ...CATEGORIES.map((c) => ({ value: c, label: c })),
-          ]}
-          onValueChange={(v) => setFilter("category", v || undefined)}
-        >
-          <SelectTrigger size="sm" className="w-44">
-            <SelectValue placeholder="All categories" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>All categories</SelectItem>
-            {CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Severity Select */}
-        <Select
-          value={filters.severity || null}
-          items={[
-            { value: null, label: "All severities" },
-            ...SEVERITIES.map((sev) => ({ value: sev, label: sev })),
-          ]}
-          onValueChange={(v) => setFilter("severity", v || undefined)}
-        >
-          <SelectTrigger size="sm" className="w-36">
-            <SelectValue placeholder="All severities" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>All severities</SelectItem>
-            {SEVERITIES.map((sev) => (
-              <SelectItem key={sev} value={sev}>
-                {sev}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Result Select */}
-        <Select
-          value={filters.status || null}
-          items={[
-            { value: null, label: "All results" },
-            { value: "success", label: "Success" },
-            { value: "failed", label: "Failed" },
-          ]}
-          onValueChange={(v) => setFilter("status", v || undefined)}
-        >
-          <SelectTrigger size="sm" className="w-32">
-            <SelectValue placeholder="All results" />
-          </SelectTrigger>
-          <SelectContent alignItemWithTrigger={false}>
-            <SelectItem value={null}>All results</SelectItem>
-            <SelectItem value="success">Success</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Date Pickers */}
-        <DatePicker
-          className="w-40"
-          value={filters.from}
-          onChange={(v) => setFilter("from", v)}
-          max={filters.to}
-        />
-        <DatePicker
-          className="w-40"
-          value={filters.to}
-          onChange={(v) => setFilter("to", v)}
-          min={filters.from}
-        />
-
-        <RevealInline show={hasActiveFilter}>
-          <Button size="sm" variant="ghost" onClick={resetFilters}>
-            Clear filters
-          </Button>
-        </RevealInline>
-      </div>
-
-      {/* Main Table Card */}
       <Card className="gap-0 py-0 overflow-hidden">
+        <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight">
+              Audit log list
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Click a row to see the full detail.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search.value}
+                onChange={search.onChange}
+                placeholder="Action, email, IP..."
+                className="pl-8"
+              />
+            </div>
+            {hasActiveFilter && (
+              <Button size="sm" variant="ghost" onClick={resetFilters}>
+                Clear filters
+              </Button>
+            )}
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -1287,9 +616,7 @@ export default function AuditLogsPage() {
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ScrollText size={32} className="opacity-30" />
             <span className="text-sm">
-              {hasActiveFilter
-                ? notFound("audit events")
-                : noData("audit events")}
+              {hasActiveFilter ? notFound("audit logs") : noData("audit logs")}
             </span>
           </div>
         ) : (
@@ -1300,19 +627,16 @@ export default function AuditLogsPage() {
                   {TABLE_COLUMNS.index}
                 </TableHead>
                 <TableHead className="w-[18%]">{TABLE_COLUMNS.time}</TableHead>
-                <TableHead className="w-[12%]">Service</TableHead>
-                <TableHead className="w-[24%]">Action</TableHead>
-                <TableHead className="w-[10%]">Result</TableHead>
-                <TableHead className="w-[20%]">Account / Actor</TableHead>
-                <TableHead className="w-[16%]">IP / Target</TableHead>
+                <TableHead className="w-[26%]">Action</TableHead>
+                <TableHead className="w-[12%]">Result</TableHead>
+                <TableHead className="w-[26%]">Account</TableHead>
+                <TableHead className="w-[18%]">IP</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log, index) => {
-                const category = log.actionCategory ?? "System";
-                const actionLabel =
-                  ACTION_LABELS[log.actionCode] ?? log.actionCode;
-                const actorName = resolveActorName(log);
+                const category = resolveCategory(log);
+                const accountDisplay = resolveAccountDisplay(log);
 
                 return (
                   <TableRow
@@ -1327,54 +651,43 @@ export default function AuditLogsPage() {
                       {fmt(log.occurredAt)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-3xs font-mono">
-                        {log.serviceName}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center gap-2">
                         <Badge
                           variant="outline"
-                          className={`text-3xs font-medium px-1.5 py-0 border shrink-0 ${
-                            CATEGORY_STYLE[category] ??
-                            "bg-muted text-muted-foreground"
-                          }`}
+                          className={`text-3xs font-medium px-1.5 py-0 border shrink-0 ${CATEGORY_STYLE[category]}`}
                         >
-                          {CATEGORY_SHORT_LABEL[category] ?? category}
+                          {CATEGORY_LABEL[category]}
                         </Badge>
                         <span className="font-medium text-sm">
-                          {actionLabel}
+                          {ACTION_LABELS[log.actionCode] ?? log.actionCode}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`text-3xs font-semibold px-2 py-0.5 ${toneClass(
-                          log.isSuccess ? "ok" : "p1",
-                        )}`}
+                      <span
+                        className={`inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.5 rounded-full ${
+                          log.isSuccess ? toneClass("ok") : toneClass("p1")
+                        }`}
                       >
                         {log.isSuccess ? (
-                          <CheckCircle2 size={10} className="mr-1" />
+                          <CheckCircle2 size={10} />
                         ) : (
-                          <XCircle size={10} className="mr-1" />
+                          <XCircle size={10} />
                         )}
                         {log.isSuccess ? "OK" : "FAIL"}
-                      </Badge>
+                      </span>
                     </TableCell>
-                    <TableCell className="text-sm truncate">
-                      {actorName === "System" ? (
-                        <span className="text-muted-foreground italic">
-                          System
-                        </span>
+                    <TableCell className="text-sm max-w-50 truncate">
+                      {accountDisplay !== "—" ? (
+                        accountDisplay
                       ) : (
-                        <span className="text-foreground">{actorName}</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-muted-foreground text-xs font-mono truncate">
-                          {log.actorIp ?? log.targetDisplay ?? "—"}
+                        <span className="text-muted-foreground text-xs font-mono">
+                          {log.actorIp ?? "—"}
                         </span>
                         <ChevronRight
                           size={14}
@@ -1390,7 +703,6 @@ export default function AuditLogsPage() {
         )}
       </Card>
 
-      {/* Pagination */}
       <DataPagination
         totalItems={data?.totalItems ?? 0}
         totalPages={data?.totalPages ?? 1}
@@ -1402,33 +714,13 @@ export default function AuditLogsPage() {
         onPageSizeChange={(s) => setFilter("pageSize", s)}
       />
 
-      {/* Detail Drawer */}
-      <AuditLogDetailDrawer
-        log={selected}
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        onTraceCorrelation={(corrId) => setTraceCorrelationId(corrId)}
-      />
-
-      {/* Correlation Trace Dialog */}
-      <CorrelationTraceDialog
-        correlationId={traceCorrelationId}
-        open={!!traceCorrelationId}
-        onClose={() => setTraceCorrelationId(null)}
-        onSelectEvent={(ev) => setSelected(ev)}
-      />
-
-      {/* Replay Modal */}
-      <AuditReplayDialog
-        open={replayOpen}
-        onClose={() => setReplayOpen(false)}
-      />
-
-      {/* Redact Modal */}
-      <AuditRedactDialog
-        open={redactOpen}
-        onClose={() => setRedactOpen(false)}
-      />
+      {selected && (
+        <AuditLogDetail
+          log={selected}
+          open={!!selected}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </PageContainer>
   );
 }
