@@ -19,7 +19,6 @@ import {
   Activity,
   Layers,
   ShieldCheck,
-  AlertTriangle,
   ArrowRight,
   Loader2,
   FileSpreadsheet,
@@ -76,7 +75,6 @@ import {
 } from "@/components/ui/drawer";
 import {
   useAuditSearch,
-  useAuditStats,
   useAuditCorrelation,
   useAuditReplay,
   useAuditReplayJob,
@@ -940,93 +938,6 @@ function AuditLogDetailDrawer({
   );
 }
 
-// ── Stats Summary Bar ─────────────────────────────────────────────────────────
-
-function AuditStatsBar({ from, to }: { from?: string; to?: string }) {
-  const { data: severityStats, isLoading: isSeverityLoading } = useAuditStats({
-    groupBy: "severity",
-    from: from ? new Date(from).toISOString() : undefined,
-    to: to ? new Date(to).toISOString() : undefined,
-  });
-
-  const { data: serviceStats } = useAuditStats({
-    groupBy: "service",
-    from: from ? new Date(from).toISOString() : undefined,
-    to: to ? new Date(to).toISOString() : undefined,
-  });
-
-  const totalEvents =
-    severityStats?.reduce((acc, curr) => acc + (curr.count || 0), 0) ?? 0;
-  const criticalCount =
-    severityStats?.find((s) => s.key === "Critical")?.count ?? 0;
-  const securityCount =
-    severityStats?.find((s) => s.key === "Security")?.count ?? 0;
-  const warningCount =
-    severityStats?.find((s) => s.key === "Warning")?.count ?? 0;
-
-  return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <Card className="p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">
-            Total Events
-          </p>
-          <h3 className="text-xl font-bold tracking-tight mt-0.5">
-            {isSeverityLoading ? "…" : totalEvents.toLocaleString()}
-          </h3>
-        </div>
-        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-          <Activity size={18} />
-        </div>
-      </Card>
-
-      <Card className="p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">
-            Critical Events
-          </p>
-          <h3 className="text-xl font-bold tracking-tight mt-0.5 text-destructive">
-            {isSeverityLoading ? "…" : criticalCount.toLocaleString()}
-          </h3>
-        </div>
-        <div className="size-9 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive">
-          <ShieldAlert size={18} />
-        </div>
-      </Card>
-
-      <Card className="p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">
-            Security & Warning
-          </p>
-          <h3 className="text-xl font-bold tracking-tight mt-0.5 text-amber-600 dark:text-amber-400">
-            {isSeverityLoading
-              ? "…"
-              : (securityCount + warningCount).toLocaleString()}
-          </h3>
-        </div>
-        <div className="size-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
-          <AlertTriangle size={18} />
-        </div>
-      </Card>
-
-      <Card className="p-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">
-            Active Services
-          </p>
-          <h3 className="text-xl font-bold tracking-tight mt-0.5 text-indigo-600 dark:text-indigo-400">
-            {serviceStats?.length ?? 0}
-          </h3>
-        </div>
-        <div className="size-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-          <Layers size={18} />
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 // ── Main Page Component ───────────────────────────────────────────────────────
 
 const DEFAULTS: {
@@ -1180,9 +1091,6 @@ export default function AuditLogsPage() {
           <RefreshButton queryKeys={[KEY.auditAggregate]} />
         </div>
       </div>
-
-      {/* Stats Summary Cards */}
-      <AuditStatsBar from={filters.from} to={filters.to} />
 
       {/* Filter bar */}
       <div className="flex items-center gap-3 flex-wrap">
