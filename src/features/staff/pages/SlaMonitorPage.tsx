@@ -153,11 +153,11 @@ export default function SlaMonitorPage() {
                     <TicketPriorityBadge priority={ticket.priority} />
                   </TableCell>
                   <TableCell className="min-w-40">
-                    <SlaCountdown slaTimer={ticket.slaTimer} />
+                    <SlaCountdown slaTimer={ticket.resolutionSlaTimer ?? ticket.responseSlaTimer ?? ticket.slaTimer} />
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {ticket.slaTimer
-                      ? formatDateTime(ticket.slaTimer.dueAt)
+                    {(ticket.resolutionSlaTimer ?? ticket.responseSlaTimer ?? ticket.slaTimer)
+                      ? formatDateTime((ticket.resolutionSlaTimer ?? ticket.responseSlaTimer ?? ticket.slaTimer)!.dueAt)
                       : "-"}
                   </TableCell>
                   <TableCell className="text-right">

@@ -181,7 +181,12 @@ export default function TicketTable({
       id: "sla",
       header: TABLE_COLUMNS.sla,
       stopRowClick: true,
-      cell: (t) => <SlaCountdown slaTimer={t.slaTimer} compact />,
+      cell: (t) => (
+        <SlaCountdown
+          slaTimer={t.resolutionSlaTimer ?? t.responseSlaTimer ?? t.slaTimer}
+          compact
+        />
+      ),
     },
     {
       id: "createdAt",
