@@ -126,7 +126,9 @@ const NEUTRAL_CLS = "bg-muted/60 text-foreground";
 const levelCls = (level: ThresholdLevel) =>
   level == null
     ? NEUTRAL_CLS
-    : toneFill(level === "critical" ? "p1" : level === "warning" ? "p3" : "info");
+    : toneFill(
+        level === "critical" ? "p1" : level === "warning" ? "p3" : "info",
+      );
 
 interface LiveTelemetryCardProps {
   data: TelemetryDisplay | null;
@@ -233,8 +235,8 @@ export function LiveTelemetryCard({
               className={tempCls}
             />
             <StatTile
-              label="SOC"
-              value={fmtNum(data.socPercent)}
+              label="Remaining"
+              value={fmtNum(data.socPercent, 0)}
               unit="%"
               className={socCls}
             />
