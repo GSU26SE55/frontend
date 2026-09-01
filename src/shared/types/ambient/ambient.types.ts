@@ -5,9 +5,11 @@ export { AmbientReadingSourceEnum } from "@/shared/enums/ambient/ambient.enum";
 export interface AmbientReadingDto {
   time: string;
   siteId: string;
-  ambientTemperature: number;
+  ambientTemperature?: number | null;
   humidity?: number | null;
   solarIrradiance?: number | null;
+  gasConcentration?: number | null;
+  waterLeakDetected?: boolean | null;
   source: AmbientReadingSourceEnum;
   sourceDeviceId?: string | null;
 }
@@ -19,6 +21,8 @@ export interface AmbientThresholdConfigDto {
   highAmbientTempCritical?: number | null;
   highHumidityWarning?: number | null;
   highHumidityCritical?: number | null;
+  highGasWarning?: number | null;
+  highGasCritical?: number | null;
   comboTempThreshold?: number | null;
   comboHumidityThreshold?: number | null;
   enabled: boolean;
@@ -44,6 +48,8 @@ export interface AmbientThresholdUpsertPayload {
   highAmbientTempCritical?: number | null;
   highHumidityWarning?: number | null;
   highHumidityCritical?: number | null;
+  highGasWarning?: number | null;
+  highGasCritical?: number | null;
   comboTempThreshold?: number | null;
   comboHumidityThreshold?: number | null;
   enabled?: boolean;

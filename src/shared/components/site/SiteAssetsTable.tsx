@@ -8,7 +8,7 @@ import {
   BatteryStatusEnum,
   type BatteryAssetDto,
 } from "@/shared/types/battery/battery.types";
-import { toneClass } from "@/shared/theme/statusColors";
+import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
 import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -172,6 +172,38 @@ export default function SiteAssetsTable({
         asset.lastSensorReadingAt
           ? format(new Date(asset.lastSensorReadingAt), "dd/MM/yyyy HH:mm")
           : "—",
+    },
+    {
+      id: "alert",
+      header: "Alert",
+      cell: (asset) =>
+        (asset.activeAlertCount ?? 0) > 0 ? (
+          <Badge variant="outline" className={toneClass("p1")}>
+            Open
+          </Badge>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
+    {
+      id: "cascadeRisk",
+      header: "Cascade risk",
+      // Thiếu số thì hiện "—", KHÔNG hiện 0.00: 0.00 là một mức rủi ro có thật (Low), nên in nó
+      // khi thực ra không có dữ liệu là bịa ra một kết luận an toàn.
+      cell: (asset) =>
+        asset.cascadeRiskScore == null ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <Badge
+            variant="outline"
+            className={toneClass(
+              (asset.cascadeRiskLevel && CASCADE_RISK_TONE[asset.cascadeRiskLevel]) ||
+                "muted",
+            )}
+          >
+            {asset.cascadeRiskScore.toFixed(2)}
+          </Badge>
+        ),
     },
   ];
 

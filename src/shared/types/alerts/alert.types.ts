@@ -3,6 +3,7 @@ import type {
   AlertStatusEnum,
   AnomalyTypeEnum,
 } from "@/shared/enums/alerts/alert.enum";
+import type { EnvironmentalIncidentTypeEnum } from "@/shared/enums/alerts/environmental.enum";
 
 export {
   AlertSeverityEnum,
@@ -36,6 +37,12 @@ export interface AlertDto {
   // Non-null for site-level alerts; null for alerts tied to one specific battery.
   siteId: string | null;
   anomalyType: AnomalyTypeEnum;
+  // Set only when this alert is the copy written alongside an EnvironmentalIncident. That copy
+  // carries no measurement, so `anomalyType` alone renders every incident — gas leak, flood,
+  // fire — as the same meaningless "Environmental incident / 0 incident" row. These two fields
+  // are what let the Environmental screen show the real type and open the incident's detail.
+  environmentalIncidentId: string | null;
+  incidentType: EnvironmentalIncidentTypeEnum | null;
   severity: AlertSeverityEnum;
   thresholdValue: number | null;
   actualValue: number | null;
@@ -56,12 +63,23 @@ export interface AlertListParams {
   batteryAssetId?: string;
   severity?: AlertSeverityEnum;
   status?: AlertStatusEnum;
+  // Excludes alerts with status = Merged. BE defaults this to true, so the FE only needs to
+  // pass it to explicitly opt into seeing merged alerts.
+  excludeMerged?: boolean;
   anomalyType?: AnomalyTypeEnum;
-  // Drops the mirror alert the BE writes alongside every EnvironmentalIncident. That row
-  // belongs to the Environmental incidents screen, so the battery alert list asks the BE
-  // to leave it out — filtering it client-side instead would skew totalItems/pagination.
+  // Drops EVERY site-level alert (no battery attached): the mirror alert written alongside each
+  // EnvironmentalIncident, plus ambient threshold breaches (temperature / humidity / gas). Those
+  // belong to the Environmental alerts screen, so the battery list asks the BE to leave them out —
+  // filtering client-side instead would skew totalItems/pagination.
   // Ignored by the BE when `anomalyType` is also sent.
   excludeEnvironmentalIncidents?: boolean;
+  // Opposite of the above: ONLY site-level alerts, for the "Threshold breaches" table on the
+  // Environmental alerts screen. Device alerts carry no battery either, so the BE also subtracts
+  // them here — otherwise a gateway alert would show under Environment and be counted twice.
+  siteLevelOnly?: boolean;
+  // Site-level alerts have no battery, so `batteryAssetId` cannot narrow them — the Environmental
+  // screen's site dropdown filters on this instead.
+  siteId?: string;
   // Keeps the Battery alerts and Device alerts lists disjoint. `iotOnly` returns ONLY
   // DeviceOffline + IotDataIntegrityViolation (the Device alerts screen); its opposite drops
   // them (the Battery alerts screen). Filtering server-side rather than client-side, because

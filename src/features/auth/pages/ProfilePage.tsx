@@ -34,6 +34,7 @@ import { useUpdateAvatar } from "@/features/auth/hooks/profile/useUpdateAvatar";
 import { useUploadFile } from "@/shared/hooks/file/useUploadFile";
 import { FilePurposeEnum } from "@/shared/types/file/file-storage.types";
 import { handleErrorApi } from "@/shared/lib/errors";
+import { toLocalPhone } from "@/shared/lib/phone";
 import { AccountStatusEnum } from "@/shared/enums/account/account.enum";
 import { AUTH_MESSAGES } from "@/features/auth/constants/messages";
 
@@ -102,7 +103,7 @@ const ProfilePage = () => {
     values: account
       ? {
           fullName: account.fullName ?? "",
-          phoneNumber: account.phoneNumber ?? "",
+          phoneNumber: toLocalPhone(account.phoneNumber),
           address: account.address ?? "",
           birthDate: account.dateOfBirth
             ? account.dateOfBirth.slice(0, 10)

@@ -72,26 +72,6 @@ export function useReadingEvidence(
   });
 }
 
-/**
- * Thresholds come from the battery type's own `ThresholdConfig` — the very row `AnomalyRules`
- * on the backend reads to raise the alert. They must NOT be hardcoded here: the fleet mixes
- * 12V/24V/48V packs with different chemistries, so one set of numbers cannot describe them all,
- * and any constant we pick will silently drift away from what the backend actually enforced.
- *
- * Passing `undefined` disables every rule and yields no evidence rows — deliberate. Showing
- * rows judged against guessed limits is worse than showing none, because the Manager would be
- * cross-checking a ticket against a threshold the system never applied.
- */
-export interface EvidenceThresholds {
-  temperatureMax: number;
-  temperatureMin: number;
-  voltageMax: number;
-  voltageMin: number;
-  socWarningThreshold: number;
-  currentMaxCharge?: number;
-  currentMaxDischarge?: number;
-}
-
 export interface ReadingWarning {
   reading: SensorReadingDto;
   reasons: string[]; // warning labels ("Overheating 72°C > 60°C"...); empty = within limits
@@ -115,8 +95,11 @@ export function toWarningRows(readings: SensorReadingDto[]): ReadingWarning[] {
     // ("Undervoltage 0.00V < 10.50V") để không phải sửa chỗ hiển thị.
     reasons: (r.anomalies ?? []).map((a) => {
       const label = ANOMALY_TYPE_LABELS[a.type] ?? a.type;
-      // Số lẻ theo đơn vị: điện áp cần 2 chữ số mới phân biệt được, còn °C/%/A thì không.
-      const digits = a.unit === "V" ? 2 : 0;
+      // 2 chu so cho MOI don vi — cung do chinh xac voi du lieu (`numeric(x,2)`) va voi
+      // `thresholdTone`. Truoc day chi Volt duoc 2 chu so, con lai lam tron ve so nguyen,
+      // nen mot vi pham that lai in ra thanh hai so BANG NHAU: nguong 32.6°C, do duoc
+      // 32.8°C, nhan hien "Overheat 33°C > 33°C" — khong giai thich duoc gi.
+      const digits = 2;
       const actual = a.actualValue.toFixed(digits);
       const limit = a.thresholdValue.toFixed(digits);
       // Hướng so sánh suy từ chính số liệu, nên không cần bảng tra riêng cho từng loại.

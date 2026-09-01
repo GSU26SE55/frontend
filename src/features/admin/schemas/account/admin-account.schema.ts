@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { AccountStatusEnum } from "@/shared/types/account/account.types";
 import {
   emailField,
   fullNameField,
@@ -40,19 +39,6 @@ export const editAccountSchema = z.object({
   address: addressField,
 });
 
-export const changeAccountStatusSchema = z.object({
-  status: z.nativeEnum(AccountStatusEnum),
-  // ChangeAccountStatusCommand caps this at 500 — without the rule the admin writes the
-  // whole justification and only then gets a 400.
-  reason: z
-    .string()
-    .max(500, "Reason must be at most 500 characters")
-    .optional(),
-});
-
 export type InviteAccountFormValues = z.infer<typeof inviteAccountSchema>;
 export type CreateAccountFormValues = z.infer<typeof createAccountSchema>;
 export type EditAccountFormValues = z.infer<typeof editAccountSchema>;
-export type ChangeAccountStatusFormValues = z.infer<
-  typeof changeAccountStatusSchema
->;

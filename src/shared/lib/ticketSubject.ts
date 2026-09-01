@@ -1,4 +1,5 @@
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import { TicketOriginEnum } from "@/shared/enums/ticket/ticket.enum";
 
 /**
  * What a ticket is actually *about* — the thing a technician goes and looks at.
@@ -23,7 +24,11 @@ export type TicketSubjectKind = "battery" | "site" | "unknown";
 
 export type TicketSubject =
   | { kind: "battery"; batteryAssetIds: string[] }
-  | { kind: "site"; incidentId: string }
+  // `incidentId` KHÔNG bắt buộc: sự cố môi trường đến từ hai đường và chỉ một đường có bản ghi
+  // incident. Đường ngưỡng ambient (nhiệt độ / độ ẩm / gas của tủ) chấm thẳng số đo rồi đẻ ticket,
+  // không đi qua EnvironmentalIncident — nhưng vẫn là ticket CẤP SITE và vẫn cần đúng bộ chứng cứ
+  // ambient đó. `siteId` là thứ luôn có ở cả hai đường, nên nó mới là field bắt buộc.
+  | { kind: "site"; incidentId?: string; siteId?: string }
   | { kind: "unknown" };
 
 /**
@@ -48,12 +53,25 @@ export function ticketBatteryIds(
 export function getTicketSubject(
   ticket: Pick<
     TicketDTO,
-    "batteryAssetId" | "batteryAssetIds" | "environmentalIncidentId"
+    | "batteryAssetId"
+    | "batteryAssetIds"
+    | "environmentalIncidentId"
+    | "origin"
+    | "siteId"
   >,
 ): TicketSubject {
   const batteryAssetIds = ticketBatteryIds(ticket);
   if (batteryAssetIds.length > 0) return { kind: "battery", batteryAssetIds };
   if (ticket.environmentalIncidentId)
-    return { kind: "site", incidentId: ticket.environmentalIncidentId };
+    return {
+      kind: "site",
+      incidentId: ticket.environmentalIncidentId,
+      siteId: ticket.siteId ?? undefined,
+    };
+  // Ticket môi trường từ ngưỡng ambient: không có incident record nên trước đây rơi xuống
+  // "unknown" và màn chi tiết KHÔNG hiện bộ chứng cứ nào — trong khi ticket ngập nước (có
+  // incident) thì hiện đầy đủ. Cùng một loại sự cố, hai màn hình khác hẳn nhau.
+  if (ticket.origin === TicketOriginEnum.AutoFromEnvironment)
+    return { kind: "site", siteId: ticket.siteId ?? undefined };
   return { kind: "unknown" };
 }

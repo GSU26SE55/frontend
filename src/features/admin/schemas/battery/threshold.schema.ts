@@ -26,7 +26,7 @@ export const upsertThresholdSchema = z
   // payload spells them ("voltageMax") — that matches nothing on screen.
   .superRefine((d, ctx) => {
     if (d.voltageMax <= d.voltageMin) {
-      const message = "Maximum voltage must be greater than minimum voltage";
+      const message = "Critical voltage must be greater than warning voltage";
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message,
@@ -36,7 +36,7 @@ export const upsertThresholdSchema = z
 
     if (d.temperatureMax <= d.temperatureMin) {
       const message =
-        "Maximum temperature must be greater than minimum temperature";
+        "Critical temperature must be greater than warning temperature";
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message,

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
   ChartContainer,
   ChartTooltip,
@@ -171,7 +172,7 @@ export default function StaffDashboardPage() {
   );
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto py-6 pl-(--page-pl) pr-(--page-pr) lg:overflow-hidden">
+    <PageContainer fillViewport>
       <div className="shrink-0">
         <DashboardHeading
           title="Your work"
@@ -424,6 +425,6 @@ export default function StaffDashboardPage() {
           className="min-h-52 rounded-lg lg:col-span-3 lg:min-h-0"
         />
       </div>
-    </div>
+    </PageContainer>
   );
 }

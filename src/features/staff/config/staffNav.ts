@@ -54,7 +54,7 @@ export const STAFF_NAV: NavSection[] = [
       // định kỳ nằm trong từng cục pin, báo cáo tiến độ nằm trong ticket.
       // IOT3-68 — đặt CẠNH calibration: cùng một người, cùng một lúc, cùng một thiết bị.
       {
-        label: "IoT Devices",
+        label: "Devices",
         path: "/staff/iot-devices",
         icon: HardDrive,
       },

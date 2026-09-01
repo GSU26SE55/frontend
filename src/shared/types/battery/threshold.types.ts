@@ -5,6 +5,9 @@ export interface ThresholdConfigDto {
   id: string;
   batteryTypeId: string;
   batteryTypeName: string;
+  // ⚠️ Min/Max ở đây nghĩa là WARNING/CRITICAL, không phải hai đầu một dải an toàn:
+  // vượt `voltageMin` là Warning, vượt `voltageMax` là Critical. Tên cột giữ nguyên để khỏi
+  // phá hợp đồng API. Xem `AnomalyRules.Detect` phía BE.
   voltageMin: number;
   voltageMax: number;
   temperatureMax: number;
@@ -31,6 +34,9 @@ export interface ThresholdByTypeParams {
 }
 
 export interface UpsertThresholdPayload {
+  // ⚠️ Min/Max ở đây nghĩa là WARNING/CRITICAL, không phải hai đầu một dải an toàn:
+  // vượt `voltageMin` là Warning, vượt `voltageMax` là Critical. Tên cột giữ nguyên để khỏi
+  // phá hợp đồng API. Xem `AnomalyRules.Detect` phía BE.
   voltageMin: number;
   voltageMax: number;
   temperatureMax: number;

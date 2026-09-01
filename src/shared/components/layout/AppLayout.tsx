@@ -1,18 +1,18 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { ChevronDown, LogOut } from "lucide-react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, LogOut, User } from "lucide-react";
 import Sidebar, { type NavSection, type NavBadge } from "./Sidebar";
 import { APP_NAME, SIDEBAR_LABELS } from "@/shared/constants/sidebarLabels";
 import {
   useUnresolvedAlertCount,
   useUnresolvedDeviceAlertCount,
+  useSiteLevelAlertCount,
 } from "@/shared/hooks/alerts/useAlerts";
-import { useUnresolvedIncidentCount } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { useKbReviewCounts } from "@/shared/hooks/kb/useKbPendingReview";
 import { useBlogDraftCount } from "@/shared/hooks/blog/useBlog";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { useLogout } from "@/features/auth/hooks/useLogout";
-import { UserRole } from "@/shared/types/account/session.types";
+import { UserRole, redirectByRole } from "@/shared/types/account/session.types";
 import ThemeToggle from "@/shared/components/ui/ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import LayoutSkeleton, { PageSkeleton } from "./LayoutSkeleton";
@@ -30,6 +30,7 @@ import { DIST, DUR, EASE_OUT } from "@/shared/motion/tokens";
 // ── Topbar ───────────────────────────────────────────────────────────────────
 function Topbar() {
   const reduced = useReducedMotion();
+  const navigate = useNavigate();
   const { user } = useSessionStore();
   const { mutate: logout } = useLogout();
 
@@ -63,15 +64,6 @@ function Topbar() {
       className="h-14 border-b border-border/60 bg-background/85 backdrop-blur-md flex items-center px-5 gap-3 sticky top-0 z-20 shrink-0"
     >
       <div className="flex-1" />
-
-      {/* System status dot inside a polished pill container */}
-      <div className="hidden sm:flex items-center gap-1.5 text-2xs font-medium text-muted-foreground bg-muted/40 border border-border/50 rounded-full px-2.5 py-0.75 select-none transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong">
-        <span
-          className="w-1.5 h-1.5 rounded-full pulse-dot shrink-0"
-          style={{ backgroundColor: "var(--ok)" }}
-        />
-        System stable
-      </div>
 
       <ThemeToggle />
 
@@ -110,6 +102,18 @@ function Topbar() {
               {user?.email}
             </div>
           </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() =>
+              navigate(
+                `${redirectByRole(user?.role ?? UserRole.ADMIN)}/settings`,
+              )
+            }
+            className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-1.75"
+          >
+            <User size={14} />
+            Profile
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
@@ -175,7 +179,9 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
   // keep whatever badge their nav config already set (e.g. Manager's queue).
   const alerts = useUnresolvedAlertCount();
   const deviceAlerts = useUnresolvedDeviceAlertCount();
-  const incidents = useUnresolvedIncidentCount();
+  // Drives the Environmental badge. One count covers that whole screen: incidents write a
+  // site-level alert of their own, so this already includes them.
+  const siteLevelAlerts = useSiteLevelAlertCount();
   // All of these return 0 for roles that cannot act on them (Staff) — the gate lives in
   // the hooks themselves, so nothing here has to know about roles.
   const kb = useKbReviewCounts();
@@ -191,7 +197,10 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     const single: Record<string, number> = {
       // What still needs action: Open + Acknowledged.
       [SIDEBAR_LABELS.batteryAlerts]: alerts.count,
-      [SIDEBAR_LABELS.envIncidents]: incidents.count,
+      // Site-level alerts alone: every incident also writes one of these, so the screen — and this
+      // badge — cover both from that single count. Adding the incident count on top would tally
+      // each incident twice.
+      [SIDEBAR_LABELS.envIncidents]: siteLevelAlerts.count,
       // Counted by the same Open+Acknowledged rule; its query is the exact opposite of the
       // battery one, so the two badges partition the alert table rather than overlap.
       [SIDEBAR_LABELS.deviceAlerts]: deviceAlerts.count,
@@ -232,7 +241,7 @@ export default function AppLayout({ sections }: { sections: NavSection[] }) {
     sections,
     alerts.count,
     deviceAlerts.count,
-    incidents.count,
+    siteLevelAlerts.count,
     kb.pendingReview,
     kb.draft,
     blogDrafts,

@@ -11,10 +11,6 @@ import { priorityRank } from "@/shared/utils/ticket/priorityMatrix";
 import { toneClass } from "@/shared/theme/statusColors";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
-import {
-  TicketStatusEnum,
-  TicketOriginEnum,
-} from "@/shared/enums/ticket/ticket.enum";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -171,24 +167,7 @@ export default function TicketTable({
       // Rank, not the enum string: a plain string compare sorts "Urgent" last,
       // burying the most severe ticket. See priorityRank.
       sortValue: (t) => priorityRank(t.priority),
-      // Auto tickets not yet assigned to Staff: priority is inferred by AI from the anomaly
-      // category and hasn't gone through a reviewer. Flag it so Manager doesn't mistake it
-      // for a priority someone has already signed off on.
-      cell: (t) => (
-        <div className="flex flex-wrap items-center gap-1">
-          <TicketPriorityBadge priority={t.priority} />
-          {t.origin === TicketOriginEnum.AutoFromAlert &&
-            t.status === TicketStatusEnum.Open && (
-              <Badge
-                variant="outline"
-                className="border-violet-200 bg-violet-50 text-violet-700"
-                title="Priority suggested by AI from the alert — not yet approved by Manager"
-              >
-                AI suggested
-              </Badge>
-            )}
-        </div>
-      ),
+      cell: (t) => <TicketPriorityBadge priority={t.priority} />,
     },
     {
       id: "category",

@@ -69,7 +69,6 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
-
 import TicketSlaSection from "@/shared/components/ticket/TicketSlaSection";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
@@ -232,7 +231,6 @@ export default function AdminTicketDetailPage() {
     );
   }
 
-
   // Ticket finished (Completed/Closed/ClosedRejected). Two consequences:
   //  - chat is archived: composer hidden, edit/delete locked in the thread (Admin's override
   //    edit/delete still applies — that path exists precisely for closed tickets);
@@ -332,6 +330,8 @@ export default function AdminTicketDetailPage() {
                     return (
                       <EnvironmentalIncidentInfoPanel
                         incidentId={subject.incidentId}
+                        siteId={subject.siteId}
+                        detectedAt={ticket.detectedAt}
                         description={ticket.description}
                         siteBasePath="/admin"
                       />
@@ -528,7 +528,7 @@ export default function AdminTicketDetailPage() {
               <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Description
               </p>
-              <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+              <p className="text-sm font-medium leading-relaxed text-foreground/90 whitespace-pre-wrap">
                 {ticket.description}
               </p>
             </div>
@@ -562,7 +562,7 @@ export default function AdminTicketDetailPage() {
               <p className="text-3xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-2">
                 Resolution
               </p>
-              <p className="text-base leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
                 {ticket.resolutionSummary}
               </p>
             </div>

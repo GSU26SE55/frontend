@@ -19,6 +19,9 @@ export interface SlaNonWorkingPeriodParams {
   from?: string;
   /** Keeps periods whose startDate is on/before this date. */
   to?: string;
+  /** BE whitelist: startDate (default) | endDate | reason | createdAt. */
+  sortBy?: string;
+  sortDir?: string;
 }
 
 export interface SlaNonWorkingPeriodPayload {

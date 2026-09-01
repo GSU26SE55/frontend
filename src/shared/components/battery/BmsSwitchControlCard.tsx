@@ -180,6 +180,20 @@ export default function BmsSwitchControlCard({
     }
   }, [lastCommand]);
 
+  // "Both" gửi HAI lệnh TUẦN TỰ (charge rồi discharge), không phải một lệnh `target: "all"`.
+  //
+  // Lý do: firmware chỉ map charge=1 / discharge=2 (`cmd_logic.cpp`) — `"all"` rớt validation ở
+  // thiết bị và ack về `failed`. Hai lệnh rời chạy được với đúng firmware đang nạp, và backend
+  // không chặn vì `TargetsOverlap(charge, discharge)` = false (hai MOSFET khác nhau).
+  //
+  // Đổi lại còn ĐƯỢC nhiều hơn: mỗi MOSFET có ack riêng, status riêng và readback riêng, nên ca
+  // "áp dụng được một nửa" hiện ra rõ từng cái thay vì phải nhồi vào một trạng thái chung.
+  const submitOne = (payload: SetBmsSwitchPayload) =>
+    mutation.mutateAsync(payload).then((accepted) => {
+      issuedCmdId.current = accepted.cmdId;
+      return accepted;
+    });
+
   const submit = (payload: SetBmsSwitchPayload) => {
     if (payload.target === BmsSwitchTarget.Charge) {
       setLocalSwitches((prev) => ({ ...prev, charge: payload.enable }));
@@ -189,16 +203,30 @@ export default function BmsSwitchControlCard({
       setLocalSwitches({ charge: payload.enable, discharge: payload.enable });
     }
 
-    mutation.mutate(payload, {
-      // No "command sent" toast: acceptance is not the outcome the operator is waiting
-      // for, and pairing it with the confirmation toast that follows meant every switch
-      // produced two notifications. The wait is already visible in the control itself,
-      // which stays disabled and pending until the BMS answers.
-      onSuccess: (accepted) => {
-        issuedCmdId.current = accepted.cmdId;
-      },
-      onError: (error) => toast.error(failureMessage(error)),
-    });
+    // No "command sent" toast: acceptance is not the outcome the operator is waiting for, and
+    // pairing it with the confirmation toast that follows meant every switch produced two
+    // notifications. The wait is already visible in the control itself, which stays disabled
+    // and pending until the BMS answers.
+    if (payload.target !== BmsSwitchTarget.All) {
+      submitOne(payload).catch((error) => toast.error(failureMessage(error)));
+      return;
+    }
+
+    void (async () => {
+      try {
+        await submitOne({ target: BmsSwitchTarget.Charge, enable: payload.enable });
+      } catch (error) {
+        toast.error(failureMessage(error));
+        // TẮT thì vẫn đi tiếp: mục đích là cô lập pin, tắt được vế nào hay vế đó.
+        // BẬT thì dừng: bật nửa vời trong khi nửa kia lỗi là trạng thái không ai muốn.
+        if (payload.enable) return;
+      }
+      try {
+        await submitOne({ target: BmsSwitchTarget.Discharge, enable: payload.enable });
+      } catch (error) {
+        toast.error(failureMessage(error));
+      }
+    })();
   };
 
   // In a row of header buttons the placeholder is a disabled trigger, not a card: a skeleton

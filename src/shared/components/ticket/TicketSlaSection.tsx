@@ -21,6 +21,8 @@ import {
   getResponseSlaHours,
   parsePriorityEnum,
   formatDurationHuman,
+  formatCalendarExtension,
+  formatCalendarExtensionDays,
 } from "@/shared/lib/sla";
 import { toneClass } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
@@ -219,6 +221,12 @@ export default function TicketSlaSection({ ticket, className }: Props) {
   const resolutionBarCls = slaTimer
     ? slaBarColorClass(slaTimer.remainingPercent)
     : "";
+  const calendarExtensionLabel = formatCalendarExtension(
+    slaTimer?.calendarExtensionDays,
+  );
+  const calendarExtensionDays = formatCalendarExtensionDays(
+    slaTimer?.calendarExtensionDays,
+  );
 
   return (
     <div className={cn("p-4 space-y-4", className)}>
@@ -326,6 +334,21 @@ export default function TicketSlaSection({ ticket, className }: Props) {
                 {format(new Date(slaTimer.dueAt), "dd/MM HH:mm")}
               </span>
             </div>
+
+            {calendarExtensionLabel && (
+              <div className="text-3xs text-muted-foreground">
+                <p className="italic">{calendarExtensionLabel}:</p>
+                {calendarExtensionDays.length > 0 && (
+                  <ul className="mt-1 space-y-0.5">
+                    {calendarExtensionDays.map((day) => (
+                      <li key={day} className="font-bold not-italic">
+                        - {day}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {isResolutionLive && (
               <>

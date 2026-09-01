@@ -170,10 +170,10 @@ export default function BatteryWarningEvidencePanel({
                             : ""
                         }`}
                       >
-                        {num(r.temperature, 1)}
+                        {num(r.temperature)}
                       </td>
                       <td className="px-2 py-1.5 text-right tabular-nums">
-                        {num(r.socPercent, 1)}
+                        {num(r.socPercent)}
                       </td>
                       <td className="px-2 py-1.5">
                         <div className="flex flex-wrap gap-1">
