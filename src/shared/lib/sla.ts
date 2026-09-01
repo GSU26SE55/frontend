@@ -19,13 +19,28 @@ export function parsePriorityEnum(
 ): TicketPriorityEnum | null {
   if (val == null) return null;
   const s = String(val).trim();
-  if (s.startsWith("1") || s.startsWith("P1") || s.includes("P1Critical") || s.includes("Critical")) {
+  if (
+    s.startsWith("1") ||
+    s.startsWith("P1") ||
+    s.includes("P1Critical") ||
+    s.includes("Critical")
+  ) {
     return TicketPriorityEnum.P1Critical;
   }
-  if (s.startsWith("2") || s.startsWith("P2") || s.includes("P2High") || s.includes("High")) {
+  if (
+    s.startsWith("2") ||
+    s.startsWith("P2") ||
+    s.includes("P2High") ||
+    s.includes("High")
+  ) {
     return TicketPriorityEnum.P2High;
   }
-  if (s.startsWith("3") || s.startsWith("P3") || s.includes("P3Normal") || s.includes("Normal")) {
+  if (
+    s.startsWith("3") ||
+    s.startsWith("P3") ||
+    s.includes("P3Normal") ||
+    s.includes("Normal")
+  ) {
     return TicketPriorityEnum.P3Normal;
   }
   if (s.startsWith("4") || s.startsWith("Urgent") || s.includes("Urgent")) {
@@ -228,6 +243,56 @@ export function isSlaClockLive(status?: SlaTimerStatusEnum | null): boolean {
     status === SlaTimerStatusEnum.Running ||
     status === SlaTimerStatusEnum.Paused
   );
+}
+
+/**
+ * % SLA còn lại để vẽ thanh progress — chạy realtime cùng nhịp với text countdown.
+ *
+ * `slaTimer.remainingPercent` là ảnh chụp của BE lúc query: để yên thì bar đứng im 15–30s
+ * (tới lần refetch kế) trong khi text vẫn tụt mỗi giây.
+ *
+ * Tính theo mốc thời gian THẬT của chính timer: `(dueAt - now) / (dueAt - startedAt)`.
+ * Tử và mẫu cùng đơn vị (wall-clock ms), cùng 2 mốc BE đã trả, nên:
+ *   - Khớp 100% với text countdown (đều đo tới `dueAt`).
+ *   - KHÔNG dùng `slaWorkingHours` — sau escalation BE trả budget theo priority MỚI (P3→P1
+ *     là ×7) trong khi `dueAt` giữ nguyên (chính sách: breach thì thêm nhân lực, không gia
+ *     hạn). Chia cho budget mới khiến % tụt mạnh dù ưu tiên cao hơn — nghịch lý hiển thị.
+ *     Đo theo cửa sổ [startedAt, dueAt] của timer thì escalation không làm bar nhảy.
+ *   - `calendarExtensionMinutes` đã nằm sẵn trong `dueAt` nên phần gia hạn ngày lễ tự đúng.
+ *
+ * Fallback về `remainingPercent` khi thiếu `startedAt`/`dueAt` hoặc timer không còn chạy.
+ *
+ * `nowMs` truyền vào để component kiểm soát nhịp re-render (tick mỗi giây) — hàm thuần,
+ * không tự đọc `Date.now()`.
+ */
+export function liveRemainingPercent(
+  slaTimer: {
+    status?: SlaTimerStatusEnum | null;
+    remainingPercent: number;
+    startedAt?: string | null;
+    dueAt?: string | null;
+  },
+  nowMs: number,
+): number {
+  const snapshot = Math.max(0, Math.min(100, slaTimer.remainingPercent));
+  // Chỉ Running mới đếm live. Paused: đồng hồ đóng băng.
+  if (slaTimer.status !== SlaTimerStatusEnum.Running) return snapshot;
+
+  const startedMs = slaTimer.startedAt
+    ? new Date(slaTimer.startedAt).getTime()
+    : NaN;
+  const dueMs = slaTimer.dueAt ? new Date(slaTimer.dueAt).getTime() : NaN;
+  if (
+    !Number.isFinite(startedMs) ||
+    !Number.isFinite(dueMs) ||
+    dueMs <= startedMs
+  ) {
+    return snapshot;
+  }
+
+  const total = dueMs - startedMs;
+  const remaining = dueMs - nowMs;
+  return Math.max(0, Math.min(100, (remaining / total) * 100));
 }
 
 /**

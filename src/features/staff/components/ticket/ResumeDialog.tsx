@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -35,6 +36,14 @@ export function ResumeDialog({ open, onClose, onSubmit, isPending }: Props) {
     resolver: zodResolver(resumeSchema),
     defaultValues: { reason: "" },
   });
+
+  // The dialog stays mounted (the `open` prop just toggles visibility) → reset on each
+  // open so a new resume doesn't inherit the previous reason text.
+  useEffect(() => {
+    if (open) {
+      form.reset({ reason: "" });
+    }
+  }, [open, form]);
 
   const handleSubmit = form.handleSubmit(async (data) => {
     try {

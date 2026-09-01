@@ -81,13 +81,13 @@ export function MaintenanceLogDialog({
     },
   });
 
-  // The dialog stays mounted (the `open` prop just toggles visibility) → clear photos
-  // on every open so a new log doesn't inherit photos from the previous one.
+  // The dialog stays mounted (the `open` prop just toggles visibility) → reset every
+  // field on each open so a new log doesn't inherit text/photos from the previous one.
   useEffect(() => {
     if (open) {
-      form.setValue("beforePhotos", []);
-      form.setValue("afterPhotos", []);
-      if (fixedLogType) form.setValue("logType", fixedLogType);
+      form.reset({
+        logType: fixedLogType ?? MaintenanceLogTypeEnum.RemoteSupport,
+      });
     }
   }, [open, form, fixedLogType]);
 

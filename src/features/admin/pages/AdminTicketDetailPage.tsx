@@ -352,6 +352,7 @@ export default function AdminTicketDetailPage() {
                           key={bid}
                           batteryAssetId={bid}
                           detectedAt={ticket.detectedAt}
+                          originAlertId={ticket.originAlertId}
                         />
                       ))}
                     </div>
