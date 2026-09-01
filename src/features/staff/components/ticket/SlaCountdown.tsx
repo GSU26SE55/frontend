@@ -7,6 +7,7 @@ import {
   formatSlaDueAt,
   formatSlaOverdue,
 } from "@/shared/lib/sla";
+import { useLiveSlaPercent } from "@/shared/hooks/ticket/useLiveSlaPercent";
 import { toneClass } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +47,9 @@ export function SlaCountdown({
     status === SlaTimerStatusEnum.Met ||
     status === SlaTimerStatusEnum.Stopped;
 
-  const effectiveEnd = completedAt ? new Date(completedAt).getTime() : Date.now();
+  const effectiveEnd = completedAt
+    ? new Date(completedAt).getTime()
+    : Date.now();
 
   const [remaining, setRemaining] = useState(() =>
     dueAt ? new Date(dueAt).getTime() - effectiveEnd : 0,
@@ -61,6 +64,9 @@ export function SlaCountdown({
     }, 1000);
     return () => clearInterval(id);
   }, [dueAt, isStopped]);
+
+  // Bar chạy realtime cùng nhịp text — nội suy từ snapshot working-time của BE.
+  const livePercent = useLiveSlaPercent(slaTimer);
 
   // Matches `shared/components/ticket/SlaCountdown`: the timer only exists once a ticket
   // is actually picked up (ApplySlaAsync), and Urgent never gets one — so "no timer" is a
@@ -145,7 +151,7 @@ export function SlaCountdown({
     return (
       <span
         className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${
-          isNearBreachPercent(remainingPercent)
+          isNearBreachPercent(livePercent)
             ? toneClass("p1")
             : toneClass("muted")
         }`}
@@ -213,7 +219,7 @@ export function SlaCountdown({
     );
   }
 
-  const isWarning = isNearBreachPercent(remainingPercent);
+  const isWarning = isNearBreachPercent(livePercent);
   const barColor = isWarning ? "bg-destructive" : "bg-primary";
 
   return (
@@ -236,7 +242,7 @@ export function SlaCountdown({
               "[transition:width_var(--motion-enter)_linear,background-color_var(--motion-enter)_var(--motion-ease-out)]",
               barColor,
             )}
-            style={{ width: `${Math.min(100, remainingPercent)}%` }}
+            style={{ width: `${livePercent}%` }}
           />
         </div>
       )}

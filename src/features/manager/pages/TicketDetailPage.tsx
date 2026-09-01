@@ -526,6 +526,7 @@ export default function TicketDetailPage() {
                         key={bid}
                         batteryAssetId={bid}
                         detectedAt={ticket.detectedAt}
+                        originAlertId={ticket.originAlertId}
                       />
                     ))}
                   </div>
@@ -715,7 +716,7 @@ export default function TicketDetailPage() {
 
           {/* Panel content — only shown when open, fixed width w-75 to avoid reflow while sliding */}
           {sidebarOpen && (
-            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border/60 animate-in fade-in slide-in-from-right-4 duration-300 ease-out">
+            <div className="w-75 h-full overflow-y-auto flex flex-col divide-y divide-border animate-in fade-in slide-in-from-right-4 duration-300 ease-out">
               {/* Header — collapse button */}
               <div className="flex items-center justify-between px-4 py-2 shrink-0">
                 <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">

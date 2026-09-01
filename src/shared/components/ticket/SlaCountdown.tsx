@@ -65,12 +65,16 @@ export default function SlaCountdown({
   const effectiveEnd = completedAt ? new Date(completedAt).getTime() : now;
   const remaining = dueAt ? new Date(dueAt).getTime() - effectiveEnd : 0;
 
+  // Deps là giá trị nguyên thủy, KHÔNG phải object `slaTimer`: callers như TicketSlaSection
+  // truyền một `slaTimer` được useMemo lại mỗi giây (phụ thuộc `now`), nên dùng `slaTimer`
+  // làm dep sẽ clear + tạo lại interval trước khi nó kịp fire → countdown đứng.
+  const hasTimer = !!slaTimer;
   useEffect(() => {
-    if (!slaTimer || isStopped) return;
+    if (!hasTimer || isStopped) return;
 
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [slaTimer, isStopped]);
+  }, [hasTimer, isStopped]);
 
   // No timer at all. The clock is only created when a ticket is actually picked up
   // (ApplySlaAsync, on the transition to InProgress), and Urgent tickets never get one —
@@ -118,7 +122,9 @@ export default function SlaCountdown({
             <div className="font-medium tabular-nums">
               SLA breached · {formatSlaOverdue(overdueMs)} overdue
             </div>
-            <div className="opacity-80">Due {formatSlaDueAt(slaTimer.dueAt)}</div>
+            <div className="opacity-80">
+              Due {formatSlaDueAt(slaTimer.dueAt)}
+            </div>
           </div>
         </TooltipContent>
       </Tooltip>
@@ -178,7 +184,9 @@ export default function SlaCountdown({
             <div className="font-medium tabular-nums">
               Overdue · {formatSlaOverdue(overdueMs)}
             </div>
-            <div className="opacity-80">Due {formatSlaDueAt(slaTimer.dueAt)}</div>
+            <div className="opacity-80">
+              Due {formatSlaDueAt(slaTimer.dueAt)}
+            </div>
           </div>
         </TooltipContent>
       </Tooltip>

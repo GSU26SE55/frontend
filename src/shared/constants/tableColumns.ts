@@ -10,6 +10,8 @@ export const TABLE_COLUMNS = {
   ticket: "Ticket",
   time: "Time",
   sla: "SLA",
+  slaResponse: "SLA Response",
+  slaResolve: "SLA Resolve",
   detectedAt: "Detected at",
   source: "Source",
   severity: "Severity",

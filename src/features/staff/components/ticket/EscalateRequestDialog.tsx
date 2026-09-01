@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { handleErrorApi } from "@/shared/lib/errors";
@@ -58,6 +59,14 @@ export function EscalateRequestDialog({
   const form = useForm<EscalateRequestFormValues>({
     resolver: zodResolver(escalateRequestSchema),
   });
+
+  // The dialog stays mounted (the `open` prop just toggles visibility) → reset on each
+  // open so a new escalation request doesn't inherit the previous reason/note.
+  useEffect(() => {
+    if (open) {
+      form.reset();
+    }
+  }, [open, form]);
 
   const handleSubmit = form.handleSubmit(async (data) => {
     try {

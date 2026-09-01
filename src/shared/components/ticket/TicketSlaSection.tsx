@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Clock, ShieldAlert } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type {
   TicketDTO,
   TicketDetailDTO,
@@ -14,6 +14,7 @@ import {
 } from "@/shared/enums/ticket/ticket.enum";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
+import { useLiveSlaPercent } from "@/shared/hooks/ticket/useLiveSlaPercent";
 import {
   isSlaClockLive,
   slaBarColorClass,
@@ -49,9 +50,12 @@ export default function TicketSlaSection({ ticket, className }: Props) {
     // Response SLA chốt mức ưu tiên ban đầu (lúc tạo phiếu / tiếp nhận).
     // Bất kỳ sự thay đổi mức ưu tiên nào sau này (đổi P ở InProgress hoặc Escalate)
     // chỉ dành cho Resolution SLA và không làm thay đổi Response SLA.
-    const responseTimer = ticket.responseSlaTimer ?? (isOpenStage ? ticket.slaTimer : null);
+    const responseTimer =
+      ticket.responseSlaTimer ?? (isOpenStage ? ticket.slaTimer : null);
 
-    let priorityAtResponse: TicketPriorityEnum | null = parsePriorityEnum(responseTimer?.priority);
+    let priorityAtResponse: TicketPriorityEnum | null = parsePriorityEnum(
+      responseTimer?.priority,
+    );
 
     if (!priorityAtResponse) {
       // Nếu có sự kiện đổi priority thì oldValue của sự kiện đầu tiên chính là priority lúc tạo
@@ -77,12 +81,15 @@ export default function TicketSlaSection({ ticket, className }: Props) {
         (a) => a.action === ActivityActionEnum.PriorityAssigned,
       );
       if (initialPriorityActivity?.newValue) {
-        priorityAtResponse = parsePriorityEnum(initialPriorityActivity.newValue);
+        priorityAtResponse = parsePriorityEnum(
+          initialPriorityActivity.newValue,
+        );
       }
     }
 
     if (!priorityAtResponse) {
-      priorityAtResponse = parsePriorityEnum(ticket.priority) ?? TicketPriorityEnum.P3Normal;
+      priorityAtResponse =
+        parsePriorityEnum(ticket.priority) ?? TicketPriorityEnum.P3Normal;
     }
 
     const targetHours = getResponseSlaHours(priorityAtResponse);
@@ -117,7 +124,11 @@ export default function TicketSlaSection({ ticket, className }: Props) {
       if (responseTimer.status === SlaTimerStatusEnum.Met) {
         const durationMs =
           firstRespondedAt && ticket.createdAt
-            ? Math.max(0, firstRespondedAt.getTime() - new Date(ticket.createdAt).getTime())
+            ? Math.max(
+                0,
+                firstRespondedAt.getTime() -
+                  new Date(ticket.createdAt).getTime(),
+              )
             : 0;
         return {
           hasResponded: true,
@@ -137,7 +148,11 @@ export default function TicketSlaSection({ ticket, className }: Props) {
         const hasResponded = !isOpenStage;
         const durationMs =
           firstRespondedAt && ticket.createdAt
-            ? Math.max(0, firstRespondedAt.getTime() - new Date(ticket.createdAt).getTime())
+            ? Math.max(
+                0,
+                firstRespondedAt.getTime() -
+                  new Date(ticket.createdAt).getTime(),
+              )
             : 0;
         const overdueAtResponse =
           hasResponded && firstRespondedAt && deadline
@@ -150,7 +165,11 @@ export default function TicketSlaSection({ ticket, className }: Props) {
           deadline,
           firstRespondedAt,
           durationMs,
-          overdueMs: hasResponded ? overdueAtResponse : (deadline ? Math.max(0, now - deadline.getTime()) : 0),
+          overdueMs: hasResponded
+            ? overdueAtResponse
+            : deadline
+              ? Math.max(0, now - deadline.getTime())
+              : 0,
           isMet: false,
           remainingMs: hasResponded
             ? -overdueAtResponse
@@ -190,7 +209,10 @@ export default function TicketSlaSection({ ticket, className }: Props) {
     // Chưa phản hồi (Ticket vẫn Open) — Response SLA đếm 24/7 calendar liên tục theo thời gian thực
     const remainingMs = deadline ? deadline.getTime() - now : 0;
     const isOverdue = remainingMs <= 0;
-    const remainingPercent = Math.min(100, Math.max(0, (remainingMs / totalMs) * 100));
+    const remainingPercent = Math.min(
+      100,
+      Math.max(0, (remainingMs / totalMs) * 100),
+    );
 
     return {
       hasResponded: false,
@@ -205,7 +227,16 @@ export default function TicketSlaSection({ ticket, className }: Props) {
       remainingPercent,
       isOverdue,
     };
-  }, [ticket.createdAt, ticket.priority, ticket.status, ticket.responseSlaTimer, ticket.slaTimer, activities, isOpenStage, now]);
+  }, [
+    ticket.createdAt,
+    ticket.priority,
+    ticket.status,
+    ticket.responseSlaTimer,
+    ticket.slaTimer,
+    activities,
+    isOpenStage,
+    now,
+  ]);
 
   // ── 1.1 Synthetic / BE Response SlaTimer for unified SlaCountdown badge ────
   const responseSlaTimer: SlaTimerDTO | null = useMemo(() => {
@@ -233,11 +264,12 @@ export default function TicketSlaSection({ ticket, className }: Props) {
 
   // ── 2. RESOLUTION SLA CALCULATION ────────────────────────────────────────
   // Resolution SLA chỉ chạy khi ticket đã bước qua giai đoạn Open (được phân công / InProgress)
-  const slaTimer = ticket.resolutionSlaTimer ?? (!isOpenStage ? ticket.slaTimer : null);
+  const slaTimer =
+    ticket.resolutionSlaTimer ?? (!isOpenStage ? ticket.slaTimer : null);
   const isResolutionLive = slaTimer ? isSlaClockLive(slaTimer.status) : false;
-  const resolutionBarCls = slaTimer
-    ? slaBarColorClass(slaTimer.remainingPercent)
-    : "";
+  // Bar chạy realtime cùng nhịp text — nội suy từ snapshot working-time của BE.
+  const resolutionPercent = useLiveSlaPercent(slaTimer);
+  const resolutionBarCls = slaTimer ? slaBarColorClass(resolutionPercent) : "";
   const calendarExtensionLabel = formatCalendarExtension(
     slaTimer?.calendarExtensionDays,
   );
@@ -245,21 +277,43 @@ export default function TicketSlaSection({ ticket, className }: Props) {
     slaTimer?.calendarExtensionDays,
   );
 
+  // Default collapsed once a stage already has an outcome (nothing live left to watch) —
+  // keeps both stages visible at once from reading as noisy. Lazy-init only, so a user's
+  // manual toggle isn't overridden on every re-render as the live timer ticks.
+  const [responseExpanded, setResponseExpanded] = useState(
+    () => !responseData.hasResponded,
+  );
+  const [resolutionExpanded, setResolutionExpanded] = useState(
+    () => isOpenStage || isResolutionLive,
+  );
+
   return (
-    <div className={cn("p-4 space-y-4", className)}>
-      <div className="flex items-center justify-between">
-        <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
-          SLA Performance
-        </p>
-      </div>
+    <div className={cn("p-4", className)}>
+      <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        SLA Performance
+      </p>
 
       {/* ── STAGE 1: RESPONSE SLA ────────────────────────────────────────── */}
-      <div className="rounded-lg border border-border/70 bg-card/60 p-3 space-y-2.5">
-        <div className="flex items-center justify-between border-b border-border/50 pb-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-            <Clock className="size-3.5 text-muted-foreground" />
-            <span>1. Response SLA</span>
-          </div>
+      <div className="space-y-2.5 pb-3">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-xs font-semibold text-foreground"
+            onClick={() => setResponseExpanded((v) => !v)}
+          >
+            {responseExpanded ? (
+              <ChevronDown
+                size={14}
+                className="shrink-0 text-muted-foreground"
+              />
+            ) : (
+              <ChevronRight
+                size={14}
+                className="shrink-0 text-muted-foreground"
+              />
+            )}
+            1. Response SLA
+          </button>
           <SlaCountdown
             slaTimer={responseSlaTimer}
             compact
@@ -269,78 +323,107 @@ export default function TicketSlaSection({ ticket, className }: Props) {
           />
         </div>
 
-        <div className="space-y-1.5 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-3xs">
-              Priority at response
-            </span>
-            <TicketPriorityBadge priority={responseData.priorityAtResponse} />
-          </div>
+        {responseExpanded && (
+          <div className="space-y-1.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground text-xs">
+                Priority at response
+              </span>
+              <TicketPriorityBadge priority={responseData.priorityAtResponse} />
+            </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-3xs">Deadline</span>
-            <span className="font-medium tabular-nums text-foreground text-3xs">
-              {responseData.deadline
-                ? format(responseData.deadline, "dd/MM HH:mm")
-                : "—"}
-            </span>
-          </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground text-xs">Deadline</span>
+              <span className="font-medium tabular-nums text-foreground text-xs">
+                {responseData.deadline
+                  ? format(responseData.deadline, "dd/MM HH:mm")
+                  : "—"}
+              </span>
+            </div>
 
-          {!responseData.hasResponded && (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-3xs">Remaining</span>
-                <span className="font-medium tabular-nums text-foreground text-3xs">
-                  {responseData.remainingPercent.toFixed(0)}%
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarColorClass(responseData.remainingPercent)}`}
-                  style={{
-                    width: `${Math.max(0, responseData.remainingPercent)}%`,
-                  }}
-                />
-              </div>
-            </>
-          )}
+            {!responseData.hasResponded && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Remaining
+                  </span>
+                  <span className="font-medium tabular-nums text-foreground text-xs">
+                    {responseData.remainingPercent.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarColorClass(responseData.remainingPercent)}`}
+                    style={{
+                      width: `${Math.max(0, responseData.remainingPercent)}%`,
+                    }}
+                  />
+                </div>
+              </>
+            )}
 
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground text-3xs">
-              Responded at
-            </span>
-            <span className="font-medium tabular-nums text-foreground text-3xs">
-              {responseData.hasResponded && responseData.firstRespondedAt ? (
-                <>
-                  {format(responseData.firstRespondedAt, "dd/MM HH:mm")}
-                  {responseData.isOverdue && responseData.overdueMs > 0 ? (
-                    <span className="text-destructive font-normal ml-1">
-                      ({formatDurationHuman(responseData.overdueMs)} late)
-                    </span>
-                  ) : responseData.durationMs > 0 ? (
-                    <span className="text-muted-foreground font-normal ml-1">
-                      (after {formatDurationHuman(responseData.durationMs)})
-                    </span>
-                  ) : null}
-                </>
-              ) : (
-                "—"
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground text-xs">
+                Responded at
+              </span>
+              <span className="font-medium tabular-nums text-foreground text-xs">
+                {responseData.hasResponded && responseData.firstRespondedAt
+                  ? format(responseData.firstRespondedAt, "dd/MM HH:mm")
+                  : "—"}
+              </span>
+            </div>
+
+            {responseData.hasResponded &&
+              responseData.isOverdue &&
+              responseData.overdueMs > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Late by</span>
+                  <span className="font-medium tabular-nums text-destructive text-xs">
+                    {formatDurationHuman(responseData.overdueMs)}
+                  </span>
+                </div>
               )}
-            </span>
+
+            {responseData.hasResponded &&
+              !responseData.isOverdue &&
+              responseData.durationMs > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Response time
+                  </span>
+                  <span className="font-medium tabular-nums text-foreground text-xs">
+                    {formatDurationHuman(responseData.durationMs)}
+                  </span>
+                </div>
+              )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── STAGE 2: RESOLUTION SLA ─────────────────────────────────────── */}
-      <div className="rounded-lg border border-border/70 bg-card/60 p-3 space-y-2.5">
-        <div className="flex items-center justify-between border-b border-border/50 pb-2">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-            <ShieldAlert className="size-3.5 text-muted-foreground" />
-            <span>2. Resolution SLA</span>
-          </div>
+      <div className="space-y-2.5 -mx-4 px-4 pt-3 border-t border-border">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-xs font-semibold text-foreground"
+            onClick={() => setResolutionExpanded((v) => !v)}
+          >
+            {resolutionExpanded ? (
+              <ChevronDown
+                size={14}
+                className="shrink-0 text-muted-foreground"
+              />
+            ) : (
+              <ChevronRight
+                size={14}
+                className="shrink-0 text-muted-foreground"
+              />
+            )}
+            2. Resolution SLA
+          </button>
           {isOpenStage ? (
             <span
-              className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-3xs font-medium ${toneClass("muted")}`}
+              className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("muted")}`}
             >
               Not started
             </span>
@@ -352,101 +435,108 @@ export default function TicketSlaSection({ ticket, className }: Props) {
                 ticket.status === TicketStatusEnum.Completed ||
                 ticket.status === TicketStatusEnum.Closed ||
                 ticket.status === TicketStatusEnum.ClosedRejected
-                  ? (ticket as TicketDetailDTO).resolvedAt ??
-                    (ticket as TicketDetailDTO).closedAt
+                  ? ((ticket as TicketDetailDTO).resolvedAt ??
+                    (ticket as TicketDetailDTO).closedAt)
                   : null
               }
             />
           )}
         </div>
 
-        {isOpenStage ? (
-          <div className="py-2 text-center text-3xs text-muted-foreground">
-            Resolution SLA starts once the ticket is assigned and moved to InProgress.
-          </div>
-        ) : slaTimer ? (
-          <div className="space-y-1.5 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-3xs">
-                Current priority
-              </span>
-              <TicketPriorityBadge priority={ticket.priority} />
+        {resolutionExpanded &&
+          (isOpenStage ? (
+            <div className="py-2 text-center text-xs text-muted-foreground">
+              Resolution SLA starts once the ticket is assigned and moved to
+              InProgress.
             </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-3xs">
-                Deadline
-              </span>
-              <span className="font-medium tabular-nums text-foreground text-3xs">
-                {format(new Date(slaTimer.dueAt), "dd/MM HH:mm")}
-              </span>
-            </div>
-
-            {calendarExtensionLabel && (
-              <div className="text-3xs text-muted-foreground">
-                <p className="italic">{calendarExtensionLabel}:</p>
-                {calendarExtensionDays.length > 0 && (
-                  <ul className="mt-1 space-y-0.5">
-                    {calendarExtensionDays.map((day) => (
-                      <li key={day} className="font-bold not-italic">
-                        - {day}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          ) : slaTimer ? (
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-xs">
+                  Current priority
+                </span>
+                <TicketPriorityBadge priority={ticket.priority} />
               </div>
-            )}
 
-            {isResolutionLive && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-3xs">
-                    Remaining
-                  </span>
-                  <span className="font-medium tabular-nums text-foreground text-3xs">
-                    {slaTimer.remainingPercent.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${resolutionBarCls}`}
-                    style={{
-                      width: `${Math.max(0, slaTimer.remainingPercent)}%`,
-                    }}
-                  />
-                </div>
-              </>
-            )}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-xs">Deadline</span>
+                <span className="font-medium tabular-nums text-foreground text-xs">
+                  {format(new Date(slaTimer.dueAt), "dd/MM HH:mm")}
+                </span>
+              </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-3xs">
-                Resolved at
-              </span>
-              <span className="font-medium tabular-nums text-foreground text-3xs">
-                {(ticket as TicketDetailDTO).resolvedAt
-                  ? format(new Date((ticket as TicketDetailDTO).resolvedAt!), "dd/MM HH:mm")
-                  : "—"}
-              </span>
-            </div>
-
-            {slaTimer.status === SlaTimerStatusEnum.Breached && (
-              <div className="space-y-1 text-3xs">
-                <div className="text-destructive font-medium">
-                  SLA deadline has breached. Prioritize resolution.
+              {calendarExtensionLabel && (
+                <div className="text-xs text-muted-foreground">
+                  <p className="italic">{calendarExtensionLabel}:</p>
+                  {calendarExtensionDays.length > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {calendarExtensionDays.map((day) => (
+                        <li key={day} className="font-bold not-italic">
+                          - {day}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                {slaTimer.rescueRemainingMinutes != null && slaTimer.rescueRemainingMinutes > 0 && (
-                  <div className="text-amber-600 dark:text-amber-400 font-medium">
-                    Rescue window: {Math.floor(slaTimer.rescueRemainingMinutes / 60)}h {slaTimer.rescueRemainingMinutes % 60}m remaining
+              )}
+
+              {isResolutionLive && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-xs">
+                      Remaining
+                    </span>
+                    <span className="font-medium tabular-nums text-foreground text-xs">
+                      {resolutionPercent.toFixed(0)}%
+                    </span>
                   </div>
-                )}
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${resolutionBarCls}`}
+                      style={{
+                        width: `${Math.max(0, resolutionPercent)}%`,
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-xs">
+                  Resolved at
+                </span>
+                <span className="font-medium tabular-nums text-foreground text-xs">
+                  {(ticket as TicketDetailDTO).resolvedAt
+                    ? format(
+                        new Date((ticket as TicketDetailDTO).resolvedAt!),
+                        "dd/MM HH:mm",
+                      )
+                    : "—"}
+                </span>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="py-2 text-center text-3xs text-muted-foreground">
-            No Resolution SLA configured for this ticket.
-          </div>
-        )}
+
+              {slaTimer.status === SlaTimerStatusEnum.Breached &&
+                (slaTimer.rescueRemainingMinutes != null &&
+                slaTimer.rescueRemainingMinutes > 0 ? (
+                  <div className="text-sm text-destructive font-medium">
+                    Overdue — {Math.floor(slaTimer.rescueRemainingMinutes / 60)}
+                    h
+                    {slaTimer.rescueRemainingMinutes % 60 > 0
+                      ? ` ${slaTimer.rescueRemainingMinutes % 60}m`
+                      : ""}{" "}
+                    until auto-escalation.
+                  </div>
+                ) : (
+                  <div className="text-sm text-destructive font-medium">
+                    SLA deadline breached.
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="py-2 text-center text-xs text-muted-foreground">
+              No Resolution SLA configured for this ticket.
+            </div>
+          ))}
       </div>
     </div>
   );

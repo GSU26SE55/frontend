@@ -198,6 +198,13 @@ export default function BmsSwitchControlCard({
     });
 
   const submit = (payload: SetBmsSwitchPayload) => {
+    // Guards against a double-click firing submit() twice before the dialog closes: the
+    // AlertDialogAction onClick calls setConfirmation(null) synchronously, but mutation.isPending
+    // only flips true after the mutateAsync call inside submitOne actually runs (deferred for
+    // "All" behind an async IIFE), leaving a window where a second click still passes the button's
+    // own `disabled={mutation.isPending}` check.
+    if (pending) return;
+
     if (payload.target === BmsSwitchTarget.Charge) {
       setLocalSwitches((prev) => ({ ...prev, charge: payload.enable }));
     } else if (payload.target === BmsSwitchTarget.Discharge) {

@@ -16,6 +16,7 @@ import {
   EnvironmentalIncidentStatusEnum,
   type EnvironmentalIncidentDto,
 } from "@/shared/types/alerts/environmental.types";
+import { toneClass, INCIDENT_STATUS_TONE } from "@/shared/theme/statusColors";
 
 /** ±2' — same width as the battery evidence window (`useReadingEvidence`). */
 const EVIDENCE_WINDOW_MS = 2 * 60 * 1_000;
@@ -26,19 +27,6 @@ const STATUS_LABEL: Record<EnvironmentalIncidentStatusEnum, string> = {
   [EnvironmentalIncidentStatusEnum.Resolved]: "Resolved",
   [EnvironmentalIncidentStatusEnum.FalseAlarm]: "False alarm",
 };
-
-/**
- * A resolved or false-alarm incident is settled; anything else still needs someone on site.
- * Colouring by that split rather than by severity is deliberate — every incident that reaches a
- * ticket is Critical, so a severity-driven badge would be red on all of them and carry no signal.
- */
-function statusVariant(
-  status: EnvironmentalIncidentStatusEnum,
-): "default" | "secondary" | "destructive" {
-  if (status === EnvironmentalIncidentStatusEnum.Resolved) return "secondary";
-  if (status === EnvironmentalIncidentStatusEnum.FalseAlarm) return "secondary";
-  return "destructive";
-}
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -263,8 +251,11 @@ function Header({ incident }: { incident?: EnvironmentalIncidentDto }) {
       </p>
       {incident ? (
         <Badge
-          variant={statusVariant(incident.status)}
-          className="ml-auto text-2xs font-normal"
+          variant="outline"
+          className={cn(
+            "ml-auto text-2xs font-normal",
+            toneClass(INCIDENT_STATUS_TONE[incident.status]),
+          )}
         >
           {STATUS_LABEL[incident.status] ?? incident.status}
         </Badge>
