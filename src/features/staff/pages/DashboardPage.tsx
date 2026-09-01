@@ -75,8 +75,10 @@ export default function StaffDashboardPage() {
   const openTickets = tickets.filter(isOpenTicket);
   // Least SLA time left first: the top row is always the one to open next.
   const priorityTickets = [...openTickets].sort((a, b) => {
-    const aPercent = a.slaTimer?.remainingPercent ?? 101;
-    const bPercent = b.slaTimer?.remainingPercent ?? 101;
+    const aTimer = a.resolutionSlaTimer ?? a.responseSlaTimer ?? a.slaTimer;
+    const bTimer = b.resolutionSlaTimer ?? b.responseSlaTimer ?? b.slaTimer;
+    const aPercent = aTimer?.remainingPercent ?? 101;
+    const bPercent = bTimer?.remainingPercent ?? 101;
     return aPercent - bPercent;
   });
 
@@ -248,7 +250,8 @@ export default function StaffDashboardPage() {
           }
         >
           {priorityTickets.map((t) => {
-            const remaining = t.slaTimer?.remainingPercent;
+            const timer = t.resolutionSlaTimer ?? t.responseSlaTimer ?? t.slaTimer;
+            const remaining = timer?.remainingPercent;
             const tone = slaTone(remaining);
             return (
               <tr

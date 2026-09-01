@@ -5,12 +5,13 @@ import {
   isNearBreachPercent,
   formatSlaRemaining,
   formatSlaDueAt,
+  formatSlaOverdue,
 } from "@/shared/lib/sla";
 import { toneClass } from "@/shared/theme/statusColors";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  slaTimer: SlaTimerDTO | null;
+  slaTimer?: SlaTimerDTO | null;
   /**
    * Hide the small accompanying progress bar.
    *
@@ -39,22 +40,19 @@ export function SlaCountdown({
   const remainingPercent = slaTimer?.remainingPercent ?? 0;
 
   const [remaining, setRemaining] = useState(() =>
-    dueAt ? Math.max(0, new Date(dueAt).getTime() - Date.now()) : 0,
+    dueAt ? new Date(dueAt).getTime() - Date.now() : 0,
   );
 
   useEffect(() => {
     if (
       !dueAt ||
       status === SlaTimerStatusEnum.Paused ||
-      status === SlaTimerStatusEnum.Met ||
-      status === SlaTimerStatusEnum.Breached
+      status === SlaTimerStatusEnum.Met
     ) {
       return;
     }
     const id = setInterval(() => {
-      const diff = new Date(dueAt).getTime() - Date.now();
-      setRemaining(Math.max(0, diff));
-      if (diff <= 0) clearInterval(id);
+      setRemaining(new Date(dueAt).getTime() - Date.now());
     }, 1000);
     return () => clearInterval(id);
   }, [dueAt, status]);
@@ -90,9 +88,10 @@ export function SlaCountdown({
     if (status === SlaTimerStatusEnum.Breached) {
       return (
         <span
-          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${toneClass("p1")}`}
+          title={`SLA breached · Due ${formatSlaDueAt(dueAt)}`}
         >
-          SLA breached
+          {formatSlaOverdue(Math.abs(remaining))}
         </span>
       );
     }
@@ -116,16 +115,15 @@ export function SlaCountdown({
         </span>
       );
     }
-    // Still Running but past dueAt (BE breach sweep has not landed yet). `remaining` is
-    // clamped at 0, so this rendered a clock frozen on 00:00:00 — reads as "breaching now"
-    // rather than "already over".
+    // Still Running but past dueAt (BE breach sweep has not landed yet). Show live overdue
+    // counter — remaining is now negative so Math.abs gives elapsed overdue duration.
     if (remaining <= 0) {
       return (
         <span
-          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${toneClass("p1")}`}
           title={`Due ${formatSlaDueAt(dueAt)}`}
         >
-          Overdue
+          {formatSlaOverdue(Math.abs(remaining))}
         </span>
       );
     }
@@ -146,8 +144,8 @@ export function SlaCountdown({
   if (status === SlaTimerStatusEnum.Breached) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-base font-semibold text-destructive">
-          SLA breached
+        <span className="text-base font-semibold font-mono tabular-nums text-destructive">
+          {formatSlaOverdue(Math.abs(remaining))}
         </span>
         {!hideBar && (
           <div className="h-1.5 w-full rounded-full bg-destructive/20">

@@ -19,7 +19,8 @@ import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
+
+import TicketSlaSection from "@/shared/components/ticket/TicketSlaSection";
 // GH-1176: TriageDialog (approval) removed.
 import AssignDialog from "@/features/manager/components/ticket/AssignDialog";
 import ReassignDialog from "@/features/manager/components/ticket/ReassignDialog";
@@ -81,7 +82,7 @@ import {
 } from "@/shared/utils/ticket/assignments";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
-import { slaBarColorClass, isSlaClockLive } from "@/shared/lib/sla";
+
 import { ESCALATION_REASON_LABEL } from "@/shared/constants/ticketLabels";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -334,8 +335,6 @@ export default function TicketDetailPage() {
     mergeCandidates.length > 0;
 
   // comments come from a separate query (useTicketComments) + realtime push (SignalR).
-
-  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
 
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
@@ -793,62 +792,7 @@ export default function TicketDetailPage() {
                 )}
 
               {/* SLA */}
-              <div className="p-4">
-                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  SLA
-                </p>
-                {ticket.slaTimer ? (
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      {/* "Duration", not "Status": the value beside it is a live countdown to
-                          the deadline, not a state name. Admin's SLA panel does show
-                          slaTimer.status, so it keeps the Status label. */}
-                      <span className="text-xs text-muted-foreground">
-                        Duration
-                      </span>
-                      <SlaCountdown slaTimer={ticket.slaTimer} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Deadline
-                      </span>
-                      <span className="text-xs font-medium tabular-nums">
-                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                      </span>
-                    </div>
-                    {/* "Remaining %" and the bar are only meaningful while the clock is
-                        actually counting. On a terminal timer (Stopped after a reject/merge,
-                        or an already decided Met/Breached) the BE returns remainingPercent = 0,
-                        and drawing the bar anyway rendered a rejected ticket as if it still had
-                        an SLA running against it. The countdown above already states the
-                        outcome, so the ratio rows just drop out. */}
-                    {isSlaClockLive(ticket.slaTimer.status) && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            Remaining
-                          </span>
-                          <span className="text-xs font-medium">
-                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                            style={{
-                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Not yet triaged.
-                  </p>
-                )}
-              </div>
+              <TicketSlaSection ticket={ticket} />
 
               {/* Status + processing time */}
               <div className="p-4">

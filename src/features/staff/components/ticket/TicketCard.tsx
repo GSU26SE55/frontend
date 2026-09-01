@@ -28,12 +28,15 @@ export function TicketCard({ ticket }: Props) {
     ? ticket.assignments?.find((a) => a.staffId === accountId)?.role
     : undefined;
 
+  const activeSlaTimer =
+    ticket.resolutionSlaTimer ?? ticket.responseSlaTimer ?? ticket.slaTimer;
+
   // The two states that mean "this one, now": a site incident, or a clock that has
   // already run out. Both light the tile up, because to the person scanning the board
   // they mean the same thing.
   const alert =
     ticket.isIncident ||
-    ticket.slaTimer?.status === SlaTimerStatusEnum.Breached;
+    activeSlaTimer?.status === SlaTimerStatusEnum.Breached;
 
   return (
     <Link to={`/staff/tickets/${ticket.id}`} className="block h-full">
@@ -124,13 +127,13 @@ export function TicketCard({ ticket }: Props) {
           {/* SLA always sits at the bottom thanks to justify-between — every clock lines
               up when scanning down a column. */}
           <div className="border-t border-border pt-2">
-            {ticket.slaTimer ? (
+            {activeSlaTimer ? (
               <div className="space-y-1">
-                <SlaCountdown slaTimer={ticket.slaTimer} />
+                <SlaCountdown slaTimer={activeSlaTimer} />
                 <p className="text-xs text-muted-foreground">
                   Due{" "}
                   <span className="font-medium tabular-nums text-foreground">
-                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
+                    {format(new Date(activeSlaTimer.dueAt), "dd/MM HH:mm")}
                   </span>
                 </p>
               </div>
