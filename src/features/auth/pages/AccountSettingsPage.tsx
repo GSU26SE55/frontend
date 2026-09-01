@@ -3,7 +3,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   ShieldCheck,
   History,
-  Trash2,
   ChevronRight,
   User,
   Settings,
@@ -22,14 +21,12 @@ import { DIST, DUR, EASE_OUT, SPRING } from "@/shared/motion/tokens";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ChangePasswordForm from "@/features/auth/components/password/ChangePasswordForm";
-import ChangeEmailForm from "@/features/auth/components/profile/ChangeEmailForm";
 import PhoneVerifySection from "@/features/auth/components/profile/PhoneVerifySection";
 import TwoFactorSetup from "@/features/auth/components/2fa/TwoFactorSetup";
 import GoogleLinkSection from "@/features/auth/components/profile/GoogleLinkSection";
 import TrustedDevicesSection from "@/features/auth/components/trusted-device/TrustedDevicesSection";
 import MySessionsSection from "@/features/auth/components/session/MySessionsSection";
 import LoginHistoryTable from "@/features/auth/components/account/LoginHistoryTable";
-import DangerZone from "@/features/auth/components/profile/DangerZone";
 import NotificationPreferencesSection from "@/features/auth/components/profile/NotificationPreferencesSection";
 import NotificationCategoryMatrixSection from "@/features/auth/components/profile/NotificationCategoryMatrixSection";
 import ProfilePage from "@/features/auth/pages/ProfilePage";
@@ -102,7 +99,6 @@ function StatusBadge({
 const AccountSettingsPage = () => {
   const { data: account } = useCurrentUser();
   const [active, setActive] = useState<string>("profile");
-  const [credSub, setCredSub] = useState<"password" | "email" | null>(null);
 
   const user = useSessionStore((s) => s.user);
   const isAdmin = user?.role === UserRole.ADMIN;
@@ -113,7 +109,6 @@ const AccountSettingsPage = () => {
       label: string;
       icon: LucideIcon;
       desc: string;
-      danger?: boolean;
     }[] = [
       {
         key: "profile",
@@ -123,9 +118,9 @@ const AccountSettingsPage = () => {
       },
       {
         key: "credentials",
-        label: "Password & Email",
+        label: "Change Password",
         icon: KeyRound,
-        desc: "Update your password and login email address",
+        desc: "Update your current password",
       },
       {
         key: "security",
@@ -150,21 +145,12 @@ const AccountSettingsPage = () => {
       });
     }
 
-    items.push(
-      {
-        key: "history",
-        label: "Login history",
-        icon: History,
-        desc: "View recent login sessions",
-      },
-      {
-        key: "danger",
-        label: "Danger Zone",
-        icon: Trash2,
-        desc: "Deactivate or delete the account",
-        danger: true,
-      },
-    );
+    items.push({
+      key: "history",
+      label: "Login history",
+      icon: History,
+      desc: "View recent login sessions",
+    });
 
     return items;
   }, [isAdmin]);
@@ -201,23 +187,12 @@ const AccountSettingsPage = () => {
             return (
               <button
                 key={item.key}
-                onClick={() => {
-                  setActive(item.key);
-                  setCredSub(null);
-                }}
+                onClick={() => setActive(item.key)}
                 className={cn(
                   "relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors mb-0.5 cursor-pointer",
                   isActive
                     ? "text-foreground font-semibold"
                     : "text-foreground/60 hover:bg-background/70 hover:text-foreground",
-                  "danger" in item &&
-                    item.danger &&
-                    !isActive &&
-                    "hover:bg-destructive/10 hover:text-destructive",
-                  "danger" in item &&
-                    item.danger &&
-                    isActive &&
-                    "text-destructive",
                 )}
               >
                 {isActive && (
@@ -226,12 +201,7 @@ const AccountSettingsPage = () => {
                     {...(reduced
                       ? {}
                       : { layoutId: `${navId}-active`, transition: SPRING })}
-                    className={cn(
-                      "absolute inset-0 rounded-lg border",
-                      "danger" in item && item.danger
-                        ? "bg-destructive/10 border-destructive/20"
-                        : "bg-background border-border/50 shadow-sm",
-                    )}
+                    className="absolute inset-0 rounded-lg border bg-background border-border/50 shadow-sm"
                   />
                 )}
                 <Icon size={14} className="relative shrink-0" />
@@ -277,82 +247,14 @@ const AccountSettingsPage = () => {
 
                 {/* Panel body */}
                 <div className="px-6 pb-6 pt-5">
-                  {/* Password & Email — choose an action then show the form */}
-                  {active === "credentials" &&
-                    (credSub === null ? (
-                      <div className="flex flex-col items-center justify-center min-h-85 gap-6">
-                        <p className="text-sm text-muted-foreground">
-                          Choose the action you want to perform
-                        </p>
-                        <div className="flex gap-4">
-                          <button
-                            onClick={() => setCredSub("password")}
-                            className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer group"
-                          >
-                            <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                              <Lock
-                                size={20}
-                                className="text-muted-foreground group-hover:text-primary transition-colors"
-                              />
-                            </div>
-                            <div className="text-center space-y-1">
-                              <p className="text-sm font-medium">
-                                Change password
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Update your current password
-                              </p>
-                            </div>
-                          </button>
-                          <button
-                            onClick={() => setCredSub("email")}
-                            className="flex flex-col items-center gap-4 w-44 py-7 rounded-xl border border-border hover:border-primary/50 hover:bg-muted/50 transition-[color,background-color,border-color,box-shadow] duration-(--motion-state) ease-strong cursor-pointer group"
-                          >
-                            <div className="size-12 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                              <KeyRound
-                                size={20}
-                                className="text-muted-foreground group-hover:text-primary transition-colors"
-                              />
-                            </div>
-                            <div className="text-center space-y-1">
-                              <p className="text-sm font-medium">
-                                Change email
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Change your email address
-                              </p>
-                            </div>
-                          </button>
-                        </div>
+                  {/* Change Password */}
+                  {active === "credentials" && (
+                    <div className="flex flex-col items-center min-h-85">
+                      <div className="w-full max-w-md">
+                        <ChangePasswordForm bare />
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center min-h-85">
-                        <div className="w-full max-w-md">
-                          <button
-                            onClick={() => setCredSub(null)}
-                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-5 transition-colors cursor-pointer"
-                          >
-                            <ChevronRight size={12} className="rotate-180" />
-                            Back
-                          </button>
-                          {credSub === "password" ? (
-                            <>
-                              <p className="text-2sm font-semibold mb-4">
-                                Change password
-                              </p>
-                              <ChangePasswordForm bare />
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-2sm font-semibold mb-4">
-                                Change email address
-                              </p>
-                              <ChangeEmailForm bare />
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                    </div>
+                  )}
 
                   {/* Security */}
                   {active === "security" && (
@@ -436,9 +338,6 @@ const AccountSettingsPage = () => {
 
                   {/* History — fills remaining height, table scrolls, pagination fixed */}
                   {active === "history" && <LoginHistoryTable />}
-
-                  {/* Danger Zone */}
-                  {active === "danger" && <DangerZone />}
                 </div>
               </>
             )}
