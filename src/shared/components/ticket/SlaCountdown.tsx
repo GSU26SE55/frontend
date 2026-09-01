@@ -40,22 +40,37 @@ interface Props {
    * the point of the column. `tabular-nums` keeps the digits from shifting as it ticks.
    */
   compact?: boolean;
+  /**
+   * Thời điểm hoàn thành SLA (ví dụ: thời điểm First Response hoặc Resolved).
+   * Khi được truyền vào, đồng hồ sẽ đóng băng tại mốc chênh lệch đó thay vì tiếp tục đếm live.
+   */
+  completedAt?: string | Date | null;
 }
 
-export default function SlaCountdown({ slaTimer, compact = false }: Props) {
+export default function SlaCountdown({
+  slaTimer,
+  compact = false,
+  completedAt,
+}: Props) {
   const dueAt = slaTimer?.dueAt ?? "";
+  const isStopped =
+    !!completedAt ||
+    slaTimer?.status === SlaTimerStatusEnum.Met ||
+    slaTimer?.status === SlaTimerStatusEnum.Stopped;
+
   // `now` is the only clock read, and it only ever moves inside the effect. Remaining
   // is then derived (deadline - now), so a dueAt change is reflected on the SAME render
   // instead of showing the previous ticket's remainder until the next tick lands.
   const [now, setNow] = useState(() => Date.now());
-  const remaining = dueAt ? new Date(dueAt).getTime() - now : 0;
+  const effectiveEnd = completedAt ? new Date(completedAt).getTime() : now;
+  const remaining = dueAt ? new Date(dueAt).getTime() - effectiveEnd : 0;
 
   useEffect(() => {
-    if (!slaTimer || slaTimer.status === SlaTimerStatusEnum.Met) return;
+    if (!slaTimer || isStopped) return;
 
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [slaTimer]);
+  }, [slaTimer, isStopped]);
 
   // No timer at all. The clock is only created when a ticket is actually picked up
   // (ApplySlaAsync, on the transition to InProgress), and Urgent tickets never get one —
@@ -76,6 +91,16 @@ export default function SlaCountdown({ slaTimer, compact = false }: Props) {
   }
 
   if (slaTimer.status === SlaTimerStatusEnum.Breached) {
+    if (completedAt) {
+      return (
+        <span
+          className={`${BADGE_BASE} ${toneClass("p1")}`}
+          title={`SLA breached · Due ${formatSlaDueAt(slaTimer.dueAt)}`}
+        >
+          Breached
+        </span>
+      );
+    }
     const overdueMs = Math.abs(remaining);
     return (
       <Tooltip>

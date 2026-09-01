@@ -126,6 +126,7 @@ export default function TicketSlaSection({ ticket, className }: Props) {
           deadline,
           firstRespondedAt,
           durationMs,
+          overdueMs: 0,
           isMet: true,
           remainingMs: 0,
           remainingPercent: 0,
@@ -133,18 +134,29 @@ export default function TicketSlaSection({ ticket, className }: Props) {
         };
       }
       if (responseTimer.status === SlaTimerStatusEnum.Breached) {
+        const hasResponded = !isOpenStage;
+        const durationMs =
+          firstRespondedAt && ticket.createdAt
+            ? Math.max(0, firstRespondedAt.getTime() - new Date(ticket.createdAt).getTime())
+            : 0;
+        const overdueAtResponse =
+          hasResponded && firstRespondedAt && deadline
+            ? Math.max(0, firstRespondedAt.getTime() - deadline.getTime())
+            : 0;
         return {
-          hasResponded: !isOpenStage,
+          hasResponded,
           priorityAtResponse,
           targetHours,
           deadline,
           firstRespondedAt,
-          durationMs:
-            firstRespondedAt && ticket.createdAt
-              ? Math.max(0, firstRespondedAt.getTime() - new Date(ticket.createdAt).getTime())
-              : 0,
+          durationMs,
+          overdueMs: hasResponded ? overdueAtResponse : (deadline ? Math.max(0, now - deadline.getTime()) : 0),
           isMet: false,
-          remainingMs: deadline ? deadline.getTime() - now : 0,
+          remainingMs: hasResponded
+            ? -overdueAtResponse
+            : deadline
+              ? deadline.getTime() - now
+              : 0,
           remainingPercent: 0,
           isOverdue: true,
         };
@@ -157,6 +169,9 @@ export default function TicketSlaSection({ ticket, className }: Props) {
         firstRespondedAt.getTime() - new Date(ticket.createdAt).getTime(),
       );
       const isMet = firstRespondedAt.getTime() <= deadline.getTime();
+      const overdueMs = isMet
+        ? 0
+        : Math.max(0, firstRespondedAt.getTime() - deadline.getTime());
       return {
         hasResponded: true,
         priorityAtResponse,
@@ -164,6 +179,7 @@ export default function TicketSlaSection({ ticket, className }: Props) {
         deadline,
         firstRespondedAt,
         durationMs,
+        overdueMs,
         isMet,
         remainingMs: 0,
         remainingPercent: 0,
@@ -183,6 +199,7 @@ export default function TicketSlaSection({ ticket, className }: Props) {
       deadline,
       firstRespondedAt: null,
       durationMs: 0,
+      overdueMs: isOverdue ? Math.abs(remainingMs) : 0,
       isMet: false,
       remainingMs,
       remainingPercent,
@@ -243,7 +260,13 @@ export default function TicketSlaSection({ ticket, className }: Props) {
             <Clock className="size-3.5 text-muted-foreground" />
             <span>1. Response SLA</span>
           </div>
-          <SlaCountdown slaTimer={responseSlaTimer} compact />
+          <SlaCountdown
+            slaTimer={responseSlaTimer}
+            compact
+            completedAt={
+              responseData.hasResponded ? responseData.firstRespondedAt : null
+            }
+          />
         </div>
 
         <div className="space-y-1.5 text-xs">
@@ -287,9 +310,22 @@ export default function TicketSlaSection({ ticket, className }: Props) {
               Responded at
             </span>
             <span className="font-medium tabular-nums text-foreground text-3xs">
-              {responseData.hasResponded && responseData.firstRespondedAt
-                ? `${format(responseData.firstRespondedAt, "dd/MM HH:mm")}${responseData.durationMs > 0 ? ` (after ${formatDurationHuman(responseData.durationMs)})` : ""}`
-                : "—"}
+              {responseData.hasResponded && responseData.firstRespondedAt ? (
+                <>
+                  {format(responseData.firstRespondedAt, "dd/MM HH:mm")}
+                  {responseData.isOverdue && responseData.overdueMs > 0 ? (
+                    <span className="text-destructive font-normal ml-1">
+                      ({formatDurationHuman(responseData.overdueMs)} late)
+                    </span>
+                  ) : responseData.durationMs > 0 ? (
+                    <span className="text-muted-foreground font-normal ml-1">
+                      (after {formatDurationHuman(responseData.durationMs)})
+                    </span>
+                  ) : null}
+                </>
+              ) : (
+                "—"
+              )}
             </span>
           </div>
         </div>
@@ -309,7 +345,18 @@ export default function TicketSlaSection({ ticket, className }: Props) {
               Not started
             </span>
           ) : (
-            <SlaCountdown slaTimer={slaTimer} compact />
+            <SlaCountdown
+              slaTimer={slaTimer}
+              compact
+              completedAt={
+                ticket.status === TicketStatusEnum.Completed ||
+                ticket.status === TicketStatusEnum.Closed ||
+                ticket.status === TicketStatusEnum.ClosedRejected
+                  ? (ticket as TicketDetailDTO).resolvedAt ??
+                    (ticket as TicketDetailDTO).closedAt
+                  : null
+              }
+            />
           )}
         </div>
 

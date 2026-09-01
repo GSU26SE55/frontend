@@ -28,34 +28,39 @@ interface Props {
    * to `false`, keeping the multi-line layout for TicketCard and SlaMonitorPage.
    */
   compact?: boolean;
+  completedAt?: string | Date | null;
 }
 
 export function SlaCountdown({
   slaTimer,
   hideBar = false,
   compact = false,
+  completedAt,
 }: Props) {
   const dueAt = slaTimer?.dueAt ?? "";
   const status = slaTimer?.status;
   const remainingPercent = slaTimer?.remainingPercent ?? 0;
+  const isStopped =
+    !!completedAt ||
+    status === SlaTimerStatusEnum.Paused ||
+    status === SlaTimerStatusEnum.Met ||
+    status === SlaTimerStatusEnum.Stopped;
+
+  const effectiveEnd = completedAt ? new Date(completedAt).getTime() : Date.now();
 
   const [remaining, setRemaining] = useState(() =>
-    dueAt ? new Date(dueAt).getTime() - Date.now() : 0,
+    dueAt ? new Date(dueAt).getTime() - effectiveEnd : 0,
   );
 
   useEffect(() => {
-    if (
-      !dueAt ||
-      status === SlaTimerStatusEnum.Paused ||
-      status === SlaTimerStatusEnum.Met
-    ) {
+    if (!dueAt || isStopped) {
       return;
     }
     const id = setInterval(() => {
       setRemaining(new Date(dueAt).getTime() - Date.now());
     }, 1000);
     return () => clearInterval(id);
-  }, [dueAt, status]);
+  }, [dueAt, isStopped]);
 
   // Matches `shared/components/ticket/SlaCountdown`: the timer only exists once a ticket
   // is actually picked up (ApplySlaAsync), and Urgent never gets one — so "no timer" is a
@@ -86,6 +91,16 @@ export function SlaCountdown({
       );
     }
     if (status === SlaTimerStatusEnum.Breached) {
+      if (completedAt) {
+        return (
+          <span
+            className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
+            title={`SLA breached · Due ${formatSlaDueAt(dueAt)}`}
+          >
+            Breached
+          </span>
+        );
+      }
       return (
         <span
           className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${toneClass("p1")}`}
