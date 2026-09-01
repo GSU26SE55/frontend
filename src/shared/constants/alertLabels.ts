@@ -23,6 +23,7 @@ export const ANOMALY_TYPE_LABELS: Record<AnomalyTypeEnum, string> = {
   [AnomalyTypeEnum.Undertemp]: "Low temperature",
   [AnomalyTypeEnum.IotDataIntegrityViolation]: "IoT data integrity violation",
   [AnomalyTypeEnum.HighGasConcentration]: "High gas concentration",
+  [AnomalyTypeEnum.WaterLeak]: "Water leak detected",
 };
 
 export const ALERT_SEVERITY_LABELS: Record<AlertSeverityEnum, string> = {

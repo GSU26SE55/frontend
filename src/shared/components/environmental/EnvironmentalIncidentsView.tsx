@@ -403,11 +403,12 @@ function IncidentDetailDialog({
       autoAckedId.current !== incident.id
     ) {
       autoAckedId.current = incident.id;
-      environmentalService
-        .acknowledge(incident.id)
-        .then(() =>
-          qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] }),
-        );
+      environmentalService.acknowledge(incident.id).then(() => {
+        qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
+        // The table on this screen reads from the alert mirror row (useAlertList), a
+        // separate cache — without this it keeps showing "Open" after the silent ack.
+        qc.invalidateQueries({ queryKey: [KEY.alerts] });
+      });
     }
   }, [incident, qc]);
 
