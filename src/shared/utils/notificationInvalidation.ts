@@ -53,7 +53,11 @@ const INVALIDATION_MAP: Partial<
   // ── Tickets ────────────────────────────────────────────────────────────────
   // A new ticket lands unassigned → it enters the Manager Queue, which is what the "Queue"
   // badge counts.
-  [T.TicketCreated]: ANY_TICKETS,
+  // ALSO invalidate ALERTS: the saga that auto-creates a ticket from a battery/device/site
+  // alert writes the new `ticketId` back onto that alert row. Without this, the alert
+  // table/badges keep showing "no ticket" until their own 30s staleTime/refetchInterval
+  // catches up — even though the bell already fired for the new ticket.
+  [T.TicketCreated]: [ALERTS, ...ANY_TICKETS],
   // Assignment takes it OUT of the queue and INTO someone's list — both counts move.
   [T.TicketAssigned]: ANY_TICKETS,
   [T.TicketStatusChanged]: ANY_TICKETS,
@@ -102,8 +106,12 @@ const INVALIDATION_MAP: Partial<
   // ── Environmental incidents ────────────────────────────────────────────────
   // Detected raises the count; Resolved lowers it. Both must invalidate — dropping the
   // resolved case is how a badge gets stuck showing work that is already done.
-  [T.EnvironmentalIncidentDetected]: [INCIDENTS, AMBIENT],
-  [T.EnvironmentalIncidentResolved]: [INCIDENTS, AMBIENT],
+  // ALSO invalidate ALERTS: every EnvironmentalIncident writes a mirror row into the alerts
+  // table (site-level, `environmentalIncidentId` set — see AlertDto) so it also shows up in
+  // the alert badges/table. Without this, that mirror row stays stale for up to 30s after
+  // the bell already announced it — same reasoning as IncidentDeclared below.
+  [T.EnvironmentalIncidentDetected]: [INCIDENTS, ALERTS, AMBIENT],
+  [T.EnvironmentalIncidentResolved]: [INCIDENTS, ALERTS, AMBIENT],
   [T.IncidentDeclared]: [INCIDENTS, ALERTS, AMBIENT],
 
   // ── Guide (KB) ─────────────────────────────────────────────────────────────
