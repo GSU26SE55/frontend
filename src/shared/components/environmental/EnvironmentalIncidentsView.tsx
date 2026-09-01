@@ -47,7 +47,7 @@ import {
 } from "@/shared/hooks/alerts/useAlerts";
 import { alertService } from "@/shared/services/alerts/alert.service";
 import { anomalyTypeLabel } from "@/shared/constants/alertLabels";
-import { AlertStatusEnum } from "@/shared/enums/alerts/alert.enum";
+import { AlertStatusEnum, AnomalyTypeEnum } from "@/shared/enums/alerts/alert.enum";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -338,10 +338,12 @@ export default function EnvironmentalIncidentsView({
                     <TableCell>
                       <AlertSeverityBadge severity={alert.severity} />
                     </TableCell>
-                    {/* Mirror rows carry no measurement (they would read "0 incident / 0 incident"),
-                        so only threshold breaches show numbers. */}
                     <TableCell className="font-mono text-sm">
-                      {alert.actualValue == null || isIncident
+                      {alert.anomalyType === AnomalyTypeEnum.WaterLeak ||
+                      alert.unit?.toLowerCase() === "wet" ||
+                      alert.unit?.toLowerCase() === "bool"
+                        ? "Wet"
+                        : alert.actualValue == null || isIncident
                         ? "—"
                         : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""} / ${alert.thresholdValue ?? "—"}${alert.unit ? ` ${alert.unit}` : ""}`}
                     </TableCell>
@@ -734,16 +736,24 @@ function AmbientAlertDetailDialog({
             <DetailRow label="Status">
               <AlertStatusBadge status={alert.status} />
             </DetailRow>
-            <DetailRow label="Actual value">
+            <DetailRow label="Measured value">
               <span className="font-mono-num">
-                {alert.actualValue == null
+                {alert.anomalyType === AnomalyTypeEnum.WaterLeak ||
+                alert.unit?.toLowerCase() === "wet" ||
+                alert.unit?.toLowerCase() === "bool"
+                  ? "Wet"
+                  : alert.actualValue == null
                   ? "—"
                   : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""}`}
               </span>
             </DetailRow>
             <DetailRow label="Threshold">
               <span className="font-mono-num">
-                {alert.thresholdValue == null
+                {alert.anomalyType === AnomalyTypeEnum.WaterLeak ||
+                alert.unit?.toLowerCase() === "wet" ||
+                alert.unit?.toLowerCase() === "bool"
+                  ? "Wet"
+                  : alert.thresholdValue == null
                   ? "—"
                   : `${alert.thresholdValue}${alert.unit ? ` ${alert.unit}` : ""}`}
               </span>
