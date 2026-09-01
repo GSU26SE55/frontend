@@ -1,15 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   SLA_CAUTION_PERCENT,
   SLA_WARNING_PERCENT,
+  calculateResponseDeadline,
+  formatDurationHuman,
   formatSlaDueAt,
+  formatSlaOverdue,
+  formatSlaOverdueCompact,
   formatSlaRemaining,
   formatSlaRemainingCompact,
+  getResponseSlaHours,
   isNearBreachPercent,
   slaBarColorClass,
   slaComplianceColor,
   slaTextColorClass,
 } from "@/shared/lib/sla";
+import { TicketPriorityEnum } from "@/shared/enums/ticket/ticket.enum";
 
 const SEC = 1000;
 const MIN = 60 * SEC;
@@ -131,6 +137,45 @@ describe("formatSlaRemainingCompact", () => {
   });
 });
 
+describe("formatSlaOverdue", () => {
+  it("dưới một ngày hiện +HH:mm:ss", () => {
+    expect(formatSlaOverdue(1 * HOUR + 23 * MIN + 45 * SEC)).toBe("+01:23:45");
+  });
+
+  it("từ một ngày trở lên tách phần ngày ra trước", () => {
+    expect(formatSlaOverdue(3 * DAY + 4 * HOUR + 12 * MIN)).toBe("+3d 04:12:00");
+  });
+
+  it("chấp nhận ms âm (Math.abs nội bộ)", () => {
+    expect(formatSlaOverdue(-1 * HOUR)).toBe("+01:00:00");
+  });
+
+  it("đệm số 0 đủ hai chữ số", () => {
+    expect(formatSlaOverdue(1 * HOUR + 2 * MIN + 3 * SEC)).toBe("+01:02:03");
+  });
+
+  it("đúng ranh giới 24 giờ", () => {
+    expect(formatSlaOverdue(DAY)).toBe("+1d 00:00:00");
+    expect(formatSlaOverdue(DAY - SEC)).toBe("+23:59:59");
+  });
+});
+
+describe("formatSlaOverdueCompact", () => {
+  it.each([
+    [3 * DAY + 4 * HOUR, "+3d"],
+    [17 * HOUR + 30 * MIN, "+17h"],
+    [45 * MIN + 10 * SEC, "+45m"],
+    [30 * SEC, "+30s"],
+    [0, "+0s"],
+  ])("%s ms → %s", (ms, expected) => {
+    expect(formatSlaOverdueCompact(ms)).toBe(expected);
+  });
+
+  it("ms âm vẫn hiện dấu + (Math.abs nội bộ)", () => {
+    expect(formatSlaOverdueCompact(-2 * HOUR)).toBe("+2h");
+  });
+});
+
 describe("formatSlaDueAt", () => {
   it("hiện ngày/tháng giờ:phút theo giờ địa phương", () => {
     const due = new Date(2026, 4, 9, 17, 0);
@@ -149,4 +194,51 @@ describe("formatSlaDueAt", () => {
       expect(formatSlaDueAt(value)).toBe("");
     },
   );
+});
+
+describe("getResponseSlaHours", () => {
+  it("P1Critical có hạn response 4h", () => {
+    expect(getResponseSlaHours(TicketPriorityEnum.P1Critical)).toBe(4);
+  });
+
+  it("P2High có hạn response 24h", () => {
+    expect(getResponseSlaHours(TicketPriorityEnum.P2High)).toBe(24);
+  });
+
+  it("P3Normal hoặc mặc định có hạn response 72h", () => {
+    expect(getResponseSlaHours(TicketPriorityEnum.P3Normal)).toBe(72);
+    expect(getResponseSlaHours(null)).toBe(72);
+    expect(getResponseSlaHours(undefined)).toBe(72);
+  });
+});
+
+describe("calculateResponseDeadline", () => {
+  it("tính đúng deadline theo giờ cho P1 (4h)", () => {
+    const start = new Date("2026-08-31T10:00:00Z");
+    const deadline = calculateResponseDeadline(
+      start.toISOString(),
+      TicketPriorityEnum.P1Critical,
+    );
+    expect(deadline?.toISOString()).toBe("2026-08-31T14:00:00.000Z");
+  });
+
+  it("trả về null nếu createdAt không hợp lệ", () => {
+    expect(
+      calculateResponseDeadline("invalid-date", TicketPriorityEnum.P1Critical),
+    ).toBeNull();
+  });
+});
+
+describe("formatDurationHuman", () => {
+  it.each([
+    [15 * MIN, "15m"],
+    [45 * MIN, "45m"],
+    [2 * HOUR + 15 * MIN, "2h 15m"],
+    [2 * HOUR, "2h"],
+    [1 * DAY + 4 * HOUR, "1d 4h"],
+    [2 * DAY, "2d"],
+    [30 * SEC, "30s"],
+  ])("%s ms → %s", (ms, expected) => {
+    expect(formatDurationHuman(ms)).toBe(expected);
+  });
 });

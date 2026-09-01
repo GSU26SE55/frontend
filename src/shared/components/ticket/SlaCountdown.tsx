@@ -7,6 +7,7 @@ import {
   SLA_WARNING_PERCENT,
   formatSlaRemaining,
   formatSlaDueAt,
+  formatSlaOverdue,
 } from "@/shared/lib/sla";
 import { toneClass, type StatusTone } from "@/shared/theme/statusColors";
 import {
@@ -31,7 +32,7 @@ const BADGE_BASE =
   "inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium";
 
 interface Props {
-  slaTimer: SlaTimerDTO | null;
+  slaTimer?: SlaTimerDTO | null;
   /**
    * List rendering: same badge, tightened typography for a table cell.
    *
@@ -39,27 +40,37 @@ interface Props {
    * the point of the column. `tabular-nums` keeps the digits from shifting as it ticks.
    */
   compact?: boolean;
+  /**
+   * Thời điểm hoàn thành SLA (ví dụ: thời điểm First Response hoặc Resolved).
+   * Khi được truyền vào, đồng hồ sẽ đóng băng tại mốc chênh lệch đó thay vì tiếp tục đếm live.
+   */
+  completedAt?: string | Date | null;
 }
 
-export default function SlaCountdown({ slaTimer, compact = false }: Props) {
+export default function SlaCountdown({
+  slaTimer,
+  compact = false,
+  completedAt,
+}: Props) {
   const dueAt = slaTimer?.dueAt ?? "";
+  const isStopped =
+    !!completedAt ||
+    slaTimer?.status === SlaTimerStatusEnum.Met ||
+    slaTimer?.status === SlaTimerStatusEnum.Stopped;
+
   // `now` is the only clock read, and it only ever moves inside the effect. Remaining
   // is then derived (deadline - now), so a dueAt change is reflected on the SAME render
   // instead of showing the previous ticket's remainder until the next tick lands.
   const [now, setNow] = useState(() => Date.now());
-  const remaining = dueAt ? new Date(dueAt).getTime() - now : 0;
+  const effectiveEnd = completedAt ? new Date(completedAt).getTime() : now;
+  const remaining = dueAt ? new Date(dueAt).getTime() - effectiveEnd : 0;
 
   useEffect(() => {
-    if (
-      !slaTimer ||
-      slaTimer.status === SlaTimerStatusEnum.Met ||
-      slaTimer.status === SlaTimerStatusEnum.Breached
-    )
-      return;
+    if (!slaTimer || isStopped) return;
 
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [slaTimer]);
+  }, [slaTimer, isStopped]);
 
   // No timer at all. The clock is only created when a ticket is actually picked up
   // (ApplySlaAsync, on the transition to InProgress), and Urgent tickets never get one —
@@ -80,8 +91,37 @@ export default function SlaCountdown({ slaTimer, compact = false }: Props) {
   }
 
   if (slaTimer.status === SlaTimerStatusEnum.Breached) {
+    if (completedAt) {
+      return (
+        <span
+          className={`${BADGE_BASE} ${toneClass("p1")}`}
+          title={`SLA breached · Due ${formatSlaDueAt(slaTimer.dueAt)}`}
+        >
+          Breached
+        </span>
+      );
+    }
+    const overdueMs = Math.abs(remaining);
     return (
-      <span className={`${BADGE_BASE} ${toneClass("p1")}`}>SLA breached</span>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span
+              className={`${BADGE_BASE} font-mono tabular-nums ${toneClass("p1")}`}
+            />
+          }
+        >
+          {formatSlaOverdue(overdueMs)}
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="space-y-0.5 text-left">
+            <div className="font-medium tabular-nums">
+              SLA breached · {formatSlaOverdue(overdueMs)} overdue
+            </div>
+            <div className="opacity-80">Due {formatSlaDueAt(slaTimer.dueAt)}</div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
@@ -119,11 +159,30 @@ export default function SlaCountdown({ slaTimer, compact = false }: Props) {
   );
 
   // Running, but the deadline is already behind us — the BE breach sweep has not flipped
-  // the status yet. `formatSlaRemaining` floors at "00:00:00", so this rendered as a live
-  // clock frozen on zero, which reads as "breaching right now" rather than "already over".
-  // Say it plainly instead of counting time that has run out.
+  // the status yet. Show live overdue counter instead of a frozen 00:00:00 or static label.
   if (remaining <= 0) {
-    return <span className={`${BADGE_BASE} ${toneClass("p1")}`}>Overdue</span>;
+    const overdueMs = Math.abs(remaining);
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span
+              className={`${BADGE_BASE} font-mono tabular-nums ${toneClass("p1")}`}
+            />
+          }
+        >
+          {formatSlaOverdue(overdueMs)}
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="space-y-0.5 text-left">
+            <div className="font-medium tabular-nums">
+              Overdue · {formatSlaOverdue(overdueMs)}
+            </div>
+            <div className="opacity-80">Due {formatSlaDueAt(slaTimer.dueAt)}</div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    );
   }
 
   // In a list the badge is graded green→amber→red by % left, so a column of them still

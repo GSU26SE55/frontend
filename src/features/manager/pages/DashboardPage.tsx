@@ -382,9 +382,9 @@ export default function ManagerDashboardPage() {
                   the team's internal process, a different scale that had leaked into ticket UI. */}
               <ChartFooterStats
                 items={[
-                  { label: "P1 · 1d SLA", value: p1, color: "var(--p1)" },
+                  { label: "P1 · 14d SLA", value: p1, color: "var(--p1)" },
                   { label: "P2 · 3d SLA", value: p2, color: "var(--p2)" },
-                  { label: "P3 · 7d SLA", value: p3, color: "var(--p3)" },
+                  { label: "P3 · 2d SLA", value: p3, color: "var(--p3)" },
                 ]}
               />
             </>

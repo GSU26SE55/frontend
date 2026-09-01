@@ -88,6 +88,8 @@ export interface SlaTimerDTO {
   slaWorkingHours?: number;
   /** Số phút làm việc còn lại tới dueAt. Cùng quy ước với remainingPercent: 0 khi timer đã kết thúc. */
   remainingWorkingMinutes?: number;
+  /** GH-1176 / Rescue Window: Số phút làm việc còn lại trong rescue window (24h làm việc) trước khi demote. */
+  rescueRemainingMinutes?: number | null;
   /**
    * Số phút SLA calendar (ngày lễ/nghỉ) đã cộng thêm vào dueAt, so với deadline nếu không có
    * ngày nghỉ nào rơi vào khoảng chạy của timer. 0 khi không bị ảnh hưởng — luôn 0 ở Stage 1
@@ -163,7 +165,13 @@ export interface TicketDTO {
   hasUnreadChat: boolean;
   createdAt: string;
   updatedAt?: string | null;
-  slaTimer: SlaTimerDTO | null;
+  slaTimer?: SlaTimerDTO | null;
+  /** Stage 1: Response SLA timer (24/7 calendar clock during Open stage) */
+  responseSlaTimer?: SlaTimerDTO | null;
+  /** Stage 2: Resolution SLA timer (working-hours clock during InProgress stage) */
+  resolutionSlaTimer?: SlaTimerDTO | null;
+  /** Expected completion deadline for customer / public view */
+  expectedCompletionAtUtc?: string | null;
 
   // ── Manual ticket: detection time + battery serial (snapshot) + AI verify + merge ──
   /**
