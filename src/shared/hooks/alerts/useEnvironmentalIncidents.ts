@@ -50,6 +50,9 @@ export const useReportManualIncident = () => {
       environmentalService.reportManual(payload),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
+      // Every EnvironmentalIncident mirrors into the alert table (siteLevelOnly) — the incidents
+      // list and the alerts-backed table on EnvironmentalIncidentsView are two different caches.
+      qc.invalidateQueries({ queryKey: [KEY.alerts] });
       toast.success(
         res.status === 201
           ? MESSAGES.incident.reported
@@ -66,6 +69,7 @@ export const useAcknowledgeIncident = () => {
     mutationFn: (id: string) => environmentalService.acknowledge(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
+      qc.invalidateQueries({ queryKey: [KEY.alerts] });
       toast.success(MESSAGES.incident.acknowledged);
     },
     onError: (error) => handleErrorApi({ error }),
@@ -85,6 +89,7 @@ export const useResolveIncident = () => {
     }) => environmentalService.resolve(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
+      qc.invalidateQueries({ queryKey: [KEY.alerts] });
       toast.success(MESSAGES.incident.resolved);
     },
   });
@@ -103,6 +108,7 @@ export const useFalseAlarmIncident = () => {
     }) => environmentalService.falseAlarm(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [KEY.environmentalIncidents] });
+      qc.invalidateQueries({ queryKey: [KEY.alerts] });
       toast.success(MESSAGES.incident.falseAlarm);
     },
   });

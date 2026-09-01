@@ -125,13 +125,6 @@ export function useVoiceRecorder(): UseVoiceRecorderResult {
         const file = new File([blob], `voice-message.${ext}`, {
           type: cleanMime,
         });
-        console.log("[useVoiceRecorder] stop() — recording finished", {
-          rawMime,
-          cleanMime,
-          chunkCount: chunksRef.current.length,
-          blobSize: blob.size,
-          fileSize: file.size,
-        });
         resolve(file);
       };
       recorder.stop();
