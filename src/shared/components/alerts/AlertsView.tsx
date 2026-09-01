@@ -94,8 +94,10 @@ const alertSubject = (alert: AlertDto) =>
   isSiteLevel(alert) ? "Site level" : alert.batterySerialNumber;
 
 // Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable)
-const formatMeasure = (value?: number | null, unit?: string | null) =>
-  value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+const formatMeasure = (value?: number | null, unit?: string | null) => {
+  if (unit?.toLowerCase() === "wet" || unit?.toLowerCase() === "bool") return "Wet";
+  return value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+};
 
 export default function AlertsView({
   subtitle,

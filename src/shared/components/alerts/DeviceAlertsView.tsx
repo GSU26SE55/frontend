@@ -95,8 +95,10 @@ const deviceSubject = (alert: AlertDto) =>
 
 // Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable).
 // IotDataIntegrityViolation in particular carries no measurement at all.
-const formatMeasure = (value?: number | null, unit?: string | null) =>
-  value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+const formatMeasure = (value?: number | null, unit?: string | null) => {
+  if (unit?.toLowerCase() === "wet" || unit?.toLowerCase() === "bool") return "Wet";
+  return value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+};
 
 export default function DeviceAlertsView({
   subtitle,
