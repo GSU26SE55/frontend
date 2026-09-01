@@ -1,25 +1,27 @@
 import {
   TicketOriginEnum,
   TicketSourceFilterEnum,
-  ImpactScopeEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 import type { StatusTone } from "@/shared/theme/statusColors";
 
 /**
  * Nguồn tạo ticket, gộp từ nhiều field thành MỘT phân loại dùng chung.
  *
- * `origin` một mình không đủ: ba luồng tự động khác nhau (sự cố môi trường, bảo trì
- * định kỳ, cascade risk) đều ghi Origin = System, nên lọc/gắn nhãn theo mỗi origin
- * sẽ gộp cả ba làm một.
+ * Source là NGUỒN GỐC BẤT BIẾN của ticket — ai/cái gì đẻ ra nó — nên chỉ được suy ra
+ * từ các field cố định lúc tạo: `origin`, `environmentalIncidentId`, cờ bảo trì định kỳ.
+ * KHÔNG dùng `impactScope`: đó là field động, Manager sửa được qua Re-prioritize, dùng nó
+ * thì một ticket lỗi pin bị Manager đổi scope sang Site sẽ đột nhiên hiện "Environmental".
  *
- * Thứ tự kiểm tra ở đây phải KHỚP với FilterBySource bên BE — lệch thứ tự thì một
- * ticket sẽ hiện nhãn này mà lại rơi vào bộ lọc kia.
+ * `origin` một mình gần đủ; chỉ còn `System` bị hai luồng dùng chung (bảo trì định kỳ,
+ * cascade risk) nên phải tách bằng cờ `isPeriodicMaintenance`.
+ *
+ * Điều kiện ở đây phải KHỚP 1:1 với FilterBySource bên BE (TicketQueryHelper.FilterBySource)
+ * — lệch thì một ticket hiện nhãn này mà lại rơi vào bộ lọc kia.
  */
 interface SourceInput {
   origin: TicketOriginEnum;
   environmentalIncidentId?: string | null;
   isPeriodicMaintenance?: boolean;
-  impactScope?: ImpactScopeEnum | null;
 }
 
 export interface TicketSourceInfo {
@@ -45,28 +47,23 @@ const SOURCE_TONE: Record<TicketSourceFilterEnum, StatusTone> = {
 };
 
 export function getTicketSource(t: SourceInput): TicketSourceInfo {
-  // Field chuyên biệt xét TRƯỚC origin: đây là dấu hiệu duy nhất tách ba luồng System.
+  // Sự cố môi trường đến từ HAI đường, cùng một Source:
+  //  - `AutoFromEnvironment` — BE chấm số đo ambient vượt ngưỡng AmbientThresholdConfig
+  //    (nhiệt độ, độ ẩm, gas, combo), HOẶC thiết bị tự báo (khói, rò khí, ngập).
+  //  - `environmentalIncidentId != null` — lưới an toàn cho DÒNG CŨ tạo trước khi có
+  //    origin `AutoFromEnvironment` (migration backfill lo phần còn lại).
+  //
+  // KHÔNG còn nhánh `AutoFromAlert + impactScope === Site`: `impactScope` là field động
+  // (Manager sửa qua Re-prioritize) nên không được dùng để suy ra nguồn gốc cứng. BE
+  // FilterBySource cũng đã bỏ điều kiện này.
   //
   // isPeriodicMaintenance do BE tính từ PeriodicMaintenanceDueAtUtc, KHÔNG phải từ
   // PeriodicMaintenanceSourceTicketId — field đó luôn trống từ khi lịch bảo trì chuyển
   // sang tầng tài sản, dùng nó thì cờ vĩnh viễn false.
-  //
-  // Su co moi truong den tu HAI duong, khac nhau o cho ai phat hien:
-  //  - `environmentalIncidentId` — thiet bi tu bao (khoi, ro khi, ngap).
-  //  - `AutoFromAlert` + `impactScope = Site` — backend cham so do ambient vuot nguong
-  //    `AmbientThresholdConfig` (nhiet do, do am, gas, combo). Nhom nay khong di qua
-  //    EnvironmentalIncident nen khong co id, truoc day roi xuong nhanh AutoFromAlert va bi
-  //    dan nhan "AI predicted" — mot ticket nhiet do cua CA SITE hien y het ticket cua MOT
-  //    vien pin, va khong bao gio hien ra khi loc theo Environmental.
-  // Chi luong auto-from-alert dung Origin nay; cascade-risk / bao tri / incident deu la
-  // System — nen cap dieu kien nay la duy nhat. Phai KHOP voi FilterBySource ben BE.
   let key: TicketSourceFilterEnum;
   if (
     t.origin === TicketOriginEnum.AutoFromEnvironment ||
-    // Dòng CŨ tạo trước khi có origin riêng: lưới an toàn nếu migration backfill chưa chạy.
-    t.environmentalIncidentId ||
-    (t.origin === TicketOriginEnum.AutoFromAlert &&
-      t.impactScope === ImpactScopeEnum.Site)
+    t.environmentalIncidentId
   ) {
     key = TicketSourceFilterEnum.Environmental;
   } else if (t.isPeriodicMaintenance) {

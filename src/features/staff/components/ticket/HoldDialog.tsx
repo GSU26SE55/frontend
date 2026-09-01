@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -50,6 +51,14 @@ export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
     resolver: zodResolver(holdSchema),
     defaultValues: { rescheduledStartAt: "", note: "" },
   });
+
+  // The dialog stays mounted (the `open` prop just toggles visibility) → reset every
+  // field on each open so a new hold doesn't inherit the previous reason/date/note.
+  useEffect(() => {
+    if (open) {
+      form.reset({ rescheduledStartAt: "", note: "" });
+    }
+  }, [open, form]);
 
   const handleSubmit = form.handleSubmit(async (data) => {
     try {
