@@ -114,6 +114,107 @@ const SERVICES = [
 const CATEGORIES = Object.values(AuditActionCategory);
 const SEVERITIES = Object.values(AuditSeverity);
 
+const ACTION_LABELS: Record<string, string> = {
+  // Auth & Account
+  LoginSuccess: "Login",
+  LoginFailedWrongPassword: "Wrong password",
+  LoginFailedAccountLocked: "Account locked",
+  LoginFailedAccountSuspended: "Account suspended",
+  LoginFailedAccountBanned: "Account banned",
+  LoginFailedAccountInactive: "Account inactive",
+  LoginFailedNotVerified: "Email not verified",
+  AccountAutoLocked: "Auto-locked",
+  Logout: "Logout",
+  GoogleLoginSuccess: "Google login",
+  GoogleLoginFailed: "Google login failed",
+  TokenRefreshed: "Token refreshed",
+  TokenReuseDetected: "Anomalous token",
+  PasswordChanged: "Password changed",
+  PasswordReset: "Password reset",
+  OtpVerifySuccess: "OTP verified",
+  OtpVerifyFailed: "OTP verification failed",
+  TwoFactorEnabled: "2FA enabled",
+  TwoFactorDisabled: "2FA disabled",
+  TwoFactorReset: "2FA reset",
+  BackupCodeRedeemed: "Backup code used",
+  BackupCodesRegenerated: "Backup codes regenerated",
+  Admin2faReset: "Admin reset 2FA",
+  LoginWith2fa: "Login with 2FA",
+  LoginPending2fa: "Pending 2FA verification",
+  GoogleLinked: "Google linked",
+  GoogleUnlinked: "Google unlinked",
+  AccountRegistered: "Account registered",
+  AccountCreatedByAdmin: "Admin created account",
+  AccountUpdated: "Account updated",
+  AccountStatusChanged: "Account status changed",
+  AccountUnlocked: "Account unlocked",
+  AccountDeactivated: "Account deactivated",
+  AccountDeleted: "Account deleted",
+  AccountInviteSent: "Invite sent",
+  AccountInviteAccepted: "Invite accepted",
+  SessionRevoked: "Session revoked",
+  AllSessionsRevoked: "All sessions revoked",
+  AdminForceLogout: "Admin forced logout",
+  SessionLimitExceededOldestRevoked: "Session limit exceeded",
+  RoleAssigned: "Role assigned",
+  RoleRevoked: "Role revoked",
+  RoleTemporaryAssigned: "Temporary role assigned",
+  RoleCreated: "Role created",
+  RoleUpdated: "Role updated",
+  RoleStatusChanged: "Role status changed",
+  RoleDeleted: "Role deleted",
+  PermissionGranted: "Permission granted",
+  PermissionRevoked: "Permission revoked",
+
+  // Battery & IoT
+  BatteryCreated: "Battery created",
+  BatteryUpdated: "Battery updated",
+  BatteryDeleted: "Battery deleted",
+  BatteryStatusChanged: "Battery status changed",
+  ThresholdUpdated: "Threshold updated",
+  AlertCreated: "Alert generated",
+  AlertAcknowledged: "Alert acknowledged",
+  AlertResolved: "Alert resolved",
+  AlertMerged: "Alert merged",
+  DeviceCreated: "Device provisioned",
+  DeviceUpdated: "Device updated",
+  DeviceDecommissioned: "Device decommissioned",
+  FirmwareUploaded: "Firmware uploaded",
+  FirmwareReleased: "Firmware released",
+  BmsSwitchTriggered: "BMS switch triggered",
+  CalibrationApplied: "Calibration applied",
+  IncidentReported: "Incident reported",
+  IncidentResolved: "Incident resolved",
+
+  // Ticket
+  TicketCreated: "Ticket created",
+  TicketUpdated: "Ticket updated",
+  TicketAssigned: "Ticket assigned",
+  TicketResolved: "Ticket resolved",
+  TicketClosed: "Ticket closed",
+  TicketReopened: "Ticket reopened",
+  CommentAdded: "Comment added",
+
+  // Notification & File
+  NotificationSent: "Notification sent",
+  TemplateCreated: "Template created",
+  TemplateUpdated: "Template updated",
+  FileUploaded: "File uploaded",
+  FileDeleted: "File deleted",
+};
+
+const CATEGORY_SHORT_LABEL: Record<string, string> = {
+  Authentication: "Auth",
+  Authorization: "Authz",
+  AccountManagement: "Account",
+  DataModification: "Data",
+  DataAccess: "Access",
+  Configuration: "Config",
+  Security: "Security",
+  Communication: "Comm",
+  System: "System",
+};
+
 const CATEGORY_STYLE: Record<string, string> = {
   Authentication:
     "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
@@ -146,6 +247,29 @@ const SEVERITY_STYLE: Record<string, string> = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function isUuid(val?: string | null): boolean {
+  if (!val) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    val,
+  );
+}
+
+function resolveActorName(log: AuditAggregateDto): string {
+  if (log.actorDisplay && !isUuid(log.actorDisplay)) {
+    return log.actorDisplay;
+  }
+  if (log.targetDisplay && !isUuid(log.targetDisplay)) {
+    return log.targetDisplay;
+  }
+  if (log.actorRole) {
+    return log.actorRole;
+  }
+  if (log.actorAccountId || log.targetId) {
+    return log.targetDisplay || log.actorDisplay || "User";
+  }
+  return "System";
+}
 
 const fmt = (dt?: string) => {
   if (!dt) return "—";
@@ -331,8 +455,8 @@ function CorrelationTraceDialog({
                         <Badge variant="outline" className="text-2xs font-mono">
                           {ev.serviceName}
                         </Badge>
-                        <span className="font-semibold text-sm">
-                          {ev.actionCode}
+                        <span className="font-medium text-sm">
+                          {ACTION_LABELS[ev.actionCode] ?? ev.actionCode}
                         </span>
                       </div>
                       <span className="text-2xs text-muted-foreground font-mono">
@@ -341,10 +465,7 @@ function CorrelationTraceDialog({
                     </div>
 
                     <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        Actor:{" "}
-                        {ev.actorDisplay ?? ev.actorAccountId ?? "System"}
-                      </span>
+                      <span>Actor: {resolveActorName(ev)}</span>
                       <span
                         className={`font-semibold inline-flex items-center gap-1 ${
                           ev.isSuccess ? "text-emerald-600" : "text-red-600"
@@ -652,6 +773,8 @@ function AuditLogDetailDrawer({
   const ua = parseUserAgent(log.actorUserAgent);
   const category = log.actionCategory ?? "Other";
   const severity = log.severity ?? "Info";
+  const actionText = ACTION_LABELS[log.actionCode] ?? log.actionCode;
+  const actorText = resolveActorName(log);
 
   return (
     <Drawer open={open} onOpenChange={(v) => !v && onClose()} direction="right">
@@ -684,10 +807,10 @@ function AuditLogDetailDrawer({
                 </Badge>
               </div>
               <DrawerTitle className="text-base font-semibold leading-tight mt-1">
-                {log.actionCode}
+                {actionText}
               </DrawerTitle>
               <p className="text-2xs text-muted-foreground font-mono mt-0.5">
-                Category: {category}
+                Category: {category} ({log.actionCode})
               </p>
             </div>
             <Badge
@@ -753,17 +876,7 @@ function AuditLogDetailDrawer({
               Actor (Performed By)
             </h3>
             <div className="space-y-3">
-              <DetailRow
-                icon={User}
-                label="Actor Display"
-                value={
-                  log.actorDisplay ?? (
-                    <span className="text-muted-foreground italic">
-                      System / Anonymous
-                    </span>
-                  )
-                }
-              />
+              <DetailRow icon={User} label="Actor Display" value={actorText} />
               {log.actorRole && (
                 <DetailRow
                   icon={ShieldCheck}
@@ -1235,17 +1348,20 @@ export default function AuditLogsPage() {
                 <TableHead className="w-12 text-center">
                   {TABLE_COLUMNS.index}
                 </TableHead>
-                <TableHead className="w-[16%]">{TABLE_COLUMNS.time}</TableHead>
-                <TableHead className="w-[14%]">Service</TableHead>
+                <TableHead className="w-[18%]">{TABLE_COLUMNS.time}</TableHead>
+                <TableHead className="w-[12%]">Service</TableHead>
                 <TableHead className="w-[24%]">Action</TableHead>
                 <TableHead className="w-[10%]">Result</TableHead>
-                <TableHead className="w-[20%]">Actor</TableHead>
-                <TableHead className="w-[16%]">Target</TableHead>
+                <TableHead className="w-[20%]">Account / Actor</TableHead>
+                <TableHead className="w-[16%]">IP / Target</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log, index) => {
                 const category = log.actionCategory ?? "System";
+                const actionLabel =
+                  ACTION_LABELS[log.actionCode] ?? log.actionCode;
+                const actorName = resolveActorName(log);
 
                 return (
                   <TableRow
@@ -1256,7 +1372,7 @@ export default function AuditLogsPage() {
                     <TableCell className="text-center text-muted-foreground tabular-nums">
                       {(filters.pageNumber - 1) * filters.pageSize + index + 1}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground text-xs font-mono">
+                    <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
                       {fmt(log.occurredAt)}
                     </TableCell>
                     <TableCell>
@@ -1265,7 +1381,7 @@ export default function AuditLogsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="flex items-center gap-2">
                         <Badge
                           variant="outline"
                           className={`text-3xs font-medium px-1.5 py-0 border shrink-0 ${
@@ -1273,10 +1389,10 @@ export default function AuditLogsPage() {
                             "bg-muted text-muted-foreground"
                           }`}
                         >
-                          {category}
+                          {CATEGORY_SHORT_LABEL[category] ?? category}
                         </Badge>
-                        <span className="font-medium text-xs truncate">
-                          {log.actionCode}
+                        <span className="font-medium text-sm">
+                          {actionLabel}
                         </span>
                       </div>
                     </TableCell>
@@ -1295,15 +1411,19 @@ export default function AuditLogsPage() {
                         {log.isSuccess ? "OK" : "FAIL"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs truncate font-mono text-muted-foreground">
-                      {log.actorDisplay ?? log.actorAccountId ?? (
-                        <span className="italic">System</span>
+                    <TableCell className="text-sm truncate">
+                      {actorName === "System" ? (
+                        <span className="text-muted-foreground italic">
+                          System
+                        </span>
+                      ) : (
+                        <span className="text-foreground">{actorName}</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-muted-foreground text-xs truncate">
-                          {log.targetDisplay ?? log.targetType ?? "—"}
+                        <span className="text-muted-foreground text-xs font-mono truncate">
+                          {log.actorIp ?? log.targetDisplay ?? "—"}
                         </span>
                         <ChevronRight
                           size={14}
