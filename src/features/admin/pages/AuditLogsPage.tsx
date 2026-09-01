@@ -40,11 +40,11 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "@/components/ui/drawer";
-import { useAdminAuditLogs } from "@/features/admin/hooks/account/useAdminAuditLogs";
+import { useAuditSearch } from "@/features/admin/hooks/account/useAuditAggregator";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { useDebouncedSearch } from "@/shared/hooks/useDebouncedSearch";
-import type { AuditLogDto } from "@/features/admin/types/account/admin.types";
+import type { AuditAggregateDto } from "@/features/admin/types/account/audit-aggregator.types";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { toneClass } from "@/shared/theme/statusColors";
@@ -105,6 +105,23 @@ const ACTION_LABELS: Record<string, string> = {
   RoleDeleted: "Role deleted",
   PermissionGranted: "Permission granted",
   PermissionRevoked: "Permission revoked",
+
+  // Battery & System
+  BatteryCreated: "Battery created",
+  BatteryUpdated: "Battery updated",
+  BatteryDeleted: "Battery deleted",
+  BatteryStatusChanged: "Battery status changed",
+  AlertCreated: "Alert generated",
+  AlertAcknowledged: "Alert acknowledged",
+  AlertResolved: "Alert resolved",
+  AlertMerged: "Alert merged",
+  DeviceCreated: "Device provisioned",
+  DeviceUpdated: "Device updated",
+  DeviceDecommissioned: "Device decommissioned",
+  TicketCreated: "Ticket created",
+  TicketUpdated: "Ticket updated",
+  TicketResolved: "Ticket resolved",
+  TicketClosed: "Ticket closed",
 };
 
 type ActionCategory =
@@ -113,6 +130,7 @@ type ActionCategory =
   | "session"
   | "role"
   | "security"
+  | "system"
   | "other";
 
 const ACTION_CATEGORY: Record<string, ActionCategory> = {
@@ -168,11 +186,16 @@ const ACTION_CATEGORY: Record<string, ActionCategory> = {
 };
 
 const CATEGORY_STYLE: Record<ActionCategory, string> = {
-  auth: "bg-blue-50 text-blue-700 border-blue-200",
-  account: "bg-violet-50 text-violet-700 border-violet-200",
-  session: "bg-amber-50 text-amber-700 border-amber-200",
-  role: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  security: "bg-orange-50 text-orange-700 border-orange-200",
+  auth: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+  account:
+    "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
+  session:
+    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+  role: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800",
+  security:
+    "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800",
+  system:
+    "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800",
   other: "bg-muted text-muted-foreground border-border",
 };
 
@@ -182,27 +205,81 @@ const CATEGORY_LABEL: Record<ActionCategory, string> = {
   session: "Session",
   role: "Permissions",
   security: "Security",
+  system: "System",
   other: "Other",
 };
 
+function resolveCategory(log: AuditAggregateDto): ActionCategory {
+  if (ACTION_CATEGORY[log.actionCode]) {
+    return ACTION_CATEGORY[log.actionCode];
+  }
+  const catLower = (log.actionCategory ?? "").toLowerCase();
+  if (catLower.includes("auth")) return "auth";
+  if (catLower.includes("account")) return "account";
+  if (catLower.includes("session")) return "session";
+  if (catLower.includes("role") || catLower.includes("permission"))
+    return "role";
+  if (catLower.includes("sec")) return "security";
+  if (catLower.includes("sys")) return "system";
+  return "other";
+}
+
+function resolveAccountDisplay(log: AuditAggregateDto): string {
+  if (
+    log.targetDisplay &&
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      log.targetDisplay,
+    )
+  ) {
+    return log.targetDisplay;
+  }
+  if (
+    log.actorDisplay &&
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      log.actorDisplay,
+    )
+  ) {
+    return log.actorDisplay;
+  }
+  return "—";
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const fmt = (dt: string) =>
-  format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: enUS });
+const fmt = (dt?: string) => {
+  if (!dt) return "—";
+  try {
+    return format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: enUS });
+  } catch {
+    return dt;
+  }
+};
 
-const fmtFull = (dt: string) =>
-  format(new Date(dt), "EEEE, dd/MM/yyyy 'at' HH:mm:ss", { locale: enUS });
+const fmtFull = (dt?: string) => {
+  if (!dt) return "—";
+  try {
+    return format(new Date(dt), "EEEE, dd/MM/yyyy 'at' HH:mm:ss", {
+      locale: enUS,
+    });
+  } catch {
+    return dt;
+  }
+};
 
-function parseMetadata(raw?: string): Record<string, string> | null {
+function parseMetadata(raw?: string | null): Record<string, unknown> | null {
   if (!raw) return null;
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null) {
+      return parsed as Record<string, unknown>;
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-// ── Detail Sheet ──────────────────────────────────────────────────────────────
+// ── Detail Sheet Components ───────────────────────────────────────────────────
 
 function DetailRow({
   icon: Icon,
@@ -273,13 +350,14 @@ function AuditLogDetail({
   open,
   onClose,
 }: {
-  log: AuditLogDto;
+  log: AuditAggregateDto;
   open: boolean;
   onClose: () => void;
 }) {
-  const category = ACTION_CATEGORY[log.actionName] ?? "other";
+  const category = resolveCategory(log);
   const metadata = parseMetadata(log.metadataJson);
-  const ua = parseUserAgent(log.userAgent);
+  const ua = parseUserAgent(log.actorUserAgent);
+  const accountText = resolveAccountDisplay(log);
 
   return (
     <Drawer open={open} onOpenChange={(v) => !v && onClose()} direction="right">
@@ -294,10 +372,10 @@ function AuditLogDetail({
             </div>
             <div className="min-w-0 flex-1">
               <DrawerTitle className="text-base font-semibold leading-tight">
-                {ACTION_LABELS[log.actionName] ?? log.actionName}
+                {ACTION_LABELS[log.actionCode] ?? log.actionCode}
               </DrawerTitle>
               <p className="text-2xs text-muted-foreground font-mono mt-0.5">
-                {log.actionName} · #{log.action}
+                {log.actionCode} &middot; #{log.serviceName}
               </p>
             </div>
             <span
@@ -325,7 +403,7 @@ function AuditLogDetail({
               <DetailRow
                 icon={Clock}
                 label="Time"
-                value={fmtFull(log.createdAt)}
+                value={fmtFull(log.occurredAt)}
               />
               <CopyIdRow icon={Hash} label="Log ID" value={log.id} />
               {log.correlationId && (
@@ -345,18 +423,18 @@ function AuditLogDetail({
               Account
             </h3>
             <div className="space-y-3">
-              {log.targetEmail && (
+              {accountText !== "—" && (
                 <DetailRow
                   icon={User}
                   label="Affected account"
-                  value={log.targetEmail}
+                  value={accountText}
                 />
               )}
-              {log.targetAccountId && (
+              {(log.targetId || log.targetDisplay) && (
                 <CopyIdRow
                   icon={Hash}
                   label="Target Account ID"
-                  value={log.targetAccountId}
+                  value={log.targetId || log.targetDisplay || ""}
                 />
               )}
               {log.actorAccountId && (
@@ -376,19 +454,19 @@ function AuditLogDetail({
               Device & Network
             </h3>
             <div className="space-y-3">
-              {log.ipAddress && (
+              {log.actorIp && (
                 <DetailRow
                   icon={Globe}
                   label="IP address"
-                  value={log.ipAddress}
+                  value={log.actorIp}
                   mono
                 />
               )}
-              {log.deviceId && (
+              {log.targetId && (
                 <CopyIdRow
                   icon={Fingerprint}
                   label="Device ID"
-                  value={log.deviceId}
+                  value={log.targetId}
                 />
               )}
               {ua && (
@@ -398,7 +476,7 @@ function AuditLogDetail({
                   value={
                     <div className="space-y-1">
                       <p className="text-sm">
-                        {ua.browser} · {ua.os}
+                        {ua.browser} &middot; {ua.os}
                       </p>
                       <p className="text-2xs text-muted-foreground font-mono break-all leading-relaxed">
                         {ua.full}
@@ -432,11 +510,11 @@ function AuditLogDetail({
                 <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border">
                   {Object.entries(metadata).map(([k, v]) => (
                     <div key={k} className="flex items-start gap-3 px-3 py-2.5">
-                      <span className="text-2xs font-mono text-muted-foreground shrink-0 pt-0.5 w-28 truncate">
+                      <span className="text-2xs font-mono text-muted-foreground shrink-0 pt-0.5 w-32 truncate">
                         {k}
                       </span>
                       <span className="text-xs font-mono break-all">
-                        {String(v)}
+                        {typeof v === "object" ? JSON.stringify(v) : String(v)}
                       </span>
                     </div>
                   ))}
@@ -468,7 +546,7 @@ const DEFAULTS = {
 };
 
 export default function AuditLogsPage() {
-  const [selected, setSelected] = useState<AuditLogDto | null>(null);
+  const [selected, setSelected] = useState<AuditAggregateDto | null>(null);
 
   const { filters, setFilter, resetFilters, hasActiveFilter } =
     useUrlFilters(DEFAULTS);
@@ -476,36 +554,28 @@ export default function AuditLogsPage() {
     setFilter("keyword", kw),
   );
 
-  const { data, isLoading } = useAdminAuditLogs({
+  const { data, isLoading } = useAuditSearch({
+    action: filters.keyword ? filters.keyword.trim() : undefined,
     pageNumber: filters.pageNumber,
     pageSize: filters.pageSize,
   });
 
   const logs = data?.items ?? [];
-  const keyword = (filters.keyword ?? "").toLowerCase();
-  const filtered = keyword
-    ? logs.filter(
-        (l) =>
-          (l.actionName ?? "").toLowerCase().includes(keyword) ||
-          (l.targetEmail ?? "").toLowerCase().includes(keyword) ||
-          (l.ipAddress ?? "").includes(keyword),
-      )
-    : logs;
 
   return (
     <PageContainer>
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin · System
+            Admin &middot; System
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()} events
-            — activity history across the system.
+            &mdash; activity history across the system.
           </p>
         </div>
-        <RefreshButton queryKeys={[KEY.admin.auditLogs]} />
+        <RefreshButton queryKeys={[KEY.auditAggregate]} />
       </div>
 
       <Card className="gap-0 py-0 overflow-hidden">
@@ -542,7 +612,7 @@ export default function AuditLogsPage() {
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : logs.length === 0 ? (
           <div className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
             <ScrollText size={32} className="opacity-30" />
             <span className="text-sm">
@@ -564,8 +634,10 @@ export default function AuditLogsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((log, index) => {
-                const category = ACTION_CATEGORY[log.actionName] ?? "other";
+              {logs.map((log, index) => {
+                const category = resolveCategory(log);
+                const accountDisplay = resolveAccountDisplay(log);
+
                 return (
                   <TableRow
                     key={log.id}
@@ -576,7 +648,7 @@ export default function AuditLogsPage() {
                       {(filters.pageNumber - 1) * filters.pageSize + index + 1}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
-                      {fmt(log.createdAt)}
+                      {fmt(log.occurredAt)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -587,7 +659,7 @@ export default function AuditLogsPage() {
                           {CATEGORY_LABEL[category]}
                         </Badge>
                         <span className="font-medium text-sm">
-                          {ACTION_LABELS[log.actionName] ?? log.actionName}
+                          {ACTION_LABELS[log.actionCode] ?? log.actionCode}
                         </span>
                       </div>
                     </TableCell>
@@ -606,14 +678,16 @@ export default function AuditLogsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-sm max-w-50 truncate">
-                      {log.targetEmail ?? (
+                      {accountDisplay !== "—" ? (
+                        accountDisplay
+                      ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-muted-foreground text-xs font-mono">
-                          {log.ipAddress ?? "—"}
+                          {log.actorIp ?? "—"}
                         </span>
                         <ChevronRight
                           size={14}

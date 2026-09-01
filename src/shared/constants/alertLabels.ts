@@ -5,7 +5,7 @@ import {
 } from "@/shared/enums/alerts/alert.enum";
 
 export const ANOMALY_TYPE_LABELS: Record<AnomalyTypeEnum, string> = {
-  [AnomalyTypeEnum.Overheat]: "Overheating",
+  [AnomalyTypeEnum.Overheat]: "Overheating hazard",
   [AnomalyTypeEnum.Overvoltage]: "Overvoltage",
   [AnomalyTypeEnum.Undervoltage]: "Undervoltage",
   [AnomalyTypeEnum.LowSoc]: "Low SOC",

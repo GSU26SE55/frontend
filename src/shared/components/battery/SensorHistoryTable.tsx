@@ -71,9 +71,7 @@ function currentTone(
   return toTone(currentLevel(v, t?.currentMaxCharge, t?.currentMaxDischarge));
 }
 function socOf(v: number, t?: ThresholdConfigDto | null): StatusTone | null {
-  return toTone(
-    socLevel(v, t?.socWarningThreshold, t?.socCriticalThreshold),
-  );
+  return toTone(socLevel(v, t?.socWarningThreshold, t?.socCriticalThreshold));
 }
 
 // Numbers colored by tone (no threshold yet → shown neutral).
@@ -149,10 +147,7 @@ function buildColumns(
       headClassName: "w-[18%] text-right",
       cellClassName: "text-right tabular-nums",
       cell: (r) => (
-        <ToneNum
-          value={r.socPercent}
-          tone={socOf(r.socPercent, threshold)}
-        />
+        <ToneNum value={r.socPercent} tone={socOf(r.socPercent, threshold)} />
       ),
     },
   ];

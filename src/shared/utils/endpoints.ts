@@ -393,6 +393,7 @@ export const ENDPOINTS = {
     STATS: "/api/admin/audit/stats",
     EXPORT: "/api/admin/audit/export",
     REPLAY: "/api/admin/audit/replay",
+    REPLAY_JOB: (jobId: string) => `/api/admin/audit/replay/${jobId}`,
     REDACT: "/api/admin/audit/redact",
   },
 

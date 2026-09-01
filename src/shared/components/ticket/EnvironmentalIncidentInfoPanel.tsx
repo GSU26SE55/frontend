@@ -122,7 +122,10 @@ export default function EnvironmentalIncidentInfoPanel({
   const realtimeLink = realtimeHref ? (
     <Link
       to={realtimeHref}
-      className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full mb-3")}
+      className={cn(
+        buttonVariants({ variant: "outline", size: "sm" }),
+        "w-full mb-3",
+      )}
     >
       <Activity className="size-3.5" />
       View real-time detail
@@ -142,7 +145,9 @@ export default function EnvironmentalIncidentInfoPanel({
             label="Detected at"
             value={
               anchorAt
-                ? format(new Date(anchorAt), "HH:mm dd/MM/yyyy", { locale: enUS })
+                ? format(new Date(anchorAt), "HH:mm dd/MM/yyyy", {
+                    locale: enUS,
+                  })
                 : null
             }
           />

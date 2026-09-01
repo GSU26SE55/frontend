@@ -190,9 +190,17 @@ function MetricMiniChart({
   // `warn`/`crit` là hai mốc theo chiều vi phạm; `descending` cho SOC (thấp mới là vi phạm).
   const bounds: { warn: number; crit: number; descending: boolean } | null =
     metric.key === "avgVoltage" && threshold
-      ? { warn: threshold.voltageMin, crit: threshold.voltageMax, descending: false }
+      ? {
+          warn: threshold.voltageMin,
+          crit: threshold.voltageMax,
+          descending: false,
+        }
       : metric.key === "avgTemperature" && threshold
-        ? { warn: threshold.temperatureMin, crit: threshold.temperatureMax, descending: false }
+        ? {
+            warn: threshold.temperatureMin,
+            crit: threshold.temperatureMax,
+            descending: false,
+          }
         : metric.key === "avgSocPercent" && threshold
           ? {
               warn: threshold.socWarningThreshold,
