@@ -43,6 +43,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
+import { RevealInline } from "@/shared/motion/RevealInline";
 import {
   Select,
   SelectContent,
@@ -384,7 +386,7 @@ function AuditReplayDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const [service, setService] = useState<string>("all");
+  const [service, setService] = useState<string | null>(null);
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -397,7 +399,7 @@ function AuditReplayDialog({
   const handleStartReplay = async () => {
     try {
       const res = await replayMutation.mutateAsync({
-        service: service === "all" ? undefined : service,
+        service: service || undefined,
         from: from ? new Date(from).toISOString() : undefined,
         to: to ? new Date(to).toISOString() : undefined,
       });
@@ -486,12 +488,19 @@ function AuditReplayDialog({
               <label className="text-xs font-medium text-muted-foreground">
                 Service Source
               </label>
-              <Select value={service} onValueChange={(v) => v && setService(v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All services" />
+              <Select
+                value={service}
+                items={[
+                  { value: null, label: "All Services" },
+                  ...SERVICES.map((s) => ({ value: s, label: s })),
+                ]}
+                onValueChange={(v) => setService(v)}
+              >
+                <SelectTrigger size="sm">
+                  <SelectValue placeholder="All Services" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Services</SelectItem>
+                <SelectContent alignItemWithTrigger={false}>
+                  <SelectItem value={null}>All Services</SelectItem>
                   {SERVICES.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
@@ -584,9 +593,9 @@ function AuditRedactDialog({
             <DialogTitle>GDPR PII Redact</DialogTitle>
           </div>
           <DialogDescription className="text-xs leading-relaxed mt-1.5">
-            Executes GDPR "Right to be Forgotten" on the audit read-store.
-            Personal information (display name, IP address) for this account
-            will be permanently replaced with{" "}
+            Executes GDPR &quot;Right to be Forgotten&quot; on the audit
+            read-store. Personal information (display name, IP address) for this
+            account will be permanently replaced with{" "}
             <code className="font-mono">[REDACTED]</code>. Event IDs, action
             codes, and timestamps are preserved for compliance integrity.
           </DialogDescription>
@@ -683,18 +692,19 @@ function AuditLogDetailDrawer({
                 Category: {category}
               </p>
             </div>
-            <span
-              className={`shrink-0 inline-flex items-center gap-1 text-2xs font-semibold px-2.5 py-1 rounded-full ${
-                log.isSuccess ? toneClass("ok") : toneClass("p1")
-              }`}
+            <Badge
+              variant="outline"
+              className={`shrink-0 text-2xs font-semibold ${toneClass(
+                log.isSuccess ? "ok" : "p1",
+              )}`}
             >
               {log.isSuccess ? (
-                <CheckCircle2 size={12} />
+                <CheckCircle2 size={12} className="mr-1" />
               ) : (
-                <XCircle size={12} />
+                <XCircle size={12} className="mr-1" />
               )}
               {log.isSuccess ? "Success" : "Failed"}
-            </span>
+            </Badge>
           </div>
         </DrawerHeader>
 
@@ -955,18 +965,18 @@ function AuditStatsBar({ from, to }: { from?: string; to?: string }) {
     severityStats?.find((s) => s.key === "Warning")?.count ?? 0;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <Card className="p-4 flex items-center justify-between">
         <div>
           <p className="text-xs text-muted-foreground font-medium">
             Total Events
           </p>
-          <h3 className="text-2xl font-bold tracking-tight mt-0.5">
+          <h3 className="text-xl font-bold tracking-tight mt-0.5">
             {isSeverityLoading ? "…" : totalEvents.toLocaleString()}
           </h3>
         </div>
-        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-          <Activity size={20} />
+        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+          <Activity size={18} />
         </div>
       </Card>
 
@@ -975,12 +985,12 @@ function AuditStatsBar({ from, to }: { from?: string; to?: string }) {
           <p className="text-xs text-muted-foreground font-medium">
             Critical Events
           </p>
-          <h3 className="text-2xl font-bold tracking-tight mt-0.5 text-red-600">
+          <h3 className="text-xl font-bold tracking-tight mt-0.5 text-destructive">
             {isSeverityLoading ? "…" : criticalCount.toLocaleString()}
           </h3>
         </div>
-        <div className="size-10 rounded-lg bg-red-100 dark:bg-red-950/50 flex items-center justify-center text-red-600">
-          <ShieldAlert size={20} />
+        <div className="size-9 rounded-lg bg-destructive/10 flex items-center justify-center text-destructive">
+          <ShieldAlert size={18} />
         </div>
       </Card>
 
@@ -989,14 +999,14 @@ function AuditStatsBar({ from, to }: { from?: string; to?: string }) {
           <p className="text-xs text-muted-foreground font-medium">
             Security & Warning
           </p>
-          <h3 className="text-2xl font-bold tracking-tight mt-0.5 text-amber-600">
+          <h3 className="text-xl font-bold tracking-tight mt-0.5 text-amber-600 dark:text-amber-400">
             {isSeverityLoading
               ? "…"
               : (securityCount + warningCount).toLocaleString()}
           </h3>
         </div>
-        <div className="size-10 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
-          <AlertTriangle size={20} />
+        <div className="size-9 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+          <AlertTriangle size={18} />
         </div>
       </Card>
 
@@ -1005,12 +1015,12 @@ function AuditStatsBar({ from, to }: { from?: string; to?: string }) {
           <p className="text-xs text-muted-foreground font-medium">
             Active Services
           </p>
-          <h3 className="text-2xl font-bold tracking-tight mt-0.5">
+          <h3 className="text-xl font-bold tracking-tight mt-0.5 text-indigo-600 dark:text-indigo-400">
             {serviceStats?.length ?? 0}
           </h3>
         </div>
-        <div className="size-10 rounded-lg bg-indigo-100 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600">
-          <Layers size={20} />
+        <div className="size-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <Layers size={18} />
         </div>
       </Card>
     </div>
@@ -1021,20 +1031,20 @@ function AuditStatsBar({ from, to }: { from?: string; to?: string }) {
 
 const DEFAULTS: {
   keyword: string;
-  service: string;
-  category: string;
-  severity: string;
-  status: string;
+  service?: string;
+  category?: string;
+  severity?: string;
+  status?: string;
   from: string;
   to: string;
   pageNumber: number;
   pageSize: number;
 } = {
   keyword: "",
-  service: "all",
-  category: "all",
-  severity: "all",
-  status: "all",
+  service: undefined,
+  category: undefined,
+  severity: undefined,
+  status: undefined,
   from: "",
   to: "",
   pageNumber: 1,
@@ -1066,9 +1076,9 @@ export default function AuditLogsPage() {
         : undefined;
 
   const queryParams: AuditSearchParams = {
-    service: filters.service !== "all" ? filters.service : undefined,
-    category: filters.category !== "all" ? filters.category : undefined,
-    severity: filters.severity !== "all" ? filters.severity : undefined,
+    service: filters.service || undefined,
+    category: filters.category || undefined,
+    severity: filters.severity || undefined,
     isSuccess: isSuccessParam,
     action: filters.keyword ? filters.keyword.trim() : undefined,
     from: filters.from ? new Date(filters.from).toISOString() : undefined,
@@ -1079,6 +1089,7 @@ export default function AuditLogsPage() {
 
   const { data, isLoading } = useAuditSearch(queryParams);
   const logs = data?.items ?? [];
+  const total = data?.totalItems ?? 0;
 
   const handleExport = async (formatType: "csv" | "json") => {
     setIsExporting(true);
@@ -1109,15 +1120,12 @@ export default function AuditLogsPage() {
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-0.5">
-            Admin · Compliance & Forensic
+            Admin &middot; Compliance
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Audit Explorer
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Audit logs</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Cross-service unified audit read-store (
-            {isLoading ? "…" : (data?.totalItems ?? 0).toLocaleString()}{" "}
-            records)
+            {isLoading ? "…" : total.toLocaleString()} audit events &mdash;
+            cross-service unified audit trail.
           </p>
         </div>
 
@@ -1126,10 +1134,9 @@ export default function AuditLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5"
             onClick={() => setReplayOpen(true)}
           >
-            <RotateCcw size={14} />
+            <RotateCcw className="size-3.5" />
             Replay
           </Button>
 
@@ -1137,10 +1144,10 @@ export default function AuditLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-destructive hover:text-destructive"
+            className="text-destructive hover:text-destructive"
             onClick={() => setRedactOpen(true)}
           >
-            <UserX size={14} />
+            <UserX className="size-3.5" />
             GDPR Redact
           </Button>
 
@@ -1148,16 +1155,11 @@ export default function AuditLogsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  disabled={isExporting}
-                >
+                <Button variant="outline" size="sm" disabled={isExporting}>
                   {isExporting ? (
-                    <Loader2 size={14} className="animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                   ) : (
-                    <Download size={14} />
+                    <Download className="size-3.5" />
                   )}
                   Export
                 </Button>
@@ -1182,112 +1184,127 @@ export default function AuditLogsPage() {
       {/* Stats Summary Cards */}
       <AuditStatsBar from={filters.from} to={filters.to} />
 
-      {/* Main Table Card */}
-      <Card className="gap-0 py-0 overflow-hidden">
-        {/* Filters Toolbar */}
-        <div className="flex flex-col gap-3 border-b border-border p-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <h2 className="text-base font-semibold tracking-tight">
-                Event Stream
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Click any row for detailed actor, target, device, and metadata
-                forensics.
-              </p>
-            </div>
-
-            {hasActiveFilter && (
-              <Button size="sm" variant="ghost" onClick={resetFilters}>
-                Clear all filters
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1">
-            {/* Search Input */}
-            <div className="relative lg:col-span-2">
-              <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search.value}
-                onChange={search.onChange}
-                placeholder="Action, actor, target..."
-                className="pl-8 text-xs"
-              />
-            </div>
-
-            {/* Service Select */}
-            <Select
-              value={filters.service}
-              onValueChange={(v) => v && setFilter("service", v)}
-            >
-              <SelectTrigger className="text-xs">
-                <SelectValue placeholder="All Services" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Services</SelectItem>
-                {SERVICES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Category Select */}
-            <Select
-              value={filters.category}
-              onValueChange={(v) => v && setFilter("category", v)}
-            >
-              <SelectTrigger className="text-xs">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Severity Select */}
-            <Select
-              value={filters.severity}
-              onValueChange={(v) => v && setFilter("severity", v)}
-            >
-              <SelectTrigger className="text-xs">
-                <SelectValue placeholder="All Severities" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Severities</SelectItem>
-                {SEVERITIES.map((sev) => (
-                  <SelectItem key={sev} value={sev}>
-                    {sev}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Status Select */}
-            <Select
-              value={filters.status}
-              onValueChange={(v) => v && setFilter("status", v)}
-            >
-              <SelectTrigger className="text-xs">
-                <SelectValue placeholder="Result" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Results</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Filter bar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search action, actor, target..."
+            value={search.value}
+            onChange={search.onChange}
+            className="pl-8"
+          />
         </div>
 
-        {/* Table Content */}
+        {/* Service Select */}
+        <Select
+          value={filters.service || null}
+          items={[
+            { value: null, label: "All services" },
+            ...SERVICES.map((s) => ({ value: s, label: s })),
+          ]}
+          onValueChange={(v) => setFilter("service", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue placeholder="All services" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All services</SelectItem>
+            {SERVICES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Category Select */}
+        <Select
+          value={filters.category || null}
+          items={[
+            { value: null, label: "All categories" },
+            ...CATEGORIES.map((c) => ({ value: c, label: c })),
+          ]}
+          onValueChange={(v) => setFilter("category", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-44">
+            <SelectValue placeholder="All categories" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All categories</SelectItem>
+            {CATEGORIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Severity Select */}
+        <Select
+          value={filters.severity || null}
+          items={[
+            { value: null, label: "All severities" },
+            ...SEVERITIES.map((sev) => ({ value: sev, label: sev })),
+          ]}
+          onValueChange={(v) => setFilter("severity", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-36">
+            <SelectValue placeholder="All severities" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All severities</SelectItem>
+            {SEVERITIES.map((sev) => (
+              <SelectItem key={sev} value={sev}>
+                {sev}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Result Select */}
+        <Select
+          value={filters.status || null}
+          items={[
+            { value: null, label: "All results" },
+            { value: "success", label: "Success" },
+            { value: "failed", label: "Failed" },
+          ]}
+          onValueChange={(v) => setFilter("status", v || undefined)}
+        >
+          <SelectTrigger size="sm" className="w-32">
+            <SelectValue placeholder="All results" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All results</SelectItem>
+            <SelectItem value="success">Success</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Date Pickers */}
+        <DatePicker
+          className="w-40"
+          value={filters.from}
+          onChange={(v) => setFilter("from", v)}
+          max={filters.to}
+        />
+        <DatePicker
+          className="w-40"
+          value={filters.to}
+          onChange={(v) => setFilter("to", v)}
+          min={filters.from}
+        />
+
+        <RevealInline show={hasActiveFilter}>
+          <Button size="sm" variant="ghost" onClick={resetFilters}>
+            Clear filters
+          </Button>
+        </RevealInline>
+      </div>
+
+      {/* Main Table Card */}
+      <Card className="gap-0 py-0 overflow-hidden">
         {isLoading ? (
           <div className="p-6 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -1356,24 +1373,23 @@ export default function AuditLogsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span
-                        className={`inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.5 rounded-full ${
-                          log.isSuccess ? toneClass("ok") : toneClass("p1")
-                        }`}
+                      <Badge
+                        variant="outline"
+                        className={`text-3xs font-semibold px-2 py-0.5 ${toneClass(
+                          log.isSuccess ? "ok" : "p1",
+                        )}`}
                       >
                         {log.isSuccess ? (
-                          <CheckCircle2 size={10} />
+                          <CheckCircle2 size={10} className="mr-1" />
                         ) : (
-                          <XCircle size={10} />
+                          <XCircle size={10} className="mr-1" />
                         )}
                         {log.isSuccess ? "OK" : "FAIL"}
-                      </span>
+                      </Badge>
                     </TableCell>
-                    <TableCell className="text-xs truncate">
+                    <TableCell className="text-xs truncate font-mono text-muted-foreground">
                       {log.actorDisplay ?? log.actorAccountId ?? (
-                        <span className="text-muted-foreground italic">
-                          System
-                        </span>
+                        <span className="italic">System</span>
                       )}
                     </TableCell>
                     <TableCell>
