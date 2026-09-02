@@ -8,12 +8,8 @@ export const ambientThresholdSchema = z
     siteId: z.string().uuid("Select a valid site"),
     highAmbientTempWarning: z.string().optional(),
     highAmbientTempCritical: z.string().optional(),
-    highHumidityWarning: z.string().optional(),
-    highHumidityCritical: z.string().optional(),
     highGasWarning: z.string().optional(),
     highGasCritical: z.string().optional(),
-    comboTempThreshold: z.string().optional(),
-    comboHumidityThreshold: z.string().optional(),
     enabled: z.boolean(),
   })
   .superRefine((data, ctx) => {
@@ -22,19 +18,15 @@ export const ambientThresholdSchema = z
     const numericFields = [
       "highAmbientTempWarning",
       "highAmbientTempCritical",
-      "highHumidityWarning",
-      "highHumidityCritical",
       "highGasWarning",
       "highGasCritical",
-      "comboTempThreshold",
-      "comboHumidityThreshold",
     ] as const;
 
     // Range per metric. Neither side checked these before — the BE
     // (UpsertAmbientThresholdConfigCommand) validates only SiteId and the
     // critical/warning ordering — so "500" in a field the form labels "(%)" was
     // written straight to AmbientThresholdConfig, leaving a threshold that can never
-    // trip. Humidity is a percentage; the temperature range is wide enough for any
+    // trip. Gas is a percentage; the temperature range is wide enough for any
     // real site while still rejecting a typo of the wrong magnitude.
     const RANGES: Record<
       (typeof numericFields)[number],
@@ -42,12 +34,8 @@ export const ambientThresholdSchema = z
     > = {
       highAmbientTempWarning: { min: -50, max: 150, unit: "°C" },
       highAmbientTempCritical: { min: -50, max: 150, unit: "°C" },
-      highHumidityWarning: { min: 0, max: 100, unit: "%" },
-      highHumidityCritical: { min: 0, max: 100, unit: "%" },
       highGasWarning: { min: 0, max: 100, unit: "%" },
       highGasCritical: { min: 0, max: 100, unit: "%" },
-      comboTempThreshold: { min: -50, max: 150, unit: "°C" },
-      comboHumidityThreshold: { min: 0, max: 100, unit: "%" },
     };
 
     for (const field of numericFields) {
@@ -88,16 +76,6 @@ export const ambientThresholdSchema = z
       });
     }
 
-    const humWarn = num(data.highHumidityWarning);
-    const humCrit = num(data.highHumidityCritical);
-    if (humWarn !== undefined && humCrit !== undefined && humCrit < humWarn) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["highHumidityCritical"],
-        message: "Must be ≥ the warning threshold",
-      });
-    }
-
     const gasWarn = num(data.highGasWarning);
     const gasCrit = num(data.highGasCritical);
     if (gasWarn !== undefined && gasCrit !== undefined && gasCrit < gasWarn) {
@@ -105,23 +83,6 @@ export const ambientThresholdSchema = z
         code: z.ZodIssueCode.custom,
         path: ["highGasCritical"],
         message: "Must be ≥ the warning threshold",
-      });
-    }
-
-    // The combo rule is only active when BOTH thresholds are set (temperature +
-    // humidity). Blocks a half-configured combo (only 1 field) — the BE ignores
-    // it, but it is easy to misread.
-    const comboTemp = num(data.comboTempThreshold);
-    const comboHum = num(data.comboHumidityThreshold);
-    if ((comboTemp === undefined) !== (comboHum === undefined)) {
-      const missing =
-        comboTemp === undefined
-          ? "comboTempThreshold"
-          : "comboHumidityThreshold";
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [missing],
-        message: "Combo rule needs both temperature and humidity thresholds",
       });
     }
   });
