@@ -1,4 +1,7 @@
-import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+import {
+  SlaTimerStatusEnum,
+  TicketPriorityEnum,
+} from "@/shared/enums/ticket/ticket.enum";
 
 // SLA thresholds UNIFIED across the app (fixes the inconsistency between staff ≤25% vs
 // manager <1h vs bar >50/>20). Uses remainingPercent (relative) so it's correct for every priority.
@@ -9,6 +12,87 @@ import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 
 export const SLA_WARNING_PERCENT = 25;
 export const SLA_CAUTION_PERCENT = 50;
+
+/** Parse chuỗi hoặc số sang TicketPriorityEnum hợp lệ. */
+export function parsePriorityEnum(
+  val?: string | number | null,
+): TicketPriorityEnum | null {
+  if (val == null) return null;
+  const s = String(val).trim();
+  if (
+    s.startsWith("1") ||
+    s.startsWith("P1") ||
+    s.includes("P1Critical") ||
+    s.includes("Critical")
+  ) {
+    return TicketPriorityEnum.P1Critical;
+  }
+  if (
+    s.startsWith("2") ||
+    s.startsWith("P2") ||
+    s.includes("P2High") ||
+    s.includes("High")
+  ) {
+    return TicketPriorityEnum.P2High;
+  }
+  if (
+    s.startsWith("3") ||
+    s.startsWith("P3") ||
+    s.includes("P3Normal") ||
+    s.includes("Normal")
+  ) {
+    return TicketPriorityEnum.P3Normal;
+  }
+  if (s.startsWith("4") || s.startsWith("Urgent") || s.includes("Urgent")) {
+    return TicketPriorityEnum.Urgent;
+  }
+  return null;
+}
+
+/** Hạn chót Response SLA theo Priority (Giai đoạn Open): P1=4h, P2=24h, P3=72h (24/7 calendar clock). */
+export function getResponseSlaHours(
+  priority?: TicketPriorityEnum | null,
+): number {
+  const p = parsePriorityEnum(priority) ?? TicketPriorityEnum.P3Normal;
+  switch (p) {
+    case TicketPriorityEnum.P1Critical:
+      return 4;
+    case TicketPriorityEnum.P2High:
+      return 24;
+    case TicketPriorityEnum.P3Normal:
+    default:
+      return 72;
+  }
+}
+
+/**
+ * Tính thời điểm hạn chót Response SLA dựa trên thời điểm tạo và priority.
+ */
+export function calculateResponseDeadline(
+  createdAt: string,
+  priority?: TicketPriorityEnum | null,
+): Date | null {
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return null;
+  const hours = getResponseSlaHours(priority);
+  return new Date(d.getTime() + hours * 3600 * 1000);
+}
+
+/**
+ * Format khoảng thời gian ngắn gọn: "45m", "2h 15m", "1d 4h", "<1m".
+ */
+export function formatDurationHuman(ms: number): string {
+  const absMs = Math.abs(ms);
+  const totalSecs = Math.floor(absMs / 1000);
+  const days = Math.floor(totalSecs / 86400);
+  const hours = Math.floor((totalSecs % 86400) / 3600);
+  const mins = Math.floor((totalSecs % 3600) / 60);
+
+  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  if (mins > 0) return `${mins}m`;
+  return `${totalSecs}s`;
+}
 
 /** Ticket about to breach — used for the "about to breach" KPI, countdown warning color. */
 export function isNearBreachPercent(remainingPercent?: number | null): boolean {
@@ -109,6 +193,39 @@ export function formatSlaRemainingCompact(ms: number): string {
 }
 
 /**
+ * Format thời gian quá hạn khi SLA bị vi phạm — "+01:23:45" hoặc "+3d 04:12:00".
+ * Nhận ms âm hoặc dương (Math.abs nội bộ).
+ */
+export function formatSlaOverdue(ms: number): string {
+  const absMs = Math.abs(ms);
+  const totalSecs = Math.floor(absMs / 1000);
+  const days = Math.floor(totalSecs / 86400);
+  const hms = [
+    Math.floor((totalSecs % 86400) / 3600),
+    Math.floor((totalSecs % 3600) / 60),
+    totalSecs % 60,
+  ]
+    .map((v) => String(v).padStart(2, "0"))
+    .join(":");
+  return days > 0 ? `+${days}d ${hms}` : `+${hms}`;
+}
+
+/**
+ * Compact overdue — "+3d", "+17h", "+45m", "+30s". Dùng cho list row khi không đủ chỗ.
+ */
+export function formatSlaOverdueCompact(ms: number): string {
+  const absMs = Math.abs(ms);
+  const totalSecs = Math.floor(absMs / 1000);
+  const days = Math.floor(totalSecs / 86400);
+  if (days > 0) return `+${days}d`;
+  const hours = Math.floor(totalSecs / 3600);
+  if (hours > 0) return `+${hours}h`;
+  const mins = Math.floor(totalSecs / 60);
+  if (mins > 0) return `+${mins}m`;
+  return `+${totalSecs}s`;
+}
+
+/**
  * Is the SLA clock still counting?
  *
  * Only `Running` and `Paused` are live states — every other status is terminal:
@@ -126,6 +243,56 @@ export function isSlaClockLive(status?: SlaTimerStatusEnum | null): boolean {
     status === SlaTimerStatusEnum.Running ||
     status === SlaTimerStatusEnum.Paused
   );
+}
+
+/**
+ * % SLA còn lại để vẽ thanh progress — chạy realtime cùng nhịp với text countdown.
+ *
+ * `slaTimer.remainingPercent` là ảnh chụp của BE lúc query: để yên thì bar đứng im 15–30s
+ * (tới lần refetch kế) trong khi text vẫn tụt mỗi giây.
+ *
+ * Tính theo mốc thời gian THẬT của chính timer: `(dueAt - now) / (dueAt - startedAt)`.
+ * Tử và mẫu cùng đơn vị (wall-clock ms), cùng 2 mốc BE đã trả, nên:
+ *   - Khớp 100% với text countdown (đều đo tới `dueAt`).
+ *   - KHÔNG dùng `slaWorkingHours` — sau escalation BE trả budget theo priority MỚI (P3→P1
+ *     là ×7) trong khi `dueAt` giữ nguyên (chính sách: breach thì thêm nhân lực, không gia
+ *     hạn). Chia cho budget mới khiến % tụt mạnh dù ưu tiên cao hơn — nghịch lý hiển thị.
+ *     Đo theo cửa sổ [startedAt, dueAt] của timer thì escalation không làm bar nhảy.
+ *   - `calendarExtensionMinutes` đã nằm sẵn trong `dueAt` nên phần gia hạn ngày lễ tự đúng.
+ *
+ * Fallback về `remainingPercent` khi thiếu `startedAt`/`dueAt` hoặc timer không còn chạy.
+ *
+ * `nowMs` truyền vào để component kiểm soát nhịp re-render (tick mỗi giây) — hàm thuần,
+ * không tự đọc `Date.now()`.
+ */
+export function liveRemainingPercent(
+  slaTimer: {
+    status?: SlaTimerStatusEnum | null;
+    remainingPercent: number;
+    startedAt?: string | null;
+    dueAt?: string | null;
+  },
+  nowMs: number,
+): number {
+  const snapshot = Math.max(0, Math.min(100, slaTimer.remainingPercent));
+  // Chỉ Running mới đếm live. Paused: đồng hồ đóng băng.
+  if (slaTimer.status !== SlaTimerStatusEnum.Running) return snapshot;
+
+  const startedMs = slaTimer.startedAt
+    ? new Date(slaTimer.startedAt).getTime()
+    : NaN;
+  const dueMs = slaTimer.dueAt ? new Date(slaTimer.dueAt).getTime() : NaN;
+  if (
+    !Number.isFinite(startedMs) ||
+    !Number.isFinite(dueMs) ||
+    dueMs <= startedMs
+  ) {
+    return snapshot;
+  }
+
+  const total = dueMs - startedMs;
+  const remaining = dueMs - nowMs;
+  return Math.max(0, Math.min(100, (remaining / total) * 100));
 }
 
 /**

@@ -57,8 +57,13 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
   // hoàn toàn bình thường. Bảng vì thế đọc như một đoạn log chép nguyên si, người trực phải tự
   // dò xem dòng nào là lý do mình đang nhìn cái ticket này. Cùng khuôn với bảng bằng chứng của
   // pin ngay dưới: dẫn bằng vi phạm, phần còn lại nằm sau nút "Show more".
-  const graded = allRows.map((r) => ({ row: r, ev: evaluateAmbientRow(r, threshold) }));
-  const breaching = graded.filter((g) => g.ev.worst === "warning" || g.ev.worst === "critical");
+  const graded = allRows.map((r) => ({
+    row: r,
+    ev: evaluateAmbientRow(r, threshold),
+  }));
+  const breaching = graded.filter(
+    (g) => g.ev.worst === "warning" || g.ev.worst === "critical",
+  );
   // Không có dòng nào vi phạm (ngưỡng site tắt, hoặc alert đến từ kênh khác) → hiện toàn bộ
   // thay vì một bảng rỗng: bằng chứng vẫn đáng đọc, chỉ là không tô được dòng nào.
   const rows = breaching.length > 0 ? breaching.map((g) => g.row) : allRows;
@@ -79,9 +84,9 @@ export default function AmbientEvidencePanel({ siteId, anchorAt }: Props) {
 
       {trimmed > 0 ? (
         <p className="text-2xs text-muted-foreground mb-1.5">
-          Showing the {rows.length} reading{rows.length > 1 ? "s" : ""} that breached a
-          configured limit · {trimmed} normal reading{trimmed > 1 ? "s" : ""} in this window
-          hidden.
+          Showing the {rows.length} reading{rows.length > 1 ? "s" : ""} that
+          breached a configured limit · {trimmed} normal reading
+          {trimmed > 1 ? "s" : ""} in this window hidden.
         </p>
       ) : null}
 

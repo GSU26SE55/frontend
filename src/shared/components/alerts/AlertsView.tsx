@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +53,7 @@ import {
   anomalyTypeLabel,
 } from "@/shared/constants/alertLabels";
 import type { AlertDto } from "@/shared/types/alerts/alert.types";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import AlertSeverityBadge from "./AlertSeverityBadge";
 import AlertStatusBadge from "./AlertStatusBadge";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -93,8 +95,11 @@ const alertSubject = (alert: AlertDto) =>
   isSiteLevel(alert) ? "Site level" : alert.batterySerialNumber;
 
 // Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable)
-const formatMeasure = (value?: number | null, unit?: string | null) =>
-  value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+const formatMeasure = (value?: number | null, unit?: string | null) => {
+  if (unit?.toLowerCase() === "wet" || unit?.toLowerCase() === "bool")
+    return "Wet";
+  return value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+};
 
 export default function AlertsView({
   subtitle,
@@ -272,7 +277,11 @@ export default function AlertsView({
                   {/* Empty when the BE cannot resolve the account (deleted or not yet
                       synced) — show a dash rather than a blank cell. */}
                   <TableCell>{alert.customerName || "—"}</TableCell>
-                  <TableCell>{anomalyLabel(alert.anomalyType)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {anomalyLabel(alert.anomalyType)}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <AlertSeverityBadge severity={alert.severity} />
                   </TableCell>
@@ -327,9 +336,22 @@ function AlertDetailDialog({
   onClose: () => void;
 }) {
   const { data: alert, isLoading } = useAlertDetail(alertId ?? "");
-  const { code: ticketCode, isLoading: ticketCodeLoading } = useTicketCode(
-    alert?.ticketId,
-  );
+  const {
+    code: ticketCode,
+    status: ticketStatus,
+    isLoading: ticketCodeLoading,
+  } = useTicketCode(alert?.ticketId);
+
+  // An Open ticket has not been assigned yet — for the Manager it sits in the Queue, which
+  // is its own route (/manager/tickets/queue/:id). Anything past Open is an assigned ticket
+  // and belongs under /tickets/:id. Admin/Staff have no queue route, so they always use
+  // /tickets/:id. Falls back to /tickets/:id until the ticket lookup settles.
+  const ticketHref =
+    alert?.ticketId == null
+      ? null
+      : basePath === "/manager" && ticketStatus === TicketStatusEnum.Open
+        ? `${basePath}/tickets/queue/${alert.ticketId}`
+        : `${basePath}/tickets/${alert.ticketId}`;
 
   // Falls back to a shortened id when the site list has not loaded or the site is
   // outside this user's scope — matches EnvironmentalIncidentsView.
@@ -423,9 +445,9 @@ function AlertDetailDialog({
               {formatDateTime(alert.resolvedAt)}
             </DetailRow>
             <DetailRow label="Ticket">
-              {alert.ticketId ? (
+              {alert.ticketId && ticketHref ? (
                 <Link
-                  to={`${basePath}/tickets/${alert.ticketId}`}
+                  to={ticketHref}
                   className="font-mono-num text-xs text-primary hover:underline"
                 >
                   {/* Three states, deliberately distinct: the code once it lands, a neutral

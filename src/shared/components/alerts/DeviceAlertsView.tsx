@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Router } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -94,8 +95,10 @@ const deviceSubject = (alert: AlertDto) =>
 
 // Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable).
 // IotDataIntegrityViolation in particular carries no measurement at all.
-const formatMeasure = (value?: number | null, unit?: string | null) =>
-  value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+const formatMeasure = (value?: number | null, unit?: string | null) => {
+  if (unit?.toLowerCase() === "wet" || unit?.toLowerCase() === "bool") return "Wet";
+  return value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
+};
 
 export default function DeviceAlertsView({
   subtitle,
@@ -268,7 +271,11 @@ export default function DeviceAlertsView({
                   {/* Empty when the BE cannot resolve the account (deleted or not yet
                       synced) — show a dash rather than a blank cell. */}
                   <TableCell>{alert.customerName || "—"}</TableCell>
-                  <TableCell>{anomalyLabel(alert.anomalyType)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {anomalyLabel(alert.anomalyType)}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <AlertSeverityBadge severity={alert.severity} />
                   </TableCell>

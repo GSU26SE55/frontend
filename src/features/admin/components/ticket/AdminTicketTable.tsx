@@ -114,7 +114,12 @@ export default function AdminTicketTable({
       header: TABLE_COLUMNS.sla,
       headClassName: "w-24",
       stopRowClick: true,
-      cell: (t) => <SlaCountdown slaTimer={t.slaTimer} compact />,
+      cell: (t) => (
+        <SlaCountdown
+          slaTimer={t.resolutionSlaTimer ?? t.responseSlaTimer ?? t.slaTimer}
+          compact
+        />
+      ),
     },
     {
       id: "createdAt",

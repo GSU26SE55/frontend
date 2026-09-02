@@ -472,6 +472,8 @@ export const QUERY_KEY = {
     accountTimeline: (accountId: string, limit?: number) =>
       [KEY.auditAggregate, "timeline", accountId, limit] as const,
     stats: (params?: object) => [KEY.auditAggregate, "stats", params] as const,
+    replayJob: (jobId: string) =>
+      [KEY.auditAggregate, "replayJob", jobId] as const,
   },
   chatMentions: {
     me: (params?: object) => [KEY.chatMentions, "me", params] as const,

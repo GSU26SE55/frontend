@@ -35,6 +35,10 @@ export const useTicketCode = (ticketId?: string | null) => {
 
   return {
     code: data?.code ?? null,
+    // Exposed so a caller can route to the right section: an Open ticket has not been
+    // assigned yet and lives in the Manager queue, everything past Open is an assigned
+    // ticket. Null until the lookup settles (or on a 403 / deleted ticket).
+    status: data?.status ?? null,
     // `isPending` stays true for a disabled query, so it alone would report "loading" forever
     // when there is no ticket id at all. Gate it on the id, and treat the in-flight first
     // fetch as loading too.

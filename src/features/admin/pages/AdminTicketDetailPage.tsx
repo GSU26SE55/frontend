@@ -69,12 +69,7 @@ import {
   useMarkTicketChatsRead,
   useTranslateTicketChat,
 } from "@/shared/hooks/ticket/useTicketChatActions";
-import {
-  slaBarColorClass,
-  isSlaClockLive,
-  formatCalendarExtension,
-  formatCalendarExtensionDays,
-} from "@/shared/lib/sla";
+import TicketSlaSection from "@/shared/components/ticket/TicketSlaSection";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
@@ -236,13 +231,6 @@ export default function AdminTicketDetailPage() {
     );
   }
 
-  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
-  const calendarExtensionLabel = formatCalendarExtension(
-    ticket.slaTimer?.calendarExtensionDays,
-  );
-  const calendarExtensionDays = formatCalendarExtensionDays(
-    ticket.slaTimer?.calendarExtensionDays,
-  );
   // Ticket finished (Completed/Closed/ClosedRejected). Two consequences:
   //  - chat is archived: composer hidden, edit/delete locked in the thread (Admin's override
   //    edit/delete still applies — that path exists precisely for closed tickets);
@@ -364,6 +352,7 @@ export default function AdminTicketDetailPage() {
                           key={bid}
                           batteryAssetId={bid}
                           detectedAt={ticket.detectedAt}
+                          originAlertId={ticket.originAlertId}
                         />
                       ))}
                     </div>
@@ -499,71 +488,9 @@ export default function AdminTicketDetailPage() {
         {/* Right: Sidebar */}
         <div className="w-75 shrink-0 overflow-y-auto flex flex-col divide-y divide-border/60">
           {/* SLA */}
-          <div className="p-4">
-            <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              SLA
-            </p>
-            {ticket.slaTimer ? (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <span className="text-xs font-medium">
-                    {ticket.slaTimer.status}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Deadline
-                  </span>
-                  <span className="text-xs font-medium tabular-nums">
-                    {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                  </span>
-                </div>
-                {/* Tells Admin WHY the deadline is further out than the raw priority budget
-                    would suggest — see the Manager panel for the full rationale. */}
-                {calendarExtensionLabel && (
-                  <div className="text-xs text-muted-foreground">
-                    <p className="italic">{calendarExtensionLabel}:</p>
-                    {calendarExtensionDays.length > 0 && (
-                      <ul className="mt-1 space-y-0.5">
-                        {calendarExtensionDays.map((day) => (
-                          <li key={day} className="font-bold not-italic">
-                            - {day}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-                {/* Live-clock only — see the Manager panel. The Status row above already
-                    names the terminal state (Stopped/Met/Breached), and the BE returns
-                    remainingPercent = 0 for all of them, so the ratio rows would only
-                    contradict it. */}
-                {isSlaClockLive(ticket.slaTimer.status) && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Remaining
-                      </span>
-                      <span className="text-xs font-medium">
-                        {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                        style={{
-                          width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              // No SLA timer, but a periodic-maintenance ticket still has a live booking
-              // deadline (and may already be past its cycle due date) — "No SLA timer yet"
-              // alone reported that as nothing being due.
+          <TicketSlaSection ticket={ticket} />
+          {ticket.isPeriodicMaintenance && (
+            <div className="p-4">
               <MaintenanceScheduleCountdown
                 dueAtUtc={ticket.periodicMaintenanceDueAtUtc}
                 scheduleDeadlineAtUtc={
@@ -571,8 +498,8 @@ export default function AdminTicketDetailPage() {
                 }
                 isOverdue={ticket.isPeriodicMaintenanceOverdue}
               />
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Status + processing time */}
           <div className="p-4">

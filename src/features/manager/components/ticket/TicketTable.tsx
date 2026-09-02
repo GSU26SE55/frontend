@@ -5,12 +5,18 @@ import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
 import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 import { getTicketSource } from "@/shared/utils/ticket/ticketSource";
 import { priorityRank } from "@/shared/utils/ticket/priorityMatrix";
 import { toneClass } from "@/shared/theme/statusColors";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { isOpenTicket } from "@/shared/utils/ticket.utils";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
@@ -95,12 +101,16 @@ export default function TicketTable({
       header: "Title",
       sortKey: "title",
       sortValue: (t) => t.title,
-      cellClassName: "max-w-xs font-medium",
+      headClassName: "w-50",
+      cellClassName: "w-50 max-w-50 font-medium",
       cell: (t) => (
-        <div className="max-w-xs">
-          <span title={t.title} className="block truncate">
-            {t.title}
-          </span>
+        <div className="max-w-50">
+          <Tooltip>
+            <TooltipTrigger render={<span className="block truncate" />}>
+              {t.title}
+            </TooltipTrigger>
+            <TooltipContent className="max-w-sm">{t.title}</TooltipContent>
+          </Tooltip>
           <div className="mt-0.5 flex flex-wrap items-center gap-1">
             {/* AI verify — manual tickets only, hidden when valid (hideWhenOk). */}
             <TicketVerifyBadge
@@ -178,10 +188,39 @@ export default function TicketTable({
       cell: (t) => CATEGORY_LABEL[t.category] ?? t.category,
     },
     {
-      id: "sla",
-      header: TABLE_COLUMNS.sla,
+      // Ticket có 2 SLA riêng: Response chạy ở stage Open, Resolution chạy từ InProgress.
+      // Tách 2 cột để thấy rõ mốc nào đang đếm — cột chưa bắt đầu hiện "Not started".
+      id: "slaResponse",
+      header: TABLE_COLUMNS.slaResponse,
       stopRowClick: true,
-      cell: (t) => <SlaCountdown slaTimer={t.slaTimer} compact />,
+      cell: (t) => (
+        <SlaCountdown
+          slaTimer={t.responseSlaTimer ?? t.slaTimer}
+          compact
+          completedAt={t.status !== TicketStatusEnum.Open ? t.updatedAt : null}
+        />
+      ),
+    },
+    {
+      id: "slaResolve",
+      header: TABLE_COLUMNS.slaResolve,
+      stopRowClick: true,
+      cell: (t) => (
+        <SlaCountdown
+          slaTimer={t.resolutionSlaTimer}
+          compact
+          // `resolvedAt`/`closedAt` chỉ có trên TicketDetailDTO, không có trên DTO của danh
+          // sách mà bảng này render — nên mốc gần đúng duy nhất còn lại là `updatedAt`, đúng
+          // như cột SLA response ngay bên trên đang dùng.
+          completedAt={
+            t.status === TicketStatusEnum.Completed ||
+            t.status === TicketStatusEnum.Closed ||
+            t.status === TicketStatusEnum.ClosedRejected
+              ? t.updatedAt
+              : null
+          }
+        />
+      ),
     },
     {
       id: "createdAt",

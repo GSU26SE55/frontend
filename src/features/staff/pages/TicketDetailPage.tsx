@@ -23,12 +23,7 @@ import {
   TicketStatusEnum,
   MaintenanceLogTypeEnum,
 } from "@/shared/types/ticket/ticket.types";
-import {
-  slaBarColorClass,
-  isSlaClockLive,
-  formatCalendarExtension,
-  formatCalendarExtensionDays,
-} from "@/shared/lib/sla";
+import TicketSlaSection from "@/shared/components/ticket/TicketSlaSection";
 import {
   isTicketChatLocked,
   ticketChatLockedNotice,
@@ -53,7 +48,6 @@ import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import ChatUnreadBadge from "@/shared/components/ticket/ChatUnreadBadge";
 import TypingIndicator from "@/shared/components/chat/TypingIndicator";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
-import { SlaCountdown } from "@/features/staff/components/ticket/SlaCountdown";
 import { HoldDialog } from "@/features/staff/components/ticket/HoldDialog";
 import { ResumeDialog } from "@/features/staff/components/ticket/ResumeDialog";
 import { EscalateRequestDialog } from "@/features/staff/components/ticket/EscalateRequestDialog";
@@ -307,14 +301,6 @@ export default function TicketDetailPage() {
 
   const logs = ticket.maintenanceLogs ?? [];
 
-  const slaBarCls = slaBarColorClass(ticket.slaTimer?.remainingPercent);
-  const calendarExtensionLabel = formatCalendarExtension(
-    ticket.slaTimer?.calendarExtensionDays,
-  );
-  const calendarExtensionDays = formatCalendarExtensionDays(
-    ticket.slaTimer?.calendarExtensionDays,
-  );
-
   return (
     <div className="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
@@ -448,6 +434,7 @@ export default function TicketDetailPage() {
                         key={bid}
                         batteryAssetId={bid}
                         detectedAt={ticket.detectedAt}
+                        originAlertId={ticket.originAlertId}
                       />
                     ))}
                   </div>
@@ -714,83 +701,7 @@ export default function TicketDetailPage() {
                 )}
 
               {/* SLA */}
-              <div className="p-4">
-                <p className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  SLA
-                </p>
-                {ticket.slaTimer ? (
-                  <div className="space-y-2.5">
-                    {/* Single-line chip clock — MATCHES Manager. A multi-line version with its
-                        own progress bar would give the SLA block 2 bars drawing the same
-                        ratio (the small one here + the "remaining" bar below). */}
-                    <div className="flex items-center justify-between">
-                      {/* "Duration", not "Status": the value beside it is a live countdown to
-                          the deadline, not a state name. Admin's SLA panel does show
-                          slaTimer.status, so it keeps the Status label. */}
-                      <span className="text-xs text-muted-foreground">
-                        Duration
-                      </span>
-                      <SlaCountdown
-                        slaTimer={ticket.slaTimer}
-                        hideBar
-                        compact
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Deadline
-                      </span>
-                      <span className="text-xs font-medium tabular-nums">
-                        {format(new Date(ticket.slaTimer.dueAt), "dd/MM HH:mm")}
-                      </span>
-                    </div>
-                    {/* Tells Staff WHY the deadline is further out than the raw priority budget
-                        would suggest — see the Manager panel for the full rationale. */}
-                    {calendarExtensionLabel && (
-                      <div className="text-xs text-muted-foreground">
-                        <p className="italic">{calendarExtensionLabel}:</p>
-                        {calendarExtensionDays.length > 0 && (
-                          <ul className="mt-1 space-y-0.5">
-                            {calendarExtensionDays.map((day) => (
-                              <li key={day} className="font-bold not-italic">
-                                - {day}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    )}
-                    {/* Live-clock only — see the Manager panel. A Stopped/Met/Breached timer
-                        has remainingPercent = 0 from the BE, so the bar would either read as
-                        an empty red near-breach or, on stale data, a full green clock on a
-                        ticket nobody is working any more. */}
-                    {isSlaClockLive(ticket.slaTimer.status) && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            Remaining
-                          </span>
-                          <span className="text-xs font-medium">
-                            {ticket.slaTimer.remainingPercent.toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-[width,background-color] duration-(--motion-enter) ease-linear ${slaBarCls}`}
-                            style={{
-                              width: `${Math.max(0, ticket.slaTimer.remainingPercent)}%`,
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Not triaged yet.
-                  </p>
-                )}
-              </div>
+              <TicketSlaSection ticket={ticket} />
 
               {/* Processing time.
                   Dropped a "Current status" badge row: the badge already sits right next to

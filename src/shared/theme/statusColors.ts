@@ -160,12 +160,14 @@ export const ALERT_STATUS_TONE: Record<AlertStatusEnum, StatusTone> = {
   [AlertStatusEnum.Resolved]: "ok",
 };
 
+// Same tone scale as ALERT_STATUS_TONE (Open/Acknowledged/Resolved) — Battery alerts, Device
+// alerts and Environmental alerts must read as one family in the sidebar.
 export const INCIDENT_STATUS_TONE: Record<
   EnvironmentalIncidentStatusEnum,
   StatusTone
 > = {
-  [EnvironmentalIncidentStatusEnum.Open]: "p1",
-  [EnvironmentalIncidentStatusEnum.Acknowledged]: "p2",
+  [EnvironmentalIncidentStatusEnum.Open]: "p2",
+  [EnvironmentalIncidentStatusEnum.Acknowledged]: "info",
   [EnvironmentalIncidentStatusEnum.Resolved]: "ok",
   [EnvironmentalIncidentStatusEnum.FalseAlarm]: "muted",
 };
