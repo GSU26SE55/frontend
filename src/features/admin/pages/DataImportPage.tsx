@@ -1,6 +1,12 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Download, FileUp, RotateCcw, Upload } from "lucide-react";
+import {
+  Download,
+  FileUp,
+  RefreshCw,
+  RotateCcw,
+  Upload,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
@@ -37,6 +43,7 @@ import {
   useImportBatches,
   useImportRows,
   useRevertImportBatch,
+  useUpdateImportRows,
 } from "@/features/admin/hooks/import/useImportBatches";
 import {
   ImportBatchStatusBadge,
@@ -44,58 +51,38 @@ import {
 } from "@/features/admin/components/import/ImportStatusBadge";
 import { IMPORT_ENTITY_LABEL } from "@/features/admin/components/import/importLabels";
 import {
+  IMPORT_FIELD_DEFINITIONS,
+  errorColumnKey,
+} from "@/features/admin/components/import/importFieldDefinitions";
+import {
   ImportBatchStatusEnum,
-  ImportEntityTypeEnum,
   ImportRowStatusEnum,
   isImportBatchRunning,
 } from "@/shared/enums/import/import.enum";
-import type { CreateImportBatchPayload } from "@/shared/types/import/import.types";
+import type { ImportRowDto } from "@/shared/types/import/import.types";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 import { cn } from "@/lib/utils";
 
-const TEMPLATES = [
-  { type: ImportEntityTypeEnum.Customer, label: "Customer" },
-  { type: ImportEntityTypeEnum.Site, label: "Site" },
-  { type: ImportEntityTypeEnum.BatteryAsset, label: "Battery asset" },
-] as const;
-
-type FileSlot = keyof CreateImportBatchPayload;
-
-const FILE_SLOTS: { slot: FileSlot; label: string; hint: string }[] = [
-  { slot: "customersFile", label: "customers.csv", hint: "Customers" },
-  {
-    slot: "sitesFile",
-    label: "sites.csv",
-    hint: "Sites — needs a customer code",
-  },
-  {
-    slot: "assetsFile",
-    label: "assets.csv",
-    hint: "Battery assets — needs a site code",
-  },
-];
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 // Matches the BE's own multipart size limit for this endpoint — rejecting oversized files
 // client-side avoids a full upload roundtrip just to learn the server would refuse it.
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 function validateFile(file: File): string | null {
-  const isCsv =
-    file.name.toLowerCase().endsWith(".csv") ||
-    file.type === "text/csv" ||
-    file.type === "application/vnd.ms-excel";
-  if (!isCsv) return "Not a .csv file.";
+  const isXlsx =
+    file.name.toLowerCase().endsWith(".xlsx") || file.type === XLSX_MIME;
+  if (!isXlsx) return "Not an .xlsx file.";
   if (file.size === 0) return "File is empty.";
   if (file.size > MAX_FILE_SIZE_BYTES) return "File is larger than 10 MB.";
   return null;
 }
 
 export default function DataImportPage() {
-  const [files, setFiles] = useState<CreateImportBatchPayload>({});
-  const [fileErrors, setFileErrors] = useState<
-    Partial<Record<FileSlot, string>>
-  >({});
+  const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
   const [revertTarget, setRevertTarget] = useState<string | null>(null);
   const [confirmCommit, setConfirmCommit] = useState(false);
@@ -103,7 +90,10 @@ export default function DataImportPage() {
   const [batchesPage, setBatchesPage] = useState(1);
   const [batchesPageSize, setBatchesPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [badRowsPage, setBadRowsPage] = useState(1);
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [rowEdits, setRowEdits] = useState<Record<string, Record<string, string>>>(
+    {},
+  );
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: batches, isLoading: batchesLoading } = useImportBatches({
     pageNumber: batchesPage,
@@ -128,15 +118,7 @@ export default function DataImportPage() {
   const revertBatch = useRevertImportBatch();
   const downloadTemplate = useDownloadImportTemplate();
   const downloadErrors = useDownloadImportErrors();
-
-  const hasAnyFile = useMemo(
-    () => FILE_SLOTS.some(({ slot }) => !!files[slot]),
-    [files],
-  );
-  const hasFileError = useMemo(
-    () => Object.values(fileErrors).some(Boolean),
-    [fileErrors],
-  );
+  const updateRows = useUpdateImportRows(activeBatchId ?? "");
 
   const progressPercent =
     activeBatch && activeBatch.validRows > 0
@@ -159,47 +141,46 @@ export default function DataImportPage() {
   ];
   const canRevert = !!activeBatch && REVERTABLE.includes(activeBatch.status);
 
-  function pickFile(slot: FileSlot, file: File | null) {
-    setFiles((current) => ({ ...current, [slot]: file }));
-    setFileErrors((current) => ({
-      ...current,
-      [slot]: file ? (validateFile(file) ?? undefined) : undefined,
-    }));
+  function pickFile(picked: File | null) {
+    setFile(picked);
+    setFileError(picked ? (validateFile(picked) ?? null) : null);
   }
 
-  function resetFiles() {
-    setFiles({});
-    setFileErrors({});
-    Object.values(inputRefs.current).forEach((input) => {
-      if (input) input.value = "";
-    });
+  function resetFile() {
+    setFile(null);
+    setFileError(null);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   function handleDryRun() {
     setUploadPercent(0);
-    createBatch.mutate(files, {
-      onSuccess: (response) => {
-        setUploadPercent(null);
-        const batch = response.data;
-        if (!batch) return;
-        setActiveBatchId(batch.id);
-        setBadRowsPage(1);
-        resetFiles();
-        if (batch.invalidRows > 0) {
-          toast.warning(
-            `${batch.validRows}/${batch.totalRows} rows valid. Download the failed rows, fix them and upload again.`,
-          );
-        } else {
-          toast.success(
-            `${batch.totalRows} rows valid. Nothing written yet — press "Commit" to continue.`,
-          );
-        }
+    createBatch.mutate(
+      { file },
+      {
+        onSuccess: (response) => {
+          setUploadPercent(null);
+          const batch = response.data;
+          if (!batch) return;
+          setActiveBatchId(batch.id);
+          setBadRowsPage(1);
+          setRowEdits({});
+          resetFile();
+          if (batch.invalidRows > 0) {
+            toast.warning(
+              `${batch.validRows}/${batch.totalRows} rows valid. Download the failed rows, fix them and upload again.`,
+            );
+          } else {
+            toast.success(
+              `${batch.totalRows} rows valid. Nothing written yet — press "Commit" to continue.`,
+            );
+          }
+        },
+        onError: (error) => {
+          setUploadPercent(null);
+          handleErrorApi({ error });
+        },
       },
-      onError: (error) => {
-        setUploadPercent(null);
-        handleErrorApi({ error });
-      },
-    });
+    );
   }
 
   function handleCommit() {
@@ -214,6 +195,47 @@ export default function DataImportPage() {
         setConfirmCommit(false);
       },
     });
+  }
+
+  function setFieldEdit(rowId: string, fieldKey: string, value: string) {
+    setRowEdits((current) => ({
+      ...current,
+      [rowId]: { ...current[rowId], [fieldKey]: value },
+    }));
+  }
+
+  function handleResubmitCorrections() {
+    if (!activeBatchId || !badRows) return;
+
+    const rowsById = new Map(badRows.items.map((row) => [row.id, row]));
+    const editedRows = Object.entries(rowEdits)
+      .filter(([rowId]) => rowsById.has(rowId))
+      .map(([rowId, edits]) => ({
+        rowId,
+        // Gửi ĐỦ mọi cột của dòng, không chỉ cột vừa sửa — BE thay nguyên RawJson bằng những gì
+        // gửi lên, thiếu cột nào là mất giá trị cũ của cột đó.
+        fields: { ...rowsById.get(rowId)!.fields, ...edits },
+      }));
+
+    if (editedRows.length === 0) return;
+
+    updateRows.mutate(
+      { rows: editedRows },
+      {
+        onSuccess: (response) => {
+          setRowEdits({});
+          setBadRowsPage(1);
+          const batch = response.data;
+          if (!batch) return;
+          toast.success(
+            batch.invalidRows === 0
+              ? `All ${batch.validRows} rows are now valid.`
+              : `${batch.validRows}/${batch.totalRows} rows valid now — ${batch.invalidRows} still need fixing.`,
+          );
+        },
+        onError: (error) => handleErrorApi({ error }),
+      },
+    );
   }
 
   function handleRevert() {
@@ -243,76 +265,63 @@ export default function DataImportPage() {
         <RefreshButton queryKeys={[KEY.importBatches]} />
       </div>
 
-      {/* Step 1 — templates */}
+      {/* Step 1 — template */}
       <Card className="p-5">
-        <h2 className="mb-3 font-medium">Step 1 — Download a template</h2>
-        <div className="flex flex-wrap gap-2">
-          {TEMPLATES.map(({ type, label }) => (
-            <Button
-              key={type}
-              variant="outline"
-              size="sm"
-              data-testid={`template-${type}`}
-              disabled={downloadTemplate.isPending}
-              onClick={() =>
-                downloadTemplate.mutate(type, {
-                  onError: (error) => handleErrorApi({ error }),
-                })
-              }
-            >
-              <Download className="mr-2 size-4" />
-              {label}
-            </Button>
-          ))}
-        </div>
+        <h2 className="mb-3 font-medium">Step 1 — Download the template</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          data-testid="template-download"
+          disabled={downloadTemplate.isPending}
+          onClick={() =>
+            downloadTemplate.mutate(undefined, {
+              onError: (error) => handleErrorApi({ error }),
+            })
+          }
+        >
+          <Download className="mr-2 size-4" />
+          import-template.xlsx
+        </Button>
+        <p className="text-muted-foreground mt-2 text-xs">
+          One workbook, three sheets — Customers, Sites, Battery assets, in
+          that order.
+        </p>
       </Card>
 
-      {/* Step 2 — pick files + dry run */}
+      {/* Step 2 — pick the file + dry run */}
       <Card className="p-5">
-        <h2 className="mb-3 font-medium">Step 2 — Pick files and dry-run</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {FILE_SLOTS.map(({ slot, label, hint }) => {
-            const error = fileErrors[slot];
-            return (
-              <div key={slot} className="space-y-1.5">
-                <Label htmlFor={slot}>
-                  {label}
-                  <span className="text-muted-foreground ml-2 text-xs font-normal">
-                    {hint}
-                  </span>
-                </Label>
-                <Input
-                  id={slot}
-                  type="file"
-                  accept=".csv,text/csv"
-                  className={cn("h-9", error && "border-destructive")}
-                  data-testid={`file-${slot}`}
-                  ref={(element) => {
-                    inputRefs.current[slot] = element;
-                  }}
-                  onChange={(event) =>
-                    pickFile(slot, event.target.files?.[0] ?? null)
-                  }
-                />
-                {error && <p className="text-destructive text-xs">{error}</p>}
-              </div>
-            );
-          })}
+        <h2 className="mb-3 font-medium">Step 2 — Pick the file and dry-run</h2>
+        <div className="max-w-sm space-y-1.5">
+          <Label htmlFor="import-file">Workbook (.xlsx)</Label>
+          <Input
+            id="import-file"
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className={cn("h-9", fileError && "border-destructive")}
+            data-testid="file-input"
+            ref={inputRef}
+            onChange={(event) =>
+              pickFile(event.target.files?.[0] ?? null)
+            }
+          />
+          {fileError && (
+            <p className="text-destructive text-xs">{fileError}</p>
+          )}
         </div>
         <div className="mt-4 flex items-center justify-end gap-3">
-          {!hasAnyFile && (
+          {!file && (
             <span className="text-muted-foreground text-sm">
-              Pick at least one file.
+              Pick a file first.
             </span>
           )}
-          {hasAnyFile && hasFileError && (
+          {file && fileError && (
             <span className="text-destructive text-sm">
-              Fix the file errors above before running.
+              Fix the file error above before running.
             </span>
           )}
           <Button
             data-testid="dry-run-button"
-            disabled={!hasAnyFile || hasFileError || createBatch.isPending}
+            disabled={!file || !!fileError || createBatch.isPending}
             onClick={handleDryRun}
           >
             <FileUp className="mr-2 size-4" />
@@ -438,39 +447,42 @@ export default function DataImportPage() {
 
           {!!badRows?.items.length && (
             <div className="mt-5 space-y-3">
-              <h3 className="text-sm font-medium">Invalid rows</h3>
-              <Table data-testid="invalid-rows-table">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Row</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Reason</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {badRows.items.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        {IMPORT_ENTITY_LABEL[row.entityType]}
-                      </TableCell>
-                      <TableCell>{row.rowNumber}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {row.externalRef}
-                      </TableCell>
-                      <TableCell>
-                        <ImportRowStatusBadge status={row.status} />
-                      </TableCell>
-                      <TableCell className="text-destructive text-sm">
-                        {row.errors
-                          .map((error) => `${error.field}: ${error.detail}`)
-                          .join(" · ")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-medium">
+                    Invalid rows — fix and resubmit
+                  </h3>
+                  <p className="text-muted-foreground text-xs">
+                    Edit the fields below, then resubmit — the same validation
+                    that checks a .xlsx file runs again on the whole batch.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  data-testid="resubmit-corrections-button"
+                  disabled={
+                    Object.keys(rowEdits).length === 0 || updateRows.isPending
+                  }
+                  onClick={handleResubmitCorrections}
+                >
+                  <RefreshCw className="mr-2 size-4" />
+                  {updateRows.isPending
+                    ? "Re-validating…"
+                    : `Resubmit ${Object.keys(rowEdits).length} correction(s)`}
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {badRows.items.map((row) => (
+                  <InvalidRowEditor
+                    key={row.id}
+                    row={row}
+                    values={{ ...row.fields, ...rowEdits[row.id] }}
+                    onFieldChange={(fieldKey, value) =>
+                      setFieldEdit(row.id, fieldKey, value)
+                    }
+                  />
+                ))}
+              </div>
               <DataPagination
                 totalItems={badRows.totalItems}
                 pageNumber={badRows.pageNumber}
@@ -524,6 +536,7 @@ export default function DataImportPage() {
                         onClick={() => {
                           setActiveBatchId(batch.id);
                           setBadRowsPage(1);
+                          setRowEdits({});
                         }}
                       >
                         View
@@ -645,6 +658,80 @@ function Stat({
       <div className="text-xl font-semibold" data-testid={testId}>
         {value}
       </div>
+    </div>
+  );
+}
+
+/**
+ * One invalid row, editable in place — the fields shown match exactly the columns of that row's
+ * sheet in the .xlsx template, pre-filled with its current values (already-corrected values if
+ * the caller passed those in via `values`).
+ */
+function InvalidRowEditor({
+  row,
+  values,
+  onFieldChange,
+}: {
+  row: ImportRowDto;
+  values: Record<string, string>;
+  onFieldChange: (fieldKey: string, value: string) => void;
+}) {
+  const fields = IMPORT_FIELD_DEFINITIONS[row.entityType];
+
+  const errorByColumn = new Map<string, string>();
+  const unmatchedErrors: typeof row.errors = [];
+  for (const error of row.errors) {
+    const columnKey = errorColumnKey(row.entityType, error.field);
+    if (columnKey) errorByColumn.set(columnKey, error.detail);
+    else unmatchedErrors.push(error);
+  }
+
+  return (
+    <div
+      className="rounded-md border p-3"
+      data-testid={`invalid-row-${row.id}`}
+    >
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-medium">
+            {IMPORT_ENTITY_LABEL[row.entityType]}
+          </span>
+          <span className="text-muted-foreground">Row {row.rowNumber}</span>
+        </div>
+        <ImportRowStatusBadge status={row.status} />
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {fields.map((field) => {
+          const errorDetail = errorByColumn.get(field.key);
+          return (
+            <div key={field.key} className="space-y-1">
+              <Label className="text-xs" htmlFor={`${row.id}-${field.key}`}>
+                {field.label}
+                {field.required && (
+                  <span className="text-destructive ml-0.5">*</span>
+                )}
+              </Label>
+              <Input
+                id={`${row.id}-${field.key}`}
+                data-testid={`field-${row.id}-${field.key}`}
+                className={cn("h-8 text-sm", errorDetail && "border-destructive")}
+                value={values[field.key] ?? ""}
+                onChange={(event) => onFieldChange(field.key, event.target.value)}
+              />
+              {errorDetail && (
+                <p className="text-destructive text-xs">{errorDetail}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {unmatchedErrors.length > 0 && (
+        <p className="text-destructive mt-2 text-xs">
+          {unmatchedErrors
+            .map((error) => `${error.field}: ${error.detail}`)
+            .join(" · ")}
+        </p>
+      )}
     </div>
   );
 }

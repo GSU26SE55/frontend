@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Battery, HeartPulse } from "lucide-react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,21 +29,13 @@ import {
   toneVars,
   CASCADE_RISK_TONE,
 } from "@/shared/theme/statusColors";
-
-function fmtDate(iso?: string | null) {
-  if (!iso) return "—";
-  try {
-    return format(new Date(iso), "dd/MM/yyyy", { locale: enUS });
-  } catch {
-    return iso;
-  }
-}
+import { formatDate, formatDateTime } from "@/shared/utils/datetime";
 
 function InfoRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex items-center justify-between py-1.5 text-xs">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground text-right truncate max-w-[140px]">
+      <span className="font-medium text-foreground text-right truncate max-w-35">
         {value || "—"}
       </span>
     </div>
@@ -291,13 +281,15 @@ export default function BatteryRealtimeDetail({
                 <InfoRow label="Site" value={asset.siteName} />
                 <InfoRow
                   label="Install date"
-                  value={asset.installDate ? fmtDate(asset.installDate) : null}
+                  value={
+                    asset.installDate ? formatDate(asset.installDate) : null
+                  }
                 />
                 <InfoRow
                   label="Warranty end"
                   value={
                     asset.warrantyEndDate
-                      ? fmtDate(asset.warrantyEndDate)
+                      ? formatDate(asset.warrantyEndDate)
                       : null
                   }
                 />
@@ -305,9 +297,7 @@ export default function BatteryRealtimeDetail({
                   label="Last reading"
                   value={
                     asset.lastSensorReadingAt
-                      ? new Date(asset.lastSensorReadingAt).toLocaleString(
-                          "vi-VN",
-                        )
+                      ? formatDateTime(asset.lastSensorReadingAt)
                       : null
                   }
                 />

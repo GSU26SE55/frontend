@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDate } from "@/shared/utils/datetime";
 import { BatteryFull, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
@@ -116,20 +115,11 @@ export default function BatteryAssetInfoPanel({
             />
           }
         />
-        <InfoRow
-          label="Install date"
-          value={format(new Date(asset.installDate), "dd/MM/yyyy", {
-            locale: enUS,
-          })}
-        />
+        <InfoRow label="Install date" value={formatDate(asset.installDate)} />
         <InfoRow
           label="Warranty"
           value={
-            asset.warrantyEndDate
-              ? format(new Date(asset.warrantyEndDate), "dd/MM/yyyy", {
-                  locale: enUS,
-                })
-              : "—"
+            asset.warrantyEndDate ? formatDate(asset.warrantyEndDate) : "—"
           }
         />
       </div>

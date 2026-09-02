@@ -10,6 +10,8 @@
 import {
   TicketStatusEnum,
   TicketPriorityEnum,
+  ImpactScopeEnum,
+  UrgencyLevelEnum,
 } from "@/shared/enums/ticket/ticket.enum";
 import { SlaTimerStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import {
@@ -136,6 +138,20 @@ export const TICKET_PRIORITY_TONE: Record<TicketPriorityEnum, StatusTone> = {
   [TicketPriorityEnum.P2High]: "p2",
   [TicketPriorityEnum.P3Normal]: "p3",
   [TicketPriorityEnum.Urgent]: "p1",
+};
+
+// Feeds the Impact×Urgency priority matrix — same severity scale as priority, so a Manager
+// reading "Urgency: High" next to a P3 ticket immediately sees the mismatch worth investigating.
+export const IMPACT_SCOPE_TONE: Record<ImpactScopeEnum, StatusTone> = {
+  [ImpactScopeEnum.SingleAsset]: "muted",
+  [ImpactScopeEnum.Site]: "p2",
+  [ImpactScopeEnum.MultiSite]: "p1",
+};
+
+export const URGENCY_LEVEL_TONE: Record<UrgencyLevelEnum, StatusTone> = {
+  [UrgencyLevelEnum.Low]: "muted",
+  [UrgencyLevelEnum.Medium]: "p2",
+  [UrgencyLevelEnum.High]: "p1",
 };
 
 export const SLA_TIMER_TONE: Record<SlaTimerStatusEnum, StatusTone> = {

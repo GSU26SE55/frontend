@@ -59,13 +59,14 @@ export default function DeclareIncidentDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Declare Incident</DialogTitle>
+          <DialogTitle>Escalate to Urgent</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Mark this ticket as a major incident to prioritize it. This action
-              is logged to the history and cannot be repeated.
+              Pin this ticket at Urgent priority, stop its SLA timer, and
+              request battery isolation. This action is logged to the history
+              and cannot be repeated.
             </p>
             <FormField
               control={form.control}
@@ -73,12 +74,11 @@ export default function DeclareIncidentDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Incident description{" "}
-                    <span className="text-destructive">*</span>
+                    Reason <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Brief reason for declaring this incident..."
+                      placeholder="Brief reason for escalating to Urgent..."
                       {...field}
                     />
                   </FormControl>
@@ -91,7 +91,7 @@ export default function DeclareIncidentDialog({
                 Cancel
               </Button>
               <Button type="submit" variant="destructive" disabled={isPending}>
-                {isPending ? "Processing..." : "Declare Incident"}
+                {isPending ? "Processing..." : "Escalate to Urgent"}
               </Button>
             </DialogFooter>
           </form>

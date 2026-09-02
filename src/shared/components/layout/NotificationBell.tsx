@@ -134,7 +134,7 @@ export default function NotificationBell() {
           {/* Each row is ~90px, so the old max-h-90 (360px) showed barely four and cut the
               fifth mid-row, which read as "the rest of my notifications are missing".
               Taller list + the count in the header make it clear the list scrolls. */}
-          <div className="max-h-[32rem] overflow-y-auto">
+          <div className="max-h-128 overflow-y-auto">
             {isLoading ? (
               <div
                 role="status"

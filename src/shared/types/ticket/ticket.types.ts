@@ -156,7 +156,13 @@ export interface TicketDTO {
   pendingContext?: PendingContextEnum | null;
   /** GH-1176: hold reason — only set when pendingContext=Held. */
   pendingReason?: PauseReasonEnum | null;
-  /** GH-1176: active incident episode ID (set when priority=Urgent + isIncident=true). */
+  /**
+   * GH-1176: set only by a manual Declare Incident — pins Priority=Urgent, stops the SLA
+   * timer, and requests battery isolation. NOT the same as `isIncident`: an
+   * AutoFromEnvironment ticket has `isIncident=true` from creation but keeps its
+   * severity-derived P1/P2/P3 priority and never opens an episode. Use this field (not
+   * `isIncident`) to gate anything tied to the Urgent-lock side effects (e.g. reprioritize).
+   */
   activeIncidentEpisodeId?: string | null;
   /**
    * Precomputed by the BE for the current user — drives the unread-chat dot on

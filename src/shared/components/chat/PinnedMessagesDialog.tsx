@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +62,7 @@ export default function PinnedMessagesDialog({
                       {authorName(c)}
                     </span>
                     <span className="text-2xs text-muted-foreground shrink-0">
-                      {format(new Date(c.createdAt), "dd/MM/yyyy HH:mm")}
+                      {formatDateTime(c.createdAt)}
                     </span>
                   </div>
                   <p className="text-sm mt-0.5 line-clamp-3 whitespace-pre-wrap break-words">

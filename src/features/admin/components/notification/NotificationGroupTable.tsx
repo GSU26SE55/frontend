@@ -2,6 +2,11 @@ import { Lock, Pencil, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -72,9 +77,18 @@ export default function NotificationGroupTable({
                   )}
                 </div>
                 {g.description && (
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {g.description}
-                  </p>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground" />
+                      }
+                    >
+                      {g.description}
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm">
+                      {g.description}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </TableCell>
               <TableCell>

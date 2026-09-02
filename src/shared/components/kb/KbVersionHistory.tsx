@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { History, GitCompare, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,8 +102,7 @@ export function KbVersionHistory({
                   </p>
                 )}
                 <p className="text-2xs text-muted-foreground">
-                  {v.changedBy} ·{" "}
-                  {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
+                  {v.changedBy} · {formatDateTime(v.createdAt)}
                 </p>
               </div>
               {onRollback && (

@@ -3,6 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/shared/utils/datetime";
 import {
   Dialog,
   DialogContent,
@@ -277,10 +278,7 @@ export default function EditStaffProfileDialog({
                         </span>
                         {sk.certifiedUntil && (
                           <span className="ml-2 text-xs text-muted-foreground">
-                            — expires{" "}
-                            {new Date(sk.certifiedUntil).toLocaleDateString(
-                              "vi-VN",
-                            )}
+                            — expires {formatDate(sk.certifiedUntil)}
                           </span>
                         )}
                       </div>

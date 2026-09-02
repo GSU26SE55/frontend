@@ -13,6 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { DeviceSecrets } from "@/features/admin/components/iot/deviceSecrets";
 
 interface Props {
@@ -81,9 +86,22 @@ function CopyRow({ label, value }: { label: string; value: string }) {
       <Label>{label}</Label>
       <div className="flex gap-2">
         <Input value={value} readOnly className="font-mono text-xs" />
-        <Button type="button" variant="outline" size="icon" onClick={copy}>
-          <Copy className="size-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={copy}
+                aria-label={`Copy ${label}`}
+              />
+            }
+          >
+            <Copy className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>Copy {label}</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

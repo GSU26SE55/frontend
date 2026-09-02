@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDate, formatDateTimeWithSeconds } from "@/shared/utils/datetime";
 import {
   EllipsisVertical,
   Globe,
@@ -110,7 +109,7 @@ function formatDateLabel(iso: string) {
   );
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
-  return format(d, "dd/MM/yyyy", { locale: enUS });
+  return formatDate(d);
 }
 
 function initials(name: string) {
@@ -237,7 +236,7 @@ function CommentBubbleContent({
         {isOwn && canShowActions && actionsMenu}
         <div
           className={cn(
-            "rounded-2xl px-3 py-2 text-base whitespace-pre-wrap break-words",
+            "rounded-2xl px-3 py-2 text-base whitespace-pre-wrap wrap-break-word",
             isOwn
               ? "rounded-br-sm bg-primary text-primary-foreground"
               : "rounded-bl-sm bg-muted text-foreground",
@@ -752,7 +751,7 @@ export function TicketCommentThread({
   return (
     <div className="flex flex-col">
       {/* Public / Internal tab split — sticks to the top on scroll, background covers messages underneath */}
-      <div className="sticky -top-6 z-20 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] -mt-6 bg-background pl-(--page-pl) pr-(--page-pr) pt-6 flex items-center gap-1 border-b border-border pb-2 shrink-0">
+      <div className="sticky -top-6 z-20 -ml-(--page-pl) -mr-(--page-pr) -mt-6 bg-background pl-(--page-pl) pr-(--page-pr) pt-6 flex items-center gap-1 border-b border-border pb-2 shrink-0">
         <Tabs value={tab} onValueChange={(v) => setTab(v as ChatTab)}>
           <TabsList>
             <TabsTrigger value="public">
@@ -782,7 +781,7 @@ export function TicketCommentThread({
           top-10 (40px) is where the tab strip ends: it pins at -top-6 (-24) and stands
           pt-6 + h-8 + pb-2 + 1px border = 65 tall, so its bottom edge lands at 41px. */}
       {pinnedMessages.length > 0 && (
-        <div className="sticky top-10 z-10 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] bg-background pl-(--page-pl) pr-(--page-pr) shrink-0">
+        <div className="sticky top-10 z-10 -ml-(--page-pl) -mr-(--page-pr) bg-background pl-(--page-pl) pr-(--page-pr) shrink-0">
           <PinnedMessageBar
             pinned={pinnedMessages}
             authorName={authorNameOf}
@@ -915,7 +914,7 @@ export function TicketCommentThread({
                     </div>
 
                     {isEditing ? (
-                      <div className="w-full min-w-[220px] space-y-1.5">
+                      <div className="w-full min-w-55 space-y-1.5">
                         <Textarea
                           value={editBody}
                           onChange={(e) => setEditBody(e.target.value)}
@@ -973,11 +972,7 @@ export function TicketCommentThread({
                           />
                         </TooltipTrigger>
                         <TooltipContent>
-                          {format(
-                            new Date(c.createdAt),
-                            "EEEE, dd/MM/yyyy HH:mm:ss",
-                            { locale: enUS },
-                          )}
+                          {formatDateTimeWithSeconds(c.createdAt)}
                         </TooltipContent>
                       </Tooltip>
                     )}
@@ -1019,11 +1014,7 @@ export function TicketCommentThread({
                           edited
                         </TooltipTrigger>
                         <TooltipContent>
-                          {format(
-                            new Date(c.createdAt),
-                            "EEEE, dd/MM/yyyy HH:mm:ss",
-                            { locale: enUS },
-                          )}
+                          {formatDateTimeWithSeconds(c.createdAt)}
                         </TooltipContent>
                       </Tooltip>
                     )}
@@ -1081,7 +1072,7 @@ export function TicketCommentThread({
                     key={i}
                     type="button"
                     onClick={() => pickSuggestion(s)}
-                    className="w-full rounded-2xl rounded-br-md border border-primary/30 bg-primary/5 px-3 py-2 text-right text-base whitespace-pre-wrap break-words transition-colors hover:bg-primary/10 hover:border-primary/50"
+                    className="w-full rounded-2xl rounded-br-md border border-primary/30 bg-primary/5 px-3 py-2 text-right text-base whitespace-pre-wrap wrap-break-word transition-colors hover:bg-primary/10 hover:border-primary/50"
                   >
                     {s}
                   </button>

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +45,7 @@ import { toneClass, SAGA_STATE_TONE } from "@/shared/theme/statusColors";
 import { DEFAULT_PAGE_SIZE } from "@/shared/constants/pagination";
 
 function fmt(d?: string | null) {
-  return d ? format(new Date(d), "dd/MM/yyyy HH:mm", { locale: enUS }) : "—";
+  return d ? formatDateTime(d) : "—";
 }
 
 function DetailRow({

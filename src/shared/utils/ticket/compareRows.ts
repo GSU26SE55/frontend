@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { TicketOriginEnum } from "@/shared/enums/ticket/ticket.enum";
 import {
@@ -16,8 +15,7 @@ const ORIGIN_LABELS: Record<string, string> = {
 
 const EMPTY = "—";
 
-const fmtDate = (v?: string | null) =>
-  v ? format(new Date(v), "dd/MM/yyyy HH:mm", { locale: enUS }) : EMPTY;
+const fmtDate = (v?: string | null) => (v ? formatDateTime(v) : EMPTY);
 
 export interface CompareRow {
   label: string;

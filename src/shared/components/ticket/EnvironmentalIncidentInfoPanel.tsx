@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Activity, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -131,13 +130,7 @@ export default function EnvironmentalIncidentInfoPanel({
           <InfoRow label="Site" value={site?.name ?? null} />
           <InfoRow
             label="Detected at"
-            value={
-              anchorAt
-                ? format(new Date(anchorAt), "HH:mm dd/MM/yyyy", {
-                    locale: enUS,
-                  })
-                : null
-            }
+            value={anchorAt ? formatDateTime(anchorAt) : null}
           />
         </div>
         <SensorEvidence fallback={description} />
@@ -203,9 +196,7 @@ export default function EnvironmentalIncidentInfoPanel({
         />
         <InfoRow
           label="Detected at"
-          value={format(new Date(incident.detectedAt), "HH:mm dd/MM/yyyy", {
-            locale: enUS,
-          })}
+          value={formatDateTime(incident.detectedAt)}
         />
         {/* Who and where, not the acknowledge/resolve clock: the status badge in the header
             already says where the incident stands, and on an Open one both timestamps are

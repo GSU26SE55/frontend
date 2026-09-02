@@ -26,6 +26,11 @@ import { useDebounce } from "@/shared/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import { SectionContent } from "./KbArticleDetail";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface KbArticleSearchParams {
   q?: string;
@@ -179,9 +184,16 @@ export function KbArticleSelector({
               options?.find((a) => a.id === id) ?? selectedMeta.get(id);
             return (
               <Badge key={id} variant="secondary" className="gap-1 pr-1">
-                <span className="max-w-40 truncate text-xs">
-                  {article?.code ?? id.slice(0, 8)}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={<span className="max-w-40 truncate text-xs" />}
+                  >
+                    {article?.code ?? id.slice(0, 8)}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {article?.title ?? article?.code ?? id}
+                  </TooltipContent>
+                </Tooltip>
                 <button
                   type="button"
                   onClick={() => removeId(id)}
@@ -303,7 +315,16 @@ export function KbArticleSelector({
                             article.category}
                         </span>
                       </div>
-                      <p className="truncate text-sm mt-0.5">{article.title}</p>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={<p className="truncate text-sm mt-0.5" />}
+                        >
+                          {article.title}
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          {article.title}
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 );

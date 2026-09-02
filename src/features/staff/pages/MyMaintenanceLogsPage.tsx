@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
@@ -71,9 +70,7 @@ export default function MyMaintenanceLogsPage() {
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="outline">{log.logType}</Badge>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(log.startedAt), "dd/MM/yyyy HH:mm", {
-                          locale: enUS,
-                        })}
+                        {formatDateTime(log.startedAt)}
                       </p>
                     </div>
                     {log.summary && (

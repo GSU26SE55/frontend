@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { formatDate } from "@/shared/utils/datetime";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SiteStatusEnum, type SiteDto } from "@/shared/types/site/site.types";
@@ -76,7 +76,7 @@ export default function SiteTable({
       header: "Install date",
       sortKey: "installDate",
       sortValue: (s) => new Date(s.installDate).getTime(),
-      cell: (s) => format(new Date(s.installDate), "dd/MM/yyyy"),
+      cell: (s) => formatDate(s.installDate),
     },
     {
       id: "chevron",

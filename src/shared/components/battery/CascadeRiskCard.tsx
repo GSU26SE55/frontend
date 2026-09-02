@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,13 +94,7 @@ export default function CascadeRiskCard({
             <dt className="text-muted-foreground">Last updated</dt>
             <dd className="text-right font-medium">
               {data.cascadeRiskUpdatedAt
-                ? format(
-                    new Date(data.cascadeRiskUpdatedAt),
-                    "dd/MM/yyyy HH:mm",
-                    {
-                      locale: enUS,
-                    },
-                  )
+                ? formatDateTime(data.cascadeRiskUpdatedAt)
                 : "Not computed yet"}
             </dd>
           </dl>

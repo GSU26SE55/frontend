@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { ArrowLeft, Lock, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -22,7 +22,14 @@ import {
 import {
   TicketStatusEnum,
   MaintenanceLogTypeEnum,
+  ImpactScopeEnum,
+  UrgencyLevelEnum,
 } from "@/shared/types/ticket/ticket.types";
+import {
+  toneClass,
+  IMPACT_SCOPE_TONE,
+  URGENCY_LEVEL_TONE,
+} from "@/shared/theme/statusColors";
 import TicketSlaSection from "@/shared/components/ticket/TicketSlaSection";
 import {
   isTicketChatLocked,
@@ -63,6 +70,7 @@ import {
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
+import TicketOriginAlertPanel from "@/shared/components/ticket/TicketOriginAlertPanel";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
 import SubIssuePanel from "@/features/staff/components/ticket/SubIssuePanel";
 import BatteryAssetInfoPanel from "@/features/staff/components/battery/BatteryAssetInfoPanel";
@@ -107,6 +115,18 @@ const getKbArticleDetail = (id: string) =>
 import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
 
 // GH-1176: removed legacy WaitingCustomer/WaitingParts/WaitingOnsiteSchedule statuses.
+
+const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
+  SingleAsset: "Single Asset",
+  Site: "Site",
+  MultiSite: "Multi Site",
+};
+
+const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
+  Low: "Low",
+  Medium: "Medium",
+  High: "High",
+};
 
 function SideInfoRow({
   label,
@@ -434,7 +454,6 @@ export default function TicketDetailPage() {
                         key={bid}
                         batteryAssetId={bid}
                         detectedAt={ticket.detectedAt}
-                        originAlertId={ticket.originAlertId}
                       />
                     ))}
                   </div>
@@ -721,6 +740,9 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
+              {/* Origin alert — why this auto-created ticket exists */}
+              <TicketOriginAlertPanel alertId={ticket.originAlertId} />
+
               {/* Battery asset info moved to the "Info" tab (matches Manager) —
                   keeping it in both places would render the same battery panel + evidence twice. */}
 
@@ -774,10 +796,7 @@ export default function TicketDetailPage() {
                   </p>
                   {ticket.resolvedAt && (
                     <p className="text-3xs text-emerald-700/70 dark:text-emerald-400/70">
-                      Resolved at{" "}
-                      {format(new Date(ticket.resolvedAt), "dd/MM/yyyy HH:mm", {
-                        locale: enUS,
-                      })}
+                      Resolved at {formatDateTime(ticket.resolvedAt)}
                     </p>
                   )}
                 </div>
@@ -796,9 +815,7 @@ export default function TicketDetailPage() {
                     </p>
                   )}
                   <p className="text-3xs text-orange-700/70 dark:text-orange-400/70 mt-1">
-                    {format(new Date(ticket.escalatedAt), "dd/MM/yyyy HH:mm", {
-                      locale: enUS,
-                    })}
+                    {formatDateTime(ticket.escalatedAt)}
                   </p>
                 </div>
               )}
@@ -835,11 +852,7 @@ export default function TicketDetailPage() {
                       value={
                         ticket.periodicMaintenanceDueAtUtc ? (
                           <span className="inline-flex items-center gap-1.5">
-                            {format(
-                              new Date(ticket.periodicMaintenanceDueAtUtc),
-                              "dd/MM/yyyy HH:mm",
-                              { locale: enUS },
-                            )}
+                            {formatDateTime(ticket.periodicMaintenanceDueAtUtc)}
                             {/* Quá hạn là tin cần biết ngay, nhưng nó nói về CÁI HẠN NÀY — nên đứng
                                 cạnh ngày, không tách thành một hàng "Periodic · overdue" riêng. */}
                             {ticket.isPeriodicMaintenanceOverdue && (
@@ -855,11 +868,7 @@ export default function TicketDetailPage() {
                       label="Visit schedule"
                       value={
                         ticket.scheduledStartAtUtc
-                          ? format(
-                              new Date(ticket.scheduledStartAtUtc),
-                              "dd/MM/yyyy HH:mm",
-                              { locale: enUS },
-                            )
+                          ? formatDateTime(ticket.scheduledStartAtUtc)
                           : null
                       }
                     />
@@ -887,27 +896,43 @@ export default function TicketDetailPage() {
                 {ticket.detectedAt && (
                   <SideInfoRow
                     label="Detected at"
-                    value={format(
-                      new Date(ticket.detectedAt),
-                      "dd/MM/yyyy HH:mm",
-                      { locale: enUS },
-                    )}
+                    value={formatDateTime(ticket.detectedAt)}
                   />
                 )}
-                <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />
+                <SideInfoRow
+                  label="Scope"
+                  value={
+                    ticket.impactScope ? (
+                      <Badge
+                        variant="outline"
+                        className={toneClass(
+                          IMPACT_SCOPE_TONE[ticket.impactScope],
+                        )}
+                      >
+                        {IMPACT_LABEL[ticket.impactScope] ?? ticket.impactScope}
+                      </Badge>
+                    ) : null
+                  }
+                />
                 <SideInfoRow
                   label="Urgency"
-                  value={ticket.urgencyLevel ?? null}
+                  value={
+                    ticket.urgencyLevel ? (
+                      <Badge
+                        variant="outline"
+                        className={toneClass(
+                          URGENCY_LEVEL_TONE[ticket.urgencyLevel],
+                        )}
+                      >
+                        {URGENCY_LABEL[ticket.urgencyLevel] ??
+                          ticket.urgencyLevel}
+                      </Badge>
+                    ) : null
+                  }
                 />
                 <SideInfoRow
                   label="Created"
-                  value={format(
-                    new Date(ticket.createdAt),
-                    "dd/MM/yyyy HH:mm",
-                    {
-                      locale: enUS,
-                    },
-                  )}
+                  value={formatDateTime(ticket.createdAt)}
                 />
                 {ticket.reopenCount > 0 && (
                   <SideInfoRow

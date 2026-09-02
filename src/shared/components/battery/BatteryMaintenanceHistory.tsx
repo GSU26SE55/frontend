@@ -1,5 +1,5 @@
-import { format, differenceInCalendarDays } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { differenceInCalendarDays } from "date-fns";
+import { formatDate } from "@/shared/utils/datetime";
 import { useState } from "react";
 import {
   CalendarClock,
@@ -17,8 +17,7 @@ import { useSessionStore } from "@/shared/stores/sessionStore";
 import { redirectByRole } from "@/shared/types/account/session.types";
 import type { MaintenanceCycleDTO } from "@/shared/types/battery/maintenance-cycle.types";
 
-const fmtDate = (value?: string | null) =>
-  value ? format(new Date(value), "dd/MM/yyyy", { locale: enUS }) : "—";
+const fmtDate = (value?: string | null) => (value ? formatDate(value) : "—");
 
 /** Kỳ tiếp theo — đọc thẳng từ asset, không suy ra từ danh sách kỳ. */
 function NextCycleBanner({ assetId }: { assetId: string }) {

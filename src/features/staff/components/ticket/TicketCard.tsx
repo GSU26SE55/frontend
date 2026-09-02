@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
+import { formatDateTimeShort } from "@/shared/utils/datetime";
 import { BatteryCharging, Repeat2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
@@ -35,8 +35,7 @@ export function TicketCard({ ticket }: Props) {
   // already run out. Both light the tile up, because to the person scanning the board
   // they mean the same thing.
   const alert =
-    ticket.isIncident ||
-    activeSlaTimer?.status === SlaTimerStatusEnum.Breached;
+    ticket.isIncident || activeSlaTimer?.status === SlaTimerStatusEnum.Breached;
 
   return (
     <Link to={`/staff/tickets/${ticket.id}`} className="block h-full">
@@ -54,7 +53,10 @@ export function TicketCard({ ticket }: Props) {
           {/* Row 1: ticket code + badges. Row 2: title takes the FULL width — sharing a
               column with the badges squeezed it into two lines with room to spare. */}
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate font-mono text-xs text-muted-foreground">
+            <p
+              className="truncate font-mono text-xs text-muted-foreground"
+              title={ticket.code}
+            >
               {ticket.code}
             </p>
             {/* The role badge joins the EXISTING badge row rather than adding a new one:
@@ -133,7 +135,7 @@ export function TicketCard({ ticket }: Props) {
                 <p className="text-xs text-muted-foreground">
                   Due{" "}
                   <span className="font-medium tabular-nums text-foreground">
-                    {format(new Date(activeSlaTimer.dueAt), "dd/MM HH:mm")}
+                    {formatDateTimeShort(activeSlaTimer.dueAt)}
                   </span>
                 </p>
               </div>

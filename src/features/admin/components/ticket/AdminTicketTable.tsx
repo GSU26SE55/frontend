@@ -1,11 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import type { PaginationResponse } from "@/shared/types/api.types";
 import TicketStatusBadge from "@/shared/components/ticket/TicketStatusBadge";
 import TicketPriorityBadge from "@/shared/components/ticket/TicketPriorityBadge";
+import TicketVerifyBadge from "@/shared/components/ticket/TicketVerifyBadge";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { DataTable, type ColumnDef } from "@/shared/components/ui/DataTable";
 import type { ServerSortState } from "@/shared/hooks/useServerSort";
@@ -13,8 +20,10 @@ import SlaCountdown from "@/shared/components/ticket/SlaCountdown";
 import { getTicketSource } from "@/shared/utils/ticket/ticketSource";
 import { priorityRank } from "@/shared/utils/ticket/priorityMatrix";
 import { toneClass } from "@/shared/theme/statusColors";
+import { isOpenTicket } from "@/shared/utils/ticket.utils";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
+import { formatDate } from "@/shared/utils/datetime";
 
 interface Props {
   data?: PaginationResponse<TicketDTO>;
@@ -45,8 +54,7 @@ export default function AdminTicketTable({
       header: "Code",
       sortKey: "code",
       sortValue: (t) => t.code,
-      headClassName: "w-32",
-      cellClassName: "font-mono text-sm",
+      cellClassName: "font-mono text-xs",
       cell: (t) => (
         <div className="flex items-center gap-1">
           {t.isIncident && (
@@ -61,13 +69,55 @@ export default function AdminTicketTable({
       header: "Title",
       sortKey: "title",
       sortValue: (t) => t.title,
-      cellClassName: "max-w-xs truncate",
-      cell: (t) => <span title={t.title}>{t.title}</span>,
+      headClassName: "w-50",
+      cellClassName: "w-50 max-w-50 font-medium",
+      cell: (t) => (
+        <div className="max-w-50">
+          <Tooltip>
+            <TooltipTrigger render={<span className="block truncate" />}>
+              {t.title}
+            </TooltipTrigger>
+            <TooltipContent className="max-w-sm">{t.title}</TooltipContent>
+          </Tooltip>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+            {/* AI verify — manual tickets only, hidden when valid (hideWhenOk). */}
+            <TicketVerifyBadge
+              status={t.aiVerifyStatus}
+              origin={t.origin}
+              hideWhenOk
+            />
+            {/* Suspected duplicate — only while the ticket is still open. Once it is finished
+                the merge decision has been made (often BY merging it), so the badge would be
+                pointing at a question that is already answered. */}
+            {t.suspectedDuplicateOfTicketId && isOpenTicket(t) && (
+              <Badge
+                variant="outline"
+                className="border-amber-200 bg-amber-50 text-amber-700"
+              >
+                Suspected duplicate
+              </Badge>
+            )}
+            {t.isPeriodicMaintenance && (
+              <Badge
+                variant="outline"
+                className={
+                  t.isPeriodicMaintenanceOverdue
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-sky-200 bg-sky-50 text-sky-700"
+                }
+              >
+                {t.isPeriodicMaintenanceOverdue
+                  ? "Periodic · overdue"
+                  : "Periodic maintenance"}
+              </Badge>
+            )}
+          </div>
+        </div>
+      ),
     },
     {
       id: "source",
       header: "Source",
-      headClassName: "w-32",
       // Không sortKey: BE whitelist sort là code|title|category|status|priority|createdAt —
       // "source" không phải cột thật nên gửi lên sẽ bị bỏ qua, để header sort được thì
       // người dùng bấm mà bảng không đổi.
@@ -87,7 +137,6 @@ export default function AdminTicketTable({
       header: "Status",
       sortKey: "status",
       sortValue: (t) => t.status,
-      headClassName: "w-36",
       cell: (t) => <TicketStatusBadge status={t.status} />,
     },
     {
@@ -97,7 +146,6 @@ export default function AdminTicketTable({
       // Rank, not the enum string: a plain string compare sorts "Urgent" last,
       // burying the most severe ticket. See priorityRank.
       sortValue: (t) => priorityRank(t.priority),
-      headClassName: "w-32",
       cell: (t) => <TicketPriorityBadge priority={t.priority} />,
     },
     {
@@ -105,19 +153,41 @@ export default function AdminTicketTable({
       header: "Category",
       sortKey: "category",
       sortValue: (t) => TICKET_CATEGORY_LABEL[t.category] ?? t.category,
-      headClassName: "w-32",
       cellClassName: "text-sm text-muted-foreground",
       cell: (t) => TICKET_CATEGORY_LABEL[t.category] ?? t.category,
     },
     {
-      id: "sla",
-      header: TABLE_COLUMNS.sla,
-      headClassName: "w-24",
+      // Ticket có 2 SLA riêng: Response chạy ở stage Open, Resolution chạy từ InProgress.
+      // Tách 2 cột để thấy rõ mốc nào đang đếm — cột chưa bắt đầu hiện "Not started".
+      id: "slaResponse",
+      header: TABLE_COLUMNS.slaResponse,
       stopRowClick: true,
       cell: (t) => (
         <SlaCountdown
-          slaTimer={t.resolutionSlaTimer ?? t.responseSlaTimer ?? t.slaTimer}
+          slaTimer={t.responseSlaTimer}
           compact
+          completedAt={t.status !== TicketStatusEnum.Open ? t.updatedAt : null}
+        />
+      ),
+    },
+    {
+      id: "slaResolve",
+      header: TABLE_COLUMNS.slaResolve,
+      stopRowClick: true,
+      cell: (t) => (
+        <SlaCountdown
+          slaTimer={t.resolutionSlaTimer}
+          compact
+          // `resolvedAt`/`closedAt` chỉ có trên TicketDetailDTO, không có trên DTO của danh
+          // sách mà bảng này render — nên mốc gần đúng duy nhất còn lại là `updatedAt`, đúng
+          // như cột SLA response ngay bên trên đang dùng.
+          completedAt={
+            t.status === TicketStatusEnum.Completed ||
+            t.status === TicketStatusEnum.Closed ||
+            t.status === TicketStatusEnum.ClosedRejected
+              ? t.updatedAt
+              : null
+          }
         />
       ),
     },
@@ -126,9 +196,8 @@ export default function AdminTicketTable({
       header: "Created",
       sortKey: "createdAt",
       sortValue: (t) => new Date(t.createdAt).getTime(),
-      headClassName: "w-36",
-      cellClassName: "text-sm text-muted-foreground",
-      cell: (t) => format(new Date(t.createdAt), "dd/MM/yyyy HH:mm"),
+      cellClassName: "text-xs text-muted-foreground",
+      cell: (t) => formatDate(t.createdAt),
     },
   ];
 

@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDate, formatDateTime } from "@/shared/utils/datetime";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -163,14 +163,14 @@ export default function SiteAssetsTable({
     {
       id: "installDate",
       header: "Install date",
-      cell: (asset) => format(new Date(asset.installDate), "dd/MM/yyyy"),
+      cell: (asset) => formatDate(asset.installDate),
     },
     {
       id: "lastSensorReadingAt",
       header: "Last reading",
       cell: (asset) =>
         asset.lastSensorReadingAt
-          ? format(new Date(asset.lastSensorReadingAt), "dd/MM/yyyy HH:mm")
+          ? formatDateTime(asset.lastSensorReadingAt)
           : "—",
     },
     {

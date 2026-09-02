@@ -19,6 +19,11 @@ import { noData, notFound } from "@/shared/constants/emptyStates";
 import { SortableTableHead } from "@/shared/components/ui/SortableTableHead";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import { Card } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface KbArticleTableProps {
   data: KbArticleSummaryDTO[];
@@ -179,18 +184,24 @@ export default function KbArticleTable({
                 </TableCell>
                 <TableCell className="text-right">
                   {onCopy && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="-mt-1 -mr-1 size-8"
-                      title="Copy"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCopy(article);
-                      }}
-                    >
-                      <Copy className="size-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="-mt-1 -mr-1 size-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCopy(article);
+                            }}
+                          />
+                        }
+                      >
+                        <Copy className="size-4" />
+                      </TooltipTrigger>
+                      <TooltipContent>Copy</TooltipContent>
+                    </Tooltip>
                   )}
                 </TableCell>
               </TableRow>

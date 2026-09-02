@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { ArrowLeft, AlertTriangle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -58,6 +58,7 @@ import {
   type ChatTab,
 } from "@/shared/components/ticket/TicketCommentThread";
 import { ProcessingDurationTimer } from "@/shared/components/ticket/ProcessingDurationTimer";
+import TicketOriginAlertPanel from "@/shared/components/ticket/TicketOriginAlertPanel";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -72,7 +73,16 @@ import {
 import TicketSlaSection from "@/shared/components/ticket/TicketSlaSection";
 import { TICKET_CATEGORY_LABEL } from "@/shared/constants/ticketLabels";
 import TicketKbReferencesPanel from "@/shared/components/ticket/TicketKbReferencesPanel";
-import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
+import {
+  TicketStatusEnum,
+  ImpactScopeEnum,
+  UrgencyLevelEnum,
+} from "@/shared/enums/ticket/ticket.enum";
+import {
+  toneClass,
+  IMPACT_SCOPE_TONE,
+  URGENCY_LEVEL_TONE,
+} from "@/shared/theme/statusColors";
 import { adminKbService } from "@/features/admin/services/kb/kb.service";
 import type { KbArticleSearchParams } from "@/shared/components/kb/KbArticleSelector";
 import { KbArticleStatusEnum, KbCategoryCode } from "@/shared/enums/kb/kb.enum";
@@ -91,6 +101,18 @@ const searchKbArticles = ({ q, category }: KbArticleSearchParams) =>
 
 const getKbArticleDetail = (id: string) =>
   adminKbService.getDetail(id).then((r) => r.data.data!);
+
+const IMPACT_LABEL: Record<ImpactScopeEnum, string> = {
+  SingleAsset: "Single Asset",
+  Site: "Site",
+  MultiSite: "Multi Site",
+};
+
+const URGENCY_LABEL: Record<UrgencyLevelEnum, string> = {
+  Low: "Low",
+  Medium: "Medium",
+  High: "High",
+};
 
 function SideInfoRow({
   label,
@@ -275,14 +297,20 @@ export default function AdminTicketDetailPage() {
               sits with the other header actions rather than a screen away. Picks battery vs
               whole-site itself, and hides once the ticket is finished. */}
           <TicketBmsAction ticket={ticket} />
+          {/* Gated on activeIncidentEpisodeId, NOT isIncident — an AutoFromEnvironment ticket
+              also has isIncident=true without ever opening an episode, so disabling on
+              isIncident alone showed "Already an Incident" for a ticket that was never
+              actually declared (BE only rejects when an episode is already open). */}
           <Button
             variant="destructive"
             size="sm"
-            disabled={ticket.isIncident || isPending}
+            disabled={!!ticket.activeIncidentEpisodeId || isPending}
             onClick={() => setConfirmOpen(true)}
           >
             <AlertTriangle size={13} />
-            {ticket.isIncident ? "Already an Incident" : "Declare Incident"}
+            {ticket.activeIncidentEpisodeId
+              ? "Already an Incident"
+              : "Declare Incident"}
           </Button>
           <RefreshButton queryKeys={[KEY.admin.tickets, KEY.tickets]} />
         </div>
@@ -523,6 +551,9 @@ export default function AdminTicketDetailPage() {
             </div>
           </div>
 
+          {/* Origin alert — why this auto-created ticket exists */}
+          <TicketOriginAlertPanel alertId={ticket.originAlertId} />
+
           {/* Description */}
           {ticket.description && (
             <div className="p-4">
@@ -583,11 +614,7 @@ export default function AdminTicketDetailPage() {
                   value={
                     ticket.periodicMaintenanceDueAtUtc ? (
                       <span className="inline-flex items-center gap-1.5">
-                        {format(
-                          new Date(ticket.periodicMaintenanceDueAtUtc),
-                          "dd/MM/yyyy HH:mm",
-                          { locale: enUS },
-                        )}
+                        {formatDateTime(ticket.periodicMaintenanceDueAtUtc)}
                         {/* Quá hạn là tin cần biết ngay, nhưng nó nói về CÁI HẠN NÀY — nên đứng
                             cạnh ngày, không tách thành một hàng "Periodic · overdue" riêng. */}
                         {ticket.isPeriodicMaintenanceOverdue && (
@@ -603,11 +630,7 @@ export default function AdminTicketDetailPage() {
                   label="Visit schedule"
                   value={
                     ticket.scheduledStartAtUtc
-                      ? format(
-                          new Date(ticket.scheduledStartAtUtc),
-                          "dd/MM/yyyy HH:mm",
-                          { locale: enUS },
-                        )
+                      ? formatDateTime(ticket.scheduledStartAtUtc)
                       : null
                   }
                 />
@@ -628,8 +651,34 @@ export default function AdminTicketDetailPage() {
                 value={previousPrimaryHandlerNames.join(", ")}
               />
             )}
-            <SideInfoRow label="Scope" value={ticket.impactScope ?? null} />
-            <SideInfoRow label="Urgency" value={ticket.urgencyLevel ?? null} />
+            <SideInfoRow
+              label="Scope"
+              value={
+                ticket.impactScope ? (
+                  <Badge
+                    variant="outline"
+                    className={toneClass(IMPACT_SCOPE_TONE[ticket.impactScope])}
+                  >
+                    {IMPACT_LABEL[ticket.impactScope] ?? ticket.impactScope}
+                  </Badge>
+                ) : null
+              }
+            />
+            <SideInfoRow
+              label="Urgency"
+              value={
+                ticket.urgencyLevel ? (
+                  <Badge
+                    variant="outline"
+                    className={toneClass(
+                      URGENCY_LEVEL_TONE[ticket.urgencyLevel],
+                    )}
+                  >
+                    {URGENCY_LABEL[ticket.urgencyLevel] ?? ticket.urgencyLevel}
+                  </Badge>
+                ) : null
+              }
+            />
             {/* Site-level ticket has no battery by design — see the Manager page for the full
                 reasoning. An empty row here reads as a load failure. */}
             {!ticket.environmentalIncidentId && (
@@ -640,25 +689,19 @@ export default function AdminTicketDetailPage() {
             )}
             <SideInfoRow
               label="Created"
-              value={format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
-                locale: enUS,
-              })}
+              value={formatDateTime(ticket.createdAt)}
             />
             {/* GH-866 — a single incident detection timestamp (replaces the old from/to pair). */}
             {ticket.detectedAt && (
               <SideInfoRow
                 label="Detected at"
-                value={format(new Date(ticket.detectedAt), "dd/MM/yyyy HH:mm", {
-                  locale: enUS,
-                })}
+                value={formatDateTime(ticket.detectedAt)}
               />
             )}
             {ticket.updatedAt && (
               <SideInfoRow
                 label="Updated"
-                value={format(new Date(ticket.updatedAt), "dd/MM/yyyy HH:mm", {
-                  locale: enUS,
-                })}
+                value={formatDateTime(ticket.updatedAt)}
               />
             )}
           </div>
@@ -723,15 +766,15 @@ export default function AdminTicketDetailPage() {
         />
       )}
 
-      {/* ── Declare Incident Dialog ──────────────────────────────────────── */}
+      {/* ── Escalate to Urgent Dialog ────────────────────────────────────── */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Mark as a major Incident?</AlertDialogTitle>
+            <AlertDialogTitle>Escalate to Urgent?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ticket <strong>{ticket.code}</strong> will be marked as an
-              Incident and handled under the highest-priority process. This
-              action cannot be undone.
+              Ticket <strong>{ticket.code}</strong> will be pinned at Urgent
+              priority, its SLA timer stopped, and battery isolation requested.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
@@ -740,7 +783,7 @@ export default function AdminTicketDetailPage() {
             </Label>
             <Textarea
               id="incident-description"
-              placeholder="Briefly describe why you're declaring an incident..."
+              placeholder="Briefly describe why you're escalating to Urgent..."
               value={incidentDescription}
               onChange={(e) => setIncidentDescription(e.target.value)}
             />

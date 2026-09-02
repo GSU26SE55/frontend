@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { formatDate } from "@/shared/utils/datetime";
 import { EllipsisVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +94,7 @@ export default function SiteTable({
       header: "Install date",
       sortKey: "installDate",
       sortValue: (site) => new Date(site.installDate).getTime(),
-      cell: (site) => format(new Date(site.installDate), "dd/MM/yyyy"),
+      cell: (site) => formatDate(site.installDate),
     },
     {
       id: "actions",
@@ -106,6 +106,7 @@ export default function SiteTable({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={<Button variant="ghost" size="icon" className="size-7" />}
+            aria-label="Actions"
           >
             <EllipsisVertical className="size-4" />
           </DropdownMenuTrigger>
