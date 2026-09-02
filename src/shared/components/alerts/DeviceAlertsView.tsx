@@ -96,7 +96,8 @@ const deviceSubject = (alert: AlertDto) =>
 // Measured value can be null from the BE (thresholdValue/actualValue/unit are nullable).
 // IotDataIntegrityViolation in particular carries no measurement at all.
 const formatMeasure = (value?: number | null, unit?: string | null) => {
-  if (unit?.toLowerCase() === "wet" || unit?.toLowerCase() === "bool") return "Wet";
+  if (unit?.toLowerCase() === "wet" || unit?.toLowerCase() === "bool")
+    return "Wet";
   return value == null ? "—" : `${value}${unit ? ` ${unit}` : ""}`;
 };
 
@@ -171,13 +172,19 @@ export default function DeviceAlertsView({
           <SelectContent alignItemWithTrigger={false}>
             <SelectItem value={null}>All severities</SelectItem>
             {SEVERITY_OPTIONS.map((s) => (
-              <SelectItem key={s} value={String(s)}>
+              // Info hidden per request — logic kept intact, not removed.
+              <SelectItem
+                key={s}
+                value={String(s)}
+                className={s === AlertSeverityEnum.Info ? "hidden" : undefined}
+              >
                 {SEVERITY_LABELS[s]}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
+        {/* Status filter hidden per request — logic kept intact, not removed. */}
         <Select
           value={filters.status || null}
           items={STATUS_OPTIONS.map((s) => ({
@@ -188,7 +195,7 @@ export default function DeviceAlertsView({
             setFilter("status", v || undefined)
           }
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-44 hidden">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>

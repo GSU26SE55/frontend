@@ -186,13 +186,19 @@ export default function AlertsView({
           <SelectContent alignItemWithTrigger={false}>
             <SelectItem value={null}>All severities</SelectItem>
             {SEVERITY_OPTIONS.map((s) => (
-              <SelectItem key={s} value={String(s)}>
+              // Info hidden per request — logic kept intact, not removed.
+              <SelectItem
+                key={s}
+                value={String(s)}
+                className={s === AlertSeverityEnum.Info ? "hidden" : undefined}
+              >
                 {SEVERITY_LABELS[s]}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
+        {/* Status filter hidden per request — logic kept intact, not removed. */}
         <Select
           value={filters.status || null}
           items={STATUS_OPTIONS.map((s) => ({
@@ -203,7 +209,7 @@ export default function AlertsView({
             setFilter("status", v || undefined)
           }
         >
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-44 hidden">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>

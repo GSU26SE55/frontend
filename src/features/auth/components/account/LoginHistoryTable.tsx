@@ -27,6 +27,7 @@ const RESULT_LABEL: Record<LoginAttemptResult, string> = {
   [LoginAttemptResult.AccountBanned]: "Banned",
   [LoginAttemptResult.AccountInactive]: "Inactive",
   [LoginAttemptResult.AccountNotVerified]: "Not verified",
+  [LoginAttemptResult.WrongTwoFactorCode]: "Wrong 2FA code",
 };
 
 const LoginHistoryTable = () => {
