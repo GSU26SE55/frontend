@@ -91,7 +91,11 @@ export default function SlaNonWorkingPeriodTable({
           <Badge variant="destructive" className="text-2xs">
             Overdue
           </Badge>
-        ) : null,
+        ) : (
+          <Badge variant="secondary" className="text-2xs">
+            Active
+          </Badge>
+        ),
       cellClassName: "whitespace-nowrap",
     },
     {

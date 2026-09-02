@@ -91,6 +91,7 @@ export default function BatteryAssetForm({
     formState: { errors, isSubmitting },
   } = useForm<BatteryAssetFormValues>({
     resolver: zodResolver(batteryAssetFormSchema),
+    mode: "onChange",
   });
 
   const installDate = useWatch({ control, name: "installDate" });
