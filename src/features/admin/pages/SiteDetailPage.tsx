@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   MapPin,
@@ -83,6 +83,30 @@ type ConfirmState = { type: "none" } | { type: "delete" } | { type: "restore" };
 export default function SiteDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  // Tab + evidence window live in the URL, not in local state. A ticket links straight to
+  // "?tab=ambient&from=…&to=…" to land the reader on the Environment tab already filtered to
+  // the incident window; with an uncontrolled <Tabs defaultValue>, that link opened the
+  // Battery list every time and the from/to pair had nothing reading it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") === "ambient" ? "ambient" : "assets";
+  const ambientFrom = searchParams.get("from") ?? undefined;
+  const ambientTo = searchParams.get("to") ?? undefined;
+
+  const setTab = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
+  // Dropping the window keeps the reader on the Environment tab and restores the full log.
+  const clearAmbientWindow = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("from");
+    next.delete("to");
+    setSearchParams(next, { replace: true });
+  };
+
   const [editOpen, setEditOpen] = useState(false);
   const [assetFormOpen, setAssetFormOpen] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>({ type: "none" });
@@ -233,7 +257,7 @@ export default function SiteDetailPage() {
       </div>
 
       {/* Battery + Environment */}
-      <Tabs defaultValue="assets">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="assets">
             <Battery className="size-3.5" /> Battery list
@@ -349,7 +373,14 @@ export default function SiteDetailPage() {
         </TabsContent>
 
         <TabsContent value="ambient" className="mt-4">
-          <AmbientSitePanel siteId={id} />
+          <AmbientSitePanel
+            siteId={id}
+            from={ambientFrom}
+            to={ambientTo}
+            onClearWindow={
+              ambientFrom || ambientTo ? clearAmbientWindow : undefined
+            }
+          />
         </TabsContent>
       </Tabs>
 
