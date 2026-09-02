@@ -51,8 +51,12 @@ import {
   useResolveAlert,
 } from "@/shared/hooks/alerts/useAlerts";
 import { alertService } from "@/shared/services/alerts/alert.service";
-import { anomalyTypeLabel } from "@/shared/constants/alertLabels";
 import {
+  ALERT_SEVERITY_LABELS as SEVERITY_LABELS,
+  anomalyTypeLabel,
+} from "@/shared/constants/alertLabels";
+import {
+  AlertSeverityEnum,
   AlertStatusEnum,
   AnomalyTypeEnum,
 } from "@/shared/enums/alerts/alert.enum";
@@ -95,6 +99,7 @@ import { formatDateTime } from "@/shared/utils/datetime";
 
 const DEFAULTS = {
   status: "",
+  severity: "",
   siteId: "",
   from: "",
   to: "",
@@ -115,6 +120,12 @@ const STATUS_LABELS: Record<number, string> = {
   [AlertStatusEnum.Acknowledged]: "Acknowledged",
   [AlertStatusEnum.Resolved]: "Resolved",
 };
+
+const SEVERITY_OPTIONS = [
+  AlertSeverityEnum.Info,
+  AlertSeverityEnum.Warning,
+  AlertSeverityEnum.Critical,
+];
 
 export default function EnvironmentalIncidentsView({
   subtitle,
@@ -157,6 +168,9 @@ export default function EnvironmentalIncidentsView({
     siteId: filters.siteId || undefined,
     status: filters.status
       ? (Number(filters.status) as AlertStatusEnum)
+      : undefined,
+    severity: filters.severity
+      ? (Number(filters.severity) as AlertSeverityEnum)
       : undefined,
     from: filters.from || undefined,
     // `to` is date-only from the input → send end-of-day so the selected day is fully covered
@@ -222,6 +236,34 @@ export default function EnvironmentalIncidentsView({
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={String(s)}>
                 {STATUS_LABELS[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.severity || null}
+          items={SEVERITY_OPTIONS.map((s) => ({
+            value: String(s),
+            label: SEVERITY_LABELS[s],
+          }))}
+          onValueChange={(v: string | null) =>
+            setFilter("severity", v || undefined)
+          }
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="All severities" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value={null}>All severities</SelectItem>
+            {SEVERITY_OPTIONS.map((s) => (
+              // Info hidden per request — logic kept intact, not removed.
+              <SelectItem
+                key={s}
+                value={String(s)}
+                className={s === AlertSeverityEnum.Info ? "hidden" : undefined}
+              >
+                {SEVERITY_LABELS[s]}
               </SelectItem>
             ))}
           </SelectContent>
