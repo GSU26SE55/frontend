@@ -55,6 +55,7 @@ export default function SlaNonWorkingPeriodDialog({
   } = useForm<SlaNonWorkingPeriodForm>({
     resolver: zodResolver(slaNonWorkingPeriodSchema),
     defaultValues: EMPTY,
+    mode: "onChange",
   });
 
   useEffect(() => {

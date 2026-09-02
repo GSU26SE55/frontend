@@ -58,6 +58,7 @@ export default function CreateAccountDialog({ open, onClose }: Props) {
     formState: { errors },
   } = useForm<CreateAccountFormValues>({
     resolver: zodResolver(createAccountSchema),
+    mode: "onChange",
     // roleId starts as "" rather than undefined so an untouched select reports
     // "Select a role" instead of Zod's raw "expected string, received undefined".
     defaultValues: {

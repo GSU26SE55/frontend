@@ -78,6 +78,7 @@ export default function SiteFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<SiteFormValues>({
     resolver: zodResolver(siteFormSchema),
+    mode: "onChange",
     defaultValues: { status: SiteStatusEnum.Active },
   });
 

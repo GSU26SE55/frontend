@@ -74,6 +74,7 @@ export default function ReassignDialog({
 
   const form = useForm<ReassignFormValues>({
     resolver: zodResolver(reassignSchema),
+    mode: "onChange",
     defaultValues: {
       newPrimaryHandlerStaffId: "",
       reason: "",

@@ -57,6 +57,7 @@ export default function CalibrationFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<CreateCalibrationForm>({
     resolver: zodResolver(createCalibrationSchema),
+    mode: "onChange",
     defaultValues: { scale: 1, offset: 0 },
   });
 

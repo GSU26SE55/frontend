@@ -74,6 +74,7 @@ export default function EditStaffProfileDialog({
   // ── Add skill form ──
   const skillForm = useForm<AddSkillFormValues>({
     resolver: zodResolver(addSkillSchema),
+    mode: "onChange",
   });
 
   const handleSaveProfile = async (data: EditStaffProfileFormValues) => {

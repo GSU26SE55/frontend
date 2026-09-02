@@ -100,6 +100,7 @@ const ProfilePage = () => {
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    mode: "onChange",
     values: account
       ? {
           fullName: account.fullName ?? "",

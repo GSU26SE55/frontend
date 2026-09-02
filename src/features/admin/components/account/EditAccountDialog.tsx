@@ -41,6 +41,7 @@ export default function EditAccountDialog({ open, onClose, account }: Props) {
     formState: { errors },
   } = useForm<EditAccountFormValues>({
     resolver: zodResolver(editAccountSchema),
+    mode: "onChange",
     values: {
       fullName: account.fullName,
       phoneNumber: toLocalPhone(account.phoneNumber),

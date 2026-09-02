@@ -49,6 +49,7 @@ interface Props {
 export function HoldDialog({ open, onClose, onSubmit, isPending }: Props) {
   const form = useForm<HoldFormValues>({
     resolver: zodResolver(holdSchema),
+    mode: "onChange",
     defaultValues: { rescheduledStartAt: "", note: "" },
   });
 
