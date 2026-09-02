@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TicketDTO } from "@/shared/types/ticket/ticket.types";
 import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
@@ -55,14 +54,7 @@ export default function AdminTicketTable({
       sortKey: "code",
       sortValue: (t) => t.code,
       cellClassName: "font-mono text-xs",
-      cell: (t) => (
-        <div className="flex items-center gap-1">
-          {t.isIncident && (
-            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-          )}
-          {t.code}
-        </div>
-      ),
+      cell: (t) => <div className="flex items-center gap-1">{t.code}</div>,
     },
     {
       id: "title",
