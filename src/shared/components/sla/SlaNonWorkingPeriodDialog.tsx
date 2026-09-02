@@ -16,7 +16,7 @@ import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   slaNonWorkingPeriodSchema,
-  todayIsoDate,
+  tomorrowIsoDate,
   SLA_REASON_MAX_LENGTH,
   type SlaNonWorkingPeriodForm,
 } from "@/shared/schemas/sla/sla-calendar.schema";
@@ -119,9 +119,9 @@ export default function SlaNonWorkingPeriodDialog({
                     id="startDate"
                     value={field.value}
                     onChange={(v) => field.onChange(v ?? "")}
-                    // The BE rejects a start date before today (ValidateStartDate), on both
-                    // create and edit — so the calendar never offers one.
-                    min={todayIsoDate()}
+                    // UI only offers a future date (today excluded) even though the BE's
+                    // ValidateStartDate would accept today too.
+                    min={tomorrowIsoDate()}
                   />
                 )}
               />
@@ -144,7 +144,7 @@ export default function SlaNonWorkingPeriodDialog({
                     id="endDate"
                     value={field.value}
                     onChange={(v) => field.onChange(v ?? "")}
-                    min={todayIsoDate()}
+                    min={tomorrowIsoDate()}
                   />
                 )}
               />
