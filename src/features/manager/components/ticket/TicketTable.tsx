@@ -129,13 +129,15 @@ export default function TicketTable({
                 Suspected duplicate
               </Badge>
             )}
+            {/* Periodic maintenance badge hidden per request — logic kept intact, not removed. */}
             {t.isPeriodicMaintenance && (
               <Badge
                 variant="outline"
                 className={
-                  t.isPeriodicMaintenanceOverdue
+                  "hidden " +
+                  (t.isPeriodicMaintenanceOverdue
                     ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-sky-200 bg-sky-50 text-sky-700"
+                    : "border-sky-200 bg-sky-50 text-sky-700")
                 }
               >
                 {t.isPeriodicMaintenanceOverdue
