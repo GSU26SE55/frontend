@@ -250,13 +250,8 @@ function ThresholdFormBody({
           threshold.highAmbientTempWarning?.toString() ?? "",
         highAmbientTempCritical:
           threshold.highAmbientTempCritical?.toString() ?? "",
-        highHumidityWarning: threshold.highHumidityWarning?.toString() ?? "",
-        highHumidityCritical: threshold.highHumidityCritical?.toString() ?? "",
         highGasWarning: threshold.highGasWarning?.toString() ?? "",
         highGasCritical: threshold.highGasCritical?.toString() ?? "",
-        comboTempThreshold: threshold.comboTempThreshold?.toString() ?? "",
-        comboHumidityThreshold:
-          threshold.comboHumidityThreshold?.toString() ?? "",
         enabled: threshold.enabled,
       });
     } else if (threshold === null || isError) {
@@ -267,12 +262,8 @@ function ThresholdFormBody({
         siteId,
         highAmbientTempWarning: "",
         highAmbientTempCritical: "",
-        highHumidityWarning: "",
-        highHumidityCritical: "",
         highGasWarning: "",
         highGasCritical: "",
-        comboTempThreshold: "",
-        comboHumidityThreshold: "",
         enabled: true,
       });
     }
@@ -283,12 +274,14 @@ function ThresholdFormBody({
       siteId: data.siteId,
       highAmbientTempWarning: toNumOrNull(data.highAmbientTempWarning),
       highAmbientTempCritical: toNumOrNull(data.highAmbientTempCritical),
-      highHumidityWarning: toNumOrNull(data.highHumidityWarning),
-      highHumidityCritical: toNumOrNull(data.highHumidityCritical),
       highGasWarning: toNumOrNull(data.highGasWarning),
       highGasCritical: toNumOrNull(data.highGasCritical),
-      comboTempThreshold: toNumOrNull(data.comboTempThreshold),
-      comboHumidityThreshold: toNumOrNull(data.comboHumidityThreshold),
+      // Humidity and the temp+humidity combo rule are not used. Sent as null so a
+      // site that was configured with them before stops alerting on them.
+      highHumidityWarning: null,
+      highHumidityCritical: null,
+      comboTempThreshold: null,
+      comboHumidityThreshold: null,
       enabled: data.enabled,
     };
     try {
@@ -323,24 +316,6 @@ function ThresholdFormBody({
 
       <div>
         <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Humidity
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <NumField
-            label="Warning (%)"
-            error={errors.highHumidityWarning?.message}
-            {...register("highHumidityWarning")}
-          />
-          <NumField
-            label="Critical (%)"
-            error={errors.highHumidityCritical?.message}
-            {...register("highHumidityCritical")}
-          />
-        </div>
-      </div>
-
-      <div>
-        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Gas Concentration (Khí Gas)
         </p>
         <div className="grid grid-cols-2 gap-3">
@@ -353,24 +328,6 @@ function ThresholdFormBody({
             label="Critical (%)"
             error={errors.highGasCritical?.message}
             {...register("highGasCritical")}
-          />
-        </div>
-      </div>
-
-      <div>
-        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Combo rule
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <NumField
-            label="Temp threshold (°C)"
-            error={errors.comboTempThreshold?.message}
-            {...register("comboTempThreshold")}
-          />
-          <NumField
-            label="Humidity threshold (%)"
-            error={errors.comboHumidityThreshold?.message}
-            {...register("comboHumidityThreshold")}
           />
         </div>
       </div>
@@ -395,8 +352,7 @@ function ThresholdFormBody({
           </Label>
         </div>
         <p className="text-xs text-muted-foreground">
-          Leaving a field blank means that metric isn't monitored. The combo
-          rule only activates when both combo thresholds have a value.
+          Leaving a field blank means that metric isn't monitored.
         </p>
       </div>
 
