@@ -209,11 +209,14 @@ export default function TicketTable({
         <SlaCountdown
           slaTimer={t.resolutionSlaTimer}
           compact
+          // `resolvedAt`/`closedAt` chỉ có trên TicketDetailDTO, không có trên DTO của danh
+          // sách mà bảng này render — nên mốc gần đúng duy nhất còn lại là `updatedAt`, đúng
+          // như cột SLA response ngay bên trên đang dùng.
           completedAt={
             t.status === TicketStatusEnum.Completed ||
             t.status === TicketStatusEnum.Closed ||
             t.status === TicketStatusEnum.ClosedRejected
-              ? (t.resolvedAt ?? t.closedAt)
+              ? t.updatedAt
               : null
           }
         />

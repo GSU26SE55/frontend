@@ -142,7 +142,11 @@ export default function SiteBmsSwitchDialog({
         : [target];
 
     let firstError: unknown = null;
-    for (const t of targets) {
+    for (let i = 0; i < targets.length; i++) {
+      const t = targets[i];
+      if (i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+      }
       try {
         await bmsSwitchService.setSwitch(assetId, {
           target: t,
