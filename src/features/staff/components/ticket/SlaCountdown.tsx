@@ -5,7 +5,6 @@ import {
   isNearBreachPercent,
   formatSlaRemaining,
   formatSlaDueAt,
-  formatSlaOverdue,
 } from "@/shared/lib/sla";
 import { useLiveSlaPercent } from "@/shared/hooks/ticket/useLiveSlaPercent";
 import { toneClass } from "@/shared/theme/statusColors";
@@ -60,7 +59,11 @@ export function SlaCountdown({
       return;
     }
     const id = setInterval(() => {
-      setRemaining(new Date(dueAt).getTime() - Date.now());
+      const next = new Date(dueAt).getTime() - Date.now();
+      setRemaining(next);
+      // At zero the label becomes a static "Breached" — stop the clock instead of
+      // counting the overdue time upwards.
+      if (next <= 0) clearInterval(id);
     }, 1000);
     return () => clearInterval(id);
   }, [dueAt, isStopped]);
@@ -97,22 +100,12 @@ export function SlaCountdown({
       );
     }
     if (status === SlaTimerStatusEnum.Breached) {
-      if (completedAt) {
-        return (
-          <span
-            className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
-            title={`SLA breached · Due ${formatSlaDueAt(dueAt)}`}
-          >
-            Breached
-          </span>
-        );
-      }
       return (
         <span
-          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${toneClass("p1")}`}
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
           title={`SLA breached · Due ${formatSlaDueAt(dueAt)}`}
         >
-          {formatSlaOverdue(Math.abs(remaining))}
+          Breached
         </span>
       );
     }
@@ -136,15 +129,15 @@ export function SlaCountdown({
         </span>
       );
     }
-    // Still Running but past dueAt (BE breach sweep has not landed yet). Show live overdue
-    // counter — remaining is now negative so Math.abs gives elapsed overdue duration.
+    // Still Running but past dueAt (BE breach sweep has not landed yet). The deadline is
+    // already gone: say Breached and stop — do not count the overdue time upwards.
     if (remaining <= 0) {
       return (
         <span
-          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-mono font-medium ${toneClass("p1")}`}
-          title={`Due ${formatSlaDueAt(dueAt)}`}
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${toneClass("p1")}`}
+          title={`SLA breached · Due ${formatSlaDueAt(dueAt)}`}
         >
-          {formatSlaOverdue(Math.abs(remaining))}
+          Breached
         </span>
       );
     }
@@ -162,11 +155,16 @@ export function SlaCountdown({
     );
   }
 
-  if (status === SlaTimerStatusEnum.Breached) {
+  // `remaining <= 0` is here too: a Running timer that reached zero is breached in fact,
+  // whether or not the BE sweep has flipped its status yet.
+  if (status === SlaTimerStatusEnum.Breached || remaining <= 0) {
     return (
       <div className="flex flex-col gap-1">
-        <span className="text-base font-semibold font-mono tabular-nums text-destructive">
-          {formatSlaOverdue(Math.abs(remaining))}
+        <span
+          className="text-base font-semibold text-destructive"
+          title={`Due ${formatSlaDueAt(dueAt)}`}
+        >
+          Breached
         </span>
         {!hideBar && (
           <div className="h-1.5 w-full rounded-full bg-destructive/20">

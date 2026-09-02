@@ -154,6 +154,8 @@ export default function SlaCalendarView({ roleLabel }: Props) {
       )}
 
       <SlaNonWorkingPeriodDialog
+        // Mounting is how the form resets: a new key on every open, and per period edited.
+        key={`${formOpen}-${editing?.id ?? "new"}`}
         open={formOpen}
         onOpenChange={setFormOpen}
         period={editing}
