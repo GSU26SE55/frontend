@@ -145,6 +145,7 @@ export default function IoTDeviceTable({
                     render={
                       <Button variant="ghost" size="icon" className="size-7" />
                     }
+                    aria-label="Actions"
                   >
                     <EllipsisVertical className="size-4" />
                   </DropdownMenuTrigger>

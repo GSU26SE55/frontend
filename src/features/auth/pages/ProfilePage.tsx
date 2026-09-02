@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
+import { formatDate, formatDateTime } from "@/shared/utils/datetime";
 import {
   Loader2,
   Camera,
@@ -273,14 +273,13 @@ const ProfilePage = () => {
             {account?.createdAt && (
               <span className="flex items-center gap-1">
                 <CalendarDays size={11} />
-                Joined {format(new Date(account.createdAt), "dd/MM/yyyy")}
+                Joined {formatDate(account.createdAt)}
               </span>
             )}
             {account?.lastLoginAt && (
               <span className="flex items-center gap-1">
                 <Clock size={11} />
-                Last login{" "}
-                {format(new Date(account.lastLoginAt), "dd/MM/yyyy HH:mm")}
+                Last login {formatDateTime(account.lastLoginAt)}
               </span>
             )}
             {account?.twoFactorEnabled && (

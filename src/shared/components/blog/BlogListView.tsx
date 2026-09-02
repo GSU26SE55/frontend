@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { formatDate } from "@/shared/utils/datetime";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
@@ -287,7 +287,7 @@ export function BlogListView({
                     v{b.currentVersion}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right font-mono text-xs text-muted-foreground">
-                    {format(new Date(b.createdAt), "dd/MM/yyyy")}
+                    {formatDate(b.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div onClick={(e) => e.stopPropagation()}>

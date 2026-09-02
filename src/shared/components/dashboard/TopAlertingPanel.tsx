@@ -57,7 +57,10 @@ export function TopAlertingPanel({
                   onClick={() => onSelect(a)}
                 >
                   <div className="flex items-baseline gap-3">
-                    <span className="min-w-0 flex-1 truncate text-sm group-hover:text-primary">
+                    <span
+                      className="min-w-0 flex-1 truncate text-sm group-hover:text-primary"
+                      title={a.serialNumber}
+                    >
                       {a.serialNumber}
                     </span>
                     {a.criticalCount > 0 && (

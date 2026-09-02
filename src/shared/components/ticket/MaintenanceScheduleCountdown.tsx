@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
+import { formatDateTimeShort } from "@/shared/utils/datetime";
 import { formatSlaRemaining } from "@/shared/lib/sla";
 import { toneClass } from "@/shared/theme/statusColors";
 
@@ -67,7 +67,7 @@ export default function MaintenanceScheduleCountdown({
               Schedule before
             </span>
             <span className="text-xs font-medium tabular-nums">
-              {format(new Date(scheduleDeadlineAtUtc), "dd/MM HH:mm")}
+              {formatDateTimeShort(scheduleDeadlineAtUtc)}
             </span>
           </div>
           <div className="flex items-center justify-between">

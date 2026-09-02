@@ -193,61 +193,65 @@ function Row({
       <TicketPriorityBadge priority={ticket.priority} />
       <TicketStatusBadge status={ticket.status} />
 
-      {/* Two buttons rather than one "Link" — the old single button linked in only one
-          direction, so linking a second ticket from the parent's own page tried to make the
-          parent adopt its own child as ITS parent, which the BE rejects. Naming the direction
-          also answers what used to be silent: does this candidate become the parent, or a
-          sibling child? */}
-      {onSetParent && (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={onSetParent}
-          className="h-6 shrink-0 px-2 text-2xs"
-        >
-          {pending ? (
-            <Loader2 className="size-3 animate-spin" />
-          ) : (
-            <Link2 className="size-3" />
-          )}
-          Set as parent
-        </Button>
-      )}
+      {/* ml-auto separates this action cluster from the priority/status badges above — without
+          it the two groups sat flush against each other, reading as one crowded row. */}
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {/* Two buttons rather than one "Link" — the old single button linked in only one
+            direction, so linking a second ticket from the parent's own page tried to make the
+            parent adopt its own child as ITS parent, which the BE rejects. Naming the direction
+            also answers what used to be silent: does this candidate become the parent, or a
+            sibling child? */}
+        {onSetParent && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={onSetParent}
+            className="h-6 shrink-0 px-2 text-2xs"
+          >
+            {pending ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <Link2 className="size-3" />
+            )}
+            Set as parent
+          </Button>
+        )}
 
-      {onAddChild && (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={onAddChild}
-          className="h-6 shrink-0 px-2 text-2xs"
-        >
-          {pending ? (
-            <Loader2 className="size-3 animate-spin" />
-          ) : (
-            <Link2 className="size-3" />
-          )}
-          Add as child
-        </Button>
-      )}
+        {onAddChild && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={onAddChild}
+            className="h-6 shrink-0 px-2 text-2xs"
+          >
+            {pending ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <Link2 className="size-3" />
+            )}
+            Add as child
+          </Button>
+        )}
 
-      {onUnlink && canUnlinkHere && (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={onUnlink}
-          className="h-6 shrink-0 px-2 text-2xs"
-        >
-          {pending ? (
-            <Loader2 className="size-3 animate-spin" />
-          ) : (
-            <Link2Off className="size-3" />
-          )}
-          Unlink
-        </Button>
-      )}
+        {onUnlink && canUnlinkHere && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={onUnlink}
+            className="h-6 shrink-0 px-2 text-2xs"
+          >
+            {pending ? (
+              <Loader2 className="size-3 animate-spin" />
+            ) : (
+              <Link2Off className="size-3" />
+            )}
+            Unlink
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

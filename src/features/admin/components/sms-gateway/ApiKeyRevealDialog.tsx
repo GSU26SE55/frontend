@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { CreateGatewayDeviceResponseDto } from "@/features/admin/types/ticket/sms-gateway.types";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
 
@@ -109,19 +114,28 @@ export default function ApiKeyRevealDialog({
               className="font-mono text-xs"
               onFocus={(e) => e.currentTarget.select()}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={handleCopy}
-              aria-label="Copy API key"
-            >
-              {copied ? (
-                <Check className="size-4" />
-              ) : (
-                <Copy className="size-4" />
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopy}
+                    aria-label="Copy API key"
+                  />
+                }
+              >
+                {copied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                {copied ? "Copied!" : "Copy API key"}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

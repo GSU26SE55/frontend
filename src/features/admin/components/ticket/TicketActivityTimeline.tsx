@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
   TicketActivityDTO,
@@ -96,7 +96,7 @@ export default function TicketActivityTimeline({
                   {meta.label}
                 </p>
                 <time className="text-xs text-muted-foreground whitespace-nowrap">
-                  {format(new Date(activity.createdAt), "dd/MM/yyyy HH:mm")}
+                  {formatDateTime(activity.createdAt)}
                 </time>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">

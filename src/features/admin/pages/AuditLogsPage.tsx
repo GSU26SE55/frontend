@@ -15,8 +15,7 @@ import {
   Copy,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTimeWithSeconds } from "@/shared/utils/datetime";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import {
@@ -32,6 +31,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Drawer,
   DrawerContent,
@@ -246,25 +250,8 @@ function resolveAccountDisplay(log: AuditAggregateDto): string {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const fmt = (dt?: string) => {
-  if (!dt) return "—";
-  try {
-    return format(new Date(dt), "dd/MM/yyyy HH:mm:ss", { locale: enUS });
-  } catch {
-    return dt;
-  }
-};
-
-const fmtFull = (dt?: string) => {
-  if (!dt) return "—";
-  try {
-    return format(new Date(dt), "EEEE, dd/MM/yyyy 'at' HH:mm:ss", {
-      locale: enUS,
-    });
-  } catch {
-    return dt;
-  }
-};
+const fmt = formatDateTimeWithSeconds;
+const fmtFull = formatDateTimeWithSeconds;
 
 function parseMetadata(raw?: string | null): Record<string, unknown> | null {
   if (!raw) return null;
@@ -329,18 +316,25 @@ function CopyIdRow({
         </p>
         <p className="text-sm text-muted-foreground">Hidden</p>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0"
-        aria-label={`Copy ${label}`}
-        onClick={() => {
-          navigator.clipboard.writeText(value);
-          toast.success(`${label} copied`);
-        }}
-      >
-        <Copy className="h-3.5 w-3.5" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              aria-label={`Copy ${label}`}
+              onClick={() => {
+                navigator.clipboard.writeText(value);
+                toast.success(`${label} copied`);
+              }}
+            />
+          }
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </TooltipTrigger>
+        <TooltipContent>Copy {label}</TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -510,7 +504,10 @@ function AuditLogDetail({
                 <div className="rounded-lg border border-border bg-muted/40 divide-y divide-border">
                   {Object.entries(metadata).map(([k, v]) => (
                     <div key={k} className="flex items-start gap-3 px-3 py-2.5">
-                      <span className="text-2xs font-mono text-muted-foreground shrink-0 pt-0.5 w-32 truncate">
+                      <span
+                        className="text-2xs font-mono text-muted-foreground shrink-0 pt-0.5 w-32 truncate"
+                        title={k}
+                      >
                         {k}
                       </span>
                       <span className="text-xs font-mono break-all">
@@ -677,7 +674,12 @@ export default function AuditLogsPage() {
                         {log.isSuccess ? "OK" : "FAIL"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm max-w-50 truncate">
+                    <TableCell
+                      className="text-sm max-w-50 truncate"
+                      title={
+                        accountDisplay !== "—" ? accountDisplay : undefined
+                      }
+                    >
                       {accountDisplay !== "—" ? (
                         accountDisplay
                       ) : (

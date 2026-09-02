@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -80,7 +80,7 @@ export function BlogVersionHistory({
                     Version {v.versionNumber}
                   </span>
                   <span className="text-muted-foreground text-xs">
-                    {format(new Date(v.createdAt), "dd/MM/yyyy HH:mm")}
+                    {formatDateTime(v.createdAt)}
                   </span>
                 </div>
                 <p className="truncate text-sm">{v.title}</p>

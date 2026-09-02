@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2, LogOut, MonitorSmartphone } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +22,7 @@ import { describeUserAgent } from "@/shared/utils/userAgent";
 import { plural } from "@/shared/utils/plural";
 import type { SessionDto } from "@/shared/types/account/session.types";
 
-const fmt = (iso?: string | null) =>
-  iso ? format(new Date(iso), "dd/MM/yyyy HH:mm") : "—";
+const fmt = (iso?: string | null) => (iso ? formatDateTime(iso) : "—");
 
 /**
  * "Where you're signed in" — the current user's own active sessions, with remote sign-out.

@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Inbox } from "lucide-react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { useSessionStore } from "@/shared/stores/sessionStore";
 import { isUnreadStatus } from "@/shared/enums/notification/notification.enum";
 import { notificationDeepLink } from "@/shared/utils/notificationDeepLink";
@@ -95,9 +94,7 @@ export default function NotificationDetailPane({
           </div>
           <h2 className="text-sm font-semibold text-foreground">{n.title}</h2>
           <p className="text-2xs text-muted-foreground mt-0.5">
-            {format(new Date(n.createdAt), "HH:mm — EEEE, dd/MM/yyyy", {
-              locale: enUS,
-            })}
+            {formatDateTime(n.createdAt)}
           </p>
         </div>
 
@@ -127,18 +124,8 @@ export default function NotificationDetailPane({
         </h3>
         <Row label="Channel" value={notificationChannelLabel(n.channel)} />
         <Row label="Status" value={notificationStatusLabel(n.status)} />
-        {n.sentAt && (
-          <Row
-            label="Sent at"
-            value={format(new Date(n.sentAt), "HH:mm dd/MM/yyyy")}
-          />
-        )}
-        {n.readAt && (
-          <Row
-            label="Read at"
-            value={format(new Date(n.readAt), "HH:mm dd/MM/yyyy")}
-          />
-        )}
+        {n.sentAt && <Row label="Sent at" value={formatDateTime(n.sentAt)} />}
+        {n.readAt && <Row label="Read at" value={formatDateTime(n.readAt)} />}
         {/* Only shown once the entity name resolves — a raw GUID (entityType has no
             resolver yet, or the fetch is still loading) isn't useful to the reader;
             the title/body/"Open content" link already cover getting to the right place. */}

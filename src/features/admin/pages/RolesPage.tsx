@@ -14,6 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ErrorState } from "@/shared/components/ui/ErrorState";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
 import {
@@ -254,9 +259,18 @@ export default function RolesPage() {
                         </span>
                         <div className="min-w-0">
                           <p className="font-medium">{role.name}</p>
-                          <p className="mt-0.5 max-w-130 truncate text-xs text-muted-foreground">
-                            {role.description || role.normalizedName}
-                          </p>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <p className="mt-0.5 max-w-130 truncate text-xs text-muted-foreground" />
+                              }
+                            >
+                              {role.description || role.normalizedName}
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-sm">
+                              {role.description || role.normalizedName}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     </TableCell>

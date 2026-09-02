@@ -38,24 +38,11 @@ import {
   StaffFeedbackEnum,
   StaffFeedbackLabel,
 } from "@/shared/enums/battery/ai.enum";
+import { formatDateTime } from "@/shared/utils/datetime";
 
 const chartConfig = {
   predictedSohPercent: { label: "Predicted SOH (%)", color: "var(--chart-1)" },
 } satisfies ChartConfig;
-
-function formatDateTime(dateStr?: string | Date) {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return String(dateStr);
-  return d.toLocaleString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
 
 function formatChartTime(dateStr?: string | Date) {
   if (!dateStr) return "";

@@ -8,6 +8,11 @@ import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -466,12 +471,23 @@ function AlertDetailDialog({
         )}
 
         <DialogFooter>
-          <Button
-            disabled={!canResolve || resolvePending}
-            onClick={() => alert && resolve(alert.id)}
-          >
-            Mark resolved
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  disabled={!canResolve || resolvePending}
+                  onClick={() => alert && resolve(alert.id)}
+                />
+              }
+            >
+              Mark resolved
+            </TooltipTrigger>
+            {!canResolve && (
+              <TooltipContent>
+                This alert is already resolved or dismissed
+              </TooltipContent>
+            )}
+          </Tooltip>
         </DialogFooter>
       </DialogContent>
     </Dialog>

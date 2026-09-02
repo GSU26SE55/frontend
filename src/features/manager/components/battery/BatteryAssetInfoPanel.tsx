@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDate } from "@/shared/utils/datetime";
 import { BatteryFull, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { useManagerBatteryAsset } from "@/features/manager/hooks/battery/useBatteryAsset";
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
 import CustomerHoverCard from "@/features/manager/components/account/CustomerHoverCard";
-import AlertStatusHoverCard from "@/shared/components/alerts/AlertStatusHoverCard";
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -28,14 +26,11 @@ interface Props {
   batteryAssetId?: string | null;
   /** Incident detection time (ticket.detectedAt) — used to show the warning evidence log. */
   detectedAt?: string | null;
-  /** The alert this ticket was auto-created from — drives the header badge (Open/Acknowledged/...). */
-  originAlertId?: string | null;
 }
 
 export default function BatteryAssetInfoPanel({
   batteryAssetId,
   detectedAt,
-  originAlertId,
 }: Props) {
   const {
     data: asset,
@@ -81,7 +76,6 @@ export default function BatteryAssetInfoPanel({
         <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
           Battery device information
         </p>
-        {originAlertId && <AlertStatusHoverCard alertId={originAlertId} />}
       </div>
 
       {/* Open the real-time detail page for this battery. When the ticket carries a detection
@@ -111,20 +105,11 @@ export default function BatteryAssetInfoPanel({
             />
           }
         />
-        <InfoRow
-          label="Install date"
-          value={format(new Date(asset.installDate), "dd/MM/yyyy", {
-            locale: enUS,
-          })}
-        />
+        <InfoRow label="Install date" value={formatDate(asset.installDate)} />
         <InfoRow
           label="Warranty"
           value={
-            asset.warrantyEndDate
-              ? format(new Date(asset.warrantyEndDate), "dd/MM/yyyy", {
-                  locale: enUS,
-                })
-              : "—"
+            asset.warrantyEndDate ? formatDate(asset.warrantyEndDate) : "—"
           }
         />
       </div>

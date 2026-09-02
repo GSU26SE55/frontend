@@ -1,14 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KEY, QUERY_KEY } from "@/shared/utils/queryKeys";
 import { importService } from "@/features/admin/services/import/import.service";
-import {
-  isImportBatchRunning,
-  type ImportEntityTypeEnum,
-} from "@/shared/enums/import/import.enum";
+import { isImportBatchRunning } from "@/shared/enums/import/import.enum";
 import type {
   CreateImportBatchPayload,
   ImportBatchListParams,
   ImportRowListParams,
+  UpdateImportRowsPayload,
 } from "@/shared/types/import/import.types";
 
 /**
@@ -71,6 +69,17 @@ export function useCreateImportBatch(
   });
 }
 
+export function useUpdateImportRows(batchId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateImportRowsPayload) =>
+      importService.updateRows(batchId, payload).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY.importBatches] });
+    },
+  });
+}
+
 export function useCommitImportBatch() {
   const qc = useQueryClient();
   return useMutation({
@@ -116,9 +125,9 @@ function saveBlob(blob: Blob, fileName: string) {
 
 export function useDownloadImportTemplate() {
   return useMutation({
-    mutationFn: async (entityType: ImportEntityTypeEnum) => {
-      const response = await importService.downloadTemplate(entityType);
-      saveBlob(response.data, `import-template-${entityType}.csv`);
+    mutationFn: async () => {
+      const response = await importService.downloadTemplate();
+      saveBlob(response.data, "import-template.xlsx");
     },
   });
 }

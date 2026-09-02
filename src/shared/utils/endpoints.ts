@@ -630,12 +630,14 @@ export const ENDPOINTS = {
   // Nhập dữ liệu khách hàng và thiết bị từ bên thứ ba — Admin/Manager.
   // Hoàn tác chỉ Admin: nó gỡ hàng loạt bản ghi trong một nhịp.
   IMPORTS: {
-    TEMPLATE: (entityType: number | string) =>
-      `/api/imports/templates/${entityType}`,
+    // Một workbook .xlsx ba sheet (Customers/Sites/Assets) — không còn theo entityType nữa.
+    TEMPLATE: "/api/imports/templates",
     CREATE_BATCH: "/api/imports/batches",
     LIST_BATCHES: "/api/imports/batches",
     BATCH_DETAIL: (id: string) => `/api/imports/batches/${id}`,
     BATCH_ROWS: (id: string) => `/api/imports/batches/${id}/rows`,
+    // Sửa trực tiếp vài dòng hỏng rồi kiểm định lại — cùng path GET ở trên, khác method.
+    UPDATE_ROWS: (id: string) => `/api/imports/batches/${id}/rows`,
     // Đường dẫn kết thúc bằng ".csv" là có chủ ý — BE trả file đính kèm, không phải JSON.
     BATCH_ERRORS_CSV: (id: string) => `/api/imports/batches/${id}/errors.csv`,
     COMMIT_BATCH: (id: string) => `/api/imports/batches/${id}/commit`,

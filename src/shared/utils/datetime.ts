@@ -16,6 +16,7 @@ import { format } from "date-fns";
 export const DATE_FORMAT = "dd/MM/yyyy";
 export const DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm";
 export const DATE_TIME_SECONDS_FORMAT = "dd/MM/yyyy HH:mm:ss";
+export const DATE_TIME_SHORT_FORMAT = "dd/MM HH:mm";
 
 /** Placeholder for a missing date — matches the em dash used across the tables. */
 const EMPTY = "—";
@@ -46,4 +47,12 @@ export const formatDateTimeWithSeconds = (
 ): string => {
   const d = parse(value);
   return d ? format(d, DATE_TIME_SECONDS_FORMAT) : EMPTY;
+};
+
+/** `26/08 13:46` — no year, for compact SLA countdown labels where space is tight. */
+export const formatDateTimeShort = (
+  value: Date | string | null | undefined,
+): string => {
+  const d = parse(value);
+  return d ? format(d, DATE_TIME_SHORT_FORMAT) : EMPTY;
 };

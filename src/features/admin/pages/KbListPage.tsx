@@ -132,7 +132,7 @@ export default function KbListPage() {
         </div>
       </div>
 
-      <div className="sticky top-0 z-10 ml-[calc(var(--page-pl)*-1)] mr-[calc(var(--page-pr)*-1)] pl-(--page-pl) pr-(--page-pr) bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 space-y-3">
+      <div className="sticky top-0 z-10 -ml-(--page-pl) -mr-(--page-pr) pl-(--page-pl) pr-(--page-pr) bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/70 space-y-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />

@@ -273,7 +273,7 @@ function Section({
                             key={i}
                             title={b.title}
                             className={cn(
-                              "text-3xs font-bold px-1.5 py-[1px] rounded-full leading-none",
+                              "text-3xs font-bold px-1.5 py-px rounded-full leading-none",
                               b.tone === "muted" &&
                                 "bg-muted text-muted-foreground",
                               b.tone === "warning" &&
@@ -445,7 +445,7 @@ export default function Sidebar({
       {/* ── Navigation ── */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto py-3 space-y-3 w-full [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "flex-1 overflow-y-auto py-3 space-y-3 w-full scrollbar-none [&::-webkit-scrollbar]:hidden",
           collapsed ? "flex flex-col items-center px-0" : "px-2",
         )}
       >

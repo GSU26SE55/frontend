@@ -1,9 +1,8 @@
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate, formatDateTime } from "@/shared/utils/datetime";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { KbStatusBadge } from "./KbStatusBadge";
@@ -46,7 +45,7 @@ export function SectionContent({ text }: { text: string }) {
             key={i}
             className="flex gap-3 text-sm leading-relaxed text-foreground/80"
           >
-            <span className="mt-[1px] flex size-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-2xs font-semibold tabular-nums text-muted-foreground">
+            <span className="mt-px flex size-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-2xs font-semibold tabular-nums text-muted-foreground">
               {i + 1}
             </span>
             <span>{step}</span>
@@ -127,7 +126,7 @@ export function KbArticleDetail({
       {/* ── Toolbar: identity on the left, actions on the right ──────────── */}
       {/* The toolbar spans the page, not the reading column: the article wants a narrow
           measure, the action row wants room to stay on one line. */}
-      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70">
         <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           <Button variant="ghost" size="sm" onClick={() => navigate(backUrl)}>
             <ArrowLeft className="size-3.5" />
@@ -187,18 +186,14 @@ export function KbArticleDetail({
             <div className="flex items-baseline justify-between gap-3">
               <dt className="text-muted-foreground">Added</dt>
               <dd className="tabular-nums font-medium">
-                {format(new Date(article.createdAt), "MMM d, yyyy", {
-                  locale: enUS,
-                })}
+                {formatDate(article.createdAt)}
               </dd>
             </div>
             {article.updatedAt && (
               <div className="flex items-baseline justify-between gap-3">
                 <dt className="text-muted-foreground">Updated</dt>
                 <dd className="tabular-nums font-medium">
-                  {format(new Date(article.updatedAt), "MMM d, yyyy HH:mm", {
-                    locale: enUS,
-                  })}
+                  {formatDateTime(article.updatedAt)}
                 </dd>
               </div>
             )}
