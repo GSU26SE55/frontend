@@ -7,7 +7,6 @@ import {
   SLA_WARNING_PERCENT,
   formatSlaRemaining,
   formatSlaDueAt,
-  formatSlaOverdue,
 } from "@/shared/lib/sla";
 import { toneClass, type StatusTone } from "@/shared/theme/statusColors";
 import {
@@ -69,12 +68,15 @@ export default function SlaCountdown({
   // truyền một `slaTimer` được useMemo lại mỗi giây (phụ thuộc `now`), nên dùng `slaTimer`
   // làm dep sẽ clear + tạo lại interval trước khi nó kịp fire → countdown đứng.
   const hasTimer = !!slaTimer;
+  // Past the deadline the badge is a static "Breached" — nothing left to tick, so the
+  // interval stops too instead of counting overdue time upwards.
+  const hasExpired = !!dueAt && remaining <= 0;
   useEffect(() => {
-    if (!hasTimer || isStopped) return;
+    if (!hasTimer || isStopped || hasExpired) return;
 
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [hasTimer, isStopped]);
+  }, [hasTimer, isStopped, hasExpired]);
 
   // No timer at all. The clock is only created when a ticket is actually picked up
   // (ApplySlaAsync, on the transition to InProgress), and Urgent tickets never get one —
@@ -95,39 +97,13 @@ export default function SlaCountdown({
   }
 
   if (slaTimer.status === SlaTimerStatusEnum.Breached) {
-    if (completedAt) {
-      return (
-        <span
-          className={`${BADGE_BASE} ${toneClass("p1")}`}
-          title={`SLA breached · Due ${formatSlaDueAt(slaTimer.dueAt)}`}
-        >
-          Breached
-        </span>
-      );
-    }
-    const overdueMs = Math.abs(remaining);
     return (
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              className={`${BADGE_BASE} font-mono tabular-nums ${toneClass("p1")}`}
-            />
-          }
-        >
-          {formatSlaOverdue(overdueMs)}
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="space-y-0.5 text-left">
-            <div className="font-medium tabular-nums">
-              SLA breached · {formatSlaOverdue(overdueMs)} overdue
-            </div>
-            <div className="opacity-80">
-              Due {formatSlaDueAt(slaTimer.dueAt)}
-            </div>
-          </div>
-        </TooltipContent>
-      </Tooltip>
+      <span
+        className={`${BADGE_BASE} ${toneClass("p1")}`}
+        title={`SLA breached · Due ${formatSlaDueAt(slaTimer.dueAt)}`}
+      >
+        Breached
+      </span>
     );
   }
 
@@ -165,31 +141,15 @@ export default function SlaCountdown({
   );
 
   // Running, but the deadline is already behind us — the BE breach sweep has not flipped
-  // the status yet. Show live overdue counter instead of a frozen 00:00:00 or static label.
+  // the status yet. Show the breach the clock has already reached; do NOT keep counting.
   if (remaining <= 0) {
-    const overdueMs = Math.abs(remaining);
     return (
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              className={`${BADGE_BASE} font-mono tabular-nums ${toneClass("p1")}`}
-            />
-          }
-        >
-          {formatSlaOverdue(overdueMs)}
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="space-y-0.5 text-left">
-            <div className="font-medium tabular-nums">
-              Overdue · {formatSlaOverdue(overdueMs)}
-            </div>
-            <div className="opacity-80">
-              Due {formatSlaDueAt(slaTimer.dueAt)}
-            </div>
-          </div>
-        </TooltipContent>
-      </Tooltip>
+      <span
+        className={`${BADGE_BASE} ${toneClass("p1")}`}
+        title={`SLA breached · Due ${formatSlaDueAt(slaTimer.dueAt)}`}
+      >
+        Breached
+      </span>
     );
   }
 

@@ -28,12 +28,15 @@ export function useLiveSlaPercent(slaTimer: SlaTimerLike): number {
     slaTimer != null && slaTimer.startedAt != null && slaTimer.dueAt != null;
 
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const percent = slaTimer ? liveRemainingPercent(slaTimer, nowMs) : 0;
+  // Ở 0% là đã breach — bar không giảm thêm được nữa, nên dừng tick thay vì re-render
+  // mỗi giây cho mọi ticket đã quá hạn trong danh sách.
+  const isExhausted = percent <= 0;
   useEffect(() => {
-    if (!isRunning) return;
+    if (!isRunning || isExhausted) return;
     const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [isRunning]);
+  }, [isRunning, isExhausted]);
 
-  if (!slaTimer) return 0;
-  return liveRemainingPercent(slaTimer, nowMs);
+  return percent;
 }
