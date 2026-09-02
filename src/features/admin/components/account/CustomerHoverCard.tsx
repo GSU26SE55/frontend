@@ -5,6 +5,7 @@ import {
   HoverCardContent,
 } from "@/components/ui/hover-card";
 import { useCustomerAccount } from "@/features/admin/hooks/account/useCustomerAccount";
+import { toLocalPhone } from "@/shared/lib/phone";
 
 interface Props {
   customerId: string;
@@ -54,7 +55,7 @@ function CustomerHoverCardBody({ customerId }: { customerId: string }) {
         {customer.phoneNumber && (
           <div className="flex items-center gap-1.5">
             <Phone className="size-3.5 shrink-0" />
-            <span>{customer.phoneNumber}</span>
+            <span>{toLocalPhone(customer.phoneNumber)}</span>
           </div>
         )}
         {customer.address && (
