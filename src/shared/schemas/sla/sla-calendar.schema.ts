@@ -10,6 +10,15 @@ export const todayIsoDate = () => {
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
 };
 
+/** Tomorrow in the business timezone, as the yyyy-MM-dd string the date inputs use. */
+export const tomorrowIsoDate = () => {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60_000;
+  const localNow = new Date(now.getTime() - offsetMs);
+  localNow.setDate(localNow.getDate() + 1);
+  return localNow.toISOString().slice(0, 10);
+};
+
 export const slaNonWorkingPeriodSchema = z
   .object({
     startDate: z.string().min(1, "Start date is required"),
@@ -28,10 +37,10 @@ export const slaNonWorkingPeriodSchema = z
     message: "End date must be on or after the start date",
     path: ["endDate"],
   })
-  // Mirrors ValidateStartDate, which compares against "today" in Asia/Ho_Chi_Minh. Catching it
-  // here keeps the message on the field instead of arriving as a toast.
-  .refine((d) => d.startDate >= todayIsoDate(), {
-    message: "Start date cannot be in the past",
+  // BE's ValidateStartDate only rejects the past, but the UI is stricter: only a future
+  // date (not today) may be picked, so this can't arrive as a toast from the BE.
+  .refine((d) => d.startDate >= tomorrowIsoDate(), {
+    message: "Start date must be in the future",
     path: ["startDate"],
   });
 
