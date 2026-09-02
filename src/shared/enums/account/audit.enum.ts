@@ -13,6 +13,7 @@ export const LoginAttemptResult = {
   AccountBanned: 6,
   AccountInactive: 7,
   AccountNotVerified: 8,
+  WrongTwoFactorCode: 9,
 } as const;
 export type LoginAttemptResult =
   (typeof LoginAttemptResult)[keyof typeof LoginAttemptResult];
