@@ -184,7 +184,16 @@ export default function ManualIncidentDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {SEVERITY_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={String(s.value)}>
+                      // Info hidden per request — logic kept intact, not removed.
+                      <SelectItem
+                        key={s.value}
+                        value={String(s.value)}
+                        className={
+                          s.value === AlertSeverityEnum.Info
+                            ? "hidden"
+                            : undefined
+                        }
+                      >
                         {s.label}
                       </SelectItem>
                     ))}

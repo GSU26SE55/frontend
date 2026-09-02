@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Eye, EyeOff, Copy } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -21,8 +20,6 @@ import {
 } from "@/features/admin/components/iot/deviceSecrets";
 import DeviceCommandDialog from "@/features/admin/components/iot/DeviceCommandDialog";
 import ConfirmActionDialog from "@/features/admin/components/common/ConfirmActionDialog";
-import CalibrationTable from "@/shared/components/iot/CalibrationTable";
-import CalibrationFormDialog from "@/shared/components/iot/CalibrationFormDialog";
 import { RefreshButton } from "@/shared/components/ui/RefreshButton";
 import { KEY } from "@/shared/utils/queryKeys";
 import { useIotDevice } from "@/features/admin/hooks/iot/useIotDevice";
@@ -31,7 +28,6 @@ import {
   useRotateIotDeviceMqtt,
   useRevokeIotDeviceKey,
 } from "@/features/admin/hooks/iot/useIotDeviceMutations";
-import { useIotCalibrations } from "@/shared/hooks/iot/useIotCalibrations";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { ADMIN_MESSAGES } from "@/features/admin/constants/messages";
@@ -115,7 +111,6 @@ export default function IoTDeviceDetailPage() {
   const navigate = useNavigate();
   const { id = "" } = useParams<{ id: string }>();
   const { data: device, isLoading } = useIotDevice(id);
-  const { data: calibrations } = useIotCalibrations(id);
 
   const { mutate: rotateKey } = useRotateIotDeviceKey(id);
   const { mutate: rotateMqtt } = useRotateIotDeviceMqtt(id);
@@ -123,7 +118,6 @@ export default function IoTDeviceDetailPage() {
 
   const [revealed, setRevealed] = useState<DeviceSecrets | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
-  const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [confirm, setConfirm] = useState<
     "rotate" | "rotate-mqtt" | "revoke" | null
   >(null);
@@ -232,84 +226,48 @@ export default function IoTDeviceDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="calibrations">Calibration</TabsTrigger>
-          <TabsTrigger value="firmware">Firmware</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <Card className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Field label="Site" value={device.siteName} />
-            <Field label="Hardware revision" value={device.hardwareRevision} />
-            <Field
-              label="API key (last 4)"
-              value={
-                <span className="font-mono">…{device.apiKeyLastFour}</span>
-              }
-            />
-            <Field
-              label="API key (full)"
-              value={<ApiKeyReveal apiKey={device.apiKey} />}
-            />
-            <Field
-              label="Key issued at"
-              value={formatDateTime(device.apiKeyIssuedAt)}
-            />
-            <Field
-              label="Key revoked"
-              value={
-                device.apiKeyRevokedAt
-                  ? formatDateTime(device.apiKeyRevokedAt)
-                  : "Still valid"
-              }
-            />
-            <Field
-              label="Heartbeat (seconds)"
-              value={device.heartbeatIntervalSeconds}
-            />
-            <Field
-              label="Last heartbeat"
-              value={
-                device.lastSeenAt ? formatDateTime(device.lastSeenAt) : "Never"
-              }
-            />
-            <Field
-              label="Clock skew (seconds)"
-              value={device.lastClockSkewSeconds}
-            />
-            <Field
-              label="Created at"
-              value={formatDateTime(device.createdAt)}
-            />
-            <div className="col-span-2 md:col-span-3">
-              <Field label="Notes" value={device.notes} />
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="calibrations">
-          <div className="flex justify-end mb-3">
-            <Button size="sm" onClick={() => setCalibrationOpen(true)}>
-              <Plus className="size-3.5" /> Add calibration
-            </Button>
-          </div>
-          <Card className="gap-0 py-0 overflow-hidden">
-            <CalibrationTable deviceId={id} items={calibrations ?? []} />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="firmware">
-          <Card className="p-6 grid grid-cols-2 gap-4">
-            <Field
-              label="Current firmware"
-              value={device.currentFirmwareVersion}
-            />
-            <Field label="Target OTA" value={device.targetFirmwareVersion} />
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Field label="Site" value={device.siteName} />
+        <Field label="Hardware revision" value={device.hardwareRevision} />
+        <Field
+          label="API key (last 4)"
+          value={<span className="font-mono">…{device.apiKeyLastFour}</span>}
+        />
+        <Field
+          label="API key (full)"
+          value={<ApiKeyReveal apiKey={device.apiKey} />}
+        />
+        <Field
+          label="Key issued at"
+          value={formatDateTime(device.apiKeyIssuedAt)}
+        />
+        <Field
+          label="Key revoked"
+          value={
+            device.apiKeyRevokedAt
+              ? formatDateTime(device.apiKeyRevokedAt)
+              : "Still valid"
+          }
+        />
+        <Field
+          label="Heartbeat (seconds)"
+          value={device.heartbeatIntervalSeconds}
+        />
+        <Field
+          label="Last heartbeat"
+          value={
+            device.lastSeenAt ? formatDateTime(device.lastSeenAt) : "Never"
+          }
+        />
+        <Field
+          label="Clock skew (seconds)"
+          value={device.lastClockSkewSeconds}
+        />
+        <Field label="Created at" value={formatDateTime(device.createdAt)} />
+        <div className="col-span-2 md:col-span-3">
+          <Field label="Notes" value={device.notes} />
+        </div>
+      </Card>
 
       <DeviceKeyRevealDialog
         open={!!revealed}
@@ -321,11 +279,6 @@ export default function IoTDeviceDetailPage() {
         onOpenChange={setCommandOpen}
         deviceId={id}
         deviceStatus={device.status}
-      />
-      <CalibrationFormDialog
-        open={calibrationOpen}
-        onOpenChange={setCalibrationOpen}
-        deviceId={id}
       />
 
       {/* IOT3-76 — hai lệnh xoay khoá, HAI cảnh báo hoàn toàn khác nhau.
