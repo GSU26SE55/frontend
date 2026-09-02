@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Clock, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,12 +66,10 @@ export default function MaintenanceLogCard({
     completed &&
     format(started, "yyyy-MM-dd") === format(completed, "yyyy-MM-dd");
   const when = completed
-    ? `${format(started, "dd/MM/yyyy HH:mm", { locale: enUS })} → ${format(
-        completed,
-        sameDay ? "HH:mm" : "dd/MM/yyyy HH:mm",
-        { locale: enUS },
-      )}`
-    : format(started, "dd/MM/yyyy HH:mm", { locale: enUS });
+    ? `${formatDateTime(started)} → ${
+        sameDay ? format(completed, "HH:mm") : formatDateTime(completed)
+      }`
+    : formatDateTime(started);
 
   const hasBody =
     !!log.diagnosisDetails?.trim() ||

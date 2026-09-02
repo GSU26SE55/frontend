@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2, Trash2, MonitorSmartphone } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +21,7 @@ import { handleErrorApi } from "@/shared/lib/errors";
 import { plural } from "@/shared/utils/plural";
 import type { TrustedDeviceDto } from "@/features/auth/types/trusted-device/trusted-device.types";
 
-const fmt = (iso?: string | null) =>
-  iso ? format(new Date(iso), "dd/MM/yyyy HH:mm") : "—";
+const fmt = (iso?: string | null) => (iso ? formatDateTime(iso) : "—");
 
 // #AUTH-48: manage trusted devices — list + revoke one / revoke all
 const TrustedDevicesSection = () => {

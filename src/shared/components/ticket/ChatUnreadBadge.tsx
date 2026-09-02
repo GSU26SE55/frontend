@@ -32,7 +32,7 @@ export default function ChatUnreadBadge({ ticketId }: Props) {
           aria-label={`${unreadCount} unread comments`}
           // min-w = h so a single digit renders as a circle, longer numbers auto-expand into a pill.
           // tabular-nums keeps the width stable as the number changes, avoiding tab jitter.
-          className="ml-1.5 h-[15px] min-w-[15px] px-1 inline-flex items-center justify-center rounded-full text-white text-3xs font-semibold leading-none tabular-nums group-data-[state=active]:hidden"
+          className="ml-1.5 h-3.75 min-w-3.75 px-1 inline-flex items-center justify-center rounded-full text-white text-3xs font-semibold leading-none tabular-nums group-data-[state=active]:hidden"
           style={{ backgroundColor: "var(--p1-solid)" }}
           initial={reduced ? false : { scale: 0.4, opacity: 0 }}
           animate={{ scale: 1, opacity: 1, transition: SPRING }}

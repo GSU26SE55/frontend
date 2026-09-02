@@ -12,6 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   useAdminPermissionList,
   useAdminRolePermissions,
   useAdminSetRolePermissions,
@@ -274,10 +279,18 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
                               <div className="flex-1 min-w-0">
                                 {/* End users read the description, not the code.
                                     The code is only a fallback for permissions the
-                                    BE has not given a description yet. */}
-                                <div className="text-2sm leading-snug">
-                                  {p.description || p.code}
-                                </div>
+                                    BE has not given a description yet — but admins
+                                    debugging authz still want the raw code on hover. */}
+                                <Tooltip>
+                                  <TooltipTrigger
+                                    render={
+                                      <div className="text-2sm leading-snug" />
+                                    }
+                                  >
+                                    {p.description || p.code}
+                                  </TooltipTrigger>
+                                  <TooltipContent>{p.code}</TooltipContent>
+                                </Tooltip>
                               </div>
                             </label>
                           );

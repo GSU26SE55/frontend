@@ -7,6 +7,11 @@ import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import IoTDeviceStatusBadge from "@/shared/components/iot/IoTDeviceStatusBadge";
 import DeviceKeyRevealDialog from "@/features/admin/components/iot/DeviceKeyRevealDialog";
 import {
@@ -61,31 +66,47 @@ function ApiKeyReveal({ apiKey }: { apiKey: string | null }) {
       <span className="font-mono text-xs break-all">
         {shown ? apiKey : "•".repeat(16)}
       </span>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0"
-        aria-label={shown ? "Hide API key" : "Show API key"}
-        onClick={() => setShown((v) => !v)}
-      >
-        {shown ? (
-          <EyeOff className="h-3.5 w-3.5" />
-        ) : (
-          <Eye className="h-3.5 w-3.5" />
-        )}
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 shrink-0"
-        aria-label="Copy API key"
-        onClick={() => {
-          navigator.clipboard.writeText(apiKey);
-          toast.success(ADMIN_MESSAGES.iot.apiKeyCopied);
-        }}
-      >
-        <Copy className="h-3.5 w-3.5" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              aria-label={shown ? "Hide API key" : "Show API key"}
+              onClick={() => setShown((v) => !v)}
+            />
+          }
+        >
+          {shown ? (
+            <EyeOff className="h-3.5 w-3.5" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
+        </TooltipTrigger>
+        <TooltipContent>
+          {shown ? "Hide API key" : "Show API key"}
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              aria-label="Copy API key"
+              onClick={() => {
+                navigator.clipboard.writeText(apiKey);
+                toast.success(ADMIN_MESSAGES.iot.apiKeyCopied);
+              }}
+            />
+          }
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </TooltipTrigger>
+        <TooltipContent>Copy API key</TooltipContent>
+      </Tooltip>
     </div>
   );
 }

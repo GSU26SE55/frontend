@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { LogOut, Loader2, History } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTime } from "@/shared/utils/datetime";
 import {
   Drawer,
   DrawerContent,
@@ -92,8 +91,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
     );
   };
 
-  const fmt = (dt: string) =>
-    format(new Date(dt), "dd/MM/yyyy HH:mm", { locale: enUS });
+  const fmt = (dt: string) => formatDateTime(dt);
 
   return (
     <>

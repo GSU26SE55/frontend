@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import {
   Table,
   TableBody,
@@ -149,7 +149,7 @@ const LoginHistoryTable = () => {
                     {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="tabular-nums text-xs text-muted-foreground">
-                    {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm")}
+                    {formatDateTime(item.createdAt)}
                   </TableCell>
                   <TableCell>
                     <Badge

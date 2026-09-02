@@ -1,6 +1,5 @@
 import { ScrollText, CheckCircle2, XCircle } from "lucide-react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatDateTimeWithSeconds } from "@/shared/utils/datetime";
 import {
   Table,
   TableBody,
@@ -154,9 +153,7 @@ export default function BatteryAuditLogTable({
               {(pageNumber - 1) * pageSize + index + 1}
             </TableCell>
             <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
-              {format(new Date(log.occurredAt), "dd/MM/yyyy HH:mm:ss", {
-                locale: enUS,
-              })}
+              {formatDateTimeWithSeconds(log.occurredAt)}
             </TableCell>
             <TableCell>
               <div className="flex flex-col">
@@ -177,12 +174,18 @@ export default function BatteryAuditLogTable({
                 {log.severity}
               </Badge>
             </TableCell>
-            <TableCell className="text-sm truncate">
+            <TableCell
+              className="text-sm truncate"
+              title={log.targetDisplay ?? log.targetId ?? undefined}
+            >
               {log.targetDisplay ?? log.targetId ?? (
                 <span className="text-muted-foreground">—</span>
               )}
             </TableCell>
-            <TableCell className="text-xs font-mono text-muted-foreground truncate">
+            <TableCell
+              className="text-xs font-mono text-muted-foreground truncate"
+              title={log.actorAccountId ?? "System"}
+            >
               {log.actorAccountId ?? "System"}
             </TableCell>
             <TableCell className="text-center">

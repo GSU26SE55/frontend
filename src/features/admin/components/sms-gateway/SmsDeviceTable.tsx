@@ -1,5 +1,5 @@
 import { Ban } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toneClass } from "@/shared/theme/statusColors";
@@ -13,8 +13,7 @@ const isOnline = (lastSeenAt: string | null) =>
   !!lastSeenAt &&
   Date.now() - new Date(lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
 
-const fmt = (dt: string | null) =>
-  dt ? format(new Date(dt), "dd/MM/yyyy HH:mm") : "—";
+const fmt = (dt: string | null) => (dt ? formatDateTime(dt) : "—");
 
 interface SmsDeviceTableProps {
   data: GatewayDeviceDto[];

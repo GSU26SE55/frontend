@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { format } from "date-fns";
+import { formatDateTimeShort } from "@/shared/utils/datetime";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type {
   TicketDTO,
@@ -277,14 +277,15 @@ export default function TicketSlaSection({ ticket, className }: Props) {
     slaTimer?.calendarExtensionDays,
   );
 
-  // Default collapsed once a stage already has an outcome (nothing live left to watch) —
-  // keeps both stages visible at once from reading as noisy. Lazy-init only, so a user's
-  // manual toggle isn't overridden on every re-render as the live timer ticks.
+  // Default collapsed once a stage already has an outcome, or hasn't started yet — expanded
+  // only for the stage actually running, so a still-Open ticket doesn't open both the live
+  // Response SLA AND a Resolution SLA that has nothing to show yet ("Not started"). Lazy-init
+  // only, so a user's manual toggle isn't overridden on every re-render as the live timer ticks.
   const [responseExpanded, setResponseExpanded] = useState(
     () => !responseData.hasResponded,
   );
   const [resolutionExpanded, setResolutionExpanded] = useState(
-    () => isOpenStage || isResolutionLive,
+    () => isResolutionLive,
   );
 
   return (
@@ -336,7 +337,7 @@ export default function TicketSlaSection({ ticket, className }: Props) {
               <span className="text-muted-foreground text-xs">Deadline</span>
               <span className="font-medium tabular-nums text-foreground text-xs">
                 {responseData.deadline
-                  ? format(responseData.deadline, "dd/MM HH:mm")
+                  ? formatDateTimeShort(responseData.deadline)
                   : "—"}
               </span>
             </div>
@@ -368,7 +369,7 @@ export default function TicketSlaSection({ ticket, className }: Props) {
               </span>
               <span className="font-medium tabular-nums text-foreground text-xs">
                 {responseData.hasResponded && responseData.firstRespondedAt
-                  ? format(responseData.firstRespondedAt, "dd/MM HH:mm")
+                  ? formatDateTimeShort(responseData.firstRespondedAt)
                   : "—"}
               </span>
             </div>
@@ -461,7 +462,7 @@ export default function TicketSlaSection({ ticket, className }: Props) {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-xs">Deadline</span>
                 <span className="font-medium tabular-nums text-foreground text-xs">
-                  {format(new Date(slaTimer.dueAt), "dd/MM HH:mm")}
+                  {formatDateTimeShort(slaTimer.dueAt)}
                 </span>
               </div>
 
@@ -507,9 +508,8 @@ export default function TicketSlaSection({ ticket, className }: Props) {
                 </span>
                 <span className="font-medium tabular-nums text-foreground text-xs">
                   {(ticket as TicketDetailDTO).resolvedAt
-                    ? format(
-                        new Date((ticket as TicketDetailDTO).resolvedAt!),
-                        "dd/MM HH:mm",
+                    ? formatDateTimeShort(
+                        (ticket as TicketDetailDTO).resolvedAt,
                       )
                     : "—"}
                 </span>

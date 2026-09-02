@@ -242,7 +242,7 @@ export function DashboardDonut({
             <div className="flex min-w-0 items-center gap-2.5">
               <span
                 aria-hidden
-                className="size-2.5 shrink-0 rounded-[2px]"
+                className="size-2.5 shrink-0 rounded-xs"
                 style={{ background: b.fill }}
               />
               <span className="truncate text-sm text-muted-foreground">
@@ -411,7 +411,7 @@ export function DashboardStackedBar({
                   <div className="flex w-full items-center gap-2">
                     <span
                       aria-hidden
-                      className="size-2.5 shrink-0 rounded-[2px]"
+                      className="size-2.5 shrink-0 rounded-xs"
                       style={{ background: seg.fill }}
                     />
                     <span className="text-muted-foreground">{seg.label}</span>

@@ -211,6 +211,7 @@ export default function KbArticleTable({
                             className="-mt-1 -mr-1 size-8"
                           />
                         }
+                        aria-label="Actions"
                       >
                         <EllipsisVertical className="size-4.5" />
                       </DropdownMenuTrigger>

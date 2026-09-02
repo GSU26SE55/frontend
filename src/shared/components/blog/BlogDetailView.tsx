@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -145,15 +150,26 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
 
             {canWorkflow && (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  disabled={!canPublish || publishing}
-                  onClick={() => publish(post.id)}
-                >
-                  <Upload className="size-3.5" /> Publish
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        disabled={!canPublish || publishing}
+                        onClick={() => publish(post.id)}
+                      />
+                    }
+                  >
+                    <Upload className="size-3.5" /> Publish
+                  </TooltipTrigger>
+                  {!canPublish && (
+                    <TooltipContent>
+                      Only draft posts can be published
+                    </TooltipContent>
+                  )}
+                </Tooltip>
                 <Button
                   variant="outline"
                   size="sm"
@@ -237,7 +253,7 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
             <div className="flex items-baseline justify-between gap-3">
               <dt className="text-muted-foreground">Written</dt>
               <dd className="font-medium tabular-nums">
-                {format(new Date(post.createdAt), "MMM d, yyyy HH:mm")}
+                {formatDateTime(post.createdAt)}
               </dd>
             </div>
           </dl>

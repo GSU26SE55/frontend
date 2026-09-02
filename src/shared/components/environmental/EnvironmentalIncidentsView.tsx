@@ -10,6 +10,11 @@ import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -47,7 +52,10 @@ import {
 } from "@/shared/hooks/alerts/useAlerts";
 import { alertService } from "@/shared/services/alerts/alert.service";
 import { anomalyTypeLabel } from "@/shared/constants/alertLabels";
-import { AlertStatusEnum, AnomalyTypeEnum } from "@/shared/enums/alerts/alert.enum";
+import {
+  AlertStatusEnum,
+  AnomalyTypeEnum,
+} from "@/shared/enums/alerts/alert.enum";
 import { useUrlFilters } from "@/shared/hooks/useUrlFilters";
 import { handleErrorApi } from "@/shared/lib/errors";
 import { useSessionStore } from "@/shared/stores/sessionStore";
@@ -344,8 +352,8 @@ export default function EnvironmentalIncidentsView({
                       alert.unit?.toLowerCase() === "bool"
                         ? "Wet"
                         : alert.actualValue == null || isIncident
-                        ? "—"
-                        : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""} / ${alert.thresholdValue ?? "—"}${alert.unit ? ` ${alert.unit}` : ""}`}
+                          ? "—"
+                          : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""} / ${alert.thresholdValue ?? "—"}${alert.unit ? ` ${alert.unit}` : ""}`}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDateTime(alert.detectedAt)}
@@ -543,9 +551,23 @@ function IncidentDetailDialog({
                 False alarm
               </Button>
             )}
-            <Button disabled={!canResolve} onClick={() => setPanel("resolve")}>
-              Resolve
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    disabled={!canResolve}
+                    onClick={() => setPanel("resolve")}
+                  />
+                }
+              >
+                Resolve
+              </TooltipTrigger>
+              {!canResolve && (
+                <TooltipContent>
+                  This incident is already resolved or a false alarm
+                </TooltipContent>
+              )}
+            </Tooltip>
           </DialogFooter>
         )}
       </DialogContent>
@@ -743,8 +765,8 @@ function AmbientAlertDetailDialog({
                 alert.unit?.toLowerCase() === "bool"
                   ? "Wet"
                   : alert.actualValue == null
-                  ? "—"
-                  : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""}`}
+                    ? "—"
+                    : `${alert.actualValue}${alert.unit ? ` ${alert.unit}` : ""}`}
               </span>
             </DetailRow>
             <DetailRow label="Threshold">
@@ -754,8 +776,8 @@ function AmbientAlertDetailDialog({
                 alert.unit?.toLowerCase() === "bool"
                   ? "Wet"
                   : alert.thresholdValue == null
-                  ? "—"
-                  : `${alert.thresholdValue}${alert.unit ? ` ${alert.unit}` : ""}`}
+                    ? "—"
+                    : `${alert.thresholdValue}${alert.unit ? ` ${alert.unit}` : ""}`}
               </span>
             </DetailRow>
             <DetailRow label="Customer">{alert.customerName || "—"}</DetailRow>
@@ -790,12 +812,23 @@ function AmbientAlertDetailDialog({
         )}
 
         <DialogFooter>
-          <Button
-            disabled={!canResolve || resolvePending}
-            onClick={() => alert && resolve(alert.id)}
-          >
-            Mark resolved
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  disabled={!canResolve || resolvePending}
+                  onClick={() => alert && resolve(alert.id)}
+                />
+              }
+            >
+              Mark resolved
+            </TooltipTrigger>
+            {!canResolve && (
+              <TooltipContent>
+                This alert is already resolved or dismissed
+              </TooltipContent>
+            )}
+          </Tooltip>
         </DialogFooter>
       </DialogContent>
     </Dialog>

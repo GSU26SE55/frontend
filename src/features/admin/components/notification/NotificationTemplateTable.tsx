@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
+import { formatDateTime } from "@/shared/utils/datetime";
 import {
   notificationTypeLabel,
   notificationChannelLabel,
@@ -117,7 +117,7 @@ export default function NotificationTemplateTable({
               </span>
             </TableCell>
             <TableCell className="text-muted-foreground text-xs">
-              {format(new Date(t.updatedAt ?? t.createdAt), "dd/MM/yyyy HH:mm")}
+              {formatDateTime(t.updatedAt ?? t.createdAt)}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
@@ -125,6 +125,7 @@ export default function NotificationTemplateTable({
                   render={
                     <Button variant="ghost" size="icon" className="size-7" />
                   }
+                  aria-label="Actions"
                 >
                   <EllipsisVertical className="size-4" />
                 </DropdownMenuTrigger>
