@@ -181,8 +181,13 @@ export default function EnvironmentalIncidentsView({
         <div className="flex items-center gap-2">
           {/* Need the site list to pick a SiteId (required field) → hide the button until it's available.
               Staff can only list sites once BE opens GET /api/sites to the Staff role. */}
+          {/* Manual report button hidden per request — logic kept intact, not removed. */}
           {sites && sites.length > 0 && (
-            <Button size="sm" onClick={() => setReportOpen(true)}>
+            <Button
+              size="sm"
+              className="hidden"
+              onClick={() => setReportOpen(true)}
+            >
               Manual report
             </Button>
           )}
