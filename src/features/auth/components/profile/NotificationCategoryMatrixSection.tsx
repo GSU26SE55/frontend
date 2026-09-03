@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { handleErrorApi, EntityError } from "@/shared/lib/errors";
 import {
@@ -126,9 +126,35 @@ export default function NotificationCategoryMatrixSection() {
   };
 
   if (isLoading) {
+    const categoryCount = Object.keys(CATEGORY_LABEL).length;
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Loading…
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <Skeleton className="h-4.5 w-52" />
+          <Skeleton className="h-3 w-full max-w-md" />
+        </div>
+        <div className="border border-border rounded-xl overflow-hidden">
+          <div className="border-b border-border bg-muted/40 px-4 py-2.5 flex items-center gap-3">
+            <Skeleton className="h-4 w-20" />
+            <div className="flex-1 flex justify-around">
+              {CHANNEL_COLUMNS.map((col) => (
+                <Skeleton key={col.key} className="h-4 w-10" />
+              ))}
+            </div>
+          </div>
+          <div className="divide-y divide-border/60">
+            {Array.from({ length: categoryCount }).map((_, i) => (
+              <div key={i} className="px-4 py-3 flex items-center gap-3">
+                <Skeleton className="h-4 w-32" />
+                <div className="flex-1 flex justify-around">
+                  {CHANNEL_COLUMNS.map((col) => (
+                    <Skeleton key={col.key} className="h-5 w-9 rounded-full" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -161,22 +187,14 @@ export default function NotificationCategoryMatrixSection() {
           <thead>
             <tr className="border-b border-border bg-muted/40">
               <th className="text-left font-medium px-4 py-2.5">Category</th>
-              {CHANNEL_COLUMNS.map((col) => {
-                const globalOff = channels ? !channels[col.key] : false;
-                return (
-                  <th
-                    key={col.key}
-                    className="font-medium px-3 py-2.5 text-center whitespace-nowrap"
-                  >
-                    {col.label}
-                    {globalOff && (
-                      <span className="block text-3xs font-normal text-muted-foreground">
-                        off
-                      </span>
-                    )}
-                  </th>
-                );
-              })}
+              {CHANNEL_COLUMNS.map((col) => (
+                <th
+                  key={col.key}
+                  className="font-medium px-3 py-2.5 text-center whitespace-nowrap"
+                >
+                  {col.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">

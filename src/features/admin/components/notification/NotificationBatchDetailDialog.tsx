@@ -6,6 +6,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   notificationTypeLabel,
   notificationChannelLabel,
@@ -63,9 +64,26 @@ export default function NotificationBatchDetailDialog({
         </DialogHeader>
 
         {isLoading || !data ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            Loading…
-          </p>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3.5 w-full" />
+              <div className="flex gap-1">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-4.5 w-16 rounded-full" />
+                ))}
+              </div>
+            </div>
+            <div>
+              <Skeleton className="h-3 w-14 mb-1.5" />
+              <Skeleton className="h-4.5 w-24 rounded-full" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-md" />
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="rounded-lg border border-border p-3">

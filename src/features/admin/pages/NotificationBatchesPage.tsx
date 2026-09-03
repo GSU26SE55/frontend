@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { PageContainer } from "@/shared/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -114,9 +115,11 @@ export default function NotificationBatchesPage() {
 
       <Card className="gap-0 py-0 overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-            Loading…
-          </p>
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
         ) : batches.length === 0 ? (
           <div className="px-4 py-10 text-center">
             <p className="text-sm text-muted-foreground">No sends yet.</p>

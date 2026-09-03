@@ -222,7 +222,7 @@ export function KbArticleSelector({
           <BookOpen className="size-3.5" />
           Select guide article
         </DialogTrigger>
-        <DialogContent className="!w-[94vw] !max-w-260">
+        <DialogContent className="w-[94vw]! max-w-260!">
           <DialogHeader>
             <DialogTitle>Select guide article</DialogTitle>
           </DialogHeader>

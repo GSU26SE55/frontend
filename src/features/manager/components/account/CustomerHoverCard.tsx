@@ -1,10 +1,12 @@
-import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
 } from "@/components/ui/hover-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomerAccount } from "@/features/manager/hooks/account/useCustomerAccount";
+import { toLocalPhone } from "@/shared/lib/phone";
 
 interface Props {
   customerId: string;
@@ -29,8 +31,12 @@ function CustomerHoverCardBody({ customerId }: { customerId: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-32" />
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-28" />
+        </div>
       </div>
     );
   }
@@ -54,7 +60,7 @@ function CustomerHoverCardBody({ customerId }: { customerId: string }) {
         {customer.phoneNumber && (
           <div className="flex items-center gap-1.5">
             <Phone className="size-3.5 shrink-0" />
-            <span>{customer.phoneNumber}</span>
+            <span>{toLocalPhone(customer.phoneNumber)}</span>
           </div>
         )}
         {customer.address && (
