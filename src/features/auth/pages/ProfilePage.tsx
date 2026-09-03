@@ -6,7 +6,6 @@ import {
   Loader2,
   Camera,
   ShieldCheck,
-  Phone,
   Mail,
   Clock,
   CalendarDays,
@@ -262,15 +261,6 @@ const ProfilePage = () => {
                 <BadgeCheck size={11} className="text-emerald-500" />
               )}
             </span>
-            {account?.phoneNumber && (
-              <span className="flex items-center gap-1">
-                <Phone size={11} />
-                {account.phoneNumber}
-                {account.phoneConfirmed && (
-                  <BadgeCheck size={11} className="text-emerald-500" />
-                )}
-              </span>
-            )}
             {account?.createdAt && (
               <span className="flex items-center gap-1">
                 <CalendarDays size={11} />
