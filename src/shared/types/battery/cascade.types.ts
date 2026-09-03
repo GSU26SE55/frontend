@@ -28,6 +28,13 @@ export interface CascadeRiskDto {
   level: CascadeRiskLevelName;
   electricalTopology: ElectricalTopologyName;
   cascadeRiskUpdatedAt: string | null; // null if never computed
+  /**
+   * Human-readable reasons behind the score (e.g. "ParallelBank wiring adds +0.60") — computed
+   * live per request by the BE, NOT stored, so it can lag the stored score by a few seconds
+   * right after an alert opens/closes and before the next 5-minute recompute. Display-only —
+   * never used to decide anything. Empty when no rule contributed (Low, Independent, no alerts).
+   */
+  riskFactors: string[];
 }
 
 /** {@link CascadeRiskDto} exactly as the BE sends it — enums may still be numeric. */
@@ -47,6 +54,12 @@ export interface SiteCascadeRiskSummaryDto {
   lowRiskCount: number;
   maxScore: number; // 0 if the site is empty
   highRiskAssets: CascadeRiskDto[]; // sorted by score desc, may be empty
+  // Counted across EVERY asset in the site (not the paginated battery list) — safe to sum
+  // straight into a breakdown chart without worrying which page the table is on.
+  independentCount: number;
+  seriesStringCount: number;
+  parallelBankCount: number;
+  seriesParallelCount: number;
 }
 
 /** {@link SiteCascadeRiskSummaryDto} as the BE sends it — nested assets not yet normalised. */

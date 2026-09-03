@@ -143,13 +143,16 @@ export const SlaTimerStatusEnum = {
   Stopped: "Stopped",
 } as const;
 // Bộ lọc "nguồn tạo ticket" — mirror TicketSourceFilterEnum bên BE (Domain/Enums).
-// KHÔNG map 1-1 với TicketOriginEnum: Environmental và PeriodicMaintenance đều là
-// Origin = System. Xem utils/ticket/ticketSource.ts.
+// KHÔNG map 1-1 với TicketOriginEnum: Environmental, PeriodicMaintenance và CascadeRisk
+// đều là Origin = System. Xem utils/ticket/ticketSource.ts.
 export const TicketSourceFilterEnum = {
   Customer: "Customer",
   AiPredicted: "AiPredicted",
   Environmental: "Environmental",
   PeriodicMaintenance: "PeriodicMaintenance",
+  // Rủi ro lan truyền cao — rule-based, KHÔNG có ML tham gia. Tách khỏi AiPredicted để
+  // không gây hiểu lầm là có AI đứng sau (xem ticketSource.ts).
+  CascadeRisk: "CascadeRisk",
 } as const;
 export type TicketSourceFilterEnum =
   (typeof TicketSourceFilterEnum)[keyof typeof TicketSourceFilterEnum];

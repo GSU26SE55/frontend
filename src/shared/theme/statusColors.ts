@@ -250,6 +250,20 @@ export const CASCADE_RISK_TONE: Record<string, StatusTone> = {
   High: "p1",
 };
 
+// Electrical topology, coloured by how much it contributes to cascade risk (Rule 1 in
+// CascadeRiskCalculator: Independent +0.0 · SeriesString +0.2 · SeriesParallel +0.4 ·
+// ParallelBank +0.6). ParallelBank is highest — thermal runaway propagates fastest and most
+// severely in parallel-connected cells (current transfer between branches), not series — see
+// the citation in CascadeRiskCalculator.ComputeAsync. Same visual language as
+// CASCADE_RISK_TONE so a reader scanning the wiring column can already guess which rows push
+// the risk column up.
+export const ELECTRICAL_TOPOLOGY_TONE: Record<string, StatusTone> = {
+  Independent: "ok",
+  SeriesString: "p3",
+  SeriesParallel: "p2",
+  ParallelBank: "p1",
+};
+
 // Alert→Ticket saga state (MassTransit returns string-name, not a numeric enum).
 export const SAGA_STATE_TONE: Record<string, StatusTone> = {
   Initial: "muted",

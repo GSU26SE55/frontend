@@ -14,7 +14,6 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useBatteryAsset } from "@/features/admin/hooks/battery/useBatteryAsset";
-import { useCascadeRisk } from "@/features/admin/hooks/battery/useCascadeRisk";
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/battery/useDeleteBatteryAsset";
 import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
@@ -35,8 +34,6 @@ export default function BatteryAssetDetailPage() {
 
   // Need the asset for the Edit/Transfer dialogs (same cache key as shared → no double-fetch).
   const { data: asset } = useBatteryAsset(id);
-  // Current topology for SetTopologyDialog (same cache key as the header's CascadeRiskBadge in shared).
-  const { data: cascade } = useCascadeRisk(id);
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
   const handleDelete = () => {
@@ -65,13 +62,6 @@ export default function BatteryAssetDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setTopologyOpen(true)}
-            >
-              <ShieldAlert size={13} /> Set topology
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
               onClick={() => setTransferOpen(true)}
             >
               <ArrowRightLeft size={13} /> Transfer
@@ -85,6 +75,27 @@ export default function BatteryAssetDetailPage() {
             </Button>
           </>
         }
+        // Sits next to the score/level inside CascadeRiskCard instead of floating unrelated in
+        // the top bar — the dialog itself already tells the reader it affects the score.
+        // `currentTopology` comes straight from CascadeRiskCard's own fetch (same cache key as
+        // the header badge) — no separate query needed here just to seed the dialog's default.
+        cascadeTopologyAction={({ currentTopology }) => (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTopologyOpen(true)}
+            >
+              <ShieldAlert size={13} /> Set topology
+            </Button>
+            <SetTopologyDialog
+              assetId={id}
+              currentTopology={currentTopology}
+              open={topologyOpen}
+              onOpenChange={setTopologyOpen}
+            />
+          </>
+        )}
       />
 
       {/* -- Dialogs (Admin only) -- */}
@@ -122,12 +133,6 @@ export default function BatteryAssetDetailPage() {
           </AlertDialog>
         </>
       )}
-      <SetTopologyDialog
-        assetId={id}
-        currentTopology={cascade?.electricalTopology}
-        open={topologyOpen}
-        onOpenChange={setTopologyOpen}
-      />
     </>
   );
 }

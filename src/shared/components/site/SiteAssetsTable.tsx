@@ -8,10 +8,15 @@ import {
   BatteryStatusEnum,
   type BatteryAssetDto,
 } from "@/shared/types/battery/battery.types";
-import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
+import {
+  toneClass,
+  CASCADE_RISK_TONE,
+  ELECTRICAL_TOPOLOGY_TONE,
+} from "@/shared/theme/statusColors";
 import { useIotDevicesForStaff } from "@/shared/hooks/iot/useIotDeviceRead";
 import { IotDeviceStatusEnum } from "@/shared/enums/iot/iot.enum";
 import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
+import { TOPOLOGY_LABEL } from "@/shared/constants/cascadeLabels";
 
 const STATUS_LABEL: Record<BatteryStatusEnum, string> = {
   [BatteryStatusEnum.Active]: "Active",
@@ -183,6 +188,24 @@ export default function SiteAssetsTable({
           </Badge>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
+    {
+      id: "electricalTopology",
+      header: "Topology",
+      // Missing (older/other endpoint reusing this DTO without the field) → "—", not a guess.
+      cell: (asset) =>
+        asset.electricalTopology == null ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <Badge
+            variant="outline"
+            className={toneClass(
+              ELECTRICAL_TOPOLOGY_TONE[asset.electricalTopology] ?? "muted",
+            )}
+          >
+            {TOPOLOGY_LABEL[asset.electricalTopology]}
+          </Badge>
         ),
     },
     {

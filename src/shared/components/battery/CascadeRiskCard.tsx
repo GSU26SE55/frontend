@@ -10,18 +10,12 @@ import type {
   ElectricalTopologyName,
 } from "@/shared/types/battery/cascade.types";
 import { toneClass, CASCADE_RISK_TONE } from "@/shared/theme/statusColors";
+import { TOPOLOGY_LABEL } from "@/shared/constants/cascadeLabels";
 
 const LEVEL_LABEL: Record<CascadeRiskLevelName, string> = {
   Low: "Low",
   Medium: "Medium",
   High: "High",
-};
-
-const TOPOLOGY_LABEL: Record<ElectricalTopologyName, string> = {
-  Independent: "Independent",
-  SeriesString: "Series",
-  ParallelBank: "Parallel",
-  SeriesParallel: "Series-Parallel",
 };
 
 // Safe fallback: if the BE returns a value outside the enum (e.g. a number instead
@@ -98,6 +92,27 @@ export default function CascadeRiskCard({
                 : "Not computed yet"}
             </dd>
           </dl>
+
+          {/* Live breakdown — see CascadeRiskDto.riskFactors. Empty for a healthy Independent
+              battery with no open alerts, so the section just doesn't render rather than
+              showing an empty "Why" heading. */}
+          {data.riskFactors.length > 0 && (
+            <div className="pt-1 border-t border-border/50 space-y-1">
+              <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Why
+              </p>
+              <ul className="space-y-0.5">
+                {data.riskFactors.map((reason) => (
+                  <li
+                    key={reason}
+                    className="text-xs text-muted-foreground list-disc list-inside"
+                  >
+                    {reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </Card>

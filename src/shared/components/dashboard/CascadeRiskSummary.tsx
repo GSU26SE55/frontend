@@ -3,11 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SiteCascadeRiskSummaryDto } from "@/shared/types/battery/cascade.types";
-import { toneText, toneVars } from "@/shared/theme/statusColors";
+import {
+  toneText,
+  toneVars,
+  ELECTRICAL_TOPOLOGY_TONE,
+} from "@/shared/theme/statusColors";
 import type { StatusTone } from "@/shared/theme/statusColors";
 import { displayNameOrShortId } from "@/shared/utils/displayId";
 import StatBreakdown from "@/shared/components/dashboard/StatBreakdown";
 import type { BreakdownSegment } from "@/shared/components/dashboard/StatBreakdown";
+import { TOPOLOGY_LABEL } from "@/shared/constants/cascadeLabels";
 
 interface CascadeRiskSummaryProps {
   summary: SiteCascadeRiskSummaryDto | undefined;
@@ -54,6 +59,31 @@ export default function CascadeRiskSummary({
     { label: "High risk", value: summary.highRiskCount, tone: "p1" },
     { label: "Medium", value: summary.mediumRiskCount, tone: "p3" },
     { label: "Low", value: summary.lowRiskCount, tone: "ok" },
+  ];
+
+  // Counted server-side across every asset in the site (see GetSiteCascadeRiskSummaryQueryHandler)
+  // — safe to sum here regardless of which page the battery list below happens to be on.
+  const topologySegments: BreakdownSegment[] = [
+    {
+      label: TOPOLOGY_LABEL.Independent,
+      value: summary.independentCount,
+      tone: ELECTRICAL_TOPOLOGY_TONE.Independent,
+    },
+    {
+      label: TOPOLOGY_LABEL.ParallelBank,
+      value: summary.parallelBankCount,
+      tone: ELECTRICAL_TOPOLOGY_TONE.ParallelBank,
+    },
+    {
+      label: TOPOLOGY_LABEL.SeriesParallel,
+      value: summary.seriesParallelCount,
+      tone: ELECTRICAL_TOPOLOGY_TONE.SeriesParallel,
+    },
+    {
+      label: TOPOLOGY_LABEL.SeriesString,
+      value: summary.seriesStringCount,
+      tone: ELECTRICAL_TOPOLOGY_TONE.SeriesString,
+    },
   ];
 
   const Icon = hasHighRisk ? ShieldAlert : ShieldCheck;
@@ -125,6 +155,15 @@ export default function CascadeRiskSummary({
               ))}
             </div>
           )}
+        </div>
+
+        {/* By wiring — lets a Manager spot "this site is mostly Series" at a glance, without
+            opening every battery's Set topology dialog one at a time. */}
+        <div className="border-t border-border pt-3">
+          <p className="text-xs text-muted-foreground font-medium mb-2">
+            By wiring
+          </p>
+          <StatBreakdown segments={topologySegments} total={summary.totalAssets} />
         </div>
       </CardContent>
     </Card>

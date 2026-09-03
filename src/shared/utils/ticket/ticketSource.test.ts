@@ -37,12 +37,14 @@ describe("getTicketSource", () => {
     ).toBe(TicketSourceFilterEnum.AiPredicted);
   });
 
-  it("cascade risk (Origin=System, không có cờ bảo trì) là AI predicted", () => {
+  it("cascade risk (Origin=System, không có cờ bảo trì/môi trường) là Cascade risk — KHÔNG phải AI predicted", () => {
+    // Cascade risk là rule-based cộng điểm cứng, không có ML tham gia — gộp chung với AI
+    // predicted (alert do AI module chấm) từng gây hiểu lầm là có AI đứng sau.
     expect(
       getTicketSource({
         origin: TicketOriginEnum.System,
       }).key,
-    ).toBe(TicketSourceFilterEnum.AiPredicted);
+    ).toBe(TicketSourceFilterEnum.CascadeRisk);
   });
 
   it("bảo trì định kỳ tách khỏi các luồng System khác", () => {

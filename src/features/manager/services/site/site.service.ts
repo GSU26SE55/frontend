@@ -16,14 +16,21 @@ import type {
 } from "@/shared/types/battery/battery.types";
 import type { StaffAssignmentProfileDto } from "@/shared/types/account/account.types";
 import type { TicketPriorityEnum } from "@/shared/types/ticket/ticket.types";
-import { CascadeRiskLevel } from "@/shared/enums/battery/cascade.enum";
+import {
+  CascadeRiskLevel,
+  ElectricalTopologyEnum,
+} from "@/shared/enums/battery/cascade.enum";
 import { nameFrom } from "@/shared/services/battery/cascade.service";
 
 // Same numeric-enum quirk as the cascade endpoints (see cascade.service.ts) — cascadeRiskLevel
-// arrives as a number, not the string name the DTO advertises.
+// and electricalTopology arrive as numbers, not the string names the DTO advertises.
 const normalizeAsset = (dto: RawBatteryAssetDto): BatteryAssetDto => ({
   ...dto,
   cascadeRiskLevel: nameFrom(CascadeRiskLevel, dto.cascadeRiskLevel),
+  electricalTopology:
+    dto.electricalTopology != null
+      ? nameFrom(ElectricalTopologyEnum, dto.electricalTopology)
+      : undefined,
 });
 
 export const managerSiteService = {

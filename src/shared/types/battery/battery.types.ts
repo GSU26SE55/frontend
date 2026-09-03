@@ -1,6 +1,7 @@
 import type { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
 import type {
   CascadeRiskLevelName,
+  ElectricalTopologyName,
   RawEnum,
 } from "@/shared/types/battery/cascade.types";
 export { BatteryStatusEnum } from "@/shared/enums/battery/battery.enum";
@@ -20,13 +21,15 @@ export interface BatteryAssetDto {
   activeAlertCount?: number;
   cascadeRiskScore?: number;
   cascadeRiskLevel?: CascadeRiskLevelName;
+  electricalTopology?: ElectricalTopologyName;
   createdAt: string;
 }
 
-/** {@link BatteryAssetDto} as the BE sends it — cascadeRiskLevel not yet normalised. */
+/** {@link BatteryAssetDto} as the BE sends it — enum fields not yet normalised. */
 export interface RawBatteryAssetDto extends Omit<
   BatteryAssetDto,
-  "cascadeRiskLevel"
+  "cascadeRiskLevel" | "electricalTopology"
 > {
   cascadeRiskLevel: RawEnum<CascadeRiskLevelName>;
+  electricalTopology?: RawEnum<ElectricalTopologyName>;
 }

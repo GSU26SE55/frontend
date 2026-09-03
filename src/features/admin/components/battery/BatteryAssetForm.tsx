@@ -221,6 +221,11 @@ export default function BatteryAssetForm({
       } else {
         await createAsset(payload);
         toast.success(ADMIN_MESSAGES.battery.created);
+        // Don't rely solely on the open-triggered reset effect below — this form stays
+        // mounted between opens (only the Dialog's visibility toggles), so without this the
+        // just-submitted values (serial number, dates, battery type...) are still sitting in
+        // RHF state the next time "Add battery" is clicked.
+        reset(lockedSiteId ? { siteId: lockedSiteId } : {});
       }
       onOpenChange(false);
     } catch (error) {

@@ -12,8 +12,9 @@ import type { StatusTone } from "@/shared/theme/statusColors";
  * KHÔNG dùng `impactScope`: đó là field động, Manager sửa được qua Re-prioritize, dùng nó
  * thì một ticket lỗi pin bị Manager đổi scope sang Site sẽ đột nhiên hiện "Environmental".
  *
- * `origin` một mình gần đủ; chỉ còn `System` bị hai luồng dùng chung (bảo trì định kỳ,
- * cascade risk) nên phải tách bằng cờ `isPeriodicMaintenance`.
+ * `origin` một mình gần đủ; chỉ còn `System` bị ba luồng dùng chung (sự cố môi trường, bảo
+ * trì định kỳ, cascade risk) nên phải tách bằng `environmentalIncidentId` + cờ
+ * `isPeriodicMaintenance` — phần `System` còn lại sau khi loại 2 nhóm kia mới là cascade risk.
  *
  * Điều kiện ở đây phải KHỚP 1:1 với FilterBySource bên BE (TicketQueryHelper.FilterBySource)
  * — lệch thì một ticket hiện nhãn này mà lại rơi vào bộ lọc kia.
@@ -35,6 +36,7 @@ export const TICKET_SOURCE_LABEL: Record<TicketSourceFilterEnum, string> = {
   [TicketSourceFilterEnum.AiPredicted]: "AI predicted",
   [TicketSourceFilterEnum.Environmental]: "Environmental",
   [TicketSourceFilterEnum.PeriodicMaintenance]: "Maintenance",
+  [TicketSourceFilterEnum.CascadeRisk]: "Cascade risk",
 };
 
 const SOURCE_TONE: Record<TicketSourceFilterEnum, StatusTone> = {
@@ -44,6 +46,8 @@ const SOURCE_TONE: Record<TicketSourceFilterEnum, StatusTone> = {
   [TicketSourceFilterEnum.AiPredicted]: "p2",
   [TicketSourceFilterEnum.Environmental]: "p1",
   [TicketSourceFilterEnum.PeriodicMaintenance]: "info",
+  // Luôn kèm P1Critical (xem AutoCreateP1TicketAsync) — cùng mức báo động với Environmental.
+  [TicketSourceFilterEnum.CascadeRisk]: "p1",
 };
 
 export function getTicketSource(t: SourceInput): TicketSourceInfo {
@@ -68,13 +72,14 @@ export function getTicketSource(t: SourceInput): TicketSourceInfo {
     key = TicketSourceFilterEnum.Environmental;
   } else if (t.isPeriodicMaintenance) {
     key = TicketSourceFilterEnum.PeriodicMaintenance;
-  } else if (
-    t.origin === TicketOriginEnum.AutoFromAlert ||
-    t.origin === TicketOriginEnum.System
-  ) {
-    // AI dự đoán: alert bất thường do AI module chấm, hoặc điểm cascade risk cao
-    // (phần System còn lại sau khi đã loại môi trường và bảo trì ở trên).
+  } else if (t.origin === TicketOriginEnum.AutoFromAlert) {
+    // AI thật sự dự đoán: alert bất thường của 1 pin do AI module chấm.
     key = TicketSourceFilterEnum.AiPredicted;
+  } else if (t.origin === TicketOriginEnum.System) {
+    // Rủi ro lan truyền (cascade risk) cao — phần System còn lại sau khi đã loại môi
+    // trường và bảo trì ở trên. KHÔNG gộp vào AiPredicted — đây là rule-based cộng điểm
+    // cứng, không có ML tham gia (xem CascadeRiskCalculator).
+    key = TicketSourceFilterEnum.CascadeRisk;
   } else {
     // Người tạo — khách tự tạo hoặc staff tạo hộ, UI không tách hai loại này.
     key = TicketSourceFilterEnum.Customer;

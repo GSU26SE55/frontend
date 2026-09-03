@@ -7,10 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BatteryMaintenanceHistory from "@/shared/components/battery/BatteryMaintenanceHistory";
+import CascadeRiskCard from "@/shared/components/battery/CascadeRiskCard";
 import { useBatteryAsset } from "@/shared/hooks/battery/useBatteryAsset";
 import { useThresholdByType } from "@/shared/hooks/battery/useThresholds";
 import { useBatteryAssetRealtime } from "@/shared/hooks/battery/useBatteryAssetRealtime";
 import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
+import type { ElectricalTopologyName } from "@/shared/types/battery/cascade.types";
 import SensorChart from "@/shared/components/battery/SensorChart";
 import ChargeDischargePeakChart from "@/shared/components/battery/ChargeDischargePeakChart";
 import SensorHistoryTable from "@/shared/components/battery/SensorHistoryTable";
@@ -87,6 +89,13 @@ interface BatteryRealtimeDetailProps {
   // Admin injects CRUD buttons (Edit/Transfer/Delete) + dialogs through this slot;
   // Admin and Staff also pass the BMS control here. Manager leaves it empty.
   headerActions?: ReactNode;
+  // Forwarded to CascadeRiskCard's own `topologyAction` slot — only Admin passes this (the
+  // Set topology button + dialog). Manager/Staff omit it, so the card stays view-only for them,
+  // matching the BE which blocks POST /topology for non-admins.
+  cascadeTopologyAction?: (ctx: {
+    currentTopology?: ElectricalTopologyName;
+    isLoading: boolean;
+  }) => ReactNode;
 }
 
 // Whitelist — an unknown ?tab= falls back to Chart. Every TabsTrigger value must be
@@ -100,6 +109,7 @@ type TabValue = (typeof TAB_VALUES)[number];
 export default function BatteryRealtimeDetail({
   assetId: id,
   headerActions,
+  cascadeTopologyAction,
 }: BatteryRealtimeDetailProps) {
   const navigate = useNavigate();
 
@@ -325,6 +335,16 @@ export default function BatteryRealtimeDetail({
                   : undefined
               }
             />
+
+            <Separator />
+
+            {/* Cascade risk — score/level/topology/last-updated + breakdown. Re-uses the same
+                query key as the `cascade` fetched above for the header badge, so this is not an
+                extra network request, just a second reader of the cached result. Last in the
+                sidebar — supplementary detail, not the first thing an operator needs to see. */}
+            <div className="px-4 py-3">
+              <CascadeRiskCard assetId={id} topologyAction={cascadeTopologyAction} />
+            </div>
           </div>
 
           {/* Right: chart / history tabs */}
