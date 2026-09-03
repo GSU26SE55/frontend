@@ -457,18 +457,19 @@ function AlertDetailDialog({
             </DetailRow>
             <DetailRow label="Ticket">
               {alert.ticketId && ticketHref ? (
-                <Link
-                  to={ticketHref}
-                  className="font-mono-num text-xs text-primary hover:underline"
-                >
-                  {/* Three states, deliberately distinct: the code once it lands, a neutral
-                      placeholder while it is still being fetched, and a SHORTENED id only when
-                      the lookup has settled without one (403 / deleted ticket). Rendering the
-                      id during loading made the link flash a GUID and then swap to the TKT-
-                      code. Never a full GUID; the link itself still uses the full id. */}
-                  {ticketCode ??
-                    (ticketCodeLoading ? "…" : shortId(alert.ticketId))}
-                </Link>
+                ticketCodeLoading && !ticketCode ? (
+                  <Skeleton className="h-4 w-24" />
+                ) : (
+                  <Link
+                    to={ticketHref}
+                    className="font-mono-num text-xs text-primary hover:underline"
+                  >
+                    {/* Two remaining states: the code once it lands, and a SHORTENED id only
+                        when the lookup has settled without one (403 / deleted ticket). Never a
+                        full GUID; the link itself still uses the full id. */}
+                    {ticketCode ?? shortId(alert.ticketId)}
+                  </Link>
+                )
               ) : (
                 "—"
               )}

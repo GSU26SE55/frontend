@@ -76,6 +76,7 @@ import {
 } from "@/shared/hooks/alerts/useEnvironmentalIncidents";
 import { environmentalService } from "@/shared/services/alerts/environmental.service";
 import { EnvironmentalIncidentStatusEnum } from "@/shared/enums/alerts/environmental.enum";
+import { TicketStatusEnum } from "@/shared/enums/ticket/ticket.enum";
 import {
   resolveIncidentSchema,
   type ResolveIncidentFormValues,
@@ -463,6 +464,16 @@ function IncidentDetailDialog({
     useIncidentTicket(incidentId);
   // Staff không có trang này (route chỉ mở cho Admin/Manager), nên chỉ cần 2 prefix.
   const ticketBasePath = user?.role === UserRole.ADMIN ? "/admin" : "/manager";
+  // Ticket vừa tạo (Open) chưa được triage/assign — với Manager nó nằm ở Queue
+  // (/manager/tickets/queue/:id), không phải danh sách ticket thường. Cùng quy tắc với
+  // dialog alert của pin (AlertsView.tsx) — hai nơi phải đồng nhất, nếu không Manager bấm
+  // vào ticket Open từ đây sẽ vào nhầm trang, "Back" đưa về sai chỗ.
+  const ticketHref = incidentTicket
+    ? ticketBasePath === "/manager" &&
+      incidentTicket.status === TicketStatusEnum.Open
+      ? `${ticketBasePath}/tickets/queue/${incidentTicket.id}`
+      : `${ticketBasePath}/tickets/${incidentTicket.id}`
+    : null;
 
   const [panel, setPanel] = useState<"none" | "resolve" | "falseAlarm">("none");
 
@@ -552,15 +563,15 @@ function IncidentDetailDialog({
               {/* Ba trạng thái tách bạch, cùng quy ước với dialog alert của pin: mã ticket khi
                   có, dấu chờ khi đang tra, và "—" khi sự cố chưa sinh ra ticket nào (consumer
                   có thể chưa chạy xong) — không phải lỗi. */}
-              {incidentTicket ? (
+              {incidentTicket && ticketHref ? (
                 <Link
-                  to={`${ticketBasePath}/tickets/${incidentTicket.id}`}
+                  to={ticketHref}
                   className="font-mono-num text-xs text-primary hover:underline"
                 >
                   {incidentTicket.code}
                 </Link>
               ) : ticketLoading ? (
-                "…"
+                <Skeleton className="h-4 w-24" />
               ) : (
                 "—"
               )}
