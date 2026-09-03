@@ -24,10 +24,15 @@ import { QUERY_KEY } from "@/shared/utils/queryKeys";
 export const useTicketCode = (ticketId?: string | null) => {
   const { data, isPending, isFetching } = useQuery({
     queryKey: QUERY_KEY.tickets.detail(ticketId ?? ""),
-    queryFn: async () => {
-      const res = await ticketLookupService.getDetail(ticketId as string);
-      return res.data.data ?? null;
-    },
+    // queryFn PHẢI trả nguyên CommonResponse<TicketDetailDTO> — cùng shape với
+    // adminTicketService/managerTicketService/staffTicketService.getDetail(), vì các hook đó
+    // dùng CHUNG queryKey này (cố ý, xem docstring trên). Từng unwrap sẵn xuống
+    // TicketDetailDTO ở đây khiến cache lưu 2 shape khác nhau dưới cùng 1 key tuỳ hook nào
+    // chạy trước — hook chạy sau đọc nhầm shape của hook kia và luôn ra "not found". Unwrap
+    // ở `select`, không phải `queryFn`, để mọi hook chia sẻ đúng một raw cache.
+    queryFn: () =>
+      ticketLookupService.getDetail(ticketId as string).then((r) => r.data),
+    select: (res) => res.data ?? null,
     enabled: !!ticketId,
     staleTime: 5 * 60_000,
     retry: false,
