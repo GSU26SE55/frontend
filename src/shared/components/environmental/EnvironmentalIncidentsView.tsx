@@ -378,7 +378,11 @@ export default function EnvironmentalIncidentsView({
                       {(filters.pageNumber - 1) * filters.pageSize + index + 1}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {alert.siteId ? siteName(alert.siteId) : "—"}
+                      {/* BE đã trả sẵn siteName trong mỗi alert row — dùng thẳng, đáng tin cậy
+                          hơn tra qua danh sách `sites` prop (có thể chưa load hết hoặc lệch
+                          trang, rơi xuống UUID rút gọn). */}
+                      {alert.siteName ||
+                        (alert.siteId ? siteName(alert.siteId) : "—")}
                     </TableCell>
                     {/* Empty when the BE cannot resolve the account — show a dash. */}
                     <TableCell>{alert.customerName || "—"}</TableCell>
@@ -520,11 +524,14 @@ function IncidentDetailDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Incident details</DialogTitle>
-          <DialogDescription>
-            {incident
-              ? `${siteName(incident.siteId)} · ${incidentTypeLabel(incident.incidentType)}`
-              : "Loading..."}
-          </DialogDescription>
+          {incident ? (
+            <DialogDescription>
+              {siteName(incident.siteId)} ·{" "}
+              {incidentTypeLabel(incident.incidentType)}
+            </DialogDescription>
+          ) : (
+            <Skeleton className="h-4 w-40 mt-0.5" />
+          )}
         </DialogHeader>
 
         {isLoading || !incident ? (
@@ -807,11 +814,14 @@ function AmbientAlertDetailDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Environmental alert details</DialogTitle>
-          <DialogDescription>
-            {alert
-              ? `${siteName(alert.siteId) ?? "Site level"} · ${anomalyTypeLabel(alert.anomalyType)}`
-              : "Loading..."}
-          </DialogDescription>
+          {alert ? (
+            <DialogDescription>
+              {alert.siteName || siteName(alert.siteId) || "Site level"} ·{" "}
+              {anomalyTypeLabel(alert.anomalyType)}
+            </DialogDescription>
+          ) : (
+            <Skeleton className="h-4 w-40 mt-0.5" />
+          )}
         </DialogHeader>
 
         {isLoading || !alert ? (
@@ -853,7 +863,7 @@ function AmbientAlertDetailDialog({
             <DetailRow label="Customer">{alert.customerName || "—"}</DetailRow>
             <DetailRow label="Site">
               <span className="font-medium text-xs">
-                {siteName(alert.siteId) ?? "—"}
+                {alert.siteName || siteName(alert.siteId) || "—"}
               </span>
             </DetailRow>
             <DetailRow label="Detected at">
