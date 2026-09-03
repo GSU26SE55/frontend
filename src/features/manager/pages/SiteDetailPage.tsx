@@ -18,11 +18,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
-import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
 import SiteBmsSwitchDialog from "@/shared/components/battery/SiteBmsSwitchDialog";
 import { useSiteSwitchableAssets } from "@/shared/hooks/battery/useSiteSwitchableAssets";
-import { useSiteCascadeSummary } from "@/features/manager/hooks/battery/useSiteCascadeSummary";
 import {
   useSiteDetail,
   useSiteDashboard,
@@ -80,8 +78,6 @@ export default function ManagerSiteDetailPage() {
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
   const { data: dashboard } = useSiteDashboard(id);
-  const { data: cascade, isLoading: loadingCascade } =
-    useSiteCascadeSummary(id);
   const { data: assetsPage, isLoading: loadingAssets } = useSiteAssets(
     id,
     assetsParams,
@@ -154,11 +150,8 @@ export default function ManagerSiteDetailPage() {
         </div>
       </div>
 
-      {/* Top Summary Grid (Side by side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {dashboard && <SiteDashboardCard data={dashboard} />}
-        <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
-      </div>
+      {/* Site overview — full width now that Cascade risk summary is hidden on FE. */}
+      {dashboard && <SiteDashboardCard data={dashboard} />}
 
       {/* Batteries + Environment */}
       <Tabs value={tab} onValueChange={setTab}>

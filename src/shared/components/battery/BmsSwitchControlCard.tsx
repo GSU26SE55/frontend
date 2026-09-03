@@ -32,7 +32,6 @@ import { cn } from "@/lib/utils";
 import { toneText, type StatusTone } from "@/shared/theme/statusColors";
 import { HttpError } from "@/shared/lib/errors";
 import { useBmsSwitch } from "@/shared/hooks/battery/useBmsSwitch";
-import { useCascadeRisk } from "@/shared/hooks/battery/useCascadeRisk";
 import { useSetBmsSwitch } from "@/shared/hooks/battery/useSetBmsSwitch";
 import {
   BmsSwitchCommandStatus,
@@ -165,7 +164,6 @@ export default function BmsSwitchControlCard({
 }) {
   const stateQuery = useBmsSwitch(assetId);
   const mutation = useSetBmsSwitch(assetId);
-  const { data: cascade } = useCascadeRisk(assetId);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   // What the confirm button will do. Defaults to the urgent case — cut everything — matching
   // the site-wide dialog.
@@ -187,8 +185,8 @@ export default function BmsSwitchControlCard({
     stateRef.current = state;
   }, [state]);
 
-  const highRisk =
-    cascade?.level === "High" || (cascade?.cascadeRiskScore ?? 0) >= 0.7;
+  // Cascade risk UI hidden on FE — warning banner disabled accordingly.
+  const highRisk = false;
   const pending = busy || mutation.isPending || state?.pendingCommand != null;
 
   // Đọc THẲNG readback, không có giá trị mặc định: `?? true` cũ bịa ra "On" cho một MOSFET mà
@@ -278,7 +276,6 @@ export default function BmsSwitchControlCard({
   // Chạy theo mỗi lần state đổi; `submit` cũng gọi thẳng sau khi seal, phòng ca ack về ngay
   // trong lần refetch cuối — lúc đó không còn `pendingCommand` để poll 400ms đánh thức nữa.
   useEffect(settle, [state]);
-
 
   // "Both" gửi HAI lệnh TUẦN TỰ (charge rồi discharge), không phải một lệnh `target: "all"`.
   //
@@ -387,7 +384,9 @@ export default function BmsSwitchControlCard({
       );
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        {!controlled && <BmsTrigger disabled onClick={() => stateQuery.refetch()} />}
+        {!controlled && (
+          <BmsTrigger disabled onClick={() => stateQuery.refetch()} />
+        )}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-1.5 text-2sm">
@@ -412,7 +411,9 @@ export default function BmsSwitchControlCard({
       );
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        {!controlled && <BmsTrigger tone="danger" onClick={() => stateQuery.refetch()} />}
+        {!controlled && (
+          <BmsTrigger tone="danger" onClick={() => stateQuery.refetch()} />
+        )}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-2sm">
@@ -540,7 +541,12 @@ export default function BmsSwitchControlCard({
               icon: PowerOff,
               off: isRedundant(false),
             },
-            { value: true, label: "Turn on", icon: Power, off: isRedundant(true) },
+            {
+              value: true,
+              label: "Turn on",
+              icon: Power,
+              off: isRedundant(true),
+            },
           ] as const
         ).map((option) => (
           <button
