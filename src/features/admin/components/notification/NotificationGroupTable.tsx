@@ -1,4 +1,4 @@
-import { Lock, Pencil, Trash2, Users } from "lucide-react";
+import { EllipsisVertical, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,7 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { notificationGroupKindLabel } from "@/shared/constants/notificationLabels";
+import { TABLE_COLUMNS } from "@/shared/constants/tableColumns";
 import {
   NotificationGroupKindEnum,
   type NotificationGroupDto,
@@ -58,7 +66,9 @@ export default function NotificationGroupTable({
           <TableHead>Group name</TableHead>
           <TableHead className="w-40">Member selection</TableHead>
           <TableHead className="w-32 text-right">Recipients</TableHead>
-          <TableHead className="w-44 text-right">Actions</TableHead>
+          <TableHead className="w-16 text-right">
+            {TABLE_COLUMNS.actions}
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -111,39 +121,39 @@ export default function NotificationGroupTable({
                 </span>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onMembers(g)}
-                    title={isRole ? "View members" : "Manage members"}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button variant="ghost" size="icon" className="size-7" />
+                    }
+                    aria-label="Actions"
                   >
-                    <Users className="size-3.5" />
-                  </Button>
-                  {/* System groups: BE returns 409 if you try to edit/delete them. Hide the button
-                      so users aren't invited to click something guaranteed to fail. */}
-                  {!g.isSystem && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onEdit(g)}
-                        title="Edit"
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive"
-                        onClick={() => onDelete(g)}
-                        title="Delete"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </>
-                  )}
-                </div>
+                    <EllipsisVertical className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    {/* System groups: BE returns 409 if you try to edit/delete them. Hide the
+                        items so users aren't invited to click something guaranteed to fail. */}
+                    {!g.isSystem && (
+                      <DropdownMenuItem onClick={() => onEdit(g)}>
+                        Edit
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => onMembers(g)}>
+                      {isRole ? "View members" : "Manage members"}
+                    </DropdownMenuItem>
+                    {!g.isSystem && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => onDelete(g)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           );
