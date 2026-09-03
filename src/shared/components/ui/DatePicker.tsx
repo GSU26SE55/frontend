@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { format, parse, isValid } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { vi } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -113,7 +113,7 @@ export function DatePicker({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          locale={enUS}
+          locale={vi}
           selected={selected}
           defaultMonth={selected}
           disabled={[
@@ -247,7 +247,7 @@ export function DateTimePicker({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          locale={enUS}
+          locale={vi}
           selected={selected}
           defaultMonth={selected}
           disabled={[

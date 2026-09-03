@@ -77,7 +77,7 @@ export default function NotificationDetailPane({
   };
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto scrollbar-gutter-stable">
       {/* The open-content button sits in the header, aligned right of the title — the pane's
           main action shouldn't be buried in the body, requiring a scroll to find on long bodies. */}
       <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-3">

@@ -11,7 +11,7 @@ vi.mock("@/shared/hooks/sla/useSlaCalendar", () => ({
   useUpdateSlaNonWorkingPeriod: () => ({ mutateAsync: updatePeriod }),
 }));
 
-/** "yyyy-MM-dd" `offsetDays` from today — the value an <input type="date"> holds. */
+/** "yyyy-MM-dd" `offsetDays` from today — the value the form state/API holds. */
 const iso = (offsetDays: number) => {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -19,11 +19,19 @@ const iso = (offsetDays: number) => {
   return new Date(d.getTime() - offsetMs).toISOString().slice(0, 10);
 };
 
+/** "dd/MM/yyyy" — what DatePicker's typed-text input shows/accepts. */
+const typed = (offsetDays: number) => {
+  const [y, m, d] = iso(offsetDays).split("-");
+  return `${d}/${m}/${y}`;
+};
+
 const fill = async (user: ReturnType<typeof userEvent.setup>) => {
   fireEvent.change(screen.getByLabelText(/From/i), {
-    target: { value: iso(1) },
+    target: { value: typed(1) },
   });
-  fireEvent.change(screen.getByLabelText(/To/i), { target: { value: iso(2) } });
+  fireEvent.change(screen.getByLabelText(/To/i), {
+    target: { value: typed(2) },
+  });
   await user.type(screen.getByLabelText(/Reason/i), "aa");
 };
 
