@@ -42,16 +42,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SiteDashboardCard from "@/shared/components/site/SiteDashboardCard";
 import SiteAssetsTable from "@/shared/components/site/SiteAssetsTable";
 import { AmbientSitePanel } from "@/shared/components/ambient/AmbientConfigView";
-import CascadeRiskSummary from "@/shared/components/dashboard/CascadeRiskSummary";
 import BmsSwitchControlCard from "@/shared/components/battery/BmsSwitchControlCard";
 import SiteBmsSwitchDialog from "@/shared/components/battery/SiteBmsSwitchDialog";
 import { useSiteSwitchableAssets } from "@/shared/hooks/battery/useSiteSwitchableAssets";
 import SiteFormDialog from "@/features/admin/components/site/SiteFormDialog";
 import BatteryAssetForm from "@/features/admin/components/battery/BatteryAssetForm";
 import TransferOwnerDialog from "@/features/admin/components/battery/TransferOwnerDialog";
-import SetTopologyDialog from "@/features/admin/components/iot/SetTopologyDialog";
-import { useSiteCascadeSummary } from "@/features/admin/hooks/battery/useSiteCascadeSummary";
-import { useCascadeRisk } from "@/features/admin/hooks/battery/useCascadeRisk";
 import { useBatteryAsset } from "@/features/admin/hooks/battery/useBatteryAsset";
 import { useDeleteBatteryAsset } from "@/features/admin/hooks/battery/useDeleteBatteryAsset";
 import {
@@ -125,9 +121,7 @@ export default function SiteDetailPage() {
   const [deleteAssetTarget, setDeleteAssetTarget] =
     useState<BatteryAssetDto | null>(null);
   const [bmsAssetId, setBmsAssetId] = useState<string | null>(null);
-  const [topologyAssetId, setTopologyAssetId] = useState<string | null>(null);
   const { data: editAssetDetail } = useBatteryAsset(editAssetId);
-  const { data: topologyAssetCascade } = useCascadeRisk(topologyAssetId ?? "");
   const { mutate: deleteAsset } = useDeleteBatteryAsset();
 
   const { data: site, isLoading: loadingSite } = useSiteDetail(id);
@@ -140,9 +134,6 @@ export default function SiteDetailPage() {
     id,
     assetsParams,
   );
-  const { data: cascade, isLoading: loadingCascade } =
-    useSiteCascadeSummary(id);
-
   const { mutate: deleteSite } = useDeleteSite();
   const { mutate: restoreSite } = useRestoreSite();
 
@@ -250,11 +241,8 @@ export default function SiteDetailPage() {
         </div>
       </div>
 
-      {/* Top Summary Grid (Side by side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {dashboard && <SiteDashboardCard data={dashboard} />}
-        <CascadeRiskSummary summary={cascade} isLoading={loadingCascade} />
-      </div>
+      {/* Site overview — full width now that Cascade risk summary is hidden on FE. */}
+      {dashboard && <SiteDashboardCard data={dashboard} />}
 
       {/* Battery + Environment */}
       <Tabs value={tab} onValueChange={setTab}>
@@ -350,11 +338,6 @@ export default function SiteDetailPage() {
                     <DropdownMenuItem onClick={() => setBmsAssetId(asset.id)}>
                       BMS
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setTopologyAssetId(asset.id)}
-                    >
-                      Set topology
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTransferTarget(asset)}>
                       Transfer
                     </DropdownMenuItem>
@@ -414,15 +397,6 @@ export default function SiteDetailPage() {
           onOpenChange={(open) => !open && setTransferTarget(null)}
           assetId={transferTarget.id}
           currentCustomerId={transferTarget.customerId}
-        />
-      )}
-
-      {topologyAssetId && (
-        <SetTopologyDialog
-          assetId={topologyAssetId}
-          currentTopology={topologyAssetCascade?.electricalTopology}
-          open
-          onOpenChange={(open) => !open && setTopologyAssetId(null)}
         />
       )}
 
