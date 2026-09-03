@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNotificationGroupMembers } from "@/features/admin/hooks/notification/useNotificationGroups";
 
 interface Props {
@@ -34,10 +34,16 @@ export default function GroupMemberPeek({ groupId, memberCount }: Props) {
 
   if (isLoading) {
     return (
-      <p className="flex items-center gap-1.5 px-2.5 pb-2 text-xs text-muted-foreground">
-        <Loader2 className="size-3 animate-spin" />
-        Loading list…
-      </p>
+      <div className="border-t border-border/60 px-2.5 py-1.5">
+        <ul className="max-h-44 space-y-1 overflow-y-auto">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <li key={i} className="flex items-baseline gap-1.5">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-28" />
+            </li>
+          ))}
+        </ul>
+      </div>
     );
   }
 

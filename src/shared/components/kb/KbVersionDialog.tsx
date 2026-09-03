@@ -27,7 +27,7 @@ export function KbVersionDialog({
 }: KbVersionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[94vw] !max-w-[94vw] p-0 overflow-hidden">
+      <DialogContent className="w-[94vw]! max-w-[94vw]! p-0 overflow-hidden">
         {/* ── Side-by-side layout: inner div owns the height ─── */}
         <div className="flex flex-col" style={{ height: "88vh" }}>
           {/* Header */}

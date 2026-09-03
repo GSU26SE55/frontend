@@ -11,6 +11,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   useAdminPushTransport,
@@ -47,9 +48,34 @@ export default function PushTransportSettingsForm() {
 
   if (isGetLoading) {
     return (
-      <div className="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2">
-        <Loader2 className="animate-spin size-4" />
-        Loading system push settings...
+      <div className="space-y-5">
+        <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+          <Settings className="size-4 text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground">
+            System Push Notification Strategy
+          </h3>
+        </div>
+        <div className="space-y-2.5">
+          <Skeleton className="h-3.5 w-40" />
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-2 rounded-lg border border-border/80 p-3.5"
+              >
+                <div className="flex items-center gap-2">
+                  <Skeleton className="size-4 shrink-0 rounded-full" />
+                  <Skeleton className="h-3.5 w-16" />
+                </div>
+                <Skeleton className="h-2.5 w-full" />
+                <Skeleton className="h-2.5 w-3/4" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/40">
+          <Skeleton className="h-9 w-32" />
+        </div>
       </div>
     );
   }

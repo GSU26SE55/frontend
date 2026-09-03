@@ -321,15 +321,15 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
 
           {!isLongTerm ? (
             sohLoading ? (
-              <div className="h-[220px] flex items-center justify-center text-xs text-muted-foreground">
+              <div className="h-55 flex items-center justify-center text-xs text-muted-foreground">
                 Loading SOH chart…
               </div>
             ) : chartData.length === 0 ? (
-              <div className="h-[160px] flex items-center justify-center text-xs text-muted-foreground">
+              <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
                 No SOH prediction data yet. The AI job runs every 5 minutes.
               </div>
             ) : (
-              <ChartContainer config={chartConfig} className="h-[240px] w-full">
+              <ChartContainer config={chartConfig} className="h-60 w-full">
                 <AreaChart
                   data={chartData}
                   margin={{ left: -10, right: 10, top: 10, bottom: 0 }}
@@ -399,12 +399,12 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
               </ChartContainer>
             )
           ) : sohLongLoading ? (
-            <div className="h-[240px] flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+            <div className="h-60 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
               <span className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
               Running deep SOH diagnosis (LONG model)…
             </div>
           ) : sohLongError ? (
-            <div className="h-[240px] flex flex-col items-center justify-center p-6 text-center border border-dashed border-border rounded-lg bg-destructive/5">
+            <div className="h-60 flex flex-col items-center justify-center p-6 text-center border border-dashed border-border rounded-lg bg-destructive/5">
               <span className="text-destructive font-semibold text-sm mb-1">
                 Diagnosis Unavailable
               </span>
@@ -464,7 +464,7 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
               </div>
             </div>
           ) : (
-            <div className="h-[240px] flex items-center justify-center text-xs text-muted-foreground">
+            <div className="h-60 flex items-center justify-center text-xs text-muted-foreground">
               No long SOH data.
             </div>
           )}
@@ -561,9 +561,9 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
                       </div>
 
                       {/* Right actions: Fixed width buttons aligned straight */}
-                      <div className="flex items-center justify-end gap-1.5 shrink-0 min-w-[155px]">
+                      <div className="flex items-center justify-end gap-1.5 shrink-0 min-w-38.75">
                         {c.staffFeedback ? (
-                          <span className="inline-flex items-center justify-center text-xs font-medium px-3 py-1 rounded bg-muted/60 text-muted-foreground border border-border min-w-[155px] text-center">
+                          <span className="inline-flex items-center justify-center text-xs font-medium px-3 py-1 rounded bg-muted/60 text-muted-foreground border border-border min-w-38.75 text-center">
                             ✓ {getShortFeedbackLabel(c.staffFeedback)}
                           </span>
                         ) : (
@@ -581,7 +581,7 @@ export default function AiPredictionCard({ assetId }: { assetId: string }) {
                                   onClick={() =>
                                     feedback.mutate({ id: c.id, feedback: fb })
                                   }
-                                  className={`w-[74px] justify-center text-center py-1 text-xs font-medium rounded border transition-colors disabled:opacity-50 ${
+                                  className={`w-18.5 justify-center text-center py-1 text-xs font-medium rounded border transition-colors disabled:opacity-50 ${
                                     isCorrect
                                       ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                                       : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30"

@@ -4,6 +4,7 @@ import { formatDateTime } from "@/shared/utils/datetime";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -68,9 +69,24 @@ const MySessionsSection = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Loading sessions...
-      </div>
+      <ul className="space-y-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <li
+            key={i}
+            className="flex items-start justify-between gap-3 rounded-lg border border-border/60 p-3"
+          >
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <Skeleton className="mt-0.5 size-4 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-52" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </div>
+            <Skeleton className="size-8 shrink-0 rounded-md" />
+          </li>
+        ))}
+      </ul>
     );
   }
 
