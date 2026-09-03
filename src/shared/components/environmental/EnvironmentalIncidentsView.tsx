@@ -761,9 +761,21 @@ function AmbientAlertDetailDialog({
   onClose: () => void;
 }) {
   const { data: alert, isLoading } = useAlertDetail(alertId ?? "");
-  const { code: ticketCode, isLoading: ticketCodeLoading } = useTicketCode(
-    alert?.ticketId,
-  );
+  const {
+    code: ticketCode,
+    status: ticketStatus,
+    isLoading: ticketCodeLoading,
+  } = useTicketCode(alert?.ticketId);
+  // Ticket vừa tạo (Open) chưa được triage/assign — với Manager nó nằm ở Queue
+  // (/manager/tickets/queue/:id), không phải danh sách ticket thường. Cùng quy tắc với
+  // dialog alert của pin (AlertsView.tsx) — nếu không Manager bấm vào ticket Open từ đây
+  // sẽ vào nhầm trang, "Back" đưa về sai chỗ.
+  const ticketHref =
+    alert?.ticketId == null
+      ? null
+      : basePath === "/manager" && ticketStatus === TicketStatusEnum.Open
+        ? `${basePath}/tickets/queue/${alert.ticketId}`
+        : `${basePath}/tickets/${alert.ticketId}`;
   const { mutate: resolve, isPending: resolvePending } = useResolveAlert();
 
   const canResolve =
@@ -854,14 +866,17 @@ function AmbientAlertDetailDialog({
               {formatDateTime(alert.resolvedAt)}
             </DetailRow>
             <DetailRow label="Ticket">
-              {alert.ticketId ? (
-                <Link
-                  to={`${basePath}/tickets/${alert.ticketId}`}
-                  className="font-mono-num text-xs text-primary hover:underline"
-                >
-                  {ticketCode ??
-                    (ticketCodeLoading ? "…" : alert.ticketId.slice(0, 8))}
-                </Link>
+              {alert.ticketId && ticketHref ? (
+                ticketCodeLoading && !ticketCode ? (
+                  <Skeleton className="h-4 w-24" />
+                ) : (
+                  <Link
+                    to={ticketHref}
+                    className="font-mono-num text-xs text-primary hover:underline"
+                  >
+                    {ticketCode ?? alert.ticketId.slice(0, 8)}
+                  </Link>
+                )
               ) : (
                 "—"
               )}
