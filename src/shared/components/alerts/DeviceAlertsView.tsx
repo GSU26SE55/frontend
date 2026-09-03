@@ -376,11 +376,13 @@ function DeviceAlertDetailDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Device alert details</DialogTitle>
-          <DialogDescription>
-            {alert
-              ? `${deviceSubject(alert)} · ${anomalyLabel(alert.anomalyType)}`
-              : "Loading..."}
-          </DialogDescription>
+          {alert ? (
+            <DialogDescription>
+              {deviceSubject(alert)} · {anomalyLabel(alert.anomalyType)}
+            </DialogDescription>
+          ) : (
+            <Skeleton className="h-4 w-40 mt-0.5" />
+          )}
         </DialogHeader>
 
         {isLoading || !alert ? (

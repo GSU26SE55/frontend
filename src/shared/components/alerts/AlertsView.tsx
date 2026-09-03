@@ -404,11 +404,13 @@ function AlertDetailDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Alert details</DialogTitle>
-          <DialogDescription>
-            {alert
-              ? `${alertSubject(alert)} · ${anomalyLabel(alert.anomalyType)}`
-              : "Loading..."}
-          </DialogDescription>
+          {alert ? (
+            <DialogDescription>
+              {alertSubject(alert)} · {anomalyLabel(alert.anomalyType)}
+            </DialogDescription>
+          ) : (
+            <Skeleton className="h-4 w-40 mt-0.5" />
+          )}
         </DialogHeader>
 
         {isLoading || !alert ? (
@@ -438,11 +440,12 @@ function AlertDetailDialog({
             <DetailRow label="Customer">{alert.customerName || "—"}</DetailRow>
             <DetailRow label={isSiteLevel(alert) ? "Site" : "Battery"}>
               <span className="font-mono text-xs">
-                {/* Site-level alerts carry only siteId; name it from the site list the
-                    page already loaded. The battery branch beside it has always shown a
-                    serial, so leaving the site branch as a raw UUID read as a defect. */}
+                {/* BE đã trả sẵn siteName trong alert — dùng thẳng, đáng tin cậy hơn tra qua
+                    danh sách `sites` prop (có thể chưa load hết hoặc lệch trang, rơi xuống
+                    UUID rút gọn). The battery branch beside it has always shown a serial, so
+                    leaving the site branch as a raw UUID read as a defect. */}
                 {isSiteLevel(alert)
-                  ? (siteName(alert.siteId) ?? "—")
+                  ? alert.siteName || (siteName(alert.siteId) ?? "—")
                   : alert.batterySerialNumber}
               </span>
             </DetailRow>
