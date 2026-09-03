@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useStaffBatteryAsset } from "@/features/staff/hooks/battery/useBatteryAsset";
 import { WarrantyStatusEnum } from "@/features/staff/types/battery/battery-asset.types";
 import BatteryWarningEvidencePanel from "@/shared/components/battery/BatteryWarningEvidencePanel";
+import CustomerHoverCard from "@/features/staff/components/account/CustomerHoverCard";
 
 const WARRANTY_LABEL: Record<WarrantyStatusEnum, string> = {
   [WarrantyStatusEnum.ACTIVE]: "Under warranty",
@@ -101,7 +102,15 @@ export default function BatteryAssetInfoPanel({
         <InfoRow label="Serial number" value={asset.serialNumber} />
         <InfoRow label="Battery type" value={asset.batteryTypeName} />
         <InfoRow label="Site" value={asset.siteName} />
-        <InfoRow label="Customer" value={asset.customerName} />
+        <InfoRow
+          label="Customer"
+          value={
+            <CustomerHoverCard
+              customerId={asset.customerId}
+              customerName={asset.customerName}
+            />
+          }
+        />
         <InfoRow label="Install date" value={formatDate(asset.installDate)} />
         <InfoRow
           label="Warranty"
