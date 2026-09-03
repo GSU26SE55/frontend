@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import Cookies from "js-cookie";
 import { authService } from "@/features/auth/services/auth.service";
 import { isTokenExpired, saveTokens } from "@/shared/lib/axios";
@@ -28,12 +29,22 @@ export const useHydrateSession = () => {
 
         saveTokens(tokens.accessToken, tokens.refreshToken);
         return decodeToken(tokens.accessToken);
-      } catch {
+      } catch (error) {
+        // No response from the server (network drop, timeout, ngrok hiccup) means we
+        // never actually learned whether the refresh token is valid — surface this as a
+        // query error (after retrying) rather than treating it as "logged out", so
+        // AuthProvider keeps whatever session state it already had instead of wiping it
+        // on a blip. A real rejection (BE responded, e.g. 401 invalid/revoked token)
+        // does mean logged out.
+        if (axios.isAxiosError(error) && !error.response) {
+          throw error;
+        }
         return null;
       }
     },
     gcTime: Infinity,
-    retry: false,
+    retry: (failureCount, error) =>
+      axios.isAxiosError(error) && !error.response && failureCount < 2,
     staleTime: Infinity,
   });
 };
