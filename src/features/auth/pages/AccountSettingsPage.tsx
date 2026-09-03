@@ -220,7 +220,7 @@ const AccountSettingsPage = () => {
         </nav>
 
         {/* ── Content ── */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto scrollbar-gutter-stable">
           {/* Keyed on the section, so switching sections replays the entrance instead of
               swapping the panel's contents in place. */}
           <motion.div

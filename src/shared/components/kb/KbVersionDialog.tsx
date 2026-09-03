@@ -38,7 +38,7 @@ export function KbVersionDialog({
           </div>
           {/* Body: left list + right diff */}
           <div className="flex flex-1 min-h-0">
-            <div className="w-75 shrink-0 border-r border-border overflow-y-auto px-4 py-4">
+            <div className="w-75 shrink-0 border-r border-border overflow-y-auto scrollbar-gutter-stable px-4 py-4">
               <KbVersionHistory
                 versions={versions}
                 onCompare={onCompare}
@@ -46,7 +46,7 @@ export function KbVersionDialog({
                 isPending={isPending}
               />
             </div>
-            <div className="flex-1 min-w-0 overflow-y-auto px-5 py-4">
+            <div className="flex-1 min-w-0 overflow-y-auto scrollbar-gutter-stable px-5 py-4">
               {diff ? (
                 <KbDiffViewer diff={diff} />
               ) : (

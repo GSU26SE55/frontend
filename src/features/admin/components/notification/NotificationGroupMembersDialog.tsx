@@ -119,7 +119,7 @@ export default function NotificationGroupMembersDialog({
               onChange={(e) => setPickerSearch(e.target.value)}
               className="h-8"
             />
-            <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-background">
+            <div className="max-h-40 overflow-y-auto scrollbar-gutter-stable rounded-md border border-border bg-background">
               {isSearchingAccounts ? (
                 <p className="px-3 py-4 text-center text-xs text-muted-foreground">
                   Searching…

@@ -200,11 +200,11 @@ export default function PermissionsDialog({ open, onClose, role }: Props) {
           </div>
 
           {/* Permission list — module cards laid out across multiple columns */}
-          <div className="flex-1 overflow-y-auto -mr-1 pr-1">
+          <div className="flex-1 overflow-y-auto scrollbar-gutter-stable -mr-1 pr-1">
             {isLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-40" />
+                  <Skeleton key={i} className="h-40 mb-3 break-inside-avoid" />
                 ))}
               </div>
             ) : modules.length === 0 ? (

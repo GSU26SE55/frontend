@@ -139,7 +139,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
             {/* ── Sessions tab ── */}
             <TabsContent
               value="sessions"
-              className="flex-1 overflow-y-auto px-6 pb-6 mt-4 space-y-3"
+              className="flex-1 overflow-y-auto scrollbar-gutter-stable px-6 pb-6 mt-4 space-y-3"
             >
               {activeSessions.length > 0 && (
                 <div className="flex justify-end">
@@ -217,7 +217,7 @@ export default function AccountDetailDrawer({ open, onClose, account }: Props) {
             {/* ── History tab ── */}
             <TabsContent
               value="history"
-              className="flex-1 overflow-y-auto px-6 pb-6 mt-4"
+              className="flex-1 overflow-y-auto scrollbar-gutter-stable px-6 pb-6 mt-4"
             >
               {loadingHistory ? (
                 <div className="space-y-2">

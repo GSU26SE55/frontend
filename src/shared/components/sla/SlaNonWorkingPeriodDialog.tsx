@@ -8,9 +8,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/shared/components/ui/DatePicker";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
   slaNonWorkingPeriodSchema,
@@ -45,11 +45,9 @@ export default function SlaNonWorkingPeriodDialog({
   period,
 }: Props) {
   const isEdit = !!period;
-  // Plain state instead of react-hook-form + a custom date picker: the three fields are
-  // driven by <input type="date">, whose value IS the "yyyy-MM-dd" string the API wants, so
-  // nothing can hold a date on screen that the form state does not have. The picker this
-  // replaced kept its own text state and swallowed onChange when a typed date fell below
-  // `min`, which left the dialog showing a filled date while the form still validated as empty.
+  // Plain state instead of react-hook-form: the three fields are plain "yyyy-MM-dd"/text
+  // strings matching the API shape directly, so nothing can hold a date on screen that the
+  // form state does not have.
   //
   // The parent keys this component on open+period, so mounting is the reset — no effect needed.
   const [values, setValues] = useState<SlaNonWorkingPeriodForm>(() =>
@@ -125,11 +123,10 @@ export default function SlaNonWorkingPeriodDialog({
               <Label htmlFor="startDate">
                 From <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <DatePicker
                 id="startDate"
-                type="date"
                 value={values.startDate}
-                onChange={(e) => setField("startDate", e.target.value)}
+                onChange={(value) => setField("startDate", value ?? "")}
                 // UI only offers a future date (today excluded) even though the BE's
                 // ValidateStartDate would accept today too.
                 min={tomorrowIsoDate()}
@@ -143,11 +140,10 @@ export default function SlaNonWorkingPeriodDialog({
               <Label htmlFor="endDate">
                 To <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <DatePicker
                 id="endDate"
-                type="date"
                 value={values.endDate}
-                onChange={(e) => setField("endDate", e.target.value)}
+                onChange={(value) => setField("endDate", value ?? "")}
                 min={values.startDate || tomorrowIsoDate()}
               />
               {errors.endDate && (
