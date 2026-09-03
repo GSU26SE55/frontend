@@ -1,6 +1,7 @@
 import { EllipsisVertical, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -45,9 +46,36 @@ export default function NotificationGroupTable({
 }: Props) {
   if (isLoading) {
     return (
-      <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-        Loading…
-      </p>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Group name</TableHead>
+            <TableHead className="w-40">Member selection</TableHead>
+            <TableHead className="w-32 text-right">Recipients</TableHead>
+            <TableHead className="w-16 text-right">
+              {TABLE_COLUMNS.actions}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <TableRow key={i}>
+              <TableCell>
+                <Skeleton className="h-4 w-40" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-10 ml-auto" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-4 w-6 ml-auto" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     );
   }
 

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import DataPagination from "@/shared/components/ui/DataPagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useAdminAccountList } from "@/features/admin/hooks/account/useAdminAccounts";
@@ -186,9 +187,19 @@ export default function NotificationGroupMembersDialog({
 
           <div className="rounded-lg border border-border">
             {isLoading ? (
-              <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-                Loading…
-              </p>
+              <ul className="divide-y divide-border">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <Skeleton className="h-3.5 w-40" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
             ) : (data?.items.length ?? 0) === 0 ? (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">
                 No members in this group yet.

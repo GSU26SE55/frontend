@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { AlertTriangle, ChevronDown, Check, Plus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTemplateVariables } from "@/features/admin/hooks/notification/useNotificationTemplates";
 import { getVariableDoc } from "@/features/admin/constants/templateVariableDocs";
 import type { NotificationTypeEnum } from "@/shared/enums/notification/notification.enum";
@@ -76,8 +77,10 @@ export default function TemplateVariablePalette({
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
-        <p className="text-xs text-muted-foreground">Loading variables…</p>
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 rounded-md" />
+        ))}
       </div>
     );
   }

@@ -125,7 +125,7 @@ export function BlogDetailView({ basePath, canWorkflow }: BlogDetailViewProps) {
     <div className="pb-24">
       {/* The toolbar spans the page, not the reading column: the post wants a narrow
           measure, the action row wants room to stay on one line. */}
-      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70">
         <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pl-(--page-pl) pr-(--page-pr)">
           <Button
             variant="ghost"

@@ -212,17 +212,17 @@ export default function ChargeDischargePeakChart({
           )}
         </div>
         {isLoading ? (
-          <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">
+          <div className="h-65 flex items-center justify-center text-sm text-muted-foreground">
             Loading...
           </div>
         ) : chartData.length === 0 ? (
-          <div className="h-[260px] flex items-center justify-center text-sm text-muted-foreground">
+          <div className="h-65 flex items-center justify-center text-sm text-muted-foreground">
             No data in this time range
           </div>
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="h-[260px] w-full aspect-auto"
+            className="h-65 w-full aspect-auto"
             initialDimension={{ width: 480, height: 260 }}
           >
             <LineChart

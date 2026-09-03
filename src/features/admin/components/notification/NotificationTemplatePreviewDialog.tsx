@@ -284,14 +284,14 @@ export default function NotificationTemplatePreviewDialog({
                   <Bell className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-2sm font-semibold text-foreground break-words">
+                  <p className="text-2sm font-semibold text-foreground wrap-break-word">
                     {rendered.title || (
                       <span className="italic text-muted-foreground">
                         (empty)
                       </span>
                     )}
                   </p>
-                  <p className="mt-0.5 text-xs text-muted-foreground whitespace-pre-wrap break-words">
+                  <p className="mt-0.5 text-xs text-muted-foreground whitespace-pre-wrap wrap-break-word">
                     {rendered.body || <span className="italic">(empty)</span>}
                   </p>
                   <p className="mt-1.5 text-2xs text-muted-foreground">

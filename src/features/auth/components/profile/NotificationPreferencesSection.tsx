@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { handleErrorApi } from "@/shared/lib/errors";
 import {
@@ -113,8 +114,31 @@ export default function NotificationPreferencesSection() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Loading…
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <Skeleton className="h-4.5 w-40" />
+          <div className="border border-border rounded-xl overflow-hidden divide-y divide-border/60">
+            {CHANNELS.map((ch) => (
+              <div
+                key={ch.name}
+                className="px-4 py-3 flex items-center justify-between gap-3"
+              >
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-3 w-36" />
+                </div>
+                <Skeleton className="h-5 w-9 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1.5">
+            <Skeleton className="h-4.5 w-24" />
+            <Skeleton className="h-3 w-64" />
+          </div>
+          <Skeleton className="h-5 w-9 rounded-full" />
+        </div>
       </div>
     );
   }
